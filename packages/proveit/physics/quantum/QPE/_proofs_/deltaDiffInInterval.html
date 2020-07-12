@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.QPE.deltaDiffInInterval theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.QPE.deltaDiffInInterval-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">physics</a>.<a class="ProveItLink" href="../../_context_.html">quantum</a>.<a class="ProveItLink" href="../_context_.html">QPE</a>.<a class="ProveItLink" href="../_theorems_.html#deltaDiffInInterval">deltaDiffInInterval</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.QPE.deltaDiffInInterval-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> deltaDiffInInterval presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of deltaDiffInInterval
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="deltaDiffInInterval">deltaDiffInInterval:</strong> <a class="ProveItLink" href="../__pv_it/ee592a78ff0840f56b0a4a24779417f19ac166890/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/ee592a78ff0840f56b0a4a24779417f19ac166890/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.core_expr_types.tuples.len_of_ranges_with_repeated_indices theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.core_expr_types.tuples.len_of_ranges_with_repeated_indices-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">core_expr_types</a>.<a class="ProveItLink" href="../_context_.html">tuples</a>.<a class="ProveItLink" href="../_theorems_.html#len_of_ranges_with_repeated_indices">len_of_ranges_with_repeated_indices</a> theorem<a class="anchor-link" href="#Proof-of-proveit.core_expr_types.tuples.len_of_ranges_with_repeated_indices-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> len_of_ranges_with_repeated_indices presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of len_of_ranges_with_repeated_indices
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="len_of_ranges_with_repeated_indices">len_of_ranges_with_repeated_indices:</strong> <a class="ProveItLink" href="../__pv_it/9159d349fcf6b35fb8da5f6014b3fa05c49799ad0/expr.html"><img src="data:image/png;base64,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
+Qs9efvu/owwd/5KRRqIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/9159d349fcf6b35fb8da5f6014b3fa05c49799ad0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

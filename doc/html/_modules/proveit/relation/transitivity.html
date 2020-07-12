@@ -1,0 +1,889 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.relation.transitivity &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.relation.transitivity</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A TransitiveRelation is a generic base class for binary</span>
+<span class="sd">relationships that are transitive.  Less than and greater than</span>
+<span class="sd">relationships are examples (so are subset and superset relationships).</span>
+<span class="sd">For example, transitivity in the &quot;less than&quot; context means that </span>
+<span class="sd">a&lt;b and b&lt;c implies that a&lt;c.  The &quot;equivalence class&quot; </span>
+<span class="sd">(proveit.logic.Equals by default) is special kind of TransitiveRelation </span>
+<span class="sd">that is also symmetric; that is, y=x if x=y.  </span>
+<span class="sd">proveit.logic.Equals is a TransitiveRelation, but</span>
+<span class="sd">overloads the default methods.  The TransitiveRelation class</span>
+<span class="sd">provides convenient automation capabilities for performing</span>
+<span class="sd">a transitive search to conclude a new relation from known relations</span>
+<span class="sd">using transitivity rules.  To enable this, each TransitiveRelation</span>
+<span class="sd">needs to track to define knownLeftSides and knownRightSides as</span>
+<span class="sd">class dictionaries; these will be populated as side effects for</span>
+<span class="sd">each proven relation (see deriveSideEffects).  Also, the</span>
+<span class="sd">applyTransitivity method should be appropriately implemented.</span>
+<span class="sd">The default version handles the case when the &quot;other&quot; relation</span>
+<span class="sd">is an equality (in which case, substitution may simply be performed).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">OperationSequence</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">,</span> <span class="n">ProofFailure</span>
+<span class="kn">from</span> <span class="nn">.sorter</span> <span class="k">import</span> <span class="n">TransitivitySorter</span>
+
+<div class="viewcode-block" id="TransitiveRelation"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation">[docs]</a><span class="k">class</span> <span class="nc">TransitiveRelation</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Base class for generic transitive relations.  Examples</span>
+<span class="sd">    are &lt;, &lt;=, &gt;, &gt;= as well as subset, subseteq, superset,</span>
+<span class="sd">    and superseteq relations.  proveit.logic.Equals is a special </span>
+<span class="sd">    TransitiveRelation which is also symmetric (x=y means that y=x).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">):</span>
+        <span class="n">Operation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">operator</span><span class="p">,</span> <span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<div class="viewcode-block" id="TransitiveRelation.sideEffects"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.sideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">sideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knownTruth</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Automatically derive the reversed form of transitive</span>
+<span class="sd">        relations as side effects (e.g., y &gt; x from x &lt; y).</span>
+<span class="sd">        Also, store known left sides and known right sides </span>
+<span class="sd">        in class member dictionaries: knownLeftSides, knownRightSides</span>
+<span class="sd">        whilc will enable transitivity searches.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="s1">&#39;knownLeftSides&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="s1">&#39;knownRightSides&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Expressions derived from TransitiveRelation should define &#39;knownLeftSides&#39; and &#39;knownRightSides&#39; as class variables&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">knownLeftSides</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">knownTruth</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">knownRightSides</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">knownTruth</span><span class="p">)</span>
+        <span class="k">return</span>
+        <span class="k">yield</span> <span class="c1"># makes this a generator as it should be</span></div>
+
+<div class="viewcode-block" id="TransitiveRelation.conclude"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.conclude">[docs]</a>    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Try to conclude the TransitivityRelation using other </span>
+<span class="sd">        TransitivityRelations or Equals that are known to be true via transitivity.</span>
+<span class="sd">        For example, if a&lt;b, b=c, and c&lt;=d are known</span>
+<span class="sd">        truths (under the given assumptions), we can conclude that</span>
+<span class="sd">        a&lt;d (under these assumptions).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Use a breadth-first search approach to find the shortest</span>
+        <span class="c1"># path to get from one end-point to the other.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaTransitivity</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">TransitivityException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TransitivityException</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span> <span class="c1"># indicate the expression we were trying to prove</span></div>
+    
+<div class="viewcode-block" id="TransitiveRelation.concludeViaTransitivity"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.concludeViaTransitivity">[docs]</a>    <span class="k">def</span> <span class="nf">concludeViaTransitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">proven_relation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_transitivitySearch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">relation</span> <span class="o">=</span> <span class="n">proven_relation</span><span class="o">.</span><span class="n">expr</span>
+        <span class="k">if</span> <span class="n">relation</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_checkedWeakRelationClass</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">relation</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_checkedStrongRelationClass</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="n">relation</span><span class="o">.</span><span class="n">deriveRelaxed</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">relation</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">==</span> <span class="n">Equals</span><span class="p">:</span>
+                    <span class="c1"># Derive a weaker relation via the strong relation </span>
+                    <span class="c1"># of equality:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaEquality</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Not able to conclude the desired relation of </span><span class="si">%s</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot; from the proven relation of </span><span class="si">%s</span><span class="s2">.&quot;</span>
+                    <span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">relation</span><span class="p">)))</span>
+            <span class="k">raise</span> <span class="n">TransitivityException</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">proven_relation</span></div>
+    
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_RelationClasses</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the strong and weak relation classes.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_checkedStrongRelationClass</span><span class="p">(),</span> 
+                    <span class="bp">cls</span><span class="o">.</span><span class="n">_checkedWeakRelationClass</span><span class="p">())</span>
+
+<div class="viewcode-block" id="TransitiveRelation.knownRelationsFromLeft"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.knownRelationsFromLeft">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">knownRelationsFromLeft</span><span class="p">(</span><span class="n">RelationClass</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield (KnownTruth, right-hand-side) pairs for this</span>
+<span class="sd">        transitive relationship (or equality) that involve the given expression on </span>
+<span class="sd">        the left side and are known to be true under the given assumptions.</span>
+<span class="sd">        Equality relations will always be yielded first.</span>
+<span class="sd">        Strong relations will be yielded next.</span>
+<span class="sd">        Weak relations will only be yielded if this is a weak</span>
+<span class="sd">        relation class.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">equiv_class</span> <span class="o">=</span> <span class="n">RelationClass</span><span class="o">.</span><span class="n">EquivalenceClass</span><span class="p">()</span>
+        <span class="c1"># equivalence relationships are strongest and should come first.</span>
+        <span class="n">equiv_left_relations</span> <span class="o">=</span> <span class="n">equiv_class</span><span class="o">.</span><span class="n">knownRelationsFromLeft</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">knownTruth</span><span class="p">,</span> <span class="n">otherExpr</span><span class="p">)</span> <span class="ow">in</span> <span class="n">equiv_left_relations</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">expr</span> <span class="o">!=</span> <span class="n">otherExpr</span><span class="p">:</span> <span class="c1"># exclude reflexive equations -- they don&#39;t count</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">knownTruth</span><span class="p">,</span> <span class="n">otherExpr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">RelationClass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">equiv_class</span><span class="p">:</span>
+            <span class="n">relation_classes</span> <span class="o">=</span> <span class="n">RelationClass</span><span class="o">.</span><span class="n">_RelationClasses</span><span class="p">()</span>
+            <span class="c1"># stronger then weaker relations</span>
+            <span class="k">for</span> <span class="n">Relation</span> <span class="ow">in</span> <span class="n">relation_classes</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">knownTruth</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">Relation</span><span class="o">.</span><span class="n">knownLeftSides</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="p">[])):</span>
+                    <span class="k">if</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">isSufficient</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                        <span class="k">yield</span> <span class="p">(</span><span class="n">knownTruth</span><span class="p">,</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span></div>
+                
+<div class="viewcode-block" id="TransitiveRelation.knownRelationsFromRight"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.knownRelationsFromRight">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">knownRelationsFromRight</span><span class="p">(</span><span class="n">RelationClass</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield (KnownTruth, left-hand-side) pairs for this</span>
+<span class="sd">        transitivie relationship (or equality) that involve the given expression on </span>
+<span class="sd">        the right side and are known to be true under the given assumptions.</span>
+<span class="sd">        Equality relations will always be yielded first.</span>
+<span class="sd">        Strong relations will be yielded next.</span>
+<span class="sd">        Weak relations will only be yielded if this is a weak</span>
+<span class="sd">        relation class.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">equiv_class</span> <span class="o">=</span> <span class="n">RelationClass</span><span class="o">.</span><span class="n">EquivalenceClass</span><span class="p">()</span>
+        <span class="c1"># equivalence relationships are strongest and should come first.</span>
+        <span class="n">equiv_right_relations</span> <span class="o">=</span> <span class="n">equiv_class</span><span class="o">.</span><span class="n">knownRelationsFromRight</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">knownTruth</span><span class="p">,</span> <span class="n">otherExpr</span><span class="p">)</span> <span class="ow">in</span> <span class="n">equiv_right_relations</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">expr</span> <span class="o">!=</span> <span class="n">otherExpr</span><span class="p">:</span> <span class="c1"># exclude reflexive equations -- they don&#39;t count</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">knownTruth</span><span class="p">,</span> <span class="n">otherExpr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">RelationClass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">equiv_class</span><span class="p">:</span>
+            <span class="n">relation_classes</span> <span class="o">=</span> <span class="n">RelationClass</span><span class="o">.</span><span class="n">_RelationClasses</span><span class="p">()</span>
+            <span class="c1"># stronger then weaker relations</span>
+            <span class="k">for</span> <span class="n">Relation</span> <span class="ow">in</span> <span class="n">relation_classes</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">knownTruth</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">Relation</span><span class="o">.</span><span class="n">knownRightSides</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="p">[])):</span>
+                    <span class="k">if</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">isSufficient</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                        <span class="k">yield</span> <span class="p">(</span><span class="n">knownTruth</span><span class="p">,</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="TransitiveRelation.applyTransitivity"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.applyTransitivity">[docs]</a>    <span class="k">def</span> <span class="nf">applyTransitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Apply transitivity to derive a new relation from &#39;self&#39; and &#39;other&#39;.</span>
+<span class="sd">        For example, from self:a&lt;b, other:b=c, derive a&lt;c.</span>
+<span class="sd">        This must be implemented for the different types of transitive</span>
+<span class="sd">        relations.  This default version handles the case where</span>
+<span class="sd">        &#39;other&#39; is an equality (as in the above example.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">equiv_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">EquivalenceClass</span><span class="p">()</span>
+        <span class="c1">#print &#39;apply transitivity&#39;, self, other</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">equiv_class</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">lhs</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+                <span class="n">subrule</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">subRightSideInto</span>
+                <span class="n">commonExpr</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">lhs</span>
+            <span class="k">elif</span> <span class="n">other</span><span class="o">.</span><span class="n">rhs</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+                <span class="n">subrule</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">subLeftSideInto</span>
+                <span class="n">commonExpr</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">rhs</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Equality does not involve either side of inequality!&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">commonExpr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">:</span>
+                <span class="c1"># replace the lhs of self with its counterpart from the &quot;other&quot; equality.</span>
+                <span class="k">return</span> <span class="n">subrule</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">innerExpr</span><span class="p">()</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">commonExpr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+                <span class="c1"># replace the rhs of self with its counterpart from the &quot;other&quot; equality.</span>
+                <span class="k">return</span> <span class="n">subrule</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">innerExpr</span><span class="p">()</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Must implement applyTransitivity appropriately for each kind of TransitiveRelation&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransitiveRelation.applyTransitivities"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.applyTransitivities">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">applyTransitivities</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Apply transitvity rules on a list of relations in the given chain</span>
+<span class="sd">        to proof the relation over the chain end points.</span>
+<span class="sd">        Each element of the chain must be a KnownTruth object that represents</span>
+<span class="sd">        a proven relation for which transitivity rules may be applied via</span>
+<span class="sd">        an &#39;applyTransitivity&#39; method (such as a KnownTruth for a proven</span>
+<span class="sd">        Equals statement).  The chain must &quot;connect&quot; in the sense that any</span>
+<span class="sd">        two neighbors in the chain can be joined vie applyTransitivity.</span>
+<span class="sd">        The transitivity rule will be applied left to right.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TransitivityException</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="s1">&#39;Empty transitivity relation train&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">)</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expecting chain elements to be KnownTruth objects&#39;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">second</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">new_relation</span> <span class="o">=</span> <span class="n">first</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="n">second</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_relation</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;applyTransitivity should return a KnownTruth, not </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">new_relation</span><span class="p">)</span>
+            <span class="n">chain</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">new_relation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">chain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># we are done</span></div>
+
+<div class="viewcode-block" id="TransitiveRelation.EquivalenceClass"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.EquivalenceClass">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">EquivalenceClass</span><span class="p">():</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span>
+        <span class="k">return</span> <span class="n">Equals</span></div>
+    
+<div class="viewcode-block" id="TransitiveRelation.WeakRelationClass"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.WeakRelationClass">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">WeakRelationClass</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The Expression class for the weak form of the relation (that include equality as a possibility) should be returned&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransitiveRelation.StrongRelationClass"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.StrongRelationClass">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">StrongRelationClass</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The Expression class for the strong form of the relation (that excludes equality as a possibility) should be returned&quot;</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_checkedWeakRelationClass</span><span class="p">(</span><span class="n">RelationClass</span><span class="p">):</span>
+        <span class="n">equiv_class</span> <span class="o">=</span> <span class="n">RelationClass</span><span class="o">.</span><span class="n">EquivalenceClass</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">RelationClass</span><span class="o">==</span><span class="n">equiv_class</span><span class="p">:</span> <span class="k">return</span> <span class="n">equiv_class</span> <span class="c1"># (&quot;equal to&quot; or &quot;equal to&quot; is just &quot;equal to&quot;)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Relation</span> <span class="o">=</span> <span class="n">RelationClass</span><span class="o">.</span><span class="n">WeakRelationClass</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The Expression class for the weak form </span><span class="si">%s</span><span class="s2"> (that include equality as a possibility) should be returned&quot;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">RelationClass</span><span class="p">))</span>
+        <span class="k">assert</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">Relation</span><span class="p">,</span> <span class="n">TransitiveRelation</span><span class="p">),</span> <span class="s2">&quot;WeakRelationClass() should return a sub-class of TransitiveRelation&quot;</span>
+        <span class="k">return</span> <span class="n">Relation</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_checkedStrongRelationClass</span><span class="p">(</span><span class="n">RelationClass</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Relation</span> <span class="o">=</span> <span class="n">RelationClass</span><span class="o">.</span><span class="n">StrongRelationClass</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The Expression class for the strong form </span><span class="si">%s</span><span class="s2"> (that excludes equality as a possibility) should be returned&quot;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">RelationClass</span><span class="p">))</span>            
+        <span class="k">assert</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">Relation</span><span class="p">,</span> <span class="n">TransitiveRelation</span><span class="p">),</span> <span class="s2">&quot;StrongRelationClass() should return a sub-class of TransitiveRelation&quot;</span>
+        <span class="k">return</span> <span class="n">Relation</span>
+
+<div class="viewcode-block" id="TransitiveRelation.SequenceClass"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.SequenceClass">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">SequenceClass</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The Expression class for the transitive relation sequence should be returned&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransitiveRelation.makeSequenceOrRelation"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.makeSequenceOrRelation">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">makeSequenceOrRelation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">relations</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">relations</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">relations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># only 1 relation</span>
+        <span class="n">Sequence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SequenceClass</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">TransitiveSequence</span><span class="p">),</span> <span class="s2">&quot;SequenceClass() should return a sub-class TransitiveSequence&quot;</span>
+        <span class="n">operators</span> <span class="o">=</span> <span class="p">[</span><span class="n">relation</span><span class="o">.</span><span class="n">operator</span> <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">relations</span><span class="p">]</span>
+        <span class="n">operands</span> <span class="o">=</span> <span class="p">[</span><span class="n">relation</span><span class="o">.</span><span class="n">lhs</span> <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">relations</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">relations</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rhs</span><span class="p">]</span>
+        <span class="n">alt_operands</span> <span class="o">=</span> <span class="p">[</span><span class="n">relations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lhs</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">relation</span><span class="o">.</span><span class="n">rhs</span> <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">relations</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">operands</span> <span class="o">!=</span> <span class="n">alt_operands</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The relations do not have the expected operands in common to form a sequence&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Sequence</span><span class="p">(</span><span class="n">operators</span><span class="p">,</span> <span class="n">operands</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="TransitiveRelation.sorted_items"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.sorted_items">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">sorted_items</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">reorder</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the given items in sorted order with respect to this </span>
+<span class="sd">        TransitivityRelation class (cls) under the given assumptions</span>
+<span class="sd">        using known transitive relations.</span>
+<span class="sd">        If reorder is False, raise a TransitivityException if the</span>
+<span class="sd">        items are not in sorted order as provided.</span>
+<span class="sd">        Weak relations (e.g., &lt;=) are only considered when calling</span>
+<span class="sd">        this method on a weak relation class (otherwise, only</span>
+<span class="sd">        equality and strong relations are used in the sorting).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">isLiteralInt</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">isLiteralInt</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">):</span>
+            <span class="c1"># All the items are integers.  Use efficient n log(n) sorting to</span>
+            <span class="c1"># get them in the proper order and then use fixedTransitivitySort</span>
+            <span class="c1"># to efficiently prove this order.</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">item</span> <span class="p">:</span> <span class="n">item</span><span class="o">.</span><span class="n">asInt</span><span class="p">())</span>
+            <span class="n">reorder</span> <span class="o">=</span> <span class="kc">False</span> 
+        <span class="k">if</span> <span class="n">reorder</span><span class="p">:</span>
+            <span class="n">sorter</span> <span class="o">=</span> <span class="n">TransitivitySorter</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">sorter</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fixedTransitivitySort</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">operands</span></div>
+    
+<div class="viewcode-block" id="TransitiveRelation.sort"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.sort">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">sort</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">reorder</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the proven Sequence, a known truth for an expression </span>
+<span class="sd">        of type cls.SequenceClass(), representing the sorted sequence</span>
+<span class="sd">        according to the cls.sorted_items method.</span>
+<span class="sd">        Weak relations (e.g., &lt;=) are only considered when calling</span>
+<span class="sd">        this method on a weak relation class (otherwise, only</span>
+<span class="sd">        equality and strong relations are used in the sorting).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">automation</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reorder</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">sorted_items</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">reorder</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+            <span class="c1">#print(&quot;sorted&quot;, items)</span>
+            <span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Direct relations already proven.</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fixedTransitivitySort</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> 
+                                          <span class="n">automation</span><span class="o">=</span><span class="n">automation</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="TransitiveRelation.mergesorted_items"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.mergesorted_items">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">mergesorted_items</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">item_iterators</span><span class="p">,</span> 
+                          <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span>
+                          <span class="n">skip_exact_reps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                          <span class="n">skip_equiv_reps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                          <span class="n">requirements</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given a list of Expression item iterators, with each generator </span>
+<span class="sd">        yielding items in sorted order, yield every item (from all the</span>
+<span class="sd">        generators) in sorted order.  If skip_exact_reps is True,</span>
+<span class="sd">        only yield the first of an &#39;item&#39; that is repeated</span>
+<span class="sd">        exactly (equal Expressions).  If skip_equiv_reps is True,</span>
+<span class="sd">        only yield the first of an &#39;item&#39; that is repeated via</span>
+<span class="sd">        a known equivalence.  Passes back requirements (if provided)</span>
+<span class="sd">        that are the specific merger relations.</span>
+<span class="sd">        Weak relations (e.g., &lt;=) are only considered when calling</span>
+<span class="sd">        this method on a weak relation class (otherwise, only</span>
+<span class="sd">        equality and strong relations are used in the sorting).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="c1"># item_iterators may be actual iterators or something that</span>
+        <span class="c1"># can produce an iterator. Convert them all to actual iterators.</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">iterator</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">item_iterators</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Try to convert to an actual iterator.</span>
+                <span class="n">item_iterators</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">iterator</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span> <span class="c1"># Assume it is already an actual iterator.</span>
+                
+        <span class="c1"># Start with the first item from each generator and track</span>
+        <span class="c1"># the generator(s) for each item so we no where to get the</span>
+        <span class="c1"># item(s) to be added after yielding the &quot;next&quot; sorted item.</span>
+        <span class="n">first_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">front_item_to_iterators</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">iterator</span> <span class="ow">in</span> <span class="n">item_iterators</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">)</span>
+                <span class="n">first_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">front_item_to_iterators</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iterator</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="k">pass</span>
+        
+        <span class="k">if</span> <span class="n">requirements</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">requirements</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Create a TransitivitySorter.</span>
+        <span class="n">sorter</span> <span class="o">=</span> <span class="n">TransitivitySorter</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">first_items</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span>
+                                    <span class="n">skip_exact_reps</span><span class="o">=</span><span class="n">skip_exact_reps</span><span class="p">,</span>
+                                    <span class="n">skip_equiv_reps</span><span class="o">=</span><span class="n">skip_equiv_reps</span><span class="p">)</span>
+        <span class="c1"># Yield items in sorted order from the TransitivitySorter,</span>
+        <span class="c1"># add to the TransitivitySorter as new items become &quot;exposed&quot;,</span>
+        <span class="c1"># and keep front_item_to_iterators updated.</span>
+        <span class="n">prev_item</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">prev_iters</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">next_item</span> <span class="ow">in</span> <span class="n">sorter</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">next_item</span> <span class="c1"># Yield the next item.</span>
+            <span class="k">if</span> <span class="n">next_item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">front_item_to_iterators</span><span class="p">:</span>
+                <span class="n">prev_item</span> <span class="o">=</span> <span class="n">next_item</span>
+                <span class="n">prev_iters</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">continue</span>
+            <span class="c1"># Add newly &quot;exposed&quot; items and update </span>
+            <span class="c1"># front_item_to_iterators.</span>
+            <span class="n">iterators</span> <span class="o">=</span> <span class="n">front_item_to_iterators</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">next_item</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">prev_item</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">prev_iters</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">iterators</span><span class="p">):</span>
+                <span class="c1"># next_item and prev_item are in different iterators,</span>
+                <span class="c1"># so their relationship is important for establishing</span>
+                <span class="c1"># the sorted order of the merger. </span>
+                <span class="n">requirement</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_transitivitySearch</span><span class="p">(</span><span class="n">prev_item</span><span class="p">,</span> <span class="n">next_item</span><span class="p">,</span> 
+                                                      <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> 
+                                                      <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">requirements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">requirement</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">iterator</span> <span class="ow">in</span> <span class="n">iterators</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">item_to_add</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">)</span>
+                    <span class="c1"># Add &quot;exposed&quot; item.</span>
+                    <span class="n">sorter</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item_to_add</span><span class="p">)</span>
+                    <span class="c1"># Update front_item_to_iterators.</span>
+                    <span class="n">front_item_to_iterators</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">item_to_add</span><span class="p">,</span> 
+                                                       <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iterator</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                    <span class="k">pass</span> <span class="c1"># Nothing more from this generator.</span>
+            <span class="n">prev_item</span> <span class="o">=</span> <span class="n">next_item</span>
+            <span class="n">prev_iters</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">iterators</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="TransitiveRelation.mergesort"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.mergesort">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">mergesort</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">item_iterators</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span>
+                  <span class="n">skip_exact_reps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">skip_equiv_reps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">requirements</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the proven Sequence, a known truth for an expression </span>
+<span class="sd">        of type cls.SequenceClass(), representing the sorted sequence</span>
+<span class="sd">        according to the cls.mergesorted_items method.</span>
+<span class="sd">        Weak relations (e.g., &lt;=) are only considered when calling</span>
+<span class="sd">        this method on a weak relation class (otherwise, only</span>
+<span class="sd">        equality and strong relations are used in the sorting).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">mergesorted_items</span><span class="p">(</span><span class="n">item_iterators</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span>
+                                      <span class="n">skip_exact_reps</span><span class="p">,</span> <span class="n">skip_equiv_reps</span><span class="p">,</span>
+                                      <span class="n">requirements</span><span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+        <span class="c1">#print(&quot;merge sorted&quot;, items)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fixedTransitivitySort</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span>
+                                           <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>        </div>
+    
+<div class="viewcode-block" id="TransitiveRelation.insertion_point"><a class="viewcode-back" href="../../../api/proveit.TransitiveRelation.html#proveit.TransitiveRelation.insertion_point">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">insertion_point</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sorted_items</span><span class="p">,</span> <span class="n">item_to_insert</span><span class="p">,</span> 
+                        <span class="n">equiv_group_pos</span><span class="o">=</span><span class="s1">&#39;any&#39;</span><span class="p">,</span>
+                        <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">requirements</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the position to insert the &quot;item to insert&quot; into the </span>
+<span class="sd">        sorted items to maintain the sorted order (according to</span>
+<span class="sd">        the TransitivityRelation class cls).  The sorted_items should</span>
+<span class="sd">        be provably sorted, with relations between consecutive items</span>
+<span class="sd">        that are KnownTruths.  </span>
+<span class="sd">        </span>
+<span class="sd">        If equiv_group_pos is &#39;first&#39;, the insertion point will be one</span>
+<span class="sd">        that would place he &quot;item to insert&quot; prior to any equivalent </span>
+<span class="sd">        items; if equiv_group_pos is &#39;last&#39;, the insertion point will be</span>
+<span class="sd">        one that would place the &quot;item to insert&quot; after any equivalent</span>
+<span class="sd">        items.  If it is &#39;first&amp;last&#39;, both insertion points are</span>
+<span class="sd">        returned as a tuple pair (first, last).</span>
+<span class="sd">        The default of equiv_group_pos=&#39;any&#39; will result in</span>
+<span class="sd">        an arbitrary position relative to equivalent items.</span>
+<span class="sd">        &#39;&#39;&#39;</span> 
+        <span class="n">equiv_class</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">EquivalenceClass</span><span class="p">()</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">item_to_insert</span> <span class="ow">in</span> <span class="n">sorted_items</span><span class="p">:</span>
+            <span class="n">point</span> <span class="o">=</span> <span class="n">sorted_items</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">item_to_insert</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">item_iterators</span> <span class="o">=</span> <span class="p">[</span><span class="n">sorted_items</span><span class="p">,</span> <span class="p">[</span><span class="n">item_to_insert</span><span class="p">]]</span>
+            <span class="c1"># Don&#39;t skip equivalent or exact representations because</span>
+            <span class="c1"># we don&#39;t want the insertion point index to be thrown</span>
+            <span class="c1"># off and we need to make sure the &#39;item_to_insert&#39; is </span>
+            <span class="c1"># included:</span>
+            <span class="n">skip_exact_reps</span> <span class="o">=</span> <span class="n">skip_equiv_reps</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="c1"># And don&#39;t skip exact representations</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">mergesorted_items</span><span class="p">(</span><span class="n">item_iterators</span><span class="p">,</span>
+                                                            <span class="n">assumptions</span><span class="p">,</span>
+                                                            <span class="n">skip_exact_reps</span><span class="p">,</span>
+                                                            <span class="n">skip_equiv_reps</span><span class="p">,</span>
+                                                            <span class="n">requirements</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">item</span><span class="o">==</span><span class="n">item_to_insert</span><span class="p">:</span>
+                    <span class="n">point</span> <span class="o">=</span> <span class="n">k</span>
+        
+        <span class="c1"># If equiv_group_pos is &#39;first&#39; or &#39;last&#39;, we need to make sure</span>
+        <span class="c1"># we get the insertion point in the right spot with respect to</span>
+        <span class="c1"># equivalent items.</span>
+        
+        <span class="n">orig_point</span> <span class="o">=</span> <span class="n">point</span>
+        <span class="n">equiv_item</span> <span class="o">=</span> <span class="n">item_to_insert</span>
+        <span class="k">if</span> <span class="n">equiv_group_pos</span><span class="o">==</span><span class="s1">&#39;first&#39;</span> <span class="ow">or</span> <span class="n">equiv_group_pos</span><span class="o">==</span><span class="s1">&#39;first&amp;last&#39;</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">point</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">prev_point</span> <span class="o">=</span> <span class="n">point</span><span class="o">-</span><span class="mi">1</span>
+                <span class="k">if</span> <span class="n">item_to_insert</span><span class="o">==</span><span class="n">sorted_items</span><span class="p">[</span><span class="n">prev_point</span><span class="p">]:</span>
+                    <span class="n">point</span> <span class="o">-=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">item1</span><span class="p">,</span> <span class="n">item2</span> <span class="o">=</span> <span class="n">sorted_items</span><span class="p">[</span><span class="n">prev_point</span><span class="p">],</span> <span class="n">equiv_item</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">relation</span> <span class="o">=</span> \
+                        <span class="bp">cls</span><span class="o">.</span><span class="n">_transitivitySearch</span><span class="p">(</span><span class="n">item1</span><span class="p">,</span> <span class="n">item2</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span>
+                                                <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Unknown </span><span class="si">%s</span><span class="s2"> relationship between </span><span class="si">%s</span><span class="s2"> and </span><span class="si">%s</span><span class="s2">&quot;</span>
+                            <span class="o">%</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">item1</span><span class="p">,</span> <span class="n">item2</span><span class="p">))</span>
+                    <span class="k">raise</span> <span class="n">TransitivityException</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relation</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">equiv_class</span><span class="p">):</span>
+                    <span class="n">equiv_item</span> <span class="o">=</span> <span class="n">sorted_items</span><span class="p">[</span><span class="n">prev_point</span><span class="p">]</span>
+                    <span class="n">point</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">break</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="n">point</span>
+                
+        <span class="k">if</span> <span class="n">equiv_group_pos</span><span class="o">==</span><span class="s1">&#39;last&#39;</span> <span class="ow">or</span> <span class="n">equiv_group_pos</span><span class="o">==</span><span class="s1">&#39;first&amp;last&#39;</span><span class="p">:</span>
+            <span class="n">point</span> <span class="o">=</span> <span class="n">orig_point</span>
+            <span class="k">while</span> <span class="n">point</span><span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_items</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">item_to_insert</span><span class="o">==</span><span class="n">sorted_items</span><span class="p">[</span><span class="n">point</span><span class="p">]:</span>
+                    <span class="n">point</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">item1</span><span class="p">,</span> <span class="n">item2</span> <span class="o">=</span> <span class="n">equiv_item</span><span class="p">,</span> <span class="n">sorted_items</span><span class="p">[</span><span class="n">point</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">relation</span> <span class="o">=</span> \
+                        <span class="bp">cls</span><span class="o">.</span><span class="n">_transitivitySearch</span><span class="p">(</span><span class="n">item1</span><span class="p">,</span> <span class="n">item2</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span>
+                                                <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Unknown </span><span class="si">%s</span><span class="s2"> relationship between </span><span class="si">%s</span><span class="s2"> and </span><span class="si">%s</span><span class="s2">&quot;</span>
+                            <span class="o">%</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">item1</span><span class="p">,</span> <span class="n">item2</span><span class="p">))</span>
+                    <span class="k">raise</span> <span class="n">TransitivityException</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relation</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">equiv_class</span><span class="p">):</span>
+                    <span class="n">equiv_item</span> <span class="o">=</span> <span class="n">sorted_items</span><span class="p">[</span><span class="n">point</span><span class="p">]</span>
+                    <span class="n">point</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">break</span>
+            <span class="n">last</span> <span class="o">=</span> <span class="n">point</span>
+        
+        <span class="k">if</span> <span class="n">equiv_group_pos</span><span class="o">==</span><span class="s1">&#39;first&amp;last&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">last</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">point</span></div>
+                
+    
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_transitivitySearch</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">leftItem</span><span class="p">,</span> <span class="n">rightItem</span><span class="p">,</span> 
+                            <span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Performs a breadth-first, bidirectional (meet in the middle) search attempting</span>
+<span class="sd">        to prove a relation between leftItem and rightItem according to the RelationClass</span>
+<span class="sd">        by applying transitivity derivations.</span>
+<span class="sd">        If successful, the approprate KnownTruth relating these items (in weak or strong</span>
+<span class="sd">        form as can be determined) is returned; otherwise a TransitivityException is raised.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">equiv_class</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">EquivalenceClass</span><span class="p">()</span>
+        
+        <span class="c1">#  Check if the relation is already known directly:</span>
+        <span class="k">if</span> <span class="n">leftItem</span><span class="o">==</span><span class="n">rightItem</span><span class="p">:</span>
+            <span class="c1"># Items are the exact same, so they are equal.</span>
+            <span class="k">return</span> <span class="n">equiv_class</span><span class="p">(</span><span class="n">leftItem</span><span class="p">,</span> <span class="n">rightItem</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Try the strong relation first.</span>
+            <span class="n">StrongClass</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_checkedStrongRelationClass</span><span class="p">()</span>
+            <span class="n">relation</span> <span class="o">=</span> <span class="n">StrongClass</span><span class="p">(</span><span class="n">leftItem</span><span class="p">,</span> <span class="n">rightItem</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">relation</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">ProofFailure</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">):</span>
+            <span class="c1"># Try equality.</span>
+            <span class="k">try</span><span class="p">:</span>                    
+                <span class="c1"># Maybe the equality is known.</span>
+                <span class="n">relation</span> <span class="o">=</span> <span class="n">equiv_class</span><span class="p">(</span><span class="n">leftItem</span><span class="p">,</span> <span class="n">rightItem</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">relation</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span>
+                                        <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="c1"># Try the weak relation if cls is weak.</span>
+            <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_checkedWeakRelationClass</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Maybe the weak relation is known.</span>
+                    <span class="n">WeakClass</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_checkedWeakRelationClass</span><span class="p">()</span>
+                    <span class="n">relation</span> <span class="o">=</span> <span class="n">WeakClass</span><span class="p">(</span><span class="n">leftItem</span><span class="p">,</span> <span class="n">rightItem</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">relation</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span>
+                                            <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">except</span> <span class="p">(</span><span class="n">ProofFailure</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">):</span>
+                    <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">automation</span><span class="p">:</span>
+            <span class="n">relation</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">leftItem</span><span class="p">,</span> <span class="n">rightItem</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;No proof found via applying transitivity amongst&#39;</span>
+                   <span class="s1">&#39; known proven relations.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TransitivityException</span><span class="p">(</span><span class="n">relation</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+        
+        <span class="n">sorter</span> <span class="o">=</span> <span class="n">TransitivitySorter</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="p">[</span><span class="n">leftItem</span><span class="p">,</span> <span class="n">rightItem</span><span class="p">],</span> 
+                                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span>
+                                    <span class="n">skip_exact_reps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                                    <span class="n">skip_equiv_reps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                    <span class="n">presorted_pair</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="nb">list</span><span class="p">(</span><span class="n">sorter</span><span class="p">)</span> <span class="c1"># should prove desired relation</span>
+        <span class="c1"># Return the proven relation.</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_transitivitySearch</span><span class="p">(</span><span class="n">leftItem</span><span class="p">,</span> <span class="n">rightItem</span><span class="p">,</span>
+                                        <span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_fixedTransitivitySort</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> 
+                               <span class="n">automation</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check that the given items are in sorted order, returning the </span>
+<span class="sd">        sorted sequence if they are or raising a TransitivityException</span>
+<span class="sd">        if they are not.  If automation is False, don&#39;t generate</span>
+<span class="sd">        new relations through transitivities; assume that we already</span>
+<span class="sd">        have the necessary direct relationships proven.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">items_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="c1"># in case the items are a non-indexable iterable</span>
+        <span class="n">relations</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item1</span><span class="p">,</span> <span class="n">item2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">items_list</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">items_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">relations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_transitivitySearch</span><span class="p">(</span><span class="n">item1</span><span class="p">,</span> <span class="n">item2</span><span class="p">,</span> 
+                                                     <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> 
+                                                     <span class="n">automation</span><span class="o">=</span><span class="n">automation</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">relations</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">relations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">makeSequenceOrRelation</span><span class="p">(</span><span class="o">*</span><span class="n">relations</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransitiveSequence"><a class="viewcode-back" href="../../../api/proveit.TransitiveSequence.html#proveit.TransitiveSequence">[docs]</a><span class="k">class</span> <span class="nc">TransitiveSequence</span><span class="p">(</span><span class="n">OperationSequence</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Base clase for Operation Expressions that represent a sequence of transitive relationships.</span>
+<span class="sd">    For example, w &lt; x = y &lt;= z.  As shown in this example, the relations may include weak, </span>
+<span class="sd">    strong, and/or equality.  It may not mix different types of relations.  The type of relation</span>
+<span class="sd">    is dictated by the RelationClass() class method defined in the derived class.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operators</span><span class="p">,</span> <span class="n">operands</span><span class="p">,</span> <span class="n">doMinSizeCheck</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">doMinSizeCheck</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">operators</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Do not use a TransitiveSequence for fewer than two relationship (it is unnecessary)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">operators</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">operands</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;There must be one more operand than operator in a TransitiveSequence&quot;</span><span class="p">)</span>
+        <span class="n">relation_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">RelationClass</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">relation_class</span><span class="p">,</span> <span class="n">TransitiveRelation</span><span class="p">),</span> <span class="s2">&quot;The Relation class of a TransitiveSequence should be a TransitiveRelation&quot;</span>
+        <span class="n">equiv_class</span> <span class="o">=</span> <span class="n">relation_class</span><span class="o">.</span><span class="n">EquivalenceClass</span><span class="p">()</span>
+        <span class="n">relation_operators</span> <span class="o">=</span> <span class="p">(</span><span class="n">relation_class</span><span class="o">.</span><span class="n">WeakRelationClass</span><span class="p">()</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> 
+                              <span class="n">relation_class</span><span class="o">.</span><span class="n">StrongRelationClass</span><span class="p">()</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> 
+                              <span class="n">equiv_class</span><span class="o">.</span><span class="n">_operator_</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">operator</span> <span class="ow">in</span> <span class="n">operators</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">operator</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">relation_operators</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Operators of TransitiveSequence should be </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, or </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">relation_operator</span><span class="p">)</span> <span class="k">for</span> <span class="n">relation_operator</span> <span class="ow">in</span> <span class="n">relation_operators</span><span class="p">))</span>
+        <span class="n">Operation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operators</span><span class="p">,</span> <span class="n">operands</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="TransitiveSequence.RelationClass"><a class="viewcode-back" href="../../../api/proveit.TransitiveSequence.html#proveit.TransitiveSequence.RelationClass">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">RelationClass</span><span class="p">(</span><span class="n">SequenceClass</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Must identify the Relation class for the sequence which should be a TransitiveRelation class&quot;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="TransitiveSequence.insert"><a class="viewcode-back" href="../../../api/proveit.TransitiveSequence.html#proveit.TransitiveSequence.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">Relation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">RelationClass</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Relation</span><span class="o">.</span><span class="n">_transitivityInsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">operators</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">makeSequenceOrRelation</span><span class="p">(</span><span class="n">TransitiveSequenceClass</span><span class="p">,</span> <span class="n">operators</span><span class="p">,</span> <span class="n">operands</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a TransitiveSequence of some kind with the given operators or operands,</span>
+<span class="sd">    or create an appropriate degenerate Expression when there are fewer than two operators.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">operators</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">operands</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expecting one more operand than operators&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">operators</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">operators</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Operation</span><span class="o">.</span><span class="n">operationClassOfOperator</span><span class="p">[</span><span class="n">operators</span><span class="p">[</span><span class="mi">0</span><span class="p">]](</span><span class="o">*</span><span class="n">operands</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">TransitiveSequenceClass</span><span class="p">(</span><span class="n">operators</span><span class="p">,</span> <span class="n">operands</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TransitivityException"><a class="viewcode-back" href="../../../api/proveit.TransitivityException.html#proveit.TransitivityException">[docs]</a><span class="k">class</span> <span class="nc">TransitivityException</span><span class="p">(</span><span class="n">ProofFailure</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="n">ProofFailure</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div>
+ 
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.varRange.html">varRange</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

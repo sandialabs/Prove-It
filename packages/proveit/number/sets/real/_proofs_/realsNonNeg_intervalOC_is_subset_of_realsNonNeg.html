@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.sets.real.realsNonNeg_intervalOC_is_subset_of_realsNonNeg theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.sets.real.realsNonNeg_intervalOC_is_subset_of_realsNonNeg-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">number</a>.<a class="ProveItLink" href="../../_context_.html">sets</a>.<a class="ProveItLink" href="../_context_.html">real</a>.<a class="ProveItLink" href="../_theorems_.html#realsNonNeg_intervalOC_is_subset_of_realsNonNeg">realsNonNeg_intervalOC_is_subset_of_realsNonNeg</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.sets.real.realsNonNeg_intervalOC_is_subset_of_realsNonNeg-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> realsNonNeg_intervalOC_is_subset_of_realsNonNeg presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of realsNonNeg_intervalOC_is_subset_of_realsNonNeg
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="realsNonNeg_intervalOC_is_subset_of_realsNonNeg">realsNonNeg_intervalOC_is_subset_of_realsNonNeg:</strong> <a class="ProveItLink" href="../__pv_it/ed84ab6d6b69f64a7219b425570b1b952f57a1f20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPsAAAAcBAMAAABVHdSvAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABBVJREFU
+SMfFVl2IG1UU/jKT38lMssg+FBdhbP0ppULYxWXBdo0U9UkbEdc+FLLUVkFRSrGu1iqxFE13Eac+
+VJFihy6UskYyWLRWBAeq1MbdEkV0KVVCoRb/98EHyYN4ztyZeCdJ7WZ3YW/IncmZm/Od+53vnDvA
+qoyNG1cH9z6LZ8NNj6+Ux1i+h8Wp4QLNiTyaUFYGfqyn1akRwq8WMIDoyhDwS2/LtS/zKFp4CZhb
+CXTV5D3Vw0bj6rUzol2wizb2UApsoMGWH5YBf4yc4KTs/pXdgN4G//2aN/5YI2JUfufd30A3OeCr
+JfAXGmd5+lm2ZHKd8GicwLZ5jvT4lJf7v4iyBeBtpq60DPgB5jonW7JOF/jSUSRTJLbKwUD5wIsU
+KkWkO0tHT7GfhCWbttr/wc9PTEzs9eFVq4Hpgx7/Oa/uRyjw2szMW8vYvNFHU9jBObTg3z0v7V61
+SnjE73peym6m79/l8v7lCJ+1u45p2DR4ozD9tPauAP4Fmfx4e6UzTbuAQx1OuTWhcsnu0uM8cc/V
+gt9J1s3r9L3HyiwI5f9jVy0Brzoy/OnRNn9FgtkCrdEB8h3/b1LzJPlg6LHxFGParUrLjAsNaTdB
+FQpON5E1BXxCkt7hiZfJ6cdlGkEUx/K8RJF7xun1j13mo4FsfeC8Qvdlnd7z6ii1mOjTQIQ+/kjw
+037aaBMJM0hH1RXwR2Tlb0m2k1mlRXq9FaP26VBd0VFjNw9vSPXB02yGmXjv7GaYrn6c6R+0DyNR
+kIqc4SMlrmbfstUR8CdlePXe9vrm3acarTNj/swMCP4isxGbCuCzVFXG1Ds2wRvvs2GbI8EnffKr
+Lj7zy76Ou+1O8o9i8ps2+CLX66GdNE3fdgVR3gjDu8Q0UbwAT8rFtU+SQGgQfIUuH9WRRSQgMu5L
+r+rgmbRX/tk86UDA66YMP6YWOpWPU9Sitb2xJjIQ8EM5ITBferfb68TJYLrqkFClJD2lTzTepGk8
+p6NKC+P1ZC4ovF/lpqs7u8LwX3vRUohqLrYb05479fFngTulwjuAHzVPfebwE3l4O5AKL8pd734y
+7bj1yC1I7KO7wblW2zmx024dOVdQ/jPcXke8UqIVEUcZx6NUE6aiv/ltOMZ+DMeeL5cPwDx/R5dj
+tD/UdD/xr0HT3f6a33S7jcutErCSF+24ID+93dZmZ2c/D5416VQZF+R/WEOFHoWC2BQ6ctw2+P99
+8WgGdxGr+AD0gsh9zZVOlEnsM0r4QsDrlU4nD/EU9E3N7AHeaPXg6I4PNgNT3HYuuNOjUo8dwNgs
+CYuSlt7/mzbU2SDjjlTgBnqAT7QVgkK5b1+TFpf1lPtrUNjo8rKlXF0E/KVFnGhnrrvi1FLfFBbz
+klO/7op0fmnwqo3VHv8CjrcVf1CQPhoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/ed84ab6d6b69f64a7219b425570b1b952f57a1f20/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.core_expr_types.tuples.shift_equivalence theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.core_expr_types.tuples.shift_equivalence-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">core_expr_types</a>.<a class="ProveItLink" href="../_context_.html">tuples</a>.<a class="ProveItLink" href="../_theorems_.html#shift_equivalence">shift_equivalence</a> theorem<a class="anchor-link" href="#Proof-of-proveit.core_expr_types.tuples.shift_equivalence-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> shift_equivalence presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of shift_equivalence
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="shift_equivalence">shift_equivalence:</strong> <a class="ProveItLink" href="../__pv_it/e61ff455547e23493c6cb08f550a783528488bda0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/e61ff455547e23493c6cb08f550a783528488bda0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorem skolemElim of type Forall</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorem-skolemElim-of-type-Forall">Theorem <a class="ProveItLink" href="../../_theorems_.html#skolemElim">skolemElim</a> of type <a class="ProveItLink" href="../../../../../../../../doc/html/api/proveit.logic.Forall.html">Forall</a><a class="anchor-link" href="#Theorem-skolemElim-of-type-Forall">&#182;</a></h1><h1 id="from-context-proveit.number.sets.real.root2_proof_temporary_context">from context <a class="ProveItLink" href="../../_context_.html">proveit.number.sets.real.root2_proof_temporary_context</a><a class="anchor-link" href="#from-context-proveit.number.sets.real.root2_proof_temporary_context">&#182;</a></h1><p><strong><em> see <a class="ProveItLink" href="dependencies.html">dependencies</a> </em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when only building an expression:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Makes files smaller.</span>
+<span class="c1"># import the special expression</span>
+<span class="kn">from</span> <span class="nn">proveit.number.sets.real.root2_proof_temporary_context._theorems_</span> <span class="k">import</span> <span class="n">skolemElim</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># check that the built expression is the same as the stored expression</span>
+<span class="o">%</span><span class="k">check_expr</span> skolemElim
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Passed sanity check: built &#39;skolemElim&#39; is the same as the stored Expression.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Show the LaTeX representation of the expression for convenience if you need it.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">skolemElim</span><span class="o">.</span><span class="n">latex</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>\vdash \forall_{P, Q, \alpha}~\left(\left(\left[\exists_{y~|~Q(y)}~P(y)\right] \land \left[\forall_{x~|~P(x), Q(x)}~\alpha\right]\right) \Rightarrow \alpha\right)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># display the expression information</span>
+<span class="n">skolemElim</span><span class="o">.</span><span class="n">exprInfo</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>
+<tr><td>0</td><td>Operation</td><td>operator:&nbsp;12<br>operand:&nbsp;1<br></td><td><a class="ProveItLink" href="expr.html"><img src="expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>1</td><td>Lambda</td><td>parameters:&nbsp;2<br>body:&nbsp;3<br></td><td><a class="ProveItLink" href="../098c557bb37ccca306187e52e7f7aeaeb19f94c80/expr.html"><img src="../098c557bb37ccca306187e52e7f7aeaeb19f94c80/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>2</td><td>ExprTuple</td><td>25, 26, 18</td><td><a class="ProveItLink" href="../4f255e94948c6b264d86b654f8b70e32dd47c20e0/expr.html"><img src="../4f255e94948c6b264d86b654f8b70e32dd47c20e0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>3</td><td>Operation</td><td>operator:&nbsp;4<br>operands:&nbsp;5<br></td><td><a class="ProveItLink" href="../96a8037ece0a0a38a5f4b20d91b61ba9c3578be20/expr.html"><img src="../96a8037ece0a0a38a5f4b20d91b61ba9c3578be20/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>4</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../../../logic/boolean/implication/__pv_it/1e62b0c0a90306fc48b17f0dc8d4dc4df8bb234f0/expr.html"><img src="../../../../../../logic/boolean/implication/__pv_it/1e62b0c0a90306fc48b17f0dc8d4dc4df8bb234f0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>5</td><td>ExprTuple</td><td>6, 18</td><td><a class="ProveItLink" href="../381889decb76437561bff4d475c1947267f1ccaf0/expr.html"><img src="../381889decb76437561bff4d475c1947267f1ccaf0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>6</td><td>Operation</td><td>operator:&nbsp;21<br>operands:&nbsp;7<br></td><td><a class="ProveItLink" href="../788a5f012675ee940f340b42064ebc8329fc3c810/expr.html"><img src="../788a5f012675ee940f340b42064ebc8329fc3c810/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>7</td><td>ExprTuple</td><td>8, 9</td><td><a class="ProveItLink" href="../0f49b9ab142dd3d818cdef767ba56f0244cb00380/expr.html"><img src="../0f49b9ab142dd3d818cdef767ba56f0244cb00380/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>8</td><td>Operation</td><td>operator:&nbsp;10<br>operand:&nbsp;11<br></td><td><a class="ProveItLink" href="../dc5e3e4bf852a75de64fd4e3b108d517848234cf0/expr.html"><img src="../dc5e3e4bf852a75de64fd4e3b108d517848234cf0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>9</td><td>Operation</td><td>operator:&nbsp;12<br>operand:&nbsp;13<br></td><td><a class="ProveItLink" href="../67c14f8ddb0565a0a688448b5eed94e6a23de4490/expr.html"><img src="../67c14f8ddb0565a0a688448b5eed94e6a23de4490/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>10</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../../../logic/boolean/quantification/existential/__pv_it/a8168c029d342fc3061f84d6d950c32772790ad90/expr.html"><img src="../../../../../../logic/boolean/quantification/existential/__pv_it/a8168c029d342fc3061f84d6d950c32772790ad90/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>11</td><td>Lambda</td><td>parameter:&nbsp;20<br>body:&nbsp;14<br></td><td><a class="ProveItLink" href="../8c4cb73424675cec184655bd2aad4f6df5f1f1db0/expr.html"><img src="../8c4cb73424675cec184655bd2aad4f6df5f1f1db0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>12</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../../../logic/boolean/quantification/universal/__pv_it/fd9c772d6675566ed52a6897806f45eb08a4ea910/expr.html"><img src="../../../../../../logic/boolean/quantification/universal/__pv_it/fd9c772d6675566ed52a6897806f45eb08a4ea910/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>13</td><td>Lambda</td><td>parameter:&nbsp;27<br>body:&nbsp;15<br></td><td><a class="ProveItLink" href="../afafc903c7754042f810cdef3411787d24fb45dd0/expr.html"><img src="../afafc903c7754042f810cdef3411787d24fb45dd0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>14</td><td>Conditional</td><td>value:&nbsp;16<br>condition:&nbsp;17<br></td><td><a class="ProveItLink" href="../8ad8229fa6e368fd00fbc708a5a26574716190510/expr.html"><img src="../8ad8229fa6e368fd00fbc708a5a26574716190510/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>15</td><td>Conditional</td><td>value:&nbsp;18<br>condition:&nbsp;19<br></td><td><a class="ProveItLink" href="../3e99878ea9321090e3945acf4fc2961ada3d88320/expr.html"><img src="../3e99878ea9321090e3945acf4fc2961ada3d88320/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>16</td><td>Operation</td><td>operator:&nbsp;25<br>operand:&nbsp;20<br></td><td><a class="ProveItLink" href="../../../../../../__pv_it/48906551f53658ac26c160560a233587087698750/expr.html"><img src="../../../../../../__pv_it/48906551f53658ac26c160560a233587087698750/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>17</td><td>Operation</td><td>operator:&nbsp;26<br>operand:&nbsp;20<br></td><td><a class="ProveItLink" href="../../../../../../__pv_it/b12459e03311082eca9a1d24d3c933c0eba785f90/expr.html"><img src="../../../../../../__pv_it/b12459e03311082eca9a1d24d3c933c0eba785f90/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>18</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../../../../../__pv_it/186b4b5c9925c86cfc381a01181526b85fd087620/expr.html"><img src="../../../../../../__pv_it/186b4b5c9925c86cfc381a01181526b85fd087620/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>19</td><td>Operation</td><td>operator:&nbsp;21<br>operands:&nbsp;22<br></td><td><a class="ProveItLink" href="../05f6770c6e111f893f02b9962fd56d2d1ddf01e20/expr.html"><img src="../05f6770c6e111f893f02b9962fd56d2d1ddf01e20/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>20</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../../../../../__pv_it/c6e291955561f22a0e6708fd793ea93f1c7dbb5d0/expr.html"><img src="../../../../../../__pv_it/c6e291955561f22a0e6708fd793ea93f1c7dbb5d0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>21</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../../../logic/boolean/conjunction/__pv_it/f41cc6b553210927c09f19a8a39cdf860a5585930/expr.html"><img src="../../../../../../logic/boolean/conjunction/__pv_it/f41cc6b553210927c09f19a8a39cdf860a5585930/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>22</td><td>ExprTuple</td><td>23, 24</td><td><a class="ProveItLink" href="../bb6173e0bbb3b3570cc60e352d8a952a2aa94d240/expr.html"><img src="../bb6173e0bbb3b3570cc60e352d8a952a2aa94d240/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>23</td><td>Operation</td><td>operator:&nbsp;25<br>operand:&nbsp;27<br></td><td><a class="ProveItLink" href="../../../../../../__pv_it/2548a99d921e002e203801a4828f7377ced085bf0/expr.html"><img src="../../../../../../__pv_it/2548a99d921e002e203801a4828f7377ced085bf0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>24</td><td>Operation</td><td>operator:&nbsp;26<br>operand:&nbsp;27<br></td><td><a class="ProveItLink" href="../../../../../../__pv_it/a24cf46eabc9f0f99096d4e0a28e00277ee25c6c0/expr.html"><img src="../../../../../../__pv_it/a24cf46eabc9f0f99096d4e0a28e00277ee25c6c0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>25</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../../../../../__pv_it/390c91a44e60b16c95d2255652741252e8ec8d980/expr.html"><img src="../../../../../../__pv_it/390c91a44e60b16c95d2255652741252e8ec8d980/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>26</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../../../../../__pv_it/dbe7145e53d9411a5ba89652cbfea9d54e4b581a0/expr.html"><img src="../../../../../../__pv_it/dbe7145e53d9411a5ba89652cbfea9d54e4b581a0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>27</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../../../../../__pv_it/72df168d2bfb4e0140af90912ebf83b13772060b0/expr.html"><img src="../../../../../../__pv_it/72df168d2bfb4e0140af90912ebf83b13772060b0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+</table>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-10 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

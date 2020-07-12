@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Welcome to the expanding Prove-It library of Proofs</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../index.html"><img src="../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Welcome-to-the-expanding-Prove-It-library-of-Proofs">Welcome to the expanding Prove-It library of Proofs<a class="anchor-link" href="#Welcome-to-the-expanding-Prove-It-library-of-Proofs">&#182;</a></h1><p><a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> is a tool for proving and organizing general theorems using Python.  These web pages are a companion to the <strong>Prove-It</strong> code repository, generated using this code to display the proofs contained therein, in addition to the <a href="doc/html/index.html">documentation</a>.  This system is in an early beta version and under active development.  A tutorial and more complete explanation of <strong>Prove-It</strong>'s unique approach to theorem proving is in progress.</p>
+<p>Our proofs are organized into a <a href="#hierarchy">hierarchy of contexts</a> as listed below.  This is an expanding and evolving library with the eventual aim of accepting proofs from many contributors.  There is a particular structure to this library described in this <a class="ProveItLink" href="guide.html">guide</a>.  The links below go to corresponding <a class="ProveItLink" href="guide.html#context">context</a> web pages.  Each of these contains context-specific links to web pages for <a class="ProveItLink" href="guide.html#common">common expressions</a>, 
+<a class="ProveItLink" href="guide.html#axioms">axioms</a>, and <a class="ProveItLink" href="guide.html#theorems">theorems</a>, as well as a page of <a class="ProveItLink" href="guide.html#demonstrations">demonstrations</a> containing relevant examples.  Additionally, each generated expression links to an <a class="ProveItLink" href="guide.html#expr_info">expression information</a> page that shows the internal tree-like structure of the expression.  Each theorem links to its <a class="ProveItLink" href="guide.html#theorem_proof">proof</a>, though not all proofs have been generated.  This content is very much incomplete.  The earlier contexts listed below tend to be more complete than the later ones.  The <a class="ProveItLink" href="packages/proveit/logic/equality/_context_.html">proveit.logic.equality</a> context has the best example of an ideal <a class="ProveItLink" href="packages/proveit/logic/equality/_demonstrations_.html">demonstrations</a> page.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="hierarchy"></a><strong>Hierarchy of Contexts</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">contents</span> packages/proveit
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/_context_.html">proveit</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/core_expr_types/_context_.html">proveit.core_expr_types</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/core_expr_types/operations/_context_.html">proveit.core_expr_types.operations</a></li>
+<li><a class="ProveItLink" href="packages/proveit/core_expr_types/conditionals/_context_.html">proveit.core_expr_types.conditionals</a></li>
+<li><a class="ProveItLink" href="packages/proveit/core_expr_types/lambda_maps/_context_.html">proveit.core_expr_types.lambda_maps</a></li>
+<li><a class="ProveItLink" href="packages/proveit/core_expr_types/tuples/_context_.html">proveit.core_expr_types.tuples</a></li>
+<li><a class="ProveItLink" href="packages/proveit/core_expr_types/indexed_vars/_context_.html">proveit.core_expr_types.indexed_vars</a></li>
+<li><a class="ProveItLink" href="packages/proveit/core_expr_types/expr_array/_context_.html">proveit.core_expr_types.expr_array</a></li>
+</ul>
+<li><a class="ProveItLink" href="packages/proveit/logic/_context_.html">proveit.logic</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/logic/boolean/_context_.html">proveit.logic.boolean</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/logic/boolean/implication/_context_.html">proveit.logic.boolean.implication</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/boolean/negation/_context_.html">proveit.logic.boolean.negation</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/boolean/conjunction/_context_.html">proveit.logic.boolean.conjunction</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/boolean/disjunction/_context_.html">proveit.logic.boolean.disjunction</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/boolean/quantification/_context_.html">proveit.logic.boolean.quantification</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/logic/boolean/quantification/universal/_context_.html">proveit.logic.boolean.quantification.universal</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/boolean/quantification/existential/_context_.html">proveit.logic.boolean.quantification.existential</a></li>
+</ul>
+</ul>
+<li><a class="ProveItLink" href="packages/proveit/logic/equality/_context_.html">proveit.logic.equality</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/_context_.html">proveit.logic.set_theory</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/membership/_context_.html">proveit.logic.set_theory.membership</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/enumeration/_context_.html">proveit.logic.set_theory.enumeration</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/containment/_context_.html">proveit.logic.set_theory.containment</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/unification/_context_.html">proveit.logic.set_theory.unification</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/intersection/_context_.html">proveit.logic.set_theory.intersection</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/subtraction/_context_.html">proveit.logic.set_theory.subtraction</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/comprehension/_context_.html">proveit.logic.set_theory.comprehension</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/disjointness/_context_.html">proveit.logic.set_theory.disjointness</a></li>
+<li><a class="ProveItLink" href="packages/proveit/logic/set_theory/cardinality/_context_.html">proveit.logic.set_theory.cardinality</a></li>
+</ul>
+</ul>
+<li><a class="ProveItLink" href="packages/proveit/number/_context_.html">proveit.number</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/number/sets/_context_.html">proveit.number.sets</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/number/sets/integer/_context_.html">proveit.number.sets.integer</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/sets/rational/_context_.html">proveit.number.sets.rational</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/sets/real/_context_.html">proveit.number.sets.real</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/number/sets/real/root2_proof_temporary_context/_context_.html">proveit.number.sets.real.root2_proof_temporary_context</a></li>
+</ul>
+<li><a class="ProveItLink" href="packages/proveit/number/sets/complex/_context_.html">proveit.number.sets.complex</a></li>
+</ul>
+<li><a class="ProveItLink" href="packages/proveit/number/rounding/_context_.html">proveit.number.rounding</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/absolute_value/_context_.html">proveit.number.absolute_value</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/numeral/_context_.html">proveit.number.numeral</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/number/numeral/binary/_context_.html">proveit.number.numeral.binary</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/numeral/deci/_context_.html">proveit.number.numeral.deci</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/numeral/hexidecimal/_context_.html">proveit.number.numeral.hexidecimal</a></li>
+</ul>
+<li><a class="ProveItLink" href="packages/proveit/number/addition/_context_.html">proveit.number.addition</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/number/addition/subtraction/_context_.html">proveit.number.addition.subtraction</a></li>
+</ul>
+<li><a class="ProveItLink" href="packages/proveit/number/negation/_context_.html">proveit.number.negation</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/ordering/_context_.html">proveit.number.ordering</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/multiplication/_context_.html">proveit.number.multiplication</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/division/_context_.html">proveit.number.division</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/divisibility/_context_.html">proveit.number.divisibility</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/modular/_context_.html">proveit.number.modular</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/exponentiation/_context_.html">proveit.number.exponentiation</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/summation/_context_.html">proveit.number.summation</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/product/_context_.html">proveit.number.product</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/differentiation/_context_.html">proveit.number.differentiation</a></li>
+<li><a class="ProveItLink" href="packages/proveit/number/integration/_context_.html">proveit.number.integration</a></li>
+</ul>
+<li><a class="ProveItLink" href="packages/proveit/physics/_context_.html">proveit.physics</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/physics/quantum/_context_.html">proveit.physics.quantum</a></li>
+<ul>
+<li><a class="ProveItLink" href="packages/proveit/physics/quantum/QFT/_context_.html">proveit.physics.quantum.QFT</a></li>
+<li><a class="ProveItLink" href="packages/proveit/physics/quantum/QPE/_context_.html">proveit.physics.quantum.QPE</a></li>
+</ul>
+</ul>
+</ul>
+</ul>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

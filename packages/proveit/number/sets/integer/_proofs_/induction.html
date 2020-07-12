@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.sets.integer.induction theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.sets.integer.induction-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">number</a>.<a class="ProveItLink" href="../../_context_.html">sets</a>.<a class="ProveItLink" href="../_context_.html">integer</a>.<a class="ProveItLink" href="../_theorems_.html#induction">induction</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.sets.integer.induction-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">defaults</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">n</span><span class="p">,</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">y</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">Naturals</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.number._common_</span> <span class="k">import</span> <span class="n">Pzero</span><span class="p">,</span> <span class="n">Pone</span><span class="p">,</span> <span class="n">Pm</span><span class="p">,</span> <span class="n">P_mAddOne</span><span class="p">,</span> <span class="n">Pn</span>
+
+<span class="kn">from</span> <span class="nn">proveit.number.sets.integer._theorems_</span> <span class="k">import</span> <span class="n">inductionLemma</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> induction presuming [proveit.logic]
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of induction
+Recorded &#39;presuming&#39; information
+Presuming theorems in proveit.logic (except any that presume this theorem).
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="induction">induction:</strong> <a class="ProveItLink" href="../__pv_it/c23bf2cc02ad6df44cad408ab9af8f3624d03fb80/expr.html"><img src="data:image/png;base64,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
+5wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/c23bf2cc02ad6df44cad408ab9af8f3624d03fb80/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">defaults</span><span class="o">.</span><span class="n">assumptions</span> <span class="o">=</span> <span class="n">induction</span><span class="o">.</span><span class="n">allConditions</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="defaults.assumptions">defaults.assumptions:</strong> <a class="ProveItLink" href="../__pv_it/30d23d36f0994fc28429b458d9f08265f0433d5f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAUBAMAAABL3sEiAAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAAGNJREFU
+CNdjYOC7wPaAgYHhNAODHpBax8BwioGBdwIDA3MBAwdQgieA4QVQnGEJQyWIsmTYC6JuMbSBqAyG
+EBAlD6PAgh4wJZYgajKQDwQLIYY1wIxm2Ae2CGQtkAV0BO8DBgBfVhetSSF8+gAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">inductionLemma</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="inductionLemma.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../__pv_it/37f5c5e1ca8471def3e9381a3be9a649dcb722600/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfkAAAAUBAMAAAB8NVk/AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABcRJREFU
+WMOlWH1oHEUUf8nd5u5295L+0f5X7JlCKlLtWrFRSerVggURcxbUgIVEiaioNX5AbJUagpiLRXqo
+tLVQu62Y1itttkrQojXhEkWbWE5toZXYXvGjVPBIVURLpc73zu7OnEYfvGRubn/3e7+ZN29mFqCG
+1Vdzit6dkmvscOjztT/UooFUmbrarIKWJH0uG+Hyg6wVHQNX8Odv1Y/Z2Ub8Lx0IzOz3vTQTGR6r
+bTqdbQgFPFmTBvYx19gjoCWxs9CgGhwcnHIkOZCBp3DnTzr1tof+NbpyZ2NBeKNnbghjXgFzC5gV
+NqlCfS0aOM9cYYcQ90HQkiABnAvCQapMABl4Ow6yX6eefLM90Pm1718CHAtBYg7AaZQULAiHq69F
+k3aoS/Yum8LHnkDq7YyWBAngXJEgFSZFR8F4YskMK9WT6ZoKdG7w/SWAMZoXJ/v66BSMoKVwK8Bu
++mznRq6+Fk2iQD2qHuAMwpnz2CgN9m0KkWD1u31YsiAFKQ1vFMjA6aPF4jbQqp8pFt/pDVSoXt9/
+B+ggijqv5l93oBpxN5r0LPnU08zV16LZxlynHr4nTWPAjZBg9YyLPNLvB+mbCsjBf+Tzz+vVN+Xz
+g+OBfcARbv6Kfg9npekv6JFLpA7aJJHNSoKrr0WzmPmelteXZlTqJ0jzoBslwQJsJ5LxOMD4p280
+L9cCOfhBgCG9+oYcSSdjeuoES66y8NQlgC4crlR26y9fxiU6TdaB7bFkn1TQrJs+kuOliLg5nn4q
+UVGpPx0q/T4JFkC5WvuwveCIIO3kAIwUdEAOXh2smsbTk3Blt1Afd0jJXQ3WLFuknvAUmvsunBhJ
+CX/g/gsoYIukXgJSFa4+RIN/eIw1n6Nuu/bFeEGl/n3S7FeQYAGWnOYfezzI+9BI7srpgBycgHqx
+n++faIcPbDfmCvXQC9eg1kbxG3VZ4SLz76oiE9puQdQGGauvyJRT9RKN+dH1ZUi4YtDmUzchSTmO
+VatPVqs/+uq7yLRcgVlCJDhCY1be6M9mWZDuSBbOaIEcbJcTojZu3uHCkYxj+5kPXwAe2j8BvIh6
+XPXGvMCWiJEjQj0as3u4eonm5OEiQFMBrKB61JdRVz2i3t8vJZKI+q2f8yBxaq3XAjk4VUERptvX
+LsbZiWx09FVZ/ZsGXgZnJ8X25Gc+5Fl0dYJ8GMeKuuJ4yCyHHzsmGQ2UbmjJxcnabFwoSjXLfITM
+qdWvIc15ChIcIeGClVVi50WQsBLgL1MH5GAY6kHqV5XrCvQ4OmofWCepT27Fz7y1aD5Eqp447cTE
+nB1C3sarHlZuOUw9oal31yfo6RnM6y5kIVD1LHcZekBf9ZYrSPyqR+1OP0hYCNZFWwfkYHgPjcSO
+JdDkmiTSURifkNRbrXQHfYj3Ob4nPHOBmD1irWgfwbkSw8Wwk2U/VY9pDPgZjSRPUl6tJqh3eFvE
+5USoX+ayiNmEhkhwhDF/R+ZbLw4u9RvYlRM6IAfT1fYArALj2Xx+AKnfmZDUwy/I30brhdfqXt/N
+UgvN1eEX2Zw5t614lOQ17u/BrWauni5qVEDuzefzGTMHJl+va6gPN+9pL4fUr1j0HeqiN0Tz4dsj
+JOS049+0GnKBIFOPezogB0MaR74A2gzopnMfXyur/wb5h7x8BU+6vt0x2BfYz/biPySzDa6e0Biz
+BjSQy5YHRve/OOmS6FmSxD9jB1afBEe4VzqIgvKkqwByMIXNwjOj8AluHgeYkdVjuxHMlxW3HL2V
+wjdcarvsig02nqBYP+xz9becYuDQldGSzPGWI0VXkuTFu2FpGZIoUeKbsnR2ZPU3tU248k2Cu87C
+t06ufvh46SjAZqz+tembxddDoD9vguqGK0h0N9xawck33IBdhdZ98KSrfnHAXWfJglo9O2+idT+X
+txtDehIUYXIubzcC86eUJ4W56T++2ToV+rzk/7zZShe0JPXnshGuf36zdUqA/wa6EhhVnbkSEQAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">inductionLemma</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span><span class="n">assumptions</span> <span class="o">=</span>  <span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Naturals</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="inductionLemma.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../__pv_it/37f5c5e1ca8471def3e9381a3be9a649dcb722600/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfkAAAAUBAMAAAB8NVk/AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABcRJREFU
+WMOlWH1oHEUUf8nd5u5295L+0f5X7JlCKlLtWrFRSerVggURcxbUgIVEiaioNX5AbJUagpiLRXqo
+tLVQu62Y1itttkrQojXhEkWbWE5toZXYXvGjVPBIVURLpc73zu7OnEYfvGRubn/3e7+ZN29mFqCG
+1Vdzit6dkmvscOjztT/UooFUmbrarIKWJH0uG+Hyg6wVHQNX8Odv1Y/Z2Ub8Lx0IzOz3vTQTGR6r
+bTqdbQgFPFmTBvYx19gjoCWxs9CgGhwcnHIkOZCBp3DnTzr1tof+NbpyZ2NBeKNnbghjXgFzC5gV
+NqlCfS0aOM9cYYcQ90HQkiABnAvCQapMABl4Ow6yX6eefLM90Pm1718CHAtBYg7AaZQULAiHq69F
+k3aoS/Yum8LHnkDq7YyWBAngXJEgFSZFR8F4YskMK9WT6ZoKdG7w/SWAMZoXJ/v66BSMoKVwK8Bu
++mznRq6+Fk2iQD2qHuAMwpnz2CgN9m0KkWD1u31YsiAFKQ1vFMjA6aPF4jbQqp8pFt/pDVSoXt9/
+B+ggijqv5l93oBpxN5r0LPnU08zV16LZxlynHr4nTWPAjZBg9YyLPNLvB+mbCsjBf+Tzz+vVN+Xz
+g+OBfcARbv6Kfg9npekv6JFLpA7aJJHNSoKrr0WzmPmelteXZlTqJ0jzoBslwQJsJ5LxOMD4p280
+L9cCOfhBgCG9+oYcSSdjeuoES66y8NQlgC4crlR26y9fxiU6TdaB7bFkn1TQrJs+kuOliLg5nn4q
+UVGpPx0q/T4JFkC5WvuwveCIIO3kAIwUdEAOXh2smsbTk3Blt1Afd0jJXQ3WLFuknvAUmvsunBhJ
+CX/g/gsoYIukXgJSFa4+RIN/eIw1n6Nuu/bFeEGl/n3S7FeQYAGWnOYfezzI+9BI7srpgBycgHqx
+n++faIcPbDfmCvXQC9eg1kbxG3VZ4SLz76oiE9puQdQGGauvyJRT9RKN+dH1ZUi4YtDmUzchSTmO
+VatPVqs/+uq7yLRcgVlCJDhCY1be6M9mWZDuSBbOaIEcbJcTojZu3uHCkYxj+5kPXwAe2j8BvIh6
+XPXGvMCWiJEjQj0as3u4eonm5OEiQFMBrKB61JdRVz2i3t8vJZKI+q2f8yBxaq3XAjk4VUERptvX
+LsbZiWx09FVZ/ZsGXgZnJ8X25Gc+5Fl0dYJ8GMeKuuJ4yCyHHzsmGQ2UbmjJxcnabFwoSjXLfITM
+qdWvIc15ChIcIeGClVVi50WQsBLgL1MH5GAY6kHqV5XrCvQ4OmofWCepT27Fz7y1aD5Eqp447cTE
+nB1C3sarHlZuOUw9oal31yfo6RnM6y5kIVD1LHcZekBf9ZYrSPyqR+1OP0hYCNZFWwfkYHgPjcSO
+JdDkmiTSURifkNRbrXQHfYj3Ob4nPHOBmD1irWgfwbkSw8Wwk2U/VY9pDPgZjSRPUl6tJqh3eFvE
+5USoX+ayiNmEhkhwhDF/R+ZbLw4u9RvYlRM6IAfT1fYArALj2Xx+AKnfmZDUwy/I30brhdfqXt/N
+UgvN1eEX2Zw5t614lOQ17u/BrWauni5qVEDuzefzGTMHJl+va6gPN+9pL4fUr1j0HeqiN0Tz4dsj
+JOS049+0GnKBIFOPezogB0MaR74A2gzopnMfXyur/wb5h7x8BU+6vt0x2BfYz/biPySzDa6e0Biz
+BjSQy5YHRve/OOmS6FmSxD9jB1afBEe4VzqIgvKkqwByMIXNwjOj8AluHgeYkdVjuxHMlxW3HL2V
+wjdcarvsig02nqBYP+xz9becYuDQldGSzPGWI0VXkuTFu2FpGZIoUeKbsnR2ZPU3tU248k2Cu87C
+t06ufvh46SjAZqz+tembxddDoD9vguqGK0h0N9xawck33IBdhdZ98KSrfnHAXWfJglo9O2+idT+X
+txtDehIUYXIubzcC86eUJ4W56T++2ToV+rzk/7zZShe0JPXnshGuf36zdUqA/wa6EhhVnbkSEQAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

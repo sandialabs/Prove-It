@@ -1,0 +1,461 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OperationOverInstances &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OperationSequence" href="proveit.OperationSequence.html" />
+    <link rel="prev" title="OperationError" href="proveit.OperationError.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="operationoverinstances">
+<h1>OperationOverInstances<a class="headerlink" href="#operationoverinstances" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="proveit.OperationOverInstances">
+<em class="property">class </em><code class="descclassname">proveit.</code><code class="descname">OperationOverInstances</code><span class="sig-paren">(</span><em>operator</em>, <em>instanceParamOrParams</em>, <em>instanceExpr</em>, <em>*</em>, <em>domain=None</em>, <em>domains=None</em>, <em>condition=None</em>, <em>conditions=None</em>, <em>styles=None</em>, <em>_lambda_map=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="proveit.Operation.html#proveit.Operation" title="proveit._core_.expression.operation.operation.Operation"><code class="docutils literal notranslate"><span class="pre">proveit.Operation</span></code></a></p>
+<p>OperationOverInstances description: TODO</p>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.OperationOverInstances.allConditions" title="proveit.OperationOverInstances.allConditions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allConditions</span></code></a>()</td>
+<td>Returns all conditions of this OperationOverInstances and all conditions of nested OperationOverInstances of the same type.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.OperationOverInstances.allDomains" title="proveit.OperationOverInstances.allDomains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allDomains</span></code></a>()</td>
+<td>Returns all domains of this OperationOverInstances including domains of nested OperationOverInstances of the same type.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.OperationOverInstances.allInstanceParams" title="proveit.OperationOverInstances.allInstanceParams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allInstanceParams</span></code></a>()</td>
+<td>Returns all instance parameters (each a Variable or Iter of  IndexedVars) of this OperationOverInstances and all instance parameters of nested OperationOverInstances.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.OperationOverInstances.allInstanceVars" title="proveit.OperationOverInstances.allInstanceVars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allInstanceVars</span></code></a>()</td>
+<td>Returns all instance parameter variables of this OperationOverInstances and all instance parameters variables of nested OperationOverInstances.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.OperationOverInstances.domainConditions" title="proveit.OperationOverInstances.domainConditions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">domainConditions</span></code></a>()</td>
+<td>Return the domain conditions of all instance variables that areg joined together at this level according to the style.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.OperationOverInstances.effectiveCondition" title="proveit.OperationOverInstances.effectiveCondition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">effectiveCondition</span></code></a>()</td>
+<td>Return the effective ‘condition’ of the OperationOverInstances.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.OperationOverInstances.explicitConditions" title="proveit.OperationOverInstances.explicitConditions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">explicitConditions</span></code></a>()</td>
+<td>Return the conditions that are to be shown explicitly in the formatting (after the “such that” symbol “|”) at this level according to the  style.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.OperationOverInstances.explicitDomains" title="proveit.OperationOverInstances.explicitDomains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">explicitDomains</span></code></a>()</td>
+<td>Return the domains of the instance variables that are joined together at this level according to the style.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.OperationOverInstances.explicitInstanceParams" title="proveit.OperationOverInstances.explicitInstanceParams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">explicitInstanceParams</span></code></a>()</td>
+<td>Return the instance parameters that are to be shown explicitly  in the formatting (as opposed to being made implicit via conditions) joined together at this level according to the style.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.OperationOverInstances.explicitInstanceVars" title="proveit.OperationOverInstances.explicitInstanceVars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">explicitInstanceVars</span></code></a>()</td>
+<td>Return the instance parameter variables that are to be shown explicitly  in the formatting (as opposed to being made implicit via conditions)  joined together at this level according to the style.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.OperationOverInstances.extractMyInitArgValue" title="proveit.OperationOverInstances.extractMyInitArgValue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extractMyInitArgValue</span></code></a>(argName)</td>
+<td>Return the most proper initialization value for the initialization argument of the given name in order to reconstruct this Expression in its current style.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.OperationOverInstances.first_domain" title="proveit.OperationOverInstances.first_domain"><code class="xref py py-obj docutils literal notranslate"><span class="pre">first_domain</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.OperationOverInstances.hasDomain" title="proveit.OperationOverInstances.hasDomain"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasDomain</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.OperationOverInstances.instanceParamLists" title="proveit.OperationOverInstances.instanceParamLists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">instanceParamLists</span></code></a>()</td>
+<td>Returns lists of instance parameters that include all of the instance parameters (see allInstanceParams method) but grouped together according to the style joining instance parameters together.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.OperationOverInstances.latex" title="proveit.OperationOverInstances.latex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latex</span></code></a>(**kwargs)</td>
+<td>Return a latex-formatted representation of the Expression.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.OperationOverInstances.string" title="proveit.OperationOverInstances.string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">string</span></code></a>(**kwargs)</td>
+<td>Return a string representation of the Expression.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="proveit.OperationOverInstances.allConditions">
+<code class="descname">allConditions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.allConditions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.allConditions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all conditions of this OperationOverInstances
+and all conditions of nested OperationOverInstances
+of the same type. Relies on the Python generator function
+_allConditions() defined above.
+Added by wdc on 6/06/2019.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.allDomains">
+<code class="descname">allDomains</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.allDomains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.allDomains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all domains of this OperationOverInstances
+including domains of nested OperationOverInstances
+of the same type.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.allInstanceParams">
+<code class="descname">allInstanceParams</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.allInstanceParams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.allInstanceParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all instance parameters (each a Variable or Iter of 
+IndexedVars) of this OperationOverInstances
+and all instance parameters of nested OperationOverInstances.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.allInstanceVars">
+<code class="descname">allInstanceVars</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.allInstanceVars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.allInstanceVars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all instance parameter variables of this OperationOverInstances
+and all instance parameters variables of nested OperationOverInstances.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.domainConditions">
+<code class="descname">domainConditions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.domainConditions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.domainConditions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the domain conditions of all instance variables that
+areg joined together at this level according to the style.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.effectiveCondition">
+<code class="descname">effectiveCondition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.effectiveCondition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.effectiveCondition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the effective ‘condition’ of the OperationOverInstances.
+If there is no ‘condition’, return And operating on zero
+operands.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.explicitConditions">
+<code class="descname">explicitConditions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.explicitConditions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.explicitConditions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the conditions that are to be shown explicitly in the formatting
+(after the “such that” symbol “|”) at this level according to the 
+style.  By default, this includes all of the ‘joined’ conditions except 
+implicit ‘domain’ conditions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.explicitDomains">
+<code class="descname">explicitDomains</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.explicitDomains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.explicitDomains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the domains of the instance variables that
+are joined together at this level according to the style.
+If there is no domain, return None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.explicitInstanceParams">
+<code class="descname">explicitInstanceParams</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.explicitInstanceParams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.explicitInstanceParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the instance parameters that are to be shown explicitly 
+in the formatting (as opposed to being made implicit via
+conditions) joined together at this level according to the
+style. By default, this includes all of the instance parameters
+that are to be joined but this may be overridden to exclude
+implicit instance parameters.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.explicitInstanceVars">
+<code class="descname">explicitInstanceVars</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.explicitInstanceVars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.explicitInstanceVars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the instance parameter variables that are to be shown explicitly 
+in the formatting (as opposed to being made implicit via conditions) 
+joined together at this level according to the style. The behavior
+is determined by ‘explicitInstanceParams’.  Here, we simply extract
+the variables from the parameters that result from 
+‘explicitInstanceParams’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.extractMyInitArgValue">
+<code class="descname">extractMyInitArgValue</code><span class="sig-paren">(</span><em>argName</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.extractMyInitArgValue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.extractMyInitArgValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the most proper initialization value for the
+initialization argument of the given name in order to
+reconstruct this Expression in its current style.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.first_domain">
+<code class="descname">first_domain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.first_domain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.first_domain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.hasDomain">
+<code class="descname">hasDomain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.hasDomain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.hasDomain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.instanceParamLists">
+<code class="descname">instanceParamLists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.instanceParamLists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.instanceParamLists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns lists of instance parameters that include all of the instance
+parameters (see allInstanceParams method) but grouped together
+according to the style joining instance parameters together.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.latex">
+<code class="descname">latex</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.latex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a latex-formatted representation of the Expression.  The kwargs can contain formatting
+directives (such as ‘fence’ used to indicate when a sub-expression should be wrapped in
+parentheses if there can be ambiguity in the order of operations).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.OperationOverInstances.string">
+<code class="descname">string</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/operation/operation_over_instances.html#OperationOverInstances.string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.OperationOverInstances.string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a string representation of the Expression.  The kwargs can contain formatting
+directives (such as ‘fence’ used to indicate when a sub-expression should be wrapped in
+parentheses if there can be ambiguity in the order of operations).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.varRange.html">varRange</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="proveit.OperationError.html" title="previous chapter">OperationError</a></li>
+      <li>Next: <a href="proveit.OperationSequence.html" title="next chapter">OperationSequence</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="../_sources/api/proveit.OperationOverInstances.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

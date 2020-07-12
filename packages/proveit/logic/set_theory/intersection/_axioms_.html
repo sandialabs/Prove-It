@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for context proveit.logic.set_theory.intersection</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-context-proveit.logic.set_theory.intersection">Axioms for context <a class="ProveItLink" href="_context_.html">proveit.logic.set_theory.intersection</a><a class="anchor-link" href="#Axioms-for-context-proveit.logic.set_theory.intersection">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when building axiom expressions:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Intersect</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types._common_</span> <span class="k">import</span> <span class="n">A_1_to_m</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.set_theory._common_</span> <span class="k">import</span> <span class="n">x_in_every_A</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">NaturalsPos</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for context &#39;proveit.logic.set_theory.intersection&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Membership in the intersection of sets is the same as having membership in <em>all</em> of the sets being intersected:</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">intersectionDef</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">),</span> 
+                                   <span class="n">Equals</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Intersect</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">)),</span>
+                                          <span class="n">x_in_every_A</span><span class="p">)),</span> 
+                         <span class="n">domain</span><span class="o">=</span><span class="n">NaturalsPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="intersectionDef">intersectionDef:</strong> <a class="ProveItLink" href="__pv_it/0431ef7e2ccc9be979a26da4e66f57dcab9eb5940/expr.html"><img src="data:image/png;base64,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
+X1Z9KVQvtOiYAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

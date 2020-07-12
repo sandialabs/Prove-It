@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.sets.real.root2_proof_temporary_context.KapurTheorem theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.sets.real.root2_proof_temporary_context.KapurTheorem-theorem">Proof of <a class="ProveItLink" href="../../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../../_context_.html">number</a>.<a class="ProveItLink" href="../../../_context_.html">sets</a>.<a class="ProveItLink" href="../../_context_.html">real</a>.<a class="ProveItLink" href="../_context_.html">root2_proof_temporary_context</a>.<a class="ProveItLink" href="../_theorems_.html#KapurTheorem">KapurTheorem</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.sets.real.root2_proof_temporary_context.KapurTheorem-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> KapurTheorem presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of KapurTheorem
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="KapurTheorem">KapurTheorem:</strong> <a class="ProveItLink" href="../__pv_it/d8c614556cf18b903a78e8b68dce745bfad4eec80/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/d8c614556cf18b903a78e8b68dce745bfad4eec80/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

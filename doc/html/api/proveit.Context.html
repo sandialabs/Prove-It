@@ -1,0 +1,683 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Context &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ContextException" href="proveit.ContextException.html" />
+    <link rel="prev" title="Conditional" href="proveit.Conditional.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="context">
+<h1>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="proveit.Context">
+<em class="property">class </em><code class="descclassname">proveit.</code><code class="descname">Context</code><span class="sig-paren">(</span><em>path='.'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A Context object provides an interface into the __pv_it database for access
+to the common expressions, axioms, theorems and associated proofs of a
+Prove-It context.  You can also store miscellaneous expressions (and
+their latex/png representations) generated in test/demonstration notebooks 
+within the context directory.  These may be garbage collected via the
+‘clean’ method; anything that is not associated with a common
+expression, axiom, theorem, or theorem proof will be garbage collected.</p>
+<p class="rubric">Attributes Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.default" title="proveit.Context.default"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.specialExprKindToModuleName" title="proveit.Context.specialExprKindToModuleName"><code class="xref py py-obj docutils literal notranslate"><span class="pre">specialExprKindToModuleName</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.storages" title="proveit.Context.storages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">storages</span></code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.appendSubContextName" title="proveit.Context.appendSubContextName"><code class="xref py py-obj docutils literal notranslate"><span class="pre">appendSubContextName</span></code></a>(subContextName)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.axiomNames" title="proveit.Context.axiomNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">axiomNames</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.clean" title="proveit.Context.clean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clean</span></code></a>()</td>
+<td>Clean the corresponding __pv_it directory of any stored expressions or proofs that have a reference count of zero.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.clear" title="proveit.Context.clear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear</span></code></a>()</td>
+<td>Remove reference counts to all common expressions, axioms, theorems, and recorded displayed expressions and then clean the __pv_it folder of any stored expressions with zero reference counts.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.clearAll" title="proveit.Context.clearAll"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clearAll</span></code></a>()</td>
+<td>Clear (see clear method) this context and all sub-contexts.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.commonExpressionNames" title="proveit.Context.commonExpressionNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">commonExpressionNames</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.containsAnyExpression" title="proveit.Context.containsAnyExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">containsAnyExpression</span></code></a>()</td>
+<td>Return True if this context and all of its sub-contexts contain no expressions.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.cyclicallyReferencedCommonExprContext" title="proveit.Context.cyclicallyReferencedCommonExprContext"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cyclicallyReferencedCommonExprContext</span></code></a>()</td>
+<td>Check for illegal cyclic dependencies of common expression notebooks.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.expressionNotebook" title="proveit.Context.expressionNotebook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expressionNotebook</span></code></a>(expr[,&nbsp;…])</td>
+<td>Return the path of the expression notebook, creating it if it does not already exist.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.findAxiom" title="proveit.Context.findAxiom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">findAxiom</span></code></a>(fullName)</td>
+<td>Given the full name of an axiom that includes the context name, return the Axiom obtained the proper Context.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.findTheorem" title="proveit.Context.findTheorem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">findTheorem</span></code></a>(fullName)</td>
+<td>Given the full name of an theorem that includes the context name, return the Theorem obtained the proper Context.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.getAxiom" title="proveit.Context.getAxiom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAxiom</span></code></a>(name)</td>
+<td>Return the Axiom of the given name in this context.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.getCommonExpr" title="proveit.Context.getCommonExpr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getCommonExpr</span></code></a>(name)</td>
+<td>Return the Expression of the common expression in this context with the given name.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.getContext" title="proveit.Context.getContext"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getContext</span></code></a>(contextName)</td>
+<td>Return the Context with the given name.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.getPath" title="proveit.Context.getPath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPath</span></code></a>()</td>
+<td>Return the directory associated with the context</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.getShowProof" title="proveit.Context.getShowProof"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getShowProof</span></code></a>(proof_id)</td>
+<td>Return the _ShowProof representing the proof with the  given id (hash string) for display purposes.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.getStoredAxiom" title="proveit.Context.getStoredAxiom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredAxiom</span></code></a>(fullname)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.getStoredExpr" title="proveit.Context.getStoredExpr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredExpr</span></code></a>(expr_id)</td>
+<td>Return the stored Expression with the given id (hash string).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.getStoredKnownTruth" title="proveit.Context.getStoredKnownTruth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredKnownTruth</span></code></a>(truth_id)</td>
+<td>Return the stored KnownTruth with the given id (hash string).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.getStoredStmt" title="proveit.Context.getStoredStmt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredStmt</span></code></a>(fullname,&nbsp;kind)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.getStoredTheorem" title="proveit.Context.getStoredTheorem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredTheorem</span></code></a>(fullname)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.getSubContextNames" title="proveit.Context.getSubContextNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getSubContextNames</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.getSubContexts" title="proveit.Context.getSubContexts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getSubContexts</span></code></a>()</td>
+<td>Yield the Context objects for the sub-contexts.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.getTheorem" title="proveit.Context.getTheorem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getTheorem</span></code></a>(name)</td>
+<td>Return the Theorem of the given name in this context.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.isRoot" title="proveit.Context.isRoot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isRoot</span></code></a>()</td>
+<td>Return True iff this Context is a “root” Context (no parent directory with an __init__.py file).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.links" title="proveit.Context.links"><code class="xref py py-obj docutils literal notranslate"><span class="pre">links</span></code></a>([from_directory])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.makeSpecialExprModule" title="proveit.Context.makeSpecialExprModule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">makeSpecialExprModule</span></code></a>(kind)</td>
+<td>Make a _common_.py, _axioms_.py, or _theorems_.py file for importing expressions from the certified database.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.proofNotebook" title="proveit.Context.proofNotebook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proofNotebook</span></code></a>(proof)</td>
+<td>Return the “basic” proof notebook corresponding to the given  proof_id.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.recordCommonExprDependencies" title="proveit.Context.recordCommonExprDependencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recordCommonExprDependencies</span></code></a>()</td>
+<td>Record the context names of any referenced common expressions in storage while creating the common expressions for this context (for the purposes of checking for illegal cyclic dependencies).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.referenceHyperlinkedObjects" title="proveit.Context.referenceHyperlinkedObjects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">referenceHyperlinkedObjects</span></code></a>(name[,&nbsp;clear])</td>
+<td>Reference displayed expressions, recorded under the given name in the __pv_it directory.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.setSubContextNames" title="proveit.Context.setSubContextNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setSubContextNames</span></code></a>(subContextNames)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.specialExpr" title="proveit.Context.specialExpr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">specialExpr</span></code></a>(expr)</td>
+<td>Return the kind and name of the special expression as a tuple, assuming the ‘expr’ is a special expression of this Context.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.specialExprAddress" title="proveit.Context.specialExprAddress"><code class="xref py py-obj docutils literal notranslate"><span class="pre">specialExprAddress</span></code></a>(expr)</td>
+<td>A special expression “address” consists of a kind (‘common’, ‘axiom’, or ‘theorem’), module and the name of the expression.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.stashExtraneousThmProofNotebooks" title="proveit.Context.stashExtraneousThmProofNotebooks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stashExtraneousThmProofNotebooks</span></code></a>()</td>
+<td>For any proof notebooks for theorem names not included in the context,  stash them or remove them if they are generic notebooks.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.storedCommonExprDependencies" title="proveit.Context.storedCommonExprDependencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">storedCommonExprDependencies</span></code></a>()</td>
+<td>Return the stored set of context names of common expressions referenced by the common expressions of this context.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Context.theoremNames" title="proveit.Context.theoremNames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">theoremNames</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Context.thmProofNotebook" title="proveit.Context.thmProofNotebook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">thmProofNotebook</span></code></a>(theoremName,&nbsp;expr)</td>
+<td>Return the path of the proof notebook for a theorem with the  given name and expression, creating it if it does not already  exist.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes Documentation</p>
+<dl class="attribute">
+<dt id="proveit.Context.default">
+<code class="descname">default</code><em class="property"> = None</em><a class="headerlink" href="#proveit.Context.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.Context.specialExprKindToModuleName">
+<code class="descname">specialExprKindToModuleName</code><em class="property"> = {'axiom': '_axioms_', 'common': '_common_', 'theorem': '_theorems_'}</em><a class="headerlink" href="#proveit.Context.specialExprKindToModuleName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.Context.storages">
+<code class="descname">storages</code><em class="property"> = {'/home/wwitzel/Prove-It/packages/proveit': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac8e4d30&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/composite': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac82b2b0&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/conditional': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac7b7b38&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/label': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac8739e8&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/lambda_expr': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac7b7e10&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/operation': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac72bc50&gt;, '/home/wwitzel/Prove-It/packages/proveit/core_expr_types/tuples': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac7d0198&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac6bc208&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/boolean': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac87cef0&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/boolean/conjunction': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac7f4fd0&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/boolean/disjunction': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac805d30&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/boolean/implication': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac821a90&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/boolean/negation': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac81a278&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/boolean/quantification/existential': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac873f98&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/boolean/quantification/universal': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac87cf60&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/equality': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac86c470&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac84c518&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/cardinality': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac84c320&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/comprehension': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac840668&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/containment': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac8a4c50&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/disjointness': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac840ac8&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/enumeration': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac89da58&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/intersection': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac836c18&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/membership': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac890b00&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/subtraction': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac840128&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/set_theory/unification': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac836748&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/absolute_value': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac2268d0&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/addition': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac1ed358&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/divisibility': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac1d7b38&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/division': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac207f28&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/exponentiation': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac210cc0&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/integration': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac21cf98&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/modular': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac226eb8&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/multiplication': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac207208&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/negation': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac1f91d0&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/numeral': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac245d30&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/numeral/deci': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac254898&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/ordering': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac1c6940&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/product': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac207710&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/rounding': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac1b1b38&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/sets/complex': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac27ab70&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/sets/integer': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac4cd0f0&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/sets/rational': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac4572b0&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/sets/real': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac3963c8&gt;, '/home/wwitzel/Prove-It/packages/proveit/number/summation': &lt;proveit._core_._context_storage.ContextStorage object at 0x7f0cac21ca90&gt;}</em><a class="headerlink" href="#proveit.Context.storages" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="proveit.Context.appendSubContextName">
+<code class="descname">appendSubContextName</code><span class="sig-paren">(</span><em>subContextName</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.appendSubContextName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.appendSubContextName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.axiomNames">
+<code class="descname">axiomNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.axiomNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.axiomNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.clean">
+<code class="descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean the corresponding __pv_it directory of any stored expressions
+or proofs that have a reference count of zero.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove reference counts to all common expressions, axioms,
+theorems, and recorded displayed expressions and then
+clean the __pv_it folder of any stored expressions with
+zero reference counts.  Note that this can, in principle
+(assuming nothing is corrupted), be undone by re-executing
+the notebooks that generated these in the first place.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.clearAll">
+<code class="descname">clearAll</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.clearAll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.clearAll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear (see clear method) this context and all sub-contexts.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.commonExpressionNames">
+<code class="descname">commonExpressionNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.commonExpressionNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.commonExpressionNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.containsAnyExpression">
+<code class="descname">containsAnyExpression</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.containsAnyExpression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.containsAnyExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if this context and all of its sub-contexts
+contain no expressions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.cyclicallyReferencedCommonExprContext">
+<code class="descname">cyclicallyReferencedCommonExprContext</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.cyclicallyReferencedCommonExprContext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.cyclicallyReferencedCommonExprContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for illegal cyclic dependencies of common expression notebooks.
+If there is one, return the name; otherwise return None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.expressionNotebook">
+<code class="descname">expressionNotebook</code><span class="sig-paren">(</span><em>expr</em>, <em>unofficialNameKindContext=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.expressionNotebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.expressionNotebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the path of the expression notebook, creating it if it does not
+already exist.  If ‘unofficialNameKindContext’ is provided,
+it should be the (name, kind, context) for a special expression
+that is not-yet-official (%end_[common/axioms/theorems] has not been
+called yet in the special expressions notebook).</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.Context.findAxiom">
+<em class="property">static </em><code class="descname">findAxiom</code><span class="sig-paren">(</span><em>fullName</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.findAxiom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.findAxiom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the full name of an axiom that includes the context
+name, return the Axiom obtained the proper Context.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.Context.findTheorem">
+<em class="property">static </em><code class="descname">findTheorem</code><span class="sig-paren">(</span><em>fullName</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.findTheorem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.findTheorem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the full name of an theorem that includes the context
+name, return the Theorem obtained the proper Context.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getAxiom">
+<code class="descname">getAxiom</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getAxiom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getAxiom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the Axiom of the given name in this context.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getCommonExpr">
+<code class="descname">getCommonExpr</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getCommonExpr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getCommonExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the Expression of the common expression in this context
+with the given name.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.Context.getContext">
+<em class="property">static </em><code class="descname">getContext</code><span class="sig-paren">(</span><em>contextName</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getContext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the Context with the given name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getPath">
+<code class="descname">getPath</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the directory associated with the context</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getShowProof">
+<code class="descname">getShowProof</code><span class="sig-paren">(</span><em>proof_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getShowProof"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getShowProof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the _ShowProof representing the proof with the 
+given id (hash string) for display purposes.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.Context.getStoredAxiom">
+<em class="property">static </em><code class="descname">getStoredAxiom</code><span class="sig-paren">(</span><em>fullname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getStoredAxiom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getStoredAxiom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getStoredExpr">
+<code class="descname">getStoredExpr</code><span class="sig-paren">(</span><em>expr_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getStoredExpr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getStoredExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the stored Expression with the given id (hash string).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getStoredKnownTruth">
+<code class="descname">getStoredKnownTruth</code><span class="sig-paren">(</span><em>truth_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getStoredKnownTruth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getStoredKnownTruth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the stored KnownTruth with the given id (hash string).</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.Context.getStoredStmt">
+<em class="property">static </em><code class="descname">getStoredStmt</code><span class="sig-paren">(</span><em>fullname</em>, <em>kind</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getStoredStmt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getStoredStmt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.Context.getStoredTheorem">
+<em class="property">static </em><code class="descname">getStoredTheorem</code><span class="sig-paren">(</span><em>fullname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getStoredTheorem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getStoredTheorem" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getSubContextNames">
+<code class="descname">getSubContextNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getSubContextNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getSubContextNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getSubContexts">
+<code class="descname">getSubContexts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getSubContexts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getSubContexts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield the Context objects for the sub-contexts.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.getTheorem">
+<code class="descname">getTheorem</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.getTheorem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.getTheorem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the Theorem of the given name in this context.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.isRoot">
+<code class="descname">isRoot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.isRoot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.isRoot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True iff this Context is a “root” Context (no parent
+directory with an __init__.py file).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.links">
+<code class="descname">links</code><span class="sig-paren">(</span><em>from_directory='.'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.links" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.makeSpecialExprModule">
+<code class="descname">makeSpecialExprModule</code><span class="sig-paren">(</span><em>kind</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.makeSpecialExprModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.makeSpecialExprModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a _common_.py, _axioms_.py, or _theorems_.py file for importing
+expressions from the certified database.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.proofNotebook">
+<code class="descname">proofNotebook</code><span class="sig-paren">(</span><em>proof</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.proofNotebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.proofNotebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the “basic” proof notebook corresponding to the given 
+proof_id.  Note, this is different than a “theorem” proof
+notebook which generates the proof.  This just shows the
+proof as Prove-It stores it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.recordCommonExprDependencies">
+<code class="descname">recordCommonExprDependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.recordCommonExprDependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.recordCommonExprDependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record the context names of any referenced common expressions in storage
+while creating the common expressions for this context
+(for the purposes of checking for illegal cyclic dependencies).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.referenceHyperlinkedObjects">
+<code class="descname">referenceHyperlinkedObjects</code><span class="sig-paren">(</span><em>name</em>, <em>clear=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.referenceHyperlinkedObjects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.referenceHyperlinkedObjects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reference displayed expressions, recorded under the given name
+in the __pv_it directory.  If the same name is reused,
+any expressions that are not displayed this time that
+were displayed last time will be unreferenced.
+If clear is True, remove all of the references and the
+file that stores these references.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.setSubContextNames">
+<code class="descname">setSubContextNames</code><span class="sig-paren">(</span><em>subContextNames</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.setSubContextNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.setSubContextNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.specialExpr">
+<code class="descname">specialExpr</code><span class="sig-paren">(</span><em>expr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.specialExpr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.specialExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the kind and name of the special expression as a tuple,
+assuming the ‘expr’ is a special expression of this Context.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.specialExprAddress">
+<code class="descname">specialExprAddress</code><span class="sig-paren">(</span><em>expr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.specialExprAddress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.specialExprAddress" title="Permalink to this definition">¶</a></dt>
+<dd><p>A special expression “address” consists of a kind (‘common’, ‘axiom’, or
+‘theorem’), module and the name of the expression.
+Provided that the given expression is one of the special expressions
+of this context, return the address as a tuple.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.stashExtraneousThmProofNotebooks">
+<code class="descname">stashExtraneousThmProofNotebooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.stashExtraneousThmProofNotebooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.stashExtraneousThmProofNotebooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>For any proof notebooks for theorem names not included in the context, 
+stash them or remove them if they are generic notebooks.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.storedCommonExprDependencies">
+<code class="descname">storedCommonExprDependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.storedCommonExprDependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.storedCommonExprDependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the stored set of context names of common expressions
+referenced by the common expressions of this context.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.theoremNames">
+<code class="descname">theoremNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.theoremNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.theoremNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Context.thmProofNotebook">
+<code class="descname">thmProofNotebook</code><span class="sig-paren">(</span><em>theoremName</em>, <em>expr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/context.html#Context.thmProofNotebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Context.thmProofNotebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the path of the proof notebook for a theorem with the 
+given name and expression, creating it if it does not already 
+exist.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.varRange.html">varRange</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="proveit.Conditional.html" title="previous chapter">Conditional</a></li>
+      <li>Next: <a href="proveit.ContextException.html" title="next chapter">ContextException</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="../_sources/api/proveit.Context.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

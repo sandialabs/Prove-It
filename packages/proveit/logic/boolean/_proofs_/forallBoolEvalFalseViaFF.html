@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.boolean.forallBoolEvalFalseViaFF theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.boolean.forallBoolEvalFalseViaFF-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">logic</a>.<a class="ProveItLink" href="../_context_.html">boolean</a>.<a class="ProveItLink" href="../_theorems_.html#forallBoolEvalFalseViaFF">forallBoolEvalFalseViaFF</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.boolean.forallBoolEvalFalseViaFF-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> forallBoolEvalFalseViaFF presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of forallBoolEvalFalseViaFF
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forallBoolEvalFalseViaFF">forallBoolEvalFalseViaFF:</strong> <a class="ProveItLink" href="../__pv_it/e16202739fc567381a54f9c906e8886178c983390/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAf8AAAAUBAMAAABxKyl4AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABS5JREFU
+WMOlWF1oXEUUPu5P9+/upkJA8EEu7YuI2It9qErVBR/yVMiTBAS3aBNQgllpMfZPog+yi9TdF4kI
+oSsKLRXDokjoU5fuFbENsioIRRoWVwUrJMGGJpVqnDMz986ZuzO3KQ6cZXa/e7/zzbdz5s5cAEPL
+9VSEbSHsXQRbu2hiGu4XmjYCRCzoAiRWx2EHTc+zcixGK0Yfv1zXsfMkftp+d2rQAsjPwYFZbG/A
+LpPCF/BjCKEM2Id0Gz9fMRAoxIRifqdsEhu04szW1GtPyZysvSiZ/BitGFfxyw39gj9IwL8A2QcB
+SnxsX3AtfUN+DclRpoCB9wsufi6a/vwQMaGY3ymbxIZthCV/uyXzAKxJJj9GK8aHqHdO99JTAek7
+TNtfAD+qW+GyzYAAKXmKKWDgfTlMx7UZgIgJxfxO2SBWtUoH4JIr80BxrSWY/DitLEp4XVvDM00V
+kNhgwYZwnNz6sdUAiUycUEwBA+/LYeZ32wxAhKL1oHMcDTCIVW1fmUVH5oHPnm0KJj9OK4vilQsX
+5nV8ngRk11mpbECuSm4tlW2kEjmyRzEFDPNkmPCrzQCOEHQiWNmqaIBBrGoNFjNlmQd66Acy+XFa
+MbZqtVM6vpcEr6yzHiQ8cqvj2UgFku9nFFPAsJcOs2s1oKujckLz/E7ZIFY1ttTkbsqckGpd6gkm
+P04rxiSfZ6nG9BOvSvwMCaysAsuZ7ZFbi3yt+24V20AjFYjTlvOUMpyhw1zhl3GCVQ+iCEeT/Jkz
+e1OgmJ8ZMBkURX34KcLqdKkT5PkUKq5g8uO0Yjwn1u7vAb6R+EkSsG96+XFWeZk2ubVQtbkqkAzk
++iFTwHCSDnPJOgOWImjhT7GatLkBUiwUN+QE+WVwVK4JiVvL3UeCnFDGSceZ/DitGBlI4L87xZRK
+fJQENFr8t/vK5Nb0uo1UID/weRVhGKXDrFgNqETRxdEgPzNAioVP/sF1rvs0uJ2Fr+Qc+Vuph/TL
++2fmBJMfpxXD6fGCPQ1QMxmwCfduAHsGPK/EbML/MSA33SQGSLFw5Sj799/7qAWu63wutwFVkifF
+7ujv0IBcH8Xmb0PihKEE0rIGtRJIVVVd/a6RcqTgBfsmyqCVwBhZAw5DFOFoUqCrTVoCQiyk3RrW
+Lmuue+hbuQ3wSB52dWa3YPLjtHK99SP47c6jV8GwCCY21CIUWepMrnIEB1/wIMIwvAgaZ8CKjqb6
+2iIoxMIuOCA38e7+h8bVNiDIk2MGlNbJImjTyvV+iS44ZExdEiVZWQ59DCY7NlKOTMgy0Bm6dJgH
+rQYc1NHFlsqPBnCx8DNbr/KemAHJD+TWt6Xy4F4ge1sw+XFaud4RzJwlj/YxFcm1Wy6Z9XBIbCGi
+pzJ2TLofj0kC4X/SHogwjPEn2+sPzM6yOf9bhEBHCDoZzISqMICLzQ+WG630m7XaO7gGJPgFz2y/
+FKo/v30DCo1NjzP5cVq53iJaN9K2bIXJVjRs56xH0XPiEYRlGm6FCWt4tKvaCBChaFPbCkuxyRac
+HYfDYgY4SRjayFM2P06rGkmlaTkMkcNI2C5bDYgglIH2jccduPthSPbZPBzpwdfcgI6zbM9pOQwB
+PQzJXcTak6CfQOqR7VZWOWQ8DpuRurm/aHXQehzONkMDsluQa5yGLJu0xVOD93v2nJbjMNDjsKnR
+FyLkhYTBi2GVw0yGft1qQN2G8hci+k8PszXAop6w+TFabSO5yyuxa1b513b2SqxodRCRovWV2Fv3
++EoMmR47FqOVxX9VTe4/UiWb+gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/e16202739fc567381a54f9c906e8886178c983390/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

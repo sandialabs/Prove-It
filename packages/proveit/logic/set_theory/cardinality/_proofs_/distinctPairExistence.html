@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.set_theory.cardinality.distinctPairExistence theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.set_theory.cardinality.distinctPairExistence-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../_context_.html">set_theory</a>.<a class="ProveItLink" href="../_context_.html">cardinality</a>.<a class="ProveItLink" href="../_theorems_.html#distinctPairExistence">distinctPairExistence</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.set_theory.cardinality.distinctPairExistence-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> distinctPairExistence presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of distinctPairExistence
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="distinctPairExistence">distinctPairExistence:</strong> <a class="ProveItLink" href="../__pv_it/44709844527d13a8fe733d0d7861417c11ad2eb40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAAWCAMAAAAYVLJmAAAAOVBMVEX///8kJCQNDQ0oKCgQEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAD9T1yxAAAAAXRSTlMAQObY
+ZgAAA0RJREFUWMPVWNmS3CAMdBJzI67//9hwmNvg2c1OqkYPU2D3gGhaQvg43m3IWiqzvWF8afbv
+NczPVHLEWE4OW54a8xYCNDkOzJKd8OPDg3jgx7bYk6cWk8U5rfJrC28jIBv7eQnYhyEZ6dD4osIW
+52RmUIrjAwkw+EEA/apc3m6NinN546sUPokA/iQA2vaIyyqHszhnNAST/PhAAp68HgSgK9yS4pwT
+wbj+RAJQjgCJNUZzjhW0TxgMIZyUrnFxLqlEXL5RrbUy5X9tCiEDgsyLxQLDDQGaJ3NrAtp5ibV7
+QF3gdXKR049sXZ3URvvzO/yWNAHOxzskJ4wtBBDcpMXYUXWkVkJiQIQ+aTdV+zaz31JAP6/GD4CS
+AtQV0YEILB4EoGIKcDH/KV6dC010UcmhX/ZMQEWIpL2aZ0JGouMu7wgApTE287xWPQCynWlwHFfG
+0Sga1vexjTKIwU5ddU6bREI8J6KLakNARYgcfploX1cd0pGXCTBCSYCbeTOJS8BAwCniyugogIHv
+GAwkHYUtAb5YKlzZU3cLmAmoiPIOtCC9zHYEAEbM0qzqu3mpQ4jBBjCEQNrUNj5iDvh1pkxQdOBM
+UctBmhDwTJV6CfDpTrIjoCKad6BzOTHpcCQAOPUrDOg2W3TzIq/3kN+XgCEJQtxUn32U3BaJQZwp
+XXRJ0HOH2+NUMr4joCJEe+Mxq/Q1EoA9gvK4pOHMLvMKFB1cA5pjp/6Bs0NPabOviryT4nqKdeuc
+u7YNaCJ0TUCLyO8ACbWuTGO1eR2D4aA+PRYFVVIeC5Dg/DDvGe9PG0BdZKIE/PlOJUN93T9VBT74
+dL7xxSAsBJgLq9SYPEcCWoSYEgDxtBK6VkBchAzKDamtTjPM6y6eloBXSmG1vSUAv3MunaQgYE1A
+i4hNLJrkZZVSArYEHL5koY6EjdB0nleGH58CjFgAXr4M7S+3zWWoI8BXlLqr5SYCGkTo03a/Txfs
+2BNAGFIone0lcuqoNOw8ZTpF8w3geDjqigC2pX1zHX4wsWjf9Z/vAlMpf4V45/kT4LUPInsBCPn/
+CEDc0i9cb9RX70uLT2LblRl5nV38nwlQItsPfU96z3e57xtetO/6H2l/AakpKtM7jYzfAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/44709844527d13a8fe733d0d7861417c11ad2eb40/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.boolean.conjunction.leftwardCommute theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.boolean.conjunction.leftwardCommute-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../_context_.html">boolean</a>.<a class="ProveItLink" href="../_context_.html">conjunction</a>.<a class="ProveItLink" href="../_theorems_.html#leftwardCommute">leftwardCommute</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.boolean.conjunction.leftwardCommute-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> leftwardCommute presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of leftwardCommute
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="leftwardCommute">leftwardCommute:</strong> <a class="ProveItLink" href="../__pv_it/b616b694383e1576fbaf93a10121f33b3d84b1150/expr.html"><img src="data:image/png;base64,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
+3ui4IJYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/b616b694383e1576fbaf93a10121f33b3d84b1150/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

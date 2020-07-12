@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.QPE.alpha_l_eval theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.QPE.alpha_l_eval-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">physics</a>.<a class="ProveItLink" href="../../_context_.html">quantum</a>.<a class="ProveItLink" href="../_context_.html">QPE</a>.<a class="ProveItLink" href="../_theorems_.html#alpha_l_eval">alpha_l_eval</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.QPE.alpha_l_eval-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> alpha_l_eval presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of alpha_l_eval
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="alpha_l_eval">alpha_l_eval:</strong> <a class="ProveItLink" href="../__pv_it/9a3c81aff27ae296dfbec874136b14c56dd66d560/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/9a3c81aff27ae296dfbec874136b14c56dd66d560/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

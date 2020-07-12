@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for context proveit.logic.boolean.quantification.existential</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-context-proveit.logic.boolean.quantification.existential">Axioms for context <a class="ProveItLink" href="_context_.html">proveit.logic.boolean.quantification.existential</a><a class="anchor-link" href="#Axioms-for-context-proveit.logic.boolean.quantification.existential">&#182;</a></h1><p>Unlike <code>Forall</code>, <code>Exists</code> is not fundamentally defined in the core of <strong>Prove-It</strong>.  It must be defined via its relationship with <code>Forall</code>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when building axiom expressions:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">inBool</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">NotExists</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Naturals</span><span class="p">,</span> <span class="n">NaturalsPos</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">n</span><span class="p">,</span> <span class="n">P</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.boolean.quantification._common_</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">general_exists_Px</span><span class="p">,</span> <span class="n">general_exists_Py</span><span class="p">,</span> <span class="n">general_forall__Py_not_T</span><span class="p">,</span> <span class="n">general_notexists_Px</span><span class="p">)</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for context &#39;proveit.logic.boolean.quantification.existential&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Defines the $\exists$ operation generically for any number of instance variables or conditions by equating it to an equivalent expression in terms of $\forall$</strong>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">existsDef</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> 
+                             <span class="n">Equals</span><span class="p">(</span><span class="n">general_exists_Px</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span><span class="n">general_forall__Py_not_T</span><span class="p">))</span><span class="o">.</span><span class="n">withWrapAfterOperator</span><span class="p">()),</span>
+                  <span class="n">domain</span><span class="o">=</span><span class="n">NaturalsPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="existsDef">existsDef:</strong> <a class="ProveItLink" href="__pv_it/bdfa5485aa24679792b264ad7932ef7e6ea103cb0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The equivalent expression to saying "there exists an instance of $x_1, \ldots, x_l$ variables for which the set of $Q_{1}, \ldots, Q_{k}$ conditions are satisfied such that $P(x_1, \ldots, x_l)$ is true" is to say that the following is <em>not</em> true: "for all occurrences of $x_1, \ldots, x_l$ for which the set of $Q_{1}, \ldots, Q_{k}$ conditions are satisfied,$P(x_1, \ldots, x_l)$ is not equal to <code>TRUE</code>".  That is, "there exists appropriately constrained operands of $P$ for which the $P$ operation is true" means that "it is <em>not</em> the case that all appropriately constrained operands of $P$ cause the $P$ operation to <em>not</em> evaluate to true".  This is expressed in a way that does not assume that the $P$ operation returns a Boolean, exploiting the fact that <code>Equals</code> ($=$) is defined to always evaluate to a Boolean and therefore <code>NotEquals</code> ($\neq$) as well.  Existence in this context means that the $P$ operation evaluates to true for some instance of appropriately constrained operands but it does not mean that the $P$ operation always evaluates to a Boolean under this constraint.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Defines the $\nexists$ operation generically for any number of instance variables or conditions by equating it to the negation of the corresponding $\exists$ operation</strong>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">notExistsDef</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> 
+                                <span class="n">Equals</span><span class="p">(</span><span class="n">general_notexists_Px</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span><span class="n">general_exists_Py</span><span class="p">))</span><span class="o">.</span><span class="n">withWrapAfterOperator</span><span class="p">()),</span>
+                      <span class="n">domain</span><span class="o">=</span><span class="n">NaturalsPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="notExistsDef">notExistsDef:</strong> <a class="ProveItLink" href="__pv_it/7ec466137b81c3b38c0d061a6cc7f0cccc278efb0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

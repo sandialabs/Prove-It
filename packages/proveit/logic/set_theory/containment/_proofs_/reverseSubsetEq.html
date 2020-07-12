@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.set_theory.containment.reverseSubsetEq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.set_theory.containment.reverseSubsetEq-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../_context_.html">set_theory</a>.<a class="ProveItLink" href="../_context_.html">containment</a>.<a class="ProveItLink" href="../_theorems_.html#reverseSubsetEq">reverseSubsetEq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.set_theory.containment.reverseSubsetEq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># allows access to modules in parent context</span>
+<span class="kn">import</span> <span class="nn">proveit</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> reverseSubsetEq presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of reverseSubsetEq
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="reverseSubsetEq">reverseSubsetEq:</strong> <a class="ProveItLink" href="../__pv_it/9d4ff48d5e083eafbd325560dddb29adb24d9d550/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAAAWBAMAAACF/ptXAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAtZJREFU
+SMetVU1oU0EQ/vqS2LyXpO1NQQ+52Yu2EIg/FFv0oBdp8aA3U6hC9WCLgvEXI2h5lUriyV4kEQtK
+lRoQFPHQSg/WKvLUo7SNqIi9tPS/lVJn9r1NNlFbfXQhu5Od3W9mvpmdB7ged9bQB1JAjoURF+BG
+Agi1zUVar/1Je5R+J4A3LI+7QK8g11BGJuqb2Nb3ePxcuKCdoF8f0E2LnnCB/pGnmAU01spoRhuk
+MjSRAYJhVPCSdYF+nqcaCmAs77LxQ0oP60lhVCE03Nt72wW43s7zVcLYmCliWwyrhsP4CiyY5iUX
+6JrgYw44crIkFzS8mX6iDIPAcaBTbNnzgenBVnHGK6/4U1LyJuuinXKXr/vmRqovKiYlxT2IMV2j
+wD4YoipDM3Y+qhCsEtfllTEK8pFpdpD4Hnjp7JYzkLYI3G0uoHuctDYgzaE9o2PQ2A3cW7YPNCOw
+pKIb9RZ81205CvQ7LJcxkJ/80H4qzNiLryXSxmUYo2iscrE1fMb2KQxPTkUP3q/Ny6eBPVDQK8lv
+baqA/tRhkNQ5G13PHRb2wqbQPG7C9oyKfsifwAsnjFlo4yozXO4bZvLgvgv2SqpyZnc/Z/MY72zA
+DqFp3FZtEynRmz3t2OX4NPWhA2pWudxj+afYs9POv07oFZN2VvFEVO4n1AjVO2Crih7KapN47ZCU
+g9YuCeO0fSaLm0Sk3Am6nIrh5+OnfKOOyePiMb68TYpjXUA6q6D31Q0tYa/j7wB0mUMvmTm10hI1
+f3vnD1bGEUjOk/Vv7B2jejJIczcC3W5MKei7oc/Kkq/MwrtY1AlW76IyThyku5Z+A/oS9C0KM16i
+dxnGTQGfzuDWQFEXW3UEZQPyL0BPXvZtxqvpSGuDgp5MoHveQmCIXlPwSiRaaOaFJyx5j8fPFqH3
+lX5OFNn/D1+P1Udnyf/n/4G+5pcvlCrZsP6C3m3SwHoOzzpg/AKxgLaswiY9TAAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/9d4ff48d5e083eafbd325560dddb29adb24d9d550/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

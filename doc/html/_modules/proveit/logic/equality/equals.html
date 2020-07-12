@@ -1,0 +1,1184 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.logic.equality.equals &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.logic.equality.equals</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">asExpression</span><span class="p">,</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">ProofFailure</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">ArgumentExtractionError</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">TransitiveRelation</span><span class="p">,</span> <span class="n">TransitivityException</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.irreducible_value</span> <span class="k">import</span> <span class="n">isIrreducibleValue</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span>
+
+<div class="viewcode-block" id="Equals"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals">[docs]</a><span class="k">class</span> <span class="nc">Equals</span><span class="p">(</span><span class="n">TransitiveRelation</span><span class="p">):</span>
+    <span class="c1"># operator of the Equals operation</span>
+    <span class="n">_operator_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="n">stringFormat</span><span class="o">=</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="vm">__file__</span><span class="p">)</span>        
+    
+    <span class="c1"># Map Expressions to sets of KnownTruths of equalities that involve</span>
+    <span class="c1"># the Expression on the left hand or right hand side.</span>
+    <span class="n">knownEqualities</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="c1"># Map each Expression/Assumptions combination to a single</span>
+    <span class="c1"># knownEquality deemed to effect a simplification of the inner</span>
+    <span class="c1"># expression on the rhs according to some canonical method of</span>
+    <span class="c1"># simplification determined by each operation. For example, the</span>
+    <span class="c1"># Expression expr = Floor(Add(x, two)) under the assumption that x</span>
+    <span class="c1"># is a Real, would have dictionary key (expr, (InSet(x, Real))) with</span>
+    <span class="c1"># an eventual value of something like |- expr = Floor(x) + two.</span>
+    <span class="n">known_simplifications</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="c1"># Specific simplifications that simplify the inner expression to </span>
+    <span class="c1"># IrreducibleValue objects.</span>
+    <span class="n">known_evaluation_sets</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        
+    <span class="c1"># Record found inversions.  See the invert method.</span>
+    <span class="c1"># Maps (lambda_map, rhs) pairs to a list of</span>
+    <span class="c1"># (known_equality, inversion) pairs, recording previous results</span>
+    <span class="c1"># of the invert method for future reference.</span>
+    <span class="n">inversions</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    
+    <span class="c1"># Record the Equals objects being initialized (to avoid infinite</span>
+    <span class="c1"># recursion while automatically deducing an equality is in Booleans).</span>
+    <span class="n">initializing</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="n">TransitiveRelation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Equals</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        # May be better not to be proactive but we need to see if this</span>
+<span class="sd">        # breaks anything.</span>
+<span class="sd">        if self not in Equals.initializing:</span>
+<span class="sd">            Equals.initializing.add(self)</span>
+<span class="sd">            try:</span>
+<span class="sd">                self.deduceInBool() # proactively prove (a=b) in Booleans.</span>
+<span class="sd">            except:</span>
+<span class="sd">                # may fail before the relevent _axioms_ have been generated</span>
+<span class="sd">                pass # and that&#39;s okay            </span>
+<span class="sd">            Equals.initializing.remove(self)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+    
+<div class="viewcode-block" id="Equals.sideEffects"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.sideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">sideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knownTruth</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Record the knownTruth in Equals.knownEqualities, associated from</span>
+<span class="sd">        the left hand side and the right hand side.  This information</span>
+<span class="sd">        may be useful for concluding new equations via transitivity. </span>
+<span class="sd">        If the right hand side is an &quot;irreducible value&quot; (see </span>
+<span class="sd">        isIrreducibleValue), also record it in</span>
+<span class="sd">        Equals.known_evaluation_sets for use when the evaluation</span>
+<span class="sd">        method is called.   Some side-effects derivations are also</span>
+<span class="sd">        attempted depending upon the form of this equality.</span>
+<span class="sd">        If the rhs is an &quot;irreducible value&quot; (see isIrreducibleValue),</span>
+<span class="sd">        also record the knownTruth in the Equals.known_simplifications</span>
+<span class="sd">        and Equals.known_evaluation_sets dictionaries, for use when the</span>
+<span class="sd">        simplification or evaluation method is called. The key for the</span>
+<span class="sd">        known_simplifications dictionary is the specific *combination*</span>
+<span class="sd">        of the lhs expression along with the assumptions in the form</span>
+<span class="sd">        (expr, tuple(sorted(assumptions))); the key for the</span>
+<span class="sd">        known_evaluation_sets dictionary is just the lhs expression</span>
+<span class="sd">        without the specific assumptions. Some side-effects</span>
+<span class="sd">        derivations are also attempted depending upon the form of this</span>
+<span class="sd">        equality.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean._common_</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>
+        <span class="n">Equals</span><span class="o">.</span><span class="n">knownEqualities</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">knownTruth</span><span class="p">)</span>
+        <span class="n">Equals</span><span class="o">.</span><span class="n">knownEqualities</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">knownTruth</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+            <span class="n">assumptions_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">knownTruth</span><span class="o">.</span><span class="n">assumptions</span><span class="p">,</span>
+                                        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">expr</span> <span class="p">:</span> <span class="nb">hash</span><span class="p">(</span><span class="n">expr</span><span class="p">))</span>
+            <span class="n">lhsKey</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">assumptions_sorted</span><span class="p">))</span>
+            <span class="c1"># n.b.: the values in the known_simplifications</span>
+            <span class="c1"># dictionary consist of single KnownTruths not sets</span>
+            <span class="n">Equals</span><span class="o">.</span><span class="n">known_simplifications</span><span class="p">[</span><span class="n">lhsKey</span><span class="p">]</span><span class="o">=</span><span class="n">knownTruth</span>
+            <span class="n">Equals</span><span class="o">.</span><span class="n">known_evaluation_sets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">knownTruth</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+            <span class="c1"># automatically derive the reversed form which is equivalent</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriveReversed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="c1"># derive FALSE given lhs=FALSE and lhs.</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriveContradiction</span>
+            <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="c1"># Use this form after merging in &#39;Expression.proven&#39; commite:</span>
+            <span class="c1">#if self.lhs.proven(): # If lhs is proven using default assumptions.</span>
+            <span class="c1">#    # derive FALSE given lhs=FALSE and lhs.</span>
+            <span class="c1">#    yield self.deriveContradiction</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">):</span>
+            <span class="c1"># automatically derive A from A=TRUE or Not(A) from A=FALSE</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriveViaBooleanEquality</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="s1">&#39;equalitySideEffects&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">sideEffect</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">equalitySideEffects</span><span class="p">(</span><span class="n">knownTruth</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">sideEffect</span></div>
+        
+<div class="viewcode-block" id="Equals.negationSideEffects"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.negationSideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">negationSideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knownTruth</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Side-effect derivations to attempt automatically for a negated</span>
+<span class="sd">        equation.        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduceNotEquals</span> <span class="c1"># A != B from not(A=B)</span></div>
+                
+<div class="viewcode-block" id="Equals.conclude"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.conclude">[docs]</a>    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to conclude the equality various ways:</span>
+<span class="sd">        simple reflexivity (x=x), via an evaluation (if one side is an</span>
+<span class="sd">        irreducible), or via transitivity.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">Iff</span><span class="p">,</span> <span class="n">inBool</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+            <span class="c1"># Trivial x=x</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaReflexivity</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Try to conclude as TRUE or FALSE.</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeBooleanEquality</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">evaluation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">rhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span>
+                        <span class="s2">&quot;Does not match with evaluation: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">evaluation</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">evaluation</span>
+            <span class="k">except</span> <span class="n">EvaluationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> 
+                                   <span class="s2">&quot;Evaluation error: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">evaluation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">rhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span>
+                        <span class="s2">&quot;Does not match with evaluation: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">evaluation</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">deriveReversed</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">EvaluationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> 
+                                   <span class="s2">&quot;Evaluation error: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">proven</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span> <span class="ow">and</span> 
+                <span class="n">Implies</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span><span class="o">.</span><span class="n">proven</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">inBool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span><span class="o">.</span><span class="n">proven</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">inBool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">proven</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)):</span>
+            <span class="c1"># There is mutual implication both sides are known to be</span>
+            <span class="c1"># boolean.  Conclude equality via mutual implication.</span>
+            <span class="k">return</span> <span class="n">Iff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">deriveEquality</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="s1">&#39;deduceEquality&#39;</span><span class="p">):</span>
+            <span class="c1"># If there is a &#39;deduceEquality&#39; method, use that.</span>
+            <span class="c1"># The responsibility then shifts to that method for</span>
+            <span class="c1"># determining what strategies should be attempted</span>
+            <span class="c1"># (with the recommendation that it should not attempt</span>
+            <span class="c1"># multiple non-trivial automation strategies).</span>
+            <span class="n">eq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">deduceEquality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;deduceEquality&#39; not implemented &quot;</span>
+                                 <span class="s2">&quot;correctly; must deduce the &#39;equality&#39; &quot;</span>
+                                 <span class="s2">&quot;that it is given if it can: &quot;</span>
+                                 <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; != &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">eq</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            If there is no &#39;deduceEquality&#39; method, we&#39;ll try</span>
+<span class="sd">            simplifying each side to see if they are equal.</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="c1"># Try to prove equality via simplifying both sides.</span>
+            <span class="n">lhs_simplification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">simplification</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">rhs_simplification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">simplification</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">simplified_lhs</span> <span class="o">=</span> <span class="n">lhs_simplification</span><span class="o">.</span><span class="n">rhs</span>
+            <span class="n">simplified_rhs</span> <span class="o">=</span> <span class="n">rhs_simplification</span><span class="o">.</span><span class="n">rhs</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">simplified_lhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="ow">or</span> <span class="n">simplified_rhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+                    <span class="n">simplified_eq</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">simplified_lhs</span><span class="p">,</span> <span class="n">simplified_rhs</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">Equals</span><span class="o">.</span><span class="n">applyTransitivities</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">lhs_simplification</span><span class="p">,</span> <span class="n">simplified_eq</span><span class="p">,</span> <span class="n">rhs_simplification</span><span class="p">],</span>
+                            <span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> 
+                           <span class="s2">&quot;Unable to automatically conclude by &quot;</span>
+                           <span class="s2">&quot;standard means.  To try to prove this via &quot;</span>
+                           <span class="s2">&quot;transitive implication relations, try &quot;</span>
+                           <span class="s2">&quot;&#39;concludeViaTransitivity&#39;.&quot;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Equals.WeakRelationClass"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.WeakRelationClass">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">WeakRelationClass</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">Equals</span> <span class="c1"># = is the strong and weak form of equality,</span></div>
+<div class="viewcode-block" id="Equals.StrongRelationClass"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.StrongRelationClass">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">StrongRelationClass</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">Equals</span> <span class="c1"># = is the strong and weak form of equality,</span></div>
+    
+<div class="viewcode-block" id="Equals.knownRelationsFromLeft"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.knownRelationsFromLeft">[docs]</a>    <span class="k">def</span> <span class="nf">knownRelationsFromLeft</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        For each KnownTruth that is an Equals involving the given expression on</span>
+<span class="sd">        the left hand side, yield the KnownTruth and the right hand side.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">knownTruth</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">knownEqualities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">expr</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">isSufficient</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="p">(</span><span class="n">knownTruth</span><span class="p">,</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Equals.knownRelationsFromRight"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.knownRelationsFromRight">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">knownRelationsFromRight</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        For each KnownTruth that is an Equals involving the given expression on</span>
+<span class="sd">        the right hand side, yield the KnownTruth and the left hand side.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">knownTruth</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">knownEqualities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">expr</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">isSufficient</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="p">(</span><span class="n">knownTruth</span><span class="p">,</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="Equals.concludeViaReflexivity"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.concludeViaReflexivity">[docs]</a>    <span class="k">def</span> <span class="nf">concludeViaReflexivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Prove and return self of the form x = x.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">equalsReflexivity</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="k">return</span> <span class="n">equalsReflexivity</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">})</span></div>
+                
+<div class="viewcode-block" id="Equals.deriveReversed"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deriveReversed">[docs]</a>    <span class="k">def</span> <span class="nf">deriveReversed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From x = y derive y = x.  This derivation is an automatic side-effect.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">equalsReversal</span>
+        <span class="k">return</span> <span class="n">equalsReversal</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Equals.reversed"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.reversed">[docs]</a>    <span class="k">def</span> <span class="nf">reversed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return an Equals expression with the right side and left side reversed</span>
+<span class="sd">        from this one.  This is not a derivation: see deriveReversed().</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">Equals</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Equals.deduceNotEquals"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deduceNotEquals">[docs]</a>    <span class="k">def</span> <span class="nf">deduceNotEquals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce x != y assuming not(x = y), where self is x=y.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.not_equals</span> <span class="k">import</span> <span class="n">NotEquals</span>
+        <span class="k">return</span> <span class="n">NotEquals</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">concludeAsFolded</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Equals.deduceNegated"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deduceNegated">[docs]</a>    <span class="k">def</span> <span class="nf">deduceNegated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean.conjunction._theorems_</span> <span class="k">import</span> <span class="n">falsifiedAndIfNotRight</span><span class="p">,</span> <span class="n">falsifiedAndIfNotLeft</span><span class="p">,</span> <span class="n">falsifiedAndIfNeither</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Deduce Not(A and B) from Not(A).</span>
+            <span class="k">return</span> <span class="n">falsifiedAndIfNotRight</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">falsifiedAndIfNotLeft</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">falsifiedAndIfNeither</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+                        
+<div class="viewcode-block" id="Equals.applyTransitivity"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.applyTransitivity">[docs]</a>    <span class="k">def</span> <span class="nf">applyTransitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From x = y (self) and y = z (other) derive and return x = z.</span>
+<span class="sd">        Also works more generally as long as there is a common side to the equations.</span>
+<span class="sd">        If &quot;other&quot; is not an equality, reverse roles and call &#39;applyTransitivity&#39;</span>
+<span class="sd">        from the &quot;other&quot; side.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">equalsTransitivity</span>
+        <span class="n">other</span> <span class="o">=</span> <span class="n">asExpression</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Equals</span><span class="p">):</span>
+            <span class="c1"># If the other relation is not &quot;Equals&quot;, call from the &quot;other&quot; side.</span>
+            <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">otherEquality</span> <span class="o">=</span> <span class="n">other</span>
+        <span class="c1"># We can assume that y=x will be a KnownTruth if x=y is a KnownTruth because it is derived as a side-effect.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">otherEquality</span><span class="o">.</span><span class="n">lhs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">equalsTransitivity</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span><span class="n">otherEquality</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">otherEquality</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">equalsTransitivity</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span><span class="n">otherEquality</span><span class="o">.</span><span class="n">lhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">otherEquality</span><span class="o">.</span><span class="n">lhs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">equalsTransitivity</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span><span class="n">otherEquality</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">otherEquality</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">equalsTransitivity</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span><span class="n">otherEquality</span><span class="o">.</span><span class="n">lhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TransitivityException</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="s1">&#39;Transitivity cannot be applied unless there is something in common in the equalities: </span><span class="si">%s</span><span class="s1"> vs </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="p">)))</span></div>
+        
+<div class="viewcode-block" id="Equals.deriveViaBooleanEquality"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deriveViaBooleanEquality">[docs]</a>    <span class="k">def</span> <span class="nf">deriveViaBooleanEquality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From A = TRUE derive A, or from A = FALSE derive Not(A).  This derivation</span>
+<span class="sd">        is an automatic side-effect.</span>
+<span class="sd">        Note, see deriveStmtEqTrue or Not.equateNegatedToFalse for the reverse process.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>        
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean._axioms_</span> <span class="k">import</span> <span class="n">eqTrueElim</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Not</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">eqTrueElim</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span> <span class="c1"># A</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span><span class="o">.</span><span class="n">concludeViaFalsifiedNegation</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span> <span class="c1"># Not(A)</span></div>
+        
+<div class="viewcode-block" id="Equals.deriveContradiction"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deriveContradiction">[docs]</a>    <span class="k">def</span> <span class="nf">deriveContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From A=FALSE, and assuming A, derive FALSE.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">FALSE</span>        
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">contradictionViaFalsification</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">contradictionViaFalsification</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Equals.deriveContradiction is only applicable if the right-hand-side is FALSE&#39;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Equals.affirmViaContradiction"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.affirmViaContradiction">[docs]</a>    <span class="k">def</span> <span class="nf">affirmViaContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A=FALSE), derive the conclusion provided that the negated conclusion</span>
+<span class="sd">        implies both (A=FALSE) as well as A, and the conclusion is a Boolean.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean.implication</span> <span class="k">import</span> <span class="n">affirmViaContradiction</span>
+        <span class="k">return</span> <span class="n">affirmViaContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Equals.denyViaContradiction"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.denyViaContradiction">[docs]</a>    <span class="k">def</span> <span class="nf">denyViaContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A=FALSE), derive the negated conclusion provided that the conclusion</span>
+<span class="sd">        implies both (A=FALSE) as well as A, and the conclusion is a Boolean.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean.implication</span> <span class="k">import</span> <span class="n">denyViaContradiction</span>
+        <span class="k">return</span> <span class="n">denyViaContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Equals.concludeBooleanEquality"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.concludeBooleanEquality">[docs]</a>    <span class="k">def</span> <span class="nf">concludeBooleanEquality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">Not</span>        
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean._axioms_</span> <span class="k">import</span> <span class="n">eqTrueIntro</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">eqTrueIntro</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">Not</span><span class="p">):</span>
+                <span class="n">evaluation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">evaluation</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span><span class="o">.</span><span class="n">equateNegatedToFalse</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">TRUE</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Equals</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span><span class="o">.</span><span class="n">concludeBooleanEquality</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveReversed</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="s2">&quot;May only conclude via boolean equality if one side of the equality is TRUE or FALSE&quot;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Equals.deriveIsInSingleton"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deriveIsInSingleton">[docs]</a>    <span class="k">def</span> <span class="nf">deriveIsInSingleton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (x = y), derive (x in {y}).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.set_theory.enumeration._theorems_</span> <span class="k">import</span> <span class="n">foldSingleton</span>
+        <span class="k">return</span> <span class="n">foldSingleton</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+    
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_lambdaExpr</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">expr_being_replaced</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">InnerExpr</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">InnerExpr</span><span class="p">):</span>
+            <span class="n">lambda_map</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">repl_lambda</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">):</span>
+            <span class="c1"># as a default, do a global replacement</span>
+            <span class="n">lambda_map</span> <span class="o">=</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">globalRepl</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">expr_being_replaced</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;When substituting, expecting a single &quot;</span>
+                             <span class="s2">&quot;&#39;lambda_map&#39; parameter entry which may &quot;</span>
+                             <span class="s2">&quot;be a single parameter or a range; got &quot;</span>
+                             <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> as &#39;lambda_map&#39;&quot;</span><span class="o">%</span><span class="n">lambda_map</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">one</span>
+            <span class="k">if</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start_index</span> <span class="o">!=</span> <span class="n">one</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;When substituting a range, expecting &quot;</span>
+                                 <span class="s2">&quot;the &#39;lambda_map&#39; parameter range to &quot;</span>
+                                 <span class="s2">&quot;have a starting index of 1; got &quot;</span>
+                                 <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> as &#39;lambda_map&#39;&quot;</span><span class="o">%</span><span class="n">lambda_map</span><span class="p">)</span>                      
+        <span class="k">return</span> <span class="n">lambda_map</span>
+    
+<div class="viewcode-block" id="Equals.substitution"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.substitution">[docs]</a>    <span class="k">def</span> <span class="nf">substitution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From x = y, and given f(x), derive f(x)=f(y).</span>
+<span class="sd">        f(x) is provided via lambdaMap as a Lambda expression or an </span>
+<span class="sd">        object that returns a Lambda expression when calling lambdaMap()</span>
+<span class="sd">        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in</span>
+<span class="sd">        particular), or, if neither of those, an expression to upon</span>
+<span class="sd">        which to perform a global replacement of self.lhs.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">substitution</span>
+        
+        <span class="n">lambda_map</span> <span class="o">=</span> <span class="n">Equals</span><span class="o">.</span><span class="n">_lambdaExpr</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">):</span>
+            <span class="c1"># We must use operands_substitution for ExprTuple</span>
+            <span class="c1"># substitution.</span>
+            <span class="kn">from</span> <span class="nn">proveit.core_expr_types.operations._axioms_</span> <span class="k">import</span> \
+                <span class="n">operands_substitution</span>
+            <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">one</span>
+            <span class="k">assert</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start_index</span> <span class="o">==</span> <span class="n">one</span>
+            <span class="n">n_sub</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">end_index</span>
+            <span class="k">return</span> <span class="n">operands_substitution</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="n">n_sub</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> 
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1"># Regular single-operand substitution:</span>
+        <span class="k">return</span> <span class="n">substitution</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">f</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> 
+                                        <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Equals.subLeftSideInto"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.subLeftSideInto">[docs]</a>    <span class="k">def</span> <span class="nf">subLeftSideInto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From x = y, and given P(y), derive P(x) assuming P(y).  </span>
+<span class="sd">        P(x) is provided via lambdaMap as a Lambda expression or an </span>
+<span class="sd">        object that returns a Lambda expression when calling lambdaMap()</span>
+<span class="sd">        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in</span>
+<span class="sd">        particular), or, if neither of those, an expression to upon</span>
+<span class="sd">        which to perform a global replacement of self.rhs.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">subLeftSideInto</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">substituteTruth</span><span class="p">,</span> <span class="n">substituteInTrue</span><span class="p">,</span> <span class="n">substituteFalsehood</span><span class="p">,</span> <span class="n">substituteInFalse</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>
+        <span class="n">lambda_map</span> <span class="o">=</span> <span class="n">Equals</span><span class="o">.</span><span class="n">_lambdaExpr</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">):</span>
+            <span class="c1"># We must use sub_in_left_operands for ExprTuple</span>
+            <span class="c1"># substitution.</span>
+            <span class="kn">from</span> <span class="nn">proveit.logic.equality._theorems_</span> <span class="k">import</span> \
+                <span class="n">sub_in_left_operands</span>
+            <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">one</span>
+            <span class="k">assert</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start_index</span> <span class="o">==</span> <span class="n">one</span>
+            <span class="n">n_sub</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">end_index</span>
+            <span class="k">return</span> <span class="n">sub_in_left_operands</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="n">n_sub</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> 
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># try some alternative proofs that may be shorter, if they </span>
+            <span class="c1"># are usable</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span> 
+                <span class="c1"># substituteTruth may provide a shorter proof option</span>
+                <span class="n">substituteTruth</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                                           <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span> 
+                <span class="c1"># substituteInTrue may provide a shorter proof option</span>
+                <span class="n">substituteInTrue</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>            
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span> 
+                <span class="c1"># substituteFalsehood may provide a shorter proof option</span>
+                <span class="n">substituteFalsehood</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                                               <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>            
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span> 
+                <span class="c1"># substituteInFalse may provide a shorter proof option</span>
+                <span class="n">substituteInFalse</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                                             <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>           
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span> 
+        <span class="k">return</span> <span class="n">subLeftSideInto</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Equals.subRightSideInto"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.subRightSideInto">[docs]</a>    <span class="k">def</span> <span class="nf">subRightSideInto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From x = y, and given P(x), derive P(y) assuming P(x).  </span>
+<span class="sd">        P(x) is provided via lambdaMap as a Lambda expression or an </span>
+<span class="sd">        object that returns a Lambda expression when calling lambdaMap()</span>
+<span class="sd">        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in</span>
+<span class="sd">        particular), or, if neither of those, an expression to upon</span>
+<span class="sd">        which to perform a global replacement of self.lhs.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">subRightSideInto</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">substituteTruth</span><span class="p">,</span> <span class="n">substituteInTrue</span><span class="p">,</span> <span class="n">substituteFalsehood</span><span class="p">,</span> <span class="n">substituteInFalse</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>
+        <span class="n">lambda_map</span> <span class="o">=</span> <span class="n">Equals</span><span class="o">.</span><span class="n">_lambdaExpr</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">):</span>
+            <span class="c1"># We must use sub_in_right_operands for ExprTuple</span>
+            <span class="c1"># substitution.</span>
+            <span class="kn">from</span> <span class="nn">proveit.logic.equality._theorems_</span> <span class="k">import</span> \
+                <span class="n">sub_in_right_operands</span>
+            <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">one</span>
+            <span class="k">assert</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start_index</span> <span class="o">==</span> <span class="n">one</span>
+            <span class="n">n_sub</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">end_index</span>
+            <span class="k">return</span> <span class="n">sub_in_right_operands</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="n">n_sub</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> 
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>        
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># try some alternative proofs that may be shorter, if they are usable</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span> 
+                <span class="c1"># substituteTruth may provide a shorter proof options</span>
+                <span class="n">substituteTruth</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                                           <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span> 
+                <span class="c1"># substituteInTrue may provide a shorter proof options</span>
+                <span class="n">substituteInTrue</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>            
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span> 
+                <span class="c1"># substituteFalsehood may provide a shorter proof options</span>
+                <span class="n">substituteFalsehood</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                                               <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>            
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span> 
+                <span class="c1"># substituteInFalse may provide a shorter proof options</span>
+                <span class="n">substituteInFalse</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                                             <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>            
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">subRightSideInto</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span><span class="n">lambda_map</span><span class="p">},</span> 
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Equals.deriveRightViaEquivalence"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deriveRightViaEquivalence">[docs]</a>    <span class="k">def</span> <span class="nf">deriveRightViaEquivalence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From A = B, derive B (the Right-Hand-Side) assuming A.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">rhsViaEquivalence</span>
+        <span class="k">return</span> <span class="n">rhsViaEquivalence</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">P</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">Q</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Equals.deriveLeftViaEquivalence"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deriveLeftViaEquivalence">[docs]</a>    <span class="k">def</span> <span class="nf">deriveLeftViaEquivalence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From A = B, derive A (the Right-Hand-Side) assuming B.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">lhsViaEquivalence</span>
+        <span class="k">return</span> <span class="n">lhsViaEquivalence</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">P</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">Q</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Equals.otherSide"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.otherSide">[docs]</a>    <span class="k">def</span> <span class="nf">otherSide</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns the &#39;other&#39; side of the of the equation if the given expr is on one side.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">expr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="k">elif</span> <span class="n">expr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The given expression is expected to be one of the sides of the equation&#39;</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Equals.deduceInBool"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.deduceInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deduceInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce and return that this equality statement is in the set of Booleans.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">equalityInBool</span>
+        <span class="k">return</span> <span class="n">equalityInBool</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">})</span></div>
+        
+<div class="viewcode-block" id="Equals.evaluation"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.evaluation">[docs]</a>    <span class="k">def</span> <span class="nf">evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given operands that may be evaluated to irreducible values that</span>
+<span class="sd">        may be compared, or if there is a known evaluation of this</span>
+<span class="sd">        equality, derive and return this expression equated to</span>
+<span class="sd">        TRUE or FALSE.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">automation</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+                <span class="c1"># prove equality is true by reflexivity</span>
+                <span class="k">return</span> <span class="n">evaluateTruth</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="p">[])</span>
+            <span class="k">if</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span> <span class="ow">and</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+                <span class="c1"># Irreducible values must know how to evaluate the equality</span>
+                <span class="c1"># between each other, where appropriate.</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">evalEquality</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TransitiveRelation</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Operation</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="Equals.invert"><a class="viewcode-back" href="../../../../api/proveit.logic.Equals.html#proveit.logic.Equals.invert">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">invert</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">rhs</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given some x -&gt; f(x) map and a right-hand-side, find the</span>
+<span class="sd">        x for which f(x) = rhs amongst known equalities under the</span>
+<span class="sd">        given assumptions.  Return this x if one is found; return</span>
+<span class="sd">        None otherwise.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">assumptionsSet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span> 
+        <span class="k">if</span> <span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">inversions</span><span class="p">:</span>
+            <span class="c1"># Previous solution(s) exist.  Use one if the assumptions are sufficient.</span>
+            <span class="k">for</span> <span class="n">known_equality</span><span class="p">,</span> <span class="n">inversion</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">inversions</span><span class="p">[(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)]:</span>
+                <span class="k">if</span> <span class="n">known_equality</span><span class="o">.</span><span class="n">isSufficient</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">inversion</span>
+        <span class="c1"># The mapping may be a trivial identity: f(x) = f(x)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">extractArgument</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span>
+            <span class="c1"># Found a trivial inversion.  Store it for future reference.</span>
+            <span class="n">known_equality</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+            <span class="n">Equals</span><span class="o">.</span><span class="n">inversions</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">rhs</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">known_equality</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">x</span> <span class="c1"># Return the found inversion.</span>
+        <span class="k">except</span> <span class="n">ArgumentExtractionError</span><span class="p">:</span>
+            <span class="k">pass</span> <span class="c1"># well, it was worth a try</span>
+        <span class="c1"># Search among known relations for a solution.</span>
+        <span class="k">for</span> <span class="n">known_equality</span><span class="p">,</span> <span class="n">lhs</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">knownRelationsFromRight</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">extractArgument</span><span class="p">(</span><span class="n">lhs</span><span class="p">)</span>
+                <span class="c1"># Found an inversion.  Store it for future reference.</span>
+                <span class="n">Equals</span><span class="o">.</span><span class="n">inversions</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">rhs</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">known_equality</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">x</span> <span class="c1"># Return the found inversion.</span>
+            <span class="k">except</span> <span class="n">ArgumentExtractionError</span><span class="p">:</span>
+                <span class="k">pass</span> <span class="c1"># not a match.  keep looking.</span>
+        <span class="k">raise</span> <span class="n">InversionError</span><span class="p">(</span><span class="s2">&quot;No inversion found to map </span><span class="si">%s</span><span class="s2"> onto </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lambda_map</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">rhs</span><span class="p">)))</span></div></div>
+    
+<div class="viewcode-block" id="reduceOperands"><a class="viewcode-back" href="../../../../api/proveit.logic.reduceOperands.html#proveit.logic.reduceOperands">[docs]</a><span class="k">def</span> <span class="nf">reduceOperands</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> <span class="n">inPlace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mustEvaluate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Attempt to return an InnerExpr object that is provably equivalent to</span>
+<span class="sd">    the given innerExpr but with simplified operands at the </span>
+<span class="sd">    inner-expression level. </span>
+<span class="sd">    If inPlace is True, the top-level expression must be a KnownTruth</span>
+<span class="sd">    and the simplified KnownTruth is derived instead of an equivalence</span>
+<span class="sd">    relation.</span>
+<span class="sd">    If mustEvaluate is True, the simplified</span>
+<span class="sd">    operands must be irreducible values (see isIrreducibleValue).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Any of the operands that can be simplified must be replaced with </span>
+    <span class="c1"># their simplification.</span>
+    <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">InnerExpr</span><span class="p">,</span> <span class="n">ExprRange</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> <span class="n">InnerExpr</span><span class="p">),</span> \
+        <span class="s2">&quot;Expecting &#39;innerExpr&#39; to be of type &#39;InnerExpr&#39;&quot;</span>
+    <span class="n">inner</span> <span class="o">=</span> <span class="n">innerExpr</span><span class="o">.</span><span class="n">exprHierarchy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">allReduced</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">operand</span> <span class="ow">in</span> <span class="n">inner</span><span class="o">.</span><span class="n">operands</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="n">operand</span><span class="p">)</span> <span class="ow">and</span> 
+                    <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">)):</span>
+                <span class="c1"># The operand isn&#39;t already irreducible, so try to</span>
+                <span class="c1"># simplify it.</span>
+                <span class="k">if</span> <span class="n">mustEvaluate</span><span class="p">:</span>
+                    <span class="n">operandEval</span> <span class="o">=</span> <span class="n">operand</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">operandEval</span> <span class="o">=</span> <span class="n">operand</span><span class="o">.</span><span class="n">simplification</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mustEvaluate</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="n">operandEval</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Evaluations expected to be irreducible values&#39;</span>
+                    <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">operandEval</span><span class="o">.</span><span class="n">lhs</span> <span class="o">!=</span> <span class="n">operandEval</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+                    <span class="c1"># Compose map to replace all instances of the </span>
+                    <span class="c1"># operand within the inner expression.</span>
+                    <span class="n">global_repl</span> <span class="o">=</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">globalRepl</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">operand</span><span class="p">)</span>
+                    <span class="n">lambdaMap</span> <span class="o">=</span> <span class="n">innerExpr</span><span class="o">.</span><span class="n">repl_lambda</span><span class="p">()</span><span class="o">.</span><span class="n">compose</span><span class="p">(</span><span class="n">global_repl</span><span class="p">)</span>
+                    <span class="c1"># substitute in the evaluated value</span>
+                    <span class="k">if</span> <span class="n">inPlace</span><span class="p">:</span>
+                        <span class="n">subbed</span> <span class="o">=</span> <span class="n">operandEval</span><span class="o">.</span><span class="n">subRightSideInto</span><span class="p">(</span><span class="n">lambdaMap</span><span class="p">)</span>
+                        <span class="n">innerExpr</span> <span class="o">=</span> <span class="n">InnerExpr</span><span class="p">(</span><span class="n">subbed</span><span class="p">,</span> <span class="n">innerExpr</span><span class="o">.</span><span class="n">innerExprPath</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">sub</span> <span class="o">=</span> <span class="n">operandEval</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span><span class="n">lambdaMap</span><span class="p">)</span>
+                        <span class="n">innerExpr</span> <span class="o">=</span> <span class="n">InnerExpr</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">innerExpr</span><span class="o">.</span><span class="n">innerExprPath</span><span class="p">)</span>
+                        <span class="n">substitutions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span>
+                    <span class="n">allReduced</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="c1"># Start over since there may have been multiple </span>
+                    <span class="c1"># substitutions:</span>
+                    <span class="k">break</span>
+        <span class="k">if</span> <span class="n">allReduced</span><span class="p">:</span> <span class="k">break</span> <span class="c1"># done!</span>
+        <span class="n">inner</span> <span class="o">=</span> <span class="n">innerExpr</span><span class="o">.</span><span class="n">exprHierarchy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">inPlace</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">substitutions</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># When there have been multiple substitutions, apply</span>
+        <span class="c1"># transtivity over the chain of substitutions to equate the</span>
+        <span class="c1"># end-points.</span>
+        <span class="n">Equals</span><span class="o">.</span><span class="n">applyTransitivities</span><span class="p">(</span><span class="n">substitutions</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">innerExpr</span></div>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">def concludeViaReduction(expr, assumptions):</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    Attempts to prove that the given expression is TRUE under the</span>
+<span class="sd">    given assumptions via evaluating that the expression is equal to true.</span>
+<span class="sd">    Returns the resulting KnownTruth if successful.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    from proveit.lambda_map import SubExprRepl</span>
+<span class="sd">    if not isinstance(expr, Operation):</span>
+<span class="sd">        # Can only really do reduction on an Operation.  But we can</span>
+<span class="sd">        # try to do a proof by evaluation.</span>
+<span class="sd">        expr.evaluation(assumptions)</span>
+<span class="sd">        return expr.prove(assumptions)</span>
+<span class="sd">    # reduce the operands</span>
+<span class="sd">    reducedExpr = reduceOperands(expr, assumptions)</span>
+<span class="sd">    # prove the reduced version</span>
+<span class="sd">    knownTruth = reducedExpr.prove(assumptions)</span>
+<span class="sd">    # now rebuild the original via subLeftSideInto (for a shorter proof than substitutions)</span>
+<span class="sd">    for k, operand in enumerate(expr.operands):</span>
+<span class="sd">        # for each operand, replace it with the original</span>
+<span class="sd">        subExprRepl = SubExprRepl(knownTruth).operands[k]</span>
+<span class="sd">        knownTruth = operand.evaluation(assumptions=assumptions).subLeftSideInto(subExprRepl, assumptions)</span>
+<span class="sd">    assert knownTruth.expr == expr, &#39;Equivalence substitutions did not work out as they should have&#39;</span>
+<span class="sd">    return knownTruth</span>
+<span class="sd">&quot;&quot;&quot;</span>
+            
+<div class="viewcode-block" id="defaultSimplification"><a class="viewcode-back" href="../../../../api/proveit.logic.defaultSimplification.html#proveit.logic.defaultSimplification">[docs]</a><span class="k">def</span> <span class="nf">defaultSimplification</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> <span class="n">inPlace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mustEvaluate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                          <span class="n">operandsOnly</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> 
+                          <span class="n">automation</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Default attempt to simplify the given inner expression under the </span>
+<span class="sd">    given assumptions.  If successful, returns a KnownTruth (using a </span>
+<span class="sd">    subset of the given assumptions) that expresses an equality between </span>
+<span class="sd">    the expression (on the left) and one with a simplified form for the </span>
+<span class="sd">    &quot;inner&quot; part (in some canonical sense determined by the Operation).</span>
+<span class="sd">    If inPlace is True, the top-level expression must be a KnownTruth</span>
+<span class="sd">    and the simplified KnownTruth is derived instead of an equivalence</span>
+<span class="sd">    relation.</span>
+<span class="sd">    If mustEvaluate=True, the simplified form must be an irreducible </span>
+<span class="sd">    value (see isIrreducibleValue).  Specifically, this method checks to</span>
+<span class="sd">    see if an appropriate simplification/evaluation has already been </span>
+<span class="sd">    proven.  If not, but if it is an Operation, call the </span>
+<span class="sd">    simplification/evaluation method on all operands, make these </span>
+<span class="sd">    substitions, then call simplification/evaluation on the expression </span>
+<span class="sd">    with operands substituted for simplified forms.  It also treats, </span>
+<span class="sd">    as a special case, evaluating the expression to be true if it is in </span>
+<span class="sd">    the set of assumptions [also see KnownTruth.evaluation and </span>
+<span class="sd">    evaluateTruth].  If operandsOnly = True, only simplify the operands</span>
+<span class="sd">    of the inner expression.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># among other things, convert any assumptions=None</span>
+    <span class="c1"># to assumptions=() to avoid len(None) errors</span>
+    <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>
+    <span class="kn">from</span> <span class="nn">proveit.logic.boolean._axioms_</span> <span class="k">import</span> <span class="n">trueAxiom</span>
+    <span class="n">topLevel</span> <span class="o">=</span> <span class="n">innerExpr</span><span class="o">.</span><span class="n">exprHierarchy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">inner</span> <span class="o">=</span> <span class="n">innerExpr</span><span class="o">.</span><span class="n">exprHierarchy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">operandsOnly</span><span class="p">:</span>
+        <span class="c1"># Just do the reduction of the operands at the level below the </span>
+        <span class="c1"># &quot;inner expression&quot;</span>
+        <span class="n">reducedInnerExpr</span> <span class="o">=</span> <span class="n">reduceOperands</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> <span class="n">inPlace</span><span class="p">,</span> <span class="n">mustEvaluate</span><span class="p">,</span> 
+                                          <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inPlace</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">reducedInnerExpr</span><span class="o">.</span><span class="n">exprHierarchy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> 
+                                                               <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">eq</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">topLevel</span><span class="p">,</span> <span class="n">reducedInnerExpr</span><span class="o">.</span><span class="n">exprHierarchy</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="kc">False</span>
+    <span class="k">def</span> <span class="nf">innerSimplification</span><span class="p">(</span><span class="n">innerEquivalence</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inPlace</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">innerEquivalence</span><span class="o">.</span><span class="n">subRightSideInto</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> 
+                                                      <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">innerEquivalence</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> 
+                                              <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="n">inner</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Equals</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">inner</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+    <span class="n">assumptionsSet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+    
+    <span class="c1"># See if the expression is already known to be true as a special</span>
+    <span class="c1"># case.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">inner</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">trueEval</span> <span class="o">=</span> <span class="n">evaluateTruth</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">)</span> <span class="c1"># A=TRUE given A</span>
+        <span class="k">if</span> <span class="n">inner</span><span class="o">==</span><span class="n">topLevel</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">inPlace</span><span class="p">:</span> <span class="k">return</span> <span class="n">trueAxiom</span>
+            <span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="n">trueEval</span>
+        <span class="k">return</span> <span class="n">innerSimplification</span><span class="p">(</span><span class="n">trueEval</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="c1"># See if the negation of the expression is already known to be true </span>
+    <span class="c1"># as a special case.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">inner</span><span class="o">.</span><span class="n">disprove</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">falseEval</span> <span class="o">=</span> <span class="n">evaluateFalsehood</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">)</span> <span class="c1"># A=FALSE given Not(A)</span>
+        <span class="k">return</span> <span class="n">innerSimplification</span><span class="p">(</span><span class="n">falseEval</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># ================================================================ #</span>
+    <span class="c1"># See if the expression already has a proven simplification        #</span>
+    <span class="c1"># ================================================================ #</span>
+
+    <span class="c1"># construct the key for the known_simplifications dictionary</span>
+    <span class="n">assumptions_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">expr</span> <span class="p">:</span> <span class="nb">hash</span><span class="p">(</span><span class="n">expr</span><span class="p">))</span>
+    <span class="n">known_simplifications_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">assumptions_sorted</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">mustEvaluate</span> <span class="ow">and</span> <span class="n">inner</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">known_evaluation_sets</span><span class="p">):</span>
+        <span class="n">evaluations</span> <span class="o">=</span> <span class="n">Equals</span><span class="o">.</span><span class="n">known_evaluation_sets</span><span class="p">[</span><span class="n">inner</span><span class="p">]</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">knownTruth</span> <span class="ow">in</span> <span class="n">evaluations</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">isSufficient</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                <span class="c1"># Found existing evaluation suitable for the assumptions</span>
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">knownTruth</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Return the &quot;best&quot; candidate with respect to fewest number</span>
+            <span class="c1"># of steps.</span>
+            <span class="n">min_key</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">knownTruth</span><span class="p">:</span> <span class="n">knownTruth</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span><span class="o">.</span><span class="n">numSteps</span><span class="p">()</span>
+            <span class="n">simplification</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">min_key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">innerSimplification</span><span class="p">(</span><span class="n">simplification</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="p">(</span><span class="ow">not</span> <span class="n">mustEvaluate</span> <span class="ow">and</span>
+          <span class="n">known_simplifications_key</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">known_simplifications</span><span class="p">):</span>
+        <span class="n">simplification</span> <span class="o">=</span> <span class="n">Equals</span><span class="o">.</span><span class="n">known_simplifications</span><span class="p">[</span><span class="n">known_simplifications_key</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">innerSimplification</span><span class="p">(</span><span class="n">simplification</span><span class="p">)</span>
+
+    <span class="c1"># ================================================================ #</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">automation</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Unknown evaluation (without automation): &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">SimplificationError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                
+    <span class="c1"># See if the expression is equal to something that has an evaluation</span>
+    <span class="c1"># or is already known to be true.</span>
+    <span class="k">if</span> <span class="n">inner</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">knownEqualities</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">knownEq</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">knownEqualities</span><span class="p">[</span><span class="n">inner</span><span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">knownEq</span><span class="o">.</span><span class="n">isSufficient</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">inPlace</span><span class="p">:</span> 
+                        <span class="c1"># Should first substitute in the known </span>
+                        <span class="c1"># equivalence then simplify that.</span>
+                        <span class="k">if</span> <span class="n">inner</span> <span class="o">==</span> <span class="n">knownEq</span><span class="o">.</span><span class="n">lhs</span><span class="p">:</span>
+                            <span class="n">knownEq</span><span class="o">.</span><span class="n">subRightSideInto</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">inner</span> <span class="o">==</span> <span class="n">knownEq</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+                            <span class="n">knownEq</span><span class="o">.</span><span class="n">subLeftSideInto</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+                    <span class="c1"># Use mustEvaluate=True.  Simply being equal to </span>
+                    <span class="c1"># something simplified isn&#39;t necessarily the </span>
+                    <span class="c1"># appropriate simplification for &quot;inner&quot; itself.</span>
+                    <span class="n">alt_inner</span> <span class="o">=</span> <span class="n">knownEq</span><span class="o">.</span><span class="n">otherSide</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span><span class="o">.</span><span class="n">innerExpr</span><span class="p">()</span>
+                    <span class="n">equivSimp</span> <span class="o">=</span> \
+                        <span class="n">defaultSimplification</span><span class="p">(</span><span class="n">alt_inner</span><span class="p">,</span>  <span class="n">inPlace</span><span class="o">=</span><span class="n">inPlace</span><span class="p">,</span> 
+                                            <span class="n">mustEvaluate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> 
+                                            <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">inPlace</span><span class="p">:</span>
+                        <span class="c1"># Returns KnownTruth with simplification:</span>
+                        <span class="k">return</span> <span class="n">equivSimp</span> 
+                    <span class="n">innerEquiv</span> <span class="o">=</span> <span class="n">knownEq</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="n">equivSimp</span><span class="p">,</span> 
+                                                           <span class="n">assumptions</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">inner</span> <span class="o">==</span> <span class="n">topLevel</span><span class="p">:</span> <span class="k">return</span> <span class="n">innerEquiv</span>
+                    <span class="k">return</span> <span class="n">innerEquiv</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> 
+                                                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">SimplificationError</span><span class="p">:</span>
+                <span class="k">pass</span>     
+    <span class="c1"># try to simplify via reduction</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">Operation</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mustEvaluate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="s1">&#39;Unknown evaluation: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">inner</span><span class="p">),</span>
+                                  <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># don&#39;t know how to simplify, so keep it the same</span>
+            <span class="k">return</span> <span class="n">innerSimplification</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">inner</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">())</span>
+    <span class="n">reducedInnerExpr</span> <span class="o">=</span> <span class="n">reduceOperands</span><span class="p">(</span><span class="n">innerExpr</span><span class="p">,</span> <span class="n">inPlace</span><span class="p">,</span> <span class="n">mustEvaluate</span><span class="p">,</span> 
+                                      <span class="n">assumptions</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">reducedInnerExpr</span> <span class="o">==</span> <span class="n">innerExpr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mustEvaluate</span><span class="p">:</span>
+            <span class="c1"># Since it wasn&#39;t irreducible to begin with, it must change </span>
+            <span class="c1"># in order to evaluate.</span>
+            <span class="k">raise</span> <span class="n">SimplificationError</span><span class="p">(</span><span class="s1">&#39;Unable to evaluate: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">inner</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SimplificationError</span><span class="p">(</span><span class="s1">&#39;Unable to simplify: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">inner</span><span class="p">))</span>
+    <span class="c1"># evaluate/simplify the reduced inner expression</span>
+    <span class="n">inner</span> <span class="o">=</span> <span class="n">reducedInnerExpr</span><span class="o">.</span><span class="n">exprHierarchy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">mustEvaluate</span><span class="p">:</span>
+        <span class="n">innerEquiv</span> <span class="o">=</span> <span class="n">inner</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">innerEquiv</span> <span class="o">=</span> <span class="n">inner</span><span class="o">.</span><span class="n">simplification</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">innerEquiv</span><span class="o">.</span><span class="n">rhs</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+        <span class="c1"># Attempt to evaluate via proving the expression;</span>
+        <span class="c1"># This should result in a shorter proof if allowed</span>
+        <span class="c1"># (e.g., if theorems are usable).</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">evaluateTruth</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+        <span class="c1"># Attempt to evaluate via disproving the expression;</span>
+        <span class="c1"># This should result in a shorter proof if allowed</span>
+        <span class="c1"># (e.g., if theorems are usable).</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">evaluateFalsehood</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="n">reducedSimplification</span> <span class="o">=</span> <span class="n">innerSimplification</span><span class="p">(</span><span class="n">innerEquiv</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">inPlace</span><span class="p">:</span>
+        <span class="n">simplification</span> <span class="o">=</span> <span class="n">reducedSimplification</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Via transitivity, go from the original expression to the </span>
+        <span class="c1"># reduced expression (simplified inner operands) and then the </span>
+        <span class="c1"># final simplification (simplified inner expression).</span>
+        <span class="n">reduced_top_level</span> <span class="o">=</span> <span class="n">reducedInnerExpr</span><span class="o">.</span><span class="n">exprHierarchy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">eq1</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">topLevel</span><span class="p">,</span> <span class="n">reduced_top_level</span><span class="p">)</span>
+        <span class="n">eq1</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">eq2</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">reduced_top_level</span><span class="p">,</span> <span class="n">reducedSimplification</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span>
+        <span class="n">eq2</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">simplification</span> <span class="o">=</span> <span class="n">eq1</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="n">eq2</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">inPlace</span> <span class="ow">and</span> <span class="n">topLevel</span><span class="o">==</span><span class="n">inner</span><span class="p">:</span>
+        <span class="c1"># Store direct simplifications in the known_simplifications</span>
+        <span class="c1"># dictionary for next time.</span>
+        <span class="n">Equals</span><span class="o">.</span><span class="n">known_simplifications</span><span class="p">[</span><span class="n">known_simplifications_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">simplification</span>
+        <span class="k">if</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="c1"># also store it in the known_evaluation_sets dictionary for</span>
+            <span class="c1"># next time, since it evaluated to an irreducible value.</span>
+            <span class="n">Equals</span><span class="o">.</span><span class="n">known_evaluation_sets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                    <span class="n">topLevel</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">simplification</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">simplification</span></div>
+
+<div class="viewcode-block" id="evaluateTruth"><a class="viewcode-back" href="../../../../api/proveit.logic.evaluateTruth.html#proveit.logic.evaluateTruth">[docs]</a><span class="k">def</span> <span class="nf">evaluateTruth</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Attempts to prove that the given expression equals TRUE under</span>
+<span class="sd">    the given assumptions via proving the expression.</span>
+<span class="sd">    Returns the resulting KnownTruth evaluation if successful.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span>
+    <span class="k">return</span> <span class="n">Equals</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">evaluateFalsehood</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Attempts to prove that the given expression equals FALSE under</span>
+<span class="sd">    the given assumptions via disproving the expression.</span>
+<span class="sd">    Returns the resulting KnownTruth evaluation if successful.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">FALSE</span>
+    <span class="k">return</span> <span class="n">Equals</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SimplificationError"><a class="viewcode-back" href="../../../../api/proveit.logic.SimplificationError.html#proveit.logic.SimplificationError">[docs]</a><span class="k">class</span> <span class="nc">SimplificationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div>
+
+<div class="viewcode-block" id="EvaluationError"><a class="viewcode-back" href="../../../../api/proveit.logic.EvaluationError.html#proveit.logic.EvaluationError">[docs]</a><span class="k">class</span> <span class="nc">EvaluationError</span><span class="p">(</span><span class="n">SimplificationError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Evaluation of </span><span class="si">%s</span><span class="s2"> under assumptions </span><span class="si">%s</span><span class="s2"> is not known&quot;</span>
+                        <span class="o">%</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div>
+
+<span class="k">class</span> <span class="nc">InversionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.varRange.html">varRange</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.sets.real.not_int_if_between_successive_ints theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.sets.real.not_int_if_between_successive_ints-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">number</a>.<a class="ProveItLink" href="../../_context_.html">sets</a>.<a class="ProveItLink" href="../_context_.html">real</a>.<a class="ProveItLink" href="../_theorems_.html#not_int_if_between_successive_ints">not_int_if_between_successive_ints</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.sets.real.not_int_if_between_successive_ints-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> not_int_if_between_successive_ints presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of not_int_if_between_successive_ints
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="not_int_if_between_successive_ints">not_int_if_between_successive_ints:</strong> <a class="ProveItLink" href="../__pv_it/d6e4efc63d343b8be8c62cc9a10bbcd2a3e537760/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAAAZCAMAAAABp+KxAAAARVBMVEX///8/Pz9vb28YGBgNDQ0r
+KysPDw8WFhYQEBCIiIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAACoIi7K
+AAAAAXRSTlMAQObYZgAAA2dJREFUWMPdWImSpCAMdW/CFU7//1MXRCQotq1bO7Wz1NRU2+0LPEJe
+Eqbp8VBaazN9miHScv0f4PX02YZR/xFd+Z/RNeHRepwhdOP2dQgP6D6H3x4WXztXkTBlM4uR6cjy
+opRpdL2rL0X7gO5z+O0RX+siF9tHQC6LK5YdsrHRNXXPDD45zM/hd0fgb8cW96snfNkCDy12q1ea
+n27F7mP4bak4d25ArX/9bHHFbeEm1x2yrNEN3uZh9DOpegy/q1OnE0iERA/3u4E2/61xIJoyz5jH
+/RS8zv8G/G4xMkopUD0FoIyAej5zZFoan5vHgYin542uWqyjeUj3Gn5jI+WiAE4cf8GydpuMBQ2T
+3ugV3QU4yDhR8hAbXcFHu0OKRYaeI+cndK/gLQ9ck+W8GOVHiC7a4JMr/Wwnsb2Bw7yQnEDmdZqU
+GfkzHLOmdZ7zUDTCW7BnUjiGV/Qkr51LM2YBH8sfVjyeV4E0CciUYGP88T39owUynwSZV86Erg+j
+kiSgMzZbT9sqw6CiqZAhfEOvh/3lwD3dQY5l7YDP9OCWBLjPCzXlLqdhR9fEWpIEHiQUURD08PJR
+/FWKDZ4SHJeQ+RG03hkePB7pHk+Lds1V3QayQQHZUi6jZteaGY0qPwaRqy5muuowfW2cfJHXN3g6
+8CpOWlB0SSDE8ODxSNepE6lydoK5TFVdATvflOqpGODsIFXJxqoQxkL+kJRgssSAhaG4bnQrPCeQ
+uKyKoAX2hqfj44CuONRoJZeI2U04991C8vsuYGrKtSogKbO2jmiLBpW3Ku+I1Es6RVgSSY4AY0+r
+NhJM8+IxghaqN7ybR2WhWdQmULoyHrvzomEAFnjXjliF37q1CYaRpdlTn4Bl36Ps6Ib6OpPLVshO
+LZ3M1r05pbvBF02QndaWTEoMDx4H3lV3isivX1IVqc9zodXjftfksNAiR6qXTac4WciL/jKhfSxV
+RUOXqZphk48ZmaenuybIVJreaRGuSiTaInTHID+DX44KrlIYlFLeR60u6aZQER6K9OMmpNp2hiVz
+/TyEruF6VrDr5q5JXTTCXQN4PqDG7qPbjA0N+1bJvci7JG++zwouLhbQfOTlDZ7dpZzTdeHO5c2F
+c4P50Lsq0a8yXHdMlv+LN5Hv3jO7u80W/I17oHzPrH4DAm40b6pAgnkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/d6e4efc63d343b8be8c62cc9a10bbcd2a3e537760/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

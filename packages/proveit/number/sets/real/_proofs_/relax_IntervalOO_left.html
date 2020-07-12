@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.sets.real.relax_IntervalOO_left theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.sets.real.relax_IntervalOO_left-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">number</a>.<a class="ProveItLink" href="../../_context_.html">sets</a>.<a class="ProveItLink" href="../_context_.html">real</a>.<a class="ProveItLink" href="../_theorems_.html#relax_IntervalOO_left">relax_IntervalOO_left</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.sets.real.relax_IntervalOO_left-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> relax_IntervalOO_left presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of relax_IntervalOO_left
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="relax_IntervalOO_left">relax_IntervalOO_left:</strong> <a class="ProveItLink" href="../__pv_it/b48a75b586443815aa50ad9f2aae0ea0c7cc5e100/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARMAAAAZBAMAAADga9dZAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA+NJREFU
+SMfll11oE0EQx8fkrknuI/ZBUBEktlAFKxaDomBrQVAQ1Dy1CIWE+llBKUWJqEipoKkiBhUUQTxb
+qFJrWxSRguJhETSK3IOgFJSg9kHxC1HQVsWZ3ctlL43tVdAXF+aS2fvP7S8zu3sbgEm1rck0/JW2
+OmlOMqIZ/lYLJf4LlJBVpNP3PubuUNPcCCVLHc+8o3jWXyrWqdWKiul4abINUR5Q5xvvKJ71rydE
+gZdovbYhyhn6aPWO4lWvV02MMko9EW6IEjbwa793FK/6gGvV64eTB8agSCN4UUq5IYqe6e4+PYlp
+61Xv0shtRpGsaGwRvOJGK+hrKrV/MitojD4kjul8K0frqDhVGSGn1xAKdHJwDnfDjeWY3kFgRiib
+AdqLDLou+xuUMXpTCFGdX30M827qLQH2mCZhrkgz4QN3+t4o3wCeAzNCWQmKOOqNeRtfsCB72qkt
+h2oiIkqBHkqcSUEhy3LOPvQNbURid1sFlAsWLOXObQM+4YDAjFAC4MttRsrNqOXTIENDh2lqXh6s
+hoipdYgoBXpocG5SSFfOmYa3IcgZ5NnvsdkoKwxo4ZIaUL4DxIEZoWhWIBf+dKAbEGWIhpqKP0c/
+etZAFP2KiFKgp4LZjULC6TwK9vB8hsSszADlS25bkUZdKKFsHTqdFcMgUU0IhaofL9uOtcCGKD0i
+CtffWVwRY3rqUhbtjNkhTsb20SVub/OleRRMhPqROz/Aj8t5NTBj76D2Tfiw3fIIhIGjRGmIuUY5
+3+Qjpj/qegeR3mfsDNQyfQi7Lsbihh2iJvLTVjUWopCcRQLKKJRkB5jzmeaNOG3hGj7MXyU3QydD
+8W/ZRZ9t8FxhvzqyZGutC4X0MrwDrpcw+VGot0OYyxquz/X9x+Ec3+/68wVqgycJU/mJzg44iNfl
+3BgKFXRKvy8B9alUKuLTTjzmtV4i70ml2iByf4EbhU8AXIZML+EjZkGFHQJybnVhzrvKOqp5vZRt
+axyUrrINjbWQxGx1VtLdYW4MRcfevnRwyCjhBVIbKKkjOECCF+h6xoVCepA/ysD0civg7nCs2w6R
+EkU3fulewcav5jY9pZmbc16Zko6vBS3G50rGDB2BvXor3OUoWs+Y88p5LatxPT1mpvzZskN009vr
+UHN68q9Dm7rxajXAUdptHpmdNfIsqHsIEMQSq/vfKtFsIUrX4zsZroe9AKvml1t2iN8pZvu4KM5W
+JRwSXGcsrL2dP/4xD+fKOKc4pp8PYkjY49HJEonbxztQDng/UAZdIbcmOFAeKDhQ6mluv0exvKNI
+lhCiVP2zY3ayyP8gMYM+44//ByV+AQ1mKP5BKjImAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/b48a75b586443815aa50ad9f2aae0ea0c7cc5e100/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

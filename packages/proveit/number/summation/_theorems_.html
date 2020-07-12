@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems for context proveit.number.summation</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-for-context-proveit.number.summation">Theorems for context <a class="ProveItLink" href="_context_.html">proveit.number.summation</a><a class="anchor-link" href="#Theorems-for-context-proveit.number.summation">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when building theorem expressions:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="c1"># the context is in the current directory:</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="c1"># adds context root to sys.path if necessary</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">subtract</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">Sum</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Naturals</span><span class="p">,</span> <span class="n">Integers</span><span class="p">,</span> <span class="n">Reals</span><span class="p">,</span> <span class="n">Complexes</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">infinity</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Px</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Q</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for context &#39;proveit.number.summation&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">summationNatsClosure = Forall([P, S, Qmulti], Implies(Forall(xMulti, InSet(PxEtc, Naturals), domain=S, conditions=etc_QxEtc), </span>
+<span class="sd">                                              InSet(Sum(xMulti, PxEtc, domain=S, conditions=etc_QxEtc), domain=Naturals)))</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;\nsummationNatsClosure = Forall([P, S, Qmulti], Implies(Forall(xMulti, InSet(PxEtc, Naturals), domain=S, conditions=etc_QxEtc), \n                                              InSet(Sum(xMulti, PxEtc, domain=S, conditions=etc_QxEtc), domain=Naturals)))\n\n&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">summationIntsClosure = Forall([P, S, Qmulti], Implies(Forall(xMulti, InSet(PxEtc, Integers), domain=S, conditions=etc_QxEtc), </span>
+<span class="sd">                                              InSet(Sum(xMulti, PxEtc, domain=S, conditions=etc_QxEtc), domain=Integers)))</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;\nsummationIntsClosure = Forall([P, S, Qmulti], Implies(Forall(xMulti, InSet(PxEtc, Integers), domain=S, conditions=etc_QxEtc), \n                                              InSet(Sum(xMulti, PxEtc, domain=S, conditions=etc_QxEtc), domain=Integers)))\n&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">summationRealsClosure = Forall([P, S, Qmulti], Implies(Forall(xMulti, InSet(PxEtc, Reals), domain=S, conditions=etc_QxEtc), </span>
+<span class="sd">                                              InSet(Sum(xMulti, PxEtc, domain=S, conditions=etc_QxEtc), domain=Reals)))</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;\nsummationRealsClosure = Forall([P, S, Qmulti], Implies(Forall(xMulti, InSet(PxEtc, Reals), domain=S, conditions=etc_QxEtc), \n                                              InSet(Sum(xMulti, PxEtc, domain=S, conditions=etc_QxEtc), domain=Reals)))\n&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">summationComplexesClosure = Forall([P, S, Qmulti], Implies(Forall(xMulti, InSet(PxEtc, Complexes), domain=S, conditions=etc_QxEtc), </span>
+<span class="sd">                                              InSet(Sum(xMulti, PxEtc, domain=S, conditions=etc_QxEtc), Complexes)))</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;\nsummationComplexesClosure = Forall([P, S, Qmulti], Implies(Forall(xMulti, InSet(PxEtc, Complexes), domain=S, conditions=etc_QxEtc), \n                                              InSet(Sum(xMulti, PxEtc, domain=S, conditions=etc_QxEtc), Complexes)))\n&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">infGeomSum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">Exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">m</span><span class="p">),</span>
+                                  <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span><span class="n">infinity</span><span class="p">)),</span> 
+                              <span class="n">frac</span><span class="p">(</span><span class="n">one</span><span class="p">,</span><span class="n">subtract</span><span class="p">(</span><span class="n">one</span><span class="p">,</span><span class="n">x</span><span class="p">))),</span>
+                    <span class="n">domain</span><span class="o">=</span><span class="n">Complexes</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="infGeomSum"><a class="ProveItLink" href="_proofs_/infGeomSum.html">infGeomSum</a>:</strong> <a class="ProveItLink" href="__pv_it/b2936fc08a6ee040898d1fe0183cd7b5ff7fbf8f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQcAAAA/BAMAAAAf2xDgAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABflJREFU
+aN6lmVtoHFUYgP+9zG5mdmY2iBUbLFkSiD4UEpC+NSbBy4MgOxa8vCWt1kIRsxbBB6VZfZAtKtmC
+eJedpBgwCIlIK5VC0ggWqpjFVlJF2Ugf6q25NIm5tMk4u3P+2ZndM3vOqedlhtn/zHznP//1LABz
+/EiuWoop+iCIjWgXp2AiQ26+Yss2pQQpXueUO2k4V3kXW1a5UxBipJdP7hi5xskqlfZJkPdO0oX7
+8oL7sZtLTJ0nNz+Q69hDr+Uv5Q/QpSPzgqp4gEuqQBQmr5IHKYjd0QVR+pKVm4IQE5M8Ujm0uSy5
+KQIsmgABk88LQqjNPL6xSW6m8lWII/MgBVjUhKB/KDc4hHRUwB/45DREHj1ungpa2ZagKmZNtkx/
+0blK265uvtkH6vGjAfLyNkOzLbU2V2RDDJJrbIlzZQsNfx37tlZTOtuflH9xrwc4ITobRwqtFiK8
+yXylho5Z6uX1uWkxCOUWOxngLgzzGpreLAYBvzNfmUTn2OB2/DVBiFmD9co0UW70Fi9E9IYgRJoZ
+WWaJKaiObeiWZ9AnKxuCEBNZFsQiCSW6MzdhEWV/9thBK2DzXxSEiDMD9zraBqlsetbdn+YCctVg
+XgwixvJRGXVbIDqLWwOsLNxZFIMIb7PS1wqmL1IMSlZ1SoRu1qWGgSJcB6GxbD6Mpt6JVliyqtqu
+LlnrPtAe7nCg0o1ia+TgTnetO9lBuRK6fwuag/veg+VDk5WhKbmvGDoadr5eECyu5B2A78o3fwUI
+xDBqD2LUVlpXKHIf3gvJ3oizD8lmMQhYBni/DBPkqjpa7qK7CWmLVlMdgsch7vwQWhKEaLW/Y0cC
+NajQC6EZtbqlh2q1UAR3wX1QkPxzuCFM0C6Oj78XmDpwVZYnfu1Q9nXJ1sUV1fHiTUGIIVvLG7nc
+qyIQI5bPB0c73tmbig7An/DuxduHOAxwQgQiYa16U8W0dizu8wfdiezqQmVwNJuLRrmJVXwvSbx1
+5FAjCOhZ9tSmqqlu+XuQpjVBTQzbEHEIY9RRzt1fVJ42pX/cDEfcTVn2ZhzvfijVhgQhVusVatGH
+s8Rh2/3VYhyFr5wdB+1jgHMNIeR1/xdSTAiGJmwIef5J+25mX4dROS14+LT9yIUg26F4t0PzN7H9
+BhWC2MQAHwSceNZOEuYL8V69/OiXnxmGCWnvVxNmpz2ZYpj8o2yY8KWdDSS4DlDpqr4+y4CQfHVE
+enIYPoH/D+Fsqu3dT+VyudRHT7DihM8GxtpGu/0FRFwUYqgMoZW1KS1JEKskztGyyQeHbbjKeOdt
+BSsn/6rzKqhlJHm/ATPuCxFiyIVoYtWl1ASWaGmYwIhWL8/YQffN8u3nC28YdYFn2H10oaqTycZR
+tmEL6hlWTSFl2wSjqPH4p0aHmMhwlZbVcLfOKu+2a6tXj3/2BRwmZMUgJFZzl8AidIpEarnqn6dW
+6HOmunggKsnXX0wHUuLJQD+JfCOYNuQz1ppAyV8L4Um+zJIfsIBJkkS76ATja612+snQp/QYHBCe
+5BthxpUh9FXH5CPsXhQWg3sexVmC4Uu+OrMmxWVF+MPgOl/j5SbfZIb1ximywYltXgZphQ/CTb79
+zOILj6rcsyvmCN/kgfAk307mmW4cdfUyLwT9mK+2BfUk30H24Q9mo9n6hj88Q2t9Q1meFtSTfO9m
+N4rYERfqfeFXOEM7YCqC0IhyWNs1dKR6G34JkibljMQUg4hxNGwlYsRanY8qaxCi2NSKGAMkOTqT
+JO57OYtc+qmtq+0w+uImxOtVr4nWVSWDLaNiNXLeVvPlPXCX2QExuwzMvS1tuf9IeStMwdMJxlk4
+Gfeg1U+DPJqBVdhf1USoHiJtCNoll+ZKZjXcxFJSM7xStYlkb534VUFF6Fz/jOpoFHZvGDLCWXnJ
+iJWz0HWqdzSqJanjCy5nkjBc9eehYOtCyyJVOyVOhASjBOzhE5tDu8/AI6Dn5eeRPfx9vSqfE2SI
+DXDK4aeeYctqGUGIOV7Bv9E62H9hnhT8g1jezSv5KboD2/s+EFSE7ED/Bzs3/2RQ9LIsAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Theorems may be imported from autogenerated _theorems_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

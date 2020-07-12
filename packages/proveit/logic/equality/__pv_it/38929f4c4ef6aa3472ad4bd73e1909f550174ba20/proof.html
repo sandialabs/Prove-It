@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Show the Proof</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Show-the-Proof">Show the Proof<a class="anchor-link" href="#Show-the-Proof">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when only showing a stored proof:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Makes files smaller.</span>
+<span class="o">%</span><span class="k">show_proof</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[1]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>
+<tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step0">0</a></td><td>instantiation</td><td><a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step1">1</a>, <a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step2">2</a>, <a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step3">3</a></td><td><span style="font-size:20px;"><a class="ProveItLink" href="../48acfa5b951060960660a168f0d03951a30d5af10/expr.html"><img src="../48acfa5b951060960660a168f0d03951a30d5af10/expr.png" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../c7187cf5db57f30c4549de28b9befe9c9d8db03d0/expr.html"><img src="../c7187cf5db57f30c4549de28b9befe9c9d8db03d0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../0b28339a9470b3064675e3d630fe626bc057a2440/expr.html"><img src="../0b28339a9470b3064675e3d630fe626bc057a2440/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../00cb836c20213ba24cb17cfe8c8e51fdb52a4c3c0/expr.html"><img src="../00cb836c20213ba24cb17cfe8c8e51fdb52a4c3c0/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../__pv_it/72df168d2bfb4e0140af90912ebf83b13772060b0/expr.html"><img src="../../../../__pv_it/72df168d2bfb4e0140af90912ebf83b13772060b0/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../042fe3505369203ea8b917f910bd10f30f035d610/expr.html"><img src="../042fe3505369203ea8b917f910bd10f30f035d610/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step1">1</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../_proofs_/substituteTruth.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../5966bb9f66c06ebf0d32f36d78b0d9e34a84973b0/expr.html"><img src="../5966bb9f66c06ebf0d32f36d78b0d9e34a84973b0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../_proofs_/substituteTruth.html">proveit.logic.equality.substituteTruth</a></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step2">2</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../boolean/_proofs_/trueInBool.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../2f88e5c6f7ea7ef0da11c50a533a1f221022588f0/expr.html"><img src="../2f88e5c6f7ea7ef0da11c50a533a1f221022588f0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../boolean/_proofs_/trueInBool.html">proveit.logic.boolean.trueInBool</a></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step3">3</a></td><td>instantiation</td><td><a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step4">4</a>, <a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step5">5</a></td><td><span style="font-size:20px;"><a class="ProveItLink" href="../48acfa5b951060960660a168f0d03951a30d5af10/expr.html"><img src="../48acfa5b951060960660a168f0d03951a30d5af10/expr.png" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../04c2ce84fcbb4c97cb77880bbe9955739074203c0/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../042fe3505369203ea8b917f910bd10f30f035d610/expr.html"><img src="../042fe3505369203ea8b917f910bd10f30f035d610/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../../__pv_it/d3792d0d8642fdf1cd2a3a9b32c673ee13653de00/expr.html"><img src="../../../../__pv_it/d3792d0d8642fdf1cd2a3a9b32c673ee13653de00/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../36d3adf27012f2f3b2867a6e7960c7ab31c86c260/expr.html"><img src="../36d3adf27012f2f3b2867a6e7960c7ab31c86c260/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step4">4</a></td><td>axiom</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../boolean/negation/_axioms_.html#negationIntro" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../c2d06a8d88dd7f2fb27d14b2da8090a46bbb8c900/expr.html"><img src="../c2d06a8d88dd7f2fb27d14b2da8090a46bbb8c900/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../boolean/negation/_axioms_.html#negationIntro">proveit.logic.boolean.negation.negationIntro</a></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step5">5</a></td><td>instantiation</td><td><a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step6">6</a>, <a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step7">7</a>, <a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step8">8</a></td><td><span style="font-size:20px;"><a class="ProveItLink" href="../48acfa5b951060960660a168f0d03951a30d5af10/expr.html"><img src="../48acfa5b951060960660a168f0d03951a30d5af10/expr.png" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../3c520165d8a5dd5cac5b8ae8e16ea19a45da6e750/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../438a136b6de566c87705ea1fa22c3f4e480a8fbf0/expr.html"><img src="../438a136b6de566c87705ea1fa22c3f4e480a8fbf0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../../__pv_it/72df168d2bfb4e0140af90912ebf83b13772060b0/expr.html"><img src="../../../../__pv_it/72df168d2bfb4e0140af90912ebf83b13772060b0/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../36d3adf27012f2f3b2867a6e7960c7ab31c86c260/expr.html"><img src="../36d3adf27012f2f3b2867a6e7960c7ab31c86c260/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../__pv_it/c6e291955561f22a0e6708fd793ea93f1c7dbb5d0/expr.html"><img src="../../../../__pv_it/c6e291955561f22a0e6708fd793ea93f1c7dbb5d0/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../4a3df866f91629eee58a5887a52551d218959f3e0/expr.html"><img src="../4a3df866f91629eee58a5887a52551d218959f3e0/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../__pv_it/0d889e00aed425c3081fbda3ac9194ae911895960/expr.html"><img src="../../../../__pv_it/0d889e00aed425c3081fbda3ac9194ae911895960/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../boolean/__pv_it/83a1ddf0f64531c80e7f41ea6b904214668818b30/expr.html"><img src="../../../boolean/__pv_it/83a1ddf0f64531c80e7f41ea6b904214668818b30/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step6">6</a></td><td>axiom</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../_axioms_.html#equalsTransitivity" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../62a78d8298863a1032c900aff4af282587b901b20/expr.html"><img src="../62a78d8298863a1032c900aff4af282587b901b20/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../_axioms_.html#equalsTransitivity">proveit.logic.equality.equalsTransitivity</a></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step7">7</a></td><td>instantiation</td><td><a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step9">9</a>, <a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step10">10</a></td><td><span style="font-size:20px;"><a class="ProveItLink" href="../48acfa5b951060960660a168f0d03951a30d5af10/expr.html"><img src="../48acfa5b951060960660a168f0d03951a30d5af10/expr.png" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../8cf1f9bc1265afe249c09e2bddec7777b69013670/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../d50d277ba895f51ae5a6fbf4703490fc60722c360/expr.html"><img src="../d50d277ba895f51ae5a6fbf4703490fc60722c360/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../7a77f25d01d1011156f1eb52bdcd8aa2293d99790/expr.html"><img src="../7a77f25d01d1011156f1eb52bdcd8aa2293d99790/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../12d229667a04d529809f5538f8a988a95f971f0e0/expr.html"><img src="../12d229667a04d529809f5538f8a988a95f971f0e0/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../__pv_it/72df168d2bfb4e0140af90912ebf83b13772060b0/expr.html"><img src="../../../../__pv_it/72df168d2bfb4e0140af90912ebf83b13772060b0/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../../__pv_it/a8d4b3a34d2189508f9082853fbac36935714f280/expr.html"><img src="../../../../__pv_it/a8d4b3a34d2189508f9082853fbac36935714f280/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../__pv_it/c6e291955561f22a0e6708fd793ea93f1c7dbb5d0/expr.html"><img src="../../../../__pv_it/c6e291955561f22a0e6708fd793ea93f1c7dbb5d0/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../boolean/__pv_it/b5b8ce0f03ab68a7c7bb937dfeb4112a686e3cbb0/expr.html"><img src="../../../boolean/__pv_it/b5b8ce0f03ab68a7c7bb937dfeb4112a686e3cbb0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step8">8</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../boolean/negation/_proofs_/notT.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../37c9e32e416bf524125fedfdcaaa4596b8ec16d20/expr.html"><img src="../37c9e32e416bf524125fedfdcaaa4596b8ec16d20/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../boolean/negation/_proofs_/notT.html">proveit.logic.boolean.negation.notT</a></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step9">9</a></td><td>axiom</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../_axioms_.html#substitution" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../227f37bc1ee52abe3a92ac5130dc32c91fd40c720/expr.html"><img src="../227f37bc1ee52abe3a92ac5130dc32c91fd40c720/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../_axioms_.html#substitution">proveit.logic.equality.substitution</a></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step10">10</a></td><td>instantiation</td><td><a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step11">11</a>, <a href="#proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step12">12</a></td><td><span style="font-size:20px;"><a class="ProveItLink" href="../48acfa5b951060960660a168f0d03951a30d5af10/expr.html"><img src="../48acfa5b951060960660a168f0d03951a30d5af10/expr.png" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../3784f8a658e6bde460197131de7c8cabbb3af7640/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../b402eb20efc410e18514bb0551c407be126d312f0/expr.html"><img src="../b402eb20efc410e18514bb0551c407be126d312f0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../../__pv_it/d3792d0d8642fdf1cd2a3a9b32c673ee13653de00/expr.html"><img src="../../../../__pv_it/d3792d0d8642fdf1cd2a3a9b32c673ee13653de00/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../../__pv_it/a8d4b3a34d2189508f9082853fbac36935714f280/expr.html"><img src="../../../../__pv_it/a8d4b3a34d2189508f9082853fbac36935714f280/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step11">11</a></td><td>axiom</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../boolean/_axioms_.html#eqTrueIntro" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../887e64e67deedd5bd54b0c6fa4a52e1f57719c000/expr.html"><img src="../887e64e67deedd5bd54b0c6fa4a52e1f57719c000/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../boolean/_axioms_.html#eqTrueIntro">proveit.logic.boolean.eqTrueIntro</a></td></tr><tr><td><a name="proveit.logic.equality.38929f4c4ef6aa3472ad4bd73e1909f550174ba20_step12">12</a></td><td>assumption</td><td></td><td><span style="font-size:20px;"><a class="ProveItLink" href="../48acfa5b951060960660a168f0d03951a30d5af10/expr.html"><img src="../48acfa5b951060960660a168f0d03951a30d5af10/expr.png" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../69a3c282a63d93c4220df315d86f562cfe91559e0/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="../../../../__pv_it/a8d4b3a34d2189508f9082853fbac36935714f280/expr.html"><img src="../../../../__pv_it/a8d4b3a34d2189508f9082853fbac36935714f280/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-10 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

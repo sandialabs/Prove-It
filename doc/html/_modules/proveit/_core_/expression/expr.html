@@ -1,0 +1,1500 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit._core_.expression.expr &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit._core_.expression.expr</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is the expression module.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">proveit._core_.defaults</span> <span class="k">import</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span>
+<span class="kn">from</span> <span class="nn">proveit._core_.context</span> <span class="k">import</span> <span class="n">Context</span>
+<span class="kn">from</span> <span class="nn">proveit._core_.expression.style_options</span> <span class="k">import</span> <span class="n">StyleOptions</span>
+<span class="kn">from</span> <span class="nn">proveit._core_._unique_data</span> <span class="k">import</span> <span class="n">meaningData</span><span class="p">,</span> <span class="n">styleData</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span><span class="o">,</span> <span class="nn">urllib.parse</span><span class="o">,</span> <span class="nn">urllib.error</span>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="k">import</span> <span class="n">encodebytes</span>
+
+<span class="k">class</span> <span class="nc">ExprType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    By overriding the Expression type, we can make Operation-type</span>
+<span class="sd">    expressions automatically populate the Operation.operationClassOfOperator</span>
+<span class="sd">    when any Expression class is provided with an &#39;_operator_&#39; class attribute.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="c1"># These attributes should not be overridden by classes outside</span>
+    <span class="c1"># of the core.</span>
+    <span class="n">protected</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;_generic_version&#39;</span><span class="p">,</span> <span class="s1">&#39;_setContext&#39;</span><span class="p">,</span> 
+                 <span class="s1">&#39;replaced&#39;</span><span class="p">,</span> <span class="s1">&#39;_replaced&#39;</span><span class="p">,</span> <span class="s1">&#39;_replaced_entries&#39;</span><span class="p">,</span> <span class="s1">&#39;relabeled&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;_make&#39;</span><span class="p">,</span> <span class="s1">&#39;_checked_make&#39;</span><span class="p">,</span> <span class="s1">&#39;_auto_reduced&#39;</span><span class="p">,</span> <span class="s1">&#39;_used_vars&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;_possibly_free_var_ranges&#39;</span><span class="p">,</span> <span class="s1">&#39;_parameterized_var_ranges&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;_repr_html_&#39;</span><span class="p">,</span> <span class="s1">&#39;_coreInfo&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;_subExpressions&#39;</span><span class="p">,</span> <span class="s1">&#39;_genericExpr&#39;</span><span class="p">,</span> 
+                 <span class="s1">&#39;_meaningData&#39;</span><span class="p">,</span> <span class="s1">&#39;_meaning_id&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;_styleData&#39;</span><span class="p">,</span> <span class="s1">&#39;_style_id&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;is_parameter_independent&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="c1"># Tip from</span>
+        <span class="c1"># https://stackoverflow.com/questions/3948873</span>
+        <span class="c1">#             /prevent-function-overriding-in-python</span>
+        <span class="n">core_package</span> <span class="o">=</span> <span class="s1">&#39;proveit._core_&#39;</span>
+        <span class="k">if</span> <span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;__module__&#39;</span><span class="p">][:</span><span class="nb">len</span><span class="p">(</span><span class="n">core_package</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">core_package</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="n">ExprType</span><span class="o">.</span><span class="n">protected</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s1">&#39;Overriding of attribute &quot;</span><span class="si">%s</span><span class="s1">&quot; &#39;</span>
+                                         <span class="s1">&#39;not allowed.&#39;</span><span class="o">%</span><span class="n">attribute</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">type</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;_operator_&#39;</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">proveit._core_.expression.operation</span> <span class="k">import</span> <span class="n">Operation</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">Operation</span><span class="p">):</span>
+                <span class="n">Operation</span><span class="o">.</span><span class="n">operationClassOfOperator</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">_operator_</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span>
+
+<div class="viewcode-block" id="Expression"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression">[docs]</a><span class="k">class</span> <span class="nc">Expression</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ExprType</span><span class="p">):</span>
+    <span class="c1"># set of (style-id, Expression) tuples</span>
+    <span class="n">displayed_expression_styles</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> 
+    
+    <span class="c1"># map expression style ids to contexts (for expressions that &quot;belong&quot; to a Context)</span>
+    <span class="n">contexts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span> 
+    
+    <span class="c1"># (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite</span>
+    <span class="c1"># recursion in the `prove` method.</span>
+    <span class="n">in_progress_to_conclude</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_clear_</span><span class="p">():</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Clear all references to Prove-It information under</span>
+<span class="sd">        the Expression jurisdiction.  All Expression classes that store Prove-It</span>
+<span class="sd">        state information must implement _clear_ to clear that information.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">Expression</span><span class="o">.</span><span class="n">displayed_expression_styles</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">Expression</span><span class="o">.</span><span class="n">contexts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">Expression</span><span class="o">.</span><span class="n">in_progress_to_conclude</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Unexpected remnant &#39;in_progress_to_conclude&#39; items (should have been temporary)&quot;</span>
+                        
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coreInfo</span><span class="p">,</span> <span class="n">subExpressions</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span> <span class="n">styles</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initialize an expression with the given coreInfo (information relevant </span>
+<span class="sd">        at the core Expression-type level) which should be a list (or tuple) of</span>
+<span class="sd">        strings, and a list (or tuple) of subExpressions.  &quot;styles&quot; is a </span>
+<span class="sd">        dictionary used to indicate how the Expression should be formatted</span>
+<span class="sd">        when there are different possibilities (e.g. division with &#39;/&#39; or as a </span>
+<span class="sd">        fraction).  The meaning of the expression is independent of its styles </span>
+<span class="sd">        signature.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">styles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">coreInfoElem</span> <span class="ow">in</span> <span class="n">coreInfo</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coreInfoElem</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expecting coreInfo elements to be of string type&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">subExpression</span> <span class="ow">in</span> <span class="n">subExpressions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subExpression</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expecting subExpression elements to be of Expression type&#39;</span><span class="p">)</span>
+                
+        <span class="c1"># note: these contained expressions are subject to style changes on an Expression instance basis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">subExpressions</span><span class="p">)</span>
+        
+        <span class="c1"># check for illegal characters in core-info or styles</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">info</span> <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">coreInfo</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;coreInfo is not allowed to contain a comma.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">styles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">style</span> <span class="ow">in</span> <span class="n">styles</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+               <span class="k">if</span> <span class="ow">not</span> <span class="p">{</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;;&#39;</span><span class="p">}</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">style</span><span class="p">):</span>
+                   <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Styles are not allowed to contain a &#39;,&#39;, &#39;:&#39;, or &#39;;&#39;.  Just use spaces.&quot;</span><span class="p">)</span> 
+        
+        <span class="c1"># Set and initialize the &quot;meaning data&quot;.</span>
+        <span class="c1"># The meaning data is shared among Expressions with the same </span>
+        <span class="c1"># structure disregarding style or chosen lambda paramterization.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_genericExpr&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genericExpr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="c1"># The _genericExpr attribute was already set</span>
+            <span class="c1"># -- must be a Lambda Expression.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genericExpr</span><span class="o">.</span><span class="n">_meaningData</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">object_rep_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">expr</span> <span class="p">:</span> <span class="nb">hex</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">_meaning_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span> <span class="o">=</span> <span class="n">meaningData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_generate_unique_rep</span><span class="p">(</span><span class="n">object_rep_fn</span><span class="p">,</span> 
+                                                                      <span class="n">coreInfo</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="p">,</span> <span class="s1">&#39;_coreInfo&#39;</span><span class="p">):</span>
+                <span class="c1"># initialize the data of self._meaningData</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_coreInfo</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">coreInfo</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        if not hasattr(self, &#39;_genericExpr&#39;):</span>
+<span class="sd">            self._genericExpr = self._generic_version()</span>
+<span class="sd">        if self._genericExpr is self:</span>
+<span class="sd">            # Create the meaning data.</span>
+<span class="sd">            object_rep_fn = lambda expr : hex(expr._meaning_id)</span>
+<span class="sd">            self._meaningData = meaningData(self._generate_unique_rep(object_rep_fn, </span>
+<span class="sd">                                                                      coreInfo))</span>
+<span class="sd">            if not hasattr(self._meaningData, &#39;_coreInfo&#39;):</span>
+<span class="sd">                # initialize the data of self._meaningData</span>
+<span class="sd">                self._meaningData._coreInfo = tuple(coreInfo)            </span>
+<span class="sd">        else:</span>
+<span class="sd">            self._meaningData = self._genericExpr._meaningData</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="c1"># The style data is shared among Expressions with the same structure and style -- this will contain the &#39;png&#39; generated on demand.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span> <span class="o">=</span> <span class="n">styleData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_generate_unique_rep</span><span class="p">(</span><span class="k">lambda</span> <span class="n">expr</span> <span class="p">:</span> <span class="nb">hex</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">_style_id</span><span class="p">),</span> <span class="n">coreInfo</span><span class="p">,</span> <span class="n">styles</span><span class="p">))</span>
+        <span class="c1"># initialize the style options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">styles</span><span class="p">)</span> <span class="c1"># formatting style options that don&#39;t affect the meaning of the expression</span>
+
+        <span class="c1"># reference this unchanging data of the unique &#39;meaning&#39; data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_meaning_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_unique_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coreInfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_coreInfo</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_style_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">_unique_id</span>
+        
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        self._styles = dict(styles) # formatting style options that don&#39;t affect the meaning of the expression</span>
+<span class="sd">        # meaning representations and unique ids are independent of style</span>
+<span class="sd">        self._meaning_rep = </span>
+<span class="sd">        self._meaning_id = makeUniqueId(self._meaning_rep)</span>
+<span class="sd">        # style representations and style ids are dependent of style</span>
+<span class="sd">        self._style_rep = self._generate_unique_rep(lambda expr : hex(expr._style_id), includeStyle=True)</span>
+<span class="sd">        self._style_id = makeUniqueId(self._style_rep)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">subExpression</span> <span class="ow">in</span> <span class="n">subExpressions</span><span class="p">:</span> <span class="c1"># update Expression.parent_expr_map</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subExpression</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_max_in_scope_bound_vars&#39;</span><span class="p">):</span>
+            <span class="c1"># The &#39;_max_inscope_bound_vars&#39; attribute is used to make </span>
+            <span class="c1"># unique variable assignments for Lambda parameters in the</span>
+            <span class="c1"># &quot;generic version&quot; which is invariant under </span>
+            <span class="c1"># alpha-conversion.  For a Lambda, this attribute is</span>
+            <span class="c1"># set ahead of time.</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_max_in_scope_bound_vars</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_max_in_scope_bound_vars</span> <span class="o">=</span> \
+                    <span class="nb">max</span><span class="p">(</span><span class="n">subexpr</span><span class="o">.</span><span class="n">_max_in_scope_bound_vars</span> <span class="k">for</span> <span class="n">subexpr</span> 
+                        <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">)</span>
+            
+    
+    <span class="k">def</span> <span class="nf">_generic_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieve (and create if necessary) the generic version of this </span>
+<span class="sd">        expression in which deterministic &#39;dummy&#39; variables are used as </span>
+<span class="sd">        Lambda parameters, determines the &#39;meaning&#39; of the expression.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_genericExpr&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genericExpr</span>
+        <span class="c1"># Get the generic versions of the sub-expressions.</span>
+        <span class="n">generic_sub_expressions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sub_expr</span><span class="o">.</span><span class="n">_generic_version</span><span class="p">()</span> 
+                                        <span class="k">for</span> <span class="n">sub_expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">)</span>
+        <span class="c1"># Get the styles of the sub expressions.</span>
+        <span class="n">sub_expression_styles</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sub_expr</span><span class="o">.</span><span class="n">_styleData</span> 
+                                      <span class="k">for</span> <span class="n">sub_expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">)</span>
+        <span class="c1"># Get the styles of the generic versions of the sub-expressions.</span>
+        <span class="n">generic_sub_expression_styles</span> <span class="o">=</span> \
+            <span class="nb">tuple</span><span class="p">(</span><span class="n">generic_sub_expr</span><span class="o">.</span><span class="n">_styleData</span> 
+                  <span class="k">for</span> <span class="n">generic_sub_expr</span> <span class="ow">in</span> <span class="n">generic_sub_expressions</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">sub_expression_styles</span> <span class="o">==</span> <span class="n">generic_sub_expression_styles</span><span class="p">:</span>
+            <span class="c1"># This is the generic version.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_genericExpr</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        
+        <span class="c1"># The &#39;generic&#39; sub-expressions are different than the sub-expressions,</span>
+        <span class="c1"># so that propagates to this Expression&#39;s generic version.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_genericExpr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_checked_make</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_coreInfo</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="p">),</span> 
+                <span class="n">generic_sub_expressions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genericExpr</span>
+        
+    
+    <span class="k">def</span> <span class="nf">_setContext</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Assign a Context to this expression.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="n">Expression</span><span class="o">.</span><span class="n">contexts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_style_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        # Commenting this out because this make a strange first-come, first-serve</span>
+<span class="sd">        # context assignment that might keep changing expression representations around;</span>
+<span class="sd">        # that can be a nuisance for version controlling the Prove-It notebooks.</span>
+<span class="sd">        for sub_expr in self._subExpressions:</span>
+<span class="sd">            if sub_expr._style_id not in Expression.contexts:</span>
+<span class="sd">                sub_expr._setContext(context)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">_generate_unique_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objectRepFn</span><span class="p">,</span> <span class="n">coreInfo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.lambda_expr</span> <span class="k">import</span> <span class="n">Lambda</span>
+        <span class="k">if</span> <span class="n">coreInfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">coreInfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coreInfo</span>
+        <span class="k">if</span> <span class="n">styles</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_styleData&#39;</span><span class="p">):</span>
+            <span class="n">styles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span>
+        <span class="k">if</span> <span class="n">styles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">style_str</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">style_name</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">styles</span><span class="p">[</span><span class="n">style_name</span><span class="p">]</span>
+                                 <span class="k">for</span> <span class="n">style_name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">styles</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">else</span><span class="p">:</span> <span class="n">style_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">sub_expr_info</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">objectRepFn</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span> <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">)</span>
+        <span class="c1"># All Lambda expressions are embued with a &quot;generic version&quot; (which may</span>
+        <span class="c1"># be itself) which we will store with the unique representation info.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genericExpr</span> <span class="ow">is</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="n">generic_ref</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span> <span class="c1"># Denote that it is &quot;generic&quot; itself.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">generic_ref</span> <span class="o">=</span> <span class="n">objectRepFn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_genericExpr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Only retain the reference to the generic version for Lambda</span>
+            <span class="c1"># expressions.  Other expressions may set a _genericExpr for</span>
+            <span class="c1"># convenience during runtime, but since these are generated on an</span>
+            <span class="c1"># as-needed basis, it shouldn&#39;t be included as part of the</span>
+            <span class="c1"># unique representation and there is no good reason to store it.</span>
+            <span class="n">generic_ref</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="c1"># Note: putting the sub-expressions at the front makes it convenient</span>
+        <span class="c1"># to just grab that piece which is used when adding or removing</span>
+        <span class="c1"># references to stored information.</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">;</span><span class="si">%s</span><span class="s1">;</span><span class="si">%s</span><span class="s1">;</span><span class="si">%s</span><span class="s1">;</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">generic_ref</span><span class="p">,</span> <span class="n">sub_expr_info</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_class_path</span><span class="p">(),</span> 
+                                 <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">coreInfo</span><span class="p">),</span> <span class="n">style_str</span><span class="p">)</span>
+    <span class="c1">#self._class_path() + &#39;[&#39; + &#39;,&#39;.join(coreInfo) + &#39;]&#39; + style_str + &#39;;[&#39; +  + &#39;]&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">_class_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ExprClass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+        <span class="n">class_module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">ExprClass</span><span class="o">.</span><span class="vm">__module__</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">class_module</span><span class="p">,</span> <span class="s1">&#39;__file__&#39;</span><span class="p">):</span>
+            <span class="n">context</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">class_module</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">context</span> <span class="o">=</span> <span class="n">Context</span><span class="p">()</span> <span class="c1"># use the current directory if using the main module</span>
+        <span class="c1"># get the full class path relative to the root context where the class is defined</span>
+        <span class="n">class_path</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">ExprClass</span><span class="o">.</span><span class="vm">__module__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">ExprClass</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="n">class_path</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_unique_rep</span><span class="p">(</span><span class="n">unique_rep</span><span class="p">):</span>
+        <span class="n">generic_ref</span><span class="p">,</span> <span class="n">sub_expr_info</span><span class="p">,</span> <span class="n">expr_class_str</span><span class="p">,</span> <span class="n">core_info_str</span><span class="p">,</span> <span class="n">style_str</span> <span class="o">=</span> \
+            <span class="n">unique_rep</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>
+        <span class="n">core_info</span> <span class="o">=</span> <span class="p">[</span><span class="n">_</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">core_info_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">_</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+        <span class="n">style_pairs</span> <span class="o">=</span> <span class="p">[</span><span class="n">_</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">style_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">_</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+        <span class="n">style_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">style_pair</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">style_pair</span> <span class="ow">in</span> <span class="n">style_pairs</span><span class="p">)</span>
+        <span class="n">sub_expr_refs</span> <span class="o">=</span> <span class="p">[</span><span class="n">_</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">sub_expr_info</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">_</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">expr_class_str</span><span class="p">,</span> <span class="n">core_info</span><span class="p">,</span> <span class="n">style_dict</span><span class="p">,</span> <span class="n">sub_expr_refs</span><span class="p">,</span> <span class="n">generic_ref</span>
+        
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extractReferencedObjIds</span><span class="p">(</span><span class="n">unique_rep</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given a unique representation string, returns the list of representations</span>
+<span class="sd">        of Prove-It objects that are referenced.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># The generic reference and sub expressions come respectfully at the </span>
+        <span class="c1"># beginning of unique_rep.</span>
+        <span class="n">generic_ref_end</span> <span class="o">=</span> <span class="n">unique_rep</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>
+        <span class="n">sub_expr_end</span> <span class="o">=</span> <span class="n">unique_rep</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">generic_ref_end</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ref_info</span> <span class="o">=</span> <span class="n">unique_rep</span><span class="p">[:</span><span class="n">sub_expr_end</span><span class="p">]</span>
+        <span class="c1"># Split by &#39;,&#39; or &#39;;&#39; to get the individual reference ids.</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,|;&#39;</span><span class="p">,</span> <span class="n">ref_info</span><span class="p">)</span> <span class="k">if</span> <span class="n">_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)]</span>
+    
+    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Expressions should be read-only objects.  Attributes may be added, however; for example,</span>
+<span class="sd">        the &#39;png&#39; attribute which will be added whenever it is generated).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">attr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;_&#39;</span> <span class="ow">and</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Attempting to alter read-only value &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="o">%</span><span class="n">attr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    
+    <span class="k">def</span> <span class="nf">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Intercept the application of &#39;auto_reduction&#39;, not executing</span>
+<span class="sd">        it if the reduction is disabled for its particular type, and</span>
+<span class="sd">        temporarily disabling it during the execution to avoid</span>
+<span class="sd">        infinite recursion</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;auto_reduction&#39;</span><span class="p">:</span>
+            <span class="c1"># The class where the &quot;auto_reduction&quot; method is actually</span>
+            <span class="c1"># defined (which may be different than self.__class__ and</span>
+            <span class="c1"># is more appropriate):</span>
+            <span class="n">attr_self_class</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="vm">__self__</span><span class="o">.</span><span class="vm">__class__</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">attr_self_class</span>
+                    <span class="ow">in</span> <span class="n">defaults</span><span class="o">.</span><span class="n">disabled_auto_reduction_types</span><span class="p">):</span>
+                <span class="c1"># This specific auto reduction is disabled, so skip it.</span>
+                <span class="k">return</span> <span class="k">lambda</span> <span class="n">assumptions</span> <span class="p">:</span> <span class="kc">None</span>
+            <span class="k">def</span> <span class="nf">safe_auto_reduction</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+                <span class="n">was_disabled</span> <span class="o">=</span> <span class="p">(</span><span class="n">attr_self_class</span> <span class="ow">in</span> 
+                                <span class="n">defaults</span><span class="o">.</span><span class="n">disabled_auto_reduction_types</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># The specific auto reduction must be disabled</span>
+                    <span class="c1"># to avoid infinite recursion.</span>
+                    <span class="n">defaults</span><span class="o">.</span><span class="n">disabled_auto_reduction_types</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">attr_self_class</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">attr</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="c1"># Re-enable the reduction.</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">was_disabled</span><span class="p">:</span>
+                        <span class="n">defaults</span><span class="o">.</span><span class="n">disabled_auto_reduction_types</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span>
+                                <span class="n">attr_self_class</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">safe_auto_reduction</span>
+        <span class="k">return</span> <span class="n">attr</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="c1"># just use the string representation</span>
+    
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaning_id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_meaning_id</span> 
+        <span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="kc">False</span> <span class="c1"># other must be an Expression to be equal to self</span>
+    
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaning_id</span> 
+    
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a string representation of the Expression.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">string</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="Expression.string"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.string">[docs]</a>    <span class="k">def</span> <span class="nf">string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a string representation of the Expression.  The kwargs can contain formatting</span>
+<span class="sd">        directives (such as &#39;fence&#39; used to indicate when a sub-expression should be wrapped in</span>
+<span class="sd">        parentheses if there can be ambiguity in the order of operations).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&#39;string&#39; method not implemented for &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Expression.latex"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.latex">[docs]</a>    <span class="k">def</span> <span class="nf">latex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a latex-formatted representation of the Expression.  The kwargs can contain formatting</span>
+<span class="sd">        directives (such as &#39;fence&#39; used to indicate when a sub-expression should be wrapped in</span>
+<span class="sd">        parentheses if there can be ambiguity in the order of operations).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&#39;latex&#39; method not implemented for &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span></div>
+    
+<div class="viewcode-block" id="Expression.formatted"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.formatted">[docs]</a>    <span class="k">def</span> <span class="nf">formatted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatType</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns a formatted version of the expression for the given formatType</span>
+<span class="sd">        (&#39;string&#39; or &#39;latex&#39;).  In the keyword arguments, fence=True indicates</span>
+<span class="sd">        that parenthesis around the sub-expression may be necessary to avoid </span>
+<span class="sd">        ambiguity.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">formatType</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">string</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">formatType</span> <span class="o">==</span> <span class="s1">&#39;latex&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">latex</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_make</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">coreInfo</span><span class="p">,</span> <span class="n">styles</span><span class="p">,</span> <span class="n">subExpressions</span><span class="p">,</span> <span class="n">genericExpr</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Should make the Expression object for the specific Expression sub-class</span>
+<span class="sd">        based upon the coreInfo and subExpressions.  Must be implemented for </span>
+<span class="sd">        each core Expression sub-class that can be instantiated.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="n">MakeNotImplemented</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_checked_make</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">coreInfo</span><span class="p">,</span> <span class="n">styles</span><span class="p">,</span> <span class="n">subExpressions</span><span class="p">,</span> <span class="n">genericExpr</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check that &#39;_make&#39; is done appropriately since it is not </span>
+<span class="sd">        entirely within the control of the core.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">coreInfo</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">coreInfo</span><span class="p">)</span>
+        <span class="n">subExpressions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">subExpressions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">genericExpr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">made</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make</span><span class="p">(</span><span class="n">coreInfo</span><span class="p">,</span> <span class="n">styles</span><span class="p">,</span> <span class="n">subExpressions</span><span class="p">,</span> <span class="n">genericExpr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">made</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make</span><span class="p">(</span><span class="n">coreInfo</span><span class="p">,</span> <span class="n">styles</span><span class="p">,</span> <span class="n">subExpressions</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">made</span><span class="o">.</span><span class="n">_coreInfo</span> <span class="o">==</span> <span class="n">coreInfo</span><span class="p">,</span> <span class="p">(</span>
+                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> vs </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">made</span><span class="o">.</span><span class="n">_coreInfo</span><span class="p">,</span> <span class="n">coreInfo</span><span class="p">))</span>
+        <span class="k">assert</span> <span class="n">made</span><span class="o">.</span><span class="n">_subExpressions</span> <span class="o">==</span> <span class="n">subExpressions</span><span class="p">,</span> <span class="p">(</span>
+                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> vs </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">made</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">,</span> <span class="n">subExpressions</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">made</span>
+    
+    
+    <span class="k">def</span> <span class="nf">_auto_reduced</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">requirements</span><span class="p">,</span>
+                      <span class="n">equality_repl_requirements</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">defaults</span><span class="o">.</span><span class="n">auto_reduce</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;auto_reduction&#39;</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">KnownTruth</span>
+            <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span>
+            <span class="n">reduction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_reduction</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reduction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reduction</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;auto_reduction&#39; must return a &quot;</span>
+                                    <span class="s2">&quot;proven equality as a KnownTruth: &quot;</span>
+                                    <span class="s2">&quot;got </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">reduction</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reduction</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">Equals</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;auto_reduction&#39; must return a &quot;</span>
+                                    <span class="s2">&quot;proven equality: got </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">&quot;</span>
+                                    <span class="o">%</span><span class="p">(</span><span class="n">reduction</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">reduction</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">lhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;auto_reduction&#39; must return a &quot;</span>
+                                    <span class="s2">&quot;proven equality with &#39;self&#39; on the &quot;</span>
+                                    <span class="s2">&quot;left side: got </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">&quot;</span>
+                                    <span class="o">%</span><span class="p">(</span><span class="n">reduction</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+                <span class="n">requirements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reduction</span><span class="p">)</span>
+                <span class="n">equality_repl_requirements</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">reduction</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">reduction</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="c1"># No reduction, just return &#39;self&#39;.</span>
+    
+<div class="viewcode-block" id="Expression.coreInfo"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.coreInfo">[docs]</a>    <span class="k">def</span> <span class="nf">coreInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Copy out the core information.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_coreInfo</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Expression.subExpr"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.subExpr">[docs]</a>    <span class="k">def</span> <span class="nf">subExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></div>
+        
+<div class="viewcode-block" id="Expression.subExprIter"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.subExprIter">[docs]</a>    <span class="k">def</span> <span class="nf">subExprIter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Iterator over the sub-expressions of this expression.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Expression.numSubExpr"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.numSubExpr">[docs]</a>    <span class="k">def</span> <span class="nf">numSubExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the number of sub-expressions of this expression.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Expression.innerExpr"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.innerExpr">[docs]</a>    <span class="k">def</span> <span class="nf">innerExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return an InnerExpr object to wrap the expression and</span>
+<span class="sd">        access any inner sub-expression for the purpose of replacing</span>
+<span class="sd">        the inner expression, or change its styles, or relabeling its</span>
+<span class="sd">        variables.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.inner_expr</span> <span class="k">import</span> <span class="n">InnerExpr</span>
+        <span class="k">return</span> <span class="n">InnerExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Expression.styleOptions"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.styleOptions">[docs]</a>    <span class="k">def</span> <span class="nf">styleOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a StyleOptions object that indicates the possible</span>
+<span class="sd">        styles and values that is available to determine how</span>
+<span class="sd">        this Expression may be presented.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">StyleOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="c1"># the default is empty</span></div>
+    
+<div class="viewcode-block" id="Expression.withStyles"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.withStyles">[docs]</a>    <span class="k">def</span> <span class="nf">withStyles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Alter the styles of this expression, and anything containing this</span>
+<span class="sd">        particular expression object, according to kwargs.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="p">)</span>
+        <span class="c1"># update the _styles, _style_rep, and _style_id</span>
+        <span class="n">styles</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">styles</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span> <span class="c1"># no change in styles, so just use the original</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">updateStyles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">styles</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Expression.withoutStyle"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.withoutStyle">[docs]</a>    <span class="k">def</span> <span class="nf">withoutStyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Remove one of the styles from the styles dictionary for this</span>
+<span class="sd">        expression.  Sometimes you want to remove a style and use</span>
+<span class="sd">        default behavior (which is allowed to be different for string </span>
+<span class="sd">        and LaTeX formatting).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="p">)</span>
+        <span class="n">styles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">styles</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span> <span class="c1"># no change in styles, so just use the original</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">updateStyles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">styles</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+    
+<div class="viewcode-block" id="Expression.withMatchingStyle"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.withMatchingStyle">[docs]</a>    <span class="k">def</span> <span class="nf">withMatchingStyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr_with_different_style</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Alter the styles of this expression to match that of the</span>
+<span class="sd">        given &quot;expr_with_different_style&quot;.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span> <span class="o">!=</span> <span class="n">expr_with_different_style</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;withMatchingStyle&#39; must be given an expression with the same meaning&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_withMatchingStyle</span><span class="p">(</span><span class="n">expr_with_different_style</span><span class="p">)</span></div>
+    
+    <span class="k">def</span> <span class="nf">_withMatchingStyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr_with_different_style</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Helper function for &#39;withMatchingStyle.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style_id</span> <span class="o">==</span> <span class="n">expr_with_different_style</span><span class="o">.</span><span class="n">_style_id</span><span class="p">:</span>
+            <span class="k">return</span> <span class="c1"># no difference in style actually; do nothing</span>
+        <span class="k">for</span> <span class="n">my_sub_expr</span><span class="p">,</span> <span class="n">other_sub_expr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subExprIter</span><span class="p">(),</span> <span class="n">expr_with_different_style</span><span class="o">.</span><span class="n">subExprIter</span><span class="p">()):</span>
+            <span class="n">my_sub_expr</span><span class="o">.</span><span class="n">_withMatchingStyle</span><span class="p">(</span><span class="n">other_sub_expr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">withStyles</span><span class="p">(</span><span class="o">**</span><span class="n">expr_with_different_style</span><span class="o">.</span><span class="n">getStyles</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span>
+    
+<div class="viewcode-block" id="Expression.styleNames"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.styleNames">[docs]</a>    <span class="k">def</span> <span class="nf">styleNames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the name of the styles that may be set.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+    
+<div class="viewcode-block" id="Expression.getStyle"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.getStyle">[docs]</a>    <span class="k">def</span> <span class="nf">getStyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">styleName</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the current style setting for the given style name.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="p">[</span><span class="n">styleName</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">styleName</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Expression.getStyles"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.getStyles">[docs]</a>    <span class="k">def</span> <span class="nf">getStyles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a copy of the internally maintained styles dictionary.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="p">)</span></div>
+         
+<div class="viewcode-block" id="Expression.remakeConstructor"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.remakeConstructor">[docs]</a>    <span class="k">def</span> <span class="nf">remakeConstructor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Method to call to reconstruct this Expression.  The default is the class name</span>
+<span class="sd">        itself to use the __init__ method, but sometimes a different method is more</span>
+<span class="sd">        appropriate for setting the proper style (e.g. the Frac method in </span>
+<span class="sd">        proveit.number.division.divide which constructs a Div object with a different</span>
+<span class="sd">        style).  This constructor method must be in the same module as the class.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span></div>
+    
+<div class="viewcode-block" id="Expression.remakeArguments"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.remakeArguments">[docs]</a>    <span class="k">def</span> <span class="nf">remakeArguments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield the argument values or (name, value) pairs</span>
+<span class="sd">        that could be used to recreate the Expression.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;remakeArguments method should be implemented for all ProveIt core Expression sub-classes.&quot;</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="Expression.remakeWithStyleCalls"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.remakeWithStyleCalls">[docs]</a>    <span class="k">def</span> <span class="nf">remakeWithStyleCalls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        In order to reconstruct this Expression to have the same styles,</span>
+<span class="sd">        what &quot;with...&quot; method calls are most appropriate?  Return a </span>
+<span class="sd">        tuple of strings with the calls to make.  For example,</span>
+<span class="sd">        [&quot;withWrappingAt(3)&quot;, &quot;withJustification(&#39;right&#39;)&quot;].</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Expression.prove"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.prove">[docs]</a>    <span class="k">def</span> <span class="nf">prove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to prove this expression automatically under the</span>
+<span class="sd">        given assumptions (if None, uses defaults.assumptions).  First</span>
+<span class="sd">        it tries to find an existing KnownTruth, then it tries a simple</span>
+<span class="sd">        proof by assumption (if self is contained in the assumptions),</span>
+<span class="sd">        then it attempts to call the &#39;conclude&#39; method.  If successful,</span>
+<span class="sd">        the KnownTruth is returned, otherwise an exception is raised.</span>
+<span class="sd">        Cyclic attempts to `conclude` the same expression under the</span>
+<span class="sd">        same set of assumptions will be blocked, so `conclude` methods are</span>
+<span class="sd">        free make attempts that may be cyclic.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">KnownTruth</span><span class="p">,</span> <span class="n">ProofFailure</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Not</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">assumptionsSet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">automation</span> <span class="ow">is</span> <span class="n">USE_DEFAULTS</span><span class="p">:</span>
+            <span class="n">automation</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">automation</span>
+                
+        <span class="n">foundTruth</span> <span class="o">=</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">findKnownTruth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptionsSet</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">foundTruth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">foundTruth</span><span class="o">.</span><span class="n">withMatchingStyles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span> <span class="c1"># give it the appropriate style</span>
+            <span class="k">return</span> <span class="n">foundTruth</span> <span class="c1"># found an existing KnownTruth that does the job!</span>
+                
+        <span class="k">if</span> <span class="bp">self</span> <span class="ow">in</span> <span class="n">assumptionsSet</span><span class="p">:</span>
+            <span class="c1"># prove by assumption if self is in the list of assumptions.</span>
+            <span class="kn">from</span> <span class="nn">proveit._core_.proof</span> <span class="k">import</span> <span class="n">Assumption</span>
+            <span class="k">return</span> <span class="n">Assumption</span><span class="o">.</span><span class="n">makeAssumption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">provenTruth</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">automation</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="s2">&quot;No pre-existing proof&quot;</span><span class="p">)</span>
+                                                
+        <span class="c1"># Use Expression.in_progress_to_conclude set to prevent an infinite recursion</span>
+        <span class="n">in_progress_key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">expr</span><span class="p">:</span><span class="nb">hash</span><span class="p">(</span><span class="n">expr</span><span class="p">))))</span>
+        <span class="k">if</span> <span class="n">in_progress_key</span> <span class="ow">in</span> <span class="n">Expression</span><span class="o">.</span><span class="n">in_progress_to_conclude</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="s2">&quot;Infinite &#39;conclude&#39; recursion blocked.&quot;</span><span class="p">)</span>
+        <span class="n">Expression</span><span class="o">.</span><span class="n">in_progress_to_conclude</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">in_progress_key</span><span class="p">)</span>        
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">concludedTruth</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Not</span><span class="p">):</span>
+                <span class="c1"># if it is a Not expression, try concludeNegation on the operand</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">concludedTruth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">concludeNegation</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+                    <span class="k">pass</span> <span class="c1"># that didn&#39;t work, try conclude on the Not expression itself</span>
+            <span class="k">if</span> <span class="n">concludedTruth</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># first attempt to prove via implication</span>
+                    <span class="n">concludedTruth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaImplication</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                    <span class="c1"># try the &#39;conclude&#39; method of the specific Expression class</span>
+                    <span class="n">concludedTruth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conclude</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">concludedTruth</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="s2">&quot;Failure to automatically &#39;conclude&#39;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">concludedTruth</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;conclude&#39; method should return a KnownTruth (or raise an exception)&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">concludedTruth</span><span class="o">.</span><span class="n">expr</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;conclude&#39; method should return a KnownTruth for this Expression object: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">concludedTruth</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; does not match &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">concludedTruth</span><span class="o">.</span><span class="n">assumptionsSet</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;While proving &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, &#39;conclude&#39; method returned a KnownTruth with extra assumptions: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">concludedTruth</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span> <span class="o">-</span> <span class="n">assumptionsSet</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">concludedTruth</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">_style_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">concludedTruth</span> <span class="c1"># concludedTruth with the same style as self.</span>
+            <span class="k">return</span> <span class="n">concludedTruth</span><span class="o">.</span><span class="n">withMatchingStyles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span> <span class="c1"># give it the appropriate style</span>
+        <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="s2">&quot;&#39;conclude&#39; method not implemented for proof automation&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">Expression</span><span class="o">.</span><span class="n">in_progress_to_conclude</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">in_progress_key</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Expression.proven"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.proven">[docs]</a>    <span class="k">def</span> <span class="nf">proven</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True if and only if the expression is known to be true.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ProofFailure</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Expression.disprove"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.disprove">[docs]</a>    <span class="k">def</span> <span class="nf">disprove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to prove the logical negation (Not) of this expression. </span>
+<span class="sd">        If successful, the KnownTruth is returned, otherwise an exception</span>
+<span class="sd">        is raised.  By default, this simply calls prove on the negated</span>
+<span class="sd">        expression. Override `concludeNegation` for automation specific to</span>
+<span class="sd">        the type of expression being negated.      </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Not</span>
+        <span class="k">return</span> <span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="n">automation</span><span class="p">)</span></div>
+                        
+<div class="viewcode-block" id="Expression.diproven"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.diproven">[docs]</a>    <span class="k">def</span> <span class="nf">diproven</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True if and only if the expression is known to be false.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ProofFailure</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disprove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+    
+<div class="viewcode-block" id="Expression.conclude"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.conclude">[docs]</a>    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to conclude this expression under the given assumptions, </span>
+<span class="sd">        using automation specific to this type of expression.</span>
+<span class="sd">        Return the KnownTruth if successful, or raise an exception.</span>
+<span class="sd">        This is called by the `prove` method when no existing proof was found </span>
+<span class="sd">        and it cannot be proven trivially via assumption or defaultConclude.</span>
+<span class="sd">        The `prove` method has a mechanism to prevent infinite recursion, </span>
+<span class="sd">        so there are no worries regarding cyclic attempts to conclude an expression.</span>
+<span class="sd">        </span>
+<span class="sd">        As a rule of thumb, &#39;conclude&#39; methods should only attempt</span>
+<span class="sd">        one non-trivial strategy for the automation.  Simple checks if</span>
+<span class="sd">        something is already known to be true is deemed &quot;trivial&quot;.</span>
+<span class="sd">        If everything fails, other methods could be recommended to the </span>
+<span class="sd">        user to be attempted manually.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&#39;conclude&#39; not implemented for &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Expression.concludeViaImplication"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.concludeViaImplication">[docs]</a>    <span class="k">def</span> <span class="nf">concludeViaImplication</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to conclude this expression via applying</span>
+<span class="sd">        modus ponens of known implications.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">concludeViaImplication</span>
+        <span class="k">return</span> <span class="n">concludeViaImplication</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Expression.concludeNegation"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.concludeNegation">[docs]</a>    <span class="k">def</span> <span class="nf">concludeNegation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to conclude the negation of this expression under the given</span>
+<span class="sd">        assumptions, using automation specific to the type of expression being negated.</span>
+<span class="sd">        Return the KnownTruth if successful, or raise an exception.</span>
+<span class="sd">        This is called by the `prove` method of the negated expression</span>
+<span class="sd">        when no existing proof for the negation was found.</span>
+<span class="sd">        The `prove` method has a mechanism to prevent infinite recursion, </span>
+<span class="sd">        so there are no worries regarding cyclic attempts to conclude an expression.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&#39;concludeNegation&#39; not implemented for &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span></div>
+        
+<div class="viewcode-block" id="Expression.sideEffects"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.sideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">sideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knownTruth</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield methods to attempt as side-effects when this expression</span>
+<span class="sd">        is proven as a known truth.  These should each accept an</span>
+<span class="sd">        &#39;assumptions&#39; parameter.</span>
+<span class="sd">        These should be obvious and useful consequences, trivial and limited.</span>
+<span class="sd">        There is no need to call this manually; it is called automatically when</span>
+<span class="sd">        the corresponding KnownTruth is created.</span>
+<span class="sd">        It also may be desirable to store the knownTruth for future automation.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(())</span></div>
+    
+<div class="viewcode-block" id="Expression.replaced"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.replaced">[docs]</a>    <span class="k">def</span> <span class="nf">replaced</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repl_map</span><span class="p">,</span> <span class="n">allow_relabeling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">requirements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">equality_repl_requirements</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns this expression with sub-expressions replaced </span>
+<span class="sd">        according to the replacement map (repl_map) dictionary </span>
+<span class="sd">        which maps Expressions to Expressions.  When used for </span>
+<span class="sd">        instantiation, this should specifically map variables,</span>
+<span class="sd">        indexed variables, or ranges of indexed variables to</span>
+<span class="sd">        Expressions.</span>
+<span class="sd">        </span>
+<span class="sd">        If allow_relabeling is True then internal Lambda parameters</span>
+<span class="sd">        may be replaced when it is a valid replacement of parameter(s) </span>
+<span class="sd">        (i.e., Variable&#39;s, IndexedVar&#39;s, or an ExprRange of </span>
+<span class="sd">        IndexedVar&#39;s, and unique parameter variables).</span>
+<span class="sd">        Otherwise, the Lambda parameter variables will be masked</span>
+<span class="sd">        within its scope.  Partial masked of a range of indexed</span>
+<span class="sd">        varaibles is not allowed and will cause an error.</span>
+<span class="sd">        For example, we cannot replace (x_1, ..., x_{n+1}) within </span>
+<span class="sd">        (x_1, ..., x_n) -&gt; f(x_1, ..., x_n).</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;assumptions&#39; and &#39;requirements&#39; are used when an operator is</span>
+<span class="sd">        replaced by a Lambda map that has a range of parameters </span>
+<span class="sd">        (e.g., x_1, ..., x_n) such that the length of the parameters </span>
+<span class="sd">        and operands must be proven to be equal.  For more details, </span>
+<span class="sd">        see Operation.replaced, Lambda.apply, and Iter.replaced </span>
+<span class="sd">        (which is the sequence of calls involved).  They may also</span>
+<span class="sd">        be used to ensure indices match when performing parameter-</span>
+<span class="sd">        dependent ExprRange expansions that require indices to match.</span>
+<span class="sd">        &#39;requirements&#39; are also needed to perform ExprRange</span>
+<span class="sd">        reductions (for empty or singular ExprRanges).  They are</span>
+<span class="sd">        also used for automatic equality replacements; for example,</span>
+<span class="sd">        &quot;And() = TRUE&quot;.  Such requirements are also recorded in the</span>
+<span class="sd">        &#39;equality_repl_requirements&#39; set if one is provided.</span>
+<span class="sd">        </span>
+<span class="sd">        Also applies any enabled automatic reductions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">requirements</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">requirements</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># Not passing back requirements.</span>
+        <span class="k">if</span> <span class="n">assumptions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">equality_repl_requirements</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Not passing back the equality replacement requirements.</span>
+            <span class="n">equality_repl_requirements</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replaced</span><span class="p">(</span>
+                <span class="n">repl_map</span><span class="p">,</span> <span class="n">allow_relabeling</span><span class="o">=</span><span class="n">allow_relabeling</span><span class="p">,</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">requirements</span><span class="o">=</span><span class="n">requirements</span><span class="p">,</span>
+                <span class="n">equality_repl_requirements</span><span class="o">=</span><span class="n">equality_repl_requirements</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">_auto_reduced</span><span class="p">(</span>
+                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">requirements</span><span class="o">=</span><span class="n">requirements</span><span class="p">,</span>
+                            <span class="n">equality_repl_requirements</span><span class="o">=</span>\
+                            <span class="n">equality_repl_requirements</span><span class="p">)</span></div>
+    
+    <span class="k">def</span> <span class="nf">_replaced</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repl_map</span><span class="p">,</span> <span class="n">allow_relabeling</span><span class="p">,</span>
+                  <span class="n">assumptions</span><span class="p">,</span> <span class="n">requirements</span><span class="p">,</span> <span class="n">equality_repl_requirements</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Implementation for Expression.replaced except for the</span>
+<span class="sd">        final automatic reduction (if applicalbe).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">repl_map</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span> <span class="ow">in</span> <span class="n">repl_map</span><span class="p">):</span>
+            <span class="n">replaced</span> <span class="o">=</span> <span class="n">repl_map</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">subbed_sub_exprs</span> <span class="o">=</span> \
+                <span class="nb">tuple</span><span class="p">(</span><span class="n">sub_expr</span><span class="o">.</span><span class="n">replaced</span><span class="p">(</span><span class="n">repl_map</span><span class="p">,</span> <span class="n">allow_relabeling</span><span class="p">,</span>
+                                        <span class="n">assumptions</span><span class="p">,</span> <span class="n">requirements</span><span class="p">,</span>
+                                        <span class="n">equality_repl_requirements</span><span class="p">)</span>
+                      <span class="k">for</span> <span class="n">sub_expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">)</span>
+            <span class="n">replaced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_checked_make</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_coreInfo</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">styles</span><span class="p">),</span>
+                    <span class="n">subbed_sub_exprs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">replaced</span>
+    
+<div class="viewcode-block" id="Expression.copy"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Make a copy of the Expression with the same styles.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># vacuous substitution makes a copy</span>
+        <span class="n">expr_copy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replaced</span><span class="p">({})</span> 
+        <span class="k">return</span> <span class="n">expr_copy</span></div>
+    
+    <span class="k">def</span> <span class="nf">_used_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return all of the used Variables of this Expression,</span>
+<span class="sd">        included those in sub-expressions.</span>
+<span class="sd">        Call externally via the used_vars method in expr.py.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">expr</span><span class="o">.</span><span class="n">_used_vars</span><span class="p">()</span> <span class="k">for</span> 
+                             <span class="n">expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_possibly_free_var_ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the dictionary mapping Variables to forms w.r.t. ranges</span>
+<span class="sd">        of indices (or solo) in which the variable occurs as free or </span>
+<span class="sd">        not explicitly and completely masked.  Examples of &quot;forms&quot;:</span>
+<span class="sd">            x</span>
+<span class="sd">            x_i</span>
+<span class="sd">            x_1, ..., x_n</span>
+<span class="sd">            x_{i, 1}, ..., x_{i, n_i}</span>
+<span class="sd">            x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}</span>
+<span class="sd">        For example,</span>
+<span class="sd">        (x_1, ..., x_n) -&gt; x_1 + ... + x_n + x_{n+1}</span>
+<span class="sd">        would report {x_{n+1}} for the x entry but not x_1, ..., x_n.</span>
+<span class="sd">        In another example,</span>
+<span class="sd">        (x_1, ..., x_n) -&gt; x_1 + ... + x_k + x_{k+1} + ... + x_{n}</span>
+<span class="sd">        would report {x_1, ..., x_k, x_{k+1}, ..., x_{n}} for the x</span>
+<span class="sd">        entry because the masking is not &quot;explicit&quot; (obvious).  </span>
+<span class="sd">                </span>
+<span class="sd">        If this Expression is in the exclusion set, or contributes </span>
+<span class="sd">        directly to a form that is in the exclusions set, skip over it.</span>
+<span class="sd">        For example, given the expression</span>
+<span class="sd">            a*x_{i, 1} + ... + a*x_{i, n_1}</span>
+<span class="sd">        if x_{i, 1}, ..., x_{i, n_i} is in the exclusion set,</span>
+<span class="sd">        then &#39;a&#39; will be the only free variable reported.</span>
+<span class="sd">        </span>
+<span class="sd">        Call externally via the free_var_forms method in expr.py.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">forms_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">exclusions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span> <span class="ow">in</span> <span class="n">exclusions</span><span class="p">:</span> 
+            <span class="k">return</span> <span class="n">forms_dict</span> <span class="c1"># this is excluded</span>
+        <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">forms</span> <span class="ow">in</span> \
+                    <span class="n">expr</span><span class="o">.</span><span class="n">_possibly_free_var_ranges</span><span class="p">(</span>
+                            <span class="n">exclusions</span><span class="o">=</span><span class="n">exclusions</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">forms_dict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">forms</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">forms_dict</span>
+    
+<div class="viewcode-block" id="Expression.safeDummyVar"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.safeDummyVar">[docs]</a>    <span class="k">def</span> <span class="nf">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.label.var</span> <span class="k">import</span> <span class="n">safeDummyVar</span>
+        <span class="k">return</span> <span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Expression.safeDummyVars"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.safeDummyVars">[docs]</a>    <span class="k">def</span> <span class="nf">safeDummyVars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.label.var</span> <span class="k">import</span> <span class="n">safeDummyVars</span>
+        <span class="k">return</span> <span class="n">safeDummyVars</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="Expression.evaluation"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.evaluation">[docs]</a>    <span class="k">def</span> <span class="nf">evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If possible, return a KnownTruth of this expression equal to its</span>
+<span class="sd">        irreducible value.  Checks for an existing evaluation.  If it</span>
+<span class="sd">        doesn&#39;t exist, try some default strategies including a reduction.</span>
+<span class="sd">        Attempt the Expression-class-specific &quot;doReducedEvaluation&quot;</span>
+<span class="sd">        when necessary.</span>
+<span class="sd">        </span>
+<span class="sd">        If automation is False, this may only succeed if the evaluation</span>
+<span class="sd">        is already known.  Other keyword arguments will be passed</span>
+<span class="sd">        along to doReducedEvaluation to instruct it on how it</span>
+<span class="sd">        should behave (e.g., &#39;minimal_automation&#39;).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">Equals</span><span class="p">,</span> <span class="n">defaultSimplification</span><span class="p">,</span> 
+                                   <span class="n">SimplificationError</span><span class="p">,</span> <span class="n">EvaluationError</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">KnownTruth</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.irreducible_value</span> <span class="k">import</span> <span class="n">isIrreducibleValue</span>
+
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="n">method_called</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># First try the default tricks. If a reduction succesfully</span>
+            <span class="c1"># occurs, evaluation will be called on that reduction.</span>
+            <span class="n">evaluation</span> <span class="o">=</span> <span class="n">defaultSimplification</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">innerExpr</span><span class="p">(),</span> <span class="n">mustEvaluate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="n">automation</span><span class="p">)</span>
+            <span class="n">method_called</span> <span class="o">=</span> <span class="n">defaultSimplification</span>
+        <span class="k">except</span> <span class="n">SimplificationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">automation</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span> <span class="c1"># Nothing else we can try when automation is off.</span>
+            <span class="c1"># The default failed, let&#39;s try the Expression-class specific version.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">evaluation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doReducedEvaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">evaluation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+                <span class="n">method_called</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doReducedEvaluation</span>
+            <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+                <span class="c1"># We have nothing but the default evaluation strategy to try,</span>
+                <span class="c1"># and that failed.</span>
+                <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evaluation</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evaluation</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">Equals</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> must return an KnownTruth, &quot;</span>
+                   <span class="s2">&quot;not </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2"> assuming </span><span class="si">%s</span><span class="s2">&quot;</span>
+                   <span class="o">%</span><span class="p">(</span><span class="n">method_called</span><span class="p">,</span> <span class="n">evaluation</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">lhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> must return an KnownTruth &quot;</span>
+                   <span class="s2">&quot;equality with self on the left side, &quot;</span>
+                   <span class="s2">&quot;not </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2"> assuming </span><span class="si">%s</span><span class="s2">&quot;</span>
+                   <span class="o">%</span><span class="p">(</span><span class="n">method_called</span><span class="p">,</span> <span class="n">evaluation</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="n">evaluation</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> must return an KnownTruth &quot;</span>
+                   <span class="s2">&quot;equality with an irreducible value on the right side, &quot;</span>
+                   <span class="s2">&quot;not </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2"> assuming </span><span class="si">%s</span><span class="s2">&quot;</span>
+                   <span class="o">%</span><span class="p">(</span><span class="n">method_called</span><span class="p">,</span> <span class="n">evaluation</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="c1"># Note: No need to store in Equals.known_evaluation_sets or</span>
+        <span class="c1"># Equals.known_simplifications; this is done automatically as</span>
+        <span class="c1"># a side-effect for proven equalities with irreducible right</span>
+        <span class="c1"># sides.</span>
+
+        <span class="k">return</span> <span class="n">evaluation</span></div>
+    
+<div class="viewcode-block" id="Expression.doReducedEvaluation"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.doReducedEvaluation">[docs]</a>    <span class="k">def</span> <span class="nf">doReducedEvaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to evaluate &#39;self&#39;, which should be a reduced</span>
+<span class="sd">        expression with operands already evaluated.</span>
+<span class="sd">        Return the evaluation as a KnownTruth equality </span>
+<span class="sd">        with &#39;self&#39; on the left side.</span>
+<span class="sd">        Must be overridden for class-specific evaluation.</span>
+<span class="sd">        Raise a SimplificationError if the evaluation</span>
+<span class="sd">        cannot be done.</span>
+<span class="sd">        </span>
+<span class="sd">        The kwargs may provide instructions on how this method</span>
+<span class="sd">        should behave (e.g., minimal_automation).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&#39;doReducedEvaluation&#39; not implemented for </span><span class="si">%s</span><span class="s2"> class&quot;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span>       </div>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    # Generated automatically via InnerExpr.register_equivalence_method.</span>
+<span class="sd">    def evaluated(self, assumptions=USE_DEFAULTS):</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        Return the right side of an evaluation.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        return self.evaluation(assumptions=assumptions).rhs</span>
+<span class="sd">   &quot;&quot;&quot;</span> 
+        
+<div class="viewcode-block" id="Expression.simplification"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.simplification">[docs]</a>    <span class="k">def</span> <span class="nf">simplification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If possible, return a KnownTruth of this expression equal to a</span>
+<span class="sd">        canonically simplified form. Checks for an existing simplifcation.</span>
+<span class="sd">        If it doesn&#39;t exist and automation is True, try some default strategies</span>
+<span class="sd">        including a reduction.  Attempt the Expression-class-specific </span>
+<span class="sd">        &quot;doReducedSimplication&quot; when necessary.</span>
+<span class="sd">        </span>
+<span class="sd">        If automation is False, this may only succeed if the </span>
+<span class="sd">        simplification is already known.  Other keyword arguments will</span>
+<span class="sd">        be passed along to doReducedEvaluation to instruct it on how it</span>
+<span class="sd">        should behave (e.g., &#39;minimal_automation&#39;).     </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">KnownTruth</span><span class="p">,</span> <span class="n">ProofFailure</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">Equals</span><span class="p">,</span> <span class="n">defaultSimplification</span><span class="p">,</span> 
+                                   <span class="n">SimplificationError</span><span class="p">,</span> <span class="n">EvaluationError</span><span class="p">)</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="n">method_called</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># First try the default tricks. If a reduction succesfully occurs,</span>
+            <span class="c1"># simplification will be called on that reduction.</span>
+            <span class="n">simplification</span> <span class="o">=</span> <span class="n">defaultSimplification</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">innerExpr</span><span class="p">(),</span> 
+                                                   <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span>
+                                                   <span class="n">automation</span><span class="o">=</span><span class="n">automation</span><span class="p">)</span>
+            <span class="n">method_called</span> <span class="o">=</span> <span class="n">defaultSimplification</span>
+        <span class="k">except</span> <span class="n">SimplificationError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">automation</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="c1"># When automation is False, we raise an exception if there</span>
+                <span class="c1"># is not a known simplification.</span>
+                <span class="k">raise</span> <span class="n">SimplificationError</span><span class="p">(</span><span class="s2">&quot;Unknown simplification of </span><span class="si">%s</span><span class="s2"> under &quot;</span>
+                                          <span class="s2">&quot;assumptions </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+            <span class="c1"># The default did nothing, let&#39;s try the Expression-class specific </span>
+            <span class="c1"># versions of evaluation and simplification.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># first try evaluation.  that is as simple as it gets.</span>
+                <span class="n">simplification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doReducedEvaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">simplification</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+                <span class="n">method_called</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doReducedEvaluation</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">NotImplementedError</span><span class="p">,</span> <span class="n">EvaluationError</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">simplification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doReducedSimplification</span><span class="p">(</span>
+                            <span class="n">assumptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">simplification</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">SimplificationError</span><span class="p">(</span><span class="s1">&#39;Unable to simplify: &#39;</span><span class="p">,</span>
+                                                  <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+                    <span class="n">method_called</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doReducedSimplification</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">NotImplementedError</span><span class="p">,</span> <span class="n">SimplificationError</span><span class="p">,</span> <span class="n">ProofFailure</span><span class="p">):</span>
+                    <span class="c1"># Simplification did not work.  Just use self-equality.</span>
+                    <span class="n">self_eq</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                    <span class="n">simplification</span> <span class="o">=</span> <span class="n">self_eq</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+                    <span class="n">method_called</span> <span class="o">=</span> <span class="n">self_eq</span><span class="o">.</span><span class="n">prove</span>
+            
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">simplification</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">simplification</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">Equals</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> must return a KnownTruth &quot;</span>
+                   <span class="s2">&quot;equality, not </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2"> assuming </span><span class="si">%s</span><span class="s2">&quot;</span>
+                   <span class="o">%</span><span class="p">(</span><span class="n">method_called</span><span class="p">,</span> <span class="n">simplification</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">simplification</span><span class="o">.</span><span class="n">lhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> must return a KnownTruth &quot;</span>
+                   <span class="s2">&quot;equality with &#39;self&#39; on the left side, not </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2"> &quot;</span>
+                   <span class="s2">&quot;assuming </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">method_called</span><span class="p">,</span> <span class="n">simplification</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c1"># Remember this simplification for next time:</span>
+        <span class="n">assumptions_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">expr</span> <span class="p">:</span> <span class="nb">hash</span><span class="p">(</span><span class="n">expr</span><span class="p">))</span>
+        <span class="n">known_simplifications_key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">assumptions_sorted</span><span class="p">))</span>
+        <span class="n">Equals</span><span class="o">.</span><span class="n">known_simplifications</span><span class="p">[</span><span class="n">known_simplifications_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">simplification</span>
+             
+        <span class="k">return</span> <span class="n">simplification</span></div>
+    
+<div class="viewcode-block" id="Expression.doReducedSimplification"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.doReducedSimplification">[docs]</a>    <span class="k">def</span> <span class="nf">doReducedSimplification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to simplify &#39;self&#39;, which should be a reduced</span>
+<span class="sd">        expression with operands already simplified.</span>
+<span class="sd">        Return the evaluation as a KnownTruth equality </span>
+<span class="sd">        with &#39;self&#39; on the left side.</span>
+<span class="sd">        Must be overridden for class-specific simplification.</span>
+<span class="sd">        Raise a SimplificationError if the simplification</span>
+<span class="sd">        cannot be done.</span>
+<span class="sd">        </span>
+<span class="sd">        The kwargs may provide instructions on how this method</span>
+<span class="sd">        should behave (e.g., minimal_automation).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&#39;doReducedSimplification&#39; not implemented for </span><span class="si">%s</span><span class="s2"> class&quot;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span></div>
+    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    # Generated automatically via InnerExpr.register_equivalence_method.</span>
+<span class="sd">    def simplified(self, assumptions=USE_DEFAULTS):</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        Return the right side of a simplification.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        return self.simplification(assumptions=assumptions).rhs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="Expression.orderOfAppearance"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.orderOfAppearance">[docs]</a>    <span class="k">def</span> <span class="nf">orderOfAppearance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subExpressions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yields the given sub-Expressions in the order in which they</span>
+<span class="sd">        appear in this Expression.  There may be repeats.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span> <span class="ow">in</span> <span class="n">subExpressions</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span>
+        <span class="k">for</span> <span class="n">subExpr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="n">subExpr</span><span class="o">.</span><span class="n">orderOfAppearance</span><span class="p">(</span><span class="n">subExpressions</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">expr</span></div>
+    
+    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">unofficialNameKindContext</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Generate html to show a png compiled from the latex (that may be recalled</span>
+<span class="sd">        from memory or storage if it was generated previously) with a link to</span>
+<span class="sd">        an expr.ipynb notebook for displaying the expression information.</span>
+<span class="sd">        If &#39;context&#39; is provided, find the stored expression information in</span>
+<span class="sd">        that context; otherwise, use the default, current directory Context.</span>
+<span class="sd">        If &#39;unofficialNameKindContext&#39; is provided, it should be the </span>
+<span class="sd">        (name, kind, context) for a special expression that is not-yet-official</span>
+<span class="sd">        (%end_[common/axioms/theorems] has not been called yet in the special </span>
+<span class="sd">        expressions notebook).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">defaults</span><span class="o">.</span><span class="n">display_latex</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span> <span class="c1"># No LaTeX display at this time.</span>
+        <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span> <span class="o">=</span> <span class="n">Context</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="p">,</span><span class="s1">&#39;png&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">png</span><span class="p">,</span> <span class="n">png_url</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">_stored_png</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">latex</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_latex_tool</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">png_url</span> <span class="o">=</span> <span class="n">png_url</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">png_url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">expr_notebook_rel_url</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">expressionNotebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unofficialNameKindContext</span><span class="p">)</span>
+            <span class="n">html</span> <span class="o">=</span> <span class="s1">&#39;&lt;a class=&quot;ProveItLink&quot; href=&quot;&#39;</span> <span class="o">+</span> <span class="n">expr_notebook_rel_url</span> <span class="o">+</span> <span class="s1">&#39;&quot;&gt;&#39;</span>
+            <span class="k">if</span> <span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span><span class="p">:</span>
+                <span class="n">encoded_png</span> <span class="o">=</span> <span class="n">encodebytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">png</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> 
+                <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;img src=&quot;data:image/png;base64,&#39;</span> <span class="o">+</span> <span class="n">encoded_png</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;&quot; style=&quot;display:inline;vertical-align:middle;&quot; /&gt;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;img src=&quot;&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">png_url</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;&quot; style=&quot;display:inline;vertical-align:middle;&quot; /&gt;&#39;</span>
+            <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;/a&gt;&#39;</span>
+        <span class="c1"># record as a &quot;displayed&quot; (style-specific) expression</span>
+        <span class="n">Expression</span><span class="o">.</span><span class="n">displayed_expression_styles</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_style_id</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span> 
+        <span class="k">return</span> <span class="n">html</span>
+        
+    <span class="k">def</span> <span class="nf">_config_latex_tool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lt</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Configure the LaTeXTool from IPython.lib.latextools as required by all</span>
+<span class="sd">        sub-expressions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">sub_expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">:</span>
+            <span class="n">sub_expr</span><span class="o">.</span><span class="n">_config_latex_tool</span><span class="p">(</span><span class="n">lt</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Expression.exprInfo"><a class="viewcode-back" href="../../../../api/proveit.Expression.html#proveit.Expression.exprInfo">[docs]</a>    <span class="k">def</span> <span class="nf">exprInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.expr_info</span> <span class="k">import</span> <span class="n">ExpressionInfo</span>
+        <span class="k">return</span> <span class="n">ExpressionInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span></div></div>
+        
+<div class="viewcode-block" id="used_vars"><a class="viewcode-back" href="../../../../api/proveit.used_vars.html#proveit.used_vars">[docs]</a><span class="k">def</span> <span class="nf">used_vars</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return all of the used Variables of this Expression,</span>
+<span class="sd">    included those in sub-expressions.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">expr</span><span class="o">.</span><span class="n">_used_vars</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="possibly_free_var_ranges"><a class="viewcode-back" href="../../../../api/proveit.possibly_free_var_ranges.html#proveit.possibly_free_var_ranges">[docs]</a><span class="k">def</span> <span class="nf">possibly_free_var_ranges</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">exclusions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return the dictionary mapping Variables to forms w.r.t. ranges</span>
+<span class="sd">    of indices (or solo) in which the variable occurs as free or </span>
+<span class="sd">    not explicitly and completely masked.  Examples of &quot;forms&quot;:</span>
+<span class="sd">        x</span>
+<span class="sd">        x_i</span>
+<span class="sd">        x_1, ..., x_n</span>
+<span class="sd">        x_{i, 1}, ..., x_{i, n_i}</span>
+<span class="sd">        x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}</span>
+<span class="sd">    For example,</span>
+<span class="sd">    (x_1, ..., x_n) -&gt; x_1 + ... + x_n + x_{n+1}</span>
+<span class="sd">    would report {x_{n+1}} for the x entry but not x_1, ..., x_n.</span>
+<span class="sd">    In another example,</span>
+<span class="sd">    (x_1, ..., x_n) -&gt; x_1 + ... + x_k + x_{k+1} + ... + x_{n}</span>
+<span class="sd">    would report {x_1, ..., x_k, x_{k+1}, ..., x_{n}} for the x</span>
+<span class="sd">    entry because the masking is not &quot;explicit&quot; and actually depends</span>
+<span class="sd">    upon what may be assumed about k.</span>
+<span class="sd">    </span>
+<span class="sd">    If this Expression is in the exclusion set, or contributes </span>
+<span class="sd">    directly to a form that is in the exclusions set, skip over it.</span>
+<span class="sd">    For example, given the expression</span>
+<span class="sd">        a*x_{i, 1} + ... + a*x_{i, n_1}</span>
+<span class="sd">    if x_{i, 1}, ..., x_{i, n_i} is in the exclusion set,</span>
+<span class="sd">    then &#39;a&#39; will be the only free variable reported.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">expr</span><span class="o">.</span><span class="n">_guaranteed_free_var_ranges</span><span class="p">(</span><span class="n">exclusions</span><span class="o">=</span><span class="n">exclusions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="free_vars"><a class="viewcode-back" href="../../../../api/proveit.free_vars.html#proveit.free_vars">[docs]</a><span class="k">def</span> <span class="nf">free_vars</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">err_inclusively</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns the set of variables that are free, the variable itself</span>
+<span class="sd">    or some indices of the variable.  </span>
+<span class="sd">    For example, </span>
+<span class="sd">        (x_1, ..., x_n) -&gt; x_1 + ... + x_n + x_{n+1}</span>
+<span class="sd">    x and n are both free.  And in</span>
+<span class="sd">        (x_1, ..., x_n) -&gt; x_1 + ... + x_k + x_{k+1} + ... + x_{n}</span>
+<span class="sd">    n, and k are free assuming 1 &lt;= k &lt;= n.</span>
+<span class="sd">    What actually gets reported depends upon the &quot;err_inclusively&quot;</span>
+<span class="sd">    flag.  If &quot;err_inclusively&quot; is True, the latter example</span>
+<span class="sd">    will report x, n, and k because it is not clear that</span>
+<span class="sd">    x is completely bound without assumptions on k.  If</span>
+<span class="sd">    &quot;err_inclusively&quot; is False, the first example will just report</span>
+<span class="sd">    n because it requires some extra work to determine that x</span>
+<span class="sd">    is not comletely bound.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Exclude TemporaryLabels to avoid errors when doing a clean</span>
+    <span class="c1"># rebuild.</span>
+    <span class="kn">from</span> <span class="nn">proveit._core_.expression.label.label</span> <span class="k">import</span> <span class="n">TemporaryLabel</span>
+    <span class="k">if</span> <span class="n">err_inclusively</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">var</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">expr</span><span class="o">.</span><span class="n">_possibly_free_var_ranges</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">TemporaryLabel</span><span class="p">)}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_entirely_unbound_vars</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">_entirely_unbound_vars</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns the set of variables for that are entirely unbound in</span>
+<span class="sd">    the given expression.</span>
+<span class="sd">    For example, given</span>
+<span class="sd">        (x_1, ..., x_n) -&gt; x_1 + ... + x_n + x_{n+1}</span>
+<span class="sd">    n is entirely unbound.  Even though there is an index for which</span>
+<span class="sd">    x is unbound, it is partially bound and therefore not returned.</span>
+<span class="sd">    Axioms and theorems must not have any variables that are</span>
+<span class="sd">    entirely unbound.  They should not have any partially unbound</span>
+<span class="sd">    variables either, but Prove-It does not check for this since</span>
+<span class="sd">    the check would be more involved and it isn&#39;t so critical.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">proveit._core_.expression.label.var</span> <span class="k">import</span> <span class="n">Variable</span>
+    <span class="kn">from</span> <span class="nn">proveit._core_.expression.lambda_expr.lambda_expr</span> <span class="k">import</span> <span class="n">Lambda</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Variable</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">expr</span><span class="p">}</span>
+    <span class="n">ubound_vars</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">sub_expr</span> <span class="ow">in</span> <span class="n">expr</span><span class="o">.</span><span class="n">_subExpressions</span><span class="p">:</span>
+        <span class="n">ubound_vars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_entirely_unbound_vars</span><span class="p">(</span><span class="n">sub_expr</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ubound_vars</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">parameterVars</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ubound_vars</span>
+
+<div class="viewcode-block" id="attempt_to_simplify"><a class="viewcode-back" href="../../../../api/proveit.attempt_to_simplify.html#proveit.attempt_to_simplify">[docs]</a><span class="k">def</span> <span class="nf">attempt_to_simplify</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">requirements</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Attempt to simplify the given expression under the given</span>
+<span class="sd">    assumptions.  If successful, return the simplified expression;</span>
+<span class="sd">    otherwise, return the original expression.  Append to</span>
+<span class="sd">    &#39;requirements&#39; if simplification is successful and not</span>
+<span class="sd">    trivial (the simplified expression is not the same as the</span>
+<span class="sd">    original).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">SimplificationError</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">simplification</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">simplification</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">simplified</span> <span class="o">=</span> <span class="n">simplification</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="k">if</span> <span class="n">requirements</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">expr</span> <span class="o">!=</span> <span class="n">simplified</span><span class="p">:</span>
+                <span class="n">requirements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">simplification</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">simplified</span>
+    <span class="k">except</span> <span class="n">SimplificationError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">expr</span></div>
+
+<div class="viewcode-block" id="expressionDepth"><a class="viewcode-back" href="../../../../api/proveit.expressionDepth.html#proveit.expressionDepth">[docs]</a><span class="k">def</span> <span class="nf">expressionDepth</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns the depth of the expression tree for the given expression.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">subDepths</span> <span class="o">=</span> <span class="p">[</span><span class="n">expressionDepth</span><span class="p">(</span><span class="n">subExpr</span><span class="p">)</span> <span class="k">for</span> <span class="n">subExpr</span> <span class="ow">in</span> <span class="n">expr</span><span class="o">.</span><span class="n">subExprIter</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subDepths</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> 
+        <span class="k">return</span> <span class="mi">1</span> <span class="c1"># no sub-expressions</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">subDepths</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="c1"># add 1 to the maximum of the sub-expression depths</span></div>
+
+<div class="viewcode-block" id="traverse_inner_expressions"><a class="viewcode-back" href="../../../../api/proveit.traverse_inner_expressions.html#proveit.traverse_inner_expressions">[docs]</a><span class="k">def</span> <span class="nf">traverse_inner_expressions</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A simple algorithm to yield all inner expressions of an expression,</span>
+<span class="sd">    including the expression itself.  These will be reported in a depth-</span>
+<span class="sd">    first order.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">KnownTruth</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">):</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">expr</span>
+    <span class="k">yield</span> <span class="n">expr</span>
+    <span class="k">for</span> <span class="n">sub_expr</span> <span class="ow">in</span> <span class="n">expr</span><span class="o">.</span><span class="n">subExprIter</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">inner_expr</span> <span class="ow">in</span> <span class="n">traverse_inner_expressions</span><span class="p">(</span><span class="n">sub_expr</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">inner_expr</span></div>
+
+<div class="viewcode-block" id="MakeNotImplemented"><a class="viewcode-back" href="../../../../api/proveit.MakeNotImplemented.html#proveit.MakeNotImplemented">[docs]</a><span class="k">class</span> <span class="nc">MakeNotImplemented</span><span class="p">(</span><span class="ne">NotImplementedError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exprSubClass</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exprSubClass</span> <span class="o">=</span> <span class="n">exprSubClass</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;make method not implemented for &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exprSubClass</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ImproperReplacement"><a class="viewcode-back" href="../../../../api/proveit.ImproperReplacement.html#proveit.ImproperReplacement">[docs]</a><span class="k">class</span> <span class="nc">ImproperReplacement</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orig_expr</span><span class="p">,</span> <span class="n">repl_map</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orig_expr</span> <span class="o">=</span> <span class="n">orig_expr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repl_map</span> <span class="o">=</span> <span class="n">repl_map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;Improper replacement of </span><span class="si">%s</span><span class="s2"> via </span><span class="si">%s</span><span class="s2">:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span>
+                <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">orig_expr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">repl_map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">))</span></div>
+
+<span class="k">class</span> <span class="nc">_NoExpandedIteration</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Used internally for _expandingIterRanges.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+    
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.varRange.html">varRange</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

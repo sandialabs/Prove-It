@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.set_theory.cardinality.enumSetCard theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.set_theory.cardinality.enumSetCard-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../_context_.html">set_theory</a>.<a class="ProveItLink" href="../_context_.html">cardinality</a>.<a class="ProveItLink" href="../_theorems_.html#enumSetCard">enumSetCard</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.set_theory.cardinality.enumSetCard-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> enumSetCard presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of enumSetCard
+Recorded &#39;presuming&#39; information
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="enumSetCard">enumSetCard:</strong> <a class="ProveItLink" href="../__pv_it/964e450329e47959bcb29c1fb9b298b0662d64ee0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAmQAAAAZBAMAAABtHC+5AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABiRJREFU
+WMPtmW9oHEUUwF8uu3t3e7uXfGg/1CCcCUlLjGYxSJE2clEwikKvEaRooUc0iIJ62NJoWmrwixel
+9PzDNVRqtvmQpvFPTyRqA4VrLiqkjZ40IkqD50dFZTEoGkWdf7u3t3u7exvIGcSB7Lydm3kz89uZ
+N29eALyTMPws/J9o4oaP1lIt+C8O8UHylHv9teJvUU2tberWlXiqErKbGlm4CAs4F3/wvRi2kmzB
+Wk4LTvtTdoE8pTgVslDC2YoHsij51MV6I5tmc5Q1301vd0EmjvrTJWQYMiJk4TJ+/d4DmZRDWVSt
+N7Lv2ByllO+mn7ggi2b86RJLDBkRsjCON8CoBzJSYbzexGRlY5Bd9atsniEjQpasHbKIXG0ZXoaX
+640smNkYZL7P/zM6sjMEmbw4M3PS0/xfm5k5l6o3spOwIcjCvrVF4wwZFtCJ+Vs6fdQTWVM6/UK+
+3sjaKpBNdrzWFXM1Oa2P3TGvv1xyRhZQLHWrJnN3ksKQYQEhGwIYq9IkX4FMSEDIj9E853xUhL38
+H0M6rk9aQGZXzMtPB0tuDd+CL2PH9Jdvysikn0hS9IJQ0VK3Kn9zd3KJIcMCQnYnOxEsSalAxinw
+Tk2s4jTrzsn68pdTjt+iaorEdemIPul3E2jEqrTGZYB3PqkW4TP1HmMvKY6rLJgz6u5zVMa6Y0NK
+MWRYyGIgAbPDxR9cgBuSVmSQgptqQsZmFM1xSQaICWQchpPjlm7ThS1sjvuwvRYhhHTzPc6GSIW0
+6e3RmBOyhrhe9/6dzquMdKcz0RgyLCBkUrHs3b9Z6IUPJbVRtSFbgpQfZCH9DK5YwNgj3u+pYsqK
+DPoS+NmEIXBuw/jZ1FUS3JCxuv0uyppijsjCpQcMR+ilUypcjCkSFHoO9uTMyN7gk/6QidRlbgax
+vKywTR7yPp8y1o0pEK0HEh7I+F/Kst2WJc0bk9V1Q0a6Y9cvfWNydGPC2CP43jvQhs0aSrOzr0g2
+WwahLD4w2gbsM64sJJMLLN2cm9ag9Vrs/T8Xp7XwtwMdAFcKrz91RcWLdf7WjoSLGsNOHDefmBG1
+GwKqG7K5gAadcPWLVsX9xMTmn9Z1QUa7o1hs5h/eQ6OQ+4oNGbqLZqW399uRRfC27xRKh0CwHIak
+sBLZbmjIiRqXD8d4tMo0mMhFc0JeyO8lTlFAfTIYh8fBSU1EX88FM7I9uRP4Oo2RnccH6F9ABeON
++yOkoXv88vWwzd0vQ54Cq4uRGYqIYLzR7igWaMwzZFjIsk17ajs0qSLBNAv5gh0Z2fuJaBH4SxZk
+uLASmbiGzL+ohVfnVIrsvCrEJlAzhIwbRV7Ej8ikXQdOajjd7vabkU21TvYWKbLgCCo7jAeW1B/D
+KoiDnW0rEJ5MwZo7MqSC1qU9oKZUB9ZI1Y7o3REsyFQkdFc2QZHJmMEg9AH/TDr9PEJ2OlgF2dfE
+JCLkQavL1ZSxIOM0ggzu/jvOkIEQ2wMUGR7c7+hvBJzU8CWXCxPZmHNV9pERdohxzTVfmPormpa3
+uCFhLABn9QvTWXO8bCvs5iFJVxk3gL96tXjZAVRsQ4YK5V0r+TKyMF1lfCaS4ptlhmwig5EVsV/F
+a3wVZIYawyspX8ubK5HZXTvJkBoSjflErdfy/oqmVVxHgsV6LWcuuQaHZuEjLC6jG2X1EGNY+xRp
+Q8jCL8K4yh6kMLJD90FG6bd5uShqEQVGRe0hbMsQMkERY+f5nJiCCakkEWQOamRjxGP2eBl2JkX7
+vWnSkCYgeG/CPV5Wvsd8UNHU8MkM/RSLNfjDPl4SuorEm+KOxUGojkx84r4uFSPjW2Bvht+GHy20
+cEj3ykkmLW1vmVqNzHdl4GNlalU8kfz8CBRaQXoYo5panl8kyBzUNMatIUYworLhnb/GQLavi7I5
+vQud12gWW2oJMb763KC5qeFrldc0xaKHGEMZeyB7B7JlXoFsvDEj5a9Os1RgucIvc043snwEnNRE
+zYHsdvrzOmP/7dYf2tcTyP6K+j4JKviP/fPdu/RoeDkuLiYjSzUiC9FsYDXnpOYibOq0zn+XFKtI
+NSLjih5qROW/gMzH/zG953vB4/eAupmBccOH/wF0OAi+eOKjDAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/964e450329e47959bcb29c1fb9b298b0662d64ee0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

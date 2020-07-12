@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.exponentiation.natPosToNatPosLowerBound theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.exponentiation.natPosToNatPosLowerBound-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">number</a>.<a class="ProveItLink" href="../_context_.html">exponentiation</a>.<a class="ProveItLink" href="../_theorems_.html#natPosToNatPosLowerBound">natPosToNatPosLowerBound</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.exponentiation.natPosToNatPosLowerBound-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> natPosToNatPosLowerBound presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of natPosToNatPosLowerBound
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="natPosToNatPosLowerBound">natPosToNatPosLowerBound:</strong> <a class="ProveItLink" href="../__pv_it/f922fef9f2d20e40b8362538c5cd23102c3758050/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALkAAAAcBAMAAADPUgMyAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAvpJREFU
+SMe1VltIFFEY/tzZcd25rD1EVBKsdrHHxYUM05qQ6ClbIjQpcJGCLiCS2J0QiRjzZUmwCMIJocJI
+pVpI6LKwhbAVbFEYYbF0e6iHfAli66Fz5j7TtAu7eODs/898Z77zn/92Fih7tOWwiEOILArtbk2E
+pj1RX3nkbFyT1QlP2B8viz2kaLKr7rAn/qIs9gZd1iurPfEA2V0N+PsSyIN5XRnEB2/Hk2g/o8q3
+clJlKTZQcaPJvf0CcJnKgRLYK4xUyaNGlY8OuVac1mIjTJfAPqYHFadE3bi2A84VGwExMzFxqZSg
+vjSU9ueGtuecY0Utmb9k+YyHV70pU5a6mbq0uWGlHR79rsmRdC052U4yyXGG/qVhvNltRS+TuTUR
+WnDgIyfVQlqBH7QQYkAruNx/2d0dysb+FeBWgXEmxJy64FqW+hxjEkl6+LI2vKNZ8i0z2Y20Y/ue
+oDbuYO8ji/IIhO3k9RlVbFFwlIgpwi5kAwbIPYhm+YEMmoRoY3ST2aFupVtwX1AYJR3ti5rp9Ykk
+5QCmYhY3N6tvtRzcT932YK7dgN/OTIB/xdDYMVaHEoevKHgYjghOz5wnxqXw2FY9jboPuD/gaTi6
+aHsb2k9+xtd9gZ9+y+/tDFvstEO1UiWZvOhiP0jYp9HDGx0y2GMci/uNytyMljO420te9LN5hCjE
+xzJvLHbaodTAJoXb+5zsJJurwuIxM3VvSiY0iLl4Sq+IauItJsL2YlxjF2goGbNDcSpjEqm0k51Y
+xnWvHV3jkbfX6zq7JbVWiV8V2jR8cXTIshzmY8EsOQxrdij2hCwPEvarNPi2GFZIxar5o6FMJare
+KZWa7dhmZRntUHHNdv8uV0WkipBzedOQRNcOCNQyUYKofxe8oHaop1R/Dcy7Lr4lzufJ43T0Wy9E
+8+rzd99pAYaJtv0zoL9ma9QOVUVywX9WQqXLtiNFbA/EXLcJ8bv9mdfEeuJ3jzFZhH2+CD5TEOUL
+/48peiVlC8P3CqKMgkUefwGOSbLq+zltpwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/f922fef9f2d20e40b8362538c5cd23102c3758050/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.boolean.disjunction.destructiveMultiDilemma theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.boolean.disjunction.destructiveMultiDilemma-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../_context_.html">boolean</a>.<a class="ProveItLink" href="../_context_.html">disjunction</a>.<a class="ProveItLink" href="../_theorems_.html#destructiveMultiDilemma">destructiveMultiDilemma</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.boolean.disjunction.destructiveMultiDilemma-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> destructiveMultiDilemma presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of destructiveMultiDilemma
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="destructiveMultiDilemma">destructiveMultiDilemma:</strong> <a class="ProveItLink" href="../__pv_it/6ba293dc9a493614ae896386b262c486ed4314a20/expr.html"><img src="data:image/png;base64,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
+agAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/6ba293dc9a493614ae896386b262c486ed4314a20/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

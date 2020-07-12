@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for context proveit.number.modular</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-context-proveit.number.modular">Demonstrations for context <a class="ProveItLink" href="_context_.html">proveit.number.modular</a><a class="anchor-link" href="#Demonstrations-for-context-proveit.number.modular">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Abs</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">ModAbs</span><span class="p">,</span> <span class="n">Mod</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Modular-Arithmetic-$a-\thinspace\text{mod}\thinspace-b$,-$|a|_{\text{mod}\thinspace-b}$">Modular Arithmetic $a \thinspace\text{mod}\thinspace b$, $|a|_{\text{mod}\thinspace b}$<a class="anchor-link" href="#Modular-Arithmetic-$a-\thinspace\text{mod}\thinspace-b$,-$|a|_{\text{mod}\thinspace-b}$">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div style="line-height:1.4; font-size:14pt">
+
+<a href='#introduction'>Introduction</a><br>
+<a href='#simple_expressions'>Simple Expressions involving modular arithmetic $(a \thinspace\text{mod}\thinspace b)$, $|a|_{\text{mod}\thinspace b}$</a><br>
+<a href='#common_attributes'>Common Attributes of the Mod $(a \thinspace\text{mod}\thinspace b)$ Expression</a><br>
+<a href='#axioms'>Axioms</a><br>
+<a href='#further_demonstrations'>Further Demonstrations</a><br>
+    <ol>
+        <li><a href='#demo01'>TBA</a></li>
+        <li><a href='#demo02'>TBA</a></li>
+        <li><a href='#demo03'>TBA</a></li>
+    </ol>
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction-[under-construction]-">Introduction [under construction] <a id="introduction" /><a class="anchor-link" href="#Introduction-[under-construction]-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>Some introductory comments here about the importance of modular arithmetic and its representation within Prove-It.</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Simple-Expressions-Involving-Modular-Arithmetic-($a-\thinspace\text{mod}\thinspace-b$-or-$|a|-\thinspace\text{mod}\thinspace-b$)">Simple Expressions Involving Modular Arithmetic ($a \thinspace\text{mod}\thinspace b$ or $|a| \thinspace\text{mod}\thinspace b$)<a id="simple_expressions" /><a class="anchor-link" href="#Simple-Expressions-Involving-Modular-Arithmetic-($a-\thinspace\text{mod}\thinspace-b$-or-$|a|-\thinspace\text{mod}\thinspace-b$)">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>It is straightforward to construct modular arithmetic expressions and absolute value expressions. Here are some basic examples of such expressions:</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># basic modular expression</span>
+<span class="n">Mod</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/03783a8dc8881e5f6123b8f72d3af3a1727e92a60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEoAAAAPBAMAAACxa0SdAAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAASpJREFU
+KM9jYMAJJncyEAHUf4CpqUvwquKDqGKoxW8YVNUnYlRx/CRGFY8D2Po7t1eCaPO11hs3dG9tYOA8
+vaeBgWHO6c0QVezSexUYGLoesH8Ac1038P1uYFvAYPKAIZqBcxEDD0TV/ErOfwycyxh4A8DcKAaG
+rwzM/xh8GBjsDVgLYH7Un8Dwm4H3JwPLBjA3nIHhDwPfZ2agn/gPzD/AwAlRdZ2B8w8DVwDDfAMw
+N5QBqInvMxNQkj/AfgNMVS0DxycGoCZ9BmRVYLMuzIer+gaybr4CgzjTAyRVDGuB7mpgD4C56wfD
+rAQG1g1sjjwIs5g/M1gZMNQw8K1g4P0NFhZjiGVg4JTe/HAHiGf4X1j1l8DxLwf47pwFhtfcY5t/
+CYDE5+5JYAAAOd9i2ZXvXdYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># basic ModAbs expression</span>
+<span class="n">ModAbs</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/0d75f65030496b1c8f8d62b41fab73895de54ca60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAAXBAMAAAChTOGJAAAAMFBMVEX///9UVFSqqqoiIiJERESY
+mJgyMjIQEBBmZmbc3NyIiIi6urp2dnbu7u7MzMwAAABs7OAJAAAAAXRSTlMAQObYZgAAAQNJREFU
+KM9jeMsAAXwXGLCC01CaZ8OQlefs6arFJ799AtsHPPK8pQwcDnjkOf4yMC/AkL95ASbP7sBw/wGG
+/HoFBoZtCSD5+wcY9DHdzwaU52kAyyswiDFNQJdnUYCoOc3AsoDVkIcBmzz/BLD7pdZNXA2U50x/
+tfBqyAYGrlVnGbiOLgPKv18lixx+8xXYHJgMGJwYLjP0MLAD5RdfWIEsf/8C4wG+Ar4PDCxr/4Lt
+9mIIQ5FnYFzAV8BawMDY/QEsX83QiCkP0r8Sov8vQxHDOqg81wOG+SD5D0D7p1+QYpgewMBgy+qA
+5CNef4Fwoyk/GHjOdDLwHF1cxMDw8AwDIQAAtVVguOyuaEEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Common-Attributes-of-a-Mod-Expression-">Common Attributes of a Mod Expression <a id="common_attributes" /><a class="anchor-link" href="#Common-Attributes-of-a-Mod-Expression-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>Let's define a simple Mod expression, $(a+b) \thinspace\text{mod}\thinspace c$, and look at some of its attributes.</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_plus_b_mod_c</span> <span class="o">=</span> <span class="n">Mod</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">c</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="a_plus_b_mod_c">a_plus_b_mod_c:</strong> <a class="ProveItLink" href="__pv_it/027c3efe0299c5e4e2868ddc4f7032e035b7022f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAAUBAMAAABSVS+EAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAdRJREFU
+OMuNlL9Lw0AUx79tNdg2TYuL4BQHUVwsOESFQhbRQdBBBEUhs4LGKoi4VAQXl0LBjlZcpIN0EUFR
+iiIoHdJ/QIlbR/FXRUV9jSfmIAd5wx3v3n3u3fu+XAClCm9bgMguRl1OxWODfJQBAraIn3t2OYde
+OyJZOqQg4hUXH8u6I5L5O8cNGjRhAS6+xfbix8o0XPnha/Di+50idB/8WqOeXH6G5/dWd4AQK61n
+qmvJHF7XIWvLdOSllma8tqrijOYhO/LA8fJ72bIR+xNw21Tqemwc3TaOIU8i9MvXjGgBW7R7FuES
+x0ufiJuQMow/Aj4Q/MIm0KsSw/TfRMDABBD+REuDCxWLB9PFYoJWCrCSCLJL4QR4gvIYfKXGJCkg
+OzxhZMQ3l2CpXH5q/5jxz58CdeIlwuKlXpPxzc6d6f504iKvf7yK3TKaMjzv5M9afzxhZKSfZaBd
+sjleJ03+9WM8pqh+PVJi9VMSGBgAomZsI8TlD1Sj1Ltw0s0HH9GpYh/KBMJ1p/4EblSMkP5t6fsV
+vn/5VEMFJkrHd+v8S2LwLankBqj/N6n0S6Kx3ndrir5fx67hw/j3I5ddjuaHx7koIH6/nFVEgajt
+ixf+v+780D/ooIk0XlLx/gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_mod_b</span> <span class="o">=</span> <span class="n">Mod</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="a_mod_b">a_mod_b:</strong> <a class="ProveItLink" href="__pv_it/03783a8dc8881e5f6123b8f72d3af3a1727e92a60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEoAAAAPBAMAAACxa0SdAAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAASpJREFU
+KM9jYMAJJncyEAHUf4CpqUvwquKDqGKoxW8YVNUnYlRx/CRGFY8D2Po7t1eCaPO11hs3dG9tYOA8
+vaeBgWHO6c0QVezSexUYGLoesH8Ac1038P1uYFvAYPKAIZqBcxEDD0TV/ErOfwycyxh4A8DcKAaG
+rwzM/xh8GBjsDVgLYH7Un8Dwm4H3JwPLBjA3nIHhDwPfZ2agn/gPzD/AwAlRdZ2B8w8DVwDDfAMw
+N5QBqInvMxNQkj/AfgNMVS0DxycGoCZ9BmRVYLMuzIer+gaybr4CgzjTAyRVDGuB7mpgD4C56wfD
+rAQG1g1sjjwIs5g/M1gZMNQw8K1g4P0NFhZjiGVg4JTe/HAHiGf4X1j1l8DxLwf47pwFhtfcY5t/
+CYDE5+5JYAAAOd9i2ZXvXdYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>We can use the `exprInfo()` method to look at the how our mod expression is structured:</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_plus_b_mod_c</span><span class="o">.</span><span class="n">exprInfo</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>
+<tr><td>0</td><td>Operation</td><td>operator:&nbsp;1<br>operands:&nbsp;2<br></td><td><a class="ProveItLink" href="__pv_it/027c3efe0299c5e4e2868ddc4f7032e035b7022f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAAUBAMAAABSVS+EAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAdRJREFU
+OMuNlL9Lw0AUx79tNdg2TYuL4BQHUVwsOESFQhbRQdBBBEUhs4LGKoi4VAQXl0LBjlZcpIN0EUFR
+iiIoHdJ/QIlbR/FXRUV9jSfmIAd5wx3v3n3u3fu+XAClCm9bgMguRl1OxWODfJQBAraIn3t2OYde
+OyJZOqQg4hUXH8u6I5L5O8cNGjRhAS6+xfbix8o0XPnha/Di+50idB/8WqOeXH6G5/dWd4AQK61n
+qmvJHF7XIWvLdOSllma8tqrijOYhO/LA8fJ72bIR+xNw21Tqemwc3TaOIU8i9MvXjGgBW7R7FuES
+x0ufiJuQMow/Aj4Q/MIm0KsSw/TfRMDABBD+REuDCxWLB9PFYoJWCrCSCLJL4QR4gvIYfKXGJCkg
+OzxhZMQ3l2CpXH5q/5jxz58CdeIlwuKlXpPxzc6d6f504iKvf7yK3TKaMjzv5M9afzxhZKSfZaBd
+sjleJ03+9WM8pqh+PVJi9VMSGBgAomZsI8TlD1Sj1Ltw0s0HH9GpYh/KBMJ1p/4EblSMkP5t6fsV
+vn/5VEMFJkrHd+v8S2LwLankBqj/N6n0S6Kx3ndrir5fx67hw/j3I5ddjuaHx7koIH6/nFVEgajt
+ixf+v+780D/ooIk0XlLx/gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>1</td><td>Literal</td><td></td><td><a class="ProveItLink" href="__pv_it/6c4fd4187387474597c9f630be02b9e0c96842720/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAPBAMAAACVcstdAAAAMFBMVEX////u7u6qqqp2dnaYmJjc
+3NwiIiJERES6urpUVFSIiIhmZmYQEBAyMjLMzMwAAADmVDTDAAAAAXRSTlMAQObYZgAAAK1JREFU
+GNNjYEAHco0MmED3BxZBVmyCDCQJvj39auWCruUNDIxWixsYGISt1oFUpi9g/dXAcoDhWQBDFQPj
+IQZmkGANA8N3Br6vDMkMDO8fsF+A2F7LwPCZgfUf3ycGBn4DeQMGRpBgOQPDL6AgE5DNX/B+AYog
+WOUGeVRBhtNAMxt4CyBmggX5/jG8ecBwmYH1BAP3LwaGl//nqf+ZYPvNgHWzNdCd0ibr/kwAABBY
+Q9Pe1GUnAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>2</td><td>ExprTuple</td><td>3, 4</td><td><a class="ProveItLink" href="__pv_it/d3d2e9852f8a403eb027cc9226c8d8afecfde6500/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEsAAAAUBAMAAAA3uN37AAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAUdJREFU
+KM9jYOC7wEAA5IGI01gkeLY2IPEYHwCJddgM4JqArGkBAwMvsgADWwGE5k9AFjVnYOB4gE2Z/wFk
+0aMMDC8YsCmzQHWCA0MlkOKbPD0GVdnC8mkwC8sVGJgnMOwFMl0fcH1AUcbz68B5iGNeJHAvYOBd
+wNAGFIxl4NyAooztDwM/hNXMwJjAwNbAEMLAwPmHgQMkyLxq1YqoVasEgCILGM4bgFQBpYCA6QNI
+GesGhvMKKKYBg80fHCSsG6DKgJYCNeaj+pT/AsN8cJBAzGRpAHnhfAKDFNsDFGUOQPdC1TMkgLxg
+ycDAXcDbyIxiGuMF7gkM54FxxCnAcFKBgdOAwQPoU/GihyWoATLdFhg/PUCW8V2gCJcCjsgCgxwY
+4wR61PMgx6UBUtQz7MOVGnkKkBIS1mQJBrwwBjfIXYQT+T0GBgBwWVEV+E/QAQAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>3</td><td>Operation</td><td>operator:&nbsp;5<br>operands:&nbsp;6<br></td><td><a class="ProveItLink" href="__pv_it/27d57aa10030b1325b1af01ce49175301ddd5f1c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAQBAMAAABw0OvaAAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAAKFJREFU
+GNNjYMAAnFEODFgB+wVUPtMGCM2vgF28fwJ28SNgku/O7ZWo4oW7LwHJrgfsH1DEOb9PmP+AgXMZ
+A28AijjTTwb+DQy8PxlYQHye8vKS5eXlAgwMvAUM8w8wcAUwzDdAUQ90fr8CSEof1T38CQz3JzDM
+V2AQZ3qAIt4AtJOBdQObIw+KesYEVmBAcEpvfrgD1Z23j2H3L0YAI4ULAI70LzJJYuzOAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>4</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../__pv_it/b2b446b221a34ee579eb9a1fbdd4ac4e2891d8c70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJBAMAAAASvxsjAAAALVBMVEX///+YmJgQEBDu7u5mZmZU
+VFQyMjJERESqqqoiIiLc3NzMzMyIiIh2dnYAAABuqkWTAAAAAXRSTlMAQObYZgAAADZJREFUCNdj
+YGC4c2YDA8PKBvYEBoa5DKwNDCyPGYCAqQBE2l0AkXwCDAxA8QAGE6DKu4IHGABBiAr2Gi8OxgAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>5</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../addition/__pv_it/65ad7e8aee19b10110d590375ba95a879c4fb7ea0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAPBAMAAAAmOuNHAAAAHlBMVEX////u7u5UVFQQEBAiIiIy
+MjJ2dnaIiIiqqqoAAABCN83zAAAAAXRSTlMAQObYZgAAABxJREFUCNdjYECAdlLo1NBQ59DQIJL1
+AYEgEAMABwsItInrGUMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>6</td><td>ExprTuple</td><td>7, 8</td><td><a class="ProveItLink" href="__pv_it/bbc1b69eb12288f0ad04da0d0cc6b9b8079b8b3f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAUBAMAAADiqgm2AAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAQNJREFU
+GNNjYOC7wIAK8kDEaSQBnq0NDAyMD4CsdcjquCYApRYwMPBOQBblTwAS5gwMHA+QRf0PAImjDAwv
+UGyyABvjwFAJpPgmT4+BiC4sn8bAwDyBYS+Q7fqA6wPEDb8OnH/AwLuAoQ3IjmXg3AAWZfvDwF/A
+wNbAEMLAwPmHgaMALMq5gOG8AQPTB5Ao6waG8wow5/ongESBJgCl86HOvcAw/wADSwPItvMJDFJs
+YGfzOwDtANlmycDAXcDbyMxwHuhRxgvcQK9yGjB4AN0gXvSwhIGjB8iabgsyXQHJxzkwxgnk0DGA
+MYChw7APFrYFMMYCpFDnhSnlBpmJEUP3GBgAwQA85Uf1dX8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>7</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../__pv_it/a8d4b3a34d2189508f9082853fbac36935714f280/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAAEdJREFU
+CNdjYOC7c3slAwND1wP2DwwMnMsYeAMYGHh/MrBsYGDgCmCYb8DAMP8Agz5QxXwFBnGmBwysG9gc
+eYAqpTc/3MEAAP4BD32xAXDqAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>8</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../__pv_it/53e304ff98ebc000dbe3ef224f4637dbafd46ba70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAOBAMAAAAPuiubAAAALVBMVEX///+YmJjc3NyIiIhUVFR2
+dna6urqqqqpmZmYyMjIiIiIQEBBERETu7u4AAAALjtrwAAAAAXRSTlMAQObYZgAAAE9JREFUCNdj
+4D29gAEIOBtAJF8BiMy7ACKjQATDFON2BgbelxfuKTCwv2XgM2DgmMBwLwCkPK+AgU+Aoe8CA18C
+70YGBhYBHqARvM2BDAwAqXgQspq5HJAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+</table>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>The operator for a Mod expression is simply the `mod` string:</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_plus_b_mod_c</span><span class="o">.</span><span class="n">operator</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/6c4fd4187387474597c9f630be02b9e0c96842720/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAPBAMAAACVcstdAAAAMFBMVEX////u7u6qqqp2dnaYmJjc
+3NwiIiJERES6urpUVFSIiIhmZmYQEBAyMjLMzMwAAADmVDTDAAAAAXRSTlMAQObYZgAAAK1JREFU
+GNNjYEAHco0MmED3BxZBVmyCDCQJvj39auWCruUNDIxWixsYGISt1oFUpi9g/dXAcoDhWQBDFQPj
+IQZmkGANA8N3Br6vDMkMDO8fsF+A2F7LwPCZgfUf3ycGBn4DeQMGRpBgOQPDL6AgE5DNX/B+AYog
+WOUGeVRBhtNAMxt4CyBmggX5/jG8ecBwmYH1BAP3LwaGl//nqf+ZYPvNgHWzNdCd0ibr/kwAABBY
+Q9Pe1GUnAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>We can get a tuple of the operands and a list of the variables. We can also get a separate list of the *free* variables in the expression (of course, in this expression, all the variables are also free variables):</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_plus_b_mod_c</span><span class="o">.</span><span class="n">operands</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/d3d2e9852f8a403eb027cc9226c8d8afecfde6500/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEsAAAAUBAMAAAA3uN37AAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAUdJREFU
+KM9jYOC7wEAA5IGI01gkeLY2IPEYHwCJddgM4JqArGkBAwMvsgADWwGE5k9AFjVnYOB4gE2Z/wFk
+0aMMDC8YsCmzQHWCA0MlkOKbPD0GVdnC8mkwC8sVGJgnMOwFMl0fcH1AUcbz68B5iGNeJHAvYOBd
+wNAGFIxl4NyAooztDwM/hNXMwJjAwNbAEMLAwPmHgQMkyLxq1YqoVasEgCILGM4bgFQBpYCA6QNI
+GesGhvMKKKYBg80fHCSsG6DKgJYCNeaj+pT/AsN8cJBAzGRpAHnhfAKDFNsDFGUOQPdC1TMkgLxg
+ycDAXcDbyIxiGuMF7gkM54FxxCnAcFKBgdOAwQPoU/GihyWoATLdFhg/PUCW8V2gCJcCjsgCgxwY
+4wR61PMgx6UBUtQz7MOVGnkKkBIS1mQJBrwwBjfIXYQT+T0GBgBwWVEV+E/QAQAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">used_vars</span><span class="p">,</span> <span class="n">free_vars</span>
+<span class="n">used_vars</span><span class="p">(</span><span class="n">a_plus_b_mod_c</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{a, b, c}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">free_vars</span><span class="p">(</span><span class="n">a_mod_b</span><span class="p">,</span> <span class="n">err_inclusively</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{a, b}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>We can replace selected variables in our expression with other variables:</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_plus_b_mod_c</span><span class="o">.</span><span class="n">replaced</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="n">d</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/6b9e1bf961ee3f9dcc20aafab0b2c1c50caacb980/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAAUBAMAAABSVS+EAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAeZJREFU
+OMuNlL1LI0EYxp9sdHGzX8FGsNorDg8bFyxWBWEb0UKIRRBycLC1B7oXBRGbiGBjIwhaGrHRFJIm
+HJx4hBPBYLH5B+5YO8tDTyNnUN/90OyAC/sWM7wz83s/ntlZQGnifZtHnP2ajjiX3sDVtqIHpFoJ
+SLlx/Ny/iHPsj6rFnMhQOKkcxysRXg4S5+r+xNvohDNiG4jwPUGVI2B4P9x5Ev46mI5Y3g+XMRPw
+K14/28V7lt9f3gHSoaaDhYFv9uSqCclYpJBnRjHkjWUNpzRPuGKb4aX/dceF/Crgpq20THkGn1x8
+hzSLdMBfW2IZG3T6C4Qyw/NtqDb4UsjXgEdwT1gHhjRiQv3XkbKQB4Q2enTy05XK4edKJQsvnKOD
++xvyP4BbKDccNanqtCH5vODXTHx3FY7J5Kfrz1kd/gRoEc8TplaH7JAnjIzqp4gLYHi1ib06ukos
+7+ffcl55x6vZ08+x0M+7DG+SJh39Qh4F6t/MVMP+KQksjAKiLa+lmfyppkh3J+hRnrvBRw0HUPIQ
+Wn7/WTQ0TJH+fcWrJfb+dsc9FbRg8cNz79e77NiDrmyPkk6N8eJd1lsf/m2/fb9s/4FdIIHJ7MOt
+RxwjCY+fcRvx75exy7gN0U3Ex/6//iShXwDaDY0sORvc6QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>And if needed we can reach down further into the expression to extract and manipulate specific pieces of the expression:</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">new</span> <span class="o">=</span> <span class="n">a_plus_b_mod_c</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">replaced</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="n">d</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="new">new:</strong> <a class="ProveItLink" href="__pv_it/5aaffd56d3411fea5ceb13fa9cbffdecde388b920/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAQBAMAAABw0OvaAAAAMFBMVEX///9UVFSYmJiIiIjc3Nwy
+MjIiIiJ2dnbu7u66urqqqqpmZmYQEBBERETMzMwAAAAYOWz6AAAAAXRSTlMAQObYZgAAALJJREFU
+GNNjYGBg4LuzgQEJcNxJgLL4FyCLM7DClM1vAFNcBmjKyhhQxKHKGBiiUcUhyli22/1CFQ803gUk
+5zjw/kAR5/ja0O/AwHGIgTsARZzrBwO/AQP3Dwa2AiCPPTQ07GhoqAADSFl/AQPPBYb+CSjqgc6f
+vwAktZ4BRZxfgWF/A0P/AgZRLgcU8QlAOxl4DZgS2VHUMyrwAgOCQ9jO0RLVnZuLUIIL7i90wNGA
+YAMAtLgoW5kcbt8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Axioms-">Axioms <a id="axioms" /><a class="anchor-link" href="#Axioms-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>The ``axioms`` for modular arithmetic …</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Demonstrations-">Demonstrations <a id="further_demonstrations" /><a class="anchor-link" href="#Demonstrations-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a id='demo01'></a><font size=4>1. TBA.<br><br>
+We begin with some simple expressions ….</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a id='demo02'></a><font size=4><br>2. TBA.<br><br>
+</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a id='demo03'></a><font size=4><br>3. TBA.<br><br>
+</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Misc-Testing-">Misc Testing <a id="misc_testing" /><a class="anchor-link" href="#Misc-Testing-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>Some temporary testing while the `modular` context and demonstrations page are developed (this material can be deleted later once the demonstrations page is more established).</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>Testing `Mod.deduceInNumberSet()` method for constants and variables.</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">NotEquals</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">Integers</span><span class="p">,</span> <span class="n">Naturals</span><span class="p">,</span> <span class="n">NaturalsPos</span><span class="p">,</span> <span class="n">Reals</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">three_mod_two</span> <span class="o">=</span> <span class="n">Mod</span><span class="p">(</span><span class="n">three</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="three_mod_two">three_mod_two:</strong> <a class="ProveItLink" href="__pv_it/886736e01583407dd7bee9f7c8dbf33f6f174ada0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEoAAAAPBAMAAACxa0SdAAAAMFBMVEX///9UVFTMzMzu7u4yMjIQ
+EBC6uroiIiKIiIiYmJhmZmaqqqpERER2dnbc3NwAAACDMjhQAAAAAXRSTlMAQObYZgAAAT9JREFU
+KM9jYMAFmNUMkHhv757GqorbPwFMW605xMDAt4Bh/wSsyt6DVTELMNxPYOD4zcBfgFUVP1gVlwED
+awADWxgDvwMeVawFDIz/QAwcNkJUsXxmYPwEsrkWxGNyXdQhwdZxjIHBtuMaUPBuh34CVDn7Z6Dz
+ry+GsE8wvG9jmMrAVMfA08BgugHkaAjIvwAiW8FcngAG/gMM+g/YLzAwfWI4AvMjEBSCSdZgsCoH
+Bv4LDO8V9DcwMPxl/svAYA9VxbUAaOEDBp7fYFUHGPgbgKr2AyX/MP1AqOoC+eQzmiqQWb+YEaq4
+FzC8Y2A9APYDQhXrAgambww+cHfpMjD0MXBOgIYXRJW+AlMQA8sFhqcJDOsbQMJ8tXcXAuMma9Ux
+cHjJf9Q+H8jrX8vw6u4yYHitnaEfCA7V////FwAAvR5iGPVMA48AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_mod_b</span> <span class="o">=</span> <span class="n">Mod</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="a_mod_b">a_mod_b:</strong> <a class="ProveItLink" href="__pv_it/03783a8dc8881e5f6123b8f72d3af3a1727e92a60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEoAAAAPBAMAAACxa0SdAAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAASpJREFU
+KM9jYMAJJncyEAHUf4CpqUvwquKDqGKoxW8YVNUnYlRx/CRGFY8D2Po7t1eCaPO11hs3dG9tYOA8
+vaeBgWHO6c0QVezSexUYGLoesH8Ac1038P1uYFvAYPKAIZqBcxEDD0TV/ErOfwycyxh4A8DcKAaG
+rwzM/xh8GBjsDVgLYH7Un8Dwm4H3JwPLBjA3nIHhDwPfZ2agn/gPzD/AwAlRdZ2B8w8DVwDDfAMw
+N5QBqInvMxNQkj/AfgNMVS0DxycGoCZ9BmRVYLMuzIer+gaybr4CgzjTAyRVDGuB7mpgD4C56wfD
+rAQG1g1sjjwIs5g/M1gZMNQw8K1g4P0NFhZjiGVg4JTe/HAHiGf4X1j1l8DxLwf47pwFhtfcY5t/
+CYDE5+5JYAAAOd9i2ZXvXdYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>Testing `Mod.deduceInInterval()` method.</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">three_mod_two</span><span class="o">.</span><span class="n">deduceInInterval</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/c8e1bc2a5bd9b2d54a01da02b6bd88d06ba49ba70/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/89ddaf5e3a08263d6d3aeb3cb1f61d62542dd45e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM8AAAAXBAMAAABewgYuAAAAMFBMVEX///9UVFQyMjIQEBAiIiKY
+mJhmZmaqqqpERETc3NyIiIi6urp2dnbu7u7MzMwAAADJdJlBAAAAAXRSTlMAQObYZgAAAn1JREFU
+SMfVlj9oE1Ecx78mOez9eUmRIiqVhA7iIFi04FDaRnGpCgZEJ6GxYJBiIKC0OqWCYKmDhzoK1j9T
+kbYguIlB26JthtNJJw9dXORSETPYEN+7u+T+vVwTcfE3vN/v7rj3ud/fd/gOSxp6CxEu8u/HNa/2
+PJtgN9ftq/W2OORAiwfKkld7RB62AA/Kt9oFCRW6rJ3XeSCSm9H5IIybIDGLYqZNkJIGIgUyygO9
+h/I7CLrCwrZsgqQqEukOQGeA1zxQHjjsB5HepAOSB5FIhYOEm8ePNUE3gKLGAQ0ASTXg0ZgDorJF
+6OKzmsujDeBVgQM6qCGph4PIqfBi+KC5Qkd+UdAcv+pOa3zQGwskLufDQbub1rYUxE3A4IPkTfBB
+Y43QPVkKBU07NaRDpB4ZJS4o1t0CFMnaoOhQAPTJyXf8UB8VZn2jdR0SupytSZ8pehOEnjnWRyq6
+qgHQIs23cinPTNHx6LluFkORVwyQsmjlUTfzKFHjgSJ0r3fYYdr9To4oc6bxmX7QJP3msBxFpxGr
+BUBdFDQKQ2X2RFsNGy9BUsOqTsjw+oiBTuKh+V6s4AbFCoQNyc8peyE/LND98mpPMHSLrj56kbvN
+9N3h+b1nqTX/TIO08tjc3BoBZNdLF4isPdKtErOXo3bD1us/A6ALI/syrslgDdcq9uMqdYWkcRlR
+E3TCnvNvXSOo82PCByI19OIrDGCWmqwYoGT9+/X/C1AFeyiI5nqnXLFA57jnUeegcR6IeSRaHskl
+2X/E/d0JO0iXBftiASIDGTRH4hA17tEcfpm65m+Y7S3+GSTdq4P/DI583BAGrt/JoryqQll5egQY
+qdfx38kft7DoKgwybyIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_mod_b</span><span class="o">.</span><span class="n">deduceInInterval</span><span class="p">(</span>
+    <span class="n">assumptions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Reals</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Reals</span><span class="p">),</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"><a class="ProveItLink" href="__pv_it/0ec4f1c8ef59e83ca81a49969e03eaddeb3311db0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALgAAAAVCAMAAADCb9TFAAAAOVBMVEX///8kJCQNDQ0oKCiIiIi6
+urrc3NxERETMzMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAACs2H6dAAAAAXRSTlMAQObY
+ZgAAAiBJREFUSMfVV8mW4yAMZGYAsQv4/49tVhu8vHYGH7o5JE5MQaESJSAkt+AD+SVNeIr9GZ39
+kRwtXv7NpGhPIT4eKxgJEJ2TcJAIQZqXodxNq6DBNsK+v7DmgzA4gjoJBgEO8XD+ZahmYxeVVmj4
+zPcj4kC4rV96fhHVu1AOo1yyEHXPiQcwqbnT7J4TN2dexPegJeBiXHNZqqodHxAXQPE6bGl2mHeS
+eQ16DjiJuq5Q3RDn3noqB7vBO701YbPeTlPqd8kXoK3zGHCMvhKnha/sorjNaFL2u91jNL9LVGX8
+zAxj+o2RL0OtK+3f3/zZNy2PxbBFJd5dUHVfRJmNysMw0+XsMqfuIUI1/erAi9BzwBNxX4nb3YUE
+mB4cX0Yw2whCut7msDFPjo5WvBWjXYdW/JxMc6okPQvJrRJJKH3E9f4Y9fZMwIUVs83XFqC16yHT
+YnMV1TZF4w9tWba83LvLWzMGDLO0MWySrUFLjv9pgm1xB6jJjVOlb66CZT1pp6otd+jd7ElKP2Vh
+ZH2PLENzSI9bey5A8mCHQPOJQpM924y6qdvEqlIhkiM01dLEMFbuBShh5yNAHg5bTp98HJOfCq7p
+fkZADQwvTkoii+eyQsbU9+ipnYK2ACUXNQAtpb2WPir5zMJct49N4etQ9c1xbScuVw7N70MdPiT+
+wXn8LCF9Haq+i8V2HicLN6CFK1/4z4AzyYas+kF3TvbozvkFPRohc6LcLRUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="__pv_it/0b77473268f0cd639aa0d2ff15b25717388ecd100/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/3d36de03bf6bc3f2cca27a4c0117e7d6a04060940/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKUAAAAVBAMAAADVzzOcAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAArlJREFU
+OMutlU1oE0EUx/9NYpqP2U3xUlAs60EUL91bbKWQi+ih0CBFrCjsUVTsNi1I8RIRRKpIIGDBi/Hj
+0iISD6V+YFmUgm0PGxAvHjTePNb0y49YfTOzu9k0beLBB5k3b97kt2/em30L/BcJWH4FtbTz1jf9
+3jRc3uJrn9ZqRjDlqstcLzV5/IVVoZZO09C1xccxyfeaa7CZrFhr489+2oSpSiam6LfYyIwZ7E7N
+yAnFCoCSa5Ynh7nO/2Y2MD8AvZ6RMJzYgUi5NTNUpYGl5ZLy/OaEg3kGDFsuc8CSzHngK1ozg1k+
+PpalnbW80L4BA4ZrHHFyHEthnKctP3mWew4PHRwxj1+lpCRHyfs2mZHMWOc4/bVHzBct7+zsBzFN
+l/ngyl3BDObwmlaOlWPLwnXLVDdSShqHypgFO4WgZNpP2CbwUcy7avlUV4Bul8l+WnaZM5UCblCm
+ziFaFK4Z4BcCm7hOm7V4wa07JW0DOC/mRR+T4uzWHSNcRcLkzHAWg0C0ioh83EtgBWolQHVO6LYO
+Jpn3wHhIIp1npkm2OXu0AFvnzMAyZ+4qwpZ39xUoILUSJlSiSMdymFMIrTtM1Rcnr9GwWyO6ngOG
+w6SzU0DD8DNFnDnbY/7mR8EJMU/7mLT9s3uXEiXctzgzlOU1sg3ska+zw8QQRZWKFd18rmK+5NZo
+coc7n0hRWZwa0Q2Jm8q1YC3OQAUHNDyCOojohljehxc05sU8YtSYEYOdhF0QRlspnhPMqM5PxDoz
+X8b4tv1/dl9c6+j9rqv5HvIu9GXWOvj6wijvXQ8Fiu3t95gsOaIhclsWbLLPufNai3fTJywrdeio
+925KuVTX6/CuVQ/x94zGHiJFr2dSD8HcPzK36XUyfrOOyXtd057sl7kdmEp9n4+XW3w7fKI0fDsm
+fN+Ods1Vn4C/xCXKK6Gg65MAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>Testing `Mod.deduceInNumberSet()` method.</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># deduce that int mod int is in Integers</span>
+<span class="n">three_mod_two</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span><span class="n">Integers</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[18]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/1cd5c6a06199431ce7384e52e51f25e1f111ea520/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/e210d82bd81cb2f14dd7c760b5c1c5d79d5762e50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAAUBAMAAAC35yitAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAjNJREFU
+OMuNlEFo01AYx/9Nm65tXpPhxYOoBcVrAh0ymWBABAXBTHYQJ9ijt/WgFC+yUZThQTInyJhgEXeZ
+4IIMp3NqQTzYHdxFBEHoEGG7WNzcRFasL99LE1ea0g+SfHnfe7983/99L4C6gjBjh8u+H6+GzVoG
+vmWftw3F50x6fph+BhxoCcZubs1emOFffwrVxkj7NGoEYL04YaLSEut5mUFJAdI2erahjbYFaARI
+liFbiOZ3x5IGork+IFFFbAhaqQNAHkXkL5glxtIvxm972FXJBtZoNKQEAUjVEdkAHtOQtBAIu6Rw
+/zpVWaTYzN3C3lhhHnhX4LmxbEE3vamJOnCMvEqwPp3/yu+v+aX2PxDTFlC7ik+Q7kDJ433O1U7Y
+OQP4Qt5/m7HMHH6/Rf41mqlY0Bzo1YQBaQOLzV3gNsavK+Q5AWBPxO2NIfLlSwQoQTNQy+g5YJNt
+Ah89QJKLBZ3KvDjLTTSCfRICoFahbBPAgZbngBG+bkf6HQBIKAKoQQYpN5vjbglavQXgZvCHBYC4
+jR/AafItH3A0arqvXETZIZUDgGxD+oUnvgaHgBtNEe8316u9q7w2y92c9IrXBwKgZ6TzSBn4buIh
+dZ9azE7wTp0UO5XzAEp5CWy/Q4mdmZongQ7+PPJ2MDpXxHr2Hu+Dyc/6IBXbaDQ44JE4ofvOCsCp
+xeFXl4dtt5W7M+Ydl9iAaGW/newuAa2Hybc3XQIqHX4oXVnohzr80naVGqLVP+kZmAt9/nsHAAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># deduce that int mod int is in Integers</span>
+<span class="n">a_mod_b</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span>
+    <span class="n">Integers</span><span class="p">,</span>
+    <span class="n">assumptions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Integers</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Integers</span><span class="p">),</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[19]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"><a class="ProveItLink" href="__pv_it/1ead77b4179649e7f7dce86b6c9f0a27726e15e70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALYAAAAVCAMAAADcpuR2AAAAOVBMVEX///8kJCQNDQ0oKCiIiIi6
+urrc3NxERETMzMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAACs2H6dAAAAAXRSTlMAQObY
+ZgAAAjtJREFUSMfVV9ty6yAMpD1gcRfw/x9brg5gOyE5fmgZT8YxXrES0goTkoZ3nvyJwR3Fdo/W
+/EKGBk8fM8HrnQ/rxpgWQVgrtBX9BiEIfS9ys4MP1JtK17UJo9dpU3AJHqEwTlh3L1Kx/hUZ/dPb
+yPYd2i7nk5HEsHEiyFuRW++bFxlq36DtQcex75hLGbepWBtTCgR8DnwDmYPNuz+g0q8sL67Q5kBP
+jAKmaywgvQJcQR6DTYIq/skL2pszjoqHXbRna3tK/CyYVlHq5AvgCrK61wcbgyu0aWYr2obYXVxi
+1ttOV9R2sjZCuqZnIfLEsD0FLiCNzePfd/pt2bSFXBa80G66J5sSYlYm1xkGcp52B1Yl74rdS+AS
+8hjsSNsV2uahPBx0s+SyBf2wwIVtoyshR9ihPWUxxWCeAZeQBa6mDemTJHqfKe59R0B+h18URsvF
+Fsu+jeUIsF3KToFLyBLsaUtCVRJZi6Gyh+qUyZPd++Kk5+7C208Gv+/WFXAJmXP7q+7VHnOAktQ4
+9PSqJJi9ifUpd2cdPSiTSleeGxZnrTSugKvIFM45/8d2IyYBhLiW14p0eablhfCi8pBloG5YXBf6
+PnIALiNTCcwjWcOaywfdxqigfFO0a76ogOFw/gIrACCeivJaWpdZdNQMEZuB60hyIvloKG19c625
+MwNDj571Cz8EXiLlizPZg7b4j1Px7UiLi7TfOW/Pu0fvRspXgdjP2+Tzr5vPv+X8h8FmgnX59Gu+
+JdnSt+QPU10gAahftQkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="__pv_it/4d505c09faceda6fb56dcceec9c754497aa778b10/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/1f260fa82c49d57038b1e2c085a447cdd68e4ab30/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH8AAAAUBAMAAABWoP+5AAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAiVJREFU
+OMudlE1oE0EUx/9m15JkZ6fBS0FR4kH8uDQHsVQRchEreMihiK0WcxQ9dE29lF4qgki9FIMUxENR
+e6iI7KXU2iqr4qHxsL0JeklvHiVtGsFaffNmdxMDSYoPZubxZuf33rz3ZgG5hpby4WKkdpVbffS5
+9Xnc2NSfXKbpUNPewLXhuakRUl61AUgNwDyNUtPexEMk4QL2dBsAAsAWDcP5d6sInDKyQLzcGWBu
+0yRy2mS/vj+l1ieQqeO0fkdngDGp5uesxxa9cNPyVmgeV1ctzlxVlhNDR2855yeyEH1jFNzHvoIG
+JHvG80A/66XoPL7YqoBvaZwrJ3+w6YEja1k7h2NlLEJcgqEB/kuxA3xlvV4M4XIB75E2goTLtgXg
+F2I7uAv0pq3ZsAqjHmrAddbdCLAnzbBBILGNuE7xG2ADshKjrHdn/AyEBjyG2CAkp2D4BQlbL5iZ
+ALDXhZ9m2zLIlax00blut9cJAfMwtwKArEcwa1F6PXUFcjWKRgBHMO1HgN8qSAywngvPG/mT5JuT
+6OexX7d6AMAQ+csm3TAHm/i0FiZxJgSsyxTwiItjOfYdox5BrIIjaTyDHESixuaDWNKtRxLPB4AV
+y8P7bxyY6Cms31a2w3/23aymTv/MyGI/9cHq2UI1peyrY6rgT3XxDugXal6ZW16oLnVq5QYRk3o1
+z+hWDqX9Y2qQ5scUybtdAkr/80PZlaN2v7TGq7bI1V/pUplCq4GUNQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># deduce that int mod int is in Naturals</span>
+<span class="n">three_mod_two</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span><span class="n">Naturals</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[20]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/3f35cfd225a8cd4b6e0dabc84c3a1336282cbe410/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/67d2820656bed333fda7c482bb26e8b94eb76a790/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIEAAAAUBAMAAABYJUOTAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAjNJREFU
+OMuNlE1oE0EUx/+7NbFJZj8IPXgKCaVY9JBAlVpBXfCgguAeglDw4FH04FoRkRapFErAy0pPYg+L
+igcRWaR+UK1EPTUe2rNeAl4EQSQ2idDQOPtmdxtjNuTB7Lx9b+Y3b968GUDdRKR8PBuq8WrkqM/A
+t4lXvX2Xt6hbf/ACyHT5KturZRyuG8BzqDau9g5EJQLTccJApdu5JutgvwDFxt4GtPneQRAhUUbM
+xJDV5duXvQmYwHAVe4rQnD6E2DykHTDTt30tlWj0yDspC77yd7JG7EIQki1INeCxMB2c832ZHHvm
+EW7RThfIdmB6/zXr1KwBNnmdZ+jT5MyWP3q4BUyRxmcFhLiV8whrXsKOLAvjXUttGoqJ8Speg53H
+UEA4VwC+kCaFp5rBIcXihEX6u2FQ9xLYhrwDHlI+m3L8s+Byh7dLpKWwS5DKaU4o0l/sAnWrwG+o
+NbkBaIWNAphPSNj8kyd17CkXRxCYnjSJoFaRapD7LdDkhDifqLl5KyRQsgThR0cMGJVN2oXW6iJQ
+DPZGSIjb+AmcFtF2EpSLLmUy5lKudwmY5isaSTfIwyhwO8hkIiysNG/HXTojZTOoByLINYxl8Qhq
+EYkm1fbCxD2esSUxcTEgPPF4jojtzP0VsuXa6St1/eifgro0xQ9n/dhMXfcqqt1uc8JDMfHDSpn6
+8TpfnzlU1YMJC67OyTelf+6AYg9I+O9mhfJ+QEKl3wszkESv1O+V69xtVL7+AjhKnFSJxjo6AAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># deduce that int mod int is in Reals</span>
+<span class="n">three_mod_two</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span><span class="n">Reals</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[21]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/073b1d8ef8decc6caf170557fa1a777a18a98d8c0/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/ca48d3addfdd3fc773925b6c296c7aacf3d135be0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIEAAAAUBAMAAABYJUOTAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAjFJREFU
+OMuNlM9LG0EUx79JTOq6m9ngH1AiIhY9JODBWpAu7aEVCs0hCGIPOYo9uLX0UFrEIkioly2e+uMQ
+bE8idin+KNXW2J7Ug94selmQQqHQQ6pJocF08mY32abZkAfJvH2z85n3vvNmAXYAT/t8q+KGLM+3
+9oCTvrX6c+OnNOy8fAdcrJn7Orq1OEq7L4MZmKifCCOCEsFVDbu1k5lt9B5ngbCBC3mo0/WTIIKU
+RTCBgF4zZ55AZhGg1UJLEmqmASE4Dd85lIQdO06nMzZBsrj3naIeVQhCWxG+HPBGhHofV3OQLBN4
+SJXOUKxnpPuefuORBqX/vgZ86Z88td9uLQID5ClLrip8LbyKj2XBLr8SwTmdFbRwApcsrEMZRsAh
+3I4DR+T5LBdh7AVXcpaeHmg0rAJ/4D8HTykWlTP2WXB7wn9j5MlVJb+ln6b4mKSn4B0aPgC/wHL+
+PKDG9+NQbIJk8L8YuV2L3Gwlh+SsIDALcp6mN4ACJ4T4QtWM6RUCiSUIP1ynKV3jQparUIs1BMrB
+2K8QQgZ+AjdFtu5+2DwEKRk0SesqASN8R63NdHToBKYcJSXdReiQonRG4QOnH4jgz6EritdgSUgF
+6u2Zvme8Z+fFwllXVwdS7SK3oecrFOsotd89i1z5HWfzA/xwdgYnzyLljiqVSpywIBZur2Sdm7WA
+jbepclc3Z4pzda6/T/9zB8JGk4T/blbFPjVJ2G30hWnKvHdq9JVzV+ul118mm6486w23YwAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># deduce that int mod int is in Reals</span>
+<span class="n">a_mod_b</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span>
+    <span class="n">Reals</span><span class="p">,</span>
+    <span class="n">assumptions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Reals</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Reals</span><span class="p">),</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[22]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"><a class="ProveItLink" href="__pv_it/0ec4f1c8ef59e83ca81a49969e03eaddeb3311db0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALgAAAAVCAMAAADCb9TFAAAAOVBMVEX///8kJCQNDQ0oKCiIiIi6
+urrc3NxERETMzMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAACs2H6dAAAAAXRSTlMAQObY
+ZgAAAiBJREFUSMfVV8mW4yAMZGYAsQv4/49tVhu8vHYGH7o5JE5MQaESJSAkt+AD+SVNeIr9GZ39
+kRwtXv7NpGhPIT4eKxgJEJ2TcJAIQZqXodxNq6DBNsK+v7DmgzA4gjoJBgEO8XD+ZahmYxeVVmj4
+zPcj4kC4rV96fhHVu1AOo1yyEHXPiQcwqbnT7J4TN2dexPegJeBiXHNZqqodHxAXQPE6bGl2mHeS
+eQ16DjiJuq5Q3RDn3noqB7vBO701YbPeTlPqd8kXoK3zGHCMvhKnha/sorjNaFL2u91jNL9LVGX8
+zAxj+o2RL0OtK+3f3/zZNy2PxbBFJd5dUHVfRJmNysMw0+XsMqfuIUI1/erAi9BzwBNxX4nb3YUE
+mB4cX0Yw2whCut7msDFPjo5WvBWjXYdW/JxMc6okPQvJrRJJKH3E9f4Y9fZMwIUVs83XFqC16yHT
+YnMV1TZF4w9tWba83LvLWzMGDLO0MWySrUFLjv9pgm1xB6jJjVOlb66CZT1pp6otd+jd7ElKP2Vh
+ZH2PLENzSI9bey5A8mCHQPOJQpM924y6qdvEqlIhkiM01dLEMFbuBShh5yNAHg5bTp98HJOfCq7p
+fkZADQwvTkoii+eyQsbU9+ipnYK2ACUXNQAtpb2WPir5zMJct49N4etQ9c1xbScuVw7N70MdPiT+
+wXn8LCF9Haq+i8V2HicLN6CFK1/4z4AzyYas+kF3TvbozvkFPRohc6LcLRUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="__pv_it/5da1c55219f4d86357f2d716262f83dffa6334b70/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/8dc3389f7235548586c52c58fb32cc1d0170a4690/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAAUBAMAAAC35yitAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAh9JREFU
+OMuNlE9IFHEUx7/O5uD82ZmhS9BpPEiRB+cQbQrChEgeAj1IJBTsuaCmLYjIgxHJRpclRW+2IXUI
+kTkohn9iK4IiYvYexHgLuoSlGybVmzej/lRm19/hN4/3+70P733f7w1gVJG63l7YMa+nXvqUHo+r
+v6Jdnx8BmsK9R9mHS5vPVyJrtg7AYADUElHK+85U3ZJWlolUqgNADDDztOX2HWmGA38VaAkbA/or
+tL1PXF+KxfI2YEoFvqEx4Cyn7LLdPixkMKUBd6NSxyYvR75TQydueufvudBzt+j6u1whBjy7MwFk
+uFZ9RizBOgdEQvaG6g92PvaMmpsdwMkQC9AvIhN3YbMShMhy4rvNIID8iHCjdOEKFJ+d88AfSH/x
+AOiwtXLSBXkLpgd5hMMEES8VX9B3EFC20OKxcxH4CWNN2iDlncCBzgClDLIlTrLtJa1ExNOl5RjQ
+7COwGbAE1AggU5zpd3gJgJ5Bfz4BfBfbON4OLoHwNyACOINSsA0wq3hawREuoVkEaJ89FjHI47gc
+CgAMkQau6icamC6plIioeAJAsp4AnWR62fuZ3QykNbTZmIYxCKXGylc1aqHi8JVR4SnjTJONPurC
+scLq7cjX+u/otXWr67djjHXSO/jYXVi3ojZOdkcBsUxv5io7w2RrixsNnrKwPiTfnlfFPXNVf5iE
+lUs7eH24+APjfKgfiji9qaXW+6UJ62uK/z99SZoQqXyq9wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># What happens if we try to deduce into an incorrect set?</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">three_mod_two</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span><span class="n">NaturalsPos</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;EXCEPTION: &quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>EXCEPTION:  Unable to prove (3 mod  2) in NaturalsPos:
+&#39;Mod.deduceInNumberSet()&#39; not implemented for the NaturalsPos set
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>Testing `ModAbs` methods.</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">abs_three_mod_two</span> <span class="o">=</span> <span class="n">ModAbs</span><span class="p">(</span><span class="n">three</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[24]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="abs_three_mod_two">abs_three_mod_two:</strong> <a class="ProveItLink" href="__pv_it/b65449aef730930f35e17bdc07a7d8c942ed546d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAAXBAMAAAChTOGJAAAAMFBMVEX///9UVFQyMjIQEBAiIiKY
+mJhmZmaqqqpERETc3NyIiIi6urp2dnbu7u7MzMwAAADJdJlBAAAAAXRSTlMAQObYZgAAARhJREFU
+KM9jeMsAATAaHZxGo7HIzznTjk+eM4GhPgCPPNd3Bn4HPPLc1gz8CvjsZ8BvPgMDrw9e93MeyWXA
+b/7iDfjlmW3R5XnnIvw/gYHjO7o80NMMDMfaLgDF+f9ikWdQZ2DgmcAI8jdzAwPLXwx5YJCzTOD7
+CRRnDcDmf5D8Bs7fIPFtad0gd0yyWyUbCmStWnOBYU2UOkgR+1+k+OX8zqDBUMLAUcDrwHaAwRwk
+yLIASZ73L4MMw2OG9wwMXfcvMID1H0NOH7wfGKSA8sEMDGL7we5nYE3AIg/SPx+ifw/DPoZ1UPl1
+DJwg+fdA+zltGRdwmjIw8KmX9yL56MZHVpPK/gSGM8cmMJyJci5gYP7//wMDAQAANt1lhRfg1kEA
+AAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">abs_a_mod_b</span> <span class="o">=</span> <span class="n">ModAbs</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[25]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="abs_a_mod_b">abs_a_mod_b:</strong> <a class="ProveItLink" href="__pv_it/0d75f65030496b1c8f8d62b41fab73895de54ca60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAAXBAMAAAChTOGJAAAAMFBMVEX///9UVFSqqqoiIiJERESY
+mJgyMjIQEBBmZmbc3NyIiIi6urp2dnbu7u7MzMwAAABs7OAJAAAAAXRSTlMAQObYZgAAAQNJREFU
+KM9jeMsAAXwXGLCC01CaZ8OQlefs6arFJ799AtsHPPK8pQwcDnjkOf4yMC/AkL95ASbP7sBw/wGG
+/HoFBoZtCSD5+wcY9DHdzwaU52kAyyswiDFNQJdnUYCoOc3AsoDVkIcBmzz/BLD7pdZNXA2U50x/
+tfBqyAYGrlVnGbiOLgPKv18lixx+8xXYHJgMGJwYLjP0MLAD5RdfWIEsf/8C4wG+Ar4PDCxr/4Lt
+9mIIQ5FnYFzAV8BawMDY/QEsX83QiCkP0r8Sov8vQxHDOqg81wOG+SD5D0D7p1+QYpgewMBgy+qA
+5CNef4Fwoyk/GHjOdDLwHF1cxMDw8AwDIQAAtVVguOyuaEEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">str</span><span class="p">(</span><span class="n">abs_three_mod_two</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[26]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;|3|_{mod 2}&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">abs_three_mod_two</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span><span class="n">Integers</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[27]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/a082fc69a0f7c24777ca53501ad939d4c6a5929b0/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/c3c3306a4c6a94c37b54372f39a74097669cbcc50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGcAAAAXBAMAAADkTUwLAAAAMFBMVEX///9UVFQyMjIQEBAiIiKY
+mJhmZmaqqqpERETc3NyIiIi6urp2dnbu7u7MzMwAAADJdJlBAAAAAXRSTlMAQObYZgAAAalJREFU
+OMtjeMsAATCaKHAajSZW05wz7URq2mJvpOxkClLMmcBQH0CcphV5DEwMDSBNXN8Z+B2I05TDwHCc
+ZwNIE7c1A78Cfk2sLS5OIDqXgVPgGSwACDiPr+sCjMlxoReqidcHf0BcguthiGINgGjiPJKLX5Mk
+nMXbcAMeP4s34NXUAGcxPpCEa2K2xdB0E+EkPiMlIAAzt3EfgGjinMDA8R1D0/oCBgaejFwQkxNh
+kwIHUPQCUDH/X2yamICaTjIIgdkGMEGeAqAyZpBNzA0MLH8xNHEANXkyvJ8AYmfBBCdyCjAwJIM0
+AQMRSzyBNHkzzN8AYrMUQAV7OS4wXIwAB8S2tG4QPclulWwokLVqzQUGrqOLwArrwcHBK7EXrIfb
+Qrmj+XMbctbg/M6gwVACtILXAZjImMGavCCS3CcgyQgzP/H+ZZBheMzwnoGhC8gEBQQDTwKhTMj7
+gUEKqCmYgUGM+wNEUxgDkZpANnFCbOI+wP0Aq6Z1cJoTpOk90E+ctkDGZGDCfFRecYFADrvxkdWk
+sj+B4cyxCQw8R5eYMzDY///PQDUAAB63hZSWMTLrAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">abs_three_mod_two</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span><span class="n">Reals</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[28]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/c56a34eeaafb2cc407a0069f1b47db1d8f2d72290/proof.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="__pv_it/19a3648fe4d3ad1160e72d118a694e092ba59b000/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGgAAAAXBAMAAAAVRheGAAAAMFBMVEX///9UVFQyMjIQEBAiIiKY
+mJhmZmaqqqpERETc3NyIiIi6urp2dnbu7u7MzMwAAADJdJlBAAAAAXRSTlMAQObYZgAAAZxJREFU
+OMtjeMsAATCaKHAajSZW05wz7cRpYnXu+KTcCtbEmcBQH0CcTUy8AnytvSBNXN8Z+B2I08TBeYCh
+YSJIE7c1A78Cfk0RLi4KME2ZTFC/EHDei7VINmVyQDTx+uANCF5dZOcJbAQr5jySi1cT4wQkTexu
+ulDFizfg08SBFBAmLuqwSGW2RdfEOxfBfqwEBNCAOJ3QC4mnCQwc39E1AeOBgeFY2wUQewZykGe/
+AGvi/4tFEwPQFTwTGMHmMyNr4ri6AKSJuYGB5S+GJmDKYpnA9xPEZFuApIlPIA+kiTUAWzyBNG3g
+/A1muyMlI4bjjA9AireldYM0T7JbJRsKZK1ac4FhTRQokBjY/4LVXuy+AE+wDziaviNlDc7vDBoM
+JQwcBbwObAcYzEGCLFCH7WmBJCPM/MT7l0GG4THDewaGrvsXGMA2HSOYCXk/MEgBNQUzMIjtB4ce
+A2sCsZpANs2H2LSHYR92TevgNCdI03ugnzhtGRdwmjIw8KmX9xLKYTc+sppU9icwnDk2geFMlHMB
+A/P//x8YqAYAu5WI6HK2QxsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># what happens if we try to deduce into an incorrect set?</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">abs_three_mod_two</span><span class="o">.</span><span class="n">deduceInNumberSet</span><span class="p">(</span><span class="n">Naturals</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;EXCEPTION: &quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>EXCEPTION:  Unable to prove |3|_{mod 2} in Naturals:
+&#39;ModAbs.deduceInNumberSet()&#39; not implemented for the Naturals set
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.boolean.quantification.existential.forallImpliesNotExistsNot theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.boolean.quantification.existential.forallImpliesNotExistsNot-theorem">Proof of <a class="ProveItLink" href="../../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../../_context_.html">boolean</a>.<a class="ProveItLink" href="../../_context_.html">quantification</a>.<a class="ProveItLink" href="../_context_.html">existential</a>.<a class="ProveItLink" href="../_theorems_.html#forallImpliesNotExistsNot">forallImpliesNotExistsNot</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.boolean.quantification.existential.forallImpliesNotExistsNot-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> forallImpliesNotExistsNot presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of forallImpliesNotExistsNot
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forallImpliesNotExistsNot">forallImpliesNotExistsNot:</strong> <a class="ProveItLink" href="../__pv_it/39be3e6f57cf6c75c84303e72b7d3279e753bbb50/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/39be3e6f57cf6c75c84303e72b7d3279e753bbb50/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

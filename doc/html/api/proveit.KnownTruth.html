@@ -1,0 +1,617 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>KnownTruth &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Label" href="proveit.Label.html" />
+    <link rel="prev" title="InvalidAssumptions" href="proveit.InvalidAssumptions.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="knowntruth">
+<h1>KnownTruth<a class="headerlink" href="#knowntruth" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="proveit.KnownTruth">
+<em class="property">class </em><code class="descclassname">proveit.</code><code class="descname">KnownTruth</code><span class="sig-paren">(</span><em>expression</em>, <em>assumptions</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p class="rubric">Attributes Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.hasBeenProven" title="proveit.KnownTruth.hasBeenProven"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasBeenProven</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.hyperlinked_proof_styles" title="proveit.KnownTruth.hyperlinked_proof_styles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hyperlinked_proof_styles</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.in_progress_to_derive_sideeffects" title="proveit.KnownTruth.in_progress_to_derive_sideeffects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">in_progress_to_derive_sideeffects</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.lookup_dict" title="proveit.KnownTruth.lookup_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lookup_dict</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.presumingPrefixes" title="proveit.KnownTruth.presumingPrefixes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">presumingPrefixes</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.presumingTheoremNamess" title="proveit.KnownTruth.presumingTheoremNamess"><code class="xref py py-obj docutils literal notranslate"><span class="pre">presumingTheoremNamess</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.qedInProgress" title="proveit.KnownTruth.qedInProgress"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qedInProgress</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.sideeffect_processed" title="proveit.KnownTruth.sideeffect_processed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sideeffect_processed</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.theoremBeingProven" title="proveit.KnownTruth.theoremBeingProven"><code class="xref py py-obj docutils literal notranslate"><span class="pre">theoremBeingProven</span></code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.asImpl" title="proveit.KnownTruth.asImpl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asImpl</span></code></a>(hypothesis)</td>
+<td>Abbreviation for asImplication.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.asImplication" title="proveit.KnownTruth.asImplication"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asImplication</span></code></a>(hypothesis)</td>
+<td>Performs a hypothetical reasoning derivation step, forming an implication statement with the given hypothesis and this statement as the conclusion.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.asTheoremOrAxiom" title="proveit.KnownTruth.asTheoremOrAxiom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asTheoremOrAxiom</span></code></a>()</td>
+<td>Assuming this KnownTruth represents a Theorem or Axiom, return  the Theorem or Axiom object.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.beginProof" title="proveit.KnownTruth.beginProof"><code class="xref py py-obj docutils literal notranslate"><span class="pre">beginProof</span></code></a>(theorem[,&nbsp;presuming,&nbsp;…])</td>
+<td>Begin a proof for a theorem.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.deriveSideEffects" title="proveit.KnownTruth.deriveSideEffects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deriveSideEffects</span></code></a>(assumptions)</td>
+<td>Derive any side-effects that are obvious consequences arising from this truth.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.evaluation" title="proveit.KnownTruth.evaluation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluation</span></code></a>([assumptions])</td>
+<td>Calling evaluation on a KnownTruth results in deriving that its expression is equal to TRUE, under the assumptions of the KnownTruth.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.findKnownTruth" title="proveit.KnownTruth.findKnownTruth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">findKnownTruth</span></code></a>(expression,&nbsp;assumptions_set)</td>
+<td>Try to find a KnownTruth for this expression that applies to the given set of assumptions (its assumptions are a subset of the given assumptions).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.forgetKnownTruths" title="proveit.KnownTruth.forgetKnownTruths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forgetKnownTruths</span></code></a>()</td>
+<td>Forget all KnownTruth’s and all Assumption proof objects.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.generalize" title="proveit.KnownTruth.generalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generalize</span></code></a>(forall_var_or_vars_or_var_lists)</td>
+<td>Performs a generalization derivation step.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.innerExpr" title="proveit.KnownTruth.innerExpr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">innerExpr</span></code></a>()</td>
+<td>Return an InnerExpr object to wrap the KnownTruth and access any inner sub-expression (including assumptions or inner expressions of assumptions) for the purpose of  replacing the inner expression, changing its style, or relabeling variables.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.instantiate" title="proveit.KnownTruth.instantiate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">instantiate</span></code></a>([repl_map,&nbsp;…])</td>
+<td>Performs an instantiation derivation step to be proven under the given assumptions, in addition to the (possibly revised) assumptions of the  KnownTruth.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.isSufficient" title="proveit.KnownTruth.isSufficient"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isSufficient</span></code></a>(assumptions)</td>
+<td>Return True iff the given assumptions satisfy the KnownTruth;  the KnownTruth is usable and requires a subset of the given assumptions.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.isUsable" title="proveit.KnownTruth.isUsable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isUsable</span></code></a>()</td>
+<td>Returns True iff this KnownTruth has a “usable” proof.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.latex" title="proveit.KnownTruth.latex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latex</span></code></a>([performUsabilityCheck])</td>
+<td>Display the turnstile notation to show that the known truth on the right derives from the set of assumptions on the left.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.orderOfAppearance" title="proveit.KnownTruth.orderOfAppearance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">orderOfAppearance</span></code></a>(subExpressions)</td>
+<td>Yields the given sub-Expressions in the order in which they appear in this KnownTruth.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.printDependents" title="proveit.KnownTruth.printDependents"><code class="xref py py-obj docutils literal notranslate"><span class="pre">printDependents</span></code></a>()</td>
+<td>Provided that this KnownTruth is known to represent a theorem or axiom, print all theorems that are known to depend on it directly or indirectly.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.printRequirements" title="proveit.KnownTruth.printRequirements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">printRequirements</span></code></a>()</td>
+<td>Provided that this KnownTruth is known to represent a proven theorem, print the set of axioms that are required directly or indirectly in its proof as well as any required theorems that are unproven (if it has not yet been proven completely).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.proof" title="proveit.KnownTruth.proof"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proof</span></code></a>()</td>
+<td>Returns the most up-to-date proof of this KnownTruth.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.raiseUnusableProof" title="proveit.KnownTruth.raiseUnusableProof"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raiseUnusableProof</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.specialize" title="proveit.KnownTruth.specialize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">specialize</span></code></a>([repl_map,&nbsp;relabel_map,&nbsp;assumptions])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.KnownTruth.string" title="proveit.KnownTruth.string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">string</span></code></a>([performUsabilityCheck])</td>
+<td>Display the turnstile notation to show that the known truth on the right derives from the set of assumptions on the left.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.KnownTruth.withMatchingStyles" title="proveit.KnownTruth.withMatchingStyles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">withMatchingStyles</span></code></a>(expr,&nbsp;assumptions)</td>
+<td>Alter the styles of the KnownTruth expression and any of its assumptions to match the given styles.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes Documentation</p>
+<dl class="attribute">
+<dt id="proveit.KnownTruth.hasBeenProven">
+<code class="descname">hasBeenProven</code><em class="property"> = None</em><a class="headerlink" href="#proveit.KnownTruth.hasBeenProven" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.KnownTruth.hyperlinked_proof_styles">
+<code class="descname">hyperlinked_proof_styles</code><em class="property"> = set()</em><a class="headerlink" href="#proveit.KnownTruth.hyperlinked_proof_styles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.KnownTruth.in_progress_to_derive_sideeffects">
+<code class="descname">in_progress_to_derive_sideeffects</code><em class="property"> = set()</em><a class="headerlink" href="#proveit.KnownTruth.in_progress_to_derive_sideeffects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.KnownTruth.lookup_dict">
+<code class="descname">lookup_dict</code><em class="property"> = {[not](FALSE): {|- [not](FALSE)}, forall_{A | [not](A)} (A != TRUE): {|- forall_{A | [not](A)} (A != TRUE)}, FALSE != TRUE: {|- FALSE != TRUE}, forall_{x, y | x != y} (y != x): {|- forall_{x, y | x != y} (y != x)}, TRUE != FALSE: {|- TRUE != FALSE}, forall_{A in BOOLEANS | A != FALSE} A: {|- forall_{A in BOOLEANS | A != FALSE} A}, TRUE: {|- TRUE}, forall_{x} (x = x): {|- forall_{x} (x = x)}, TRUE = TRUE: {|- TRUE = TRUE}, forall_{A | A = TRUE} A: {|- forall_{A | A = TRUE} A}, forall_{A | A} (A in BOOLEANS): {|- forall_{A | A} (A in BOOLEANS)}, forall_{A | [not](A)} (A in BOOLEANS): {|- forall_{A | [not](A)} (A in BOOLEANS)}, TRUE in BOOLEANS: {|- TRUE in BOOLEANS}, forall_{A in BOOLEANS} (A or [not](A)): {|- forall_{A in BOOLEANS} (A or [not](A))}, forall_{A | (A = TRUE) or (A = FALSE)} (A in BOOLEANS): {|- forall_{A | (A = TRUE) or (A = FALSE)} (A in BOOLEANS)}, forall_{A in BOOLEANS} ((A = TRUE) or (A = FALSE)): {|- forall_{A in BOOLEANS} ((A = TRUE) or (A = FALSE))}, TRUE or [not](TRUE): {|- TRUE or [not](TRUE)}, forall_{x, y | x != y} [not](x = y): {|- forall_{x, y | x != y} [not](x = y)}, [not](TRUE = FALSE): {|- [not](TRUE = FALSE)}, forall_{A | [not](A)} (A = FALSE): {|- forall_{A | [not](A)} (A = FALSE)}, (TRUE = FALSE) = FALSE: {|- (TRUE = FALSE) = FALSE}, forall_{x, y | x = y} (y = x): {|- forall_{x, y | x = y} (y = x)}, FALSE = (TRUE = FALSE): {|- FALSE = (TRUE = FALSE)}, forall_{A | A = FALSE} [not](A): {|- forall_{A | A = FALSE} [not](A)}, forall_{A | A} (A = TRUE): {|- forall_{A | A} (A = TRUE)}, [not](TRUE = FALSE) = TRUE: {|- [not](TRUE = FALSE) = TRUE}, TRUE = [not](TRUE = FALSE): {|- TRUE = [not](TRUE = FALSE)}, forall_{P, x, y | P(y), x = y} P(x): {|- forall_{P, x, y | P(y), x = y} P(x)}, forall_{P, x | P(TRUE), x} P(x): {|- forall_{P, x | P(TRUE), x} P(x)}, forall_{P, x | P(x), x} P(TRUE): {|- forall_{P, x | P(x), x} P(TRUE)}, forall_{P, x | P(FALSE), [not](x)} P(x): {|- forall_{P, x | P(FALSE), [not](x)} P(x)}, forall_{P, x | P(x), [not](x)} P(FALSE): {|- forall_{P, x | P(x), [not](x)} P(FALSE)}, [not](TRUE = FALSE) in BOOLEANS: {|- [not](TRUE = FALSE) in BOOLEANS}, forall_{A | [not](A) in BOOLEANS} (A in BOOLEANS): {|- forall_{A | [not](A) in BOOLEANS} (A in BOOLEANS)}, (TRUE = FALSE) in BOOLEANS: {|- (TRUE = FALSE) in BOOLEANS}, (TRUE = FALSE) or [not](TRUE = FALSE): {|- (TRUE = FALSE) or [not](TRUE = FALSE)}, [not](TRUE = FALSE) or [not]([not](TRUE = FALSE)): {|- [not](TRUE = FALSE) or [not]([not](TRUE = FALSE))}, forall_{x, y | [not](x = y)} (x != y): {|- forall_{x, y | [not](x = y)} (x != y)}, [not](FALSE = TRUE): {|- [not](FALSE = TRUE)}, (FALSE = TRUE) = FALSE: {|- (FALSE = TRUE) = FALSE}, FALSE = (FALSE = TRUE): {|- FALSE = (FALSE = TRUE)}, [not](FALSE = TRUE) = TRUE: {|- [not](FALSE = TRUE) = TRUE}, TRUE = [not](FALSE = TRUE): {|- TRUE = [not](FALSE = TRUE)}, [not](FALSE = TRUE) in BOOLEANS: {|- [not](FALSE = TRUE) in BOOLEANS}, (FALSE = TRUE) in BOOLEANS: {|- (FALSE = TRUE) in BOOLEANS}, (FALSE = TRUE) or [not](FALSE = TRUE): {|- (FALSE = TRUE) or [not](FALSE = TRUE)}, [not](FALSE = TRUE) or [not]([not](FALSE = TRUE)): {|- [not](FALSE = TRUE) or [not]([not](FALSE = TRUE))}, [not](FALSE) = TRUE: {|- [not](FALSE) = TRUE}, TRUE = [not](FALSE): {|- TRUE = [not](FALSE)}, [not](FALSE) in BOOLEANS: {|- [not](FALSE) in BOOLEANS}, FALSE in BOOLEANS: {|- FALSE in BOOLEANS}, FALSE or [not](FALSE): {|- FALSE or [not](FALSE)}, [not](FALSE) or [not]([not](FALSE)): {|- [not](FALSE) or [not]([not](FALSE))}, [not](TRUE) = FALSE: {|- [not](TRUE) = FALSE}, FALSE = [not](TRUE): {|- FALSE = [not](TRUE)}, [not]([not](TRUE)): {|- [not]([not](TRUE))}, [not](TRUE) != TRUE: {|- [not](TRUE) != TRUE}, TRUE != [not](TRUE): {|- TRUE != [not](TRUE)}, [not](TRUE = [not](TRUE)): {|- [not](TRUE = [not](TRUE))}, (TRUE = [not](TRUE)) = FALSE: {|- (TRUE = [not](TRUE)) = FALSE}, FALSE = (TRUE = [not](TRUE)): {|- FALSE = (TRUE = [not](TRUE))}, [not](TRUE = [not](TRUE)) = TRUE: {|- [not](TRUE = [not](TRUE)) = TRUE}, TRUE = [not](TRUE = [not](TRUE)): {|- TRUE = [not](TRUE = [not](TRUE))}, [not](TRUE = [not](TRUE)) in BOOLEANS: {|- [not](TRUE = [not](TRUE)) in BOOLEANS}, (TRUE = [not](TRUE)) in BOOLEANS: {|- (TRUE = [not](TRUE)) in BOOLEANS}, (TRUE = [not](TRUE)) or [not](TRUE = [not](TRUE)): {|- (TRUE = [not](TRUE)) or [not](TRUE = [not](TRUE))}, [not](TRUE = [not](TRUE)) or [not]([not](TRUE = [not](TRUE))): {|- [not](TRUE = [not](TRUE)) or [not]([not](TRUE = [not](TRUE)))}, [not]([not](TRUE) = TRUE): {|- [not]([not](TRUE) = TRUE)}, ([not](TRUE) = TRUE) = FALSE: {|- ([not](TRUE) = TRUE) = FALSE}, FALSE = ([not](TRUE) = TRUE): {|- FALSE = ([not](TRUE) = TRUE)}, [not]([not](TRUE) = TRUE) = TRUE: {|- [not]([not](TRUE) = TRUE) = TRUE}, TRUE = [not]([not](TRUE) = TRUE): {|- TRUE = [not]([not](TRUE) = TRUE)}, [not]([not](TRUE) = TRUE) in BOOLEANS: {|- [not]([not](TRUE) = TRUE) in BOOLEANS}, ([not](TRUE) = TRUE) in BOOLEANS: {|- ([not](TRUE) = TRUE) in BOOLEANS}, ([not](TRUE) = TRUE) or [not]([not](TRUE) = TRUE): {|- ([not](TRUE) = TRUE) or [not]([not](TRUE) = TRUE)}, [not]([not](TRUE) = TRUE) or [not]([not]([not](TRUE) = TRUE)): {|- [not]([not](TRUE) = TRUE) or [not]([not]([not](TRUE) = TRUE))}, forall_{A | [not]([not](A))} A: {|- forall_{A | [not]([not](A))} A}, [not]([not](TRUE)) = TRUE: {|- [not]([not](TRUE)) = TRUE}, TRUE = [not]([not](TRUE)): {|- TRUE = [not]([not](TRUE))}, [not]([not](TRUE)) in BOOLEANS: {|- [not]([not](TRUE)) in BOOLEANS}, [not](TRUE) in BOOLEANS: {|- [not](TRUE) in BOOLEANS}, [not](TRUE) or [not]([not](TRUE)): {|- [not](TRUE) or [not]([not](TRUE))}, [not]([not](TRUE)) or [not]([not]([not](TRUE))): {|- [not]([not](TRUE)) or [not]([not]([not](TRUE)))}, [not](TRUE) =&gt; FALSE: {|- [not](TRUE) =&gt; FALSE}, forall_{A in BOOLEANS | [not](A) =&gt; FALSE} A: {|- forall_{A in BOOLEANS | [not](A) =&gt; FALSE} A}, forall_{A in BOOLEANS | A =&gt; FALSE} [not](A): {|- forall_{A in BOOLEANS | A =&gt; FALSE} [not](A)}, forall_{A | A =&gt; FALSE} (A != TRUE): {|- forall_{A | A =&gt; FALSE} (A != TRUE)}, TRUE =&gt; TRUE: {|- TRUE =&gt; TRUE}, FALSE =&gt; TRUE: {|- FALSE =&gt; TRUE}, FALSE =&gt; FALSE: {|- FALSE =&gt; FALSE}, BOOLEANS = {TRUE, FALSE}: {|- BOOLEANS = {TRUE, FALSE}}, {TRUE, FALSE} = BOOLEANS: {|- {TRUE, FALSE} = BOOLEANS}, FALSE = FALSE: {|- FALSE = FALSE}, NaturalsPos subset Naturals: {|- NaturalsPos subset Naturals}, forall_{A, B | A subset B} (A subseteq B): {|- forall_{A, B | A subset B} (A subseteq B)}, NaturalsPos subseteq Naturals: {|- NaturalsPos subseteq Naturals}, forall_{A, B | A subseteq B} (B supseteq A): {|- forall_{A, B | A subseteq B} (B supseteq A)}, Naturals supseteq NaturalsPos: {|- Naturals supseteq NaturalsPos}, forall_{A, B | A supseteq B} (B subseteq A): {|- forall_{A, B | A supseteq B} (B subseteq A)}, forall_{A, B | A subset B} (B supset A): {|- forall_{A, B | A subset B} (B supset A)}, Naturals supset NaturalsPos: {|- Naturals supset NaturalsPos}, forall_{A, B | A supset B} (A supseteq B): {|- forall_{A, B | A supset B} (A supseteq B)}, forall_{A, B | A supset B} (B subset A): {|- forall_{A, B | A supset B} (B subset A)}, Naturals subset Integers: {|- Naturals subset Integers}, Naturals subseteq Integers: {|- Naturals subseteq Integers}, Integers supseteq Naturals: {|- Integers supseteq Naturals}, Integers supset Naturals: {|- Integers supset Naturals}, NaturalsPos subset Integers: {|- NaturalsPos subset Integers}, NaturalsPos subseteq Integers: {|- NaturalsPos subseteq Integers}, Integers supseteq NaturalsPos: {|- Integers supseteq NaturalsPos}, Integers supset NaturalsPos: {|- Integers supset NaturalsPos}, Naturals subset Rationals: {|- Naturals subset Rationals}, Naturals subseteq Rationals: {|- Naturals subseteq Rationals}, Rationals supseteq Naturals: {|- Rationals supseteq Naturals}, Rationals supset Naturals: {|- Rationals supset Naturals}, Naturals subset RationalsNonNeg: {|- Naturals subset RationalsNonNeg}, Naturals subseteq RationalsNonNeg: {|- Naturals subseteq RationalsNonNeg}, RationalsNonNeg supseteq Naturals: {|- RationalsNonNeg supseteq Naturals}, RationalsNonNeg supset Naturals: {|- RationalsNonNeg supset Naturals}, NaturalsPos subset Rationals: {|- NaturalsPos subset Rationals}, NaturalsPos subseteq Rationals: {|- NaturalsPos subseteq Rationals}, Rationals supseteq NaturalsPos: {|- Rationals supseteq NaturalsPos}, Rationals supset NaturalsPos: {|- Rationals supset NaturalsPos}, NaturalsPos subset RationalsNonNeg: {|- NaturalsPos subset RationalsNonNeg}, NaturalsPos subseteq RationalsNonNeg: {|- NaturalsPos subseteq RationalsNonNeg}, RationalsNonNeg supseteq NaturalsPos: {|- RationalsNonNeg supseteq NaturalsPos}, RationalsNonNeg supset NaturalsPos: {|- RationalsNonNeg supset NaturalsPos}, Integers subset Rationals: {|- Integers subset Rationals}, Integers subseteq Rationals: {|- Integers subseteq Rationals}, Rationals supseteq Integers: {|- Rationals supseteq Integers}, Rationals supset Integers: {|- Rationals supset Integers}, RationalsPos subset Rationals: {|- RationalsPos subset Rationals}, RationalsPos subseteq Rationals: {|- RationalsPos subseteq Rationals}, Rationals supseteq RationalsPos: {|- Rationals supseteq RationalsPos}, Rationals supset RationalsPos: {|- Rationals supset RationalsPos}, RationalsPos subset RationalsNonNeg: {|- RationalsPos subset RationalsNonNeg}, RationalsPos subseteq RationalsNonNeg: {|- RationalsPos subseteq RationalsNonNeg}, RationalsNonNeg supseteq RationalsPos: {|- RationalsNonNeg supseteq RationalsPos}, RationalsNonNeg supset RationalsPos: {|- RationalsNonNeg supset RationalsPos}, RationalsNonNeg subset Rationals: {|- RationalsNonNeg subset Rationals}, RationalsNonNeg subseteq Rationals: {|- RationalsNonNeg subseteq Rationals}, Rationals supseteq RationalsNonNeg: {|- Rationals supseteq RationalsNonNeg}, Rationals supset RationalsNonNeg: {|- Rationals supset RationalsNonNeg}, RealsPos subset Reals: {|- RealsPos subset Reals}, RealsPos subseteq Reals: {|- RealsPos subseteq Reals}, Reals supseteq RealsPos: {|- Reals supseteq RealsPos}, Reals supset RealsPos: {|- Reals supset RealsPos}, RealsNeg subset Reals: {|- RealsNeg subset Reals}, RealsNeg subseteq Reals: {|- RealsNeg subseteq Reals}, Reals supseteq RealsNeg: {|- Reals supseteq RealsNeg}, Reals supset RealsNeg: {|- Reals supset RealsNeg}, RealsNonNeg subset Reals: {|- RealsNonNeg subset Reals}, RealsNonNeg subseteq Reals: {|- RealsNonNeg subseteq Reals}, Reals supseteq RealsNonNeg: {|- Reals supseteq RealsNonNeg}, Reals supset RealsNonNeg: {|- Reals supset RealsNonNeg}, Integers subset Reals: {|- Integers subset Reals}, Integers subseteq Reals: {|- Integers subseteq Reals}, Reals supseteq Integers: {|- Reals supseteq Integers}, Reals supset Integers: {|- Reals supset Integers}, Naturals subset Reals: {|- Naturals subset Reals}, Naturals subseteq Reals: {|- Naturals subseteq Reals}, Reals supseteq Naturals: {|- Reals supseteq Naturals}, Reals supset Naturals: {|- Reals supset Naturals}, NaturalsPos subset Reals: {|- NaturalsPos subset Reals}, NaturalsPos subseteq Reals: {|- NaturalsPos subseteq Reals}, Reals supseteq NaturalsPos: {|- Reals supseteq NaturalsPos}, Reals supset NaturalsPos: {|- Reals supset NaturalsPos}, NaturalsPos subset RealsPos: {|- NaturalsPos subset RealsPos}, NaturalsPos subseteq RealsPos: {|- NaturalsPos subseteq RealsPos}, RealsPos supseteq NaturalsPos: {|- RealsPos supseteq NaturalsPos}, RealsPos supset NaturalsPos: {|- RealsPos supset NaturalsPos}, Naturals subset RealsNonNeg: {|- Naturals subset RealsNonNeg}, Naturals subseteq RealsNonNeg: {|- Naturals subseteq RealsNonNeg}, RealsNonNeg supseteq Naturals: {|- RealsNonNeg supseteq Naturals}, RealsNonNeg supset Naturals: {|- RealsNonNeg supset Naturals}, NaturalsPos subset RealsNonNeg: {|- NaturalsPos subset RealsNonNeg}, NaturalsPos subseteq RealsNonNeg: {|- NaturalsPos subseteq RealsNonNeg}, RealsNonNeg supseteq NaturalsPos: {|- RealsNonNeg supseteq NaturalsPos}, RealsNonNeg supset NaturalsPos: {|- RealsNonNeg supset NaturalsPos}, RealsPos subset RealsNonNeg: {|- RealsPos subset RealsNonNeg}, RealsPos subseteq RealsNonNeg: {|- RealsPos subseteq RealsNonNeg}, RealsNonNeg supseteq RealsPos: {|- RealsNonNeg supseteq RealsPos}, RealsNonNeg supset RealsPos: {|- RealsNonNeg supset RealsPos}, Reals subset Complexes: {|- Reals subset Complexes}, Reals subseteq Complexes: {|- Reals subseteq Complexes}, Complexes supseteq Reals: {|- Complexes supseteq Reals}, Complexes supset Reals: {|- Complexes supset Reals}, Integers subset Complexes: {|- Integers subset Complexes}, Integers subseteq Complexes: {|- Integers subseteq Complexes}, Complexes supseteq Integers: {|- Complexes supseteq Integers}, Complexes supset Integers: {|- Complexes supset Integers}, Naturals subset Complexes: {|- Naturals subset Complexes}, Naturals subseteq Complexes: {|- Naturals subseteq Complexes}, Complexes supseteq Naturals: {|- Complexes supseteq Naturals}, Complexes supset Naturals: {|- Complexes supset Naturals}, 0 in Naturals: {|- 0 in Naturals}, forall_{n in Naturals} (n &gt;= 0): {|- forall_{n in Naturals} (n &gt;= 0)}, 0 &gt;= 0: {|- 0 &gt;= 0}, forall_{x, y | x &gt;= y} (y &lt;= x): {|- forall_{x, y | x &gt;= y} (y &lt;= x)}, 0 &lt;= 0: {|- 0 &lt;= 0}, forall_{x, y | x &lt;= y} (y &gt;= x): {|- forall_{x, y | x &lt;= y} (y &gt;= x)}, 0 &lt; 1: {|- 0 &lt; 1}, forall_{x, y | x &lt; y} (x &lt;= y): {|- forall_{x, y | x &lt; y} (x &lt;= y)}, 0 &lt;= 1: {|- 0 &lt;= 1}, 1 &gt;= 0: {|- 1 &gt;= 0}, forall_{x, y | x &lt; y} (y &gt; x): {|- forall_{x, y | x &lt; y} (y &gt; x)}, 1 &gt; 0: {|- 1 &gt; 0}, forall_{x, y | x &gt; y} (x &gt;= y): {|- forall_{x, y | x &gt; y} (x &gt;= y)}, forall_{x, y | x &gt; y} (y &lt; x): {|- forall_{x, y | x &gt; y} (y &lt; x)}, 1 &lt; 2: {|- 1 &lt; 2}, 1 &lt;= 2: {|- 1 &lt;= 2}, 2 &gt;= 1: {|- 2 &gt;= 1}, 2 &gt; 1: {|- 2 &gt; 1}, 2 &lt; 3: {|- 2 &lt; 3}, 2 &lt;= 3: {|- 2 &lt;= 3}, 3 &gt;= 2: {|- 3 &gt;= 2}, 3 &gt; 2: {|- 3 &gt; 2}, 3 &lt; 4: {|- 3 &lt; 4}, 3 &lt;= 4: {|- 3 &lt;= 4}, 4 &gt;= 3: {|- 4 &gt;= 3}, 4 &gt; 3: {|- 4 &gt; 3}, 4 &lt; 5: {|- 4 &lt; 5}, 4 &lt;= 5: {|- 4 &lt;= 5}, 5 &gt;= 4: {|- 5 &gt;= 4}, 5 &gt; 4: {|- 5 &gt; 4}, 5 &lt; 6: {|- 5 &lt; 6}, 5 &lt;= 6: {|- 5 &lt;= 6}, 6 &gt;= 5: {|- 6 &gt;= 5}, 6 &gt; 5: {|- 6 &gt; 5}, 6 &lt; 7: {|- 6 &lt; 7}, 6 &lt;= 7: {|- 6 &lt;= 7}, 7 &gt;= 6: {|- 7 &gt;= 6}, 7 &gt; 6: {|- 7 &gt; 6}, 7 &lt; 8: {|- 7 &lt; 8}, 7 &lt;= 8: {|- 7 &lt;= 8}, 8 &gt;= 7: {|- 8 &gt;= 7}, 8 &gt; 7: {|- 8 &gt; 7}, 8 &lt; 9: {|- 8 &lt; 9}, 8 &lt;= 9: {|- 8 &lt;= 9}, 9 &gt;= 8: {|- 9 &gt;= 8}, 9 &gt; 8: {|- 9 &gt; 8}, 1 in Naturals: {|- 1 in Naturals}, 2 in Naturals: {|- 2 in Naturals}, 2 &gt;= 0: {|- 2 &gt;= 0}, 0 &lt;= 2: {|- 0 &lt;= 2}, 3 in Naturals: {|- 3 in Naturals}, 3 &gt;= 0: {|- 3 &gt;= 0}, 0 &lt;= 3: {|- 0 &lt;= 3}, 4 in Naturals: {|- 4 in Naturals}, 4 &gt;= 0: {|- 4 &gt;= 0}, 0 &lt;= 4: {|- 0 &lt;= 4}, 5 in Naturals: {|- 5 in Naturals}, 5 &gt;= 0: {|- 5 &gt;= 0}, 0 &lt;= 5: {|- 0 &lt;= 5}, 6 in Naturals: {|- 6 in Naturals}, 6 &gt;= 0: {|- 6 &gt;= 0}, 0 &lt;= 6: {|- 0 &lt;= 6}, 7 in Naturals: {|- 7 in Naturals}, 7 &gt;= 0: {|- 7 &gt;= 0}, 0 &lt;= 7: {|- 0 &lt;= 7}, 8 in Naturals: {|- 8 in Naturals}, 8 &gt;= 0: {|- 8 &gt;= 0}, 0 &lt;= 8: {|- 0 &lt;= 8}, 9 in Naturals: {|- 9 in Naturals}, 9 &gt;= 0: {|- 9 &gt;= 0}, 0 &lt;= 9: {|- 0 &lt;= 9}, 1 in NaturalsPos: {|- 1 in NaturalsPos}, forall_{n in NaturalsPos} (n &gt;= 1): {|- forall_{n in NaturalsPos} (n &gt;= 1)}, 1 &gt;= 1: {|- 1 &gt;= 1}, 1 &lt;= 1: {|- 1 &lt;= 1}, forall_{A, B | A subset B} [forall_{x in A} (x in B)]: {|- forall_{A, B | A subset B} [forall_{x in A} (x in B)]}, 2 in NaturalsPos: {|- 2 in NaturalsPos}, 3 in NaturalsPos: {|- 3 in NaturalsPos}, 3 &gt;= 1: {|- 3 &gt;= 1}, 1 &lt;= 3: {|- 1 &lt;= 3}, 4 in NaturalsPos: {|- 4 in NaturalsPos}, 4 &gt;= 1: {|- 4 &gt;= 1}, 1 &lt;= 4: {|- 1 &lt;= 4}, 5 in NaturalsPos: {|- 5 in NaturalsPos}, 5 &gt;= 1: {|- 5 &gt;= 1}, 1 &lt;= 5: {|- 1 &lt;= 5}, 6 in NaturalsPos: {|- 6 in NaturalsPos}, 6 &gt;= 1: {|- 6 &gt;= 1}, 1 &lt;= 6: {|- 1 &lt;= 6}, 7 in NaturalsPos: {|- 7 in NaturalsPos}, 7 &gt;= 1: {|- 7 &gt;= 1}, 1 &lt;= 7: {|- 1 &lt;= 7}, 8 in NaturalsPos: {|- 8 in NaturalsPos}, 8 &gt;= 1: {|- 8 &gt;= 1}, 1 &lt;= 8: {|- 1 &lt;= 8}, 9 in NaturalsPos: {|- 9 in NaturalsPos}, 9 &gt;= 1: {|- 9 &gt;= 1}, 1 &lt;= 9: {|- 1 &lt;= 9}, (-0) = 0: {|- (-0) = 0}, 0 = (-0): {|- 0 = (-0)}}</em><a class="headerlink" href="#proveit.KnownTruth.lookup_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.KnownTruth.presumingPrefixes">
+<code class="descname">presumingPrefixes</code><em class="property"> = None</em><a class="headerlink" href="#proveit.KnownTruth.presumingPrefixes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.KnownTruth.presumingTheoremNamess">
+<code class="descname">presumingTheoremNamess</code><em class="property"> = None</em><a class="headerlink" href="#proveit.KnownTruth.presumingTheoremNamess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.KnownTruth.qedInProgress">
+<code class="descname">qedInProgress</code><em class="property"> = False</em><a class="headerlink" href="#proveit.KnownTruth.qedInProgress" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.KnownTruth.sideeffect_processed">
+<code class="descname">sideeffect_processed</code><em class="property"> = {(RationalsNonNeg subseteq Rationals, ()), (forall_{A | [not](A) in BOOLEANS} (A in BOOLEANS), ()), ((TRUE = FALSE) = FALSE, ()), (Integers supseteq Naturals, ()), (2 &gt;= 1, ()), (forall_{A in BOOLEANS | A != FALSE} A, ()), (RationalsPos subseteq Rationals, ()), (4 &lt; 5, ()), ([not]([not](TRUE)) in BOOLEANS, ()), (Reals supseteq Naturals, ()), (NaturalsPos subset RationalsNonNeg, ()), (2 in NaturalsPos, ()), (7 in NaturalsPos, ()), (6 &lt;= 7, ()), ([not](TRUE = [not](TRUE)) = TRUE, ()), (1 &lt;= 7, ()), (5 in Naturals, ()), (Integers supset NaturalsPos, ()), (0 &gt;= 0, ()), (RationalsNonNeg subset Rationals, ()), (4 &lt;= 5, ()), (8 &gt; 7, ()), (2 in Naturals, ()), (5 &lt;= 6, ()), (RealsPos subseteq RealsNonNeg, ()), (3 &gt;= 0, ()), (Rationals supseteq RationalsNonNeg, ()), (TRUE in BOOLEANS, ()), ([not](TRUE = [not](TRUE)) in BOOLEANS, ()), (Rationals supseteq RationalsPos, ()), (9 &gt;= 0, ()), (NaturalsPos subseteq Reals, ()), (Reals supseteq RealsPos, ()), (1 &lt;= 1, ()), ((FALSE = TRUE) = FALSE, ()), (8 &lt; 9, ()), (1 in NaturalsPos, ()), (3 &gt;= 1, ()), (1 &lt;= 9, ()), (Naturals subset Rationals, ()), (RealsNonNeg supseteq RealsPos, ()), (Integers subset Complexes, ()), (Complexes supseteq Integers, ()), (forall_{P, x | P(TRUE), x} P(x), ()), (FALSE = FALSE, ()), (RealsPos supset NaturalsPos, ()), (1 &lt;= 6, ()), (RationalsNonNeg supseteq RationalsPos, ()), ((TRUE = FALSE) or [not](TRUE = FALSE), ()), (RealsNeg subset Reals, ()), ((-0) = 0, ()), (FALSE = [not](TRUE), ()), (Reals supset NaturalsPos, ()), (RationalsPos subseteq RationalsNonNeg, ()), (forall_{x, y | x &gt; y} (y &lt; x), ()), (NaturalsPos subseteq Rationals, ()), (9 in Naturals, ()), ([not]([not](TRUE) = TRUE), ()), (3 &gt;= 2, ()), (FALSE = (TRUE = [not](TRUE)), ()), (forall_{A, B | A subset B} [forall_{x in A} (x in B)], ()), (FALSE = ([not](TRUE) = TRUE), ()), (forall_{x, y | x &lt;= y} (y &gt;= x), ()), (9 &gt; 8, ()), (4 in NaturalsPos, ()), (Rationals supseteq NaturalsPos, ()), (Reals supset RealsNonNeg, ()), (1 &lt;= 8, ()), (RationalsNonNeg supset Naturals, ()), (forall_{A | [not](A)} (A != TRUE), ()), (FALSE != TRUE, ()), (forall_{A | [not]([not](A))} A, ()), ([not](TRUE) in BOOLEANS, ()), (Rationals supset RationalsPos, ()), (RealsNonNeg supset NaturalsPos, ()), (Integers subset Rationals, ()), (8 in Naturals, ()), (5 in NaturalsPos, ()), (1 &lt;= 2, ()), (0 &lt;= 7, ()), (0 &lt;= 6, ()), (8 &gt;= 1, ()), (TRUE = TRUE, ()), (Naturals subset Integers, ()), (TRUE =&gt; TRUE, ()), (5 &gt;= 0, ()), (3 in NaturalsPos, ()), (Naturals subset Reals, ()), (8 &gt;= 7, ()), (TRUE = [not]([not](TRUE)), ()), (9 &gt;= 1, ()), (Complexes supset Reals, ()), (7 &gt;= 0, ()), ((TRUE = [not](TRUE)) = FALSE, ()), (TRUE = [not]([not](TRUE) = TRUE), ()), ([not](FALSE) in BOOLEANS, ()), (([not](TRUE) = TRUE) or [not]([not](TRUE) = TRUE), ()), (TRUE != [not](TRUE), ()), (FALSE or [not](FALSE), ()), ((TRUE = FALSE) in BOOLEANS, ()), (forall_{n in NaturalsPos} (n &gt;= 1), ()), (7 in Naturals, ()), (Complexes supset Naturals, ()), (2 &gt; 1, ()), (Reals supseteq RealsNeg, ()), ([not]([not](TRUE) = TRUE) or [not]([not]([not](TRUE) = TRUE)), ()), (Naturals subseteq Reals, ()), (forall_{A in BOOLEANS | A =&gt; FALSE} [not](A), ()), (TRUE = [not](FALSE), ()), (forall_{P, x | P(x), x} P(TRUE), ()), ([not](TRUE) =&gt; FALSE, ()), (1 &gt;= 0, ()), (1 in Naturals, ()), ((FALSE = TRUE) or [not](FALSE = TRUE), ()), (forall_{A, B | A subset B} (A subseteq B), ()), (NaturalsPos subset Integers, ()), (RealsNonNeg subseteq Reals, ()), (forall_{x, y | x &lt; y} (y &gt; x), ()), (forall_{x, y | x &lt; y} (x &lt;= y), ()), (0 &lt;= 0, ()), (5 &gt; 4, ()), (Integers subseteq Complexes, ()), (NaturalsPos subset Reals, ()), (TRUE != FALSE, ()), ([not]([not](TRUE)) or [not]([not]([not](TRUE))), ()), (0 &lt;= 1, ()), (Naturals subset RationalsNonNeg, ()), (FALSE =&gt; FALSE, ()), (NaturalsPos subseteq RationalsNonNeg, ()), (Naturals subseteq Integers, ()), (forall_{x, y | x &gt;= y} (y &lt;= x), ()), (RealsNonNeg supset RealsPos, ()), (forall_{x, y | x != y} (y != x), ()), (Naturals subseteq Complexes, ()), (forall_{n in Naturals} (n &gt;= 0), ()), (RationalsNonNeg supseteq NaturalsPos, ()), (BOOLEANS = {TRUE, FALSE}, ()), (1 &gt;= 1, ()), (forall_{x, y | [not](x = y)} (x != y), ()), (5 &lt; 6, ()), (7 &gt;= 1, ()), (0 = (-0), ()), (Naturals subseteq RealsNonNeg, ()), (RealsNonNeg supseteq Naturals, ()), (1 &lt;= 5, ()), (8 in NaturalsPos, ()), (Integers subseteq Rationals, ()), (Reals supset Naturals, ()), ([not](TRUE = FALSE), ()), (Naturals supseteq NaturalsPos, ()), (RationalsPos subset RationalsNonNeg, ()), (RealsNonNeg supseteq NaturalsPos, ()), (3 in Naturals, ()), (Naturals subset Complexes, ()), (forall_{A | [not](A)} (A in BOOLEANS), ()), (([not](TRUE) = TRUE) in BOOLEANS, ()), (NaturalsPos subset Naturals, ()), (Naturals subseteq Rationals, ()), ([not](FALSE = TRUE) = TRUE, ()), (Naturals supset NaturalsPos, ()), (FALSE = (FALSE = TRUE), ()), (Integers supset Naturals, ()), (Naturals subseteq RationalsNonNeg, ()), (Rationals supseteq Integers, ()), (RealsPos subseteq Reals, ()), (Reals supseteq Integers, ()), (Integers subseteq Reals, ()), (RealsPos subset RealsNonNeg, ()), ([not](TRUE = FALSE) or [not]([not](TRUE = FALSE)), ()), (4 &gt;= 3, ()), (0 &lt;= 2, ()), (forall_{P, x | P(FALSE), [not](x)} P(x), ()), (2 &gt;= 0, ()), (6 in Naturals, ()), (6 &gt;= 1, ()), (TRUE or [not](TRUE), ()), (TRUE = [not](FALSE = TRUE), ()), (forall_{A | A = TRUE} A, ()), (forall_{A in BOOLEANS | [not](A) =&gt; FALSE} A, ()), (Naturals subset RealsNonNeg, ()), (forall_{A in BOOLEANS} ((A = TRUE) or (A = FALSE)), ()), (TRUE = [not](TRUE = [not](TRUE)), ()), ((TRUE = [not](TRUE)) in BOOLEANS, ()), (3 &lt;= 4, ()), (1 &lt;= 3, ()), (8 &gt;= 0, ()), ([not](TRUE = [not](TRUE)) or [not]([not](TRUE = [not](TRUE))), ()), (7 &lt; 8, ()), (Complexes supseteq Naturals, ()), (2 &lt; 3, ()), (FALSE in BOOLEANS, ()), ([not](FALSE), ()), (NaturalsPos subset RealsPos, ()), ([not](FALSE) = TRUE, ()), (Complexes supseteq Reals, ()), (0 &lt;= 5, ()), ({TRUE, FALSE} = BOOLEANS, ()), ([not](FALSE) or [not]([not](FALSE)), ()), (forall_{x, y | x != y} [not](x = y), ()), (forall_{x, y | x &gt; y} (x &gt;= y), ()), (0 &lt; 1, ()), ([not](TRUE = [not](TRUE)), ()), (Integers subset Reals, ()), (RealsNeg subseteq Reals, ()), (4 &gt; 3, ()), (forall_{A | [not](A)} (A = FALSE), ()), (forall_{A | A} (A in BOOLEANS), ()), (forall_{A, B | A supset B} (A supseteq B), ()), (NaturalsPos subseteq RealsPos, ()), (RationalsNonNeg supset RationalsPos, ()), (NaturalsPos subset Rationals, ()), (NaturalsPos subseteq Integers, ()), (Complexes supset Integers, ()), (Reals supseteq RealsNonNeg, ()), (0 &lt;= 8, ()), (forall_{x, y | x = y} (y = x), ()), (1 &gt; 0, ()), ([not]([not](TRUE) = TRUE) in BOOLEANS, ()), (6 &gt;= 5, ()), (5 &gt;= 4, ()), (Rationals supset Naturals, ()), (RealsPos subset Reals, ()), (0 &lt;= 4, ()), (6 in NaturalsPos, ()), (9 in NaturalsPos, ()), (forall_{A, B | A supset B} (B subset A), ()), (([not](TRUE) = TRUE) = FALSE, ()), ([not]([not](TRUE)) = TRUE, ()), ((FALSE = TRUE) in BOOLEANS, ()), (forall_{A | (A = TRUE) or (A = FALSE)} (A in BOOLEANS), ()), (RationalsPos subset Rationals, ()), (0 &lt;= 9, ()), (RealsNonNeg supset Naturals, ()), (forall_{P, x | P(x), [not](x)} P(FALSE), ()), (RealsNonNeg subset Reals, ()), (RealsPos supseteq NaturalsPos, ()), (Reals supset Integers, ()), (forall_{A | A =&gt; FALSE} (A != TRUE), ()), (FALSE =&gt; TRUE, ()), (7 &gt; 6, ()), (Rationals supset Integers, ()), (0 &lt;= 3, ()), (forall_{A | A} (A = TRUE), ()), (Reals supset RealsPos, ()), (3 &gt; 2, ()), (forall_{A, B | A subseteq B} (B supseteq A), ()), (2 &lt;= 3, ()), (forall_{P, x, y | P(y), x = y} P(x), ()), (forall_{x} (x = x), ()), ([not]([not](TRUE)), ()), ([not](FALSE = TRUE) in BOOLEANS, ()), ([not]([not](TRUE) = TRUE) = TRUE, ()), (3 &lt; 4, ()), ([not](TRUE = FALSE) in BOOLEANS, ()), (Reals subset Complexes, ()), (RationalsNonNeg supset NaturalsPos, ()), (forall_{A, B | A subset B} (B supset A), ()), (Integers supseteq NaturalsPos, ()), (1 &lt; 2, ()), (5 &gt;= 1, ()), ([not](TRUE) or [not]([not](TRUE)), ()), (TRUE, ()), ([not](FALSE = TRUE) or [not]([not](FALSE = TRUE)), ()), ([not](TRUE = FALSE) = TRUE, ()), (NaturalsPos subseteq Naturals, ()), (TRUE = [not](TRUE = FALSE), ()), (Rationals supseteq Naturals, ()), (Reals supseteq NaturalsPos, ()), (6 &gt; 5, ()), (RationalsNonNeg supseteq Naturals, ()), (Rationals supset RationalsNonNeg, ()), (4 &gt;= 0, ()), (4 &gt;= 1, ()), ([not](FALSE = TRUE), ()), (6 &gt;= 0, ()), (7 &lt;= 8, ()), (Rationals supset NaturalsPos, ()), ([not](TRUE) = FALSE, ()), (forall_{A, B | A supseteq B} (B subseteq A), ()), ([not](TRUE) != TRUE, ()), (NaturalsPos subset RealsNonNeg, ()), (8 &lt;= 9, ()), ((TRUE = [not](TRUE)) or [not](TRUE = [not](TRUE)), ()), (NaturalsPos subseteq RealsNonNeg, ()), (6 &lt; 7, ()), (4 in Naturals, ()), (1 &lt;= 4, ()), (FALSE = (TRUE = FALSE), ()), (9 &gt;= 8, ()), (Reals supset RealsNeg, ()), (Reals subseteq Complexes, ()), (forall_{A in BOOLEANS} (A or [not](A)), ()), (0 in Naturals, ()), (forall_{A | A = FALSE} [not](A), ()), (7 &gt;= 6, ())}</em><a class="headerlink" href="#proveit.KnownTruth.sideeffect_processed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.KnownTruth.theoremBeingProven">
+<code class="descname">theoremBeingProven</code><em class="property"> = None</em><a class="headerlink" href="#proveit.KnownTruth.theoremBeingProven" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="proveit.KnownTruth.asImpl">
+<code class="descname">asImpl</code><span class="sig-paren">(</span><em>hypothesis</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.asImpl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.asImpl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abbreviation for asImplication.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.asImplication">
+<code class="descname">asImplication</code><span class="sig-paren">(</span><em>hypothesis</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.asImplication"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.asImplication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a hypothetical reasoning derivation step, forming an
+implication statement with the given hypothesis and this statement
+as the conclusion.  The hypothesis is removed from the set of
+the conclusion statement’s assumptions for the implication
+statement’s assumptions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.asTheoremOrAxiom">
+<code class="descname">asTheoremOrAxiom</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.asTheoremOrAxiom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.asTheoremOrAxiom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assuming this KnownTruth represents a Theorem or Axiom, return 
+the Theorem or Axiom object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.beginProof">
+<code class="descname">beginProof</code><span class="sig-paren">(</span><em>theorem</em>, <em>presuming=()</em>, <em>justRecordPresumingInfo=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.beginProof"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.beginProof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begin a proof for a theorem.  Only use other theorems that are in 
+the presuming list of theorems/packages or theorems that are required,
+directly or indirectly, in proofs of theorems that are explicitly 
+listed (these are implicitly presumed).  If there exists any 
+presumed theorem that has a direct or indirect dependence upon this 
+theorem then a CircularLogic exception is raised.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.deriveSideEffects">
+<code class="descname">deriveSideEffects</code><span class="sig-paren">(</span><em>assumptions</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.deriveSideEffects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.deriveSideEffects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Derive any side-effects that are obvious consequences arising from this truth.
+Called after the corresponding Proof is complete.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.evaluation">
+<code class="descname">evaluation</code><span class="sig-paren">(</span><em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.evaluation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.evaluation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calling evaluation on a KnownTruth results in deriving that its
+expression is equal to TRUE, under the assumptions of the KnownTruth.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.KnownTruth.findKnownTruth">
+<em class="property">static </em><code class="descname">findKnownTruth</code><span class="sig-paren">(</span><em>expression</em>, <em>assumptions_set</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.findKnownTruth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.findKnownTruth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to find a KnownTruth for this expression that applies to
+the given set of assumptions (its assumptions are a subset
+of the given assumptions).  Return None if there is no match.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.KnownTruth.forgetKnownTruths">
+<em class="property">static </em><code class="descname">forgetKnownTruths</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.forgetKnownTruths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.forgetKnownTruths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forget all KnownTruth’s and all Assumption proof objects.  This is used
+for demonstration purposes in the tutorial, but should not generally be needed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.generalize">
+<code class="descname">generalize</code><span class="sig-paren">(</span><em>forall_var_or_vars_or_var_lists</em>, <em>domain_lists=None</em>, <em>domain=None</em>, <em>conditions=()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.generalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.generalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a generalization derivation step.  Returns the
+proven generalized KnownTruth.  Can introduce any number of
+nested Forall operations to wrap the original statement,
+corresponding to the number of given forallVarLists and domains.
+A single variable list or single variable and a single domain may 
+be provided to introduce a single Forall wrapper.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.innerExpr">
+<code class="descname">innerExpr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.innerExpr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.innerExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an InnerExpr object to wrap the KnownTruth and
+access any inner sub-expression (including assumptions or
+inner expressions of assumptions) for the purpose of 
+replacing the inner expression, changing its style,
+or relabeling variables.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.instantiate">
+<code class="descname">instantiate</code><span class="sig-paren">(</span><em>repl_map=None</em>, <em>*</em>, <em>num_forall_eliminations=None</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.instantiate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.instantiate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs an instantiation derivation step to be proven under the given
+assumptions, in addition to the (possibly revised) assumptions of the 
+KnownTruth.  This may instantiate Variables, according to the 
+“replacement” map (repl_map), on either side of the turnstile of the 
+KnownTruth, the assumptions side and the “truth” side.  It may also 
+eliminate any number of nested Forall operations, instantiating the 
+instance Variables according to repl_map, going to the depth
+for which the instance variables occur as keys in repl_map.  
+For Variables that map to Variables and occur as “internal” Lambda
+map parameters (internal after the Forall operations are eliminated),
+they will be relabeled within the “internal” Lambda map parameters.
+For Variables that map to non-Variables, the replacement will not
+penetrate into internal Lambda maps that use that Variable as a
+parameter.  Replacements are made simultaneously.  For example,
+the {x:y, y:x} mapping will swap x and y variables, but mapping {x:y} 
+then {y:x} in series would set both variables to x.</p>
+<p>Returns the proven instantiated KnownTruth, or throws an exception if 
+the proof fails.  For the proof to succeed, all conditions of
+eliminated Forall operations, after replacements are made, must
+be proven.  Furthermore, there may be additional requirements when
+iterated parameters are instantiated (see Lambda.apply for details).
+Automation will be used in attempting to prove these requirements.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.isSufficient">
+<code class="descname">isSufficient</code><span class="sig-paren">(</span><em>assumptions</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.isSufficient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.isSufficient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True iff the given assumptions satisfy the KnownTruth; 
+the KnownTruth is usable and requires a subset of the given assumptions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.isUsable">
+<code class="descname">isUsable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.isUsable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.isUsable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True iff this KnownTruth has a “usable” proof.  Proofs
+may be unusable when proving a theorem that is restricted with
+respect to which theorems may be used (to avoid circular logic).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.latex">
+<code class="descname">latex</code><span class="sig-paren">(</span><em>performUsabilityCheck=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.latex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display the turnstile notation to show that the known truth
+on the right derives from the set of assumptions on the left.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.orderOfAppearance">
+<code class="descname">orderOfAppearance</code><span class="sig-paren">(</span><em>subExpressions</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.orderOfAppearance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.orderOfAppearance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yields the given sub-Expressions in the order in which they
+appear in this KnownTruth.  There may be repeats.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.printDependents">
+<code class="descname">printDependents</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.printDependents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.printDependents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provided that this KnownTruth is known to represent a theorem or axiom,
+print all theorems that are known to depend on it directly or indirectly.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.printRequirements">
+<code class="descname">printRequirements</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.printRequirements"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.printRequirements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provided that this KnownTruth is known to represent a proven theorem,
+print the set of axioms that are required directly or indirectly in
+its proof as well as any required theorems that are unproven (if it
+has not yet been proven completely).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.proof">
+<code class="descname">proof</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.proof"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.proof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the most up-to-date proof of this KnownTruth.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.raiseUnusableProof">
+<code class="descname">raiseUnusableProof</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.raiseUnusableProof"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.raiseUnusableProof" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.specialize">
+<code class="descname">specialize</code><span class="sig-paren">(</span><em>repl_map=None</em>, <em>relabel_map=None</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.specialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.specialize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.string">
+<code class="descname">string</code><span class="sig-paren">(</span><em>performUsabilityCheck=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display the turnstile notation to show that the known truth
+on the right derives from the set of assumptions on the left.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.KnownTruth.withMatchingStyles">
+<code class="descname">withMatchingStyles</code><span class="sig-paren">(</span><em>expr</em>, <em>assumptions</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/known_truth.html#KnownTruth.withMatchingStyles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.KnownTruth.withMatchingStyles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alter the styles of the KnownTruth expression and any of its assumptions
+to match the given styles.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.varRange.html">varRange</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="proveit.InvalidAssumptions.html" title="previous chapter">InvalidAssumptions</a></li>
+      <li>Next: <a href="proveit.Label.html" title="next chapter">Label</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="../_sources/api/proveit.KnownTruth.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

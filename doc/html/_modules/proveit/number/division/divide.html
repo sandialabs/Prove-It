@@ -1,0 +1,474 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.number.division.divide &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.number.division.divide</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">Literal</span><span class="p">,</span> <span class="n">maybeFencedLatex</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">StyleOptions</span><span class="p">,</span>
+                     <span class="n">USE_DEFAULTS</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Div"><a class="viewcode-back" href="../../../../api/proveit.number.Div.html#proveit.number.Div">[docs]</a><span class="k">class</span> <span class="nc">Div</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="c1"># operator of the Add operation</span>
+    <span class="n">_operator_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="n">stringFormat</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">latexFormat</span><span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\div&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="vm">__file__</span><span class="p">)</span>    
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operandA</span><span class="p">,</span> <span class="n">operandB</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Divide two operands.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">Operation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Div</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="p">[</span><span class="n">operandA</span><span class="p">,</span> <span class="n">operandB</span><span class="p">],</span> <span class="n">styles</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;division&#39;</span><span class="p">:</span><span class="s1">&#39;inline&#39;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">denominator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    
+<div class="viewcode-block" id="Div.styleOptions"><a class="viewcode-back" href="../../../../api/proveit.number.Div.html#proveit.number.Div.styleOptions">[docs]</a>    <span class="k">def</span> <span class="nf">styleOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">StyleOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;division&#39;</span><span class="p">,</span> <span class="s2">&quot;&#39;inline&#39;: uses &#39;/&#39;; &#39;fraction&#39;: numerator over the denominator&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">options</span></div>
+    
+<div class="viewcode-block" id="Div.latex"><a class="viewcode-back" href="../../../../api/proveit.number.Div.html#proveit.number.Div.latex">[docs]</a>    <span class="k">def</span> <span class="nf">latex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">getStyle</span><span class="p">(</span><span class="s1">&#39;division&#39;</span><span class="p">)</span><span class="o">==</span><span class="s1">&#39;fraction&#39;</span><span class="p">:</span>
+            <span class="c1"># only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;forceFence&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;forceFence&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">False</span>        
+            <span class="k">return</span> <span class="n">maybeFencedLatex</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\frac{&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">latex</span><span class="p">()</span><span class="o">+</span><span class="s1">&#39;}{&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="o">.</span><span class="n">latex</span><span class="p">()</span><span class="o">+</span><span class="s1">&#39;}&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Operation</span><span class="o">.</span><span class="n">latex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="c1"># normal division</span></div>
+    
+<div class="viewcode-block" id="Div.remakeConstructor"><a class="viewcode-back" href="../../../../api/proveit.number.Div.html#proveit.number.Div.remakeConstructor">[docs]</a>    <span class="k">def</span> <span class="nf">remakeConstructor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">getStyle</span><span class="p">(</span><span class="s1">&#39;division&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;fraction&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;frac&#39;</span> <span class="c1"># use a different constructor if using the fraction style</span>
+        <span class="k">return</span> <span class="n">Operation</span><span class="o">.</span><span class="n">remakeConstructor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_closureTheorem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numberSet</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">theorems</span>
+        <span class="k">if</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">Reals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">theorems</span><span class="o">.</span><span class="n">divideRealClosure</span>
+        <span class="k">elif</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">RealsPos</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">theorems</span><span class="o">.</span><span class="n">divideRealPosClosure</span>
+        <span class="k">elif</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">Complexes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">theorems</span><span class="o">.</span><span class="n">divideComplexClosure</span>
+
+    <span class="k">def</span> <span class="nf">_notEqZeroTheorem</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">complex.theorems</span>
+        <span class="k">return</span> <span class="nb">complex</span><span class="o">.</span><span class="n">theorems</span><span class="o">.</span><span class="n">divideNotEqZero</span>
+
+<div class="viewcode-block" id="Div.combineExponents"><a class="viewcode-back" href="../../../../api/proveit.number.Div.html#proveit.number.Div.combineExponents">[docs]</a>    <span class="k">def</span> <span class="nf">combineExponents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">()):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">fracIntExp</span><span class="p">,</span> <span class="n">fracNatPosExp</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Exp</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">Exp</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">,</span> <span class="n">Exp</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">exponent</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="o">.</span><span class="n">exponent</span><span class="p">:</span>
+                <span class="n">exponent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">exponent</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">fracNatPosExp</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">n</span><span class="p">:</span><span class="n">exponent</span><span class="p">})</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="o">.</span><span class="n">base</span><span class="p">})</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">fracIntExp</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">n</span><span class="p">:</span><span class="n">exponent</span><span class="p">})</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="o">.</span><span class="n">base</span><span class="p">})</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unable to combine exponents of this fraction&#39;</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Div.cancellation"><a class="viewcode-back" href="../../../../api/proveit.number.Div.html#proveit.number.Div.cancellation">[docs]</a>    <span class="k">def</span> <span class="nf">cancellation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operand</span><span class="p">,</span> <span class="n">pull</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">()):</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Mult</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">denominator</span> <span class="o">==</span> <span class="n">operand</span><span class="p">:</span>
+            <span class="c1"># x/x = 1</span>
+            <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">fracCancelComplete</span>
+            <span class="k">return</span> <span class="n">fracCancelComplete</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="n">operand</span><span class="p">})</span><span class="o">.</span><span class="n">checked</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span><span class="n">Mult</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">fracCancelNumerLeft</span>
+            <span class="n">newEq0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="o">.</span><span class="n">factor</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">pull</span> <span class="o">=</span> <span class="n">pull</span><span class="p">,</span> <span class="n">groupFactor</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">groupRemainder</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span><span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">)),</span><span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="o">.</span><span class="n">checked</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">newEq1</span> <span class="o">=</span> <span class="n">fracCancelNumerLeft</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="n">operand</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="n">newEq0</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">denominator</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]})</span>
+            <span class="k">return</span> <span class="n">newEq0</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="n">newEq1</span><span class="p">)</span>
+            
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span><span class="n">Mult</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">,</span><span class="n">Mult</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">fracCancelLeft</span>
+            <span class="n">newEq0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">factor</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">pull</span> <span class="o">=</span> <span class="n">pull</span><span class="p">,</span> <span class="n">groupFactor</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">groupRemainder</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">),</span><span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="o">.</span><span class="n">checked</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">newEq1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="o">.</span><span class="n">factor</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">pull</span> <span class="o">=</span> <span class="n">pull</span><span class="p">,</span> <span class="n">groupFactor</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">groupRemainder</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="n">newEq0</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span><span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">)),</span><span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="o">.</span><span class="n">checked</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">newEq2</span> <span class="o">=</span> <span class="n">fracCancelLeft</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="n">operand</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="n">newEq1</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">z</span><span class="p">:</span><span class="n">newEq1</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">denominator</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]})</span>
+            <span class="k">return</span> <span class="n">newEq0</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="n">newEq1</span><span class="p">)</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="n">newEq2</span><span class="p">)</span>
+<span class="c1">#            newFracIntermediate = self.numerator.factor(operand).proven().subRightSideInto(self)</span>
+<span class="c1">#            newFrac = self.denominator.factor(operand).proven().subRightSideInto(newFracIntermediate)</span>
+<span class="c1">#            numRemainingOps = newFrac.numerator.operands[1:]</span>
+<span class="c1">#            denomRemainingOps = newFrac.denominator.operands[1:]</span>
+<span class="c1">#            return fracCancel1.specialize({x:operand,Etcetera(y):numRemainingOps,Etcetera(z):denomRemainingOps})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">fracCancelDenomLeft</span>
+            <span class="n">newEq0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">factor</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span><span class="n">pull</span><span class="o">=</span><span class="n">pull</span><span class="p">,</span><span class="n">groupFactor</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">groupRemainder</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">),</span><span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="o">.</span><span class="n">checked</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">newEq1</span> <span class="o">=</span> <span class="n">fracCancelDenomLeft</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="n">operand</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="n">newEq0</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]})</span>
+            <span class="k">return</span> <span class="n">newEq0</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="n">newEq1</span><span class="p">)</span></div>
+<span class="c1">#            newFrac = self.numerator.factor(operand).proven().subRightSideInto(self)</span>
+<span class="c1">#            numRemainingOps = newFrac.numerator.operands[1:]</span>
+<span class="c1">#            return fracCancel2.specialize({x:operand,Etcetera(y):numRemainingOps})</span>
+
+<div class="viewcode-block" id="Div.distribution"><a class="viewcode-back" href="../../../../api/proveit.number.Div.html#proveit.number.Div.distribution">[docs]</a>    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">()):</span>
+        <span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Distribute the denominator through the numerate.  </span>
+<span class="sd">        Returns the equality that equates self to this new version.</span>
+<span class="sd">        Examples: </span>
+<span class="sd">            :math:`(a + b + c) / d = a / d + b / d + c / d`</span>
+<span class="sd">            :math:`(a - b) / d = a / d - b / d`</span>
+<span class="sd">            :math:`\left(\sum_x f(x)\right / y = \sum_x [f(x) / y]`</span>
+<span class="sd">        Give any assumptions necessary to prove that the operands are in Complexes so that</span>
+<span class="sd">        the associative and commutation theorems are applicable.            </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">subtract</span><span class="p">,</span> <span class="n">Sum</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">distributefracThroughSum</span><span class="p">,</span> <span class="n">distributefracThroughSubtract</span><span class="p">,</span> <span class="n">distributefracThroughSummation</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">Add</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">distributefracThroughSum</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">xEtc</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">operands</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">subtract</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">distributefracThroughSubtract</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">z</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">Sum</span><span class="p">):</span>
+            <span class="c1"># Should deduce in Complexes, but distributeThroughSummation doesn&#39;t have a domain restriction right now</span>
+            <span class="c1"># because this is a little tricky.   To do.</span>
+            <span class="c1">#deduceInComplexes(self.operands, assumptions)</span>
+            <span class="n">yEtcSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">indices</span>
+            <span class="n">Pop</span><span class="p">,</span> <span class="n">Pop_sub</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">indices</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">summand</span>
+            <span class="n">S_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">domain</span>
+            <span class="n">dummyVar</span> <span class="o">=</span> <span class="n">safeDummyVar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>            
+            <span class="n">spec1</span> <span class="o">=</span> <span class="n">distributefracThroughSummation</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">Pop</span><span class="p">:</span><span class="n">Pop_sub</span><span class="p">,</span> <span class="n">S</span><span class="p">:</span><span class="n">S_sub</span><span class="p">,</span> <span class="n">yEtc</span><span class="p">:</span><span class="n">yEtcSub</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span><span class="n">dummyVar</span><span class="p">})</span>
+            <span class="k">return</span> <span class="n">spec1</span><span class="o">.</span><span class="n">deriveConclusion</span><span class="p">()</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">dummyVar</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Unsupported operand type to distribute over: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Div.deduceInNumberSet"><a class="viewcode-back" href="../../../../api/proveit.number.Div.html#proveit.number.Div.deduceInNumberSet">[docs]</a>    <span class="k">def</span> <span class="nf">deduceInNumberSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number_set</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given a number set number_set, attempt to prove that the given</span>
+<span class="sd">        expression is in that number set using the appropriate closure</span>
+<span class="sd">        theorem.</span>
+<span class="sd">        Created: 2/27/2020 by wdc, based on the same method in the Add</span>
+<span class="sd">                 class. Just a start on this method, to be cont&#39;d.</span>
+<span class="sd">        Last Modified: 2/27/2020 by wdc. Creation.</span>
+<span class="sd">        Once established, these authorship notations can be deleted.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span>
+        <span class="kn">from</span> <span class="nn">proveit.number.division._theorems_</span> <span class="k">import</span> <span class="p">(</span><span class="n">divRealClosure</span><span class="p">,</span>
+                                                        <span class="n">divideRealPosClosure</span><span class="p">,</span>
+                                                        <span class="n">divideComplexClosure</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Reals</span><span class="p">,</span> <span class="n">RealsPos</span><span class="p">,</span> <span class="n">Complexes</span>
+
+        <span class="k">if</span> <span class="n">number_set</span> <span class="o">==</span> <span class="n">Reals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">divRealClosure</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">},</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">number_set</span> <span class="o">==</span> <span class="n">RealsPos</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">divideRealPosClosure</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">},</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">number_set</span> <span class="o">==</span> <span class="n">Complexes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">divideComplexClosure</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">denominator</span><span class="p">},</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    def factor(self,theFactor,pull=&quot;left&quot;, groupFactor=False, groupRemainder=None, assumptions=frozenset()):</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        Pull out a factor from a fraction, pulling it either to the &quot;left&quot; or &quot;right&quot;.</span>
+<span class="sd">        The factor may be a product or fraction itself.  </span>
+<span class="sd">        If groupFactor is True and theFactor is a product, it will be grouped together as a </span>
+<span class="sd">        sub-product.  groupRemainder is not relevant kept for compatibility with other factor</span>
+<span class="sd">        methods.  Returns the equality that equates self to this new version.</span>
+<span class="sd">        Give any assumptions necessary to prove that the operands are in Complexes so that</span>
+<span class="sd">        the associative and commutation theorems are applicable.</span>
+<span class="sd">        &#39;&#39;&#39;        </span>
+<span class="sd">        from ._theorems_ import fracInProdRev, prodOfFracsRev, prodOfFracsLeftNumerOneRev, prodOfFracsRightNumerOneRev</span>
+<span class="sd">        from proveit.number import Mult, num</span>
+<span class="sd">        dummyVar = safeDummyVar(self)</span>
+<span class="sd">        eqns = []</span>
+<span class="sd">        if isinstance(theFactor, frac):</span>
+<span class="sd">            # factor the operand denominator out of self&#39;s denominator</span>
+<span class="sd">            denomFactorEqn = self.denominator.factor(theFactor.denominator, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)</span>
+<span class="sd">            factoredDenom = denomFactorEqn.rhs</span>
+<span class="sd">            eqns.append(denomFactorEqn.substitution(frac(self.numerator, dummyVar), dummyVar))</span>
+<span class="sd">            if theFactor.numerator != num(1) and self.numerator != num(1):</span>
+<span class="sd">                # factor the operand numerator out of self&#39;s numerator</span>
+<span class="sd">                numerFactorEqn = self.numerator.factor(theFactor.numerator, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)</span>
+<span class="sd">                factoredNumer = numerFactorEqn.rhs</span>
+<span class="sd">                eqns.append(numerFactorEqn.substitution(frac(dummyVar, factoredDenom), dummyVar))</span>
+<span class="sd">                # factor the two fractions</span>
+<span class="sd">                eqns.append(prodOfFracsRev.specialize({x:factoredNumer.operands[0], y:factoredNumer.operands[1], </span>
+<span class="sd">                                                    z:factoredDenom.operands[0], w:factoredDenom.operands[1]}))</span>
+<span class="sd">            else:</span>
+<span class="sd">                # special case: one of the numerators is equal to one, no numerator factoring to be done</span>
+<span class="sd">                if (pull == &#39;left&#39;) == (theFactor.numerator == num(1)):</span>
+<span class="sd">                    thm = prodOfFracsLeftNumerOneRev</span>
+<span class="sd">                else:</span>
+<span class="sd">                    thm = prodOfFracsRightNumerOneRev</span>
+<span class="sd">                # factor the two fractions</span>
+<span class="sd">                eqns.append(thm.specialize({x:self.numerator, y:factoredDenom.operands[0], z:factoredDenom.operands[1]}))</span>
+<span class="sd">        else:</span>
+<span class="sd">            numerFactorEqn = self.numerator.factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=assumptions)</span>
+<span class="sd">            factoredNumer = numerFactorEqn.rhs</span>
+<span class="sd">            eqns.append(numerFactorEqn.substitution(frac(dummyVar, self.denominator), dummyVar))</span>
+<span class="sd">            # factor the numerator factor from the fraction</span>
+<span class="sd">            if pull == &#39;left&#39;:</span>
+<span class="sd">                wEtcSub = factoredNumer.operands[:-1]</span>
+<span class="sd">                xSub = factoredNumer.operands[-1]</span>
+<span class="sd">                zEtcSub = []</span>
+<span class="sd">            elif pull == &#39;right&#39;:</span>
+<span class="sd">                wEtcSub = []</span>
+<span class="sd">                xSub = factoredNumer.operands[0]</span>
+<span class="sd">                zEtcSub = factoredNumer.operands[1:]</span>
+<span class="sd">            eqns.append(fracInProdRev.specialize({wEtc:wEtcSub, x:xSub, y:self.denominator, zEtc:zEtcSub}))</span>
+<span class="sd">            num = len(theFactor.operands) if isinstance(theFactor, Mult) else 1</span>
+<span class="sd">            if groupFactor and num &gt; 1:</span>
+<span class="sd">                if pull==&#39;left&#39;:</span>
+<span class="sd">                    eqns.append(eqns[-1].rhs.group(endIdx=num, assumptions=assumptions))</span>
+<span class="sd">                elif pull==&#39;right&#39;:</span>
+<span class="sd">                    eqns.append(eqns[-1].rhs.group(startIdx=-num, assumptions=assumptions))           </span>
+<span class="sd">        return Equals(eqns[0].lhs, eqns[-1].rhs).prove(assumptions)</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="frac"><a class="viewcode-back" href="../../../../api/proveit.number.frac.html#proveit.number.frac">[docs]</a><span class="k">def</span> <span class="nf">frac</span><span class="p">(</span><span class="n">numer</span><span class="p">,</span> <span class="n">denom</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Div</span><span class="p">(</span><span class="n">numer</span><span class="p">,</span> <span class="n">denom</span><span class="p">)</span><span class="o">.</span><span class="n">withStyles</span><span class="p">(</span><span class="n">division</span><span class="o">=</span><span class="s1">&#39;fraction&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.varRange.html">varRange</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

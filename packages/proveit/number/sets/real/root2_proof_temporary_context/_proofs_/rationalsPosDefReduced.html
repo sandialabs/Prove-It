@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.sets.real.root2_proof_temporary_context.rationalsPosDefReduced theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.sets.real.root2_proof_temporary_context.rationalsPosDefReduced-theorem">Proof of <a class="ProveItLink" href="../../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../../_context_.html">number</a>.<a class="ProveItLink" href="../../../_context_.html">sets</a>.<a class="ProveItLink" href="../../_context_.html">real</a>.<a class="ProveItLink" href="../_context_.html">root2_proof_temporary_context</a>.<a class="ProveItLink" href="../_theorems_.html#rationalsPosDefReduced">rationalsPosDefReduced</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.sets.real.root2_proof_temporary_context.rationalsPosDefReduced-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> rationalsPosDefReduced presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of rationalsPosDefReduced
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rationalsPosDefReduced">rationalsPosDefReduced:</strong> <a class="ProveItLink" href="../__pv_it/330697af788ec96240b19a6bb2c879d229da7dbd0/expr.html"><img src="data:image/png;base64,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
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/330697af788ec96240b19a6bb2c879d229da7dbd0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

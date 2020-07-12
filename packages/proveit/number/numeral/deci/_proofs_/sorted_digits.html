@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.numeral.decimal.sorted_digits theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.numeral.decimal.sorted_digits-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">number</a>.<a class="ProveItLink" href="../../_context_.html">numeral</a>.<a class="ProveItLink" href="../_context_.html">decimal</a>.<a class="ProveItLink" href="../_theorems_.html#sorted_digits">sorted_digits</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.numeral.decimal.sorted_digits-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> sorted_digits presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of sorted_digits
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="sorted_digits">sorted_digits:</strong> <a class="ProveItLink" href="../__pv_it/4209e8268f8ff9673834d89141f0aad44775bdb70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWEAAAAPBAMAAADHWGN6AAAAMFBMVEX///9mZma6urpUVFREREQQ
+EBDc3NwiIiLu7u6qqqoyMjLMzMyYmJiIiIh2dnYAAADXmt2vAAAAAXRSTlMAQObYZgAAAwJJREFU
+SMfV1k1IFGEYB/C/7oez36OmfUC6Xbu4e/CQRUkUFV1EQ6xL46FOkUYno2wkRBCyhegSgpYn6dB2
+6qYDEXXoQw8ZVOKKgoGxG5G1btQ0szszzvsfwnN72MHfPO87z77zPu8jEP+0ju0/QztOM13On/LG
+PWEIv4zsZosv8iOfpvP5nEjS4nKSoqSmFcW4TGNE4SnvqRybQoHGB2VMaJ6MrzIEdD3Hkz3EHqK3
+uq6nRKoCDlDUsBbsAaIdiE86dj9rznj4iCvjMlWpCHQ4FHpkfMU2kegXycAuEIVXFpj8Mo4RNQI+
+onFglKgVSBvDUwgV7RsvGq2fvJVxhQL98P2wKXrFfCnVnUhMigRcmgKRz7VGFrUoHjJewzrRKjBC
+VAIKQCKF6k3rxvvP4IwtChfh+2VRbNC+6+wKh3JOxja5MrbpuJeMBZgjajmJLyJJ34ElBXdkVP+u
+bK+1OVDGLkKN9SbGbjj7cRBEUWWKyfdqPktUmplP8lzwewbqbzJE52BWU18OkXLG0s6tOrIydhNa
+KgU0dN0pvbVdILqNKSa/GvwmklTSMEBRsNfTRYWSSmRsicca+mRE/ph/tmXAGbvJOgV80y56lyTK
+WRkLUTghkqQDDSpFSV95YKjuZieRfy5UyDi7QvJmLFCVXL7ccucS6BEplLUyFqLQrIj003hAkqJi
+kzzwGWIbKkWNfyxkzcoLlSsv6N0Vbpq3rr32Owoq8G+KNAZ7VziENlgn+RZdMx6giYSadh5orMZs
+hqIA49z1tyNa3L7yQjIuinWQKNoZO3S3tnZjr7damlWRWq01dldeIkWVZ24Tn8b1aa6Iu4P8+3TD
+DLAgnjWBduf4cB1SXXxuyeU1FWhWRQMPnJV5YLexbxWRnqsRsykMYDjLHWSJO0hwMF/fL57nUc3V
+pe0OgjPcG3oR7eamkpPO8sCJHA/cr+I10Qd11Hzi2OJBasmoP/9AEyls9H1uyftqj3L/xap+iCjY
+lFY5ankly3Qhw3NF0q7/hCoUX67Df/j5C4EbIllYFrNBAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/4209e8268f8ff9673834d89141f0aad44775bdb70/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

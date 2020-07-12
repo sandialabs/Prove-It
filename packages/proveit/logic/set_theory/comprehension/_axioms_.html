@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for context proveit.logic.set_theory.comprehension</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-context-proveit.logic.set_theory.comprehension">Axioms for context <a class="ProveItLink" href="_context_.html">proveit.logic.set_theory.comprehension</a><a class="anchor-link" href="#Axioms-for-context-proveit.logic.set_theory.comprehension">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when building axiom expressions:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">SetOfAll</span><span class="p">,</span> <span class="n">Exists</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fy</span><span class="p">,</span> <span class="n">Qy</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.set_theory._common_</span> <span class="k">import</span> <span class="n">general_comprehension_fy</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Naturals</span><span class="p">,</span> <span class="n">NaturalsPos</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for context &#39;proveit.logic.set_theory.comprehension&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Define general set comprehension any mapping $y \mapsto f(y)$ applied to the set of elements $y$ of $S$ such that $Q(y)$:</strong>
+TODO: CHANGE THIS TO A DEFINITION USING UnionOfAll:
+{f(x) | Q(x)}<em>{x in S} = Union</em>{x in S | Q(x)} {f(x)}</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">comprehension_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">S</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> 
+                           <span class="n">Equals</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">general_comprehension_fy</span><span class="p">),</span>
+                                  <span class="n">Exists</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fy</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Qy</span><span class="p">]))</span><span class="o">.</span><span class="n">withWrapBeforeOperator</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="comprehension_def">comprehension_def:</strong> <a class="ProveItLink" href="__pv_it/18306539e7987176173f77dada3336436f13b88e0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>NOTE: Comprehension defines a subset of some set $S$, and a "universal" set must not be allowed.  Otherwise you could define Russel's set,  $R = \{x~|~x \notin x\}_x$, which results in paradox upon asking whether or not $R \in R$ (if it is, then it cannot be; if it is not, then it must be).  But if $x \in S$ can only be true if $S$ is a "proper" set (the universal set is not a proper set), then this can be avoided.  Comprehension can then only be used to define a subset of a "proper" set and Russel's set cannot be defined without additional axioms making improper definitions.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

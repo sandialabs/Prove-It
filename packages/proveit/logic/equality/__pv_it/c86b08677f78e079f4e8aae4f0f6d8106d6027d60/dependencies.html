@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axiom Dependencies</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axiom-Dependencies">Axiom Dependencies<a class="anchor-link" href="#Axiom-Dependencies">&#182;</a></h1><h2 id="proveit.logic.equality.equalityInBool"><a class="ProveItLink" href="../../_context_.html">proveit.logic.equality</a>.<a class="ProveItLink" href="../../_axioms_.html#equalityInBool">equalityInBool</a><a class="anchor-link" href="#proveit.logic.equality.equalityInBool">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when querying dependencies:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Makes files smaller.</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.equality._axioms_</span> <span class="k">import</span> <span class="n">equalityInBool</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">dependencies</span> equalityInBool
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Theorems that depend directly on equalityInBool</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dl>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../core_expr_types/tuples/_proofs_/tuple_eq_via_elem_eq.html">proveit.core_expr_types.tuples.tuple_eq_via_elem_eq</a></dt><dd><a class="ProveItLink" href="../../../../core_expr_types/tuples/__pv_it/9f983d98baf96b4625eda17ab2804d5facc66fd40/expr.html"><img src="../../../../core_expr_types/tuples/__pv_it/9f983d98baf96b4625eda17ab2804d5facc66fd40/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../boolean/disjunction/_proofs_/orIfLeft.html">proveit.logic.boolean.disjunction.orIfLeft</a></dt><dd><a class="ProveItLink" href="../../../boolean/disjunction/__pv_it/663790446cc3ba0ebc44a49cb341fb14a2215eb80/expr.html"><img src="../../../boolean/disjunction/__pv_it/663790446cc3ba0ebc44a49cb341fb14a2215eb80/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../boolean/disjunction/_proofs_/orIfRight.html">proveit.logic.boolean.disjunction.orIfRight</a></dt><dd><a class="ProveItLink" href="../../../boolean/disjunction/__pv_it/d031e9d91e9bb5311a8d1abd73beb3386c0314c90/expr.html"><img src="../../../boolean/disjunction/__pv_it/d031e9d91e9bb5311a8d1abd73beb3386c0314c90/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../boolean/disjunction/_proofs_/singularConstructiveDilemma.html">proveit.logic.boolean.disjunction.singularConstructiveDilemma</a></dt><dd><a class="ProveItLink" href="../../../boolean/disjunction/__pv_it/d79a5f4c466f6188b2dd4bf4f19be94653703e510/expr.html"><img src="../../../boolean/disjunction/__pv_it/d79a5f4c466f6188b2dd4bf4f19be94653703e510/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../boolean/implication/_proofs_/modusTollensDenial.html">proveit.logic.boolean.implication.modusTollensDenial</a></dt><dd><a class="ProveItLink" href="../../../boolean/implication/__pv_it/40686d4697e31ba36fa6370124fc7deb74e629a80/expr.html"><img src="../../../boolean/implication/__pv_it/40686d4697e31ba36fa6370124fc7deb74e629a80/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../boolean/implication/_proofs_/notTrueViaContradiction.html">proveit.logic.boolean.implication.notTrueViaContradiction</a></dt><dd><a class="ProveItLink" href="../../../boolean/implication/__pv_it/dab0c33c6c2f0217a58139a6d1ca1a79a84d05e60/expr.html"><img src="../../../boolean/implication/__pv_it/dab0c33c6c2f0217a58139a6d1ca1a79a84d05e60/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../boolean/_proofs_/inBoolInBool.html">proveit.logic.boolean.inBoolInBool</a></dt><dd><a class="ProveItLink" href="../../../boolean/__pv_it/418eeb380605aea477764e689ed252796da66d500/expr.html"><img src="../../../boolean/__pv_it/418eeb380605aea477764e689ed252796da66d500/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../_proofs_/notEqualsInBool.html">proveit.logic.equality.notEqualsInBool</a></dt><dd><a class="ProveItLink" href="../3b7cb2f5e1007c79a2cbe80ff595072180dbf2830/expr.html"><img src="../3b7cb2f5e1007c79a2cbe80ff595072180dbf2830/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../set_theory/enumeration/_proofs_/inSingletonIsBool.html">proveit.logic.set_theory.enumeration.inSingletonIsBool</a></dt><dd><a class="ProveItLink" href="../../../set_theory/enumeration/__pv_it/a8b0b70e3d79cf194cf2ef96063b8f0c6f7102150/expr.html"><img src="../../../set_theory/enumeration/__pv_it/a8b0b70e3d79cf194cf2ef96063b8f0c6f7102150/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../set_theory/enumeration/_proofs_/singletonDef.html">proveit.logic.set_theory.enumeration.singletonDef</a></dt><dd><a class="ProveItLink" href="../../../set_theory/enumeration/__pv_it/9086ec1ff4a70b2a6195052a94f2a13ead13c41e0/expr.html"><img src="../../../set_theory/enumeration/__pv_it/9086ec1ff4a70b2a6195052a94f2a13ead13c41e0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+</dl>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-10 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

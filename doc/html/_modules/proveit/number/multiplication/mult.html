@@ -1,0 +1,880 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.number.multiplication.mult &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.number.multiplication.mult</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">Literal</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">,</span>
+                     <span class="n">ProofFailure</span><span class="p">,</span> <span class="n">InnerExpr</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+<span class="kn">from</span> <span class="nn">proveit.number.sets</span> <span class="k">import</span> <span class="p">(</span><span class="n">Integers</span><span class="p">,</span> <span class="n">Naturals</span><span class="p">,</span> <span class="n">NaturalsPos</span><span class="p">,</span> <span class="n">Reals</span><span class="p">,</span>
+                                 <span class="n">RealsNonNeg</span><span class="p">,</span> <span class="n">RealsPos</span><span class="p">,</span> <span class="n">Complexes</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">proveit.number.numeral.deci</span>
+<span class="kn">from</span> <span class="nn">proveit.number.numeral.deci</span> <span class="k">import</span> <span class="n">DIGITS</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span>
+<span class="kn">from</span> <span class="nn">proveit.abstract_algebra.generic_methods</span> <span class="k">import</span> <span class="n">apply_commutation_thm</span><span class="p">,</span> <span class="n">apply_association_thm</span><span class="p">,</span> <span class="n">apply_disassociation_thm</span><span class="p">,</span> <span class="n">groupCommutation</span><span class="p">,</span> <span class="n">pairwiseEvaluation</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">TransRelUpdater</span>
+
+
+<div class="viewcode-block" id="Mult"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult">[docs]</a><span class="k">class</span> <span class="nc">Mult</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="c1"># operator of the Mult operation.</span>
+    <span class="n">_operator_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="n">stringFormat</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">latexFormat</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\cdot&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="vm">__file__</span><span class="p">)</span>
+    
+    <span class="c1"># Multiplying two numerals may import a theorem for the evaluation.</span>
+    <span class="c1"># Track which ones we have encountered already.</span>
+    <span class="n">multipliedNumerals</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">operands</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Multiply together any number of operands from first operand.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">Operation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Mult</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="n">operands</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factors</span> <span class="o">=</span> <span class="n">operands</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">factor</span> <span class="ow">in</span> <span class="n">DIGITS</span> <span class="k">for</span> <span class="n">factor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Mult</span><span class="o">.</span><span class="n">multipliedNumerals</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># for single digit addition, import the theorem that provides the evaluation</span>
+                    <span class="n">Mult</span><span class="o">.</span><span class="n">multipliedNumerals</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                    <span class="n">proveit</span><span class="o">.</span><span class="n">number</span><span class="o">.</span><span class="n">numeral</span><span class="o">.</span><span class="n">deci</span><span class="o">.</span><span class="n">_theorems_</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="s1">&#39;mult_</span><span class="si">%d</span><span class="s1">_</span><span class="si">%d</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">asInt</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">asInt</span><span class="p">()))</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="c1"># may fail before the relevent _commons_ and _theorems_ have been generated</span>
+                    <span class="k">pass</span> <span class="c1"># and that&#39;s okay</span>
+    
+<div class="viewcode-block" id="Mult.deduceInNumberSet"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.deduceInNumberSet">[docs]</a>    <span class="k">def</span> <span class="nf">deduceInNumberSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numberSet</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="c1"># edited by JML 7/20/19</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="p">(</span><span class="n">multIntClosure</span><span class="p">,</span> <span class="n">multIntClosureBin</span><span class="p">,</span>
+            <span class="n">multNatClosure</span><span class="p">,</span> <span class="n">multNatClosureBin</span><span class="p">,</span> 
+            <span class="n">multNatPosClosure</span><span class="p">,</span> <span class="n">multNatPosClosureBin</span><span class="p">,</span>
+            <span class="n">multRealClosure</span><span class="p">,</span> <span class="n">multRealClosureBin</span><span class="p">,</span> <span class="n">multRealPosClosure</span><span class="p">,</span> 
+            <span class="n">multRealPosClosureBin</span><span class="p">,</span>
+            <span class="n">multRealNonNegClosure</span><span class="p">,</span> <span class="n">multRealNonNegClosureBin</span><span class="p">,</span>
+            <span class="n">multComplexClosure</span><span class="p">,</span> <span class="n">multComplexClosureBin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;number_set&#39;</span><span class="p">):</span>
+            <span class="n">numberSet</span> <span class="o">=</span> <span class="n">numberSet</span><span class="o">.</span><span class="n">number_set</span>
+        <span class="nb">bin</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">Integers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multIntClosureBin</span>
+                <span class="nb">bin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multIntClosure</span>
+        <span class="k">elif</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">Naturals</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multNatClosureBin</span>
+                <span class="nb">bin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multNatClosure</span>
+        <span class="k">elif</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">NaturalsPos</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multNatPosClosureBin</span>
+                <span class="nb">bin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multNatPosClosure</span>
+        <span class="k">elif</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">Reals</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multRealClosureBin</span>
+                <span class="nb">bin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multRealClosure</span>
+        <span class="k">elif</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">RealsPos</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multRealPosClosureBin</span>
+                <span class="nb">bin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multRealPosClosure</span>
+        <span class="k">elif</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">Complexes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multComplexClosureBin</span>
+                <span class="nb">bin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multComplexClosure</span>
+        <span class="k">elif</span> <span class="n">numberSet</span> <span class="o">==</span> <span class="n">RealsNonNeg</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multRealNonNegClosureBin</span>
+                <span class="nb">bin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">multRealNonNegClosure</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;&#39;Mult.deduceInNumberSet()&#39; not implemented for the &quot;</span>
+                   <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> set&quot;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">numberSet</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numberSet</span><span class="p">),</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="c1"># print(&quot;thm&quot;, thm)</span>
+        <span class="c1"># print(&quot;self in deduce in number set&quot;, self)</span>
+        <span class="c1"># print(&quot;self.operands&quot;, self.operands)</span>
+        <span class="k">if</span> <span class="nb">bin</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">thm</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span>
+                                  <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">thm</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">n</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">),</span> 
+                               <span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">},</span>
+                              <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Mult.notEqual"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.notEqual">[docs]</a>    <span class="k">def</span> <span class="nf">notEqual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rhs</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">multNotEqZero</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">zero</span>
+        <span class="k">if</span> <span class="n">rhs</span> <span class="o">==</span> <span class="n">zero</span><span class="p">:</span>
+            <span class="n">_n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+            <span class="k">return</span> <span class="n">multNotEqZero</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">n</span><span class="p">:</span><span class="n">_n</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span><span class="n">_a</span><span class="p">},</span> 
+                                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">assumptions</span><span class="p">,</span> <span class="p">(</span>
+                <span class="s2">&quot;&#39;notEqual&#39; only implemented for a right side of zero&quot;</span><span class="p">))</span></div>
+    
+<div class="viewcode-block" id="Mult.doReducedSimplification"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.doReducedSimplification">[docs]</a>    <span class="k">def</span> <span class="nf">doReducedSimplification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Derive and return this multiplication expression equated with a simpler form.</span>
+<span class="sd">        Deals with disassociating any nested multiplications,simplifying negations, and</span>
+<span class="sd">        factors of one, in that order.</span>
+<span class="sd">        doReducedEvaluation deals with factors of 0.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span> <span class="c1"># for convenience updating our equation</span>
+        
+        <span class="c1"># Ungroup the expression (disassociate nested multiplications).</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">:</span>
+            <span class="c1"># loop through all operands</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">Mult</span><span class="p">):</span>
+                <span class="c1"># if it is grouped, ungroup it</span>
+                <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">disassociation</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        
+        <span class="c1"># Simplify negations -- factor them out.</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">negSimplifications</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Mult</span><span class="p">):</span>
+            <span class="c1"># The expression may have changed to a negation after doing</span>
+            <span class="c1"># negSimplification.  Start the simplification of this new</span>
+            <span class="c1"># expression fresh at this point.</span>
+            <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">simplification</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>
+
+        <span class="c1"># Eliminate any factors of one.</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">oneEliminations</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span></div>
+    
+<div class="viewcode-block" id="Mult.negSimplifications"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.negSimplifications">[docs]</a>    <span class="k">def</span> <span class="nf">negSimplifications</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Equivalence method that derives a simplification in which</span>
+<span class="sd">        negated factors are factored out.  For example:</span>
+<span class="sd">            (-w)*(-x)*y*(-z) = -(w*x*y*z)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Neg</span>
+        
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        
+        <span class="c1"># A convenience to allow successive update to the equation via transitivities.</span>
+        <span class="c1"># (starting with self=self).</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="c1"># Work in reverse order so indices don&#39;t need to be updated.</span>
+        <span class="k">for</span> <span class="n">rev_idx</span><span class="p">,</span> <span class="n">operand</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">Neg</span><span class="p">):</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">-</span> <span class="n">rev_idx</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Mult</span><span class="p">):</span>
+                    <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">negSimplification</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Neg</span><span class="p">):</span>
+                    <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">innerNegMultSimplification</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>                </div>
+    
+<div class="viewcode-block" id="Mult.negSimplification"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.negSimplification">[docs]</a>    <span class="k">def</span> <span class="nf">negSimplification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Equivalence method that derives a simplification in which</span>
+<span class="sd">        a specific negated factor, at the given index, is factored out.</span>
+<span class="sd">        For example:</span>
+<span class="sd">            w*(-x)*y*z = -(w*x*y*z)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Neg</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">multNegLeft</span><span class="p">,</span> <span class="n">multNegRight</span><span class="p">,</span> <span class="n">multNegAny</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">Neg</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Operand at the index </span><span class="si">%d</span><span class="s2"> expected to be a negation for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">idx</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">operand</span>
+                <span class="n">_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">multNegLeft</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="n">_x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="n">_y</span><span class="p">},</span> 
+                                              <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">operand</span>
+                <span class="k">return</span> <span class="n">multNegRight</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="n">_x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="n">_y</span><span class="p">},</span> 
+                                               <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">_a</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[:</span><span class="n">idx</span><span class="p">])</span>
+        <span class="n">_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">operand</span>
+        <span class="n">_c</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="n">_i</span> <span class="o">=</span> <span class="n">_a</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">_j</span> <span class="o">=</span> <span class="n">_c</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">multNegAny</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">i</span><span class="p">:</span><span class="n">_i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">_j</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span><span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">_b</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span><span class="n">_c</span><span class="p">},</span> 
+                                     <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Mult.oneEliminations"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.oneEliminations">[docs]</a>    <span class="k">def</span> <span class="nf">oneEliminations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Equivalence method that derives a simplification in which</span>
+<span class="sd">        factors of one are eliminated.  For example:</span>
+<span class="sd">            x*1*y*1*z*1 = x*y*z</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">one</span>
+        
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        
+        <span class="c1"># A convenience to allow successive update to the equation via transitivities.</span>
+        <span class="c1"># (starting with self=self).</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="c1"># Work in reverse order so indices don&#39;t need to be updated.</span>
+        <span class="k">for</span> <span class="n">rev_idx</span><span class="p">,</span> <span class="n">operand</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">operand</span><span class="o">==</span><span class="n">one</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">-</span> <span class="n">rev_idx</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">oneElimination</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Mult</span><span class="p">):</span>
+                    <span class="k">break</span> <span class="c1"># can&#39;t do an elimination if reduced to a single term.</span>
+        
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>                </div>
+    
+<div class="viewcode-block" id="Mult.oneElimination"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.oneElimination">[docs]</a>    <span class="k">def</span> <span class="nf">oneElimination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Equivalence method that derives a simplification in which</span>
+<span class="sd">        a single factor of one, at the given index, is eliminated.  </span>
+<span class="sd">        For example:</span>
+<span class="sd">            x*y*1*z = x*y*z</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">one</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">elimOneLeft</span><span class="p">,</span> <span class="n">elimOneRight</span><span class="p">,</span> <span class="n">elimOneAny</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="n">one</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Operand at the index </span><span class="si">%d</span><span class="s2"> expected to be zero for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">idx</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">elimOneLeft</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> 
+                                               <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">elimOneRight</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]},</span> 
+                                                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">_a</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[:</span><span class="n">idx</span><span class="p">])</span>
+        <span class="n">_b</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="n">_i</span> <span class="o">=</span> <span class="n">_a</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">_j</span> <span class="o">=</span> <span class="n">_b</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">elimOneAny</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">i</span><span class="p">:</span><span class="n">_i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">_j</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span><span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">_b</span><span class="p">},</span> 
+                                     <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Mult.doReducedEvaluation"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.doReducedEvaluation">[docs]</a>    <span class="k">def</span> <span class="nf">doReducedEvaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Derive and return this multiplication expression equated with an irreducible value.</span>
+<span class="sd">        Handle the trivial case of a zero factor or do pairwise evaluation</span>
+<span class="sd">        after simplifying negations and eliminating one factors.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">multZeroLeft</span><span class="p">,</span> <span class="n">multZeroRight</span><span class="p">,</span> <span class="n">multZeroAny</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">isIrreducibleValue</span><span class="p">,</span> <span class="n">EvaluationError</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">zero</span>
+        
+        <span class="c1"># First check for any zero factors -- quickest way to do an evaluation.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">zeroIdx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">zero</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">zeroIdx</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">multZeroLeft</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">multZeroRight</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[:</span><span class="n">zeroIdx</span><span class="p">]</span>
+            <span class="n">_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">zeroIdx</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">_i</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="n">_a</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="n">_j</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="n">_b</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">multZeroAny</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">i</span><span class="p">:</span><span class="n">_i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">_j</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span><span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">_b</span><span class="p">},</span> 
+                                          <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">ProofFailure</span><span class="p">):</span>
+            <span class="k">pass</span> <span class="c1"># No such &quot;luck&quot; regarding a simple multiplication by zero.</span>
+        
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        
+        <span class="c1"># A convenience to allow successive update to the equation via transitivities.</span>
+        <span class="c1"># (starting with self=self).</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="c1"># Simplify negations -- factor them out.</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">negSimplifications</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Mult</span><span class="p">):</span>
+            <span class="c1"># The expression may have changed to a negation after doing</span>
+            <span class="c1"># negSimplification.  Start the simplification of this new</span>
+            <span class="c1"># expression fresh at this point.</span>
+            <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>
+
+        <span class="c1"># Eliminate any factors of one.</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">oneEliminations</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">isIrreducibleValue</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span> <span class="c1"># done</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pairwiseEvaluation</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>
+
+        <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Mult.conversionToAddition"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.conversionToAddition">[docs]</a>    <span class="k">def</span> <span class="nf">conversionToAddition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From multiplication by an integer as the first factor,</span>
+<span class="sd">        derive and return the equivalence of this multiplication</span>
+<span class="sd">        to a repeated addition; for example, 3*c = c + c + c.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">multDef</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;asInt&#39;</span><span class="p">):</span>
+            <span class="n">reps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">asInt</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot &#39;expandAsAddition&#39; unless the first operand is a literal integer: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span> <span class="c1"># for convenience updating our equation</span>
+        <span class="c1"># Group together the remaining factors if necessary:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">association</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">))</span>
+        <span class="n">_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>      
+        <span class="n">_n</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="n">reps</span><span class="p">)</span>
+        <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">multDef</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">n</span><span class="p">:</span><span class="n">_n</span><span class="p">,</span> <span class="n">a</span><span class="p">:[</span><span class="n">_x</span><span class="p">]</span><span class="o">*</span><span class="n">reps</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="n">_x</span><span class="p">},</span> 
+                                      <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span></div>
+    
+<div class="viewcode-block" id="Mult.index"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.index">[docs]</a>    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theFactor</span><span class="p">,</span> <span class="n">alsoReturnNum</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the starting index of theFactor, which may be a single operand,</span>
+<span class="sd">        a list of consecutive operands, or a Mult expression that represents</span>
+<span class="sd">        the product of the list of consecutive operands.  If alsoReturnNum is</span>
+<span class="sd">        True, return a tuple of the index and number of operands for theFactor.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theFactor</span><span class="p">,</span> <span class="n">Mult</span><span class="p">):</span>
+            <span class="n">theFactor</span> <span class="o">=</span> <span class="n">theFactor</span><span class="o">.</span><span class="n">operands</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">theFactor</span><span class="p">,</span> <span class="s1">&#39;__getitem__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">theFactor</span><span class="p">,</span> <span class="s1">&#39;__len__&#39;</span><span class="p">):</span>
+            <span class="c1"># multiple operands in theFactor</span>
+            <span class="n">firstFactor</span> <span class="o">=</span> <span class="n">theFactor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theFactor</span><span class="p">)</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">firstFactor</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="n">num</span><span class="p">])</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">theFactor</span><span class="p">):</span>
+                        <span class="k">break</span> <span class="c1"># found it all!</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Factor is absent!&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">theFactor</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Factor is absent!&quot;</span><span class="p">)</span>        
+        <span class="k">return</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span> <span class="k">if</span> <span class="n">alsoReturnNum</span> <span class="k">else</span> <span class="n">idx</span></div>
+    
+<div class="viewcode-block" id="Mult.pull"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.pull">[docs]</a>    <span class="k">def</span> <span class="nf">pull</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">endIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Pull a subset of consecutive operands, self.operands[startIdx:endIdx],</span>
+<span class="sd">        to one side or another. Returns the equality that equates self to </span>
+<span class="sd">        this new version.  Give any assumptions necessary to prove that the </span>
+<span class="sd">        operands are in Complexes so that the commutation theorem is applicable.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;left&quot;</span><span class="p">:</span> <span class="c1"># pull the factor(s) to the left</span>
+            <span class="k">if</span> <span class="n">startIdx</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">startIdx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span> <span class="c1"># no move necessary</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupCommutation</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">startIdx</span><span class="p">,</span> <span class="n">startIdx</span><span class="p">,</span> <span class="n">endIdx</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;right&quot;</span><span class="p">:</span> <span class="c1"># pull the factor(s) to the right</span>
+            <span class="k">if</span> <span class="n">endIdx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="ow">or</span> <span class="n">endIdx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span> <span class="c1"># no move necessary</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupCommutation</span><span class="p">(</span><span class="n">startIdx</span><span class="p">,</span> <span class="n">endIdx</span><span class="p">,</span> <span class="n">endIdx</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid pull direction!  (Acceptable values are </span><span class="se">\&quot;</span><span class="s2">left</span><span class="se">\&quot;</span><span class="s2"> and </span><span class="se">\&quot;</span><span class="s2">right</span><span class="se">\&quot;</span><span class="s2">.)&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Mult.distribution"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.distribution">[docs]</a>    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Distribute through the operand at the given index.  </span>
+<span class="sd">        Returns the equality that equates self to this new version.</span>
+<span class="sd">        Examples: </span>
+<span class="sd">            :math:`a (b + c + a) d = a b d + a c d + a a d`</span>
+<span class="sd">            :math:`a (b - c) d = a b d - a c d`</span>
+<span class="sd">            :math:`a \left(\sum_x f(x)\right c = \sum_x a f(x) c`</span>
+<span class="sd">        Give any assumptions necessary to prove that the operands are in Complexes so that</span>
+<span class="sd">        the associative and commutation theorems are applicable.            </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">distributeThroughSum</span><span class="p">,</span> <span class="n">distributeThroughSubtract</span><span class="c1">#, distributeThroughSummation</span>
+        <span class="kn">from</span> <span class="nn">proveit.number.division._theorems_</span> <span class="k">import</span> <span class="n">prodOfFracs</span> <span class="c1">#, fracInProd</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Div</span><span class="p">,</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">Sum</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">factor</span><span class="p">,</span> <span class="n">Div</span><span class="p">)</span> <span class="k">for</span> <span class="n">factor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">prodOfFracs</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">denominator</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">denominator</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">operand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">_a</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[:</span><span class="n">idx</span><span class="p">])</span>
+        <span class="n">_c</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="n">_i</span> <span class="o">=</span> <span class="n">_a</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">_k</span> <span class="o">=</span> <span class="n">_c</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">Add</span><span class="p">):</span>
+            <span class="n">_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">operands</span>
+            <span class="n">_j</span> <span class="o">=</span> <span class="n">_b</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">distributeThroughSum</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">i</span><span class="p">:</span><span class="n">_i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">_j</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span><span class="n">_k</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span><span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">_b</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span><span class="n">_c</span><span class="p">},</span> 
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">Add</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">operand</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span> 
+                  <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Neg</span><span class="p">)):</span>
+            <span class="n">_j</span> <span class="o">=</span> <span class="n">_k</span>
+            <span class="n">_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">operand</span>
+            <span class="k">return</span> <span class="n">distributeThroughSubtract</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">i</span><span class="p">:</span><span class="n">_i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">_j</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span><span class="n">_a</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="n">_x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="n">_y</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span><span class="n">_c</span><span class="p">},</span>
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">Div</span><span class="p">):</span>       
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Mult.distribution must be updated &quot;</span>
+                                      <span class="s2">&quot;for Div case.&quot;</span><span class="p">)</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            eqn = fracInProd.specialize({wMulti:self.operands[:idx], x:self.operands[idx].operands[0], y:self.operands[idx].operands[1], zMulti:self.operands[idx+1:]}, assumptions=assumptions)            </span>
+<span class="sd">            try:</span>
+<span class="sd">                # see if the numerator can simplify (e.g., with a one factor)</span>
+<span class="sd">                numerSimplification = eqn.rhs.numerator.simplification(assumptions=assumptions)</span>
+<span class="sd">                dummyVar = eqn.safeDummyVar()</span>
+<span class="sd">                return numerSimplification.subRightSideInto(Equals(eqn.lhs, frac(dummyVar, eqn.rhs.denominator)), dummyVar)</span>
+<span class="sd">            except:</span>
+<span class="sd">                return eqn</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">Sum</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Mult.distribution must be updated &quot;</span>
+                                      <span class="s2">&quot;for Sum case.&quot;</span><span class="p">)</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            yMultiSub = operand.indices</span>
+<span class="sd">            Pop, Pop_sub = Operation(P, operand.indices), operand.summand</span>
+<span class="sd">            S_sub = operand.domain</span>
+<span class="sd">            xDummy, zDummy = self.safeDummyVars(2)</span>
+<span class="sd">            spec1 = distributeThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yMulti:yMultiSub, </span>
+<span class="sd">                                                           xMulti:Etcetera(MultiVariable(xDummy)), zMulti:Etcetera(MultiVariable(zDummy))}, assumptions=assumptions)</span>
+<span class="sd">            return spec1.deriveConclusion().specialize({Etcetera(MultiVariable(xDummy)):self.operands[:idx], \</span>
+<span class="sd">                                                        Etcetera(MultiVariable(zDummy)):self.operands[idx+1:]}, assumptions=assumptions)</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Unsupported operand type to distribute over: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">operand</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span></div>
+        
+<div class="viewcode-block" id="Mult.factorization"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.factorization">[docs]</a>    <span class="k">def</span> <span class="nf">factorization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">theFactor</span><span class="p">,</span><span class="n">pull</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">groupFactor</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">groupRemainder</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Factor out &quot;theFactor&quot; from this product, pulling it either to the &quot;left&quot; or &quot;right&quot;.</span>
+<span class="sd">        If &quot;theFactor&quot; is a product, this may factor out a subset of the operands as</span>
+<span class="sd">        long as they are next to each other (use commute to make this happen).  If</span>
+<span class="sd">        there are multiple occurrences, the first occurrence is used.  If groupFactor is</span>
+<span class="sd">        True and theFactor is a product, these operands are grouped together as a sub-product.</span>
+<span class="sd">        If groupRemainder is True and there are multiple remaining operands (those not in</span>
+<span class="sd">        &quot;theFactor&quot;), then these remaining operands are grouped together as a sub-product.</span>
+<span class="sd">        Returns the equality that equates self to this new version.</span>
+<span class="sd">        Give any assumptions necessary to prove that the operands are in Complexes so that</span>
+<span class="sd">        the associative and commutation theorems are applicable.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>         
+        <span class="n">idx</span><span class="p">,</span> <span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">theFactor</span><span class="p">,</span> <span class="n">alsoReturnNum</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupCommutation</span><span class="p">(</span>
+                <span class="n">idx</span><span class="p">,</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">pull</span><span class="o">==</span><span class="s1">&#39;left&#39;</span> <span class="k">else</span> <span class="o">-</span><span class="n">num</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">num</span><span class="p">,</span> 
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">groupFactor</span> <span class="ow">and</span> <span class="n">num</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pull</span> <span class="o">==</span> <span class="s1">&#39;left&#39;</span><span class="p">:</span>  <span class="c1"># use 0:num type of convention like standard pythong</span>
+                <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">association</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> 
+                                                  <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">pull</span> <span class="o">==</span> <span class="s1">&#39;right&#39;</span><span class="p">:</span>
+                <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">association</span><span class="p">(</span><span class="o">-</span><span class="n">num</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> 
+                                                  <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">groupRemainder</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">-</span><span class="n">num</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># if the factor has been group, effectively there is just 1 factor operand now</span>
+            <span class="n">num_factor_operands</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">groupFactor</span> <span class="k">else</span> <span class="n">num</span>
+            <span class="k">if</span> <span class="n">pull</span> <span class="o">==</span> <span class="s1">&#39;left&#39;</span><span class="p">:</span>           
+                <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">association</span><span class="p">(</span><span class="n">num_factor_operands</span><span class="p">,</span> 
+                                                  <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">-</span><span class="n">num_factor_operands</span><span class="p">,</span>
+                                                  <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">pull</span> <span class="o">==</span> <span class="s1">&#39;right&#39;</span><span class="p">:</span>
+                <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">association</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_factor_operands</span><span class="p">,</span>
+                                                  <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span></div>
+        
+<div class="viewcode-block" id="Mult.exponentCombination"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.exponentCombination">[docs]</a>    <span class="k">def</span> <span class="nf">exponentCombination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">endIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$, </span>
+<span class="sd">        $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b}, or</span>
+<span class="sd">        $a^c b^c$ to $(a b)^c$.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">n</span><span class="p">,</span> <span class="n">xx</span>
+        <span class="kn">from</span> <span class="nn">proveit.number.exponentiation._theorems_</span> <span class="k">import</span> <span class="p">(</span>
+                <span class="n">expOfPositivesProd</span><span class="p">,</span> <span class="n">intExpOfProd</span><span class="p">,</span> <span class="n">natsPosExpOfProd</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">proveit.number.exponentiation._theorems_</span> <span class="k">import</span> <span class="p">(</span>
+                <span class="n">sumInExp</span><span class="p">,</span> <span class="n">diffInExp</span><span class="p">,</span> <span class="n">diffFracInExp</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">proveit.number.exponentiation._theorems_</span> <span class="k">import</span> <span class="p">(</span>
+                <span class="n">addOneRightInExp</span><span class="p">,</span> <span class="n">addOneLeftInExp</span><span class="p">)</span>
+        <span class="c1"># from proveit.number.exponentiation._theorems_ import prodOfSqrts</span>
+        <span class="kn">from</span> <span class="nn">proveit.number.exponentiation._theorems_</span> <span class="k">import</span> <span class="n">sqrtOfProd</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">one</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">Div</span>
+        <span class="k">if</span> <span class="n">startIdx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">endIdx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dummyVar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safeDummyVar</span><span class="p">()</span>
+            <span class="n">grouped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">startIdx</span><span class="p">,</span> <span class="n">endIdx</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">innerCombination</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">grouped</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">factors</span><span class="p">[</span><span class="n">startIdx</span><span class="p">]</span><span class="o">.</span>
+                <span class="n">exponentCombination</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="n">combineInGroup</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">innerCombination</span><span class="o">.</span>
+                <span class="n">substitution</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">[:</span><span class="n">startIdx</span><span class="p">]</span>
+                                    <span class="o">+</span> <span class="p">(</span><span class="n">dummyVar</span><span class="p">,)</span>
+                                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">factors</span><span class="p">[</span><span class="n">endIdx</span><span class="p">:])),</span> <span class="n">dummyVar</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">grouped</span><span class="o">.</span><span class="n">applyTransitivity</span><span class="p">(</span><span class="n">combineInGroup</span><span class="p">)</span>
+        <span class="c1"># if all(isinstance(factor, Sqrt) for factor in self.factors):</span>
+        <span class="c1">#     # combine the square roots into one square root</span>
+        <span class="c1">#     factorBases = [factor.base for factor in self.factors]</span>
+        <span class="c1">#     return prodOfSqrts.specialize({xMulti:factorBases},</span>
+        <span class="c1">#                                   assumptions=assumptions)</span>
+        <span class="c1"># the following sqrt specialization modified by wdc on 2/29/2020</span>
+        <span class="c1"># based on the above-commented-out code (kept here temporarily</span>
+        <span class="c1"># until we&#39;re sure this works ok)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Exp</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Exp</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Exp</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">base</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="c1"># Of the form a^b a</span>
+                <span class="k">return</span> <span class="n">addOneRightInExp</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveReversed</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Exp</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">base</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="c1"># Of the form a a^b</span>
+                <span class="k">return</span> <span class="n">addOneLeftInExp</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveReversed</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Combine exponents only implemented for a product of two exponentiated operands (or a simple variant)&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">base</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">base</span><span class="p">:</span>
+            <span class="c1"># Same base: a^b a^c = a^{b+c}$, or something similar</span>
+            <span class="n">aSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">base</span>
+            <span class="n">bSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="p">,</span> <span class="n">Neg</span><span class="p">):</span>
+                <span class="c1"># equate $a^b a^{-c} = a^{b-c}$</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">diffInExp</span>
+                <span class="n">cSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="o">.</span><span class="n">operand</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="p">,</span> <span class="n">Div</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="o">.</span><span class="n">numerator</span><span class="p">,</span> <span class="n">Neg</span><span class="p">):</span>
+                <span class="c1"># equate $a^b a^{-c/d} = a^{b-c/d}$</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">diffFracInExp</span>
+                <span class="n">cSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="o">.</span><span class="n">numerator</span><span class="o">.</span><span class="n">operand</span>
+                <span class="n">dSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="o">.</span><span class="n">denominator</span>
+                <span class="k">return</span> <span class="n">thm</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="n">aSub</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">bSub</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span><span class="n">cSub</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span><span class="n">dSub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># standard $a^b a^c = a^{b+c}$</span>
+                <span class="n">thm</span> <span class="o">=</span> <span class="n">sumInExp</span>
+                <span class="n">cSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span><span class="p">:</span>
+            <span class="c1"># Same exponent: equate $a^c b^c = (a b)^c$</span>
+            <span class="n">aSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">base</span>
+            <span class="n">bSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">base</span>
+            <span class="n">expSub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">exponent</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">natsPosExpOfProd</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">n</span><span class="p">:</span><span class="n">expSub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveReversed</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="n">aSub</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">bSub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">intExpOfProd</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">n</span><span class="p">:</span><span class="n">expSub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveReversed</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="n">aSub</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">bSub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">expOfPositivesProd</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">c</span><span class="p">:</span><span class="n">expSub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveReversed</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">a</span><span class="p">:</span><span class="n">aSub</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">bSub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Product is not in the correct form to &#39;</span>
+                            <span class="s1">&#39;combine exponents: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">thm</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">a</span><span class="p">:</span><span class="n">aSub</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span><span class="n">bSub</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span><span class="n">cSub</span><span class="p">},</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveReversed</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Mult.commutation"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.commutation">[docs]</a>    <span class="k">def</span> <span class="nf">commutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">finalIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given numerical operands, deduce that this expression is equal to a form in which the operand</span>
+<span class="sd">        at index initIdx has been moved to finalIdx.</span>
+<span class="sd">        For example, (a + b + ... + y + z) = (a + ... + y + b + z)</span>
+<span class="sd">        via initIdx = 1 and finalIdx = -2.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">commutation</span><span class="p">,</span> <span class="n">leftwardCommutation</span><span class="p">,</span> <span class="n">rightwardCommutation</span>
+        <span class="k">return</span> <span class="n">apply_commutation_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">commutation</span><span class="p">,</span> <span class="n">leftwardCommutation</span><span class="p">,</span> <span class="n">rightwardCommutation</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Mult.groupCommutation"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.groupCommutation">[docs]</a>    <span class="k">def</span> <span class="nf">groupCommutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">disassociate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given numerical operands, deduce that this expression is equal to a form in which the operands</span>
+<span class="sd">        at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).</span>
+<span class="sd">        It will do this by performing association first.  If disassocate is True, it</span>
+<span class="sd">        will be disassociated afterwards.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">groupCommutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">disassociate</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Mult.association"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.association">[docs]</a>    <span class="k">def</span> <span class="nf">association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given numerical operands, deduce that this expression is equal to a form in which operands in the</span>
+<span class="sd">        range [startIdx, startIdx+length) are grouped together.</span>
+<span class="sd">        For example, (a + b + ... + y + z) = (a + b ... + (l + ... + m) + ... + y + z)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">association</span>
+        <span class="k">return</span> <span class="n">apply_association_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">association</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Mult.disassociation"><a class="viewcode-back" href="../../../../api/proveit.number.Mult.html#proveit.number.Mult.disassociation">[docs]</a>    <span class="k">def</span> <span class="nf">disassociation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given numerical operands, deduce that this expression is equal to a form in which the operand</span>
+<span class="sd">        at index idx is no longer grouped together.</span>
+<span class="sd">        For example, (a + b ... + (l + ... + m) + ... + y+ z) = (a + b + ... + y + z)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">disassociation</span>
+        <span class="k">return</span> <span class="n">apply_disassociation_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">disassociation</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div></div>
+
+<span class="c1"># Register these expression equivalence methods:</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Mult</span><span class="p">,</span> <span class="s1">&#39;commutation&#39;</span><span class="p">,</span> <span class="s1">&#39;commuted&#39;</span><span class="p">,</span> <span class="s1">&#39;commute&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Mult</span><span class="p">,</span> <span class="s1">&#39;groupCommutation&#39;</span><span class="p">,</span> <span class="s1">&#39;groupCommuted&#39;</span><span class="p">,</span> <span class="s1">&#39;groupCommute&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Mult</span><span class="p">,</span> <span class="s1">&#39;association&#39;</span><span class="p">,</span> <span class="s1">&#39;associated&#39;</span><span class="p">,</span> <span class="s1">&#39;associate&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Mult</span><span class="p">,</span> <span class="s1">&#39;disassociation&#39;</span><span class="p">,</span> <span class="s1">&#39;disassociated&#39;</span><span class="p">,</span> <span class="s1">&#39;disassociate&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Mult</span><span class="p">,</span> <span class="s1">&#39;distribution&#39;</span><span class="p">,</span> <span class="s1">&#39;distributed&#39;</span><span class="p">,</span> <span class="s1">&#39;distribute&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Mult</span><span class="p">,</span> <span class="s1">&#39;factorization&#39;</span><span class="p">,</span> <span class="s1">&#39;factorized&#39;</span><span class="p">,</span> <span class="s1">&#39;factor&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Mult</span><span class="p">,</span> <span class="s1">&#39;exponentCombination&#39;</span><span class="p">,</span> <span class="s1">&#39;combinedExponents&#39;</span><span class="p">,</span> <span class="s1">&#39;combineExponents&#39;</span><span class="p">)</span>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.varRange.html">varRange</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

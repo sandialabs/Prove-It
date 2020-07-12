@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.set_theory.containment.subsetEqViaEquality theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.set_theory.containment.subsetEqViaEquality-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../_context_.html">set_theory</a>.<a class="ProveItLink" href="../_context_.html">containment</a>.<a class="ProveItLink" href="../_theorems_.html#subsetEqViaEquality">subsetEqViaEquality</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.set_theory.containment.subsetEqViaEquality-theorem">&#182;</a></h1><p><strong><em> see <a href="../__pv_it/25e91905b7f122ed31887b2ec5caefd3bc7bd0470/dependencies.html" class="ProveItLink">dependencies</a> </em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">proving</span> subsetEqViaEquality presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of subsetEqViaEquality
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[1]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="subsetEqViaEquality">subsetEqViaEquality:</strong> <a class="ProveItLink" href="../__pv_it/2b8ebd9f647677387b5bbfa56d0fee480caadb820/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALkAAAAWBAMAAABuySBUAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAArxJREFU
+SMetVU1oE0EU/tzstt38tD2JoEhuetEWAhG0aMSLFKTFQ68G/MtFjRYMimIE0bQKiScLIol4KPSg
+C73oyVgPLVVkrSCIqAFvRWxpbE0jtb55k10nDbZ19cHum5k3833z3nw7C3i2e2vEn9BTEo0PHsD9
+aXZGqSHydvloNBNDUw54IfrTHtBbc9LNym7oZCqV6pXtTYBvHn7iHaKemfaA/ka6j1V25pecGzGW
+AL0MjBF3AQhaHtAvyPqMLqqZsGk0FJoD7pObHBm54wHcTMqCaN/Y71FCLe2EfJEYY0Alk7nkAV3r
+ZNcdWGKfVEJtcRjnRUloynFggAfl+2D5eYKz1N2tuEnr2a7ogDNqc2FixhxnElfQj5yauiFqHaJj
+PcCHS22ZYqgdwXZe7kz+FHPXvQae1ZrNltyCWVbkKa0jB/9G8gFKqBkab+OBTNEXR6Cqovv32e66
+KPC0IJsbmLMvEq00VOaqYCByg8QatJt5bLJf7ikMX0lFDw53uuvOAXuhotNrK3fHFPQFgR6W6Gap
+j0UaznDoUS92FlT0wy1u1v55aNNqZQL0nJWKtOrkjjPEq4uEBo6JsSbs4ljPju3yhBz0uC+JRIbM
+hj43dR3qqd6lZ0YSn+hW5W5UaqeKUa7Ze3Rw7BWwTUUPWdqssy5YguYUWMiNNZ+VkjImnJuglUSx
+f1AcYVHIMyy4P7/MckFuAXlLQX/YNVF191uE+cNRZxL+7M8CHi/3138ITTMLkcRNphFkIYHqKyDP
+zLS6J6eg74Y5j9NfyWy0WdAX62+C1WzYbR2iHGxzEGYV5halMjqVd8mZlC/gdnHFLbaKuTpqqcDM
+XjY2Y7wcScQU9GwaQ99rgg9eiUSvofETFjaeSv2+gWsKW3nzB9S7aH1/jz9bPX3tZ7Ve9DX/fO9W
+Dth/g/5P5vsPGL8ARgi0WRAlBzIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/2b8ebd9f647677387b5bbfa56d0fee480caadb820/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

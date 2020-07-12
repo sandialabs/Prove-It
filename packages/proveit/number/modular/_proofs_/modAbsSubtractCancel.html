@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.modular.modAbsSubtractCancel theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.modular.modAbsSubtractCancel-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">number</a>.<a class="ProveItLink" href="../_context_.html">modular</a>.<a class="ProveItLink" href="../_theorems_.html#modAbsSubtractCancel">modAbsSubtractCancel</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.modular.modAbsSubtractCancel-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> modAbsSubtractCancel presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of modAbsSubtractCancel
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="modAbsSubtractCancel">modAbsSubtractCancel:</strong> <a class="ProveItLink" href="../__pv_it/9951d79437dfcc1e33f006a5eceb84dbe304f4c10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdEAAAAXCAMAAABj24W0AAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAABa9JREFUaN7tWgmu2yAQdVuD2bf7H7bMsBhjG9tJKuVLRWoRfJi84TEbyTT9vMb09CPbJ3Hv
+ZP3UQ1Eu/meXdtT0t5tRzz9as0W/J6ni/kDbyYKJBMbXOee+nlAtW23SKPdazuK+IP6cUuPD8oqk
+Fdg/ZzSBsabM+e+3W69abbza9J4+uBr+Bf9wyOgNSQXYu4wSwS4YRTBKFsDy6wl1tNUmj2ofTG9V
+ZHDHyfOPP2T0hqQC7C1GtRXk0kYTmGKa1nw9o0K12uRR6ZegHzCq508xeimpAnuDUUWFu+F1Exhn
+NTQlvp5QtYlHZVRndwqMGJ388iFGLyVVYC8zqrg3t+JoBhMkNGG/nlGyiUdlVHrPCaFmyKiilpI5
+WYzdRF3mZ8oI4WRaCJHpultCag5m44BtGY0zhO0lHTBegL3IKJMHdybLWjXKEwiGIy55M/tbvP8E
+OwPl8MSJJbsrJl2rTRnlXocYPnRQA0aXOf7Vhxx9OzWEJJD8kCjbgeti6MwlSb4MCWkZVSJOSX8k
+qVenAnuNUSnZaa7baFSSCwCz0FHKZgSRnPr1cPoruVtwLQJwnq6mDENB3Mb7MLrJMMoo9wajVSDn
+jOoZuKeygOoODsNhgL8yOP7ks1gANIm5Ta6Lf+bmSFKvfQX2GqNEEH3CaKtRFp7AwH9kV4xqYymN
+s2SK4K2up1Nd+tmCaxEjRhXyKDAcdJrMS8toGeWeerSHZNjWQxMzduViUJRXMkYWOkaRNdyvIo0s
+J6gwkaXqhlHaYFslad+0YlkrsAtGtTopH52w+pDRVqMsPIGxLrG6FSON0rAB6XC6Ml4c2+mCaxEj
+RqXGA4DzmM0DRrHoWzYVTGejs6ySjxhFRGjjwKjJ9IHRsmT5LaNzg7+XdFSNIrALRkkw568bVB0w
+2mq0YVT5ieWLrCnheLuW6lszHbbijwmEHixIOcM0XNExmjdgZMjODhToEvax1w2uM52e0WRpphz/
+IoaMVhulsLNntPiCQ0l9hlyBXXldb0bpC2c9oxuNsvAMRiqexlqALnrzOIh0UEqrW9eYXp4uAI/J
+5pGIntG0gWPK/Sf+cxmDIA8yIzjuFFdOGYUD4z6/fvb5TMfoNNN0teCzvOzjaEgfZG5kRiuwK0al
+Gae8cukZbTRqM6MIjOZrBofOBNpqQwflXFRhkP3FbecLMFCzkYiO0bIBV5pptdG5Y9Ruqpc6Sj2P
+ZybpqB5F5IJPybyoPWUU0yE2AySPq9ScotYqj3I8JHYkqX/4rcDeYxRSjO4VsNUoCy9gClaIXIRj
+7o4WA1uigSniljaYRX0GCzKu8xUdo024rG/vGBv6in7ZvDCUUe5jvLBu+MKgY13IFCc57m6cGOMh
+cGZkmOP5+ACZbCz1LC31KLUu1qPzmn1b61wW79k44anAIm7lZyh7tXPJ4GK4sblac6R63SYKDV/q
+W43sVi2n80Eq8GKQzfCNyzSsZlvgD4GD8wUlhp+u6BjNG3jMD3//gizRneS641fAg3xi9Ar4sSey
++5IAtwJPCV4cywywStyPplWudglbl4wevAL2YGLBGiMH+ny2CYIW0hoFeWgMo06OFuADBz1ZccRo
+3ZArl/IQtKtHL17q92etP/tS/66kFPvAXOyEnKXENHoxnXIXs4tCTxndgVk4MYS61qkbYWMw0TSW
+VQwuEePWTqMFihKXauKDFUeMNhtWCog9elyTm2/TyjOXfP5lp/YfM9H7khKj4I5IYhQfpyZOY3HT
+5Lrbok17sbZb36adl0c5CG782KMFhysG9ai5fFoefOP98GlNfYrRB5J2jFYbVa2NBnVT1n7isVqX
+P8G4/xuNIxJu3Hb8/Qlh7Wh64Vcp7mOEPpEEuFVlNGQvpuChHWZUrr3WKHQhazfxXC339oIRo+77
+v6B930fLwKOzFUbJgLlGDC4q585EJH+7RqEf1ej0v/2b9hcfqkzf3hoxiwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/9951d79437dfcc1e33f006a5eceb84dbe304f4c10/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

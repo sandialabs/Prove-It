@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.addition.subtraction.addCancelTriple_32 theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.addition.subtraction.addCancelTriple_32-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">number</a>.<a class="ProveItLink" href="../../_context_.html">addition</a>.<a class="ProveItLink" href="../_context_.html">subtraction</a>.<a class="ProveItLink" href="../_theorems_.html#addCancelTriple_32">addCancelTriple_32</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.addition.subtraction.addCancelTriple_32-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> addCancelTriple_32 presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of addCancelTriple_32
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="addCancelTriple_32">addCancelTriple_32:</strong> <a class="ProveItLink" href="../__pv_it/e3e2c4c88322d868246571b0405b2847cf9fc3100/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOwAAAAVBAMAAAC3YB/2AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAupJREFU
+SMe1Vk1oE0EU/tIkTbPJrh4EwSIE69/BQ1DwIK1URDwpuVgFwZZgEQUlHiwqHkIF2bQeFgQVf2Br
+ESVVEypFK4WGlnpQKQtebMESqBUpEop40KjgzL6N6UySuhF88JjZb/LNN/PmzZsAddldx13aaFU0
+ZAB53nnvcholafvDtS5/32jIiE09CbzmH4sup9EM8nm3y8xXQJz6BLjJmmDS5TRvHf9R+yfDwtdE
+xTinhiPQTNZkXcpeIPcV3coOyMM2VVkN9VU6fcOlajBBHk64ldXapWGifgC+6foll7INUXIt3iLF
+J9i6fZ0oS0g4KmeHTZ0EuoFUFYmDldmAJos8s6h8F0f2GNqSKEuIas8yXeBm5yFR54C9Ur6Frp6I
+Y/k6n7/siVAvkCUfN/FFzNj18CYFWQcJycdB1GdsHjRYJfbYDks5Yvo/82jwMA5NtuF+H47laNzT
+Tr4byk9+D+xNLLCet4hAhLZ1tlD4WEb8S5IsUTvZtqxACXs3moZ6Bxhj/VXseqr9t0zM5BCSZOfh
+E6+QJ4lMTNitg1TIEpXJBvMd7HNw8wJ8PK77RhjE2s4Np1j8WcYfZWxDDPIvvpnllslhXMxkB/El
+ymfLg+BQ97Ne6jgL7zl/ERrHZ2eIt8VssQun+tioSKmvGLBE2SzOhAxBlhBVTkyispTCU7Yib9Sf
+wCDHXzjluxdzCt99aKgsy9OM+2lcllI8ovaEhd06iDcnyRK1lZ8iO3pPtqELh3Vdj9w+RONrsNN/
+Xtd7gyOxcolJkA9us6TaG990faOYyYRoMUmWqDwNVVYeM0bTrNnIce89xmFtEc3o4sAutipTLI4r
+mVilHlR/IUrXymN0HkA4ZleXGCaCfbioJjHFh65N8dItPgUrWPovTwHoKXDCFx9uA/p591HhSszf
+jI437ID43VWmP3X/OUODHP/+8IEePqHmsrN1ShU1W/Xeas+8a6uxxFR9/0bq/lMzUxVVa8bLwv+1
+35+i7I/PhFjFAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/e3e2c4c88322d868246571b0405b2847cf9fc3100/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

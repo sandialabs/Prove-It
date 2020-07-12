@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for context proveit.logic.set_theory.enumeration</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-context-proveit.logic.set_theory.enumeration">Axioms for context <a class="ProveItLink" href="_context_.html">proveit.logic.set_theory.enumeration</a><a class="anchor-link" href="#Axioms-for-context-proveit.logic.set_theory.enumeration">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when building axiom expressions:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Set</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types._common_</span> <span class="k">import</span> <span class="n">y_1_to_n</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.set_theory._common_</span> <span class="k">import</span> <span class="n">x_equals_any_y</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">Naturals</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for context &#39;proveit.logic.set_theory.enumeration&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong> Membership in an enumeration is the same as being equal to any of the contents of the enumeration:</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">enumSetDef</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y_1_to_n</span><span class="p">),</span> 
+                              <span class="n">Equals</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Set</span><span class="p">(</span><span class="n">y_1_to_n</span><span class="p">)),</span> 
+                                     <span class="n">x_equals_any_y</span><span class="p">)),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">Naturals</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="enumSetDef">enumSetDef:</strong> <a class="ProveItLink" href="__pv_it/4eb6d014f2d845bdf939ae5c04f288c7a63c17cc0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

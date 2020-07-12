@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.addition.addRealNonNegClosureBin theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.addition.addRealNonNegClosureBin-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">number</a>.<a class="ProveItLink" href="../_context_.html">addition</a>.<a class="ProveItLink" href="../_theorems_.html#addRealNonNegClosureBin">addRealNonNegClosureBin</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.addition.addRealNonNegClosureBin-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> addRealNonNegClosureBin presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of addRealNonNegClosureBin
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="addRealNonNegClosureBin">addRealNonNegClosureBin:</strong> <a class="ProveItLink" href="../__pv_it/3502f7724139ef367b2d71d8416eba0e33790d340/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQsAAAAcBAMAAACE34f2AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABEVJREFU
+SMfNV12IG1UU/pLJZJKZ/OzDgmARxtafpVAJu7Zs6Y8Rob6oTRFqH4QNbVW0KNvaumL7EEvVbJZK
+tFCLL44uqKwpGVpsWRAM24o1TcsIIm1ZJRZacJWwL4JGKJ577ySdm5/uslmod9l7k3vunPnuOd/5
+7g1wV5t/pnRX3x94mQ+zOLNcHtXkUp469gLr9yNu+ZcHxvalPXbsHUD/Cz47kF4WGHNLfK5wBOo/
+0BxcWg4Uikld2Olinb4Tjjm1Ds2EZgFVNvFLDzA+ISf4soNBf3sUCOblyeje7K3fjorPjzgUDZ8J
+fwK42EtcWTvHut87WWLkXq+2Tupp9WiOoRywGTfiSYTngRMspJkeYKxge0x4Z065Y9ymbqZleShc
+QuY4obiQdCsFOEjoaIjYS0cRrlOn5TvB2MrS9an75crYWLUBY30M+jAv81VcN4ZpI+WpqY96CEa0
+jzrZQQPG9zwJQlV2rPZEY30IakqoaIXF8X76/zubPdRLoVT5pigsGwfvlWHcXLmBIs3zpc95k5Le
+IvtgYSM1G29zzrEWZq0Omsm9Xio33TJeMeo/no/NSzD0W1YxjyhPxe2CIRjG6y0lMUKve6KdzcDP
+jC05nVP3Gckc3cN8Wc0KjTENJI7p90HJSDCMOuImjFH+cg9F7xn7g4xZarlGzVPiNPi92nN2YNd1
+GrbQXB9Y3t2w0pP73t1MUhV4FfDRn9s0Zu2n5HAlAi7XantrtZsiXcUSVB6ibTVqLkXPJ3Itmy4S
+jIijNQXnmyHHH0GZuXt2dbgPB/h+WWS+OrcJZinyGUvLoPUBtJRHHBgMXwbFlBQNsmy1XRgnvAX7
+6I5WBSQY4WrzbLoyPQWCcY1FR51owIhTXqMTH1sEI3qSs972wAi5SaGNfytXStzBYxYCPCk+L4zQ
+SbOFG4w547upm3zoBgJsYwwGXUUMCv08OPVHVr5CBKJGMAo0nHEQh6/B3qBL0aKN14y8BCNJfHEp
+qpgeGGp6bXul4DTh1Q/QKRODgDGUEER0KfqwtUqcPGZJGRLs9VDU3ycEPWRG34hI0Qg6IdqXIq5X
+Bz1ijovBlATjR46akCoJdRST3K3y4n5gradgD+NXnbPUXPdSEkpKLtgAU9EnaWrng8cfkAt2kJ3g
+MfHGz49YzaMtFXr/XwnGMLfQAp/tT+M5qiHTH/nwJzlk/VinvpnNHob5w5oOF63+rmLO2xfu+NR7
+Y9VuEni9WTL50DUrKJJiPG/plUrlfMNWp9MrLZLydRkFMklgNrYdbVPeLzMLC7Feb3zy5UeeRiQl
+uFH23JbDObwVzeA7ASNSaHeyjXXjXV9RXcSx1LwFBnae2gRMMPm6XJrc7NHuFdheIQISL41Df+pD
+7V6DdpdrjyiM/MIwtFTLrwbiRusaQwwDxI077LfrJfDqIk7H2UWsmV5wxekeL7OLunQ5C64wkr3B
+UCz8X9p/az8hMIFGuvsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/3502f7724139ef367b2d71d8416eba0e33790d340/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.multiplication.multZeroAny theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.multiplication.multZeroAny-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">number</a>.<a class="ProveItLink" href="../_context_.html">multiplication</a>.<a class="ProveItLink" href="../_theorems_.html#multZeroAny">multZeroAny</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.multiplication.multZeroAny-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> multZeroAny presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of multZeroAny
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="multZeroAny">multZeroAny:</strong> <a class="ProveItLink" href="../__pv_it/4a0ba886a2365842c5a8afe2564571bbf4ff4ca20/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/4a0ba886a2365842c5a8afe2564571bbf4ff4ca20/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

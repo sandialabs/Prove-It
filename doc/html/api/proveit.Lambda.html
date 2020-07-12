@@ -1,0 +1,487 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Lambda &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="LambdaApplicationError" href="proveit.LambdaApplicationError.html" />
+    <link rel="prev" title="Label" href="proveit.Label.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="lambda">
+<h1>Lambda<a class="headerlink" href="#lambda" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="proveit.Lambda">
+<em class="property">class </em><code class="descclassname">proveit.</code><code class="descname">Lambda</code><span class="sig-paren">(</span><em>parameter_or_parameters</em>, <em>body</em>, <em>*</em>, <em>_generic_expr=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="proveit.Expression.html#proveit.Expression" title="proveit._core_.expression.expr.Expression"><code class="docutils literal notranslate"><span class="pre">proveit.Expression</span></code></a></p>
+<p>A lambda-function Expression.  A lambda function maps parameter(s) to
+its body.  For example, (x, y) -&gt; sin(x^2 + y), where (x, y) are the 
+parameters and sin(x^2 + y) is the body.  Each parameter must be a
+Variable.  Note that the body of a Lambda may be a Conditional
+such that the mapping is only defined when one of the conditions is
+satisfied.</p>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Lambda.apply" title="proveit.Lambda.apply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code></a>(*operands[,&nbsp;equiv_alt_expansions,&nbsp;…])</td>
+<td>Apply this lambda map onto the given operands (a beta reduction in the lambda calculus terminology), returning the expression that results from applying the map.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Lambda.compose" title="proveit.Lambda.compose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compose</span></code></a>(lambda2)</td>
+<td>Given some x -&gt; f(x) for self (lambda1) and y -&gt; g(y) for lambda2, return x -&gt; f(g(x)).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Lambda.extractArgument" title="proveit.Lambda.extractArgument"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extractArgument</span></code></a>(mappedExpr)</td>
+<td>Given a mapped expression, return the argument that will transform this Lambda expression into the mapped expression.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Lambda.extractArguments" title="proveit.Lambda.extractArguments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extractArguments</span></code></a>(mappedExpr)</td>
+<td>Given a mapped expression, return the arguments that will transform this Lambda expression into the mapped expression.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Lambda.globalRepl" title="proveit.Lambda.globalRepl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">globalRepl</span></code></a>(master_expr,&nbsp;sub_expr[,&nbsp;assumptions])</td>
+<td>Returns the Lambda map for replacing the given sub-Expression everywhere that it occurs in the master Expression.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Lambda.latex" title="proveit.Lambda.latex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latex</span></code></a>(**kwargs)</td>
+<td>Return a latex-formatted representation of the Expression.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Lambda.relabeled" title="proveit.Lambda.relabeled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">relabeled</span></code></a>(relabel_map)</td>
+<td>Return a variant of this Lambda expression with one or more of its parameter labels changed.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Lambda.remakeArguments" title="proveit.Lambda.remakeArguments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remakeArguments</span></code></a>()</td>
+<td>Yield the argument values or (name, value) pairs that could be used to recreate the Lambda expression.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Lambda.string" title="proveit.Lambda.string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">string</span></code></a>(**kwargs)</td>
+<td>Return a string representation of the Expression.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="proveit.Lambda.apply">
+<code class="descname">apply</code><span class="sig-paren">(</span><em>*operands</em>, <em>equiv_alt_expansions=None</em>, <em>allow_relabeling=False</em>, <em>assumptions=None</em>, <em>requirements=None</em>, <em>equality_repl_requirements=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply this lambda map onto the given operands (a beta reduction
+in the lambda calculus terminology), returning the
+expression that results from applying the map.  Assumptions
+may be necessary to prove requirements that will be passed back
+if a requirements list is provided.  Requirements may be needed
+to ensure that operands are an appropriate length to match
+a corresponding ExprRange of parameters.  Specifically, the Len 
+of an ExprTuple containing the operands must equal the Len of an
+ExprTuple containing the range of indices covered by a 
+corresponding parameter range (see the example below).  Full 
+automation of the  length proof will only be performed for the 
+last parameter entry; proving the length equivalence may need to
+be performed in advance.</p>
+<p>For example, applying the Lambda
+(x, y_1, …, y_3, z_i, …, z_j) -&gt;</p>
+<blockquote>
+<div>x*y_1 + … + x*y_3 + z_i + … + z_j</div></blockquote>
+<p>to operands (a, b, c, d, e_m, …, e_n, f)
+will result in a*b + a*c + a*d + e_m + … _ e_n + f provided 
+that|(b, c, d)| = <a href="#id1"><span class="problematic" id="id2">|(1, ..., 3)|</span></a> is proven in advance and that
+<a href="#id3"><span class="problematic" id="id4">|(e_m, ..., e_n, f)|</span></a> = <a href="#id5"><span class="problematic" id="id6">|(i, ..., j)|</span></a> can be proven via 
+automation.</p>
+<p>A dictionary may be provided for equiv_alt_expansions to
+accomplish instantiation of ranges of parameters with more
+versatility.  For example, given the following Lambda
+(x_1, …, x_{n+1}) -&gt; (x_1 &lt; x_{1+1}) and …</p>
+<blockquote>
+<div>and (x_n &lt; x_{n+1})</div></blockquote>
+<dl class="docutils">
+<dt>we can apply this on the following operands:</dt>
+<dd>(a_1, …, a_{k+1}, b_1, …, b_{n-k})</dd>
+</dl>
+<p>along with the following entries in equiv_alt_expansions
+(x_1, …, x_n, x_{n+1}) :</p>
+<blockquote>
+<div>(a_1, …, a_k, a_{k+1}, b_1, …, b_{n-k-1}, b_{n-k})</div></blockquote>
+<dl class="docutils">
+<dt>(x_1, x_{1+1}, …, x_{n+1}) :</dt>
+<dd><dl class="first last docutils">
+<dt>(a_1, a_{1+1}, …, a_{k+1}, b_1, </dt>
+<dd>b_{1+1}, …, b_{(n-k-1)+1})</dd>
+</dl>
+</dd>
+</dl>
+<p>to obtain
+(a_1 &lt; a_{1+1}) and … and (a_k &lt; a_{k+1}) and a_k &lt; b_1</p>
+<blockquote>
+<div>and (b_1 &lt; b_{1+1}) and … and (b_{n-k-1} &lt; b_{(n-k-1)+1})</div></blockquote>
+<p>under the following requirements:
+<a href="#id7"><span class="problematic" id="id8">|(a_1, ..., a_{k+1}, b_1, ..., b_{n-k})|</span></a> = <a href="#id9"><span class="problematic" id="id10">|(1, ..., n+1)|</span></a>
+(1, …, n) = (1, …, n, n+1)
+(1, …, n) = (1, 1+1, …, n+1)
+(a_1, …, a_{k+1}, b_1, …, b_{n-k})</p>
+<blockquote>
+<div>= (a_1, …, a_k, a_{k+1}, b_1, …, b_{n-k-1}, b_{n-k})</div></blockquote>
+<dl class="docutils">
+<dt>(a_1, …, a_{k+1}, b_1, …, b_{n-k})</dt>
+<dd><dl class="first last docutils">
+<dt>= (a_1, a_{1+1}, …, a_{k+1}, b_1, </dt>
+<dd>b_{1+1}, …, b_{(n-k-1)+1})</dd>
+</dl>
+</dd>
+<dt><a href="#id11"><span class="problematic" id="id12">|({a_1, ..., a_k, a_{k+1}, b_1, ..., b_{n-k-1})|</span></a> </dt>
+<dd>= <a href="#id13"><span class="problematic" id="id14">|(1, ..., n)|</span></a></dd>
+<dt><a href="#id15"><span class="problematic" id="id16">|(a_{1+1}, ..., a_{k+1}, b_1, b_{1+1}, ..., b_{(n-k-1)+1})|</span></a></dt>
+<dd>= <a href="#id17"><span class="problematic" id="id18">|(1+1, ..., n+1)|</span></a></dd>
+</dl>
+<p>If allow relabeling is True then inn</p>
+<p>There are limitations with respect the Lambda map application
+involving parameter ranges when perfoming operation 
+substitution in order to keep derivation rules (i.e., 
+instantiation) simple.  For details, see the 
+ExprRange.replaced documentation.</p>
+<p>There may be additional requirements introduced when expanding
+ranges.  For example, indices may need to match, not just
+lengths.  Also, we may perform automatic equality replacement
+in the process of performing the lambda application.  For
+example, “And() = TRUE”.  Any employed replacements will be
+added to the requirements list and added to the
+‘equality_repl_requirements’ set (if one is provided).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Lambda.compose">
+<code class="descname">compose</code><span class="sig-paren">(</span><em>lambda2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.compose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.compose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given some x -&gt; f(x) for self (lambda1) and y -&gt; g(y) for lambda2,
+return x -&gt; f(g(x)).  Also works with multiple parameters:
+x1, x2, …, xn -&gt; f(x1, x2, …, xn)  for lambda 1 and  
+y1, y2, …, yn -&gt; g1(y1, y2, …, yn), 
+y1, y2, …, yn -&gt; g2(y1, y2, …, yn), 
+…
+y1, y2, …, yn -&gt; gn(y1, y2, …, yn) for lambda2 returns
+x1, x2, …, xn -&gt; f(g1(x1, x2, …, xn), g2(x1, x2, …, xn), …, gn(x1, x2, …, xn)).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Lambda.extractArgument">
+<code class="descname">extractArgument</code><span class="sig-paren">(</span><em>mappedExpr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.extractArgument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.extractArgument" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a mapped expression, return the argument that will transform
+this Lambda expression into the mapped expression.  For example,
+if the Lambda expression is x -&gt; x + 1 and the mapped expression
+is 2 + 1, this will return 2.  If there is more than one parameter
+in this Lambda expression, use extractArguments instead.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Lambda.extractArguments">
+<code class="descname">extractArguments</code><span class="sig-paren">(</span><em>mappedExpr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.extractArguments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.extractArguments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a mapped expression, return the arguments that will transform
+this Lambda expression into the mapped expression.  For example,
+if the Lambda expression is (x, y) -&gt; x + y and the mapped expression
+is 1 + 2, this will return (1, 2).</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="proveit.Lambda.globalRepl">
+<em class="property">static </em><code class="descname">globalRepl</code><span class="sig-paren">(</span><em>master_expr</em>, <em>sub_expr</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.globalRepl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.globalRepl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Lambda map for replacing the given sub-Expression
+everywhere that it occurs in the master Expression.</p>
+<p>When replacing an ExprTuple of operands, we will return a
+lambda expression with a range of parameters for replacing the 
+operands individually.
+For example,</p>
+<blockquote>
+<div><p>master_expr : a + b + c
+sub_expr : (a, b, c)
+will return something equal to</p>
+<blockquote>
+<div>(a_1, …, a_3) -&gt; a_1 + … + a_3</div></blockquote>
+</div></blockquote>
+<p>‘assumptions’ may be required for computing the number of
+operands (which may contain ranges themselves) in this latter
+process.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Lambda.latex">
+<code class="descname">latex</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.latex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a latex-formatted representation of the Expression.  The kwargs can contain formatting
+directives (such as ‘fence’ used to indicate when a sub-expression should be wrapped in
+parentheses if there can be ambiguity in the order of operations).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Lambda.relabeled">
+<code class="descname">relabeled</code><span class="sig-paren">(</span><em>relabel_map</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.relabeled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.relabeled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a variant of this Lambda expression with one or more
+of its parameter labels changed.  The resulting expression 
+should be “equal” to the original (having the same meaning) but 
+essentially has a different “style” (formats differently) and 
+uses different labels for substitution purposes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Lambda.remakeArguments">
+<code class="descname">remakeArguments</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.remakeArguments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.remakeArguments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield the argument values or (name, value) pairs
+that could be used to recreate the Lambda expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Lambda.string">
+<code class="descname">string</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/expression/lambda_expr/lambda_expr.html#Lambda.string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Lambda.string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a string representation of the Expression.  The kwargs can contain formatting
+directives (such as ‘fence’ used to indicate when a sub-expression should be wrapped in
+parentheses if there can be ambiguity in the order of operations).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.varRange.html">varRange</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Label.html">Label</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="proveit.Label.html" title="previous chapter">Label</a></li>
+      <li>Next: <a href="proveit.LambdaApplicationError.html" title="next chapter">LambdaApplicationError</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="../_sources/api/proveit.Lambda.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.sets.real.rescale_in_IntervalCC theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.sets.real.rescale_in_IntervalCC-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">number</a>.<a class="ProveItLink" href="../../_context_.html">sets</a>.<a class="ProveItLink" href="../_context_.html">real</a>.<a class="ProveItLink" href="../_theorems_.html#rescale_in_IntervalCC">rescale_in_IntervalCC</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.sets.real.rescale_in_IntervalCC-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> rescale_in_IntervalCC presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of rescale_in_IntervalCC
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rescale_in_IntervalCC">rescale_in_IntervalCC:</strong> <a class="ProveItLink" href="../__pv_it/275dc6ef00e236842f961cb2a3504bd52b5f2c930/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYgAAAAZBAMAAADZIKRHAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABNFJREFU
+WMPtmF2IG1UUx08mO/mYTJI++KAWZcjabakoIaH7oq1RQVDQxpf2RdhQP2oVliB1t9alxH3Q1KIM
+PqRFEKcuuLCuJigiLYJDVNTY6lAL2kJLEKogKoso2PUDz7n3zszNJO5ON0p98MLNzJzM/c/53XvO
+3HsHYLiye9qEy1tGpmeGlajC5S+N/yEuCeIlUYPlWNBw44VwgulvS7xxA7p0ODcEREgBrcZrX4kF
+k+qDEI/VnsLe00u8cQM+Jdt3Q0CEFMiYvPb7010DBGTyDII1bsAR/E3WhoAIKfCFqP2lvRaIbItB
+sMYNyFh41RoCIqTAE6L2l6MixJ+ZPhAeYrvFIY4yiHRnYeHwMIkdTiBZ5XVQZJToV521LmUkPgIO
+QY3x7fRrvT4z1NspKLBPivzzeXGi5HkFPbfBy4bcntswHHR2zxuWHE7tXNnDv7lwtRt4vvWb3E0M
+ghojxIMABwd4d083LERQoCJLuMmScHhNPgnPu/8vwpcGRlCaPWmPnBOHWwnv8beamSV+Jlm1P62m
+SRDUGCFu730/vLPp/q/pqIs+TD329DZD9rHXUO0T8CFIwoWIt0S14VG8ZN3egc+tO1GQRVlNhpiB
+GN6rMXevgaj4T7KmliFrEAQ1Rog4KI7L927RUXTokI8ZytXX3t8Khq2/4j2gz1DtE/AhSML1LVLi
+9RaLdyQwkjrLBupo9dofsQiI6DI7aVLf4Hmc91mPtQtNmyCoMULoTtx96lfHFgAhzpJPWYzs9KEX
+LfQ5/bo3SQYNBBEQ8CFIIghxJb+c4oefPIikPBIRfhEnJTxv8kyQrThNbG9JEMnuDrTOjV2AEYog
+grDxOJF7BAMFC/q8yIIjZ/QaXAgu0N4yVmYCCKEVJstCIhBO2u9y4Km/sGUoC6d1EkTT9u/B8/e8
+M3+acHBMCWKEhxMcfADH93F1GTLAIYrky0ZrlK8oDDtapONedV2vwVs7kYBiTcZLGZET8+UJS0gE
+E/sPDGO37XFlCTa7iV2QINBFcGeeZgsmU6Zw3LNmS5grUmLDW+hINK9WYY5BRB/aS8dZOK+xjjXG
+d9OLHLOr3GPwIUhAhR+ACyBEEXYKCQ+CkpzqOGhb3I3Ab4mlJDoWtd2hciGiFZhzX6YJIz2ls0SQ
+rTEnkWcQ1Jggspg3kZZSgZ31et1Q9BdO021XwLi6r16fBeOTG8jnCD6kx+BDZFniXQQugBDrYUxI
+eBA07FT1k6e8aWLX5lFaOGaYZ9rDd/lvpxPnDP+uDY3rIL4feq2Fk2KyK3OINA5900yctWI8nFL3
+USwsoysVHj1vd0SW9hh8CBLADFMhxkdCuwjPLQiJ2urLjnmB+fFKy47jA2wEMS/tJyLmxN2gl3lO
+dOzks7A/XYMPuc/6IhyxcH7PS4bgfuJlvatzASS9Sv3ZERK1f2gBaP8NRFuCGNn15laAQzTZfWbP
+bVPXw44TGI8YQqmZ77Vi995WsnDKkgxBiFdPtztcACHuuH7UERIeRMLkdW1Lcc0YDCGW4nJRKKT5
+tMwPmzAFeGkFDQN3dgrPCUmituqmKBFmU5SGwRAJc4XtaXDPmDLDb08rskRt1e3pmaBhY8jtqYLb
+0zMr7bGdMD2xMoQTgPgPfyiY7v/udGDQUvzf/O409ReiRpOAf7RJxwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/275dc6ef00e236842f961cb2a3504bd52b5f2c930/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

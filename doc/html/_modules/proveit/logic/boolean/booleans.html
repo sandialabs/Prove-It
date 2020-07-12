@@ -1,0 +1,541 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.logic.boolean.booleans &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.logic.boolean.booleans</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">ProofFailure</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.irreducible_value</span> <span class="k">import</span> <span class="n">IrreducibleValue</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.set_theory.membership</span> <span class="k">import</span> <span class="n">Membership</span><span class="p">,</span> <span class="n">Nonmembership</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">A</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span>
+
+<span class="k">class</span> <span class="nc">BooleanSet</span><span class="p">(</span><span class="n">Literal</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Literal</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stringFormat</span><span class="o">=</span><span class="s1">&#39;BOOLEANS&#39;</span><span class="p">,</span> <span class="n">latexFormat</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\mathbb</span><span class="si">{B}</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">membershipObject</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BooleanMembership</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">nonmembershipObject</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BooleanNonmembership</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forallEvaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forallStmt</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given a forall statement over the BOOLEANS domain, evaluate to TRUE or FALSE</span>
+<span class="sd">        if possible.</span>
+<span class="sd">        updated by JML 6/28/19</span>
+<span class="sd">        &#39;&#39;&#39;</span>        
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">SimplificationError</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">falseEqFalse</span><span class="p">,</span> <span class="n">trueEqTrue</span> 
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">forallBoolEvalTrue</span><span class="p">,</span> <span class="n">forallBoolEvalFalseViaTF</span><span class="p">,</span> <span class="n">forallBoolEvalFalseViaFF</span><span class="p">,</span> <span class="n">forallBoolEvalFalseViaFT</span>
+        <span class="kn">from</span> <span class="nn">._common_</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">Booleans</span>
+        <span class="kn">from</span> <span class="nn">.conjunction</span> <span class="k">import</span> <span class="n">compose</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">forallStmt</span><span class="p">,</span> <span class="n">Forall</span><span class="p">)),</span> <span class="s2">&quot;May only apply forallEvaluation method of BOOLEANS to a forall statement&quot;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">forallStmt</span><span class="o">.</span><span class="n">domain</span> <span class="o">==</span> <span class="n">Booleans</span><span class="p">),</span> <span class="s2">&quot;May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain&quot;</span>
+        <span class="n">instanceList</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceParamLists</span><span class="p">())</span>
+        <span class="n">instanceVar</span> <span class="o">=</span> <span class="n">instanceList</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">instanceExpr</span> <span class="o">=</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceExpr</span>
+        <span class="n">P_op</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">instanceVar</span><span class="p">)</span>
+        <span class="n">trueInstance</span> <span class="o">=</span> <span class="n">instanceExpr</span><span class="o">.</span><span class="n">substituted</span><span class="p">({</span><span class="n">instanceVar</span><span class="p">:</span><span class="n">TRUE</span><span class="p">})</span>
+        <span class="n">falseInstance</span> <span class="o">=</span> <span class="n">instanceExpr</span><span class="o">.</span><span class="n">substituted</span><span class="p">({</span><span class="n">instanceVar</span><span class="p">:</span><span class="n">FALSE</span><span class="p">})</span>
+        <span class="k">if</span> <span class="n">trueInstance</span> <span class="o">==</span> <span class="n">TRUE</span> <span class="ow">and</span> <span class="n">falseInstance</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="c1"># special case of Forall_{A in BOOLEANS} A</span>
+            <span class="n">falseEqFalse</span> <span class="c1"># FALSE = FALSE</span>
+            <span class="n">trueEqTrue</span> <span class="c1"># TRUE = TRUE</span>
+            <span class="k">return</span> <span class="n">forallBoolEvalFalseViaTF</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">P_op</span><span class="p">:</span><span class="n">instanceExpr</span><span class="p">})</span><span class="o">.</span><span class="n">deriveConclusion</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># must evaluate for the TRUE and FALSE case separately</span>
+            <span class="n">evalTrueInstance</span> <span class="o">=</span> <span class="n">trueInstance</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">evalFalseInstance</span> <span class="o">=</span> <span class="n">falseInstance</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evalTrueInstance</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">Equals</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evalFalseInstance</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">Equals</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SimplificationError</span><span class="p">(</span><span class="s1">&#39;Quantified instances must produce equalities as evaluations&#39;</span><span class="p">)</span>            
+            <span class="c1"># proper evaluations for both cases (TRUE and FALSE)</span>
+            <span class="n">trueCaseVal</span> <span class="o">=</span> <span class="n">evalTrueInstance</span><span class="o">.</span><span class="n">rhs</span>
+            <span class="n">falseCaseVal</span> <span class="o">=</span> <span class="n">evalFalseInstance</span><span class="o">.</span><span class="n">rhs</span>
+            <span class="k">if</span> <span class="n">trueCaseVal</span> <span class="o">==</span> <span class="n">TRUE</span> <span class="ow">and</span> <span class="n">falseCaseVal</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+                <span class="c1"># both cases are TRUE, so the forall over booleans is TRUE</span>
+                <span class="n">compose</span><span class="p">([</span><span class="n">evalTrueInstance</span><span class="o">.</span><span class="n">deriveViaBooleanEquality</span><span class="p">(),</span> <span class="n">evalFalseInstance</span><span class="o">.</span><span class="n">deriveViaBooleanEquality</span><span class="p">()],</span> <span class="n">assumptions</span><span class="p">)</span>
+                <span class="n">forallBoolEvalTrue</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">P_op</span><span class="p">:</span><span class="n">instanceExpr</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">instanceVar</span><span class="p">})</span>
+                <span class="k">return</span> <span class="n">forallBoolEvalTrue</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">P_op</span><span class="p">:</span><span class="n">instanceExpr</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">instanceVar</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveConclusion</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># one case is FALSE, so the forall over booleans is FALSE</span>
+                <span class="n">compose</span><span class="p">([</span><span class="n">evalTrueInstance</span><span class="p">,</span> <span class="n">evalFalseInstance</span><span class="p">],</span> <span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">trueCaseVal</span> <span class="o">==</span> <span class="n">FALSE</span> <span class="ow">and</span> <span class="n">falseCaseVal</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">forallBoolEvalFalseViaFF</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">P_op</span><span class="p">:</span><span class="n">instanceExpr</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">instanceVar</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveConclusion</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">trueCaseVal</span> <span class="o">==</span> <span class="n">FALSE</span> <span class="ow">and</span> <span class="n">falseCaseVal</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">forallBoolEvalFalseViaFT</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">P_op</span><span class="p">:</span><span class="n">instanceExpr</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">instanceVar</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveConclusion</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">trueCaseVal</span> <span class="o">==</span> <span class="n">TRUE</span> <span class="ow">and</span> <span class="n">falseCaseVal</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">forallBoolEvalFalseViaTF</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">P_op</span><span class="p">:</span><span class="n">instanceExpr</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">instanceVar</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveConclusion</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SimplificationError</span><span class="p">(</span><span class="s1">&#39;Quantified instance evaluations must be TRUE or FALSE&#39;</span><span class="p">)</span>         
+    
+    <span class="k">def</span> <span class="nf">unfoldForall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forallStmt</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given forall_{A in Booleans} P(A), derive and return [P(TRUE) and P(FALSE)].</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">unfoldForallOverBool</span>
+        <span class="kn">from</span> <span class="nn">._common_</span> <span class="k">import</span> <span class="n">Booleans</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">forallStmt</span><span class="p">,</span> <span class="n">Forall</span><span class="p">)),</span> <span class="s2">&quot;May only apply unfoldForall method of Booleans to a forall statement&quot;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">forallStmt</span><span class="o">.</span><span class="n">domain</span> <span class="o">==</span> <span class="n">Booleans</span><span class="p">),</span> <span class="s2">&quot;May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain&quot;</span>
+        <span class="n">Px</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceVar</span><span class="p">)</span>
+        <span class="n">_Px</span> <span class="o">=</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceExpr</span>
+        <span class="n">_A</span> <span class="o">=</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceVar</span>
+        <span class="k">return</span> <span class="n">unfoldForallOverBool</span><span class="o">.</span><span class="n">specialize</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">Px</span><span class="p">:</span><span class="n">_Px</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">_A</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">foldAsForall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forallStmt</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given forall_{A in Booleans} P(A), conclude and return it from </span>
+<span class="sd">        [P(TRUE) and P(FALSE)].</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">And</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">foldForallOverBool</span><span class="p">,</span> <span class="n">foldConditionedForallOverBool</span>
+        <span class="kn">from</span> <span class="nn">._common_</span> <span class="k">import</span> <span class="n">Booleans</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">forallStmt</span><span class="p">,</span> <span class="n">Forall</span><span class="p">)),</span> <span class="s2">&quot;May only apply foldAsForall method of Booleans to a forall statement&quot;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">forallStmt</span><span class="o">.</span><span class="n">domain</span> <span class="o">==</span> <span class="n">Booleans</span><span class="p">),</span> <span class="s2">&quot;May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">forallStmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">forallStmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="o">*</span><span class="n">forallStmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="n">Qx</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceVar</span><span class="p">)</span>
+            <span class="n">_Qx</span> <span class="o">=</span> <span class="n">condition</span>
+            <span class="n">Px</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceVar</span><span class="p">)</span>
+            <span class="n">_Px</span> <span class="o">=</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceExpr</span>
+            <span class="n">_A</span> <span class="o">=</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceVar</span>
+            <span class="k">return</span> <span class="n">foldConditionedForallOverBool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">Qx</span><span class="p">:</span><span class="n">_Qx</span><span class="p">,</span> <span class="n">Px</span><span class="p">:</span><span class="n">_Px</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">_A</span><span class="p">},</span> <span class="n">num_forall_eliminations</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)</span>
+            <span class="n">Px</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceVar</span><span class="p">)</span>
+            <span class="n">_Px</span> <span class="o">=</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceExpr</span>
+            <span class="n">_A</span> <span class="o">=</span> <span class="n">forallStmt</span><span class="o">.</span><span class="n">instanceVar</span>
+            <span class="k">return</span> <span class="n">foldForallOverBool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">Px</span><span class="p">:</span><span class="n">_Px</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">_A</span><span class="p">},</span> <span class="n">num_forall_eliminations</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">BooleanMembership</span><span class="p">(</span><span class="n">Membership</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Defines methods that apply to InSet(element, Booleans) objects</span>
+<span class="sd">    via InSet.__getattr__ which calls Booleans.membershipObject(element)</span>
+<span class="sd">    to return a BooleanMembership object.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+        <span class="n">Membership</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">sideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knownTruth</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield side-effect methods to try when the element is proven to be in the set of Booleans</span>
+<span class="sd">        by calling &#39;inBoolSideEffects&#39; on the element if it has such a method.</span>
+<span class="sd">        Edited by JML on 6/27/19 to add foldInBool sideEffect</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean._theorems_</span> <span class="k">import</span> <span class="n">unfoldInBool</span><span class="p">,</span> <span class="n">foldInBool</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="s1">&#39;inBoolSideEffects&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">sideEffect</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">inBoolSideEffects</span><span class="p">(</span><span class="n">knownTruth</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">sideEffect</span>
+        <span class="c1"># don&#39;t automatically do unfoldInBoolExplicit if unfoldInBool is unusable -- avoids infinite recursion</span>
+        <span class="k">if</span> <span class="n">unfoldInBool</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">unfold</span>
+    
+    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Try to deduce that the given element is in the set of Booleans under the given assumptions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>   
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">inBoolIfTrue</span><span class="p">,</span> <span class="n">inBoolIfFalse</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span>
+        <span class="c1"># if the element is already proven or disproven, use inBoolIfTrue or inBoolIfFalse</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">element</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">inBoolIfTrue</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">element</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">element</span><span class="o">.</span><span class="n">disprove</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">inBoolIfFalse</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">element</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="c1"># Use &#39;deduceInBool&#39; if the element has that method.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="s1">&#39;deduceInBool&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">element</span><span class="o">.</span><span class="n">deduceInBool</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="n">inBool</span><span class="p">(</span><span class="n">element</span><span class="p">),</span> <span class="n">assumptions</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">element</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; not proven to be equal to TRUE or FALSE.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">equivalence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce [(element in Booleans) = [(element = TRUE) or (element = FALSE)].</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">inBoolDef</span>
+        <span class="k">return</span> <span class="n">inBoolDef</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">unfold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From inBool(Element), derive and return [element or not(element)] if</span>
+<span class="sd">        unfoldInBool is usable.  It it is not, instead try to derive and return</span>
+<span class="sd">        [(element=TRUE) or (element=FALSE)].</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">unfoldInBool</span><span class="p">,</span> <span class="n">unfoldInBoolExplicit</span>
+        <span class="k">if</span> <span class="n">unfoldInBool</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+            <span class="c1">#  [element or not(element)] assuming inBool(element)</span>
+            <span class="k">return</span> <span class="n">unfoldInBool</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#  [(element = TRUE) or (element = FALSE)] assuming inBool(element)</span>
+            <span class="k">return</span> <span class="n">unfoldInBoolExplicit</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From [(element=TRUE) or (element=FALSE)], derive inBool(Element).</span>
+<span class="sd">        Created by JML on 6/27/19 for foldInBool sideEffect</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">foldInBool</span>
+        <span class="k">if</span> <span class="n">foldInBool</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">foldInBool</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">deriveViaExcludedMiddle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consequent</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Derive the consequent from (element in Booleans)</span>
+<span class="sd">        given element =&gt; consequent and Not(element) =&gt; consequent.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">fromExcludedMiddle</span>
+        <span class="k">return</span> <span class="n">fromExcludedMiddle</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">C</span><span class="p">:</span><span class="n">consequent</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">deduceInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">inBoolInBool</span>
+        <span class="k">return</span> <span class="n">inBoolInBool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">})</span>
+    
+
+<span class="k">class</span> <span class="nc">BooleanNonmembership</span><span class="p">(</span><span class="n">Nonmembership</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+        <span class="n">Nonmembership</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">equivalence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Derive [(element not in Booleans) = [(element != TRUE) and (element != FALSE)].</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">notInBoolEquiv</span>
+        <span class="k">return</span> <span class="n">notInBoolEquiv</span><span class="o">.</span><span class="n">specialize</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">element</span><span class="p">})</span>
+
+
+<span class="k">class</span> <span class="nc">TrueLiteral</span><span class="p">(</span><span class="n">Literal</span><span class="p">,</span> <span class="n">IrreducibleValue</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Literal</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stringFormat</span><span class="o">=</span><span class="s1">&#39;TRUE&#39;</span><span class="p">,</span> <span class="n">latexFormat</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\top&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">trueAxiom</span>
+        <span class="k">return</span> <span class="n">trueAxiom</span>
+    
+    <span class="k">def</span> <span class="nf">evalEquality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">trueEqTrue</span><span class="p">,</span> <span class="n">trueNotFalse</span>
+        <span class="kn">from</span> <span class="nn">._common_</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">trueEqTrue</span><span class="o">.</span><span class="n">evaluation</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">other</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">trueNotFalse</span><span class="o">.</span><span class="n">unfold</span><span class="p">()</span><span class="o">.</span><span class="n">equateNegatedToFalse</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">notEqual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">trueNotFalse</span>
+        <span class="kn">from</span> <span class="nn">._common_</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">trueNotFalse</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="s2">&quot;Cannot prove TRUE != TRUE since that statement is false&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="s2">&quot;Inequality between TRUE and a non-boolean not defined&quot;</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">deduceInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">trueInBool</span>
+        <span class="k">return</span> <span class="n">trueInBool</span>
+        
+<span class="k">class</span> <span class="nc">FalseLiteral</span><span class="p">(</span><span class="n">Literal</span><span class="p">,</span> <span class="n">IrreducibleValue</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Literal</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stringFormat</span><span class="o">=</span><span class="s1">&#39;FALSE&#39;</span><span class="p">,</span> <span class="n">latexFormat</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\bot&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">evalEquality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">falseNotTrue</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">falseEqFalse</span>
+        <span class="kn">from</span> <span class="nn">._common_</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">falseEqFalse</span><span class="o">.</span><span class="n">evaluation</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">other</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">falseNotTrue</span><span class="o">.</span><span class="n">unfold</span><span class="p">()</span><span class="o">.</span><span class="n">equateNegatedToFalse</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">concludeNegation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean.negation._theorems_</span> <span class="k">import</span> <span class="n">notFalse</span>
+        <span class="k">return</span> <span class="n">notFalse</span> <span class="c1"># the negation of FALSE</span>
+
+    <span class="k">def</span> <span class="nf">notEqual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">_.theorems_</span> <span class="k">import</span> <span class="n">falseNotTrue</span>
+        <span class="kn">from</span> <span class="nn">._common_</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">falseNotTrue</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="s2">&quot;Cannot prove FALSE != FALSE since that statement is false&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ProofFailure</span><span class="p">(</span><span class="s2">&quot;Inequality between FALSE and a non-boolean not defined&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">deduceInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">falseInBool</span>
+        <span class="k">return</span> <span class="n">falseInBool</span>
+
+<div class="viewcode-block" id="inBool"><a class="viewcode-back" href="../../../../api/proveit.logic.inBool.html#proveit.logic.inBool">[docs]</a><span class="k">def</span> <span class="nf">inBool</span><span class="p">(</span><span class="o">*</span><span class="n">elements</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">proveit.logic.set_theory</span> <span class="k">import</span> <span class="n">InSet</span>
+    <span class="kn">from</span> <span class="nn">._common_</span> <span class="k">import</span> <span class="n">Booleans</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">InSet</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Booleans</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">Booleans</span><span class="p">)</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">]</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.varRange.html">varRange</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

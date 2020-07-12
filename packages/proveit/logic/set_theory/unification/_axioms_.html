@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for context proveit.logic.set_theory.unification</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-context-proveit.logic.set_theory.unification">Axioms for context <a class="ProveItLink" href="_context_.html">proveit.logic.set_theory.unification</a><a class="anchor-link" href="#Axioms-for-context-proveit.logic.set_theory.unification">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when building axiom expressions:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Or</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types._common_</span> <span class="k">import</span> <span class="n">A_1_to_m</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.set_theory._common_</span> <span class="k">import</span> <span class="n">x_in_any_A</span>
+<span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">NaturalsPos</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for context &#39;proveit.logic.set_theory.unification&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Membership in the union of sets is the same as having membership in <em>any</em> of the sets being unified:</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">unionDef</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">),</span> 
+                            <span class="n">Equals</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Union</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">)),</span> <span class="n">x_in_any_A</span><span class="p">)),</span>
+                  <span class="n">domain</span><span class="o">=</span><span class="n">NaturalsPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="unionDef">unionDef:</strong> <a class="ProveItLink" href="__pv_it/2a90d85dc95971167f50a11df7604c375c84346a0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

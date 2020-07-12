@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Guide to the Prove-It library of proofs</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../index.html"><img src="../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Guide-to-the-Prove-It-library-of-proofs">Guide to the Prove-It library of proofs<a class="anchor-link" href="#Guide-to-the-Prove-It-library-of-proofs">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="context"></a><strong>Context Web Pages</strong></p>
+<p>Our proofs are organized into <a class="ProveItLink" href="index.html#hierarchy">hierarchy of contexts</a>.  A <strong>context</strong> is a kind of domain of knowledge and these may be interdependent.  Each <strong>context</strong> contains zero or more <strong>common expressions</strong>, <strong>axioms</strong>, and <strong>theorems</strong>.  The <strong>context</strong> web-page has links to one web-page each for the <a href="#common">common expressions</a>, 
+<a href="#axioms">axioms</a>, and <a href="#theorems">theorems</a>, as well as a <a href="#demonstrations">demonstrations</a>
+web page containing relevant context-specific examples.  <strong>Common expressions</strong> are named <a href="#expr">expressions</a> that may be used when defining <strong>axioms</strong> and <strong>theorems</strong> as well as for convenience in the construction of <strong>theorem</strong> <strong>proofs</strong>, <strong>demonstrations</strong>, and may also be used externally (outside of the <strong>context</strong>).  <strong>Axioms</strong> are named <a href="#knowntruth">known truths</a> that require no proof.  These effectively define context-related operations and mathematical concepts.  <strong>Theorems</strong> are named <a href="#knowntruth">known truths</a> that require a proof.  Each theorem name, on the <strong>theorems</strong> web page, links to its <a href="#proofs">proof</a> page.  <strong>Proofs</strong> may be constructed in any order and have not all been constructed yet.  A <strong>theorem</strong> without a complete <strong>proof</strong> is regarded as <em>unproven</em>.  Each <strong>proof</strong> page links to a <a href="#dependencies">dependencies</a> page which lists all of the <strong>axioms</strong> used directly or indirectly in the proof, as well as any required <em>unproven</em> <strong>theorems</strong>.  It also displays the <strong>theorems</strong> that depend directly upon that one.  The final type of web page that is generated in this library is a web page of <a href="#expr_info">expression information</a> that shows the full tree-like structure of each <strong>expression</strong>.  The <strong>expression information</strong> pages of <strong>axioms</strong> and <strong>theorems</strong> also link to <strong>dependencies</strong> web pages.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="expr"></a><strong>Expressions</strong></p>
+<p>Mathematical <strong>expressions</strong> are the basic building block of <strong>Prove-It</strong> <a href="#proofs">proofs</a>.  These are represented with rendered LaTeX.  As much as possible, this representation should reflect the internal contents of the <strong>expression</strong> object.  However, to fully understand what is actually being represented by an <strong>expression</strong>, click on the rendered LaTeX to view its <a href="#expr_info">expression information</a> web page.</p>
+<p><strong>Expressions</strong> form <a href="#knowntruth">known truths</a> that are used in the derivation steps of a <strong>proof</strong>.  An <strong>expression</strong> has no intrinsic value type, unlike in conventional theorem-proving approaches.  It does have a <em>type</em> that refers to the kind of operation or mathematical object.  There are 9 <em>core types</em> recognized for having specific rules in proof <a href="#proof_deriv">derivations</a>.</p>
+<ul>
+<li><a name="variable"></a><code>Variable</code>: A label that is interchangeable (as long as it is kept distinct from other labels) with no intrinsic meaning.  It is usually represented by a single letter but can have any representation.</li>
+<li><a name="literal"></a><code>Literal</code>: A label that is not interchangeable and has an intrinsic meaning.  Specific operators ($\lnot, \land, +, \times$, etc.) and specific irreducibe values ($\top, \bot, 0, 5$, etc.) are all <code>Literal</code>s.  Furthermore, a problem-story <code>Variable</code> in a particular <strong>context</strong>, representing some unknown but particular value, should also be a <code>Literal</code> (e.g., "Ann has $a$ apples...").</li>
+<li><a name="operation"></a><code>Operation</code>: The application of <em>operator(s)</em> on <em>operand(s)</em>.  For example, $0 + 5 + 8$ and $1 &lt; a \leq b &lt; 3$ are examples of <em>operation</em> expressions.  The <strong>Prove-It</strong> library defines many <em>types</em> derived from the <em>operation</em> type (e.g., for each specific operation), but the <a href="#proof_deriv">derivation rules</a> only need to know that these are <em>operations</em>.</li>
+<li><a name="lambda"></a><code>Lambda</code>: A mapping defined by <em>parameter</em> <code>Variable</code>s transforming to some <em>body</em> <code>Expression</code> but only when the <em>parameter(s)</em> meet certain <em>condition(s)</em>.  For example, $(x, y, z) \mapsto x+y/z~|~x \in \mathbb{R}, y \in \mathbb{R}, z \in \mathbb{R}, z \neq 0$ is a conditional <strong>lambda</strong> that converts three real numbers $x, y, z$ to $x + y/z$ as long as $z$ is not zero.  Note that a <code>Lambda</code> introduces <code>Variables</code> into a new scope via the <em>parameters</em>.  These <em>parameter</em> <code>Variable</code>s are said to be <em>bound</em> in this new scope; occurrences outside this scope are not deemed to be the same thing. There is a special category of <code>Operation</code> types called <code>OperationOverInstances</code> that are essentially functionals acting on a <code>Lambda</code> operand.  $\forall$, $\exists$, $\sum$, and $\prod$ are examples of <code>OperationOverInstances</code>.  For example, $\forall_{x~|~Q(x)} P(x)$ is an expression that translates to "$P(x)$ is true for all values of $x$ for which $Q(x)$ is also true".  Internally, this is represented as an $\forall$ operator acting on the conditional <code>Lambda</code> map $x \mapsto P(x)~|~Q(x)$.</li>
+<li><a name="expr_tuple"></a><code>ExprTuple</code>: A list of <code>Expression</code>s that is used, for example, when there are multiple <em>operators</em> or <em>operands</em> of an <code>Operation</code> or multiple <em>parameters</em> of a <code>Lambda</code>.</li>
+<li><a name="expr_array"></a><code>ExprArray</code>: A multi-dimensional (e.g., two-dimensional) array of <code>Expression</code>s. This can be used, for example, to represent a quantum circuit which is a two-dimensional graphical representation of a sequence of quantum operations.  A 2-D representation of a matrix is a more basic example.  More work is required to properly implement and test the <em>ExprArray</em> class.</li>
+<li><em>NamedExprs</em>: A mapping from keyword strings to <code>Expression</code>s.  This can be used to prevent ambiguity of an expression's internal representation.</li>
+<li><a name="indexed"></a><code>Indexed</code>: A particular indexed element of a <code>Variable</code> where the <code>Variable</code> is intended to serve as a placeholder for an <code>ExprTuple</code> or <code>ExprArray</code>.  It has a <em>base</em> which determines the indexing offset, typically $0$ or $1$.  For example, $x_5$ represents the fifth or sixth element of $x$ in <em>base</em> $1$ or $0$ respectively.  The <em>base</em> is typically not displayed and must be inferred by the context, though it is explicitly revealed in the <a href="#expr_info">expression information page</a>.  An <code>Indexed</code> expression is typically contained within an <code>Iter</code> (described next).</li>
+<li><a name="iteration"></a><code>Iter</code>: Represents an iteration of a <em>parameter</em> going from a <em>start</em> to an <em>end</em> in successive unit increments ($+1$).  For example, $x_1 +~\ldots~+ x_n$ contains an <code>Iter</code> of <code>Indexed</code> <code>Variable</code>.  If we take $n$ to be $3$, this would expand to $x_1 + x_2 + x_3$.  An <code>Iter</code> has a <em>lambda map</em>, <em>start index(indices)</em>, and <em>end index(indices)</em>.  In our example, the <code>Iter</code> $x_1,~\ldots,x_n$, is the <em>operand</em> of an <code>proveit.number.addition.Add</code> <code>Operation</code>.  The <em>lambda map</em>, <em>start index</em> and <em>end index</em> of the <em>iteration</em> are $i \mapsto x_i$, $1$, and $n$, respectively.</li>
+</ul>
+<p><strong>Prove-It</strong> has an <code>Expression</code> class.  The 9 <em>core types</em> are classes derived from the <code>Expression</code> class.  Each <code>Expression</code> object has a class that is one of these 9 <em>core types</em> or a class derived from one of these.  This object-oriented approach is convenient for accessing appropriately-named sub-expressions, calling convenient methods to apply <strong>axioms</strong> or <strong>theorems</strong> pertaining to the class, and implementing class-specific automation of obvious derivation steps.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="expr_info"></a><strong>Expression Information Web Pages</strong></p>
+<p>Clicking on generated mathematical <a href="#expr">expression</a> in this library will take you to a 
+web page that shows the explicit breakdown of the <strong>expression</strong> into 
+a tree-like structure.  The top of the page indicates the <em>type</em> (class)
+of expression (again, not to be consued with a type-theory notion of its
+value type) with a link to its documentation page. Clicking on the <em>type</em> at the top of this web page will, when this feature is implemented, take you to the code documentation for the <strong>expression's</strong> class.  Currently these are dead links.</p>
+<p>The first two notebook inputs of this page show Python code for generating and "checking" the <strong>expression</strong>.  The first input shows the necessary <code>import</code> commands.  The second input builds the <strong>expression</strong> and checks, via <code>%check_expr</code>, that this built expression is consistent with what is stored in a kind of database that <strong>Prove-It</strong> maintains.  The third and final notebook input shows the command to display the <em>expression information</em> of the <strong>expression</strong> object via the <code>exprInfo()</code> method.  Its output is a table with the tree-like structure of the <strong>expression</strong> with all of its <em>sub-expressions</em>.  The first entry, with index "0", is the full <strong>expression</strong>.  Each entry lists the numbers of direct <em>sub-expressions</em> that are always later entries in the table.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="knowntruth"></a><strong>Known Truths</strong></p>
+<p>A proven statement in <strong>Prove-It</strong> is called a <strong>known truth</strong>.  These are represented in the form: <br/>
+{<em>assumption expressions</em>} $\vdash$ <em>truth expression</em><br/>
+where the <em>assumption expressions</em> is a comma-delimited list of <a href="#expr">expressions</a> and the <em>truth expression</em> is a single <a href="#expr">expression</a>.  When there are no assumptions, the <strong>known truth</strong> is simply displayed as<br/>
+$\vdash$ <em>truth expression</em>
+The turnstile symbol, $\vdash$ will hyperlink to the <a href="#proofs">proof</a> of the <strong>known truth</strong>.</p>
+<p><a name="unbound"></a>Any <em>unbound</em> <a href="#variable">variable</a> in the <em>assumption expressions</em> and/or <em>truth expression</em> (not <em>bound</em> within the scope of any <a href="#lambda">lambda</a> expression) are deemed to be <em>arbitrary variables</em>. They can represent anything without altering its status as a <strong>known truth</strong>.  This is not the case for <a href="#literal">literals</a> which may only take on a single value (which may or may not be known).</p>
+<p>As an example, $\{\lnot A\} \vdash A = \bot$, taking $A$ to be a <em>variable</em>, translates to "any $A$ equals false ($\bot$) assuming the logical negation of $A$ is a true fact".  A main part of <strong>Prove-It's</strong> unique approach is that there is no intrinsic typing system to ensure that $A$ has a <em>Boolean</em> type (true ($\top$) or false ($\bot$) represented as the set $\mathbb{B} = \{\top, \bot\}$).  Rather, it is inferred, in this case for example, from the <em>assumption</em> that the logical negation of $A$ is true.  The logical negation of a value is only defined when that value is a <em>Boolean</em>. Otherwise it simply cannot be evaluated.</p>
+<p>New <strong>known truths</strong> may derive from existing <strong>known truths</strong> via <a href="#proof_deriv">derivation rules</a>.  These rules include <a href="#generalization">generalization</a> and <a href="#specialization">specialization</a> which can actualize a change of an <em>unbound</em> <em>variable</em> to any other <strong>expression</strong>.  Taking the previous example, <em>generalizing</em> this <strong>known truth</strong> will derive<br/>
+$\vdash \forall_{A~|~\lnot A} A = \bot$.<br/>
+This may then be <em>specialized</em> to produce any specific instance of $A$ for which $\lnot A$ is proven or assumed.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="proofs"></a><strong>Proof Web Pages</strong></p>
+<p>Clicking on the turnstile symbol, $\vdash$, of a <a href="#knowntruth">known truth</a> will take you to its <strong>proof</strong> page.  This displays all of the <a href="#proof_deriv">derivation</a> steps starting from the proven <strong>known truth</strong> (step <code>0</code>) and working its way backwards through the derivation, each step dependent upon <em>requirements</em> that are realized at later steps (a convenient check against circular logic within a <strong>theorem</strong> <strong>proof</strong>).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="common"></a><strong>Common Expression Web Pages</strong></p>
+<p>Each <a href="#context">context</a> contains a <strong>common expressions</strong> page that defines zero or more named <a href="#expr">expressions</a> that can be used for convenience to build <a href="#axioms">axioms</a> and <a href="#theorems">theorems</a> as well as a general aid in <a href="#proofs">proof</a> construction.  It may also be used in <a href="#demonstrations">demonstrations</a> and external to the <strong>context</strong>.  Clicking on any of these <strong>expressions</strong> will take you to the <a href="#expr_info">expression information</a> page.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="axioms"></a><strong>Axiom Web Pages</strong></p>
+<p><strong>Axioms</strong> are <a href="#knowntruth">known truths</a> that are accepted without <strong>proof</strong>.  They provide the definitions for the various mathematical objects and operations.  They can be <strong>context</strong>-specific; for example, a <strong>context</strong> may define specific <a href="#literal">literal</a> quantities for a specific story problem or scope.  They can also be used externally as desired.  The <a href="#expr_info">expression information web page</a> of an <strong>axiom</strong> has a link to a <a href="#dependencies">dependencies web page</a> that shows all of the <strong>theorems</strong> whose <strong>proof</strong> depends directly upon this <strong>axiom</strong>.  There are also <a href="#dependencies">dependencies web pages</a> for each <strong>proof</strong> showing what <strong>axioms</strong> are used directly or indirectly in the <strong>proof</strong>.  In this way, <strong>axiom</strong> usage is tracked for every <strong>proof</strong> so users can ensure that only appropriate <strong>axioms</strong> are used for any particulary <strong>proof</strong> of interest.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="theorems"></a><strong>Theorem Web Pages</strong></p>
+<p><strong>Theorems</strong> are <a href="#knowntruth">known truths</a> that require a <a href="#theorem_proofs">proof</a>.  These must be derived from <a href="#axioms">axioms</a> or other <strong>theorems</strong> using <a href="#proof_deriv">derivation rules</a> used to obtain new <strong>known truths</strong> for previous <strong>known truths</strong>.  These <strong>theorems</strong> may be proven in any order and some of the <strong>theorems</strong> in this library have not yet been proven.  By explicitly indicating what other <strong>theorems</strong> may be <em>presumed</em> in a given <strong>proof</strong>, we avoid circular logic.  When a <strong>theorem</strong> does have a <strong>proof</strong>, it will have a <a href="#dependencies">dependencies web page</a>, accessed via a link titled <code>dependencies</code> on the <strong>proof</strong> page, that reveals all <strong>axioms</strong> used directly or indirectly in the <strong>proof</strong> as well as any dependent <strong>theorems</strong> that have not yet been proven.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="theorem_proofs"></a><strong>Theorem Proof Web Pages</strong></p>
+<p>Clicking on the name of a <strong>theorem</strong> on the <a href="#theorems">theorems web page</a> of a <strong>context</strong> will take you to its <strong>proof</strong> page.  If the <strong>proof</strong> has been supplied, this will show the Python code used to generate its derivation, culminating in the <code>%qed</code> command which displays all of the <a href="#proof_deriv">derivation</a> steps starting from the proven <strong>theorem</strong> (step <code>0</code>) and working its way backwards through the derivation, each step dependent upon <em>requirements</em> that are realized at later steps (a convenient check against circular logic within a <strong>theorem</strong> <strong>proof</strong>).  The <strong>theorem proof</strong> web page will link to a <a href="#dependencies">dependencies web page</a>,  via a link titled <code>dependencies</code> that reveals all <a href="#axioms">axioms</a> used directly or indirectly in the <strong>theorem proof</strong> as well as any dependent <strong>theorems</strong> that have not yet been proven.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="proof_deriv"></a><strong>Derivation Rules</strong></p>
+<p>New <a href="#knowntruth">known truths</a> may be derived from existing ones, in order to generate a <a href="#proofs">proof</a> of a <a href="#theorems">thereom</a> by using a small number of derivation rules that are available.  These are as follows:</p>
+<ul>
+<li><em>Assumption</em>: <br/>
+For any <a href="#expr">expression</a> $A$, $A$ is known to be true if $A$ is assumed to be true.  Thus,<br/>
+$\{A\} \vdash A$<br/>
+Note that the <strong>Prove-It</strong> system is indifferent to whether or not the assumed <strong>expression</strong> is a proper Boolean-type expression.  While it is assumed, it does have a Boolean value (<code>TRUE</code> to be specific), but that does not imply that it has a Boolean type more generally, when it is not assumed.</li>
+<li><em>Axiom/theorem invocation</em>:<br/>Introduces a <a href="#knowntruth">known truth</a> from an <a href="#axioms">axiom</a> or <a href="#theorems">theorem</a> and tracks its use in the tracked <a href="#dependencies">dependencies</a>.</li>
+<li><em>Axiom/theorem elimination</em>:<br/>Converts <strong>axioms</strong> or <strong>theorems</strong> into assumptions and removes them from the tracked <strong>dependencies</strong>.  <a href="#literal">Literals</a> may be simultaneously converted to <a href="#variable">variables</a> in this process.  This must be done in a fully consistent manner (converting all <strong>axioms</strong>/<strong>theorems</strong> that involve the <em>literal</em> simultanously, and converting all of the <em>literals</em> that the <strong>axioms</strong>/<strong>theorems</strong> involve).  (This has not yet been implemented in the <strong>Prove-It</strong> code.)</li>
+<li><em>Hypothetical reasoning</em>:<br/>Given a <strong>known truth</strong> with <em>assumptions</em>, converts any one of the assumptions into an antecedent in an explicit implication.  For example, from<br/>
+$\{A, B, C, \ldots\} \vdash Z$<br/>
+derive<br/>
+$\{A, C, \ldots\} \vdash B \Rightarrow Z$<br/>
+Both forms have their use.  Implications are important because they can be nested ("$\vdash$" cannot be nested).  As with <em>assumptions</em>, <strong>Prove-It</strong> is indifferent about whether or not the <em>antecedent</em> and <em>consequent</em> of the <em>implication</em> are Boolean-type expression.  For an <em>implication</em> to be true it only matters that the <em>consequent</em> is true if/when the <em>antecedent</em> is true; if the <em>antecedent</em> has no defined value or is non-Boolean, the <em>implication</em> is vacuously true regardless of whether or not the <em>consequent</em> can be evaluated. </li>
+<li><em>Modus ponens</em>:<br/>
+From an implication, derive its consequent given that the antecedent is known or assumed to be true.  For example, from<br/>
+$\{A, B, C\} \vdash Y \Rightarrow Z$<br/>
+and<br/>
+$\{B, C, D\} \vdash Y$<br/>
+derive<br/>
+$\{A, B, C, D\} \vdash Z$<br/>
+The <em>assumptions</em> of the resulting <strong>known truth</strong> simply become the union of the <em>assumptions</em> of the prerequisite <strong>known truths</strong>.  Furthermore, either or both of the prerequisite <strong>known truths</strong> may be incorporated in the <em>assumptions</em> list instead of having independent derivations.  For example, the following may be introduced without any prerequisites:<br/>
+$\{A, A \Rightarrow B\} \vdash B$<br/></li>
+<li><a name="generalization"></a><em>Generalization</em><br/>
+As mentioned <a href="#unbound">above</a>, any <em>unbound</em> <a href="#variable">variable</a> in a <strong>known truth</strong> is deemed to be <em>arbitrary</em>.  To transform such a fact into an explicit form, <em>generalization</em> may be used to introduce a universal quantification ($\forall$) over <em>arbitrary</em> <em>variables</em>.  Any of the <em>assumptions</em> of the original <strong>known truth</strong> may be listed as <em>conditions</em> of the universal quantification and removed from the <em>assumptions</em> list. Any <em>assumptions</em> containing the <em>unbound</em> <em>variable(s)</em> must be converted to <em>conditions</em> in this manner because they must be included in the new <em>binding</em> of the <em>variable(s)</em>.  Additional <em>conditions</em> may be added as desired because this can only weaken the <strong>known truth</strong>.  As an example, suppose we have a <strong>known truth</strong> of the form<br/>
+$\{x \in S, Q(x)\} \vdash P(x)$,<br/>
+where $Q(x)$ and $P(x)$ take the place of <strong>expressions</strong> involving $x$ as an <em>unbound</em> <em>variable</em> and $S$ may be any <strong>expression</strong> but should be a properly defined set in order for $x \in S$ to evaluate to true for any $x$.  We can then derive, via <em>generalization</em>,<br/>
+$\vdash \forall_{x \in S~|~Q(x)} P(x)$.<br/>
+Note that the $x \in S$ notation of this universal quantification is a shorthand LaTeX representation in place of $\forall_{x~|~x \in S, Q(x)}$ but internally $x \in S$ is treated as a <em>condition</em> in the same manner as $Q(x)$.  This is a simple, single-<em>variable</em> example, but multiple <em>variables</em>, in fact, may be <em>generalized</em> simultaneously.  Also, multiple nested $\forall$ operations may be introduced simultaneously.</li>
+<li><a name="specialization"></a><em>Specialization</em> and <em>relabeling</em><br/>
+<em>Specialization</em> is the reverse of <em>generalization</em>.  It can transform a <strong>known truth</strong> with explicit universal quantification into a <strong>known truth</strong> with fewer $\forall$ operations.  For example, given<br/>
+$\{A, B\} \vdash \forall_{x~|~Q(x)} P(x),$<br/>
+and<br/>
+$\{B, C\} \vdash Q(x)$<br/>
+we can derive<br/>
+$\{A, B, C\} \vdash P(x)$,<br/>
+As with <em>modus ponens</em>, the new <em>assumptions</em> are the union of the prerequisite <em>assumption</em> and there is flexibility in what is included in the <em>assumptions list</em> versus other <strong>known truths</strong>.  For example, <br/>
+$\{ \forall_{x~|~Q(x)} P(x), Q(x)\} \vdash P(x)$<br/>
+may be derived without any prerequisites.  Of course, in the <em>specialization</em> process, $x$ may be replaced with any expression, as long as it does not violate scoping restrictions of <a href="#lambda">lambda</a> <strong>expression</strong>.  That is, the <em>unbound</em> <em>variables</em> in the replacement of $x$ cannot be the same as any <em>parameter</em> of a <em>lambda</em> that contains an instance of <em>x</em> in the original <strong>known truth</strong>.  For example, from<br/>
+$\vdash \forall_{x} \exists_{y}~y=x,$<br/>
+we <strong>can</strong> derive<br/>
+$\vdash \exists_{y}~y=5$,<br/>
+but we <strong>cannot</strong> derive<br/>
+$\vdash \exists_{y}~y=y+5$.<br/>
+Multiple <em>variables</em> and even multiple nested $\forall$ operations may be <em>specialized</em> simultaneously and some <em>variables</em> may be <em>relabeled</em> instead.  The difference between <em>specializing</em> and <em>relabeling</em> is that the corresponding $\forall$ is not eliminated in the case of <em>relabeling</em> but the <em>variable</em> may only be replaced with another <em>variable</em>.  This could be accomplished via <em>specializing</em> and then <em>generalization</em> but can also be done in one step via <em>relabeling</em>.
+<br/><br/>
+Finally, there are special <em>specialization</em> rules involving <a href="#iteration">iterations</a> and <a href="#indexed">indexed</a> <strong>expression</strong>.  Specifically, when the <em>variable</em> of an <em>indexed</em> <strong>expression</strong> is replaced, via specialization, with an <a href="#expr_tuple">expression list</a> or <a href="#expr_array">expression tensor</a>, the indexing must be performed, replacing the <em>indexed</em> expression with the particular <em>indexed</em> value (or an exception raised if it cannot be performed); and when the <em>indexed</em> <strong>expression</strong> is contained within an <em>iteration</em>, the <em>iteration</em> must be expanded to reveal each particular <em>indexed</em> value.  For example, when <em>specializing</em><br/>
+$\vdash \forall_{n \in \mathbb{N}} \forall_{x, y_1, \ldots, y_n \in \mathbb{C}}~x \cdot (y_1 + \ldots + y_n) = x \cdot y_1 + \ldots x \cdot + y_n$<br/>
+(the distribution law) with $n \mapsto 3$, $x \mapsto x$, and $y \mapsto [a, b, c]$, we can derive<br/>
+$\{x \in \mathbb{C}, a \in \mathbb{C}, b \in \mathbb{C}, c \in \mathbb{C} \} \vdash x \cdot (a + b + c) = x \cdot a + x \cdot b + x \cdot c$.<br/>  In this example, the <em>indexed</em> <strong>expressions</strong> use <em>base</em> one, implicit in the LaTeX representation but explicit in the internal representation.  To expand the <em>iteration</em>, <strong>Prove-It</strong> applies $+1$ to the <em>start index</em> successively until reaching the <em>end index</em>, performing evaluations along the way.  The derivation step requires these evaluation <strong>known truths</strong> as prerequisites.  In this example,<br/>
+$\vdash 1+1=2$ and $\vdash 2+1=3$<br/>
+are prerequisites.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="dependencies"></a><strong>Dependencies Web Pages</strong></p>
+<p>The <code>dependencies</code> link on a <a href="#proofs">proof web page</a> or on the <a href="#expr_info">expression information web page</a> of an <a href="#axioms">axiom</a> or <a href="#theorems">theorem</a> will take you a web page that shows <strong>dependencies</strong> for the corresponding <strong>axiom</strong> or <strong>theorem</strong>.  For <strong>theorem</strong> <strong>dependencies</strong>, this page lists all the <strong>axioms</strong> used directly or indirectly in the <strong>proof</strong> as well as any dependent <strong>theorems</strong> that have not yet been proven.  Additionally, for both <strong>axiom</strong> and <strong>theorem</strong> <strong>dependency</strong> pages, it lists all of the <strong>theorems</strong> that directly depend on that <strong>axiom</strong>/<strong>theoreom</strong>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a name="demonstrations"></a><strong>Demonstrations Web Pages</strong></p>
+<p>The <strong>demonstrations</strong> web page of a <strong>context</strong> shows examples of how to use the operations and concepts defined in the <strong>context</strong> and should test automation capabilities.  It is a useful regression testing tool as well as a tutorial for using what is defined in the <strong>context</strong>.  Many of these have not been generated yet or are incomplete at this time.</p>
+
+</div>
+</div>
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

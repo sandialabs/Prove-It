@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.division.fracCancelDenomLeft theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.division.fracCancelDenomLeft-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">number</a>.<a class="ProveItLink" href="../_context_.html">division</a>.<a class="ProveItLink" href="../_theorems_.html#fracCancelDenomLeft">fracCancelDenomLeft</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.division.fracCancelDenomLeft-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> fracCancelDenomLeft presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of fracCancelDenomLeft
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="fracCancelDenomLeft">fracCancelDenomLeft:</strong> <a class="ProveItLink" href="../__pv_it/3784825ca28f6ecd9b4de3b6863971e4272ca6200/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPIAAAAmCAMAAADJGTavAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAAA6JJREFUaN7NWYmSnCAQJYncp/7/x6YbZFRAosZJoGq2dtce5PX9GkJGXCG8v6eVZOBF5/WU
+lErDqaf1+SnDf5rJXt+Vz+Mi5isQ68HeihJVn9WDEOpmuaXJYe1sJ7HiAuR+sYSb/CSLGEcY6kHr
+WzvPYVDIUu4Q7kHZZd6eTOjYC7218604+IdLLGb31wGU2jyTg/VBVDzU5lhrlgf8J6CiX9PptjpH
+NLPZjOxsyk+0cU4t8497+qQDQmbz5ruOaIBsWkmHSRS4nY7CNCDkiW69A6VQf9ttCT5kh6i/6EMc
+TP3VlueBX4sHDnFDo1Drvfv4+QihHa41F3LGmsUfVED4osmFz+ghQlldElPgkfpJKor5MBt3M/f/
+XOqa4jlEsniyv8P4D97iMmoExGRh32500LKLxqX8GJBfLpwl5bKxsMnoIdq8+qpuZomvB05Ya9ku
+j8uGn3eLnVKuqFOOz20n4TvtpZJ99ZcyvZCMURgAr5N1jXq3UtaUa4l6xiim1aus84zBf63Q2MHP
+Lcc/l+lANhGoQj+oWt4UauvhLq0/+HVFuVKy8CHBPhZI7YzFEwUTgbgG5I5MBzJqBzwYTT25DuSX
+IqygXAmymYlYXcxD7qcY3DxHAxcuiZtcHlBUWdKRKSB/Nk3CfqOIKrzn2IdYlmeUyybHhtQlU7oB
+zgLtidr3ocEGcxzBgNpE3OJU5gj5s6mMpeEXfMJK4xSt0tfbVKegXFmnLvc8Ig9LLNsYnNvDMZaD
+LNU9mQKyOExgqNsNAqYK4PJ2rSwo1ydydrpN7ESoaBHo6YwTxzaHwaFiau7IlLG8UR6rsznxG3WX
+PL09tygoF8+vDHbTQjQL2QWDpYdZG7p9GsidyxSQ100lBNnPHxhq4SxjE/2NyeuOcoXilWaBJIDh
+Cp+P2QyLv3swZsy1SoCqUlg3ZGrIu01zgYoOzlp1mfiXOXxJucr9rQwceqKoB/2pFhZyocaEK2JN
+4ZJmUzRkasj7TVOBWjF7z1pt/7sUtqRccy9waIrT44EAAYSFDh2ZXl12f0xO9uX2q6Bct7fHvCz9
+pZuONuQrX/zq3NXdnR2hhnjwV+pIE3K40FqdDuTOL6ieJbL3k+TjonLScnYuqO6MvoaYg1Q5pI2p
+uqB6tPeIM12Si36LY+u/Hc9Ng97DhflbIxM67A3z2ejy9q1bSdMmMypkqxrQehdUV7d1ZNhllKmZ
+fueC6qLzBDLwMqJFiE4vqK4ZOTfavwGyJyw6/iumnwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/3784825ca28f6ecd9b4de3b6863971e4272ca6200/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

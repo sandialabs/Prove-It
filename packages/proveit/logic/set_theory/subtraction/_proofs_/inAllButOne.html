@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.set_theory.subtraction.inAllButOne theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.set_theory.subtraction.inAllButOne-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../_context_.html">set_theory</a>.<a class="ProveItLink" href="../_context_.html">subtraction</a>.<a class="ProveItLink" href="../_theorems_.html#inAllButOne">inAllButOne</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.set_theory.subtraction.inAllButOne-theorem">&#182;</a></h1><p><strong><em> see <a href="../__pv_it/b1b4ffd6baaa57210b30d83dcaa354021ee7fd9a0/dependencies.html" class="ProveItLink">dependencies</a> </em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">proving</span> inAllButOne presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of inAllButOne
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[1]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="inAllButOne">inAllButOne:</strong> <a class="ProveItLink" href="../__pv_it/03b6904f9574c7f4089f1b8b134177a00020ccfa0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaUAAAAWCAMAAABXJXPzAAAAOVBMVEX///8kJCQNDQ0oKCgQEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAD9T1yxAAAAAXRSTlMAQObY
+ZgAABLNJREFUaN7tWueS3CAMJonp3e//sMEFg2Rwvc1NZk4/TutdW/qEUEE+Qv4TCiyAa8GoJT90
+mUyA/N5T18hGv/uOD2L54AzknwO90RVVZ6K9PZIMeSy79RlgqyG/91SCwbz3JPDjSBobX7KMXRrI
+PwW6Anuu6ky0ie3vsTEz9y7/HJ9lkGggv/cU0WG2aDzZd+roSxsh/xToCuxOlela2CHJe2mjwU12
+udGPnBQY5PeeImz5EOIbLxFPIf8MaAAWq4qsY2EvlLrLjY2ZeQ6hElS3SBnIm4uiVaLYeMqOS23h
+9JWX7AB5Wbu11ZBfARqARaqEVrapohtKopsqhwYP3k5k1LPWQUHeIKF33dh2Nx+XYijEKy+RyCFf
+ieZSq8V70AgsVCU5pU0Lb4fS3piZj3oi5R95iTLILaXScFrlA9uod/nutD1HLy6oWR1iKZsEm2EW
+6ct29gzyvNRtEM9AI7BA1VQ8VMvCvejWtkF2sYZRS+zpZoSK1NK4IE7qaeE2+TooSqpM0eqG9NZO
+0jHRecMkF3k+td/zQ7jxy3UN1DcxDCrTUC/7M9AILFA1lQtQMnqifZzpz+/p7+ZnZFdsGMVZtz2a
+f3JH/ZdygE9nAD9awouV+uCpSXGQwzictJduORoZt3TfWuOK7RTk85pKC+LKvQSNwNaq5jgCrXVf
+dCsDQ7uwMQtXdQaHq2kPIM80cMBttYZ5Q8dM+6dy7zS6LXNUJEplNln6MGWGMecPqdZPYoQ83ask
+Nka/A43AimrzBoobgq7oVjeD7MLGLNwHlFQ3GufVcde9ROo17JfJfLfPCf+kv9zGDDzty4R6vYqb
+sXsvESNBpbXV5TPQCGztpWU312vfFU2a5QXY1fZSCtWswFMmaNkTcfBFG6dyA9RLHqRaw4y3n/Gs
+zI+cHailrsYNdNgNJLiCfPldVYGpxEvQGGylyrHdQbYneq5Lv9ZQlXCMku3Cxqxcm/UgnLrPVKfV
+5hnLUhrm215K+MRw2D04u5TAqo1ltNs9uFUYO+0vc9OtZf4De7xm91CdLC2YBDwCjcFWqrJwx3YW
+7kU3xxLArmb3MElfFyF5PaICZWQ+XNjJpxTlAtg18pQNpvkJGDSqfTpbn2Jq5l5e7cQJk+XYUp+X
+8tIhf29TGOZeg8Zgi6rS8JdEcyB66cmQ8NoubEzmVeoci5+tWPJwvRQSbTIYlVZSmnp/OLe1UnPb
+fIoRLpmUF4Ye2SGTApYh1qdaATmaiaE68wg0BltUlYlcOdkeiG4NTIFd2JjMg63LcFbvHKyJUyYc
+xIMJEfe6MyG6SvXsYRuFVxMiBTmegVr7FaDhuhZVVcMqLljoOhO+bBc2BhtlxlTd5mbG6GQX0/ME
+2K6XJBVgPn7xtPWql4btcGtH/l3T1tZM9L6FjVACdjWnrSDuAvd0OomJIcURM8x7Zsl6mSKe6tjt
+KvWt8Lh3d27nVEodmu6C6v6bi2egG7n0voWu0SrVdjXfXHTjcndpTT3aKXhfvgW8Rsu7Wp6ytyiH
+KP54zZ++Bbyxy3qiWxPC2i5szJEm9Mp4ukzHQt7y6794oz5l8+7/PQQD+R31D9+oh+dv1Pk1yZeM
+CvtLHrwnP/Qd9BffbEQaF6NexwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/03b6904f9574c7f4089f1b8b134177a00020ccfa0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

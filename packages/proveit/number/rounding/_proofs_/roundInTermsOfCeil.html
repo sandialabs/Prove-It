@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.rounding.roundInTermsOfCeil theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.rounding.roundInTermsOfCeil-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">number</a>.<a class="ProveItLink" href="../_context_.html">rounding</a>.<a class="ProveItLink" href="../_theorems_.html#roundInTermsOfCeil">roundInTermsOfCeil</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.rounding.roundInTermsOfCeil-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> roundInTermsOfCeil presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of roundInTermsOfCeil
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="roundInTermsOfCeil">roundInTermsOfCeil:</strong> <a class="ProveItLink" href="../__pv_it/c3ecbdb76213e4ba9f947a327a7f5e7e402ad4a20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQYAAAAyBAMAAABMh2gAAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABHJJREFU
+WMPFmV+IG0Ucx7+bbJLdzSYGH1TEP0vOHloKF6wePmhN9ckXb5/0wUKPqwqKnvEPVeEoqaKmKBhF
+WvtQb9uTU47iRXyQE6FLEYVY2oAVtSANHvTBPyFc70qTs+hvNpfdXC+b2cQbHMjuzu5vZz4z8/s3
+G4BbvoGwoo0Hk9NtcQx4OJjYsEAEJKpBpOIpAV1/brWv3gkifjS7+VrwzHNWX82/LmIJzlv9THO8
+KZYBU3zpWEYww4kiX7oomCHAIF+BYIYEd7Ejy6IZtCWecDglmgE1nrA0LpxhhKdxuyvCGaZ5XYz8
+J7P4tHbBp1li+Kj2Z7Cp3s/v6MjaeWHjo4M+r4zeusgG/5lTUXJwAtevfh3c0Ntq9meg5dcq0WJg
+hrWSbOUGdXzPzr/7RZeLvVu5poRku2utOhhDYgUf0knN+w2UY7xjFn5wKycHY6A+kqQeeskvYq32
+buU74FUvyg/GQHOdKM/NHfJNc1Z6t7IINec1mR2IAZeAy4WCb/wMNdhRHv44bdBcD2W1IQNHLfnb
+w+k7aQXv3bKKEIUcLf3UA7QQeqYbw7HhD7YZPRkuA08AB3zzWSeg6MofSgqHslojLKcwQvXXMF/E
+zqLShEJGdhw/GfvaueHpGiuLbQbNTrwQq/ZkuAV4cL1Gf3n7nt+8cOEwPBYbl02WbEwdCVdRoHoV
+06Z2M6gWI1Uq44z1EClPrss86JbelIs9Ga6nAI5Q21tqX2+vhHSU3bmL1tnRms+2cC5ZkoFrnfp5
+diNmQ6JHFnExBa93YdCgOEanOdNTM9n1P6zUXYbnibQSa7/z88IciOFcZT0DTjCXmoe6RMYYWXHq
+k+wGsUiOIi75MpAPMTg6SQxq9RFm3HcPmzJTKsZgr18L7KDfvA29QcYYSjn1KxrdIBa2Fog45iPn
+PH244DHsNjkML9PvwOPUszUZyzr3iGG7q+C6Yxe4iQ2nAsnGmzS156geb+rzJUzGi0wnvwrVsbXb
+foUY4tYINc7TSXxB/BH8Bcw4DOEnX/Js0xmgyo7hcZbmj2JnxlaXoVd/VIzEXp0ZpLyq1FVCCdtd
+GMZK77pRzYfhOnfBaMSPFgoFI6S/f9bzUcveJJ/aRks/m16YMKmuPlvSJrYcvI090ya2DrGglzS7
+MMymj91X6c3AYlLCchQqgmhrLeK7vB0IP530fPUngX31zD1vdPjqv9vJjF6leTVb+lB2JzVyhcsw
+QMyiHf+ZbGfMapXZsyfLwNvMR522Z3a44he5DEr/sTtsQUq5DFfFxRDpw3rxffwNbP5qGC6DlEO0
+4eUwDU4P9wfP5X7Z+Oi4jy42EWWmFu30g8ES4M0sMW93JeV5uX1JDMOY50umjf9nj4O9fWwfwnUh
+COGOdOctnrAsZs871HHN3fPiRREI8QwOu/6A/6FHiGHsAu7oQ+Mke/MR1KlTo7k+vgWJ+CaWpFQu
+520P+GURQkv8xgBC75lCGQJ9I92YsW9q2RNIalQkQiIfSCxqCGQI+N8B7hKHoD3Njv8CRrpHcH84
+cEcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/c3ecbdb76213e4ba9f947a327a7f5e7e402ad4a20/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

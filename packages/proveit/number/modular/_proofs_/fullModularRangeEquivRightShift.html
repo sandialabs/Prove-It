@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.modular.fullModularRangeEquivRightShift theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.modular.fullModularRangeEquivRightShift-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">number</a>.<a class="ProveItLink" href="../_context_.html">modular</a>.<a class="ProveItLink" href="../_theorems_.html#fullModularRangeEquivRightShift">fullModularRangeEquivRightShift</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.modular.fullModularRangeEquivRightShift-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> fullModularRangeEquivRightShift presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of fullModularRangeEquivRightShift
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="fullModularRangeEquivRightShift">fullModularRangeEquivRightShift:</strong> <a class="ProveItLink" href="../__pv_it/7fe8c3f3173e67faf42f67a93b5caca33c02414c0/expr.html"><img src="data:image/png;base64,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
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/7fe8c3f3173e67faf42f67a93b5caca33c02414c0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.set_theory.containment.transitivitySupsetEqSupsetEq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.set_theory.containment.transitivitySupsetEqSupsetEq-theorem">Proof of <a class="ProveItLink" href="../../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../../_context_.html">logic</a>.<a class="ProveItLink" href="../../_context_.html">set_theory</a>.<a class="ProveItLink" href="../_context_.html">containment</a>.<a class="ProveItLink" href="../_theorems_.html#transitivitySupsetEqSupsetEq">transitivitySupsetEqSupsetEq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.set_theory.containment.transitivitySupsetEqSupsetEq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># allows access to modules in parent context</span>
+<span class="kn">import</span> <span class="nn">proveit</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> transitivitySupsetEqSupsetEq presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of transitivitySupsetEqSupsetEq
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="transitivitySupsetEqSupsetEq">transitivitySupsetEqSupsetEq:</strong> <a class="ProveItLink" href="../__pv_it/f21c90b247d8dafa8be25397b4891a23d4b5ae780/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPcAAAAWBAMAAADuuhdHAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA3VJREFU
+SMe1Vk1oE0EU/twkJrubtb0rGg9iFfyjEEWCjQgigrS2UD0GqqCiUO2hKooRJKyiJJ4s+NOVHlqL
+P8Ve2ovGin9VdP05VEStetKL0lqs9ffNm+x2k7QqmA7svJmdN/O9+ea9NwNMVTn7l/Fe+gZF42Xp
+sbUki8DgBEMVDbvU7PQMcF90P5QefEZGik/FQ3Nt6MtsjcxqoZ6aLD34UylejRWNdOynqiqDPjLN
+AsJdpQffJxnu/spyU3Nz84ncyBtCxGrgPGD0d3aeKj222sjCUD67v868Z+H7Juo62nYcGDXNA6UH
+V5ayWK//GP8n99jKZl0gvkllK3CU/8p63fDNbdJXjFRMES2/MzmUcVr+dCxaqC7KQEN2QU7XZtbj
+gaFxcJ0NehTJdQ3yuDXQOBwMSZBRjnA5E/cW2mFex5n8Oo7NpslH9xi4Ma4eME1TgJ2LoKNc6gbZ
+jfxQhz108J4P1Ti2UDcIha1skwT5EtDZQ1vpSAa84FoV6+kiNKLAdStPvYfMJfONXOBMi4u6vjI6
+6gHfLqo5PI+qAEVh2A7ySH+TNDkCHzMhHKHWCx5ul+dYT98eYFW+eiCBYJZExAtO1WwP+DHeOe+g
+RoKrg/U8OWKywpUaLBa2KWI/nV7w2pDc1XQL2giUD3nqwA4soYZmeWjX6dtdSHuVcJGwOBPRPbqF
+l8RyVqheVJHg2W7iccATvlz4xOEfepJCnjrwDHs9OOxwp+n76ImALB+n4KY/53Do5jVfYAlrPATm
+C1mWLQA3uhSZKpUahAehNOapA/Pw3QMu4ohjPT0eC9ekn5FvdQt+fAKhTJiivXuQZsaOk22CMnGA
+mu0Bvxy7O+YYE8pC5VzhqgNJ9pJLTjA2Qkv/tNDzq8nx17U7ZKMt1cAOMUO4vcFmWGjlGKA1q4Wx
+vqQ8GRd8JdQRblwle7vgl3nTUYcewQoS2fz06hRKr3tvFeShdre1gVa01WNQx6DOouvGwkFo9zzg
+fmKBg7GOCG21cJI276qTv1YSWTYuZgoulj+UPvdcR6GmDwZm4s5w5TYiZWMXwg19lgc8nUTLF3uz
+maINhA9VRo8QoKNOSWanoO12bCGK0+FkF37hTa+7Lc89F5p0vv73x8Tkpci6XnfZzL+A9/7PM+p5
+4Q/baRiYGJxyu5kqUhe53UxMyUvQN2VvzN+Bf+ukxIh+SwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/f21c90b247d8dafa8be25397b4891a23d4b5ae780/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.number.multiplication.multNotEqZero theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.number.multiplication.multNotEqZero-theorem">Proof of <a class="ProveItLink" href="../../../_context_.html">proveit</a>.<a class="ProveItLink" href="../../_context_.html">number</a>.<a class="ProveItLink" href="../_context_.html">multiplication</a>.<a class="ProveItLink" href="../_theorems_.html#multNotEqZero">multNotEqZero</a> theorem<a class="anchor-link" href="#Proof-of-proveit.number.multiplication.multNotEqZero-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># the theorem&#39;s context is in the parent directory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> multNotEqZero presuming []
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Beginning proof of multNotEqZero
+Recorded &#39;presuming&#39; information
+Presuming previous theorems (applied transitively).
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="multNotEqZero">multNotEqZero:</strong> <a class="ProveItLink" href="../__pv_it/7c436fafffba99973228d62c4a03b228b7899ece0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXwAAAAZCAMAAAAFd2WlAAAAOVBMVEX///8kJCQNDQ0oKCgQEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAD9T1yxAAAAAXRSTlMAQObY
+ZgAABIRJREFUaN7tWtmymzAMpS3eV/j/j60t72ATLoRMOxM94CRXsuFYPlq403RdGOdcTl+5IsRh
+Z+5MwL8Y3hHJvuB/wX/3c9l2fFL0iHmNOtZ24C/5i7VXwL9h/5go0Y7PCuujL5dmJ5A1tNV24Bud
+vizqCvg37B+TRbbjw1u99PeE1HfkUFKQnRRtB75M3iHFJdq5Yf+UWNyOT4tBPcev4bAz6C2Ntuf8
+5LDFhX/G+dftn5KU/34qD1Zzz/Fp9UVAbNWrqrU9+NYoL/Ln4TNYXLd/KtrydvwAzZFjx59WAJ+s
+utaGbGcVXi6k/PHhLts/JAi34ySxwWh+R0QazGT2/CZqx1crDuCjWhvADwdEyKvgX7a/INRASoUM
+8ntNUY/qhG1HMrtbW9Zgfysw1TM1QaaEXLOA/Pntr3n3V/BMGsBP2gA+weOQ7U04Nu6goJkNwH9h
+fy15FoZxtgtkMniddc+i4XZY57xx3Yxq9puAPeoU45qKTp4FVbg9z7S5W37o+A58HMA3tXYosvwX
+tE/SlTYYWw8E1AtYjYqsgf2FyBVXVFS4xeiyQ1aHLeaeNSF66c6ez6QZMShyFFsqNRmccpii1szU
++Of2MFC2maKmnaQdwPdHeR+crNBSwQNaNDljM6xw+/YXUsS0opXBRQbgq9X71azPgT+LbNKCP/Fz
+9X1Wa2Y6BH/LwWvMdvQefFeLxa2y2FIUAhXJQURTTSU6AL/YTwojttAz/rRXzCsSt2CYuA8+Xf0f
+uB2A39KOgrOu4wOTG05Sz1QB1c4KnP9rDsyfN1cAVVk4OVk79naEjOWYJZ7WfFip2gYOCaMsHYNf
+7BWnDhpYgh0yaqVYErZ8ApQdRO8Efj7+PfDbgKvA3dgSuir3wC8zVUC1AbdfWddFVhtw3SPEOCQV
+4pFNFa7Bd27fSafygyT7CWMfoCErOU7tsmJ9FvJ0atSsYqZ4/owgBu41053GUTg966jDjD0/0/r+
+Q7OreaYKKHga0z/C7WlUM220U1dzTUHEJxhkhhwHsne/ngdf2g6rl1+SvedhFObkh+BXiiWrSitK
+TRMhEZHER2CBp8L5KwlWuxOZAI6jYghRyRA5oJ1M6/sP9R5VM2WgwNNb/uw0uZRBKNW8STuBb5O6
+3xy3M+7KGs93PIwOwI/2yruksBA0D8EvihZrawN+ZUWsUD8XjJllyXZ6nn/UXiDvqnoLUJ5DW248
+bill7W0/X67waEA0eTctSbn1EPx8S9JxArHZ86V32N4lK2ok0kRlRVdI0m7DKlK8j3Qhz+9x/lFj
+Tb8J/Aqo3X2+6O42jbXGMRiUj4Ce0MlZQjOCnQCfMKQRLuBTTy/Ue2d90bWiO4yp7BS6nNJlEYwO
+Aq6/xUjoXfBzprfN+CTmK0PvAL8GalNfanOyAX34JgtFzn/VXhj8Mex/r/7Xm0mQJSdX3GHdB/+z
+L1M2W/zC8YU8Bf7Z3k63J4FWDEVQh5Kb3xTzvnK2PD4J/kdfI27TYnJW+/F3uPbkb6c757Ibgf9L
+uQn+5/9vRzY9JPrvvMD5cdBw2LG/Hrg2HCdUeowAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../__pv_it/7c436fafffba99973228d62c4a03b228b7899ece0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-07-09 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

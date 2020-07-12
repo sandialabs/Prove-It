@@ -1,0 +1,857 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit._core_.context &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit._core_.context</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">A context in Prove-It is a conceptual space of related literals, axioms,</span>
+<span class="sd">and theorems.  Consider, for example, a mathematics subject area such</span>
+<span class="sd">as trigonometry or linear algebra.  A context could represent such a</span>
+<span class="sd">subject area, or a reasonable subset of such a subject area.  Such</span>
+<span class="sd">contexts are represented in directories.  The directory will contain </span>
+<span class="sd">Jupyter notebooks for common expressions (_common_.ipynb) including </span>
+<span class="sd">literals, axioms (_axioms_.ipynb), and theorems (_theorems_.ipynb).  It</span>
+<span class="sd">will also contain Python scripts for defining Operation or Literal classes</span>
+<span class="sd">for building Expression objects specific to the context with convenient</span>
+<span class="sd">methods for invoking theorems and automated derivations.  Proofs of</span>
+<span class="sd">the theorems are to be stored in a _proofs_ sub-directory as Jupyter</span>
+<span class="sd">notebooks named for the theorem to be proven.</span>
+
+<span class="sd">A __pv_it sub-directory is generated to store a distributed</span>
+<span class="sd">&quot;database&quot; of information pertaining to the context.  It stores Expression</span>
+<span class="sd">entries along with latex and png representations for convenience.  It</span>
+<span class="sd">enumerates the Axioms and the Theorems, pointing to these Expression entries.</span>
+<span class="sd">It also stores KnownTruth and Proof entries for the purpose of storing</span>
+<span class="sd">the theorem proofs, and it stores theorem proof dependencies.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">._context_storage</span> <span class="k">import</span> <span class="n">ContextStorage</span><span class="p">,</span> <span class="n">relurl</span><span class="c1">#Comment out for python 3</span>
+<span class="c1">#from _context_storage import ContextStorage, relurl#Comment in for python 3</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="k">import</span> <span class="n">ModuleType</span>
+
+<div class="viewcode-block" id="Context"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context">[docs]</a><span class="k">class</span> <span class="nc">Context</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A Context object provides an interface into the __pv_it database for access</span>
+<span class="sd">    to the common expressions, axioms, theorems and associated proofs of a</span>
+<span class="sd">    Prove-It context.  You can also store miscellaneous expressions (and</span>
+<span class="sd">    their latex/png representations) generated in test/demonstration notebooks </span>
+<span class="sd">    within the context directory.  These may be garbage collected via the</span>
+<span class="sd">    &#39;clean&#39; method; anything that is not associated with a common</span>
+<span class="sd">    expression, axiom, theorem, or theorem proof will be garbage collected.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="c1"># maps root context names to their directories.  A root context</span>
+    <span class="c1"># is one use containing directory has no __init__.py.  All context</span>
+    <span class="c1"># directories should have an __init__.py file.</span>
+    <span class="n">_rootContextPaths</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    
+    <span class="c1"># The current default Context when a Literal is created.</span>
+    <span class="c1"># If this is None, use Context(), the Context at the current working directory.</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="c1"># track the storage object associated with each context, mapped</span>
+    <span class="c1"># by the absolute path</span>
+    <span class="n">storages</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="n">specialExprKindToModuleName</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;common&#39;</span><span class="p">:</span><span class="s1">&#39;_common_&#39;</span><span class="p">,</span> <span class="s1">&#39;axiom&#39;</span><span class="p">:</span><span class="s1">&#39;_axioms_&#39;</span><span class="p">,</span> <span class="s1">&#39;theorem&#39;</span><span class="p">:</span><span class="s1">&#39;_theorems_&#39;</span><span class="p">}</span>
+    
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_clear_</span><span class="p">():</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Clear all references to Prove-It information in</span>
+<span class="sd">        the Context jurisdiction.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">Context</span><span class="o">.</span><span class="n">_rootContextPaths</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">Context</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">Context</span><span class="o">.</span><span class="n">storages</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">CommonExpressions</span><span class="o">.</span><span class="n">expr_id_contexts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">CommonExpressions</span><span class="o">.</span><span class="n">referenced_contexts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>        
+        
+    <span class="c1"># externals.txt at top level to track relative path to external</span>
+    <span class="c1"># contexts.</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a Context for the given path.  If given a file name instead,</span>
+<span class="sd">        use the path of the containing directory.  If no path</span>
+<span class="sd">        is provided, base the context on the current working directory.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ContextException</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is not a valid path; unable to create Context.&quot;</span><span class="o">%</span><span class="n">path</span><span class="p">)</span>
+        
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="c1"># if in a __pv_it_ directory, go to the containing context directory</span>
+        <span class="n">splitpath</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;__pv_it&#39;</span> <span class="ow">in</span> <span class="n">splitpath</span><span class="p">:</span>
+            <span class="n">num_up_levels</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">splitpath</span><span class="p">)</span><span class="o">-</span><span class="n">splitpath</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;__pv_it&#39;</span><span class="p">))</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="p">([</span><span class="n">path</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;..&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">num_up_levels</span><span class="p">)))</span>
+        <span class="c1"># if in a _proofs_ directory, go to the containing context directory</span>
+        <span class="k">if</span> <span class="n">splitpath</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;_proofs_&#39;</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="p">([</span><span class="n">path</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;..&#39;</span><span class="p">])))</span>
+        
+        <span class="c1"># move the path up to the directory level, not script file level</span>
+        <span class="k">if</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span><span class="o">==</span><span class="s1">&#39;.py&#39;</span> <span class="ow">or</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span><span class="o">==</span><span class="s1">&#39;.pyc&#39;</span><span class="p">:</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># Makes the case be consistent in operating systems (i.e. Windows)</span>
+        <span class="c1"># with a case insensitive filesystem: </span>
+        <span class="n">normpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">normpath</span> <span class="ow">in</span> <span class="n">Context</span><span class="o">.</span><span class="n">storages</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="o">=</span> <span class="n">Context</span><span class="o">.</span><span class="n">storages</span><span class="p">[</span><span class="n">normpath</span><span class="p">]</span> <span class="c1"># got the storage - we&#39;re good</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">return</span>
+        
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span> <span class="c1"># just in case checking for &#39;.py&#39; or &#39;.pyc&#39; wasn&#39;t sufficient</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">normpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">normpath</span> <span class="ow">in</span> <span class="n">Context</span><span class="o">.</span><span class="n">storages</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="o">=</span> <span class="n">Context</span><span class="o">.</span><span class="n">storages</span><span class="p">[</span><span class="n">normpath</span><span class="p">]</span> <span class="c1"># got the storage - we&#39;re good</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">return</span>
+        
+        <span class="c1"># the name of the context is based upon the directory, going</span>
+        <span class="c1"># up the tree as long as there is an __init__.py file.</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">remainingPath</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">while</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">remainingPath</span><span class="p">,</span> <span class="s1">&#39;__init__.py&#39;</span><span class="p">)):</span>
+            <span class="n">remainingPath</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">remainingPath</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">tail</span> <span class="k">if</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="p">(</span><span class="n">tail</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+        <span class="c1"># the root context tracks paths to external packages</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">path</span>
+            <span class="k">raise</span> <span class="n">ContextException</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> context directory must have an __init__.py file&#39;</span><span class="o">%</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">rootDirectory</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">rootDirectory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">remainingPath</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># Create the Storage object for this Context</span>
+        <span class="k">if</span> <span class="n">normpath</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Context</span><span class="o">.</span><span class="n">storages</span><span class="p">:</span>
+            <span class="n">Context</span><span class="o">.</span><span class="n">storages</span><span class="p">[</span><span class="n">normpath</span><span class="p">]</span> <span class="o">=</span> <span class="n">ContextStorage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">rootDirectory</span><span class="p">)</span>
+            <span class="c1"># if the _sub_contexts_.txt file has not been created, make an empty one</span>
+            <span class="n">sub_contexts_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;_sub_contexts_.txt&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">sub_contexts_path</span><span class="p">):</span>
+                <span class="nb">open</span><span class="p">(</span><span class="n">sub_contexts_path</span><span class="p">,</span> <span class="s1">&#39;wt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="o">=</span> <span class="n">Context</span><span class="o">.</span><span class="n">storages</span><span class="p">[</span><span class="n">normpath</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span>
+            
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="ow">is</span> <span class="n">other</span><span class="o">.</span><span class="n">_storage</span>
+    
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">_storage</span>
+    
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span>
+    
+<div class="viewcode-block" id="Context.links"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.links">[docs]</a>    <span class="k">def</span> <span class="nf">links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_directory</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+        <span class="n">context_name_segments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">context_html_segments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">context_name_segment</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">context_name_segments</span><span class="p">):</span>      
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">directory</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;..&#39;</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">context_name_segments</span><span class="p">)</span> <span class="o">-</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;_context_.ipynb&#39;</span><span class="p">]))</span>
+            <span class="n">url_link</span> <span class="o">=</span> <span class="n">relurl</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">from_directory</span><span class="p">)</span>
+            <span class="n">context_html_segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;&lt;a class=\&quot;ProveItLink\&quot; href=\&quot;</span><span class="si">%s</span><span class="s1">\&quot;&gt;</span><span class="si">%s</span><span class="s1">&lt;/a&gt;&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">url_link</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">),</span> <span class="n">context_name_segment</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">context_html_segments</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Context.isRoot"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.isRoot">[docs]</a>    <span class="k">def</span> <span class="nf">isRoot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True iff this Context is a &quot;root&quot; Context (no parent</span>
+<span class="sd">        directory with an __init__.py file).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">isRoot</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Context.getPath"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getPath">[docs]</a>    <span class="k">def</span> <span class="nf">getPath</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the directory associated with the context</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">directory</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_setRootContextPath</span><span class="p">(</span><span class="n">contextName</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">contextName</span> <span class="ow">in</span> <span class="n">Context</span><span class="o">.</span><span class="n">_rootContextPaths</span><span class="p">:</span>
+            <span class="n">storedPath</span> <span class="o">=</span> <span class="n">Context</span><span class="o">.</span><span class="n">_rootContextPaths</span><span class="p">[</span><span class="n">contextName</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">storedPath</span><span class="p">)</span> <span class="o">!=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">ContextException</span><span class="p">(</span><span class="s2">&quot;Conflicting directory references to context &#39;</span><span class="si">%s</span><span class="s2">&#39;: </span><span class="si">%s</span><span class="s2"> vs </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">contextName</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">storedPath</span><span class="p">))</span>
+        <span class="n">Context</span><span class="o">.</span><span class="n">_rootContextPaths</span><span class="p">[</span><span class="n">contextName</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span> 
+    
+<div class="viewcode-block" id="Context.getContext"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getContext">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">getContext</span><span class="p">(</span><span class="n">contextName</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the Context with the given name.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">splitContextName</span> <span class="o">=</span> <span class="n">contextName</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">rootName</span> <span class="o">=</span> <span class="n">splitContextName</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">rootName</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Context</span><span class="o">.</span><span class="n">_rootContextPaths</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ContextException</span><span class="p">(</span><span class="s2">&quot;Context root &#39;</span><span class="si">%s</span><span class="s2">&#39; is unknown&quot;</span><span class="o">%</span><span class="n">rootName</span><span class="p">)</span>
+        <span class="n">rootDirectory</span> <span class="o">=</span> <span class="n">Context</span><span class="o">.</span><span class="n">_rootContextPaths</span><span class="p">[</span><span class="n">rootName</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Context</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="p">([</span><span class="n">rootDirectory</span><span class="p">]</span><span class="o">+</span><span class="n">splitContextName</span><span class="p">[</span><span class="mi">1</span><span class="p">:])))</span>        </div>
+        
+<div class="viewcode-block" id="Context.getSubContextNames"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getSubContextNames">[docs]</a>    <span class="k">def</span> <span class="nf">getSubContextNames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">getSubContextNames</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Context.getSubContexts"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getSubContexts">[docs]</a>    <span class="k">def</span> <span class="nf">getSubContexts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield the Context objects for the sub-contexts.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">sub_context_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">getSubContextNames</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">Context</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="n">sub_context_name</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Context.setSubContextNames"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.setSubContextNames">[docs]</a>    <span class="k">def</span> <span class="nf">setSubContextNames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subContextNames</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">setSubContextNames</span><span class="p">(</span><span class="n">subContextNames</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Context.appendSubContextName"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.appendSubContextName">[docs]</a>    <span class="k">def</span> <span class="nf">appendSubContextName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subContextName</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">appendSubContextName</span><span class="p">(</span><span class="n">subContextName</span><span class="p">)</span></div>
+                
+    <span class="k">def</span> <span class="nf">_setAxioms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axiomNames</span><span class="p">,</span> <span class="n">axiomDefinitions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">setSpecialStatements</span><span class="p">(</span><span class="n">axiomNames</span><span class="p">,</span> <span class="n">axiomDefinitions</span><span class="p">,</span> <span class="s1">&#39;axiom&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_setTheorems</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theoremNames</span><span class="p">,</span> <span class="n">theoremDefinitions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">setSpecialStatements</span><span class="p">(</span><span class="n">theoremNames</span><span class="p">,</span> <span class="n">theoremDefinitions</span><span class="p">,</span> <span class="s1">&#39;theorem&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_clearAxioms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setAxioms</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_clearTheorems</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setTheorems</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">())</span>
+    
+            
+    <span class="k">def</span> <span class="nf">_clearCommonExressions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setCommonExpressions</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">(),</span> <span class="n">clear</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">_setCommonExpressions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exprNames</span><span class="p">,</span> <span class="n">exprDefinitions</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">setCommonExpressions</span><span class="p">(</span><span class="n">exprNames</span><span class="p">,</span> <span class="n">exprDefinitions</span><span class="p">,</span> <span class="n">clear</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="Context.makeSpecialExprModule"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.makeSpecialExprModule">[docs]</a>    <span class="k">def</span> <span class="nf">makeSpecialExprModule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Make a _common_.py, _axioms_.py, or _theorems_.py file for importing</span>
+<span class="sd">        expressions from the certified database.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">specialStatementsClassName</span> <span class="o">=</span> <span class="n">kind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">kind</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">kind</span><span class="o">==</span><span class="s1">&#39;common&#39;</span><span class="p">:</span> <span class="n">specialStatementsClassName</span> <span class="o">=</span> <span class="s1">&#39;CommonExpressions&#39;</span>        
+        <span class="n">output</span> <span class="o">=</span> <span class="s2">&quot;import sys</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;from proveit._core_.context import </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">specialStatementsClassName</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;sys.modules[__name__] = </span><span class="si">%s</span><span class="s2">(__name__, __file__)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">specialStatementsClassName</span><span class="p">)</span>        
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">_.py&#39;</span><span class="o">%</span><span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="o">!=</span> <span class="n">output</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">ContextException</span><span class="p">(</span><span class="s2">&quot;An existing _</span><span class="si">%s</span><span class="s2">_.py must be removed before a proper one may be autogenerated&quot;</span><span class="o">%</span><span class="n">kind</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>        
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Context.axiomNames"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.axiomNames">[docs]</a>    <span class="k">def</span> <span class="nf">axiomNames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">axiomNames</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Context.theoremNames"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.theoremNames">[docs]</a>    <span class="k">def</span> <span class="nf">theoremNames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">theoremNames</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Context.commonExpressionNames"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.commonExpressionNames">[docs]</a>    <span class="k">def</span> <span class="nf">commonExpressionNames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">commonExpressionNames</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Context.recordCommonExprDependencies"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.recordCommonExprDependencies">[docs]</a>    <span class="k">def</span> <span class="nf">recordCommonExprDependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Record the context names of any referenced common expressions in storage</span>
+<span class="sd">        while creating the common expressions for this context</span>
+<span class="sd">        (for the purposes of checking for illegal cyclic dependencies).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">recordCommonExprDependencies</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Context.storedCommonExprDependencies"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.storedCommonExprDependencies">[docs]</a>    <span class="k">def</span> <span class="nf">storedCommonExprDependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the stored set of context names of common expressions</span>
+<span class="sd">        referenced by the common expressions of this context.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">storedCommonExprDependencies</span><span class="p">()</span>    </div>
+
+<div class="viewcode-block" id="Context.cyclicallyReferencedCommonExprContext"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.cyclicallyReferencedCommonExprContext">[docs]</a>    <span class="k">def</span> <span class="nf">cyclicallyReferencedCommonExprContext</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check for illegal cyclic dependencies of common expression notebooks.</span>
+<span class="sd">        If there is one, return the name; otherwise return None.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">cyclicallyReferencedCommonExprContext</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="Context.referenceHyperlinkedObjects"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.referenceHyperlinkedObjects">[docs]</a>    <span class="k">def</span> <span class="nf">referenceHyperlinkedObjects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Reference displayed expressions, recorded under the given name</span>
+<span class="sd">        in the __pv_it directory.  If the same name is reused,</span>
+<span class="sd">        any expressions that are not displayed this time that</span>
+<span class="sd">        were displayed last time will be unreferenced.</span>
+<span class="sd">        If clear is True, remove all of the references and the</span>
+<span class="sd">        file that stores these references.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">referenceHyperlinkedObjects</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">clear</span><span class="p">)</span></div>
+                            
+<div class="viewcode-block" id="Context.getAxiom"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getAxiom">[docs]</a>    <span class="k">def</span> <span class="nf">getAxiom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the Axiom of the given name in this context.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">getAxiom</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="Context.getTheorem"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getTheorem">[docs]</a>    <span class="k">def</span> <span class="nf">getTheorem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the Theorem of the given name in this context.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">getTheorem</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Context.findAxiom"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.findAxiom">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">findAxiom</span><span class="p">(</span><span class="n">fullName</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given the full name of an axiom that includes the context</span>
+<span class="sd">        name, return the Axiom obtained the proper Context.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">Context</span><span class="o">.</span><span class="n">_findStmt</span><span class="p">(</span><span class="n">fullName</span><span class="p">,</span> <span class="s1">&#39;axiom&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Context.findTheorem"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.findTheorem">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">findTheorem</span><span class="p">(</span><span class="n">fullName</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given the full name of an theorem that includes the context</span>
+<span class="sd">        name, return the Theorem obtained the proper Context.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">Context</span><span class="o">.</span><span class="n">_findStmt</span><span class="p">(</span><span class="n">fullName</span><span class="p">,</span> <span class="s1">&#39;theorem&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_findStmt</span><span class="p">(</span><span class="n">fullName</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="n">split_name</span> <span class="o">=</span> <span class="n">fullName</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">context_name</span><span class="p">,</span> <span class="n">stmt_name</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">split_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">split_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">Context</span><span class="o">.</span><span class="n">getContext</span><span class="p">(</span><span class="n">context_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;axiom&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">getAxiom</span><span class="p">(</span><span class="n">stmt_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;theorem&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">getTheorem</span><span class="p">(</span><span class="n">stmt_name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Context.specialExpr"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.specialExpr">[docs]</a>    <span class="k">def</span> <span class="nf">specialExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the kind and name of the special expression as a tuple,</span>
+<span class="sd">        assuming the &#39;expr&#39; is a special expression of this Context.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">specialExpressions</span><span class="p">[</span><span class="n">expr</span><span class="o">.</span><span class="n">_style_id</span><span class="p">]</span></div>
+    
+<div class="viewcode-block" id="Context.specialExprAddress"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.specialExprAddress">[docs]</a>    <span class="k">def</span> <span class="nf">specialExprAddress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        A special expression &quot;address&quot; consists of a kind (&#39;common&#39;, &#39;axiom&#39;, or</span>
+<span class="sd">        &#39;theorem&#39;), module and the name of the expression.</span>
+<span class="sd">        Provided that the given expression is one of the special expressions</span>
+<span class="sd">        of this context, return the address as a tuple.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">kind</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">specialExpressions</span><span class="p">[</span><span class="n">expr</span><span class="o">.</span><span class="n">_style_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;axiom&#39;</span> <span class="ow">or</span> <span class="n">kind</span><span class="o">==</span><span class="s1">&#39;theorem&#39;</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.expr&#39;</span>
+        <span class="k">return</span> <span class="n">kind</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">_specialExprModules</span><span class="p">[</span><span class="n">kind</span><span class="p">],</span> <span class="n">name</span></div>
+    
+<div class="viewcode-block" id="Context.proofNotebook"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.proofNotebook">[docs]</a>    <span class="k">def</span> <span class="nf">proofNotebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proof</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the &quot;basic&quot; proof notebook corresponding to the given </span>
+<span class="sd">        proof_id.  Note, this is different than a &quot;theorem&quot; proof</span>
+<span class="sd">        notebook which generates the proof.  This just shows the</span>
+<span class="sd">        proof as Prove-It stores it.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">proofNotebook</span><span class="p">(</span><span class="n">proof</span><span class="p">)</span>    </div>
+    
+<div class="viewcode-block" id="Context.thmProofNotebook"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.thmProofNotebook">[docs]</a>    <span class="k">def</span> <span class="nf">thmProofNotebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theoremName</span><span class="p">,</span> <span class="n">expr</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the path of the proof notebook for a theorem with the </span>
+<span class="sd">        given name and expression, creating it if it does not already </span>
+<span class="sd">        exist.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">thmProofNotebook</span><span class="p">(</span><span class="n">theoremName</span><span class="p">,</span> <span class="n">expr</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Context.stashExtraneousThmProofNotebooks"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.stashExtraneousThmProofNotebooks">[docs]</a>    <span class="k">def</span> <span class="nf">stashExtraneousThmProofNotebooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        For any proof notebooks for theorem names not included in the context, </span>
+<span class="sd">        stash them or remove them if they are generic notebooks.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">stashExtraneousThmProofNotebooks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theoremNames</span><span class="p">())</span></div>
+                
+<div class="viewcode-block" id="Context.expressionNotebook"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.expressionNotebook">[docs]</a>    <span class="k">def</span> <span class="nf">expressionNotebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">unofficialNameKindContext</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the path of the expression notebook, creating it if it does not</span>
+<span class="sd">        already exist.  If &#39;unofficialNameKindContext&#39; is provided,</span>
+<span class="sd">        it should be the (name, kind, context) for a special expression</span>
+<span class="sd">        that is not-yet-official (%end_[common/axioms/theorems] has not been</span>
+<span class="sd">        called yet in the special expressions notebook).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># use the Storage object to generate/grab the expression notebook.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">expressionNotebook</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">unofficialNameKindContext</span><span class="p">)</span></div>
+                 
+<div class="viewcode-block" id="Context.getStoredAxiom"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getStoredAxiom">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">getStoredAxiom</span><span class="p">(</span><span class="n">fullname</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Context</span><span class="o">.</span><span class="n">getStoredStmt</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="s1">&#39;axiom&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Context.getStoredTheorem"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getStoredTheorem">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">getStoredTheorem</span><span class="p">(</span><span class="n">fullname</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Context</span><span class="o">.</span><span class="n">getStoredStmt</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="s1">&#39;theorem&#39;</span><span class="p">)</span></div>
+                
+<div class="viewcode-block" id="Context.getStoredStmt"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getStoredStmt">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">getStoredStmt</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._context_storage</span> <span class="k">import</span> <span class="n">StoredAxiom</span><span class="p">,</span> <span class="n">StoredTheorem</span>
+        <span class="n">split_name</span> <span class="o">=</span> <span class="n">fullname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">context_name</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">split_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">stmt_name</span> <span class="o">=</span> <span class="n">split_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">Context</span><span class="o">.</span><span class="n">getContext</span><span class="p">(</span><span class="n">context_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;axiom&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">StoredAxiom</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">stmt_name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;theorem&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">StoredTheorem</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">stmt_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ContextException</span><span class="p">(</span><span class="s2">&quot;Expecting &#39;kind&#39; to be &#39;axiom&#39; or &#39;theorem&#39; not &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="o">%</span><span class="n">kind</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Context.getCommonExpr"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getCommonExpr">[docs]</a>    <span class="k">def</span> <span class="nf">getCommonExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the Expression of the common expression in this context</span>
+<span class="sd">        with the given name.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">getCommonExpr</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Context.getStoredExpr"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getStoredExpr">[docs]</a>    <span class="k">def</span> <span class="nf">getStoredExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the stored Expression with the given id (hash string).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">makeExpression</span><span class="p">(</span><span class="n">expr_id</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Context.getStoredKnownTruth"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getStoredKnownTruth">[docs]</a>    <span class="k">def</span> <span class="nf">getStoredKnownTruth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">truth_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the stored KnownTruth with the given id (hash string).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">makeKnownTruth</span><span class="p">(</span><span class="n">truth_id</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Context.getShowProof"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.getShowProof">[docs]</a>    <span class="k">def</span> <span class="nf">getShowProof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proof_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the _ShowProof representing the proof with the </span>
+<span class="sd">        given id (hash string) for display purposes.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">makeShowProof</span><span class="p">(</span><span class="n">proof_id</span><span class="p">)</span></div>
+    
+    <span class="k">def</span> <span class="nf">_stored_png</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">latex</span><span class="p">,</span> <span class="n">configLatexToolFn</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Find the .png file for the stored Expression.</span>
+<span class="sd">        Create it if it did not previously exist.</span>
+<span class="sd">        Return the png data and path where the png is stored as a tuple.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">retrieve_png</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">latex</span><span class="p">,</span> <span class="n">configLatexToolFn</span><span class="p">)</span>        
+    
+<div class="viewcode-block" id="Context.clean"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Clean the corresponding __pv_it directory of any stored expressions</span>
+<span class="sd">        or proofs that have a reference count of zero.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Context.clear"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Remove reference counts to all common expressions, axioms,</span>
+<span class="sd">        theorems, and recorded displayed expressions and then</span>
+<span class="sd">        clean the __pv_it folder of any stored expressions with</span>
+<span class="sd">        zero reference counts.  Note that this can, in principle</span>
+<span class="sd">        (assuming nothing is corrupted), be undone by re-executing</span>
+<span class="sd">        the notebooks that generated these in the first place.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setTheorems</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setAxioms</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setCommonExpressions</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">clearHyperlinkedObjectReferences</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="Context.clearAll"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.clearAll">[docs]</a>    <span class="k">def</span> <span class="nf">clearAll</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Clear (see clear method) this context and all sub-contexts.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">sub_context</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">getSubContexts</span><span class="p">():</span>
+            <span class="n">sub_context</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Context.containsAnyExpression"><a class="viewcode-back" href="../../../api/proveit.Context.html#proveit.Context.containsAnyExpression">[docs]</a>    <span class="k">def</span> <span class="nf">containsAnyExpression</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True if this context and all of its sub-contexts</span>
+<span class="sd">        contain no expressions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">containsAnyExpression</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">sub_context</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">getSubContexts</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">sub_context</span><span class="o">.</span><span class="n">containsAnyExpression</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>                    </div></div>
+
+<span class="k">class</span> <span class="nc">Axioms</span><span class="p">(</span><span class="n">ModuleType</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Used in _axioms_.py modules for accessing Axioms from</span>
+<span class="sd">    the _certified_ database (returning the associated KnownTruth object).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="n">ModuleType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__file__</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">axiomNames</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;__&#39;</span><span class="p">:</span> 
+            <span class="k">raise</span> <span class="ne">AttributeError</span> <span class="c1"># don&#39;t handle internal Python attributes</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">axiom_truth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">getAxiom</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">provenTruth</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;&#39; axiom not found in &#39;&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;&#39;</span><span class="se">\n</span><span class="s2">(make sure to execute the appropriate &#39;_axioms_.ipynb&#39; notebook after any changes)&quot;</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        try:</span>
+<span class="sd">            axiom_truth.deriveSideEffects()</span>
+<span class="sd">        except Exception as e:</span>
+<span class="sd">            print &quot;Failure to derive side effects of axiom&quot;, name</span>
+<span class="sd">            traceback.print_exc()</span>
+<span class="sd">            raise e</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">axiom_truth</span>
+    
+<span class="k">class</span> <span class="nc">Theorems</span><span class="p">(</span><span class="n">ModuleType</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Used in _theorems_.py modules for accessing Theorems from</span>
+<span class="sd">    the _certified_ database (returning the associated KnownTruth object).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="n">ModuleType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__file__</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">theoremNames</span><span class="p">())</span>
+                
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;__&#39;</span><span class="p">:</span> 
+            <span class="k">raise</span> <span class="ne">AttributeError</span> <span class="c1"># don&#39;t handle internal Python attributes</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">theorem_truth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">getTheorem</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">provenTruth</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;&#39; theorem not found in &#39;&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span>  <span class="s2">&quot;&#39;</span><span class="se">\n</span><span class="s2">(make sure to execute the appropriate &#39;_theorems_.ipynb&#39; notebook after any changes)&quot;</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        try:</span>
+<span class="sd">            theorem_truth.deriveSideEffects()</span>
+<span class="sd">        except Exception as e:</span>
+<span class="sd">            print &quot;Failure to derive side effects of theorem&quot;, name</span>
+<span class="sd">            traceback.print_exc()</span>
+<span class="sd">            raise e</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">theorem_truth</span>
+
+<span class="k">class</span> <span class="nc">CommonExpressions</span><span class="p">(</span><span class="n">ModuleType</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Used in _common_.py modules for accessing common sub-expressions.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="c1"># map storage ids of common expression to the Context of the common expression</span>
+    <span class="n">expr_id_contexts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span> <span class="c1"># populated in Context.commonExpressionNames()</span>
+    
+    <span class="c1"># set of contexts that has a common expression being referenced</span>
+    <span class="n">referenced_contexts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> <span class="c1"># populated in Storage._addReference(...)</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="n">ModuleType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__file__</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">commonExpressionNames</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.label.label</span> <span class="k">import</span> <span class="n">TemporaryLabel</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;__&#39;</span><span class="p">:</span> 
+            <span class="k">raise</span> <span class="ne">AttributeError</span> <span class="c1"># don&#39;t handle internal Python attributes</span>
+        
+        <span class="c1"># Is the current directory a &quot;context&quot; directory?</span>
+        <span class="n">in_context</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s1">&#39;_context_.ipynb&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># File to store information about a failure to import a common expression:</span>
+        <span class="n">failed_common_import_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;__pv_it&#39;</span><span class="p">,</span> <span class="s1">&#39;failed_common_import.txt&#39;</span><span class="p">)</span>
+        <span class="c1"># This is used to track dependencies which automatically executing </span>
+        <span class="c1"># notebooks via &#39;build.py&#39; (at the root level of Prove-It).</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">getCommonExpr</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">in_context</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">failed_common_import_filename</span><span class="p">):</span>
+                <span class="c1"># successful import -- don&#39;t need this &#39;failure&#39; file anymore.</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">failed_common_import_filename</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">expr</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">UnsetCommonExpressions</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># if this is a context directory, store the context that failed to import.</span>
+            <span class="k">if</span> <span class="n">in_context</span><span class="p">:</span>
+                <span class="c1"># store the context in which a common expression failed to import.</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">failed_common_import_filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">UnsetCommonExpressions</span><span class="p">):</span>
+                <span class="c1"># Use a temporary placeholder if the common expressions are not set.</span>
+                <span class="c1"># This avoids exceptions while common exppressions are being built/rebuilt.</span>
+                <span class="k">return</span> <span class="n">TemporaryLabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+            
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;&#39; not found in the list of common expressions of &#39;&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;&#39;</span><span class="se">\n</span><span class="s2">(make sure to execute the appropriate &#39;_common_.ipynb&#39; notebook after any changes)&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ContextException"><a class="viewcode-back" href="../../../api/proveit.ContextException.html#proveit.ContextException">[docs]</a><span class="k">class</span> <span class="nc">ContextException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div>
+
+
+<span class="k">class</span> <span class="nc">UnsetCommonExpressions</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context_name</span> <span class="o">=</span> <span class="n">context_name</span>
+        
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;The common expressions in &#39;</span><span class="si">%s</span><span class="s2">&#39; have not been set&quot;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">context_name</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.asExpression.html">asExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.asExpressions.html">asExpressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.compositeExpression.html">compositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.expressionDepth.html">expressionDepth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.indexed_var.html">indexed_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybeFenced.html">maybeFenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybeFencedLatex.html">maybeFencedLatex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybeFencedString.html">maybeFencedString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safeDefaultOrDummyVar.html">safeDefaultOrDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safeDummyVar.html">safeDummyVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safeDummyVars.html">safeDummyVars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.singleOrCompositeExpression.html">singleOrCompositeExpression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.varRange.html">varRange</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Context.html">Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ContextException.html">ContextException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.HypotheticalReasoning.html">HypotheticalReasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.KnownTruth.html">KnownTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.concludeViaImplication.html">concludeViaImplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.defaultSimplification.html">defaultSimplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.evaluateTruth.html">evaluateTruth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.inBool.html">inBool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.isIrreducibleValue.html">isIrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.reduceOperands.html">reduceOperands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Subset.html">Subset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Superset.html">Superset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Union.html">Union</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.greaterSequence.html">greaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.isLiteralInt.html">isLiteralInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.lesserSequence.html">lesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.number.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
