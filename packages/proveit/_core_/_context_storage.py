@@ -700,12 +700,15 @@ class ContextStorage:
             CommonExpressions.referenced_contexts.add(CommonExpressions.expr_id_contexts[proveItStorageId].name)
         hash_path = self._storagePath(proveItStorageId)
         file_path = os.path.join(hash_path, 'ref_count.txt')
-        with open(file_path, 'r') as f:
-            # read the current reference count
-            refCount = int(f.read().strip()) + 1
-            # change the reference count in the file
-            with open(file_path, 'w') as f2:
-                f2.write(str(refCount) + '\n')
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as f:
+                # read the current reference count
+                refCount = int(f.read().strip()) + 1
+        else:
+            refCount = 0
+        # change the reference count in the file
+        with open(file_path, 'w') as f2:
+            f2.write(str(refCount) + '\n')
 
     def _getRefCount(self, proveItStorageId):
         '''
