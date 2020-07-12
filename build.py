@@ -306,7 +306,7 @@ len(gc.get_objects()) # used to check for memory leaks
         #print('num gc objects', cell['outputs'][0]['data']['text/plain'])    
         return nb, resources
 
-    def executeNotebook(self, notebook_path, display_latex=False):
+    def executeNotebook(self, notebook_path, display_latex=False, git_clear=True):
         '''
         Read, execute, and write out the notebook at the given path.
         Return the notebook object.
@@ -338,25 +338,26 @@ len(gc.get_objects()) # used to check for memory leaks
             nbformat.write(nb, f)
         print("; finished in %0.2f seconds"%(time.time()-start_time))
         
-        try:
-            # If the file is in a git repository which is filtering
-            # the notebook output, see if the only change is in
-            # the output.  In that case, 'git add' the file so it
-            # doesn't show up as modified.
-            process = subprocess.Popen(["git", "diff", notebook_path],
-                                       stdout=subprocess.PIPE)
-            output = process.communicate()[0]
-            output = re.sub('^diff --git .*$', '', output.decode('utf-8'))
-            if output=="":
-                # No change except perhaps filtered output.
-                # Do "git add" so it won't show up as different.
-                subprocess.Popen(['git', 'add', notebook_path])
-                print("Clearing filtered notebook-output modifications in git:"
-                      "\n\tgit add %s"%notebook_path)
-        except:
-            # Our git check may fail because maybe it isn't in a git
-            # repository.  In that case, don't worry about it.
-            pass
+        if git_clear:
+            try:
+                # If the file is in a git repository which is filtering
+                # the notebook output, see if the only change is in
+                # the output.  In that case, 'git add' the file so it
+                # doesn't show up as modified.
+                process = subprocess.Popen(["git", "diff", notebook_path],
+                                           stdout=subprocess.PIPE)
+                output = process.communicate()[0]
+                output = re.sub('^diff --git .*$', '', output.decode('utf-8'))
+                if output=="":
+                    # No change except perhaps filtered output.
+                    # Do "git add" so it won't show up as different.
+                    subprocess.Popen(['git', 'add', notebook_path])
+                    print("Clearing filtered notebook-output modifications in git:"
+                          "\n\tgit add %s"%notebook_path)
+            except:
+                # Our git check may fail because maybe it isn't in a git
+                # repository.  In that case, don't worry about it.
+                pass
         
         return nb
 
@@ -398,7 +399,7 @@ def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=F
     print('Exported', notebook_path, 'to HTML in %0.2f seconds'%(time.time()-start_time))
 
 def executeAndExportNotebook(execute_processor, notebook_path, 
-                             no_execute=False, no_latex=False):
+                             no_execute=False, no_latex=False, git_clear=True):
     '''
     Read, execute, and rewrite a notebook and also export it
     to HTML. 
@@ -407,7 +408,8 @@ def executeAndExportNotebook(execute_processor, notebook_path,
         exportToHTML(notebook_path)
     else:
         nb = execute_processor.executeNotebook(notebook_path, 
-                                               display_latex=not no_latex)
+                                               display_latex=not no_latex, 
+                                               git_clear=git_clear)
         exportToHTML(notebook_path, nb)
 
 """
@@ -717,7 +719,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                                         executeAndExportNotebook(
                                                 execute_processor, 
                                                 expr_notebook,
-                                                no_latex=no_latex)
+                                                no_latex=no_latex, git_clear=False)
                                         executed_hash_paths.add(hash_path) # done
                             proof_html = os.path.join(hash_path, 'proof.html')
                             proof_notebook = os.path.join(hash_path, 'proof.ipynb')
@@ -731,7 +733,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                                         executeAndExportNotebook(
                                                 execute_processor, 
                                                 proof_notebook,
-                                                no_latex=no_latex)
+                                                no_latex=no_latex, git_clear=False)
                                         executed_hash_paths.add(hash_path) # done
                             # always execute the dependencies notebook for now to be safes
                             dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
@@ -739,7 +741,8 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                                 # execute the dependencies.ipynb notebook
                                 executeAndExportNotebook(
                                         execute_processor, dependencies_notebook, 
-                                        no_execute=no_execute, no_latex=no_latex)
+                                        no_execute=no_execute, no_latex=no_latex, 
+                                        git_clear=False)
             if len(executed_hash_paths) == prev_num_executed:
                 break # no more new ones to process
 
@@ -796,10 +799,24 @@ if __name__ == '__main__':
         print("Cleaning '__pv_it' directories...")
         sys.stdout.flush()
         for path in all_paths:
-            # remove the __pv_it folders from all paths
             pv_it_dir = os.path.join(path, '__pv_it')
-            if os.path.isdir(pv_it_dir):
-                shutil.rmtree(pv_it_dir)
+            shutil.rmtree(pv_it_dir)
+            '''
+            # remove files from __pv_it folders except *.png, *.latex kinds.
+            for sub in os.listdir(pv_it_dir):
+                if sub == '_referenced_':
+                    shutil.rmtree(os.path.join(pv_it_dir, '_referenced_'))
+                    continue
+                sub_path = os.path.join(pv_it_dir, sub)
+                if os.path.isdir(sub_path):
+                    for _sub in os.listdir(sub_path):
+                        if _sub[-4:] == '.png': continue
+                        if _sub[-6:] == '.latex': continue
+                        else:
+                            os.remove(os.path.join(sub_path, _sub))
+                else:
+                    os.remove(sub_path)
+            '''
     elif not args.download:
         # remove the __pv_it/commons.pv_it in all of the context paths
         # to make sure everything gets updated where there are dependencies
