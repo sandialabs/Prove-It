@@ -404,17 +404,15 @@ class Or(Operation):
 
     def concludeViaSome(self, subset_disjunction, assumptions=USE_DEFAULTS):
         '''
-        From some true disjunctive subset of the operands, conclude that this
-        'or' expression is true. Similar to the concludeViaExample method
-        above. For example, we might have a disjunction such as
-        exampleDisj = A V B V C V D, where we know B V D is true (or we want
-        to assume B V D is true). So we would call
-        exampleDisj.concludeViaSome(B V D, assumptions=[B V D]), which will
-        return {B V D} |– A V B V C V D.
-        created: 11/14/2019 by wdc.
-        last modified: 11/17/2019 by wdc
-            - adding disassociation and de-permutation of output.
-        previously modified: 11/14/2019 by wdc (creation).
+        From some true (or assumed true) disjunctive subset of the
+        operands, conclude that this 'or' expression is true. This is
+        similar to the concludeViaExample method above. For example,
+        we might have a disjunction such as:
+            exampleDisj = A V B V C V D,
+        where we know (or assume) that B V D is true. We could call
+            exampleDisj.concludeViaSome(B V D, assumptions=[B V D]),
+        which will return
+            {B V D} |– A V B V C V D
         '''
         # Check that the subset_disjunction is an instance of OR
         if not isinstance(subset_disjunction, Or):
@@ -451,16 +449,16 @@ class Or(Operation):
 
         return self.concludeViaPermutation(permuted_disjunction, assumptions)
 
-    def concludeViaPermutation(self, permuted_disjunction, assumptions=USE_DEFAULTS):
+    def concludeViaPermutation(self, permuted_disjunction,
+                               assumptions=USE_DEFAULTS):
         '''
-        From some true but permutated version of this 'or' expression,
-        conclude that this 'or' expression is true. For example, let
-        thisOr = A V B V C V D and permOfThisOr = S |- B V A V C V D. From
-        permOfThisOr, conclude thisOr, using the following:
-        thisOr.concludeViaPermuation(permOfThisOr, assumptions = S), which
-        will return S |– A V B V C V D.
-        created: 11/17/2019 by wdc.
-        last modified: 11/17/2019 by wdc (creation).
+        From some true (or assumed true) but permutated version of this
+        'or' expression, conclude that this 'or' expression is true.
+        For example, let thisOr = A V B V C V D
+        and let permOfThisOr = S |- B V A V C V D.
+        From permOfThisOr, conclude thisOr, using the following:
+        thisOr.concludeViaPermuation(permOfThisOr, assumptions = S),
+        which will return S |– A V B V C V D.
         '''
         
         # Check that the permuted_disjunction is an instance of OR
