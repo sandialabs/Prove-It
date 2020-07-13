@@ -92,7 +92,7 @@ class InSet(Operation):
                         # x in R is a known truth; if we can proof R subseteq S, we are done.
                         subsetRelation = SubsetEq(knownMembership.domain, self.domain).prove(assumptions)
                         # S is a superset of R, so now we can prove x in S.
-                        return subsetRelation.deriveSupsersetMembership(self.element, assumptions=assumptions)
+                        return subsetRelation.deriveSupersetMembership(self.element, assumptions=assumptions)
                     except ProofFailure:
                         pass # no luck, keep trying
         # could not prove it through a subset relationship,
