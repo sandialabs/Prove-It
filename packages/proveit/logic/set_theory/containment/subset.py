@@ -234,7 +234,7 @@ class SubsetEq(SubsetRelation):
         return reverseSubsetEq.specialize(
                 {A:self.subset, B:self.superset}, assumptions=assumptions)
         
-    def conclude(self, assumptions):
+    def conclude(self, assumptions=USE_DEFAULTS):
         from proveit import ProofFailure
         from proveit.logic import SetOfAll, Equals
 
@@ -256,15 +256,15 @@ class SubsetEq(SubsetRelation):
             from proveit.logic.set_theory.comprehension._theorems_ import (
                     comprehensionIsSubset)
             setOfAll = self.subset
-            if (len(setOfAll.instanceVars)==1 and
-                setOfAll.instanceElement == setOfAll.instanceVars[0] and
+            if (len(setOfAll.allInstanceVars())==1 and
+                setOfAll.instanceElement == setOfAll.allInstanceVars()[0] and
                 setOfAll.domain==self.superset):
                 Q_op, Q_op_sub = (
-                        Operation(Qmulti, setOfAll.instanceVars),
+                        Operation(Qmulti, setOfAll.allInstanceVars()),
                         setOfAll.conditions)
                 return comprehensionIsSubset.specialize(
                         {S:setOfAll.domain, Q_op:Q_op_sub},
-                        relabelMap={x:setOfAll.instanceVars[0]},
+                        relabelMap={x:setOfAll.allInstanceVars()[0]},
                         assumptions=assumptions)
         
         # Finally, attempt to conclude A subseteq B via
@@ -275,7 +275,7 @@ class SubsetEq(SubsetRelation):
         return self.concludeAsFolded(
                 elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
     
-    def concludeViaEquality(self, assumptions):
+    def concludeViaEquality(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import subsetEqViaEquality
         return subsetEqViaEquality.specialize(
                 {A: self.operands[0], B: self.operands[1]},
@@ -291,7 +291,7 @@ class SubsetEq(SubsetRelation):
                 {A:self.subset, B:self.superset},
                 relabelMap={x:elemInstanceVar}, assumptions=assumptions)
     
-    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+    def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From A subseteq B and x in A, derive x in B.
         '''
@@ -412,12 +412,13 @@ class NotProperSubset(Operation):
     def deriveSideEffects(self, knownTruth):
         self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
 
-    def conclude(self, assumptions):
+    def conclude(self, assumptions=USE_DEFAULTS):
         return self.concludeAsFolded(assumptions)
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
-        From A not_proper_subset B, derive and return not(propersubset(A, B)).
+        From A not_proper_subset B, derive and return
+        not(propersubset(A, B)).
         '''
         from ._theorems_ import unfoldNotProperSubset
         return unfoldNotProperSubset.specialize(
