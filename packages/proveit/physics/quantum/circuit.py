@@ -223,7 +223,11 @@ class Gate(Operation):
         if isinstance(self.gate_operation, IdentityOp):
             return self.gate_operation.formatted(formatType)
         if formatType == 'latex':
-            return r'\gate{' + formattedGateOperation + r'}'
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str += r'\gate{' + formattedGateOperation + r'}'
+            out_str += ' \n' + '}'
+            return out_str
         else:
             return Operation._formatted(self, formatType)
 
@@ -293,12 +297,12 @@ class MultiQubitGate(Operation):
         return self.formatted('latex', **kwargs)
 
     def unaryReduction(self, assumptions=USE_DEFAULTS):
-        # from proveit.physics.quantum._theorems_ import unary_MultiQubitGate_reduction
+        from proveit.physics.quantum._theorems_ import unary_multiQubitGate_reduction
         if not self.gate_set.operands.singular():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unaryReduction")
         operand = self.gate_set.operands[0]
-        # return unary_MultiQubitGate_reduction.specialize({U: self.gate, A: operand}, assumptions=assumptions)
+        return unary_multiQubitGate_reduction.specialize({U: self.gate, A: operand}, assumptions=assumptions)
 
     def formatted(self, formatType, representation=None, **kwargs):
         if representation is None:
@@ -308,7 +312,8 @@ class MultiQubitGate(Operation):
             self.gate.formatted(formatType, fence=False))
 
         if formatType == 'latex':
-            out_str = ''
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
             if formattedGateOperation == 'X':
                 if representation != 'implicit':
                     # we want to explicitly see the type of gate as a 'letter' representation
@@ -324,9 +329,25 @@ class MultiQubitGate(Operation):
                 out_str += r'\control \cw'
             else:
                 if isinstance(self.gate_set, Set):
-                    out_str += formattedGateOperation
+                    count = 0
+                    for entry in self.gate_set.operands:
+                        if isinstance(entry, Literal):
+                            count += 1
+
+                    if count == len(self.gate_set.operands):
+                        if len(self.gate_set.operands) == 1:
+                            out_str += r'\gate{' + formattedGateOperation + r'}'
+                        else:
+                            out_str += formattedGateOperation
+                    else:
+                        if len(self.gate_set.operands) == 1:
+                            out_str += r'\gate{' + formattedGateOperation + r' with ' + self.gate_set.formatted(
+                                formatType) + r'}'
+                        else:
+                            out_str += formattedGateOperation + r' with ' + self.gate_set.formatted(formatType)
                 else:
                     out_str += formattedGateOperation + r' with ' + self.gate_set.formatted(formatType)
+            out_str += ' \n' + '}'
             return out_str
         else:
             return Operation._formatted(self, formatType)
@@ -789,6 +810,11 @@ class Circuit(ExprArray):
                     add = '& '
                 else:
                     add = ' '
+                if r'\Qcircuit' in entry:
+                    idx = entry.index('\n')
+                    entry = entry[idx + 3:len(entry) - 3]
+                    # we add three  to include the n and the & and the space after then &
+                    # we subtract 3 to get rid of the ending bracket and \n
                 out_str = ''
                 if wires is not None and wires[row] is not None and len(wires[row]) != 0 and column in wires[row]:
                     if column == 0:
@@ -816,7 +842,10 @@ class Circuit(ExprArray):
                             # this is formatted as a solid dot, but with classical wires.
                             out_str += add + r'\control \cw'
                         else:
-                            out_str += add + r'\gate{' + entry + r'}'
+                            if r'\gate' in entry:
+                                out_str += add + entry
+                            else:
+                                out_str += add + r'\gate{' + entry + r'}'
                     # if we are adding wires, we add the length according to self.wires
                     elif wires[row][column] == 'gate':
                         out_str += add + r'\gate{' + entry + r'}'
