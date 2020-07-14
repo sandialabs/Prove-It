@@ -1,22 +1,16 @@
-from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
-from proveit import Literal, Operation, Lambda, ParameterExtractionError
+from proveit import asExpression, USE_DEFAULTS, ProofFailure
+from proveit import Literal
 from proveit import TransitiveRelation, TransitivityException
 from proveit.logic.irreducible_value import IrreducibleValue, isIrreducibleValue
-from proveit._common_ import A, B, C, P, Q, X, f, x, y, z
+from proveit._common_ import A, B, C, P, f, x, y, z
 
 class SetEquiv(TransitiveRelation):
     '''
     Class to capture the membership equivalence of 2 sets A and B.
     SetEquiv(A, B) is a claim that all elements of A are also elements
-    of B and vice-versa. The SetEquiv relation uses the congruence symbol
-    to distinguish the SetEquiv claim from the stronger claim that A = B.
-    The class was initially established using the class Equals as an
-    archetype.
-    created: 11/19/2019 by wdc
-    last modified: 11/20/2019 - 12/02/2019 by wdc, adding/updating
-                   methods for concludeViaReflexivity, deriveReversed,
-                   and deduceInBool.
-    previously modified: 11/19/2019 by wdc (creation)
+    of B and vice-versa. The SetEquiv relation uses the congruence
+    symbol to distinguish the SetEquiv claim from the stronger claim
+    that A = B.
     '''
     # operator for the SetEquiv relation
     _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong',
@@ -272,7 +266,7 @@ class SetEquiv(TransitiveRelation):
         P(x) is provided via lambdaMap as a Lambda expression or an 
         object that returns a Lambda expression when calling lambdaMap()
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
-        particular), or, if neither of those, an expression to upon
+        particular), or, if neither of those, an expression upon
         which to perform a global replacement of self.lhs.
         '''
         from ._theorems_ import subRightSideInto
