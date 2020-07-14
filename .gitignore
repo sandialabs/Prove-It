@@ -18,3 +18,4 @@ doc/api
 doc/doctrees
 doc/html
 *.DS_Store
+.DS_Store
