@@ -972,24 +972,19 @@ class Specialization(Proof):
         # Return the expression and conditions with substitutions and the information to reconstruct the specialization
         return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
 
-    # @staticmethod
-    # def _checkRelabelMapping(key, sub, assumptions):
-    #     from proveit import Variable
-    #     if isinstance(key, Variable):
-    #         if not isinstance(sub, Variable):
-    #             raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
-    #     else:
-    #         raise RelabelingFailure(None, assumptions, "May only relabel a Variable")
-
-    # attempting some modification of the _checkRelabelMapping() method
     @staticmethod
     def _checkRelabelMapping(generalExpr, key, sub, assumptions):
         from proveit import Variable
         if isinstance(key, Variable):
             if not isinstance(sub, Variable):
-                raise RelabelingFailure(generalExpr, assumptions, 'May only relabel a Variable to a Variable, not %s to %s'%(key, sub))
+                raise RelabelingFailure(
+                        generalExpr, assumptions,
+                        'May only relabel a Variable to a Variable, '
+                        'not %s to %s'%(key, sub))
         else:
-            raise RelabelingFailure(generalExpr, assumptions, "May only relabel a Variable, not %s"%key)
+            raise RelabelingFailure(
+                    generalExpr, assumptions,
+                    "May only relabel a Variable, not %s"%key)
 
 class Generalization(Proof):
     def __init__(self, instanceTruth, newForallVarLists, newConditions=tuple()):
