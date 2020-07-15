@@ -65,13 +65,16 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
     else:
         thm = leftwardThm
         l, m, n, A, B, C, D = thm.allInstanceVars()
-        Asub, Bsub, Csub, Dsub = expr.operands[:finalIdx], expr.operands[finalIdx:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:]
+        Asub, Bsub, Csub, Dsub = (
+            expr.operands[:finalIdx], expr.operands[finalIdx:initIdx],
+            expr.operands[initIdx], expr.operands[initIdx+1:])
         lSub, mSub, nSub = num(len(Asub)), num(len(Bsub)), num(len(Dsub))
     return thm.specialize(
         {l:lSub, m:mSub, n:nSub, A:Asub, B:Bsub, C:Csub, D:Dsub},
         assumptions=assumptions)
 
-def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS):
+def apply_association_thm(expr, startIdx, length, thm,
+                          assumptions=USE_DEFAULTS):
     from proveit.logic import Equals
     from proveit.number import num
     beg, end = startIdx, startIdx+length
@@ -103,72 +106,13 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
                          %(idx, str(expr)))
     l, m, n, AA, BB, CC = thm.allInstanceVars()
     length = len(expr.operands[idx].operands)
-    return thm.specialize({l:num(idx), m:num(length), n: num(len(expr.operands) - idx - 1), AA:expr.operands[:idx], BB:expr.operands[idx].operands, CC:expr.operands[idx+1:]}, assumptions=assumptions)
+    return thm.specialize(
+        {l:num(idx), m:num(length), n: num(len(expr.operands) - idx - 1),
+        AA:expr.operands[:idx], BB:expr.operands[idx].operands,
+        CC:expr.operands[idx+1:]}, assumptions=assumptions)
 
-# def apply_permutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
-#                           rightwardThm, assumptions=USE_DEFAULTS):
-#     '''
-#     UNDER CONSTRUCTION — can use apply_commutation_thm instead
-#     '''
-#     from proveit.logic import SetEquiv
-#     # Some initial print statements for testing
-#     print("Entering apply_permutation_thm.")
-#     print("    initIdx = {}".format(initIdx))
-#     print("    finalIdx = {}".format(finalIdx))
-#     print("    assumptions = {}".format(assumptions))
-
-#     # check validity of supplied indices in terms of defaults
-#     if initIdx is None or finalIdx is None:
-#         if len(expr.operands) != 2:
-#             raise IndexError("You may use default 'initIdx' or "
-#                              "'finalIdx' values when applying "
-#                              "permutation only if your set or "
-#                              "set-like object contains exactly 2 "
-#                              "elements.")
-#         if initIdx is not finalIdx:
-#             raise IndexError("When applying permutation, you must "
-#                              "either supply both 'initIdx' and "
-#                              "'finalIdx' or supply neither (allowed "
-#                              "when there are only 2 elements)")
-#         initIdx, finalIdx = 0, 1  # defaults when there are 2 elements
-
-#     # acknowledge any wrap-around indexing; transform for simplicity
-#     if initIdx < 0: initIdx = len(expr.operands)+initIdx
-#     if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx
-
-#     # check validity of supplied index values
-#     if initIdx >= len(expr.operands):
-#         raise IndexError("'initIdx' = {0} is out of range. Should "
-#                          "have 0 ≤ initIdx ≤ {1}.".
-#                          format(initIdx, len(expr.operands) - 1))
-#     if finalIdx >= len(expr.operands):
-#         raise IndexError("'finalIdx' = {0} is out of range. Should "
-#                          "have 0 ≤ finalIdx ≤ {1}.".
-#                          format(finalIdx, len(expr.operands) - 1))
-
-#     # trivial permutation
-#     if initIdx==finalIdx:
-#         return SetEquiv(expr, expr).prove()
-
-#     # Set or set-like object with cardinality = 2
-#     if len(expr.operands)==2 and set([initIdx, finalIdx]) == {0, 1}:
-#         A, B = binaryThm.allInstanceVars()
-#         return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
-#                                     assumptions=assumptions)
-
-#     #
-#     if initIdx < finalIdx:
-#         thm = rightwardThm
-#         print("rightwardThm = ".format(thm))
-#         print("rightwardThm.allInstanceVars() = ".format(thm.allInstanceVars()))
-#         # l, m, n, A, B, C, D = rightwardThm.allInstanceVars()
-#         # Asub, Bsub, Csub, Dsub = expr.operands[:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:finalIdx+1], expr.operands[finalIdx+1:]
-#         # lSub, mSub, nSub = num(len(Asub)), num(len(Csub)), num(len(Dsub))
-
-
-#     return expr
-
-def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
+def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True,
+                     assumptions=USE_DEFAULTS):
     '''
     Derive a commutation equivalence on a group of multiple operands by
     associating them together first.  If 'dissassociate' is true, the
@@ -245,6 +189,18 @@ def pairwiseEvaluation(expr, assumptions):
 def generic_permutation(expr, new_order=None, cycles=None,
                         assumptions=USE_DEFAULTS):
     '''
+    Deduce that the expression expr is equal to a new_expr which is
+    the same class and in which the operands at indices 0, 1, …, n-1
+    have been reordered as specified EITHER by the new_order list OR
+    by the cycles list parameter. For example, if expr were the
+    enumerated Set S = {a, b, c, d}, then:
+        generic_permutation(S, new_order=[0, 2, 3, 1]) and
+        generic_permutation(S, cycles=[(1, 2, 3)]) would both
+    return |- {a, b, c, d} = {a, c, d, b}.
+    This generic_permutation method can work with any expression type
+    which enjoys commutativity of its operands and has established
+    the corresponding permutation_move() method and related axioms or
+    theorems.
     '''
     # check validity of default param usage: should have new_order list
     # OR list of cycles, but not both
@@ -328,7 +284,6 @@ def generic_permutation(expr, new_order=None, cycles=None,
                              "specification. cycles should contain "
                              "only a single instance of any specific "
                              "index value.")
-
 
     # if user-supplied args check out, then we can continue,
     # regardless of whether user has supplied new_order or cycles
