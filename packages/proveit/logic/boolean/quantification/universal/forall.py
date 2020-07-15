@@ -138,18 +138,11 @@ class Forall(OperationOverInstances):
         Attempt to deduce, then return, that this forall expression is in the set of BOOLEANS,
         as all forall expressions are (they are taken to be false when not true).
         '''
-        # raise NotImplementedError("Need to update") # temporarily commented out 12/03/2019 by wdc
+        raise NotImplementedError("Need to update")
         from ._axioms_ import forallInBool
-        print('self.allInstanceVars = %s'%str(self.allInstanceVars()))          # for testing; delete later
-        # changing the following 3 lines to use allInstanceVars instead of instanceVars
-        # P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        # Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
-        # return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
-        P_op, P_op_sub = Operation(P, self.allInstanceVars()), self.instanceExpr
-        print('P_op = %s'%str(P_op))                                            # for testing; delete later
-        print('P_op_sub = %s'%str(P_op_sub))                                    # for testing; delete later
-        Q_op, Q_op_sub = Operation(Qmulti, self.allInstanceVars), self.conditions
-        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.allInstanceVars, S:self.domain})
+        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
 
     def unraveled(self):
         remainingConditions = self.conditions
