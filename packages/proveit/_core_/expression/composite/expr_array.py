@@ -203,9 +203,7 @@ class ExprArray(ExprTuple):
                             output += 1
                 elif isinstance(expr.first(), ExprTuple):
                     for value in expr.first():
-                        if isinstance(value, Variable) or isinstance(value, IndexedVar):
-                            output += 1
-                        elif isinstance(value, ExprTuple):
+                        if isinstance(value, ExprTuple):
                             for var in value:
                                 if isinstance(var, Variable) or isinstance(var, IndexedVar):
                                     output += 1
@@ -221,19 +219,21 @@ class ExprArray(ExprTuple):
                                 output += 5
                             else:
                                 output += 3
+                        else:
+                            output += 1
             if isinstance(expr, ExprTuple):
                 for value in expr:
                     if isinstance(value, ExprTuple):
                         for var in value:
-                            if isinstance(var, Variable) or isinstance(var, IndexedVar):
-                                output += 1
-                            elif isinstance(var, ExprTuple):
+                            if isinstance(var, ExprTuple):
                                 for operand in value:
                                     if isinstance(operand, ExprRange) or isinstance(operand, ExprTuple):
                                         raise ValueError('This expression is nested too many times to get an '
                                                          'accurate row length. Please consolidate your ExprTuple')
                                     else:
                                         output += 1
+                            else:
+                                output += 1
                     elif isinstance(value, ExprRange):
                         if explicit:
                             output += 5
