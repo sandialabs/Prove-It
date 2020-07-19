@@ -82,7 +82,14 @@ class Subset(SubsetRelation):
         other = asExpression(other)
         if isinstance(other, Equals):
             # handles this special case
-            return ContainmentRelation.applyTransitivity(other, assumptions)
+            if (self.proven(assumptions=assumptions) and
+                other.proven(assumptions=assumptions)):
+                if other.lhs == self.rhs:
+                    return other.subRightSideInto(self, assumptions=assumptions)
+                elif other.rhs == self.rhs:
+                    return other.subLeftSideInto(self, assumptions=assumptions)
+                else:
+                    return ContainmentRelation.applyTransitivity(other, assumptions)
        # if isinstance(other,Subset) or isinstance(other,SubsetEq):
         #    other = other.deriveReversed(assumptions)
         if other.lhs == self.rhs:
@@ -170,8 +177,12 @@ class ProperSubset(SubsetRelation):
         from ._theorems_ import (
                 transitivitySubsetSubset, transitivitySubsetSubsetEq,)
         if isinstance(other, Equals):
-            # handles this special case
-            return ContainmentRelation.applyTransitivity(other, assumptions)
+            if (self.proven(assumptions=assumptions) and
+                other.proven(assumptions=assumptions)):
+                if other.lhs == self.rhs:
+                    return other.subRightSideInto(self, assumptions=assumptions)
+                elif other.rhs == self.rhs:
+                    return other.subLeftSideInto(self, assumptions=assumptions)
         if other.lhs == self.rhs:
             if isinstance(other, ProperSubset) or isinstance(other, Subset):
                 result = transitivitySubsetSubset.specialize(
@@ -318,8 +329,12 @@ class SubsetEq(SubsetRelation):
                                  transitivitySubsetEqSubsetEq)
         other = asExpression(other)
         if isinstance(other, Equals):
-             # handles this special case
-            return ContainmentRelation.applyTransitivity(other, assumptions)
+            if (self.proven(assumptions=assumptions) and
+                other.proven(assumptions=assumptions)):
+                if other.lhs == self.rhs:
+                    return other.subRightSideInto(self, assumptions=assumptions)
+                elif other.rhs == self.rhs:
+                    return other.subLeftSideInto(self, assumptions=assumptions)
         if other.lhs == self.rhs:
             if isinstance(other,Subset):
                 return transitivitySubsetEqSubset.specialize(
