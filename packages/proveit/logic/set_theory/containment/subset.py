@@ -76,7 +76,9 @@ class Subset(SubsetRelation):
         expression and something of the form B subseteq C, B subset C,
         or B=C to obtain A subset C as appropriate.
         '''
-        from proveit.logic import Equals, Subset, SubsetEq
+        from proveit.logic import (
+                Equals, ProperSubset, ProperSuperset, Subset, SubsetEq,
+                Superset, SupersetEq)
         from ._theorems_ import (
                 transitivitySubsetSubset, transitivitySubsetSubsetEq)
         other = asExpression(other)
@@ -88,10 +90,10 @@ class Subset(SubsetRelation):
                     return other.subRightSideInto(self, assumptions=assumptions)
                 elif other.rhs == self.rhs:
                     return other.subLeftSideInto(self, assumptions=assumptions)
-                else:
-                    return ContainmentRelation.applyTransitivity(other, assumptions)
-       # if isinstance(other,Subset) or isinstance(other,SubsetEq):
-        #    other = other.deriveReversed(assumptions)
+        if (isinstance(other, Superset) or isinstance(other, ProperSuperset)
+            or isinstance(other,SupersetEq)):
+            other = other.deriveReversed(assumptions=assumptions)
+            other = asExpression(other)
         if other.lhs == self.rhs:
             if isinstance(other,Subset):
                 result = transitivitySubsetSubset.specialize(
@@ -173,7 +175,9 @@ class ProperSubset(SubsetRelation):
         ProperSubset(B, C), or B=C, to obtain ProperSubset(A, C) as
         appropriate.
         '''
-        from proveit.logic import Equals, ProperSubset, Subset, SubsetEq
+        from proveit.logic import (
+                Equals, ProperSubset, ProperSuperset, Subset, SubsetEq,
+                Superset, SupersetEq)
         from ._theorems_ import (
                 transitivitySubsetSubset, transitivitySubsetSubsetEq,)
         if isinstance(other, Equals):
@@ -183,6 +187,10 @@ class ProperSubset(SubsetRelation):
                     return other.subRightSideInto(self, assumptions=assumptions)
                 elif other.rhs == self.rhs:
                     return other.subLeftSideInto(self, assumptions=assumptions)
+        if (isinstance(other, Superset) or isinstance(other, ProperSuperset)
+            or isinstance(other,SupersetEq)):
+            other = other.deriveReversed(assumptions=assumptions)
+            other = asExpression(other)
         if other.lhs == self.rhs:
             if isinstance(other, ProperSubset) or isinstance(other, Subset):
                 result = transitivitySubsetSubset.specialize(
@@ -324,7 +332,9 @@ class SubsetEq(SubsetRelation):
         expression and something of the form B subseteq C, B subset C,
         or B=C to obtain A subset B or A subseteq B as appropriate.
         '''
-        from proveit.logic import Equals, Subset, SubsetEq
+        from proveit.logic import (
+                Equals, ProperSubset, ProperSuperset, Subset, SubsetEq,
+                Superset, SupersetEq)
         from ._theorems_ import (transitivitySubsetEqSubset,
                                  transitivitySubsetEqSubsetEq)
         other = asExpression(other)
@@ -335,8 +345,12 @@ class SubsetEq(SubsetRelation):
                     return other.subRightSideInto(self, assumptions=assumptions)
                 elif other.rhs == self.rhs:
                     return other.subLeftSideInto(self, assumptions=assumptions)
+        if (isinstance(other, Superset) or isinstance(other, ProperSuperset)
+            or isinstance(other,SupersetEq)):
+            other = other.deriveReversed(assumptions=assumptions)
+            other = asExpression(other)
         if other.lhs == self.rhs:
-            if isinstance(other,Subset):
+            if isinstance(other, Subset) or isinstance(other, ProperSubset):
                 return transitivitySubsetEqSubset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.rhs},
                         assumptions=assumptions)
@@ -345,7 +359,7 @@ class SubsetEq(SubsetRelation):
                         {A:self.lhs, B:self.rhs, C:other.rhs},
                         assumptions=assumptions)
         elif other.rhs == self.lhs:
-            if isinstance(other,Subset):
+            if isinstance(other,Subset) or isinstance(other, ProperSubset):
                 return transitivitySubsetEqSubset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.lhs}, 
                         assumptions=assumptions)
