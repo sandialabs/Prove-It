@@ -72,18 +72,28 @@ class Superset(SupersetRelation):
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this Superset(A, B)
-        expression and something of the form SupersetEq(B,C),
-        Superset(B, C), or B=C to obtain Superset(A, C) as appropriate.
+        expression and something of the form SupersetEq(B, C),
+        ProperSuperset(B, C), ProperSubset(C, B), SubsetEq(C, B),
+        or B=C to obtain ProperSuperset(A, C) or SupersetEq(A, C) as
+        appropriate. For example, calling
+             Superset(A,B).applyTransitivity(Equals(B,C),
+                     assumptions=[Superset(A,B), Equals(B,C)])
+        returns:
+             {Superset(A,B), Equals(B,C)} |– Superset(A,C)
         '''
-        from proveit.logic import Equals, Subset, SubsetEq
+        from proveit.logic import Equals, ProperSubset, Subset, SubsetEq
         from ._theorems_ import (
                 transitivitySupsetSupset, transitivitySupsetSupsetEq)
         other = asExpression(other)
         if isinstance(other, Equals):
-            # handles this special case
-            return ContainmentRelation.applyTransitivity(other, assumptions)
+            return ContainmentRelation.applyTransitivity(
+                    self, other, assumptions=assumptions)
+        if (isinstance(other, Subset) or isinstance(other, ProperSubset)
+            or isinstance(other,SubsetEq)):
+            other = other.deriveReversed(assumptions=assumptions)
+            other = asExpression(other)
         if other.lhs == self.rhs:
-            if isinstance(other,Superset):
+            if isinstance(other,Superset) or isinstance(other, ProperSuperset):
                 result = transitivitySupsetSupset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.rhs},
                         assumptions=assumptions)
@@ -94,7 +104,7 @@ class Superset(SupersetRelation):
                         assumptions=assumptions)
                 return result
         elif other.rhs == self.lhs:
-            if isinstance(other,Superset):
+            if isinstance(other,Superset) or isinstance(other, ProperSuperset):
                 result = transitivitySupsetSupset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.lhs},
                         assumptions=assumptions)
@@ -152,17 +162,28 @@ class ProperSuperset(SupersetRelation):
         '''
         Apply a transitivity rule to derive from this
         ProperSuperset(A, B) expression and something of the form
-        SupersetEq(B, C), ProperSuperset(B, C), or B=C to
-        obtain ProperSuperset(A, C) as appropriate.
+        SupersetEq(B, C), ProperSuperset(B, C), ProperSubset(C, B),
+        SubsetEq(C, B), or B=C to obtain ProperSuperset(A, C) or
+        SupersetEq(A, C) as appropriate. For example, calling
+             ProperSuperset(A,B).applyTransitivity(Equals(B,C),
+                     assumptions=[ProperSuperset(A,B), Equals(B,C)])
+        returns:
+             {ProperSuperset(A,B), Equals(B,C)} |– ProperSuperset(A,C)
         '''
-        from proveit.logic import Equals, Subset, SubsetEq
+        from proveit.logic import (
+                Equals, ProperSubset, Subset, SubsetEq)
         from ._theorems_ import (
                 transitivitySupsetSupset, transitivitySupsetSupsetEq)
+        other = asExpression(other)
         if isinstance(other, Equals):
-            # handles this special case
-            return ContainmentRelation.applyTransitivity(other, assumptions)
+            return ContainmentRelation.applyTransitivity(
+                    self, other, assumptions=assumptions)
+        if (isinstance(other, Subset) or isinstance(other, ProperSubset)
+            or isinstance(other,SubsetEq)):
+            other = other.deriveReversed(assumptions=assumptions)
+            other = asExpression(other)
         if other.lhs == self.rhs:
-            if isinstance(other,Superset):
+            if isinstance(other,Superset) or isinstance(other, ProperSuperset):
                 result = transitivitySupsetSupset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.rhs},
                         assumptions=assumptions)
@@ -173,7 +194,7 @@ class ProperSuperset(SupersetRelation):
                         assumptions=assumptions)
                 return result
         elif other.rhs == self.lhs:
-            if isinstance(other,Superset):
+            if isinstance(other,Superset) or isinstance(other, ProperSuperset):
                 result = transitivitySupsetSupset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.lhs},
                         assumptions=assumptions)
@@ -235,7 +256,8 @@ class SupersetEq(SupersetRelation):
         except ProofFailure:
             pass # transitivity search failed
 
-        # Finally, attempt to conclude A supseteq B via forall_{x in B} x in A.
+        # Finally, attempt to conclude A supseteq B via
+        # forall_{x in B} x in A.
         return self.concludeAsFolded(
                 elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
 
@@ -266,8 +288,8 @@ class SupersetEq(SupersetRelation):
 
     def concludeAsFolded(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
-        Derive this folded version, A superset B, from the unfolded version,
-        (forall_{x in B} x in A).
+        Derive this folded version, A superset B, from the unfolded
+        version, (forall_{x in B} x in A).
         '''
         from ._theorems_ import foldSupsetEq
         return foldSupsetEq.specialize(
@@ -278,32 +300,40 @@ class SupersetEq(SupersetRelation):
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this SupersetEq(A, B)
-        B expression and something of the form SupersetEq(B, C),
-        Superset(B, C), or B=C to obtain Superset(A, C) or
-        SupersetEq(A, C) as appropriate.
+        expression and something of the form SupersetEq(B, C),
+        ProperSuperset(B, C), ProperSubset(C, B), SubsetEq(C, B),
+        or B=C to obtain Superset(A, C) or SupersetEq(A, C) as
+        appropriate. For example, calling
+             SupersetEq(A,B).applyTransitivity(Equals(B,C),
+                     assumptions=[SupersetEq(A,B), Equals(B,C)])
+        returns:
+             {SupersetEq(A,B), Equals(B,C)} |– SupersetEq(A,C)
         '''
         from proveit.logic import Equals
         from ._theorems_ import (
                 transitivitySupsetEqSupset, transitivitySupsetEqSupsetEq)
-        from .subset import Subset, SubsetEq
+        from .subset import ProperSubset, Subset, SubsetEq
+        other = asExpression(other)
         if isinstance(other, Equals):
-            # handles this special case
-            return ContainmentRelation.applyTransitivity(other, assumptions)
-        if isinstance(other,Subset) or isinstance(other,SubsetEq):
-            other = other.deriveReversed(assumptions)
-        elif other.lhs == self.rhs:
-            if isinstance(other,Superset):
+            return ContainmentRelation.applyTransitivity(
+                    self, other, assumptions=assumptions)
+        if (isinstance(other, Subset) or isinstance(other, ProperSubset)
+            or isinstance(other,SubsetEq)):
+            other = other.deriveReversed(assumptions=assumptions)
+            other = asExpression(other)
+        if other.lhs == self.rhs:
+            if isinstance(other,Superset) or isinstance(other, ProperSuperset):
                 result = transitivitySupsetEqSupset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.rhs},
                         assumptions=assumptions)
-                return result.checked({self})
+                return result
             elif isinstance(other,SupersetEq):
                 result = transitivitySupsetEqSupsetEq.specialize(
                         {A:self.lhs, B:self.rhs, C:other.rhs},
                         assumptions=assumptions)
                 return result
         elif other.rhs == self.lhs:
-            if isinstance(other,Superset):
+            if isinstance(other,Superset) or isinstance(other, ProperSuperset):
                 result = transitivitySupsetEqSupset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.lhs},
                         assumptions=assumptions)
@@ -326,8 +356,6 @@ class SupersetEq(SupersetRelation):
         return supsetEqInBool.specialize({A:self.lhs, B:self.rhs})
 
 class NotSuperset(Operation):
-    # class added 10/15/19 by wdc
-    # modeled on the NotSupersetEq class
 
     # operator of the NotSuperset operation
     _operator_ = Literal(stringFormat='nsupset',
@@ -338,7 +366,8 @@ class NotSuperset(Operation):
         Operation.__init__(self, NotSuperset._operator_, (superset, subset))
 
     def deriveSideEffects(self, knownTruth):
-        self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
+        # unfold as an automatic side-effect
+        self.unfold(knownTruth.assumptions)
 
     def conclude(self, assumptions):
         return self.concludeAsFolded(assumptions)
@@ -354,8 +383,8 @@ class NotSuperset(Operation):
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
-        Derive this folded version, A nsupset B, from the unfolded version,
-        not(A supset B).
+        Derive this folded version, A nsupset B, from the unfolded
+        version, not(A supset B).
         '''
         from ._theorems_ import foldNotSupset
         return foldNotSupset.specialize(
@@ -374,14 +403,16 @@ class NotProperSuperset(Operation):
                            (superset, subset))
     
     def deriveSideEffects(self, knownTruth):
-        self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
+        # unfold as an automatic side-effect
+        self.unfold(knownTruth.assumptions)
 
     def conclude(self, assumptions):
         return self.concludeAsFolded(assumptions)
         
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
-        From A npropersupset B, derive and return not(propersupset(A, B)).
+        From A npropersupset B, derive and return
+        not(propersupset(A, B)).
         '''
         from ._theorems_ import unfoldNotProperSupset
         return unfoldNotProperSupset.specialize(
@@ -390,8 +421,8 @@ class NotProperSuperset(Operation):
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
-        Derive this folded version, A npropersupset B, from the unfolded version,
-        not(A propersupset B).
+        Derive this folded version, A npropersupset B, from the
+        unfolded version, not(A propersupset B).
         '''
         from ._theorems_ import foldNotProperSupset
         return foldNotProperSupset.specialize(
@@ -408,7 +439,8 @@ class NotSupersetEq(Operation):
         Operation.__init__(self, NotSupersetEq._operator_, (superset, subset))
 
     def deriveSideEffects(self, knownTruth):
-        self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
+        # unfold as an automatic side-effect
+        self.unfold(knownTruth.assumptions)
 
     def conclude(self, assumptions):
         return self.concludeAsFolded(assumptions)
@@ -424,8 +456,8 @@ class NotSupersetEq(Operation):
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
-        Derive this folded version, A nsupset B, from the unfolded version,
-        not(A supset B).
+        Derive this folded version, A nsupset B, from the unfolded
+        version, not(A supset B).
         '''
         from ._theorems_ import foldNotSupsetEq
         return foldNotSupsetEq.specialize(
