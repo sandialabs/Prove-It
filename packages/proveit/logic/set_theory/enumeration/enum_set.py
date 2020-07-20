@@ -1,6 +1,5 @@
 from proveit import (defaults, ExprTuple, InnerExpr, Literal,
                      Operation, USE_DEFAULTS)
-# from proveit.abstract_algebra.generic_methods import apply_permutation_thm
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, generic_permutation)
 
@@ -86,13 +85,14 @@ class Set(Operation):
     def permutation(self, new_order=None, cycles=None,
                     assumptions=USE_DEFAULTS):
         '''
-        Deduce that this Set expression is set-equivalent to a Set
-        in which the elements at indices 0, 1, …, n-1 have been
-        reordered as specified EITHER by the new_order list OR by the
-        cycles list parameter. For example,
-        {a, b, c, d}.permutationGeneral(new_order=[0, 2, 3, 1]) and
-        {a, b, c, d}.permutationGeneral(cycles=[(1, 2, 3)]) would both
-        return |- {a, b, c, d} = {a, c, d, b}.
+        Deduce that this Set expression is equal to a Set in which
+        the elements at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+            {a, b, c, d}.permutationGeneral(new_order=[0, 2, 3, 1])
+        and
+            {a, b, c, d}.permutationGeneral(cycles=[(1, 2, 3)])
+        would both return |- {a, b, c, d} = {a, c, d, b}.
         '''
         return generic_permutation(self, new_order, cycles, assumptions)
 
@@ -565,9 +565,6 @@ class Set(Operation):
         is equal to its support {a, b, c, d}. The deduction is
         achieved by successively applying the element-by-element
         reduction_elem() method until no further reduction is possible.
-        Created 02/08/2020 by wdc.
-        Last modified 02/08/2020 by wdc:
-            Creation; established input param checking
         '''
         from proveit import TransRelUpdater
         eq = TransRelUpdater(self, assumptions)
