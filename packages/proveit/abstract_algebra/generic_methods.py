@@ -38,13 +38,6 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
                          format(finalIdx, len(expr.operands) - 1))
 
     # trivial commutation (i.e. non-commutation)
-    # but we need to distinguish SetEquiv from Equals
-    # hmm … not any more?
-    # if initIdx==finalIdx:
-    #     if isinstance(expr, Set):
-    #         return SetEquiv(expr, expr).prove()
-    #     return Equals(expr, expr).prove()
-
     if initIdx==finalIdx:
         return Equals(expr, expr).prove()
 
