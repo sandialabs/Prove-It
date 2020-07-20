@@ -37,7 +37,6 @@ class NotInSet(Operation):
         defined in 'nonmembershipObject').
         '''
         if 'nonmembershipObject' in self.__dict__:
-            # return getattr(self.membershipObject, attr)
             return getattr(self.nonmembershipObject, attr)
         elif attr=='unfold':
             return self.unfoldNotIn # the default 'unfold' method
@@ -58,15 +57,13 @@ class NotInSet(Operation):
         '''
         Deduce and return that this 'not in' statement is in the set of BOOLEANS.
         '''
-        # self.domain.deduceNotInSetIsBool(self.element)
-        # replaced by wdc 10/16/2019
         from ._theorems_ import notInSetInBool
         from proveit._common_ import x, S
         return notInSetInBool.specialize({x:self.element, S:self.domain},
                                          assumptions=assumptions)
         
     def unfoldNotIn(self, assumptions=USE_DEFAULTS):
-        '''
+        r'''
         From (x \notin y), derive and return Not(x \in y).
         '''
         from ._theorems_ import unfoldNotInSet
@@ -82,7 +79,6 @@ class NotInSet(Operation):
         if hasattr(self, 'nonmembershipObject'):
             return self.nonmembershipObject.conclude(assumptions)
         # if hasattr(self.domain, 'nonmembershipObject'):
-        #     print("{} has a nonmembershipObject!".format(self.domain))          # for testing; delete later
         #     return self.domain.nonmembershipObject(self.element).conclude(assumptions)
         return self.concludeAsFolded(assumptions=assumptions)
 
