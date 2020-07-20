@@ -475,7 +475,6 @@ class OperationOverInstances(Operation):
         Return the instance expression after joining instance variables
         according to the style.
         '''
-        # iVarStyle = self.getStyle('instance_vars', '')
         iVarStyle = self.getStyle('instance_vars')
         if iVarStyle == 'join_next':
             return self.instanceExpr.explicitInstanceExpr()
