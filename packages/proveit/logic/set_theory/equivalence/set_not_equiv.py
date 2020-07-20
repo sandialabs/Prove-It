@@ -13,8 +13,6 @@ class SetNotEquiv(Operation):
     (negated) congruence symbol to distinguish the SetNotEquiv claims
     from the distinctive claim that A ≠ B. The class was initially
     established using the class NotEquals as an archetype.
-    created: 12/04/2019 by wdc
-    last modified: 12/04/2019 (creation)
     '''
     # operator of the SetNotEquiv operation
     _operator_ = Literal(stringFormat='not_equiv',
