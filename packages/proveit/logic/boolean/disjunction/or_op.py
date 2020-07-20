@@ -132,7 +132,7 @@ class Or(Operation):
 
     def concludeViaLeft(self, assumptions):
         '''
-        created Thurs 11/14/2019 by wdc
+        From A being (or assumed) True, conclude that (A V B) is True.
         '''
         from ._theorems_ import orIfLeft
         assert len(self.operands) == 2        
