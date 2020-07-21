@@ -1,5 +1,5 @@
 import sys
-from proveit import Lambda, Literal, Operation, USE_DEFAULTS
+from proveit import Lambda, Literal, Operation, TransitiveRelation, USE_DEFAULTS
 from proveit._common_ import A, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
@@ -225,7 +225,10 @@ class Gate(Operation):
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
             out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
-            out_str += r'\gate{' + formattedGateOperation + r'}'
+            if formattedGateOperation == 'MES':
+                out_str += r'\meter'
+            else:
+                out_str += r'\gate{' + formattedGateOperation + r'}'
             out_str += ' \n' + '}'
             return out_str
         else:
@@ -341,12 +344,12 @@ class MultiQubitGate(Operation):
                             out_str += formattedGateOperation
                     else:
                         if len(self.gate_set.operands) == 1:
-                            out_str += r'\gate{' + formattedGateOperation + r' with ' + self.gate_set.formatted(
+                            out_str += r'\gate{' + formattedGateOperation + r'\{' + self.gate_set.formatted(
                                 formatType) + r'}'
                         else:
-                            out_str += formattedGateOperation + r' with ' + self.gate_set.formatted(formatType)
+                            out_str += formattedGateOperation + r'\{' + self.gate_set.formatted(formatType)
                 else:
-                    out_str += formattedGateOperation + r' with ' + self.gate_set.formatted(formatType)
+                    out_str += formattedGateOperation + r'\{' + self.gate_set.formatted(formatType)
             out_str += ' \n' + '}'
             return out_str
         else:
@@ -393,6 +396,38 @@ class Target(Operation):
             return r'\targ'
         else:
             return Operation._formatted(self, formatType)
+
+
+class CircuitEquiv(TransitiveRelation):
+    '''
+    Class to capture the equivalence of 2 circuits A and B.
+    CircuitEquiv(A, B) is a claim that the inputs and outputs of A are
+    equivalent to the inputs and outputs of B, regardless of what is in between.
+    The CircuitEquiv relation uses the congruence
+    symbol to distinguish the CircuitEquiv claim from the stronger claim
+    that A = B.
+    '''
+    # operator for the CircuitEquiv relation
+    _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong',
+                         context=__file__)
+
+    def __init__(self, a, b):
+        TransitiveRelation.__init__(self, CircuitEquiv._operator_, a, b)
+        self.a = a
+        self.b = b
+
+    #def string(self, **kwargs):
+     #   return self.formatted('string', **kwargs)
+
+    #def latex(self, **kwargs):
+     #   return self.formatted('latex', **kwargs)
+
+   # def formatted(self, formatType, fence=False):
+#
+ #       if formatType == 'latex':
+  #          return self.a.formatted(self.a, formatType) + r'\cong' + self.b.formatted(self.b, formatType)
+   #     else:
+    #        return Operation._formatted(self, formatType)
 
 # TARGET = Literal(pkg, 'TARGET', {STRING:'TARGET', LATEX:r'\targ'}, lambda operands : Target(*operands))
 
@@ -441,6 +476,12 @@ class Circuit(ExprArray):
         self.checkRange()
         self.check_indices()
 
+    def replace_equiv_circ(self, assumptions=USE_DEFAULTS):
+        '''
+        Given the piece that is to be replaced, and the piece it is being replaced with,
+        use either space_equiv or time_equiv to prove the replacement.
+        '''
+
     def checkRange(self):
         '''
         If there is an ExprRange contained in the circuit,
@@ -448,23 +489,29 @@ class Circuit(ExprArray):
         of the ExprRange.  If not, raise an error.
         '''
         pos = []
-        box = False
-        k = 0
-        n = 0
+
         for m, expr in enumerate(self):
+            k = 0
+            # cycle through the rows
             if isinstance(expr, ExprTuple):
                 count = 0
+                # counting to make sure every row is the same length
                 for i, entry in enumerate(expr):
+                    # cycle through each member of the row
                     if isinstance(entry, ExprRange):
                         if m == 0:
+                            # if this is the first row
                             placeholder = []
                             placeholder.append(i)
+                            # adding the column number
                             if isinstance(entry.first(), MultiQubitGate):
-                                placeholder.append(entry.first().subExpr(1).subExpr(1))
+                                placeholder.append(entry.first().subExpr(1).subExpr(0).subExpr(1))
                             else:
                                 placeholder.append(entry.first().subExpr(1))
-                            if isinstance(entry.first(), MultiQubitGate):
-                                placeholder.append(entry.last().subExpr(1).subExpr(1))
+                            # add the row index, eg for Aij, we add j for the beginning and the end.
+                            # accessing j is different for a MultiQubitGate.
+                            if isinstance(entry.last(), MultiQubitGate):
+                                placeholder.append(entry.last().subExpr(1).subExpr(0).subExpr(1))
                             else:
                                 placeholder.append(entry.last().subExpr(1))
                             pos.append(placeholder)
@@ -473,14 +520,28 @@ class Circuit(ExprArray):
                                 raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
                             for item in pos:
                                 if item[0] == i:
-                                    if entry.first().subExpr(1) != item[1]:
+                                    # if we are in the current column
+                                    if isinstance(entry.first(), MultiQubitGate):
+                                        current = entry.first().subExpr(1).subExpr(0).subExpr(1)
+                                    elif isinstance(entry.first(), Gate):
+                                        current = entry.first().subExpr(1).subExpr(1)
+                                    else:
+                                        current = entry.first().subExpr(1)
+                                    # check the current j value against the first row j value
+                                    if current != item[1]:
                                         raise ValueError('Columns containing ExprRanges '
                                                          'must agree for every row. %s is '
-                                                         'not equal to %s.' % (entry.first().subExpr(1), item[1]))
-                                    if entry.last().subExpr(1) != item[2]:
+                                                         'not equal to %s.' % (current, item[1]))
+                                    if isinstance(entry.last(), MultiQubitGate):
+                                        current = entry.last().subExpr(1).subExpr(0).subExpr(1)
+                                    elif isinstance(entry.last(), Gate):
+                                        current = entry.last().subExpr(1).subExpr(1)
+                                    else:
+                                        current = entry.last().subExpr(1)
+                                    if current != item[2]:
                                         raise ValueError('Columns containing ExprRanges '
                                                          'must agree for every row. %s is '
-                                                         'not equal to %s.' % (entry.last().subExpr(1), item[2]))
+                                                         'not equal to %s.' % (current, item[2]))
                                     k += 1
                         count += 3
                     else:
@@ -493,39 +554,50 @@ class Circuit(ExprArray):
                     first = None
                     last = None
                     for i, entry in enumerate(expr.first()):
-
+                        # loop through the ExprTuple (first)
                         if isinstance(entry, ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
-                                             'extraneous feature for the ExprArray class.')
+                                             'extraneous feature for the Circuit class.')
                         elif isinstance(entry, ExprRange):
                             if m == 0:
+                                # placeholder/pos is only used if the row is an ExprTuple, however, if the first
+                                # row is an ExprRange, it needs to be defined here.
                                 placeholder = []
+                                # add which column we are in
                                 placeholder.append(i)
+                                # add the first and last values for Aij (j)
                                 if isinstance(entry.first(), MultiQubitGate):
+                                    placeholder.append(entry.first().subExpr(1).subExpr(0).subExpr(1))
+                                else:
                                     placeholder.append(entry.first().subExpr(1).subExpr(1))
+                                if isinstance(entry.last(), MultiQubitGate):
+                                    placeholder.append(entry.last().subExpr(1).subExpr(0).subExpr(1))
                                 else:
-                                    placeholder.append(entry.first().subExpr(1))
-                                if isinstance(entry.first(), MultiQubitGate):
                                     placeholder.append(entry.last().subExpr(1).subExpr(1))
-                                else:
-                                    placeholder.append(entry.last().subExpr(1))
                                 pos.append(placeholder)
-                            box = True
                             if first is None:
+                                # first and last are only used by ExprRange
                                 if isinstance(entry.first(), MultiQubitGate):
-                                    first = entry.first().subExpr(1).subExpr(1)
+                                    first = entry.first().subExpr(1).subExpr(0).subExpr(1)
                                 else:
-                                    first = entry.first().subExpr(0).subExpr(1)
+                                    first = entry.first().subExpr(1).subExpr(1)
                             if isinstance(entry.first(), MultiQubitGate):
-                                current = entry.first().subExpr(1).subExpr(1)
+                                current = entry.first().subExpr(1).subExpr(0).subExpr(1)
                             else:
-                                current = entry.first().subExpr(0).subExpr(1)
+                                current = entry.first().subExpr(1).subExpr(1)
                             if first != current:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (first, current))
                             if first != current:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (first, current))
+                            k += 1
+                        elif isinstance(entry, MultiQubitGate):
+                            if first is None:
+                                first = entry.subExpr(1).subExpr(0).subExpr(1)
+                            if first != entry.subExpr(1).subExpr(0).subExpr(1):
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (first, entry.subExpr(1).subExpr(0).subExpr(1)))
                         else:
                             if first is None:
                                 first = entry.subExpr(1)
@@ -533,25 +605,34 @@ class Circuit(ExprArray):
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (first, entry.subExpr(1)))
                     for entry in expr.last():
+                        # loop through the ExprTuple (last)
                         if isinstance(entry, ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
+                            # these checks confirm that everything in this range of a tuple of a range
+                            # are in agreement.
                             if last is None:
-                                if isinstance(entry.first(), MultiQubitGate):
-                                    last = entry.first().subExpr(1).subExpr(1)
+                                if isinstance(entry.last(), MultiQubitGate):
+                                    last = entry.last().subExpr(1).subExpr(0).subExpr(0).subExpr(1)
                                 else:
-                                    last = entry.first().subExpr(0).subExpr(1)
-                            if isinstance(entry.first(), MultiQubitGate):
-                                current = entry.first().subExpr(1).subExpr(1)
+                                    last = entry.last().subExpr(1).subExpr(1)
+                            if isinstance(entry.last(), MultiQubitGate):
+                                current = entry.last().subExpr(1).subExpr(0).subExpr(0).subExpr(1)
                             else:
-                                current = entry.first().subExpr(0).subExpr(1)
+                                current = entry.last().subExpr(1).subExpr(1)
                             if last != current:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (last, current))
                             if last != current:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (last, current))
+                        elif isinstance(entry, MultiQubitGate):
+                            if last is None:
+                                last = entry.subExpr(1).subExpr(0).subExpr(1)
+                            if last != entry.subExpr(1).subExpr(0).subExpr(1):
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (last, entry.subExpr(1).subExpr(0).subExpr(1)))
                         else:
                             if last is None:
                                 last = entry.subExpr(1)
@@ -560,20 +641,21 @@ class Circuit(ExprArray):
                                                  'not equal to %s.' % (last, entry.subExpr(1)))
             n = m
 
-        if k != len(pos):
-            if n == 0:
-                if not box:
-                    raise ValueError('ExprArrays must have more than one row.')
-            else:
-                raise ValueError('The ExprRange in the first tuple is not in the same column '
-                                 'as the ExprRange in tuple number %s' % str(n))
+            if k != len(pos):
+                print(k)
+                print(pos)
+                if n != 0:
+                    raise ValueError('The ExprRange in the first tuple is not in the same column '
+                                     'as the ExprRange in tuple number %s' % str(n))
 
     def check_indices(self):
         '''
         If there is a MultiQubitGate, checks if all indices match up with additional
          MultiQubitGates with identical indices.
         '''
-        for k, entry in enumerate(self, 1):
+        k = 1
+        # k counts the integer rows, j counts the variable rows
+        for entry in self:
             # cycle through each ExprTuple; k keeps track of which row we are on.
             if isinstance(entry, ExprTuple):
                 for i, value in enumerate(entry):
@@ -592,6 +674,31 @@ class Circuit(ExprArray):
                                 inset = True
                         if not inset:
                             raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
+                    elif isinstance(value, ExprRange):
+                        pass
+                k += 1
+           # elif isinstance(entry, ExprRange):
+            #    if isinstance(entry.first(), ExprTuple):
+             #       for i, value in enumerate(entry.first()):
+              #          # cycle through the columns
+               #         if isinstance(value, MultiQubitGate):
+                #            indices = value.subExpr(1).subExpr(1)
+                 #           gate = value.subExpr(1).subExpr(0)
+                  #          if indices.subExpr(1) != gate.subExpr(1):
+                   #             raise ValueError('The set indexed variable must be indexed the same way as the gate '
+                    #                             'indexed variable')
+                     #   elif isinstance(value, ExprRange):
+                      #      # Range of a Tuple of a Range
+                       #     indices = value.subExpr(1).subExpr(1)
+                        #    gate = value.subExpr(1).subExpr(0)
+                         #   if indices.subExpr(1) != gate.subExpr(1):
+                          #      raise ValueError('The set indexed variable must be indexed the same way as the gate '
+                           #                      'indexed variable')
+                            #if indices.subExpr(0).subExpr(1) != gate.subExpr(0).subExpr(1):
+                             #   raise ValueError('The set indexed variable must be indexed the same way as the gate '
+                              #                   'indexed variable')
+                   # k += 3
+
 
     def _find_wires(self):
         '''
@@ -601,13 +708,82 @@ class Circuit(ExprArray):
         '''
         from proveit.number.numeral import num
         wire_placement = []
+        # list of the wires
+
+        col_with_mqg = dict()
+        # keeps track of which columns have a MQG, columns start at 0, rows (top/bottom) start at 1
+        for k, entry in enumerate(self, 1):
+            # loop through each row; k tells us which row we are on
+            if isinstance(entry, ExprTuple):
+                col = 0
+                for value in entry:
+                    # loop through each column
+                    if isinstance(value, ExprRange):
+                        if isinstance(value.first(), MultiQubitGate):
+                            j = 0
+                            while j < 3:
+                                # we count to 3 because there are three items in each row of an ExprRange
+                                if str(col) not in col_with_mqg:
+                                    col_with_mqg[str(col)] = {'top': k, 'bottom': k}
+                                else:
+                                    col_with_mqg[str(col)]['bottom'] = k
+                                j += 1
+                                col += 1
+                    elif isinstance(value, MultiQubitGate):
+                        if str(col) not in col_with_mqg:
+                            col_with_mqg[str(col)] = {'top': k, 'bottom': k}
+                        else:
+                            col_with_mqg[str(col)]['bottom'] = k
+                        col += 1
+                    else:
+                        col += 1
+
+            elif isinstance(entry, ExprRange):
+                if isinstance(entry.first(), ExprTuple):
+                    # ExprRange of a ExprTuple
+                    col = 0
+                    for value in entry.first():
+                        # loop through the columns
+                        if isinstance(value, MultiQubitGate):
+                            if str(col) not in col_with_mqg:
+                                col_with_mqg[str(col)] = {'top': k, 'bottom': k}
+                            else:
+                                col_with_mqg[str(col)]['bottom'] = k
+                            col += 1
+                        elif isinstance(value, ExprRange):
+                            print('RoToR!!')
+                            # ExprRange of a ExprTuple of a ExprRange
+                            if isinstance(value.first(), MultiQubitGate):
+                                j = 0
+                                while j < 3:
+                                    # we count to 3 because there are 3 elements in each row of an ExprRange
+                                    if str(col) not in col_with_mqg:
+                                        col_with_mqg[str(col)] = {'top': k, 'bottom': k}
+                                    else:
+                                        col_with_mqg[str(col)]['bottom'] = k
+                                    j += 1
+                                    col += 1
+                        else:
+                            col += 1
+
+        print(col_with_mqg)
+
         for k, entry in enumerate(self, 1):
             # cycle through each ExprTuple; k keeps track of which row we are on.
             row = dict()
             if isinstance(entry, ExprTuple):
                 col = 0
-                for i, value in enumerate(entry):
+                for value in entry:
                     # cycle through each row; i keeps track of which column we are on.
+                    if str(col) in col_with_mqg:
+                        if col_with_mqg[str(col)]['top'] <= k < col_with_mqg[str(col)]['bottom']:
+                            # if we are between the first and last MQG in this column
+                            connect = True
+                        else:
+                            # we are not between the first and last MQG in this column
+                            connect = False
+                    else:
+                        connect = False
                     if isinstance(value, MultiQubitGate):
                         index = value.indices.index(num(k))
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
@@ -618,59 +794,89 @@ class Circuit(ExprArray):
                             if index < len(value.indices) - 1:
                                 # if this is not the last gate in the multiQubitGate
                                 if value.indices[index + 1].asInt() == k + 1 and value.gate == \
-                                        self.entries[value.indices[index + 1].asInt() - 1].entries[i].gate:
+                                        self.entries[value.indices[index + 1].asInt() - 1].entries[col].gate:
                                     # if this gate is the same as the next and the current gate is not the last one in
                                     # the multiQubit gate
                                     if index == 0 or value.indices[index - 1].asInt() != k - 1 or value.gate != \
-                                            self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
+                                            self.entries[value.indices[index - 1].asInt() - 1].entries[col].gate:
                                         # This is the first in the multiQubit block gate!
                                         length = 0
                                         n = index
                                         while n + 1 < len(value.indices) and value.indices[n + 1].asInt() == \
                                                 k + length + 1 and value.gate == \
-                                                self.entries[value.indices[n + 1].asInt() - 1].entries[i].gate:
+                                                self.entries[value.indices[n + 1].asInt() - 1].entries[col].gate:
                                             length += 1
                                             n += 1
                                             # count the number of gates that are the same and then add it to the wire
                                             # direction array
-                                        row[i] = ['first', length]
+                                        row[col] = ['first', length]
                                     else:
                                         # this is not the first in the multiQubit block gate
-                                        row[i] = 'ghost'
+                                        row[col] = 'ghost'
                                 elif index != 0 and value.indices[index - 1].asInt() == k - 1 and value.gate == \
-                                        self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
+                                        self.entries[value.indices[index - 1].asInt() - 1].entries[col].gate:
                                     # this is the last in the block gate, but it is not the last gate in the
                                     # MultiQubitGate
-                                    row[i] = ['ghost', value.indices[index + 1].asInt() - k]
+                                    row[col] = ['ghost', value.indices[index + 1].asInt() - k]
                                 else:
                                     # Define the wireDirection for the multiQubitGate by taking the next index and
                                     # subtracting the current one
-                                    row[i] = value.indices[index + 1].asInt() - k
+                                    row[col] = value.indices[index + 1].asInt() - k
                             else:
                                 # this is the last gate in the MultiQubitGate, so we skip adding the wires
                                 if index != 0:
                                     # as long as this is not the only gate in the MultiQubitGate
                                     if value.indices[index - 1].asInt() == k - 1 and value.gate == \
-                                            self.entries[k - 2].entries[i].gate:
+                                            self.entries[k - 2].entries[col].gate:
                                         # if this gate equals the gate right above it then this is part of a
                                         # block gate even though it is the last element
                                         # (we have to subtract 2 because just one takes us to the base 0 index and we
                                         # want the one before the index)
-                                        row[i] = 'ghost'
+                                        row[col] = 'ghost'
+                                        '''
+                                        if connect:
+                                            # if we are in the middle of the first and last MQGs in this column
+                                            row[col] = ['ghost', 1]
+                                        else:
+                                            # this is the last MQG in this column
+                                            '''
+
                                     else:
-                                        row[i] = 'skip'
+                                        # this is not part of a blockgate even though it is the last gate in the MQG
+                                        '''
+                                        if connect:
+                                            # if we are in the middle of the first and last MQGs in this column
+                                            row[col] = 1
+                                        else:
+                                            # this is the last MQG in this column
+                                            '''
+                                        row[col] = 'skip'
+                                    '''
+                                elif connect:
+                                    # if we are in the middle of the first and last MQGs in this column, even though
+                                    # this is the only gate in this specific MultiQubitGate
+                                    row[col] = 1
+                                    '''
                                 else:
                                     # this is the only gate in the MultiQubitGate so we skip adding the wires
-                                    row[i] = 'skip'
+                                    row[col] = 'skip'
                         else:
-                            # Define the wireDirection for the multiQubitGate by taking the next index and
+                            # there is a control or a classical control
+                            # Define the wireDirection for the MultiQubitGate by taking the next index and
                             # subtracting the current one
                             if index < len(value.indices) - 1:
                                 # this is not the last gate so we add a wire index
-                                row[i] = value.indices[index + 1].asInt() - k
+                                row[col] = value.indices[index + 1].asInt() - k
+                                '''
+                                elif connect:
+                                # if we are in the middle of the first and last MQGs in this column, even though this is
+                                # the last gate in this particular MQG
+                                row[col] = 1
+                                '''
                             else:
-                                # this is the last gate so we skip adding a wire
-                                row[i] = 'skip'
+                                # this is the last gate in this column so we skip adding a wire
+                                row[col] = 'skip'
+                        col += 1
 
                     elif isinstance(value, ExprRange):
                         # ExprTuple of an ExprRange
@@ -678,7 +884,21 @@ class Circuit(ExprArray):
                         if isinstance(value.first(), MultiQubitGate):
                             while j < 3:
                                 # we count to 3 because there are 3 elements in each row of the ExprRange
-                                row[col] = 'gate'
+                                if str(col) in col_with_mqg:
+                                    if col_with_mqg[str(col)]['top'] <= k < col_with_mqg[str(col)]['bottom']:
+                                        # if we are between the first and last MQG in this column
+                                        connect = True
+                                    else:
+                                        # we are not between the first and last MQG in this column
+                                        connect = False
+                                else:
+                                    connect = False
+                                if connect:
+                                    # if we are between the first and last MQG in this column, add a wire extending down
+                                    row[col] = ['gate', 1]
+                                else:
+                                    # we are not between the first and last MQG in this column
+                                    row[col] = 'gate'
                                 j += 1
                                 col += 1
                         elif not isinstance(value.first(), Gate):
@@ -693,28 +913,78 @@ class Circuit(ExprArray):
                                 raise TypeError('Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
                                                 'Literal imported from proveit.physics.quantum._common_  %s is not'
                                                 % value.first())
+                        else:
+                            # this is a gate
+                            while j < 3:
+                                # we count to 3 because there are 3 elements in each row of the ExprRange
+                                if str(col) in col_with_mqg:
+                                    if col_with_mqg[str(col)]['top'] <= k < col_with_mqg[str(col)]['bottom']:
+                                        # if we are between the first and last MQG in this column
+                                        connect = True
+                                    else:
+                                        # we are not between the first and last MQG in this column
+                                        connect = False
+                                else:
+                                    connect = False
+                                if j == 1:
+                                    # we only wrap the ellipsis in a gate because the first and last are already wrapped
+                                    if connect:
+                                        # even though this is a gate, we add a wire because it is in between the first
+                                        # and last MQG in this column
+                                        row[col] = ['gate', 1]
+                                    else:
+                                        # we don't add a wire because this is a gate and it is not between the first and
+                                        # last MQG in this column
+                                        row[col] = 'gate'
+                                elif connect:
+                                    # even though this is a gate, we add a wire because it is between the first and last
+                                    # MQG in this column
+                                    row[col] = 1
+
+                                j += 1
+                                col += 1
+                    else:
+                        # is none of the above, but we still need to increment the column
+                        col += 1
 
                 wire_placement.append(row)
 
             elif isinstance(entry, ExprRange):
                 if isinstance(entry.first(), ExprTuple):
                     # ExprRange of an ExprTuple
-                    k = 0
-
-                    while k < 3:
+                    n = 0
+                    while n < 3:
+                        # we count to 3 because there are three rows in an ExprRange of an ExprTuple
                         col = 0
-                        # we count to 3 because there are 3 elements in each row of the ExprRange
-                        for i, item in enumerate(entry.first()):
+
+                        for item in entry.first():
+                            if str(col) in col_with_mqg:
+                                if col_with_mqg[str(col)]['top'] <= k < col_with_mqg[str(col)]['bottom']:
+                                    # if we are between the first and last MQG in this column
+                                    connect = True
+                                else:
+                                    # we are not between the first and last MQG in this column
+                                    connect = False
+                            else:
+                                connect = False
+
                             if isinstance(item, ExprRange):
                                 # ExprRange of an ExprTuple of an ExprRange
                                 j = 0
                                 if isinstance(item.first(), MultiQubitGate):
                                     while j < 3:
-                                        # we count to 3 because there are 3 elements in each ExprRange
-                                        if k < 2:
-                                            row[col] = ['gate', 1]
+                                        # we count to 3 because there are 3 elements in each ExprRange (regardless of
+                                        # explicit parameterization)
+                                        if n == 2:
+                                            if connect:
+                                                # if we are between the first and last MQG in this column, add a wire
+                                                row[col] = ['gate', 1]
+                                            else:
+                                                # the last row should not have wires.
+                                                row[col] = 'gate'
                                         else:
-                                            row[col] = 'gate'
+                                            # add wires going down
+                                            row[col] = ['gate', 1]
                                         j += 1
                                         col += 1
                                 elif not isinstance(item.first(), Gate):
@@ -731,9 +1001,39 @@ class Circuit(ExprArray):
                                             'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
                                             'Literal imported from proveit.physics.quantum._common_  %s is not'
                                             % item.first())
+                                else:
+                                    # this is a gate
+                                    if connect:
+                                        # even though this is a gate, we are between the first and last MQG in this
+                                        # column so we add a wire.
+                                        j = 0
+                                        while j < 3:
+                                            # we count to 3 because there are 3 entries in each row of a ExprRange
+                                            row[col] = ['gate', 1]
+                                            col += 1
+                                            j += 1
+                                    else:
+                                        # this is not between the first and last MQG in this column so we do not add a
+                                        # wire
+                                        j = 0
+                                        while j < 3:
+                                            # we count to 3 because there are 3 entries in each row of a ExprRange
+                                            row[col] = 'gate'
+                                            col += 1
+                                            j += 1
 
                             elif isinstance(item, MultiQubitGate):
-                                row[i] = 'gate'
+                                # ExprRange of an ExprTuple
+                                if n == 2:
+                                    # this is the last row in the ExprRange
+                                    if connect:
+                                        # this is between the first and last MQG in this row.
+                                        row[col] = ['gate', 1]
+                                    else:
+                                        row[col] = 'gate'
+                                else:
+                                    row[col] = ['gate', 1]
+                                col += 1
                             elif not isinstance(item, Gate):
                                 if isinstance(item, Literal):
                                     from proveit.physics.quantum._common_ import SPACE, CONTROL, CLASSICAL_CONTROL
@@ -747,10 +1047,20 @@ class Circuit(ExprArray):
                                     raise TypeError('Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
                                                     'Literal imported from proveit.physics.quantum._common_  %s is not'
                                                     % item)
+                            else:
+                                # this is a gate
+                                if connect:
+                                    # even though this is a gate, we add a wire because it is in between the first and
+                                    # last MQG in this column
+                                    row[col] = ['gate', 1]
+                                else:
+                                    # we are not in between the first and last MQG in this column so we don't add a wire
+                                    row[col] = 'gate'
+                                col += 1
 
                         wire_placement.append(row)
                         row = dict()
-                        k += 1
+                        n += 1
 
             else:
                 wire_placement.append(row)
@@ -782,6 +1092,7 @@ class Circuit(ExprArray):
             outStr += r'\Qcircuit' + spacing + '{' + '\n'
 
         wires = self._find_wires()
+        print(wires)
         formatted_sub_expressions = []
         row = 0
         column = 0
@@ -813,6 +1124,7 @@ class Circuit(ExprArray):
                 if r'\Qcircuit' in entry:
                     idx = entry.index('\n')
                     entry = entry[idx + 3:len(entry) - 3]
+                    add = '& '
                     # we add three  to include the n and the & and the space after then &
                     # we subtract 3 to get rid of the ending bracket and \n
                 out_str = ''
@@ -827,7 +1139,11 @@ class Circuit(ExprArray):
                             # we assume this to be a ghost since there are only two lists: first and ghost
                             out_str += add + r'\ghost{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
                         elif wires[row][column][0] == 'gate':
-                            out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
+                            if len(wires[row][column]) == 3:
+                                out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r'] ' \
+                                                                       r'\qwx[' + str(wires[row][column][2]) + r']'
+                            else:
+                                out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
                     elif wires[row][column] == 'ghost':
                         # this is a member of a block multiqubit gate
                         out_str += add + r'\ghost{' + entry + '}'
@@ -848,7 +1164,23 @@ class Circuit(ExprArray):
                                 out_str += add + r'\gate{' + entry + r'}'
                     # if we are adding wires, we add the length according to self.wires
                     elif wires[row][column] == 'gate':
-                        out_str += add + r'\gate{' + entry + r'}'
+                        # a gate with no wires
+                        if r'\gate' in entry:
+                            out_str += add + entry
+                        else:
+                            out_str += add + r'\gate{' + entry + r'}'
+                    elif isinstance(wires[row][column], int):
+                        # tacks on a wire regardless of the entry
+                        if entry == r'\control \qw':
+                            # this is formatted as a solid dot using \control
+                            out_str += add + r'\control \qw \qwx[' + str(wires[row][column]) + r']'
+                        elif entry == r'\control \cw':
+                            # this is formatted as a solid dot, but with classical wires.
+                            out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
+                        elif r'\gate' in entry:
+                            out_str += add + entry + r' \qwx[' + str(wires[row][column]) + r']'
+                        else:
+                            out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
                     elif entry == 'X':
                         if entry != 'implicit':
                             # we want to explicitly see the type of gate as a 'letter' representation
@@ -865,6 +1197,7 @@ class Circuit(ExprArray):
                         # this is formatted as a solid dot using \ctrl and \cw since there is a classical wire
                         out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
                     else:
+                        # gate with wire
                         out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
 
                     formatted_sub_expressions.append(out_str)
