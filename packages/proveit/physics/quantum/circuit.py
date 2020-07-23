@@ -1,6 +1,6 @@
 import sys
 from proveit import Lambda, Literal, Operation, TransitiveRelation, USE_DEFAULTS
-from proveit._common_ import A, U
+from proveit._common_ import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
 # from proveit.physics.quantum._common_ import Xgate, Ygate, Zgate, Hgate
@@ -272,11 +272,12 @@ class MultiQubitGate(Operation):
         '''
         Automatically reduce "MultiQubitGate() = IdentityOp()" and "MultiQubitGate(Gate(a), Set(n)) = Gate(a)".
         '''
+        from proveit.number import Numeral
         if len(self.operands) == 0:
             # from proveit.physics.quantum._axioms_ import emptyMultiQubitGate
             # return emptyMultiQuibitGate
             pass
-        elif self.gate_set.operands.singular():
+        elif self.gate_set.operands.singular() and isinstance(self.gate_set.operands, Numeral):
             try:
                 return self.unaryReduction(assumptions)
             except:
@@ -330,6 +331,8 @@ class MultiQubitGate(Operation):
             elif formattedGateOperation == r'CLASSICAL\_CONTROL':
                 # this is formatted as a solid dot, but with classical wires.
                 out_str += r'\control \cw'
+            elif formattedGateOperation == 'SWAP':
+                out_str += r'\qswap'
             else:
                 if isinstance(self.gate_set, Set):
                     count = 0
@@ -416,6 +419,168 @@ class CircuitEquiv(TransitiveRelation):
         self.a = a
         self.b = b
 
+    @staticmethod
+    def _lambdaExpr(lambda_map, expr_being_replaced, assumptions=USE_DEFAULTS):
+        from proveit import ExprRange, InnerExpr
+        if isinstance(lambda_map, InnerExpr):
+            lambda_map = lambda_map.repl_lambda()
+        if not isinstance(lambda_map, Lambda):
+            # as a default, do a global replacement
+            lambda_map = Lambda.globalRepl(lambda_map, expr_being_replaced)
+        if len(lambda_map.parameters) != 1:
+            raise ValueError("When substituting, expecting a single "
+                             "'lambda_map' parameter entry which may "
+                             "be a single parameter or a range; got "
+                             "%s as 'lambda_map'" % lambda_map)
+        if isinstance(lambda_map.parameters[0], ExprRange):
+            from proveit.number import one
+            if lambda_map.parameters[0].start_index != one:
+                raise ValueError("When substituting a range, expecting "
+                                 "the 'lambda_map' parameter range to "
+                                 "have a starting index of 1; got "
+                                 "%s as 'lambda_map'" % lambda_map)
+        return lambda_map
+
+    def substitution(self, lambda_map, assumptions=USE_DEFAULTS):
+        '''
+        From x equiv y, and given f(x), derive f(x) equiv f(y).
+        f(x) is provided via lambdaMap as a Lambda expression or an
+        object that returns a Lambda expression when calling lambdaMap()
+        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
+        particular), or, if neither of those, an expression to upon
+        which to perform a global replacement of self.lhs.
+        '''
+        from proveit import ExprRange
+        from ._axioms_ import substitution
+        from proveit._common_ import f, x, y
+
+        lambda_map = CircuitEquiv._lambdaExpr(lambda_map, self.lhs, assumptions)
+        '''
+        if isinstance(lambda_map.parameters[0], ExprRange):
+            # We must use operands_substitution for ExprTuple
+            # substitution.
+            from proveit.core_expr_types.operations._axioms_ import \
+                operands_substitution
+            from proveit.number import one
+            assert lambda_map.parameters[0].start_index == one
+            n_sub = lambda_map.parameters[0].end_index
+            return operands_substitution.instantiate(
+                {n: n_sub, f: lambda_map, x: self.lhs, y: self.rhs},
+                assumptions=assumptions)
+        '''
+        # Regular single-operand substitution:
+        return substitution.instantiate({f: lambda_map, x: self.lhs, y: self.rhs},
+                                        assumptions=assumptions)
+
+    def subLeftSideInto(self, lambda_map, assumptions=USE_DEFAULTS):
+        '''
+        From x equiv y, and given P(y), derive P(x) assuming P(y).
+        P(x) is provided via lambdaMap as a Lambda expression or an
+        object that returns a Lambda expression when calling lambdaMap()
+        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
+        particular), or, if neither of those, an expression to upon
+        which to perform a global replacement of self.rhs.
+        '''
+        # from proveit import ExprRange
+        from ._theorems_ import subLeftSideInto
+        # from ._theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
+        from proveit._common_ import P, x, y
+        # from proveit.logic import TRUE, FALSE
+        lambda_map = CircuitEquiv._lambdaExpr(lambda_map, self.rhs)
+
+        '''
+        if isinstance(lambda_map.parameters[0], ExprRange):
+            # We must use sub_in_left_operands for ExprTuple
+            # substitution.
+            from proveit.logic.equality._theorems_ import \
+                sub_in_left_operands
+            from proveit.number import one
+            assert lambda_map.parameters[0].start_index == one
+            n_sub = lambda_map.parameters[0].end_index
+            return sub_in_left_operands.instantiate(
+                {n: n_sub, P: lambda_map, x: self.lhs, y: self.rhs},
+                assumptions=assumptions)
+        
+        try:
+            # try some alternative proofs that may be shorter, if they
+            # are usable
+            if self.rhs == TRUE:
+                # substituteTruth may provide a shorter proof option
+                substituteTruth.specialize({x: self.lhs, P: lambda_map},
+                                           assumptions=assumptions)
+            elif self.lhs == TRUE:
+                # substituteInTrue may provide a shorter proof option
+                substituteInTrue.specialize({x: self.rhs, P: lambda_map},
+                                            assumptions=assumptions)
+            elif self.rhs == FALSE:
+                # substituteFalsehood may provide a shorter proof option
+                substituteFalsehood.specialize({x: self.lhs, P: lambda_map},
+                                               assumptions=assumptions)
+            elif self.lhs == FALSE:
+                # substituteInFalse may provide a shorter proof option
+                substituteInFalse.specialize({x: self.rhs, P: lambda_map},
+                                             assumptions=assumptions)
+        except:
+            pass
+        '''
+        return subLeftSideInto.specialize(
+            {x: self.lhs, y: self.rhs, P: lambda_map},
+            assumptions=assumptions)
+
+    def subRightSideInto(self, lambda_map, assumptions=USE_DEFAULTS):
+        '''
+        From x equiv y, and given P(x), derive P(y) assuming P(x).
+        P(x) is provided via lambdaMap as a Lambda expression or an
+        object that returns a Lambda expression when calling lambdaMap()
+        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
+        particular), or, if neither of those, an expression to upon
+        which to perform a global replacement of self.lhs.
+        '''
+        from proveit import ExprRange
+        from ._theorems_ import subRightSideInto
+        # from ._theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
+        # from proveit.logic import TRUE, FALSE
+        from proveit._common_ import P, x, y
+        lambda_map = CircuitEquiv._lambdaExpr(lambda_map, self.lhs)
+
+        '''
+        if isinstance(lambda_map.parameters[0], ExprRange):
+            # We must use sub_in_right_operands for ExprTuple
+            # substitution.
+            from proveit.logic.equality._theorems_ import \
+                sub_in_right_operands
+            from proveit.number import one
+            assert lambda_map.parameters[0].start_index == one
+            n_sub = lambda_map.parameters[0].end_index
+            return sub_in_right_operands.instantiate(
+                {n: n_sub, P: lambda_map, x: self.lhs, y: self.rhs},
+                assumptions=assumptions)
+
+        try:
+            # try some alternative proofs that may be shorter, if they are usable
+            if self.lhs == TRUE:
+                # substituteTruth may provide a shorter proof options
+                substituteTruth.specialize({x: self.rhs, P: lambda_map},
+                                           assumptions=assumptions)
+            elif self.rhs == TRUE:
+                # substituteInTrue may provide a shorter proof options
+                substituteInTrue.specialize({x: self.lhs, P: lambda_map},
+                                            assumptions=assumptions)
+            elif self.lhs == FALSE:
+                # substituteFalsehood may provide a shorter proof options
+                substituteFalsehood.specialize({x: self.rhs, P: lambda_map},
+                                               assumptions=assumptions)
+            elif self.rhs == FALSE:
+                # substituteInFalse may provide a shorter proof options
+                substituteInFalse.specialize({x: self.lhs, P: lambda_map},
+                                             assumptions=assumptions)
+        except:
+            pass
+        '''
+        return subRightSideInto.specialize(
+            {x: self.lhs, y: self.rhs, P: lambda_map},
+            assumptions=assumptions)
+
     #def string(self, **kwargs):
      #   return self.formatted('string', **kwargs)
 
@@ -476,11 +641,21 @@ class Circuit(ExprArray):
         self.checkRange()
         self.check_indices()
 
-    def replace_equiv_circ(self, assumptions=USE_DEFAULTS):
+    def replace_equiv_circ(self, current, new, assumptions=USE_DEFAULTS):
         '''
         Given the piece that is to be replaced, and the piece it is being replaced with,
         use either space_equiv or time_equiv to prove the replacement.
         '''
+        from ._theorems_ import sing_time_equiv, time_equiv, sing_space_equiv, two_qubit_space_equiv
+        if not isinstance(current, Circuit):
+            raise ValueError('The current circuit piece must be a circuit element.')
+        if not isinstance(new, Circuit):
+            raise ValueError('The replacement piece must be a circuit element.')
+        if current.getColHeight() != new.getColHeight() or current.getRowLength() != new.getRowLength():
+            raise ValueError('The current circuit element and the replacement circuit element must be the same size.')
+        #if current.getRowLength() == 1 and current.getColHeight() == self.getColHeight():
+            #return sing_time_equiv.specialize({h:l, k:l, m: self.getColHeight, n:l, A:l, B: current, C:l, D: new, R:l, S: , Q:l},
+             #           assumptions=assumptions)
 
     def checkRange(self):
         '''
@@ -642,8 +817,6 @@ class Circuit(ExprArray):
             n = m
 
             if k != len(pos):
-                print(k)
-                print(pos)
                 if n != 0:
                     raise ValueError('The ExprRange in the first tuple is not in the same column '
                                      'as the ExprRange in tuple number %s' % str(n))
@@ -751,7 +924,6 @@ class Circuit(ExprArray):
                                 col_with_mqg[str(col)]['bottom'] = k
                             col += 1
                         elif isinstance(value, ExprRange):
-                            print('RoToR!!')
                             # ExprRange of a ExprTuple of a ExprRange
                             if isinstance(value.first(), MultiQubitGate):
                                 j = 0
@@ -765,8 +937,6 @@ class Circuit(ExprArray):
                                     col += 1
                         else:
                             col += 1
-
-        print(col_with_mqg)
 
         for k, entry in enumerate(self, 1):
             # cycle through each ExprTuple; k keeps track of which row we are on.
@@ -1077,7 +1247,7 @@ class Circuit(ExprArray):
                   wrapPositions=None, orientation=None, **kwargs):
         from proveit._core_.expression.expr import Expression
         default_style = ("explicit" if formatType == 'string' else 'implicit')
-
+        print("circuit formatted")
         outStr = ''
         if len(self) == 0 and fence:
             # for an empty list, show the parenthesis to show something.
@@ -1092,7 +1262,6 @@ class Circuit(ExprArray):
             outStr += r'\Qcircuit' + spacing + '{' + '\n'
 
         wires = self._find_wires()
-        print(wires)
         formatted_sub_expressions = []
         row = 0
         column = 0
@@ -1118,6 +1287,8 @@ class Circuit(ExprArray):
             elif formatType == 'latex':
                 if entry[0] == '&':
                     entry = entry[2:]
+                    add = '& '
+                elif column == 0:
                     add = '& '
                 else:
                     add = ' '
@@ -1286,7 +1457,7 @@ class Circuit(ExprArray):
 
         if formatType == 'latex':
             outStr += ' \n' + '}'
-        print(outStr)
+        #print(outStr)
         return outStr
 
     def _config_latex_tool(self, lt):
