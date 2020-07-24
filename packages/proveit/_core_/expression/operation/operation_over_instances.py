@@ -650,17 +650,39 @@ class OperationOverInstances(Operation):
         '''
         return list(self._instanceParamLists())
 
+    def styleOptions(self):
+        from proveit._core_.expression.style_options import StyleOptions
+        options = StyleOptions(self)
+        options.addOption('withWrapping', 'Whether or not to wrap the Expression after the parameters')
+        return options
+
+    def withWrapping(self, wrap=True):
+        '''
+        Wraps the 'instanceExpr' onto the next line. For example
+        \forall_{a, b, c, d, e, f, g}
+        P(a, b, c, d, e, f, g)
+
+        rather than
+        \forall_{a, b, c, d, e, f, g} P(a, b, c, d, e, f, g)
+        '''
+        return self.withStyles(withWrapping=str(wrap))
+
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self._formatted('latex', **kwargs)
 
-    def _formatted(self, formatType, fence=False):
+    def _formatted(self, formatType, withWrapping=None, fence=False):
         '''
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
         '''
+
+        if withWrapping is None:
+            # style call to wrap the expression after the parameters
+            withWrapping = self.getStyle('withWrapping', '')
+
         # override this default as desired
         explicitIparams = list(self.explicitInstanceParams()) # the (joined) instance vars to show explicitly
         explicitConditions = ExprTuple(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
@@ -704,10 +726,16 @@ class OperationOverInstances(Operation):
             if hasExplicitConditions:
                 if hasExplicitIparams: outStr += "~|~"
                 outStr += explicitConditions.formatted(formatType, fence=False)                
-                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
-            outStr += '}~' + explicitInstanceExpr.formatted(formatType,fence=True)
-            if fence: outStr += r'\right]'
+                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions)
+            print(withWrapping)
+            if withWrapping == 'True':
+                print(explicitInstanceExpr.formatted(formatType, fence=True))
 
+                outStr += r'}~ \right. \newline ' + '\n' + r'\left. ' + explicitInstanceExpr.formatted(formatType, fence=True)
+            else:
+                outStr += '}~' + explicitInstanceExpr.formatted(formatType, fence=True)
+            if fence: outStr += r'\right]'
+        print(outStr)
         return outStr
     
     """
