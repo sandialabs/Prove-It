@@ -1,5 +1,3 @@
-import types
-
 from .expr_tuple import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.style_options import StyleOptions

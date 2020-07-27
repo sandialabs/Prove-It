@@ -846,7 +846,6 @@ class Add(Operation):
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
         '''
-
         from proveit.number.addition._theorems_ import (
                 addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure, 
                 addNatPosClosure, addNatPosFromNonNeg,

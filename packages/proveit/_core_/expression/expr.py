@@ -637,17 +637,6 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
-    def proven(self, assumptions=USE_DEFAULTS):
-        '''
-        Return True if and only if the expression is known to be true.
-        '''
-        from proveit import ProofFailure
-        try:
-            self.prove(assumptions, automation=False)
-            return True
-        except ProofFailure:
-            return False
-
     def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Attempt to prove the logical negation (Not) of this expression. 

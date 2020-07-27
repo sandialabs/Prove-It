@@ -109,11 +109,11 @@ class RealNonNegSet(NumberSet):
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
     
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import inRealsNonNeg_iff_nonNegative
-        return inRealsNonNeg_iff_nonNegative.specialize(
-                {a:member},
-                assumptions=assumptions).deriveRightImplication(assumptions)
-    
+        from ._theorems_ import inRealsNonNeg_iff_non_negative
+        return inRealsNonNeg_iff_non_negative.specialize(
+                {a:member},assumptions=assumptions).deriveRightImplication(
+                        assumptions)
+
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
         # only fence if forceFence=True (nested exponents is an
@@ -154,3 +154,4 @@ if proveit.defaults.automation:
         realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
         natsInReals, natsPosInReals, natPosInRealsPos, natsInRealsNonNeg,
         natsPosInRealsNonNeg, realsPosInRealsNonNeg)
+
