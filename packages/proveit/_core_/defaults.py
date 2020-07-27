@@ -29,6 +29,9 @@ class Defaults:
         # below.
         self.disabled_auto_reduction_types = DisabledAutoReductionTypes()
         
+        # Put expression pngs inline versus using links.
+        self.inline_pngs = True
+        
         Defaults.consideredAssumptionSets.clear()
     
     def checkedAssumptions(self, assumptions):

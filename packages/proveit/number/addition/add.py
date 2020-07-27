@@ -1088,7 +1088,7 @@ class Add(Operation):
         at index idx is no longer grouped together.
         For example, (a + b ... + (l + ... + m) + ... + y+ z) = (a + b + ... + y + z)
         '''
-        from proveit import Len
+        from proveit.core_expr_types import Len
         from proveit.number import Neg
         from ._theorems_ import disassociation
         from .subtraction._theorems_ import subtraction_disassociation

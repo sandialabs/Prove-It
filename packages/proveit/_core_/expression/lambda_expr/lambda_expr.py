@@ -268,10 +268,10 @@ class Lambda(Expression):
                      in zip(bound_parameter_vars, generic_param_vars)}
                 generic_parameters = parameters._generic_version()
                 generic_parameters = generic_parameters.replaced(
-                        relabel_map, assumptions=tuple())
+                        relabel_map, assumptions=tuple())._generic_version()
                 generic_body = self.body._generic_version()
                 generic_body = generic_body.replaced(
-                        relabel_map, assumptions=tuple())
+                        relabel_map, assumptions=tuple())._generic_version()
                 generic_body = generic_body._generic_version()
                 return Lambda(generic_parameters, generic_body)
             else:
@@ -1054,8 +1054,9 @@ def extract_param_replacements(parameters, parameter_vars, body,
     operand(s) (ExprTuple-wrapped as appropriate).
     '''
     from proveit import (ExprTuple, ExprRange, ProofFailure, 
-                         Len, extract_var_tuple_indices)
+                         extract_var_tuple_indices)
     from proveit.logic import Equals, EvaluationError
+    from proveit.core_expr_types import Len
     # Loop through each parameter entry and match it with corresponding
     # operand(s).  Singular parameter entries match with singular
     # operand entries.  Iterated parameter entries match with
