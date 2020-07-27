@@ -328,7 +328,10 @@ class ExprTuple(Composite, Expression):
                                             assumptions, requirements,
                                             equality_repl_requirements)
                 subbed_exprs.append(subbed_expr)
-        return ExprTuple(*subbed_exprs)
+
+        return self.__class__._checked_make(
+                    self._coreInfo, dict(self._styleData.styles),
+                    subbed_exprs)
     
     def merger(self, assumptions=USE_DEFAULTS):
         '''
