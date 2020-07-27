@@ -727,15 +727,15 @@ class OperationOverInstances(Operation):
                 if hasExplicitIparams: outStr += "~|~"
                 outStr += explicitConditions.formatted(formatType, fence=False)                
                 #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions)
-            print(withWrapping)
+            #print(withWrapping)
             if withWrapping == 'True':
-                print(explicitInstanceExpr.formatted(formatType, fence=True))
+                #print(explicitInstanceExpr.formatted(formatType, fence=True))
 
                 outStr += r'}~ \right. \newline ' + '\n' + r'\left. ' + explicitInstanceExpr.formatted(formatType, fence=True)
             else:
                 outStr += '}~' + explicitInstanceExpr.formatted(formatType, fence=True)
             if fence: outStr += r'\right]'
-        print(outStr)
+        #print(outStr)
         return outStr
     
     """

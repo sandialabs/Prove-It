@@ -617,12 +617,14 @@ class CircuitEquiv(TransitiveRelation):
 # MULTI_WIRE = Literal(pkg, 'MULTI_WIRE', operationMaker = lambda operands : MultiWire(*operands))
 
 
-class Circuit(ExprArray):
+class Circuit(Operation):
     '''
     Represents a quantum circuit as a 2-D ExprArray
     '''
+    # literal operator for the Circuit Class
+    _operator_ = Literal('CIRCUIT', context=__file__)
 
-    def __init__(self, *expressions, styles=None):
+    def __init__(self, array, styles=None):
         '''
         Initialize an ExprTuple from an iterable over Expression
         objects.
@@ -631,9 +633,17 @@ class Circuit(ExprArray):
         if 'orientation' not in styles:
             styles['orientation'] = 'horizontal'
 
-        ExprTuple.__init__(self, *expressions, styles=styles)
+        Operation.__init__(self, Circuit._operator_, [array], styles=styles)
 
-        for entry in self:
+        self.array = self.operand
+
+        print(array.__class__)
+
+        if not isinstance(self.array, ExprArray): #or len(self.operands) != 1:
+            raise ValueError("Expected contents of a Circuit expression to be an ExprArray object not %s"
+                             % str(self.operands.__class__))
+
+        for entry in self.array:
             if not isinstance(entry, ExprTuple) and not isinstance(entry, ExprRange):
                 raise ValueError("Contents of an ExprArray must be wrapped in either an ExprRange or ExprTuple.")
 
@@ -665,7 +675,7 @@ class Circuit(ExprArray):
         '''
         pos = []
 
-        for m, expr in enumerate(self):
+        for m, expr in enumerate(self.array):
             k = 0
             # cycle through the rows
             if isinstance(expr, ExprTuple):
@@ -722,7 +732,7 @@ class Circuit(ExprArray):
                     else:
                         count += 1
 
-                if count != self.getRowLength():
+                if count != self.array.getRowLength():
                     raise ValueError('One or more rows are a different length.  Please double check your entries.')
             elif isinstance(expr, ExprRange):
                 if isinstance(expr.first(), ExprTuple):
@@ -828,7 +838,7 @@ class Circuit(ExprArray):
         '''
         k = 1
         # k counts the integer rows, j counts the variable rows
-        for entry in self:
+        for entry in self.array:
             # cycle through each ExprTuple; k keeps track of which row we are on.
             if isinstance(entry, ExprTuple):
                 for i, value in enumerate(entry):
@@ -838,7 +848,7 @@ class Circuit(ExprArray):
                         # a check to see if the current row index is in the set of MultiQubitGate indices
                         for n, number in enumerate(value.indices, 0):
                             # cycle through each row location of each QubitGate; n keeps track of which gate we are on.
-                            if self.entries[number.asInt() - 1].entries[i].indices != value.indices:
+                            if self.array.entries[number.asInt() - 1].entries[i].indices != value.indices:
                                 # each list of indices for each MultiQubitGate must match the current one (starting
                                 # at 0).
                                 raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
@@ -885,7 +895,7 @@ class Circuit(ExprArray):
 
         col_with_mqg = dict()
         # keeps track of which columns have a MQG, columns start at 0, rows (top/bottom) start at 1
-        for k, entry in enumerate(self, 1):
+        for k, entry in enumerate(self.array, 1):
             # loop through each row; k tells us which row we are on
             if isinstance(entry, ExprTuple):
                 col = 0
@@ -938,13 +948,15 @@ class Circuit(ExprArray):
                         else:
                             col += 1
 
-        for k, entry in enumerate(self, 1):
+        for k, entry in enumerate(self.array, 1):
             # cycle through each ExprTuple; k keeps track of which row we are on.
             row = dict()
             if isinstance(entry, ExprTuple):
                 col = 0
                 for value in entry:
                     # cycle through each row; i keeps track of which column we are on.
+                    '''
+                    # commented because right now we don't include explicit circuits in the wire formatting
                     if str(col) in col_with_mqg:
                         if col_with_mqg[str(col)]['top'] <= k < col_with_mqg[str(col)]['bottom']:
                             # if we are between the first and last MQG in this column
@@ -954,6 +966,7 @@ class Circuit(ExprArray):
                             connect = False
                     else:
                         connect = False
+                    '''
                     if isinstance(value, MultiQubitGate):
                         index = value.indices.index(num(k))
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
@@ -964,17 +977,17 @@ class Circuit(ExprArray):
                             if index < len(value.indices) - 1:
                                 # if this is not the last gate in the multiQubitGate
                                 if value.indices[index + 1].asInt() == k + 1 and value.gate == \
-                                        self.entries[value.indices[index + 1].asInt() - 1].entries[col].gate:
+                                        self.array.entries[value.indices[index + 1].asInt() - 1].entries[col].gate:
                                     # if this gate is the same as the next and the current gate is not the last one in
                                     # the multiQubit gate
                                     if index == 0 or value.indices[index - 1].asInt() != k - 1 or value.gate != \
-                                            self.entries[value.indices[index - 1].asInt() - 1].entries[col].gate:
+                                            self.array.entries[value.indices[index - 1].asInt() - 1].entries[col].gate:
                                         # This is the first in the multiQubit block gate!
                                         length = 0
                                         n = index
                                         while n + 1 < len(value.indices) and value.indices[n + 1].asInt() == \
                                                 k + length + 1 and value.gate == \
-                                                self.entries[value.indices[n + 1].asInt() - 1].entries[col].gate:
+                                                self.array.entries[value.indices[n + 1].asInt() - 1].entries[col].gate:
                                             length += 1
                                             n += 1
                                             # count the number of gates that are the same and then add it to the wire
@@ -984,7 +997,7 @@ class Circuit(ExprArray):
                                         # this is not the first in the multiQubit block gate
                                         row[col] = 'ghost'
                                 elif index != 0 and value.indices[index - 1].asInt() == k - 1 and value.gate == \
-                                        self.entries[value.indices[index - 1].asInt() - 1].entries[col].gate:
+                                        self.array.entries[value.indices[index - 1].asInt() - 1].entries[col].gate:
                                     # this is the last in the block gate, but it is not the last gate in the
                                     # MultiQubitGate
                                     row[col] = ['ghost', value.indices[index + 1].asInt() - k]
@@ -997,7 +1010,7 @@ class Circuit(ExprArray):
                                 if index != 0:
                                     # as long as this is not the only gate in the MultiQubitGate
                                     if value.indices[index - 1].asInt() == k - 1 and value.gate == \
-                                            self.entries[k - 2].entries[col].gate:
+                                            self.array.entries[k - 2].entries[col].gate:
                                         # if this gate equals the gate right above it then this is part of a
                                         # block gate even though it is the last element
                                         # (we have to subtract 2 because just one takes us to the base 0 index and we
@@ -1247,9 +1260,8 @@ class Circuit(ExprArray):
                   wrapPositions=None, orientation=None, **kwargs):
         from proveit._core_.expression.expr import Expression
         default_style = ("explicit" if formatType == 'string' else 'implicit')
-        print("circuit formatted")
         outStr = ''
-        if len(self) == 0 and fence:
+        if len(self.array) == 0 and fence:
             # for an empty list, show the parenthesis to show something.
             return '()'
 
@@ -1267,8 +1279,9 @@ class Circuit(ExprArray):
         column = 0
         add = ' '
         # what we add in front of the entry
-        for entry in self.get_formatted_sub_expressions(formatType, orientation, default_style, operatorOrOperators):
-            if column == self.getRowLength() + 1:
+        for entry in self.array.get_formatted_sub_expressions(formatType, orientation, default_style,
+                                                                   operatorOrOperators):
+            if column == self.array.getRowLength() + 1:
                 # we add one to compensate for the added wrapping slash
                 row += 1
                 column = 0
@@ -1383,12 +1396,12 @@ class Circuit(ExprArray):
             # in the order of the horizontal orientation regardless of orientation type
             k = 1
             vert = []
-            if self.getStyle('parameterization', default_style) == 'explicit':
+            if self.array.getStyle('parameterization', default_style) == 'explicit':
                 ex = True
             else:
                 ex = False
-            m = self.getColHeight(ex)
-            while k <= self.getRowLength(ex):
+            m = self.array.getColHeight(ex)
+            while k <= self.array.getRowLength(ex):
                 i = 1
                 j = k
                 for var in formatted_sub_expressions:
@@ -1397,8 +1410,8 @@ class Circuit(ExprArray):
                         m -= 1
                         if m == 0:
                             vert.append(r' \\' + ' \n ')
-                            m = self.getColHeight(ex)
-                        j += self.getRowLength(ex)
+                            m = self.array.getColHeight(ex)
+                        j += self.array.getRowLength(ex)
                     i += 1
                 k += 1
             formatted_sub_expressions = vert
@@ -1427,7 +1440,7 @@ class Circuit(ExprArray):
                     # using an 'explicit' style for 'parameterization').
                     # For the 'ellipses', we will just use a
                     # placeholder.
-                    be_explicit = self.getStyle('parameterization', default_style)
+                    be_explicit = self.array.getStyle('parameterization', default_style)
                     formatted_operators += operator._formatted_checkpoints(
                         formatType, fence=False, subFence=False, ellipses='',
                         use_explicit_parameterization=be_explicit)
