@@ -114,7 +114,7 @@ class Conditional(Expression):
         return inner_str
     
     '''
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         from proveit.logic import EvaluationError, TRUE
         for condition in self.conditions:
             if condition == TRUE:
@@ -124,14 +124,72 @@ class Conditional(Expression):
     
     def auto_reduction(self, assumptions=USE_DEFAULTS):
         '''
-        Automatically reduce a conditional with a TRUE condition.
+        Automatically reduce a conditional with a TRUE condition
+        or with a condition that is a conjunction of two conjunctions,
+        merging them into one.  This latter reduction is useful when 
+        merging conditions from two sources.  For example, showing\
+        that
+        \forall_{x | A, B} \forall_{y | C, D} P(x, y) = 
+           \forall_{x, y | A, B, C, D} P(x, y)
+        would make use of this reduction.
         '''
-        from proveit._common_ import a
-        from proveit.logic import TRUE
+        from proveit import ExprRange
+        from proveit._common_ import a, m, n, Q, R
+        from proveit.logic import And, TRUE
         if self.condition == TRUE:
             from proveit.core_expr_types.conditionals._axioms_ import \
                 true_condition_reduction
             return true_condition_reduction.instantiate({a:self.value})
+        elif isinstance(self.condition, And):
+            from proveit.core_expr_types.conditionals._theorems_ import \
+                (singular_conjunction_condition_reduction,
+                 condition_merger_reduction,
+                 condition_append_reduction, condition_prepend_reduction,
+                 condition_with_true_on_left_reduction,
+                 condition_with_true_on_right_reduction)            
+            conditions = self.condition.operands
+            if len(conditions)==1 and not isinstance(conditions[0], ExprRange):
+                with defaults.disabled_auto_reduction_types as disabled_types:
+                    # Don't auto-reduce 'And' in this process
+                    disabled_types.discard(And)
+                    return singular_conjunction_condition_reduction \
+                        .instantiate({a:self.value, Q:conditions[0]})
+            elif (len(conditions)==2 and isinstance(conditions[0], And)):
+                _Q = conditions[0].operands
+                _m = _Q.length(assumptions)
+                return condition_append_reduction.instantiate(
+                        {a:self.value, m:_m, Q:_Q, R:conditions[1]},
+                        assumptions=assumptions)
+            elif (len(conditions)==2 and isinstance(conditions[1], And)):
+                _R = conditions[1].operands
+                _n = _R.length(assumptions)
+                return condition_prepend_reduction.instantiate(
+                        {a:self.value, n:_n, Q:conditions[0], R:_R},
+                        assumptions=assumptions)                
+            elif (len(conditions)==2 and
+                    all(isinstance(cond, And) for cond in conditions)):
+                _Q = conditions[0].operands
+                _R = conditions[1].operands
+                _m = _Q.length(assumptions)
+                _n = _R.length(assumptions)
+                _a = self.value
+                return condition_merger_reduction.instantiate(
+                        {m:_m, n:_n, a:_a, Q:_Q, R:_R},
+                        assumptions=assumptions)
+            elif (len(conditions)==2 and
+                    any(isinstance(cond, And) for cond in conditions) and
+                    any(cond==TRUE for cond in conditions)):
+                if conditions[0]==TRUE:
+                    thm = condition_with_true_on_left_reduction
+                    _Q = conditions[1].operands
+                else:
+                    assert conditions[1]==TRUE
+                    thm = condition_with_true_on_right_reduction  
+                    _Q = conditions[0].operands
+                _m = _Q.length(assumptions)
+                _a = self.value
+                return thm.instantiate({m:_m, a:_a, Q:_Q},
+                                       assumptions=assumptions)
     
     def _replaced(self, repl_map, allow_relabeling,
                   assumptions, requirements, equality_repl_requirements):

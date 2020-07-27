@@ -72,26 +72,43 @@ class BooleanSet(Literal):
         from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain"
-        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVar): forallStmt.instanceExpr, A:forallStmt.instanceVar}).deriveConsequent(assumptions)
+        Px = Operation(P, forallStmt.instanceVar)
+        _Px = forallStmt.instanceExpr
+        _A = forallStmt.instanceVar
+        return unfoldForallOverBool.specialize(
+                {Px:_Px, A:_A}, assumptions=assumptions)
 
     def foldAsForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
-        Given forall_{A in Booleans} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
+        Given forall_{A in Booleans} P(A), conclude and return it from 
+        [P(TRUE) and P(FALSE)].
         '''
-        from proveit.logic import Forall
+        from proveit.logic import Forall, And
         from ._theorems_ import foldForallOverBool, foldConditionedForallOverBool
         from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
-        assert(len(forallStmt.conditions) <= 2), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain but no other conditions"
-        if(len(forallStmt.conditions)==2):
-            Q_op, Q_op_sub = Operation(Q, forallStmt.instanceVar), forallStmt.conditions[1]
-            P_op, P_op_sub = Operation(P, forallStmt.instanceVar), forallStmt.instanceExpr
-            return foldConditionedForallOverBool.specialize({Q_op:Q_op_sub, P_op:P_op_sub}, {A:forallStmt.instanceVar})
+        if(len(forallStmt.conditions)>1):
+            if len(forallStmt.conditions)==2:
+                condition = forallStmt.conditions[1]
+            else:
+                condition = And(*forallStmt.conditions[1:])
+            Qx = Operation(Q, forallStmt.instanceVar)
+            _Qx = condition
+            Px = Operation(P, forallStmt.instanceVar)
+            _Px = forallStmt.instanceExpr
+            _A = forallStmt.instanceVar
+            return foldConditionedForallOverBool.instantiate(
+                    {Qx:_Qx, Px:_Px, A:_A}, num_forall_eliminations=1,
+                    assumptions=assumptions)
         else:
             # forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)
-            P_op, P_op_sub = Operation(P, forallStmt.instanceVar), forallStmt.instanceExpr
-            return foldForallOverBool.specialize({P_op:P_op_sub}, {A:forallStmt.instanceVar})
+            Px = Operation(P, forallStmt.instanceVar)
+            _Px = forallStmt.instanceExpr
+            _A = forallStmt.instanceVar
+            return foldForallOverBool.instantiate(
+                    {Px:_Px, A:_A}, num_forall_eliminations=1,
+                    assumptions=assumptions)
 
 class BooleanMembership(Membership):
     '''
@@ -127,12 +144,12 @@ class BooleanMembership(Membership):
         try:
             element.prove(assumptions=assumptions, automation=False)
             return inBoolIfTrue.specialize({A:element}, assumptions=assumptions)
-        except:
+        except ProofFailure:
             pass
         try:
             element.disprove(assumptions=assumptions, automation=False)
             return inBoolIfFalse.specialize({A:element}, assumptions=assumptions)
-        except:
+        except ProofFailure:
             pass
         # Use 'deduceInBool' if the element has that method.
         if hasattr(element, 'deduceInBool'):
@@ -143,8 +160,8 @@ class BooleanMembership(Membership):
         '''
         Deduce [(element in Booleans) = [(element = TRUE) or (element = FALSE)].
         '''
-        from ._theorems_ import inBoolEquiv
-        return inBoolEquiv.specialize({A:self.element})
+        from ._theorems_ import inBoolDef
+        return inBoolDef.specialize({A:self.element})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -176,7 +193,11 @@ class BooleanMembership(Membership):
         '''
         from ._theorems_ import fromExcludedMiddle
         return fromExcludedMiddle.specialize({A:self.element, C:consequent}, assumptions=assumptions)
-
+    
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import inBoolInBool
+        return inBoolInBool.instantiate({A:self.element})
+    
 
 class BooleanNonmembership(Nonmembership):
     

@@ -1,11 +1,14 @@
 import inspect
-from proveit._core_.expression.expr import Expression, MakeNotImplemented, free_vars
+from proveit._core_.expression.expr import (
+        Expression, MakeNotImplemented, free_vars)
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda, getParamVar
 from proveit._core_.expression.composite import (
         ExprTuple, singleOrCompositeExpression, compositeExpression, 
         ExprRange)
 from proveit._core_.expression.conditional import Conditional
+from proveit._core_.defaults import USE_DEFAULTS
 from .operation import Operation, OperationError
+from .function import Function
 
 def _extract_domain_from_condition(ivar, condition):
     '''
@@ -43,7 +46,7 @@ class OperationOverInstances(Operation):
     
     def __init__(self, operator, instanceParamOrParams, instanceExpr, *,
                  domain=None, domains=None, condition=None, conditions=None,
-                 nestMultiIvars=False, styles=None, _lambda_map=None):
+                 styles=None, _lambda_map=None):
         '''
         Create an Operation for the given operator that is applied over
         instances of the given instance parameter(s), instanceParamOrParams, 
@@ -56,16 +59,6 @@ class OperationOverInstances(Operation):
         OperationOverInstances is effected as an Operation over a Lambda map
         with a conditional body.
         
-        If nestMultiIvars is True do the following:
-        When there are multiple instance parameters, this will generate a 
-        nested tructure in actuality and simply set the style to display these 
-        instance variables together.  In other words, whether instance 
-        variables are joined together, like
-        "forall_{x, y} P(x, y)" or split in a nested structure like
-        "forall_{x} [forall_y P(x, y)]"
-        is deemed to be a matter of style, not substance.  Internally it is 
-        treated as the latter.
-              
         If a 'domain' is supplied, additional conditions are generated that 
         each instance parameter is in the domain "set": InSet(x_i, domain),
         where x_i is for each instance parameter.  If, instead, 'domains' are 
@@ -110,10 +103,6 @@ class OperationOverInstances(Operation):
                 # No conditions.
                 instanceExpr = lambda_map.body
                 conditions = ExprTuple()
-            if len(instance_params) > 1 and nestMultiIvars:
-                raise ValueError("Invalid 'lambda_map' for %s: multiple parameters "
-                                 "(%s) are not allowed when 'nestMultiIvars' is True."
-                                 %(str(self.__class__), str(instance_params)))
         else:
             # We will need to generate the Lambda sub-expression.
             # Do some initial preparations w.r.t. instanceParams, domain(s), and
@@ -163,103 +152,18 @@ class OperationOverInstances(Operation):
         # supplied, this should simply reproduce them from the conditions that 
         # were prepended.
         domain = domains = None # These may be reset below if there are ...
-        nondomain_conditions = conditions # ... domain conditions.
         if (len(conditions)>=len(instance_params)):
             domains = [_extract_domain_from_condition(ivar, cond) for
                        ivar, cond in zip(instance_params, conditions)]
             if all(domain is not None for domain in domains):
                 # Used if we have a single instance variable 
-                # or nestMultiIvars is True:
                 domain = domains[0] 
-                nondomain_conditions = conditions[len(instance_params):]
             else: domains=None
         
         if _lambda_map is None:
-            # Now do the actual lambda_map creation after handling
-            # nesting.
-            
-            # Handle nesting of multiple instance variables if needed.
-            if len(instance_params) > 1 and nestMultiIvars:
-                
-                # Figure out how many "non-domain" conditions belong at
-                # each level.  At each level, "non-domain" conditions 
-                # are  included up to the first one that has any free 
-                # variables that include any of the "inner" instance 
-                # variable parameters.
-                cond_free_vars = {cond:free_vars(cond) 
-                                  for cond in nondomain_conditions}
-                num_nondomain_conditions_vs_level = [0]*len(instance_params)
-                remaining_nondomain_conditions = list(nondomain_conditions)
-                for i in range(len(instance_params)):
-                    # Parameter variables correpsonding to 'inner' instance
-                    # variables at this level:
-                    inner_instance_params = set(getParamVar(iparam) for 
-                                                iparam in instance_params[i+1:])
-                    # Start with the default # of non-domain conditions:
-                    num_nondomain_conditions = len(remaining_nondomain_conditions)
-                    # Go until a condition contains any of the "inner"
-                    # instance variable parameters as a free variable.
-                    for k, cond in enumerate(remaining_nondomain_conditions):
-                        if not cond_free_vars[cond].isdisjoint(inner_instance_params):
-                            num_nondomain_conditions = k
-                            break
-                    # Record the # of non-domain conditions and update the
-                    # 'remaining' ones.
-                    num_nondomain_conditions_vs_level[i] = num_nondomain_conditions
-                    remaining_nondomain_conditions = \
-                        remaining_nondomain_conditions[num_nondomain_conditions:]
-                
-                # Generate the nested OperationOverInstances from the inside
-                # out.
-                remaining_nondomain_conditions= list(nondomain_conditions)
-                for i in range(len(instance_params)-1, 0, -1):
-                    inner_instance_param = instance_params[i]
-                    
-                    # Get the appropriate conditions for level i.
-                    nconds = num_nondomain_conditions_vs_level[i]
-                    if nconds > 0:
-                        inner_conditions = remaining_nondomain_conditions[-nconds:]
-                        remaining_nondomain_conditions = \
-                            remaining_nondomain_conditions[:-nconds]
-                    else:
-                        inner_conditions = []
-                    if domains is not None:
-                        # prepend the domain condition
-                        inner_conditions.insert(0, conditions[i])
-                    
-                    # create the instanceExpr at level i.
-                    innerOperand = self._createOperand([inner_instance_param], instanceExpr, 
-                                                       conditions=inner_conditions)
-                    inner_styles = dict(styles)
-                    if i == len(instance_params)-1:
-                        # Inner-most -- no joining further.
-                        inner_styles['instance_params'] = 'no_join' 
-                    else:
-                        # Join with the next level.
-                        inner_styles['instance_params'] = 'join_next' 
-                    instanceExpr = self.__class__._make(['Operation'], inner_styles, 
-                                                        [operator, innerOperand])
-                    
-                
-                assert num_nondomain_conditions_vs_level[0] \
-                            == len(remaining_nondomain_conditions)
-                
-                # Get the appropriate top-level condition.
-                if domains is None:
-                    conditions = remaining_nondomain_conditions
-                else:
-                    # prepend the domain condition at the top level.
-                    conditions = [conditions[0]] + remaining_nondomain_conditions
-                
+            # Now do the actual lambda_map creation
+            if len(instance_params)==1:
                 instanceParamOrParams = instance_params[0]
-                instance_params = [instanceParamOrParams]
-                # Combine instance variables in the style:
-                styles['instance_params'] = 'join_next' 
-            elif len(instance_params)==1:
-                instanceParamOrParams = instance_params[0]
-                # No combining instance variables in the style:
-                styles['instance_params'] = 'no_join' 
-            
             # Generate the Lambda sub-expression.
             lambda_map = OperationOverInstances._createOperand(instanceParamOrParams, 
                                                                instanceExpr, 
@@ -268,8 +172,8 @@ class OperationOverInstances(Operation):
         self.instanceExpr = instanceExpr
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
         
+        self.instanceParams = instance_params
         if len(instance_params) > 1:
-            self.instanceParams = instance_params
             '''Instance parameters of the OperationOverInstance.'''
             self.instanceVars = [getParamVar(parameter) for 
                                  parameter in instance_params]
@@ -299,11 +203,28 @@ class OperationOverInstances(Operation):
 
         Operation.__init__(self, operator, lambda_map, styles=styles)
     
+    def effectiveCondition(self):
+        '''
+        Return the effective 'condition' of the OperationOverInstances.
+        If there is no 'condition', return And operating on zero
+        operands.
+        '''
+        if hasattr(self, 'condition'):
+            return self.condition
+        else:
+            from proveit.logic import And
+            return And()
+        
     def hasDomain(self):
         if hasattr(self, 'domains'):
             return self.domains is not None
         return self.domain is not None
-                        
+    
+    def first_domain(self):
+        if hasattr(self, 'domains'):
+            return self.domains[0]
+        return self.domain
+                            
     @staticmethod
     def _createOperand(instanceParamOrParams, instanceExpr, conditions):
         if len(conditions) == 0:
@@ -329,7 +250,7 @@ class OperationOverInstances(Operation):
         elif argName=='instanceExpr':
             # return the inner instance expression after joining the
             # instance variables according to the style
-            return OperationOverInstances.explicitInstanceExpr(self)
+            return self.instanceExpr
         elif argName=='domain' or argName=='domains':
             # return the proper single domain or list of domains
             domains = OperationOverInstances.explicitDomains(self)
@@ -394,9 +315,9 @@ class OperationOverInstances(Operation):
                 yield ivar
         else:
             yield self.instanceParam
-            if isinstance(self.instanceExpr, self.__class__):
-                for innerIvar in self.instanceExpr._allInstanceParams():
-                    yield innerIvar
+        if isinstance(self.instanceExpr, self.__class__):
+            for innerIvar in self.instanceExpr._allInstanceParams():
+                yield innerIvar
     
     def allInstanceParams(self):
         '''
@@ -478,31 +399,7 @@ class OperationOverInstances(Operation):
         Added by wdc on 6/06/2019.
         '''
         return list(self._allConditions())
-    
-    def _joinedNestings(self):
-        '''
-        Yield the nested levels of the OperationOverInstances that are
-        joined together in the style.
-        '''
-        yield self
-        iVarStyle = self.getStyle('instance_params', '')
-        if iVarStyle == 'join_next':
-            assert isinstance(self.instanceExpr, self.__class__), (
-                "Not expecting 'instance_params' style to be " +
-                "'join_next' unless there is nesting of the same " +
-                "type of OperationOverInstances")
-            for expr in self.instanceExpr.joinedNestings():
-                yield expr
-
-    def joinedNestings(self):
-        '''
-        Returns the nested levels of the OperationOverInstances that
-        are joined together in the style. Relies on the generator
-        function _joinedNestings() defined above. Added here by wdc
-        on 8/25/2019.
-        '''
-        return list(self._joinedNestings())
-    
+        
     def explicitInstanceParams(self):
         '''
         Return the instance parameters that are to be shown explicitly 
@@ -515,7 +412,7 @@ class OperationOverInstances(Operation):
         if hasattr(self, 'instanceParams'):
             return self.instanceParams
         else:
-            return [expr.instanceParam for expr in self.joinedNestings()]
+            return [self.instanceParam]
 
     def explicitInstanceVars(self):
         '''
@@ -539,11 +436,8 @@ class OperationOverInstances(Operation):
             return []
         if hasattr(self, 'domains'):
             return self.domains
-        else:
-            domains = [expr.domain for expr in self.joinedNestings()]
-            if None not in domains:
-                # only show as explicit domains if none of them are None:
-                return domains
+        elif self.domain is not None:
+            return [self.domain]
         return [] # No explicitly displayed domains
     
     def domainConditions(self):
@@ -562,11 +456,10 @@ class OperationOverInstances(Operation):
             if len(explicit_domains)==0:
                 return [] # no explicit domains
             domain_conditions = []
-            for expr in self.joinedNestings():
-                assert (expr.domain == 
-                        _extract_domain_from_condition(expr.instanceParam, 
-                                                       expr.conditions[0]))
-                domain_conditions.append(expr.conditions[0])
+            assert (self.domain == 
+                    _extract_domain_from_condition(self.instanceParam, 
+                                                   self.conditions[0]))
+            domain_conditions.append(self.conditions[0])
             return domain_conditions
     
     def explicitConditions(self):
@@ -587,35 +480,14 @@ class OperationOverInstances(Operation):
         else:
             explicit_domains = self.explicitDomains()
             conditions = []
-            for expr in self.joinedNestings():
-                if len(explicit_domains)==0:
-                    conditions.extend(expr.conditions)
-                else:
-                    cond_domain = _extract_domain_from_condition(expr.instanceParam, 
-                                                                 expr.conditions[0])
-                    assert cond_domain == expr.domain
-                    conditions.extend(expr.conditions[1:])
+            if len(explicit_domains)==0:
+                conditions.extend(self.conditions)
+            else:
+                cond_domain = _extract_domain_from_condition(self.instanceParam, 
+                                                             self.conditions[0])
+                assert cond_domain == self.domain
+                conditions.extend(self.conditions[1:])
             return conditions
-
-    def inclusiveConditions(self):
-        '''
-        Return all of the conditions at this level according to the style,
-        including all of the conditions of 'joined' instance variables.
-        '''
-        conditions = []
-        for expr in self.joinedNestings():
-            conditions.extend(expr.conditions)
-        return conditions
-        
-    def explicitInstanceExpr(self):
-        '''
-        Return the instance expression after joining instance variables
-        according to the style.
-        '''
-        iVarStyle = self.getStyle('instance_params', '')
-        if iVarStyle == 'join_next':
-            return self.instanceExpr.explicitInstanceExpr()
-        return self.instanceExpr
     
     def _instanceParamLists(self):
         '''
@@ -623,25 +495,14 @@ class OperationOverInstances(Operation):
         paramaters (see allInstanceParams method) but grouped together
         according to the style joining instance variables together.
         '''
-        i_param_group = []
         expr = self
         while isinstance(expr, self.__class__):
             if hasattr(expr, 'instanceParams'):
-                yield expr.instanceParams # grouped together intrinsically
-                                          # -- no nestMultiIvars
+                yield expr.instanceParams # grouped together
             else:
-                i_param_group.append(expr.instanceParam)
-                i_param_style = expr.getStyle('instance_params', '')
-                if i_param_style != 'join_next':
-                    yield i_param_group # this group is done
-                    i_param_group = [] # start next group
+                yield [expr.instanceParam]
             expr = expr.instanceExpr
-        assert len(i_param_group)==0, (
-            "Not expecting 'instance_params' style to be " +
-            "'join_next' unless there is nesting of the same type " +
-            "of OperationOverInstances")
         
-    
     def instanceParamLists(self):
         '''
         Returns lists of instance parameters that include all of the instance
@@ -684,10 +545,10 @@ class OperationOverInstances(Operation):
             withWrapping = self.getStyle('withWrapping', '')
 
         # override this default as desired
-        explicitIparams = list(self.explicitInstanceParams()) # the (joined) instance vars to show explicitly
-        explicitConditions = ExprTuple(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
-        explicitDomains = ExprTuple(*self.explicitDomains()) # the (joined) domains
-        explicitInstanceExpr = self.explicitInstanceExpr() # left over after joining instance vars according to the style
+        explicitIparams = list(self.explicitInstanceParams()) 
+        explicitConditions = ExprTuple(*self.explicitConditions()) 
+        explicitDomains = ExprTuple(*self.explicitDomains()) 
+        instanceExpr = self.instanceExpr 
         hasExplicitIparams = (len(explicitIparams) > 0)
         hasExplicitConditions = (len(explicitConditions) > 0)
         hasMultiDomain = (len(explicitDomains)>1 and (not hasattr(self, 'domain')
@@ -712,7 +573,7 @@ class OperationOverInstances(Operation):
                 if hasExplicitIparams: outStr += " | "
                 outStr += explicitConditions.formatted(formatType, fence=False)                
                 #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
-            outStr += '} ' + explicitInstanceExpr.formatted(formatType,fence=True)
+            outStr += '} ' + instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += ']'
         if formatType == 'latex':
             if fence: outStr += r'\left['
@@ -788,6 +649,237 @@ class OperationOverInstances(Operation):
         substitution = self.instanceSubstitution(universality, assumptions=assumptions)
         return substitution.deriveRightViaEquivalence(assumptions=assumptions)
     """
+
+def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
+    '''
+    Given a nested OperationOverInstances, derive or equate an 
+    equivalent form in which a given number of nested levels is 
+    bundled together.  Use the given theorem specific to the particular
+    OperationOverInstances.  
+    
+    For example,
+        \forall_{x, y | Q(x, y)} \forall_{z | R(z)} P(x, y, z)
+    can become
+        \forall_{x, y, z | Q(x, y), R(z)} P(x, y, z)
+    via bundle with num_levels=2.
+    
+    For example of the form of the theorem required, see
+    proveit.logic.boolean.quantification.bundling or
+    proveit.logic.boolean.quantification.bundling_equality.
+    '''
+    from proveit.relation import TransRelUpdater
+    from proveit.logic import Implies, Equals
+    # Make a TransRelUpdater only if the bundle_thm yield an
+    # equation, in which case we'll want the result to be an equation.
+    eq = None 
+    bundled = expr
+    while num_levels >= 2:
+        if (not isinstance(bundled, OperationOverInstances) or
+                not isinstance(bundled.instanceExpr, OperationOverInstances)):
+            raise ValueError("May only 'bundle' nested OperationOverInstances, "
+                             "not %s"%bundled)
+        _m = bundled.instanceParams.length()
+        _n = bundled.instanceExpr.instanceParams.length()
+        _P = bundled.instanceExpr.instanceExpr
+        _Q = bundled.effectiveCondition()
+        _R = bundled.instanceExpr.effectiveCondition()
+        m, n = bundle_thm.instanceVars
+        P, Q, R = bundle_thm.instanceExpr.instanceVars
+        correspondence = bundle_thm.instanceExpr.instanceExpr
+        if isinstance(correspondence, Implies):
+            if (not isinstance(correspondence.antecedent, 
+                               OperationOverInstances)
+                    or not len(correspondence.consequent.instanceParams)==2):
+                raise ValueError("'bundle_thm', %s, does not have the "
+                                 "expected form with the bundled form as "
+                                 "the consequent of the implication, %s"
+                                 %(bundle_thm, correspondence))
+            x_1_to_m, y_1_to_n = correspondence.consequent.instanceParams
+        elif isinstance(correspondence, Equals):
+            if not isinstance(correspondence.rhs, OperationOverInstances
+                    or not len(correspondence.antecedent.instanceParams)==2):
+                raise ValueError("'bundle_thm', %s, does not have the "
+                                 "expected form with the bundled form on "
+                                 "right of the an equality, %s"
+                                 %(bundle_thm, correspondence))
+            x_1_to_m, y_1_to_n = correspondence.rhs.instanceParams        
+        
+        all_params = bundled.instanceParams + bundled.instanceExpr.instanceParams
+        Pxy = Function(P, all_params)
+        Qx = Function(Q, bundled.instanceParams)
+        Rxy = Function(R, all_params)
+        x_1_to_m = x_1_to_m.replaced({m:_m})
+        y_1_to_n = y_1_to_n.replaced({n:_n})
+        instantiation = bundle_thm.instantiate(
+                {m:_m, n:_n, ExprTuple(x_1_to_m):bundled.instanceParams, 
+                 ExprTuple(y_1_to_n):bundled.instanceExpr.instanceParams ,
+                 Pxy:_P, Qx:_Q, Rxy:_R}, assumptions=assumptions)
+        if isinstance(instantiation.expr, Implies):
+            bundled = instantiation.deriveConsequent()
+        elif isinstance(instantiation.expr, Equals):
+            if eq is None:
+                eq = TransRelUpdater(bundled)
+            try:
+                bundled = eq.update(instantiation)
+            except ValueError:
+                raise ValueError(
+                        "Instantiation of bundle_thm %s is %s but "
+                        "should match %s on one side of the equation."
+                        %(bundle_thm, instantiation, bundled))
+        else:
+            raise ValueError("Instantiation of bundle_thm %s is %s but "
+                             "should be an Implies or Equals expression."
+                             %(bundle_thm, instantiation))
+        num_levels -= 1
+    if eq is None:
+        # Return the bundled result.
+        return bundled 
+    else:
+        # Return the equality between the original expression and
+        # the bundled result.
+        return eq.relation
+
+def unbundle(expr, unbundle_thm, num_param_entries=(1,), *, 
+             assumptions=USE_DEFAULTS):
+    '''
+    Given a nested OperationOverInstances, derive or equate an 
+    equivalent form in which the parameter entries are split in
+    number according to 'num_param_entries'.  Use the given theorem 
+    specific to the particular OperationOverInstances.  
+    
+    For example,
+        \forall_{x, y, z | Q(x, y), R(z)} P(x, y, z)
+    can become
+        \forall_{x, y | Q(x, y)} \forall_{z | R(z)} P(x, y, z)
+    via bundle with num_param_entries=(2, 1) or 
+    num_param_entries=(2,) -- the last number can be implied
+    by the remaining number of parameters.
+    
+    For example of the form of the theorem required, see
+    proveit.logic.boolean.quantification.unbundling or
+    proveit.logic.boolean.quantification.bundling_equality.
+    '''
+    from proveit.relation import TransRelUpdater
+    from proveit.logic import Implies, Equals, And
+    # Make a TransRelUpdater only if the bundle_thm yield an
+    # equation, in which case we'll want the result to be an equation.
+    eq = None 
+    unbundled = expr
+    net_indicated_param_entries = sum(num_param_entries)
+    num_actual_param_entries = len(expr.instanceParams)
+    for n in num_param_entries:
+        if not isinstance(n, int) or n <= 0:
+            raise ValueError(
+                    "Each of 'num_param_entries', must be an "
+                    "integer greater than 0.  %s fails this requirement."
+                    %(num_param_entries))
+    if net_indicated_param_entries > num_actual_param_entries:
+        raise ValueError("Sum of 'num_param_entries', %s=%d should not "
+                         "be greater than the number of parameter entries "
+                         "of %s for unbundling."
+                         %(num_param_entries, net_indicated_param_entries,
+                           expr))
+    if net_indicated_param_entries < num_actual_param_entries:
+        diff = num_actual_param_entries - net_indicated_param_entries
+        num_param_entries = list(num_param_entries) + [diff]
+    else:
+        num_param_entries = list(num_param_entries)
+    while len(num_param_entries) > 1:
+        n_last_entries = num_param_entries.pop(-1)
+        first_params = ExprTuple(*unbundled.instanceParams[:-n_last_entries])
+        first_param_vars = {getParamVar(param) for param in first_params}
+        remaining_params = \
+            ExprTuple(*unbundled.instanceParams[-n_last_entries:])
+        _m = first_params.length()
+        _n = remaining_params.length()
+        _P = unbundled.instanceExpr
+        # Split up the conditions between the outer 
+        # OperationOverInstances and inner OperationOverInstances
+        condition = unbundled.effectiveCondition()
+        if isinstance(condition, And):
+            _nQ = 0
+            for cond in condition.operands:
+                cond_vars = free_vars(cond, err_inclusively=True)
+                if first_param_vars.isdisjoint(cond_vars): break
+                _nQ += 1
+            if _nQ == 0:
+                _Q = And()
+            elif _nQ == 1:
+                _Q = condition.operands[0]
+            else:
+                _Q = And(*condition.operands[:_nQ])
+            _nR = len(condition.operands) - _nQ
+            if _nR == 0:
+                _R = And()
+            elif _nR == 1:
+                _R = condition.operands[-1]
+            else:
+                _R = And(*condition.operands[_nQ:])
+        elif first_param_vars.isdisjoint(free_vars(condition, 
+                                                   err_inclusively=True)):
+            _Q = condition
+            _R = And()
+        else:
+            _Q = And()
+            _R = condition
+        m, n = unbundle_thm.instanceVars
+        P, Q, R = unbundle_thm.instanceExpr.instanceVars
+        correspondence = unbundle_thm.instanceExpr.instanceExpr
+        if isinstance(correspondence, Implies):
+            if (not isinstance(correspondence.antecedent, 
+                               OperationOverInstances)
+                    or not len(correspondence.antecedent.instanceParams)==2):
+                raise ValueError("'unbundle_thm', %s, does not have the "
+                                 "expected form with the bundled form as "
+                                 "the antecedent of the implication, %s"
+                                 %(unbundle_thm, correspondence))
+            x_1_to_m, y_1_to_n = correspondence.antecedent.instanceParams
+        elif isinstance(correspondence, Equals):
+            if not isinstance(correspondence.rhs, OperationOverInstances
+                    or not len(correspondence.antecedent.instanceParams)==2):
+                raise ValueError("'unbundle_thm', %s, does not have the "
+                                 "expected form with the bundled form on "
+                                 "right of the an equality, %s"
+                                 %(unbundle_thm, correspondence))
+            x_1_to_m, y_1_to_n = correspondence.rhs.instanceParams
+        else:
+            raise ValueError("'unbundle_thm', %s, does not have the expected "
+                             "form with an equality or implication  "
+                             "correspondence, %s"
+                             %(unbundle_thm, correspondence))
+            
+        Qx = Function(Q, first_params)
+        Rxy = Function(R, unbundled.instanceParams)
+        Pxy = Function(P, unbundled.instanceParams)
+        x_1_to_m = x_1_to_m.replaced({m:_m})
+        y_1_to_n = y_1_to_n.replaced({n:_n})
+        instantiation = unbundle_thm.instantiate(
+                {m:_m, n:_n, ExprTuple(x_1_to_m):first_params, 
+                 ExprTuple(y_1_to_n):remaining_params,
+                 Pxy:_P, Qx:_Q, Rxy:_R}, assumptions=assumptions)
+        if isinstance(instantiation.expr, Implies):
+            unbundled = instantiation.deriveConsequent()
+        elif isinstance(instantiation.expr, Equals):
+            if eq is None:
+                eq = TransRelUpdater(unbundled)
+            try:
+                unbundled = eq.update(instantiation)
+            except ValueError:
+                raise ValueError(
+                        "Instantiation of bundle_thm %s is %s but "
+                        "should match %s on one side of the equation."
+                        %(unbundle_thm, instantiation, unbundled))
+        else:
+            raise ValueError("Instantiation of bundle_thm %s is %s but "
+                             "should be an Implies or Equals expression."
+                             %(unbundle_thm, instantiation))
+    if eq is None:
+        # Return the unbundled result.
+        return unbundled 
+    else:
+        # Return the equality between the original expression and
+        # the unbundled result.
+        return eq.relation
         
 class InstanceSubstitutionException(Exception):
     def __init__(self, msg, operationOverInstances, universality):

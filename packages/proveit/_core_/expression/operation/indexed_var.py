@@ -139,7 +139,7 @@ class IndexedVar(Operation):
                           index_base, {index_shift})}
     """
 
-    def _free_var_ranges(self, exclusions=None):
+    def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
         of indices (or solo) in which the variable occurs as free or 
@@ -156,7 +156,7 @@ class IndexedVar(Operation):
         forms_dict = dict()
         while isinstance(var, IndexedVar):
             forms_dict.update(
-                    var.index._free_var_ranges(exclusions=exclusions))
+                    var.index._possibly_free_var_ranges(exclusions=exclusions))
             var = var.var
         forms_dict.update({var:{self}})
         return forms_dict

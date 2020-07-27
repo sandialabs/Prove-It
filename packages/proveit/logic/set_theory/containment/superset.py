@@ -64,13 +64,22 @@ class Superset(SupersetRelation):
         from ._theorems_ import relaxSupset
         return relaxSupset.specialize({A:self.superset, B:self.subset}, assumptions=assumptions)
 
+    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+        '''
+        From A supset B and x in B, derive x in A.
+        '''
+        from ._theorems_ import supersetMembership
+        return supersetMembership.instantiate(
+                {A:self.subset, B:self.superset, x:element}, 
+                assumptions=assumptions)
+    
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this A superset B expression 
         and something of the form B supseteq C, B supset C, or B=C to 
         obtain A supset B as appropriate.
         '''
-        from proveit.logic import Equals, Subset, SubsetEq
+        from proveit.logic import Equals
         from ._theorems_ import transitivitySupsetSupset, transitivitySupsetSupsetEq
         other = asExpression(other)
         if isinstance(other, Equals):

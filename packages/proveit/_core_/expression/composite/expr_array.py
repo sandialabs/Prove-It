@@ -1,9 +1,5 @@
-import types
-
 from .expr_tuple import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.proof import ProofFailure
-from proveit._core_.defaults import USE_DEFAULTS
 from proveit._core_.expression.style_options import StyleOptions
 
 
@@ -33,30 +29,98 @@ class ExprArray(ExprTuple):
 
         # check each column for same expression throughout
         self.checkRange()
-
+    
+    @classmethod
+    def _make(subClass, coreInfo, styles, subExpressions):
+        if subClass != ExprArray: 
+            MakeNotImplemented(subClass)
+        if len(coreInfo) != 1 or coreInfo[0] != 'ExprTuple':
+            raise ValueError("An ExprArray is an ExprTuple of ExprTuples, "
+                             "so the ExprArray coreInfo should contain "
+                             "exactly one item: 'ExprTuple'")
+        return ExprArray(*subExpressions).withStyles(**styles)      
+    
     def styleOptions(self):
         options = StyleOptions(self)
         options.addOption('justification',
-                          ("if any wrap positions are set, justify to the 'left', "
-                           "'center', or 'right'"))
+                          ("justify to the 'left', 'center', or 'right' in the array cells"))
         options.addOption('orientation',
                           ("to be read from left to right then top to bottom ('horizontal') "
                            "or to be read top to bottom then left to right ('vertical')"))
+        options.addOption(
+                'parameterization', 
+                ("'implicit' (default for LaTeX formatting) hides "
+                 "the parameter the ExprRange so the parameterization "
+                 "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
+                 "'explicit' (default for string formatting) reveals "
+                 "the parameterization "
+                 "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
         return options
-
-    def wrapPositions(self):
+    
+    def remakeWithStyleCalls(self):
         '''
-        Return a list of wrap positions according to the current style setting.
-        Position 'n' is after the nth comma.
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'withWrappingAt'
+        and 'withJustification' calls.
         '''
-        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
-
-    def orientation(self, *wrap):
+        call_strs = []
+        orientation = self.getStyle('orientation')
+        if orientation != 'horizontal':
+            call_strs.append('withOrientation("' + orientation + '")')
+        justification = self.getStyle('justification')
+        if justification != 'center':
+            call_strs.append('withJustification("' + justification + '")')
+        parameterization = self.getStyle('parameterization', 'default')
+        if parameterization != 'default':
+            if parameterization == 'explicit':
+                call_strs.append('withExplicitParameterization()')
+            if parameterization == 'implicit':
+                call_strs.append('withImplicitParameterization()')
+        return call_strs
+    
+    def withJustification(self, justification):
+        return self.withStyles(justification=justification)
+    
+    def withOrientation(self, orientation):
         '''
         Wrap the expression according to the orientation: 'horizontal' or 'vertical'
         '''
-        return self.withWrappingAt(*wrap)
+        if not orientation in ('horizontal', 'vertical'):
+            raise ValueError("'orientation' must be 'horizontal' or "
+                             "'vertical', not %s"%orientation)
+        return self.withStyles(orientation=orientation)
+    
+    def withExplicitParameterization(self):
+        '''
+        The 'parameterization':'explicit' style shows the 
+        parameterization of the ExprRange explicitly.  For example,
+        x_{1+1}, ..x_{k+1}.., x_{n+1}).
+        '''
+        return self.withStyles(parameterization='explicit')
 
+    def withImplicitParameterization(self):
+        '''
+        The 'parameterization':'implicit' style does not show the
+        parameterization of the ExprRange explicitly and such that the
+        parameterization may be ambiguous but is more compact.  
+        For example, x_{1+1}, ..., x_{n+1} could be
+        x_{1+1}, ..x_{k+1}.., x_{n+1}
+        or could be
+        x_{1+1}, ..x_{k}.., x_{n+1}.
+        '''
+        return self.withStyles(parameterization='implicit')
+
+    def withDefaultParameterizationStyle(self):
+        '''
+        The default is to use an 'implicit' parameterization for
+        string formatting (see 'withImplicitParameterization') and
+        and 'explicit' parameterization for LaTeX formatting
+        (see 'withExplicitParameterization').
+        '''
+        return self.withoutStyle('parameterization')
+    
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -69,7 +133,6 @@ class ExprArray(ExprTuple):
         every item in the same column MUST agree in length
         of the ExprRange.  If not, raise an error.
         '''
-        from proveit import IndexedVar
         from .expr_range import ExprRange
         from proveit.physics.quantum.circuit import MultiQubitGate
         pos = []

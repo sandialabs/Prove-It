@@ -17,14 +17,10 @@ class Exists(OperationOverInstances):
         instanceExpr is true.  The instance parameter(s) and condition(s) may 
         be singular or plural (iterable).
         '''
-        # nestMultiIvars=True will cause it to treat multiple instance 
-        # variables as nested Exists operations internally
-        # and only join them together as a style consequence.
         OperationOverInstances.__init__(
                 self, Exists._operator_, instanceParamOrParams, instanceExpr, 
                 domain=domain, domains=domains, condition=condition,
-                conditions=conditions, nestMultiIvars=True,
-                _lambda_map=_lambda_map)
+                conditions=conditions, _lambda_map=_lambda_map)
 
     def sideEffects(self, knownTruth):
         '''

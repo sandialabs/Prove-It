@@ -15,12 +15,14 @@ class NotInSet(Operation):
         Operation.__init__(self, NotInSet._operator_, (element, domain))
         self.element = self.operands[0]
         self.domain = self.operands[1]  
-        """
         if hasattr(self.domain, 'nonmembershipObject'):
             self.nonmembershipObject = self.domain.nonmembershipObject(element)
             if not isinstance(self.nonmembershipObject, Nonmembership):
-                raise TypeError("The 'nonmembershipObject' of %s should be from a class derived from 'embership'"%str(self.domain))
-        """
+                raise TypeError("The 'nonmembershipObject' of %s is a %s which "
+                                "is not derived from %s as it should be."
+                                %(self.domain, 
+                                  self.nonmembershipObject.__class__, 
+                                  Nonmembership))
     
     def __dir__(self):
         '''
@@ -28,7 +30,7 @@ class NotInSet(Operation):
         object it generates (also 'unfold' which defaults as 'unfoldNotIn' if it
         isn't defined in 'nonmembershipObject').
         '''
-        if 'membershipObject' in self.__dict__:
+        if 'nonmembershipObject' in self.__dict__:
             return sorted(set(list(self.__dict__.keys()) + dir(self.membershipObject)))
         else:
             return sorted(list(self.__dict__.keys()) + 'unfold')
@@ -40,7 +42,7 @@ class NotInSet(Operation):
         defined in 'nonmembershipObject').
         '''
         if 'nonmembershipObject' in self.__dict__:
-            return getattr(self.membershipObject, attr)
+            return getattr(self.nonmembershipObject, attr)
         elif attr=='unfold':
             return self.unfoldNotIn # the default 'unfold' method
         raise AttributeError 
@@ -110,40 +112,27 @@ class NotInSet(Operation):
         # simplification of the element before trying anything else.
         try:
             elem_simplification = self.element.simplification(assumptions, 
-                                                              automation=False)
+                                                              automation=True)
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None # reflection doesn't count
         except SimplificationError:
             elem_simplification = None
         
-        if elem_simplification is None:
-            # If there is not a known simplification, try using a 
-            # membershipObject to conclude the membership.
-            try:
-                # could not prove it through a subset relationship,
-                # now try to use a MembershipObject
-                if hasattr(self, 'nonmembershipObject'):
-                    return self.nonmembershipObject.conclude(assumptions)
-            except Exception:
-                pass # no luck with that.
-        
-            # Since the membershipObject approach failed, let's try
-            # harder to simplify the element.
-            elem_simplification = self.element.simplification(assumptions)
-            if elem_simplification.lhs == elem_simplification.rhs:
-                elem_simplification = None # reflection doesn't count
-        
-        # If the element simplification successed, prove the membership
+        # If the element simplification succeeded, prove the membership
         # via the simplified form of the element.
-        if elem_simplification.lhs is not None:
+        if elem_simplification is not None:
             simple_elem = elem_simplification.rhs
             simple_nonmembership = NotInSet(simple_elem, self.domain).prove(assumptions)
             inner_expr = simple_nonmembership.innerExpr().element 
             return elem_simplification.subLeftSideInto(inner_expr, assumptions)
-
-        if hasattr(self, 'nonmembershipObject'):
-            return self.nonmembershipObject.conclude(assumptions)
-        return self.concludeAsFolded(assumptions=assumptions)
+        else:
+            # If it has a 'nonmembershipObject', try to conclude 
+            # nonmembership using that.
+            if hasattr(self, 'nonmembershipObject'):
+                return self.nonmembershipObject.conclude(assumptions)
+            else:
+                # Otherwise, attempt to conclude via Not(x in S)
+                return self.concludeAsFolded(assumptions=assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
@@ -152,7 +141,7 @@ class NotInSet(Operation):
         from ._theorems_ import foldNotInSet
         return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)        
 
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Attempt to form evaluation of whether (element not in domain) is
         TRUE or FALSE.  If the domain has a 'membershipObject' method,

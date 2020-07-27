@@ -268,7 +268,7 @@ class ExprTuple(Composite, Expression):
         Return the proven length of this ExprTuple as an Expression.  
         This length includes the extent of all contained ranges. 
         '''
-        from proveit import Len
+        from proveit.core_expr_types import Len
         return Len(self).computed(assumptions)
     
     def has_matching_ranges(self, other_tuple):

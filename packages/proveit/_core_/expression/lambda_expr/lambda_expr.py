@@ -1,6 +1,5 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented, 
-                                            ImproperReplacement,
-                                            free_vars,
+                                            ImproperReplacement, free_vars,
                                             traverse_inner_expressions)
 from proveit._core_.expression.label.var import safeDummyVar, safeDummyVars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -119,7 +118,8 @@ class Lambda(Expression):
         
         # Parameter variables may not occur as free variables of
         # any of the parameter indexes.
-        free_vars_of_param_indices = self._free_vars_of_parameter_indices()
+        free_vars_of_param_indices = \
+            self._possibly_free_vars_of_parameter_indices()
         if not free_vars_of_param_indices.isdisjoint(self.parameterVarSet):
             raise ParameterCollisionError(
                     self.parameters, ("Parameter variables may not occur as "
@@ -154,7 +154,7 @@ class Lambda(Expression):
         # explicitly covered under the currently introduced range 
         # cannot be relabeled.
         free_var_ranges = \
-            Lambda._free_var_ranges_static(
+            Lambda._possibly_free_var_ranges_static(
                     self.parameters, self.parameterVars, self.body)
         self.nonrelabelable_param_vars = \
             {var for var, var_form in free_var_ranges.items()
@@ -194,9 +194,9 @@ class Lambda(Expression):
         return Lambda(parameters, body, _generic_expr=genericExpr)\
                     .withStyles(**styles)
     
-    def _free_vars_of_parameter_indices(self):
+    def _possibly_free_vars_of_parameter_indices(self):
         '''
-        Return the set of free variables of the indices of all
+        Return the set of (possibly) free variables of the indices of all
         of the parameters of this Lambda expression.
         '''
         from proveit._core_.expression.composite import ExprRange
@@ -205,10 +205,13 @@ class Lambda(Expression):
         for parameter in self.parameters:
             if (isinstance(parameter, ExprRange) and 
                     isinstance(parameter.body, IndexedVar)):
-                free_vars_of_indices.update(free_vars(parameter.start_index))
-                free_vars_of_indices.update(free_vars(parameter.end_index))
+                free_vars_of_indices.update(
+                        free_vars(parameter.start_index, err_inclusively=True))
+                free_vars_of_indices.update(
+                        free_vars(parameter.end_index, err_inclusively=True))
             elif isinstance(parameter, IndexedVar):
-                free_vars_of_indices.update(free_vars(parameter.index))
+                free_vars_of_indices.update(
+                        free_vars(parameter.index, err_inclusively=True))
         return free_vars_of_indices
     
     def _generic_version(self):
@@ -245,7 +248,8 @@ class Lambda(Expression):
         # maximum number of in-scope bound variables plus the number
         # of free variables, then we skip over the free variables as 
         # they occur.
-        lambda_free_vars = free_vars(self.body) - set(bound_parameter_vars)
+        lambda_free_vars = (free_vars(self.body, err_inclusively=True) - 
+                            set(bound_parameter_vars))
         start_index = (self._max_in_scope_bound_vars - len(parameters) + 
                        len(lambda_free_vars))
         generic_param_vars = list(reversed(
@@ -264,10 +268,10 @@ class Lambda(Expression):
                      in zip(bound_parameter_vars, generic_param_vars)}
                 generic_parameters = parameters._generic_version()
                 generic_parameters = generic_parameters.replaced(
-                        relabel_map, assumptions=tuple())
+                        relabel_map, assumptions=tuple())._generic_version()
                 generic_body = self.body._generic_version()
                 generic_body = generic_body.replaced(
-                        relabel_map, assumptions=tuple())
+                        relabel_map, assumptions=tuple())._generic_version()
                 generic_body = generic_body._generic_version()
                 return Lambda(generic_parameters, generic_body)
             else:
@@ -491,7 +495,6 @@ class Lambda(Expression):
         '''
         from proveit import ExprTuple, extract_var_tuple_indices
         from proveit.logic import Equals
-        
         try:
             if parameter_vars is None:
                 parameter_vars = \
@@ -675,10 +678,10 @@ class Lambda(Expression):
         relabeling.
         '''
         
-        from proveit import Variable, ExprRange, IndexedVar
+        from proveit import Variable, ExprTuple, ExprRange, IndexedVar
         from proveit._core_.expression.composite.expr_range import \
             extract_start_indices, extract_end_indices
-        
+    
         # Within the lambda scope, we can instantiate lambda parameters
         # in a manner that retains the validity of the parameters as
         # parameters.  For any disallowed instantiation of Lambda 
@@ -726,6 +729,13 @@ class Lambda(Expression):
                     else:
                         assert isinstance(param_of_var, IndexedVar)
                         mask_start = mask_end = [param_of_var.index]
+                    # Make replacements in the masked_ start/end:
+                    for mask_indices in (mask_start, mask_end):
+                        for _, idx in enumerate(mask_indices):
+                            mask_indices[_] = \
+                                idx.replaced(repl_map, allow_relabeling,
+                                             assumptions, requirements,
+                                             equality_repl_requirements)
                     # We may only use the variable range forms of 
                     # key_repl that carve out the masked indices (e.g.
                     # (x_1, ..., x_n, x_{n+1}) is usable if the masked
@@ -736,12 +746,12 @@ class Lambda(Expression):
                                 var, key_repl, mask_start, mask_end, 
                                 allow_relabeling, repl_map, inner_repl_map, 
                                 assumptions, requirements):
-                            # No valid variable range form that carvs
+                            # No valid variable range form that carves
                             # out the masked indices.  All we can do
                             # is indicate that the 'param_of_var' is
                             # unchanged and no other expansion is 
                             # allowed.
-                            inner_repl_map[var] = {param_of_var}
+                            inner_repl_map[var] = {ExprTuple(param_of_var)}
                             inner_repl_map[param_of_var] = param_of_var                
                     except ValueError as e:
                         raise ImproperReplacement(
@@ -779,12 +789,13 @@ class Lambda(Expression):
         #            (x_{1+1}, ..., x_{n+1})} 
         # we can ignore those for this purpose as the real replacements 
         # will be what the members of this set map to.
-        non_param_body_free_vars = (free_vars(self.body) - 
-                                    self.parameterVarSet)
+        non_param_body_free_vars = (free_vars(self.body, err_inclusively=True)
+                                    - self.parameterVarSet)
         restricted_vars = non_param_body_free_vars.union(
-                *[free_vars(value) for key, value in inner_repl_map.items()
-                 if (key not in self.parameterVarSet 
-                     and not isinstance(value, set))])
+                *[free_vars(value, err_inclusively=True) for key, value 
+                  in inner_repl_map.items()
+                  if (key not in self.parameterVarSet 
+                      and not isinstance(value, set))])
         for param_var in self.parameterVarSet:
             if inner_repl_map.get(param_var, param_var) in restricted_vars:
                 # Avoid this collision by relabeling to a safe dummy 
@@ -813,11 +824,11 @@ class Lambda(Expression):
         new_params = []
         for parameter, param_var in zip(self.parameters, self.parameterVars):
             if isinstance(parameter, ExprRange):
-                subbed_param = parameter._replaced_entries(
+                for subbed_param in parameter._replaced_entries(
                         inner_repl_map, allow_relabeling, 
                         assumptions, requirements,
-                        equality_repl_requirements)
-                new_params.extend(subbed_param)
+                        equality_repl_requirements):
+                    new_params.append(subbed_param)
             else:
                 subbed_param = parameter.replaced(
                         inner_repl_map, allow_relabeling, 
@@ -831,9 +842,11 @@ class Lambda(Expression):
 
         # Can't use assumptions involving lambda parameter variables
         new_param_vars = [getParamVar(new_param) for new_param in new_params]
-        inner_assumptions = [assumption for assumption in assumptions if
-                             free_vars(assumption).isdisjoint(new_param_vars)]
-                
+        inner_assumptions = \
+            [assumption for assumption in assumptions if
+             free_vars(assumption, err_inclusively=True).isdisjoint(
+                     new_param_vars)]
+
         return new_params, inner_repl_map, tuple(inner_assumptions)
     
 
@@ -949,14 +962,15 @@ class Lambda(Expression):
         
     
     @staticmethod
-    def _free_var_ranges_static(parameters, parameterVars, body,
-                                exclusions=None):
+    def _possibly_free_var_ranges_static(parameters, parameterVars, body,
+                                         exclusions=None):
         '''
-        Static method version of _free_var_ranges.
+        Static method version of _possibly_free_var_ranges.
         '''
         forms_dict = dict()
         for expr in (parameters, body):
-            forms_dict.update(expr._free_var_ranges(exclusions=exclusions))
+            forms_dict.update(expr._possibly_free_var_ranges(
+                    exclusions=exclusions))
         for param, param_var in zip(parameters, parameterVars):
             if param_var in forms_dict.keys():
                 forms_dict[param_var].discard(param)
@@ -969,7 +983,7 @@ class Lambda(Expression):
         return forms_dict        
         
     
-    def _free_var_ranges(self, exclusions=None):
+    def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
         of indices (or solo) in which the variable occurs as free or 
@@ -983,7 +997,7 @@ class Lambda(Expression):
         forms_dict = dict()
         if exclusions is not None and self in exclusions: 
             return forms_dict # this is excluded    
-        return Lambda._free_var_ranges_static(
+        return Lambda._possibly_free_var_ranges_static(
                 self.parameters, self.parameterVars, self.body, 
                 exclusions=exclusions)
 
@@ -997,8 +1011,7 @@ def _guaranteed_to_be_independent(expr, parameter_vars):
     In such a case, we must return False since there is no guarantee
     of independence.
     '''
-    from proveit._core_.expression.expr import free_vars
-    if free_vars(expr).isdisjoint(parameter_vars):
+    if free_vars(expr, err_inclusively=True).isdisjoint(parameter_vars):
         return True
     return False
 
@@ -1041,8 +1054,9 @@ def extract_param_replacements(parameters, parameter_vars, body,
     operand(s) (ExprTuple-wrapped as appropriate).
     '''
     from proveit import (ExprTuple, ExprRange, ProofFailure, 
-                         Len, extract_var_tuple_indices)
+                         extract_var_tuple_indices)
     from proveit.logic import Equals, EvaluationError
+    from proveit.core_expr_types import Len
     # Loop through each parameter entry and match it with corresponding
     # operand(s).  Singular parameter entries match with singular
     # operand entries.  Iterated parameter entries match with
@@ -1100,7 +1114,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
                             # No good. Too many arguments for parameter.
                             raise ValueError(
                                     "Too many arguments, %s, for parameter"
-                                    "%s."%(param_operands, parameter))
+                                    " %s."%(param_operands, parameter))
                         elif (max_int_param_operands_len is None or
                                   int_param_len is None or
                                   max_int_param_operands_len==int_param_len):

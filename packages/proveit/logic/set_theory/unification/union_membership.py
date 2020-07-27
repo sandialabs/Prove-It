@@ -1,7 +1,7 @@
 from proveit import USE_DEFAULTS
 from proveit.logic import Membership, Nonmembership
 from proveit.number import num
-from proveit._common_ import m, x, AA
+from proveit._common_ import m, A, x
 
 class UnionMembership(Membership):
     '''
@@ -37,7 +37,7 @@ class UnionMembership(Membership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return membershipUnfolding.specialize({m:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
+        return membershipUnfolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -48,7 +48,7 @@ class UnionMembership(Membership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return membershipFolding.specialize({m:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
+        return membershipFolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
                         
 class UnionNonmembership(Nonmembership):
     '''
@@ -59,6 +59,13 @@ class UnionNonmembership(Nonmembership):
         Nonmembership.__init__(self, element)
         self.domain = domain
 
+    def sideEffects(self, knownTruth):
+        '''
+        Currently non side-effects for union nonmembership.
+        '''
+        return
+        yield
+
     def equivalence(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return and [element not in (A union B ...)] = [(element not in A) and (element not in B) ...]
@@ -68,7 +75,7 @@ class UnionNonmembership(Nonmembership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipEquiv.specialize({m:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
+        return nonmembershipEquiv.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -79,4 +86,4 @@ class UnionNonmembership(Nonmembership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipFolding.specialize({m:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
+        return nonmembershipFolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)

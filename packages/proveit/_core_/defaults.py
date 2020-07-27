@@ -23,7 +23,14 @@ class Defaults:
         # and the Expression class is not in 
         # 'disabled_auto_reduction_types'.
         self.auto_reduce = True
-        self.disabled_auto_reduction_types = set()
+        # Note: you can do "with self.disabled_auto_reduction_types"
+        # for temporary changes to the disabled_auto_reduction_types
+        # set.  See DisabledAutoReductionTypes class definition
+        # below.
+        self.disabled_auto_reduction_types = DisabledAutoReductionTypes()
+        
+        # Put expression pngs inline versus using links.
+        self.inline_pngs = True
         
         Defaults.consideredAssumptionSets.clear()
     
@@ -82,7 +89,40 @@ class Defaults:
         '''
         if attr == 'assumptions' and hasattr(self, attr):
             value = tuple(self.checkedAssumptions(value))
-        self.__dict__[attr] = value             
+        self.__dict__[attr] = value         
+
+class DisabledAutoReductionTypes(set):
+    '''
+    The DisabledAutoReductionTypes class stores the set of Expression
+    class types whose auto-reduction feature is currently disabled.
+    It is a "context manager" with an __enter__() and __exit__() 
+    method such that one may do the following:
+        
+    with defaults.disabled_auto_reduction_types as disabled_types:
+        disabled_types.add(..)
+        disabled_types.discard(..)
+        etc.
+    
+    Or equivalently
+    with defaults.disabled_auto_reduction_types:
+        defaults.disabled_auto_reduction_types.add(..)
+        defaults.disabled_auto_reduction_types.discard(..)
+        etc.
+        
+    When it finishes, the disabled_auto_reduction_types will return
+    to its original state.
+    '''
+    def __init__(self):
+        set.__init__(self)
+    
+    def __enter__(self):
+        self._original_disabled_types = set(self)
+        return self
+    
+    def __exit__(self, type, value, traceback):
+        # Restore to the state of when we "entered".
+        self.clear()
+        self.update(self._original_disabled_types)
 
 class InvalidAssumptions:
     def __init__(self):

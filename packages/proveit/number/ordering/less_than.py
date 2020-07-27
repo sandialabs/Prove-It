@@ -351,7 +351,13 @@ class LessEq(LesserRelation):
                                %str(relation.__class__))
         return lessEqAddBoth.specialize({a:self.lhs, b:self.rhs, c:c_val,
                                           d:d_val},
-                                         assumptions=assumptions)    
+                                         assumptions=assumptions)
+
+    def concludeViaEquality(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import relaxEqualToLessEq
+        return relaxEqualToLessEq.specialize(
+            {x: self.operands[0], y:self.operands[1]},
+            assumptions=assumptions)
     
         
 def LessOnlySeq(*operands):

@@ -120,7 +120,7 @@ class Equals(TransitiveRelation):
         simple reflexivity (x=x), via an evaluation (if one side is an
         irreducible), or via transitivity.
         '''
-        from proveit.logic import TRUE, FALSE, Implies, Iff
+        from proveit.logic import TRUE, FALSE, Implies, Iff, inBool
         if self.lhs==self.rhs:
             # Trivial x=x
             return self.concludeViaReflexivity()
@@ -150,46 +150,52 @@ class Equals(TransitiveRelation):
             except EvaluationError as e:
                 raise ProofFailure(self, assumptions, 
                                    "Evaluation error: %s"%e.message)
-        if hasattr(self.lhs, 'deduceEquality'):
-            # Try the 'deduceEquality' method if there is one.
-            try:
-                eq = self.lhs.deduceEquality(self, assumptions)
-            except ProofFailure:
-                eq = None
-            if eq is not None:
-                if eq.expr != self:
-                    raise ValueError("'deduceEquality' not implemented "
-                                     "correctly; must deduce the 'equality' "
-                                     "that it is given if it can: "
-                                     "'%s' != '%s'"%(eq.expr, self))
-                return eq
-        try:
-            Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
-            Implies(self.rhs, self.lhs).prove(assumptions, automation=False)
-            # lhs => rhs and rhs => lhs, so attempt to prove
-            # lhs = rhs via lhs <=> rhs
-            # which works when they can both be proven to be Booleans.
-            try:
-                return Iff(self.lhs, self.rhs).deriveEquality(assumptions)
-            except:
-                from proveit.logic.boolean.implication._theorems_ import (
-                        eqFromMutualImpl)
-                return eqFromMutualImpl.specialize(
-                        {A:self.lhs, B:self.rhs}, assumptions=assumptions)
-        except ProofFailure:
-            pass
         
-        """
-        # Use concludeEquality if available
-        if hasattr(self.lhs, 'concludeEquality'):
-            return self.lhs.concludeEquality(assumptions)
-        if hasattr(self.rhs, 'concludeEquality'):
-            return self.rhs.concludeEquality(assumptions)
-        """
-        # Use a breadth-first search approach to find the shortest
-        # path to get from one end-point to the other.
-        return TransitiveRelation.conclude(self, assumptions)
-                
+        if (Implies(self.lhs, self.rhs).proven(assumptions) and 
+                Implies(self.rhs, self.lhs).proven(assumptions) and
+                inBool(self.lhs).proven(assumptions) and
+                inBool(self.rhs).proven(assumptions)):
+            # There is mutual implication both sides are known to be
+            # boolean.  Conclude equality via mutual implication.
+            return Iff(self.lhs, self.rhs).deriveEquality(assumptions)
+        
+        if hasattr(self.lhs, 'deduceEquality'):
+            # If there is a 'deduceEquality' method, use that.
+            # The responsibility then shifts to that method for
+            # determining what strategies should be attempted
+            # (with the recommendation that it should not attempt
+            # multiple non-trivial automation strategies).
+            eq = self.lhs.deduceEquality(self, assumptions)
+            if eq.expr != self:
+                raise ValueError("'deduceEquality' not implemented "
+                                 "correctly; must deduce the 'equality' "
+                                 "that it is given if it can: "
+                                 "'%s' != '%s'"%(eq.expr, self))
+            return eq
+        else:
+            '''
+            If there is no 'deduceEquality' method, we'll try
+            simplifying each side to see if they are equal.
+            '''
+            # Try to prove equality via simplifying both sides.
+            lhs_simplification = self.lhs.simplification(assumptions)
+            rhs_simplification = self.rhs.simplification(assumptions)
+            simplified_lhs = lhs_simplification.rhs
+            simplified_rhs = rhs_simplification.rhs
+            try:
+                if simplified_lhs != self.lhs or simplified_rhs != self.rhs:
+                    simplified_eq = Equals(simplified_lhs, simplified_rhs).prove(assumptions)
+                    return Equals.applyTransitivities(
+                            [lhs_simplification, simplified_eq, rhs_simplification],
+                            assumptions)
+            except ProofFailure:
+                pass
+        raise ProofFailure(self, assumptions, 
+                           "Unable to automatically conclude by "
+                           "standard means.  To try to prove this via "
+                           "transitive implication relations, try "
+                           "'concludeViaTransitivity'.")
+    
     @staticmethod
     def WeakRelationClass():
         return Equals # = is the strong and weak form of equality,
@@ -617,7 +623,7 @@ def reduceOperands(innerExpr, inPlace=True, mustEvaluate=False, assumptions=USE_
                     operandEval = operand.simplification(assumptions=assumptions)
                 if mustEvaluate and not isIrreducibleValue(operandEval.rhs):
                     msg = 'Evaluations expected to be irreducible values'
-                    raise SimplificationError(msg)
+                    raise EvaluationError(msg, assumptions)
                 if operandEval.lhs != operandEval.rhs:
                     # Compose map to replace all instances of the 
                     # operand within the inner expression.
@@ -817,7 +823,8 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     # try to simplify via reduction
     if not isinstance(inner, Operation):
         if mustEvaluate:
-            raise SimplificationError('Unknown evaluation: ' + str(inner))
+            raise EvaluationError('Unknown evaluation: ' + str(inner),
+                                  assumptions)
         else:
             # don't know how to simplify, so keep it the same
             return innerSimplification(Equals(inner, inner).prove())
@@ -901,7 +908,7 @@ class SimplificationError(Exception):
     def __str__(self):
         return self.message
 
-class EvaluationError(Exception):
+class EvaluationError(SimplificationError):
     def __init__(self, expr, assumptions):
         self.message = ("Evaluation of %s under assumptions %s is not known"
                         %(expr, assumptions))

@@ -24,7 +24,7 @@ class ExprType(type):
     protected = ('_generic_version', '_setContext', 
                  'replaced', '_replaced', '_replaced_entries', 'relabeled',
                  '_make', '_checked_make', '_auto_reduced', '_used_vars',
-                 '_free_var_ranges', '_parameterized_var_ranges',
+                 '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_coreInfo',
                  '_subExpressions', '_genericExpr', 
                  '_meaningData', '_meaning_id',
@@ -310,6 +310,8 @@ class Expression(metaclass=ExprType):
                 # This specific auto reduction is disabled, so skip it.
                 return lambda assumptions : None
             def safe_auto_reduction(assumptions=USE_DEFAULTS):
+                was_disabled = (attr_self_class in 
+                                defaults.disabled_auto_reduction_types)
                 try:
                     # The specific auto reduction must be disabled
                     # to avoid infinite recursion.
@@ -317,8 +319,9 @@ class Expression(metaclass=ExprType):
                     return attr.__call__(assumptions=assumptions)
                 finally:
                     # Re-enable the reduction.
-                    defaults.disabled_auto_reduction_types.remove(
-                            attr_self_class)
+                    if not was_disabled:
+                        defaults.disabled_auto_reduction_types.remove(
+                                attr_self_class)
             return safe_auto_reduction
         return attr
 
@@ -634,17 +637,6 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
-    def proven(self, assumptions=USE_DEFAULTS):
-        '''
-        Return True if and only if the expression is known to be true.
-        '''
-        from proveit import ProofFailure
-        try:
-            self.prove(assumptions, automation=False)
-            return True
-        except ProofFailure:
-            return False
-
     def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Attempt to prove the logical negation (Not) of this expression. 
@@ -656,6 +648,17 @@ class Expression(metaclass=ExprType):
         from proveit.logic import Not
         return Not(self).prove(assumptions=assumptions, automation=automation)
                         
+    def diproven(self, assumptions=USE_DEFAULTS):
+        '''
+        Return True if and only if the expression is known to be false.
+        '''
+        from proveit import ProofFailure
+        try:
+            self.disprove(assumptions, automation=False)
+            return True
+        except ProofFailure:
+            return False
+    
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude this expression under the given assumptions, 
@@ -665,6 +668,12 @@ class Expression(metaclass=ExprType):
         and it cannot be proven trivially via assumption or defaultConclude.
         The `prove` method has a mechanism to prevent infinite recursion, 
         so there are no worries regarding cyclic attempts to conclude an expression.
+        
+        As a rule of thumb, 'conclude' methods should only attempt
+        one non-trivial strategy for the automation.  Simple checks if
+        something is already known to be true is deemed "trivial".
+        If everything fails, other methods could be recommended to the 
+        user to be attempted manually.
         '''
         raise NotImplementedError("'conclude' not implemented for " + str(self.__class__))
 
@@ -777,7 +786,7 @@ class Expression(metaclass=ExprType):
         Make a copy of the Expression with the same styles.
         '''
         # vacuous substitution makes a copy
-        expr_copy = self.replaced(expr_repl_map=dict()) 
+        expr_copy = self.replaced({}) 
         return expr_copy
     
     def _used_vars(self):
@@ -789,7 +798,7 @@ class Expression(metaclass=ExprType):
         return set().union(*[expr._used_vars() for 
                              expr in self._subExpressions])
 
-    def _free_var_ranges(self, exclusions=None):
+    def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
         of indices (or solo) in which the variable occurs as free or 
@@ -821,7 +830,8 @@ class Expression(metaclass=ExprType):
             return forms_dict # this is excluded
         for expr in self._subExpressions:
             for var, forms in \
-                    expr._free_var_ranges(exclusions=exclusions).items():
+                    expr._possibly_free_var_ranges(
+                            exclusions=exclusions).items():
                 forms_dict.setdefault(var, set()).update(forms)
         return forms_dict
     
@@ -833,13 +843,19 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.label.var import safeDummyVars
         return safeDummyVars(n, self)
             
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
+    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
+                   **kwargs):
         '''
         If possible, return a KnownTruth of this expression equal to its
         irreducible value.  Checks for an existing evaluation.  If it
         doesn't exist, try some default strategies including a reduction.
         Attempt the Expression-class-specific "doReducedEvaluation"
         when necessary.
+        
+        If automation is False, this may only succeed if the evaluation
+        is already known.  Other keyword arguments will be passed
+        along to doReducedEvaluation to instruct it on how it
+        should behave (e.g., 'minimal_automation').
         '''
         from proveit.logic import (Equals, defaultSimplification, 
                                    SimplificationError, EvaluationError)
@@ -850,18 +866,20 @@ class Expression(metaclass=ExprType):
         
         method_called = None
         try:
-            # First try the default tricks. If a reduction succesfully occurs,
-            # evaluation will be called on that reduction.
-            evaluation = defaultSimplification(self.innerExpr(), mustEvaluate=True, 
-                                               assumptions=assumptions,
-                                               automation=automation)
+            # First try the default tricks. If a reduction succesfully
+            # occurs, evaluation will be called on that reduction.
+            evaluation = defaultSimplification(
+                    self.innerExpr(), mustEvaluate=True, 
+                    assumptions=assumptions, automation=automation)
             method_called = defaultSimplification
         except SimplificationError as e:
             if automation is False:
                 raise e # Nothing else we can try when automation is off.
             # The default failed, let's try the Expression-class specific version.
             try:
-                evaluation = self.doReducedEvaluation(assumptions)
+                evaluation = self.doReducedEvaluation(assumptions, **kwargs)
+                if evaluation is None:
+                    raise EvaluationError(self, assumptions)
                 method_called = self.doReducedEvaluation
             except NotImplementedError:
                 # We have nothing but the default evaluation strategy to try,
@@ -892,7 +910,7 @@ class Expression(metaclass=ExprType):
 
         return evaluation
     
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Attempt to evaluate 'self', which should be a reduced
         expression with operands already evaluated.
@@ -901,6 +919,9 @@ class Expression(metaclass=ExprType):
         Must be overridden for class-specific evaluation.
         Raise a SimplificationError if the evaluation
         cannot be done.
+        
+        The kwargs may provide instructions on how this method
+        should behave (e.g., minimal_automation).
         '''
         raise NotImplementedError("'doReducedEvaluation' not implemented for %s class"%str(self.__class__))       
 
@@ -913,13 +934,19 @@ class Expression(metaclass=ExprType):
         return self.evaluation(assumptions=assumptions).rhs
    """ 
         
-    def simplification(self, assumptions=USE_DEFAULTS, automation=True):
+    def simplification(self, assumptions=USE_DEFAULTS, *, automation=True,
+                       **kwargs):
         '''
         If possible, return a KnownTruth of this expression equal to a
         canonically simplified form. Checks for an existing simplifcation.
         If it doesn't exist and automation is True, try some default strategies
         including a reduction.  Attempt the Expression-class-specific 
         "doReducedSimplication" when necessary.
+        
+        If automation is False, this may only succeed if the 
+        simplification is already known.  Other keyword arguments will
+        be passed along to doReducedEvaluation to instruct it on how it
+        should behave (e.g., 'minimal_automation').     
         '''
         from proveit import KnownTruth, ProofFailure
         from proveit.logic import (Equals, defaultSimplification, 
@@ -944,11 +971,17 @@ class Expression(metaclass=ExprType):
             # versions of evaluation and simplification.
             try:
                 # first try evaluation.  that is as simple as it gets.
-                simplification = self.doReducedEvaluation(assumptions)
+                simplification = self.doReducedEvaluation(assumptions, **kwargs)
+                if simplification is None:
+                    raise EvaluationError(self, assumptions)
                 method_called = self.doReducedEvaluation
             except (NotImplementedError, EvaluationError):
                 try:
-                    simplification = self.doReducedSimplification(assumptions)
+                    simplification = self.doReducedSimplification(
+                            assumptions, **kwargs)
+                    if simplification is None:
+                        raise SimplificationError('Unable to simplify: ',
+                                                  str(self))
                     method_called = self.doReducedSimplification
                 except (NotImplementedError, SimplificationError, ProofFailure):
                     # Simplification did not work.  Just use self-equality.
@@ -974,7 +1007,7 @@ class Expression(metaclass=ExprType):
              
         return simplification
     
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Attempt to simplify 'self', which should be a reduced
         expression with operands already simplified.
@@ -983,35 +1016,11 @@ class Expression(metaclass=ExprType):
         Must be overridden for class-specific simplification.
         Raise a SimplificationError if the simplification
         cannot be done.
+        
+        The kwargs may provide instructions on how this method
+        should behave (e.g., minimal_automation).
         '''
-        raise NotImplementedError("'doReducedSimplification' not implemented for %s class"%str(self.__class__))             
-    
-    def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
-                       minimal_automation=False):
-        '''
-        Under the given assumptions, attempt to prove the given 
-        'equality' where the left-side is 'self', returning the
-        proven KnownTruth.  If minimal_automation is True, don't do
-        anything "fancy" to attempt to prove this.  If
-        minimal_automation is False, this default version attempts
-        to deduce equality by simplifying both sides and proving
-        that the simplified forms are equal.
-        '''
-        from proveit.logic import Equals
-        assert isinstance(equality, Equals) and equality.lhs == self
-        if minimal_automation:
-            return equality.prove(assumptions, automation=False)
-
-        # Try to prove equality via simplifying both sides.
-        lhs_simplification = equality.lhs.simplification(assumptions)
-        rhs_simplification = equality.rhs.simplification(assumptions)
-        simplified_lhs = lhs_simplification.rhs
-        simplified_rhs = rhs_simplification.rhs
-        if simplified_lhs != equality.lhs or simplified_rhs != equality.rhs:
-            simplified_eq = Equals(simplified_lhs, simplified_rhs).prove(assumptions)
-            return Equals.applyTransitivities(
-                    [lhs_simplification, simplified_eq, rhs_simplification],
-                    assumptions)
+        raise NotImplementedError("'doReducedSimplification' not implemented for %s class"%str(self.__class__))
     
     """
     # Generated automatically via InnerExpr.register_equivalence_method.
@@ -1055,8 +1064,11 @@ class Expression(metaclass=ExprType):
         if self._styleData.png_url is not None:
             expr_notebook_rel_url = context.expressionNotebook(self, unofficialNameKindContext)
             html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
-            encoded_png = encodebytes(self._styleData.png).decode("utf-8") 
-            html += '<img src="data:image/png;base64,' + encoded_png + r'" style="display:inline;vertical-align:middle;" />'
+            if defaults.inline_pngs:
+                encoded_png = encodebytes(self._styleData.png).decode("utf-8") 
+                html += '<img src="data:image/png;base64,' + encoded_png + r'" style="display:inline;vertical-align:middle;" />'
+            else:
+                html += '<img src="' + self._styleData.png_url + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
         # record as a "displayed" (style-specific) expression
         Expression.displayed_expression_styles.add((self._style_id, self)) 
@@ -1079,9 +1091,9 @@ def used_vars(expr):
     Return all of the used Variables of this Expression,
     included those in sub-expressions.
     '''
-    return expr._used_vars(expr)
+    return expr._used_vars()
 
-def free_var_ranges(expr, exclusions=None):
+def possibly_free_var_ranges(expr, exclusions=None):
     '''
     Return the dictionary mapping Variables to forms w.r.t. ranges
     of indices (or solo) in which the variable occurs as free or 
@@ -1107,34 +1119,77 @@ def free_var_ranges(expr, exclusions=None):
     if x_{i, 1}, ..., x_{i, n_i} is in the exclusion set,
     then 'a' will be the only free variable reported.
     '''
-    return expr._free_var_ranges(exclusions=exclusions)
+    return expr._guaranteed_free_var_ranges(exclusions=exclusions)
 
-def free_vars(expr):
+def free_vars(expr, *, err_inclusively):
     '''
     Returns the set of variables that are free, the variable itself
-    or potential indexed ranges of the variable, in the given 
-    expression.
+    or some indices of the variable.  
+    For example, 
+        (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
+    x and n are both free.  And in
+        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
+    n, and k are free assuming 1 <= k <= n.
+    What actually gets reported depends upon the "err_inclusively"
+    flag.  If "err_inclusively" is True, the latter example
+    will report x, n, and k because it is not clear that
+    x is completely bound without assumptions on k.  If
+    "err_inclusively" is False, the first example will just report
+    n because it requires some extra work to determine that x
+    is not comletely bound.
+    '''
+    # Exclude TemporaryLabels to avoid errors when doing a clean
+    # rebuild.
+    from proveit._core_.expression.label.label import TemporaryLabel
+    if err_inclusively:
+        return {var for var in expr._possibly_free_var_ranges().keys()
+                if not isinstance(var, TemporaryLabel)}
+    else:
+        return _entirely_unbound_vars(expr)
+
+def _entirely_unbound_vars(expr):
+    '''
+    Returns the set of variables for that are entirely unbound in
+    the given expression.
     For example, given
         (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
-    x and n are both free.
-    Also, given
-        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
-    x, n, and k are free.  Even though x is technically not free
-    under some assumptions about k, we must error on the side of
-    saying that it is free.
+    n is entirely unbound.  Even though there is an index for which
+    x is unbound, it is partially bound and therefore not returned.
+    Axioms and theorems must not have any variables that are
+    entirely unbound.  They should not have any partially unbound
+    variables either, but Prove-It does not check for this since
+    the check would be more involved and it isn't so critical.
     '''
-    return set(expr._free_var_ranges().keys())
+    from proveit._core_.expression.label.var import Variable
+    from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
+    if isinstance(expr, Variable):
+        return {expr}
+    ubound_vars = set()
+    for sub_expr in expr._subExpressions:
+        ubound_vars.update(_entirely_unbound_vars(sub_expr))
+    if isinstance(expr, Lambda):
+        return ubound_vars.difference(expr.parameterVars)
+    return ubound_vars
 
-"""
-def free_vars(expr, exclusions=frozenset()):
+def attempt_to_simplify(expr, assumptions, requirements=None):
     '''
-    Return all of the free Variables of this Expression,
-    included those in sub-expressions but excluding those with internal
-    bindings within Lambda expressions.  If this Expression
-    is in the exclusions set, skip over it.
+    Attempt to simplify the given expression under the given
+    assumptions.  If successful, return the simplified expression;
+    otherwise, return the original expression.  Append to
+    'requirements' if simplification is successful and not
+    trivial (the simplified expression is not the same as the
+    original).
     '''
-    return expr._free_vars(exclusions=exclusions)
-"""
+    from proveit.logic import SimplificationError
+    try:
+        simplification = expr.simplification(assumptions)
+        simplified = simplification.rhs
+        if requirements is not None:
+            if expr != simplified:
+                requirements.append(simplification)
+        return simplified
+    except SimplificationError:
+        return expr
 
 def expressionDepth(expr):
     '''
@@ -1151,6 +1206,9 @@ def traverse_inner_expressions(expr):
     including the expression itself.  These will be reported in a depth-
     first order.
     '''
+    from proveit import KnownTruth
+    if isinstance(expr, KnownTruth):
+        expr = expr.expr
     yield expr
     for sub_expr in expr.subExprIter():
         for inner_expr in traverse_inner_expressions(sub_expr):

@@ -24,13 +24,10 @@ class Sum(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        # nestMultiIvars=True will cause it to treat multiple instance variables as nested Sum operations internally
-        # and only join them together as a style consequence.
         OperationOverInstances.__init__(
                 self, Sum._operator_, indexOrIndices, summand, 
                 domain=domain, domains=domains, condition=condition,
-                conditions=conditions, nestMultiIvars=True, 
-                _lambda_map=_lambda_map)
+                conditions=conditions, _lambda_map=_lambda_map)
         if hasattr(self, 'instanceVar'):
             self.index = self.instanceVar
         if hasattr(self, 'instanceVars'):

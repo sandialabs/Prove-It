@@ -340,7 +340,7 @@ class Len(Operation):
                     try:
                         equiv = \
                             self.typical_equiv(assumptions=assumptions)
-                        if equiv==equality:
+                        if equiv.expr==equality:
                             return equiv
                     except (NotImplementedError, ValueError):
                         pass
@@ -382,7 +382,7 @@ class Len(Operation):
         expr = eq.update(expr.simplification(assumptions))
         return eq.relation
     
-    def deduceInNumberSet(self, number_set):
+    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.core_expr_types.tuples._theorems_ import (
                 range_len_in_nats, range_from1_len_in_nats)
         from proveit.number import Naturals, one
@@ -396,12 +396,14 @@ class Len(Operation):
                 range_lambda = operand[0].lambda_map
                 if range_start == one:
                     return range_from1_len_in_nats.instantiate(
-                            {f:range_lambda, i:range_end})
+                            {f:range_lambda, i:range_end},
+                            assumptions=assumptions)
                 else:
                     return range_len_in_nats.instantiate(
-                            {f:range_lambda, i:range_start, j:range_end})
+                            {f:range_lambda, i:range_start, j:range_end},
+                            assumptions=assumptions)
     
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         A simplification of a Len operation computes the length as a sum
         of the lengths of each item of the ExprTuple operand, returning
@@ -411,7 +413,7 @@ class Len(Operation):
         '''
         return self._computation(must_evaluate=False, assumptions=assumptions)
     
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Return the evaluation of the length which equates that Len expression
         to an irreducible result.
