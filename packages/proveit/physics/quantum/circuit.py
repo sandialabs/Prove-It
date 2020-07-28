@@ -347,12 +347,12 @@ class MultiQubitGate(Operation):
                             out_str += formattedGateOperation
                     else:
                         if len(self.gate_set.operands) == 1:
-                            out_str += r'\gate{' + formattedGateOperation + r'\{' + self.gate_set.formatted(
+                            out_str += r'\gate{' + formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(
                                 formatType) + r'}'
                         else:
-                            out_str += formattedGateOperation + r'\{' + self.gate_set.formatted(formatType)
+                            out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
                 else:
-                    out_str += formattedGateOperation + r'\{' + self.gate_set.formatted(formatType)
+                    out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
             out_str += ' \n' + '}'
             return out_str
         else:
@@ -636,8 +636,6 @@ class Circuit(Operation):
         Operation.__init__(self, Circuit._operator_, [array], styles=styles)
 
         self.array = self.operand
-
-        print(array.__class__)
 
         if not isinstance(self.array, ExprArray): #or len(self.operands) != 1:
             raise ValueError("Expected contents of a Circuit expression to be an ExprArray object not %s"
