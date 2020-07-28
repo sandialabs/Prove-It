@@ -134,10 +134,9 @@ class ExprArray(ExprTuple):
         of the ExprRange.  If not, raise an error.
         '''
         from .expr_range import ExprRange
-        from proveit.physics.quantum.circuit import MultiQubitGate
+        from proveit.physics.quantum.circuit import MultiQubitGate, Gate
         pos = []
 
-        box = False
         k = 0
         for m, expr in enumerate(self):
             if isinstance(expr, ExprTuple):
@@ -145,7 +144,7 @@ class ExprArray(ExprTuple):
                 for i, entry in enumerate(expr):
                     if isinstance(entry, ExprRange):
 
-                        if isinstance(entry.first(), MultiQubitGate):
+                        if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
                             # we break in this instance because we have a check in Circuit
                             return
                         if m == 0:
@@ -184,7 +183,7 @@ class ExprArray(ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
-                            if isinstance(entry.first(), MultiQubitGate):
+                            if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
                                 # we break in this instance because we have a check in Circuit
                                 return
                             if m == 0:
@@ -193,7 +192,6 @@ class ExprArray(ExprTuple):
                                 placeholder.append(entry.first().subExpr(1))
                                 placeholder.append(entry.last().subExpr(1))
                                 pos.append(placeholder)
-                            box = True
                             if first is None:
                                 first = entry.first().subExpr(0).subExpr(1)
                             if first != entry.first().subExpr(0).subExpr(1):
@@ -203,7 +201,7 @@ class ExprArray(ExprTuple):
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (first, entry.last().subExpr(0).subExpr(1)))
                         else:
-                            if isinstance(entry, MultiQubitGate):
+                            if isinstance(entry, MultiQubitGate) or isinstance(entry.first(), Gate):
                                 # we break in this instance because we have a check in Circuit
                                 return
                             if first is None:
@@ -216,7 +214,7 @@ class ExprArray(ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
-                            if isinstance(entry.first(), MultiQubitGate):
+                            if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
                                 # we break in this instance because we have a check in Circuit
                                 return
                             if last is None:
@@ -228,7 +226,7 @@ class ExprArray(ExprTuple):
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (first, entry.last().subExpr(0).subExpr(1)))
                         else:
-                            if isinstance(entry, MultiQubitGate):
+                            if isinstance(entry, MultiQubitGate) or isinstance(entry.first(), Gate):
                                 # we break in this instance because we have a check in Circuit
                                 return
                             if last is None:
@@ -240,8 +238,7 @@ class ExprArray(ExprTuple):
 
         if k != len(pos):
             if n == 0:
-                if not box:
-                    raise ValueError('ExprArrays must have more than one row.')
+                pass
             else:
                 raise ValueError('The ExprRange in the first tuple is not in the same column '
                                  'as the ExprRange in tuple number %s' % str(n))
