@@ -120,6 +120,26 @@ class ExprArray(ExprTuple):
         (see 'withExplicitParameterization').
         '''
         return self.withoutStyle('parameterization')
+
+    def flat(self):
+        '''
+        Returns the contents of the array as a flattened ExprTuple.
+        For example, instead of returning [[A, B, C}, [D, E, F]] - which displays as
+         A B C
+         D E F
+        it would return [A, B, C, D, E, F]
+        '''
+        output = ExprTuple()
+        for entry in self:
+            if isinstance(entry, ExprTuple):
+                for value in entry:
+                    print(value)
+                    output = output.__add__([value])
+            else:
+                print(entry)
+                output = output.__add__([entry])
+
+        return output
     
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
