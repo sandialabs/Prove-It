@@ -118,8 +118,9 @@ class NumeralSequence(Operation, IrreducibleValue):
     Base class of BinarySequence, DecimalSequence, and HexSequence.
     """
     def __init__(self, operator, *digits):
+        from proveit import ExprRange
         Operation.__init__(self, operator, digits)
-        if len(digits) <= 1:
+        if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
             raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
         self.digits = digits
 
@@ -133,7 +134,14 @@ class NumeralSequence(Operation, IrreducibleValue):
         return Numeral.notEquals(self, other, assumptions=assumptions)
     
     def _formatted(self, formatType, **kwargs):
-        return ''.join(digit.formatted(formatType) for digit in self.digits)
+        outstr = ''
+        for digit in self.digits:
+            if isinstance(digit, Operation):
+                outstr += digit.formatted(formatType, fence=True)
+            else:
+                outstr += digit.formatted(formatType)
+        return outstr
+        #return ''.join(digit.formatted(formatType) for digit in self.digits)
 
 def isLiteralInt(expr):
     from proveit.number import Neg
