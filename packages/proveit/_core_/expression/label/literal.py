@@ -26,7 +26,6 @@ class Literal(Label):
         Create a Literal.  If latexFormat is not supplied, the stringFormat is used for both.
         '''
         from proveit._core_.context import Context
-        from proveit._core_.expression.expr import Expression
         if context is None:
             # use the default
             context = Context.default
@@ -114,13 +113,17 @@ class Literal(Label):
 
     def remakeArguments(self):
         '''
-        Yield the argument values that could be used to recreate the Literal.
+        Yield the argument values that could be used to recreate the
+        Literal.
         '''
         for arg in Label.remakeArguments(self):
             yield arg
         import inspect
         init_args = inspect.getargspec(self.__class__.__init__)[0]
-        if len(init_args)==5 and init_args[3]=='extraCoreInfo' and init_args[4]=='context':
+        if len(init_args)==1:
+            return # nothing more
+        if (len(init_args)==5 and init_args[3]=='extraCoreInfo' \
+                and init_args[4]=='context'):
             core_info = self.coreInfo()
             context_name = core_info[3]
             extra_core_info = core_info[4:]
@@ -128,7 +131,9 @@ class Literal(Label):
                 yield ('extraCoreInfo', extra_core_info)
             yield ('context', '"' + context_name + '"')
         else:
-            raise LabelError("Must properly implement the 'remakeArguments' method for class %s"%str(self.__class__))
+            raise NotImplementedError("Must properly implement the "
+                                      "'remakeArguments' method for "
+                                      "class %s"%str(self.__class__))
         
 
 class DuplicateLiteralError(Exception):

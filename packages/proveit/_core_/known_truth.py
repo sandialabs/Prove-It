@@ -111,14 +111,13 @@ class KnownTruth:
         should not be created manually but rather through the creation of Proofs which should
         be done indirectly via Expression/KnownTruth derivation-step methods.
         '''
-        from proveit._core_.proof import Proof
         # do some type checking
         if not isinstance(expression, Expression):
             raise ValueError('The expression (expr) of a KnownTruth should be an Expression')
         for assumption in assumptions:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
-        
+                
         # note: these contained expressions are subject to style changes on a KnownTruth instance basis
         self.expr = expression
         # store the assumptions as an ordered list (with the desired order for display)
@@ -180,7 +179,6 @@ class KnownTruth:
         from .proof import ProofFailure
         if not defaults.automation:
             return # automation disabled
-        #print("proven", self)
         # Sort the assumptions according to hash key so that sets of assumptions
         # are unique for determining which side-effects have been processed already.
         sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
@@ -205,7 +203,18 @@ class KnownTruth:
             finally:
                 KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
             KnownTruth.sideeffect_processed.add((self.expr, sorted_assumptions))
-
+    
+    def orderOfAppearance(self, subExpressions):
+        '''
+        Yields the given sub-Expressions in the order in which they
+        appear in this KnownTruth.  There may be repeats.
+        '''
+        for assumption in self.assumptions:
+            for expr in assumption.orderOfAppearance(subExpressions):
+                yield expr
+        for expr in self.expr.orderOfAppearance(subExpressions):
+            yield expr
+    
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
             return self._meaning_id == other._meaning_id
@@ -582,40 +591,51 @@ class KnownTruth:
     def __getattr__(self, name):
         '''
         The KnownTruth aquires the attributes of its Expression, so it will act
-        like the Expression except it has additional (or possibly overridden) attributes.
-        When accessing functions of the Expression, if that function has 'assumptions'
-        as a keyword argument, the assumptions of the KnownTruth are automatically
-        included.
+        like the Expression except it has additional (or possibly overridden) 
+        attributes.  When accessing functions of the Expression, if that 
+        function has 'assumptions' as a keyword argument, the assumptions of 
+        the KnownTruth are automatically included.
         '''
         from proveit import defaults, USE_DEFAULTS
         import inspect
         
         # called only if the attribute does not exist in KnownTruth directly
         if name == 'png':
-            raise AttributeError("Do not use the Expression version of the 'png' attribute.") 
+            raise AttributeError("Do not use the Expression version of the 'png' "
+                                 "attribute.") 
         attr = getattr(self.expr, name)
         
-        if hasattr(attr, '__call__') and 'assumptions' in inspect.getargspec(attr).args:
-            # The attribute is a callable function with 'assumptions' as an argument.
-            # Automatically include the KnownTruth assumptions.
-
-            # note, index zero is self.
-            assumptionsIndex = inspect.getargspec(attr).args.index('assumptions')-1
-            
-            def call_method_with_known_truth_assumptions(*args, **kwargs):
-                if len(args) > assumptionsIndex:
-                    args = list(args)
-                    assumptions = args[assumptionsIndex]
-                    assumptions = defaults.checkedAssumptions(assumptions)                    
-                    assumptions += self.assumptions
-                    args[assumptionsIndex] = defaults.checkedAssumptions(assumptions)
+        if hasattr(attr, '__call__'):
+            argspec = inspect.getfullargspec(attr)
+            if ('assumptions' in argspec.args 
+                    or 'assumptions' in argspec.kwonlyargs):
+                # The attribute is a callable function with 
+                # 'assumptions' as an argument.
+                # Automatically include the KnownTruth assumptions.
+    
+                # note, index zero is self.
+                if 'assumptions' in argspec.args:
+                    assumptions_idx = argspec.args.index('assumptions')-1
                 else:
-                    assumptions = kwargs.get('assumptions', USE_DEFAULTS)
-                    assumptions = defaults.checkedAssumptions(assumptions)
-                    assumptions = tuple(assumptions) + self.assumptions
-                    kwargs['assumptions'] = defaults.checkedAssumptions(assumptions)
-                return attr.__call__(*args, **kwargs)
-            return call_method_with_known_truth_assumptions
+                    assumptions_idx = None # 'assumptions' is kwonly
+                
+                def call_method_with_known_truth_assumptions(*args, **kwargs):
+                    if (assumptions_idx is not None and 
+                            len(args) > assumptions_idx):
+                        args = list(args)
+                        assumptions = args[assumptions_idx]
+                        assumptions = defaults.checkedAssumptions(assumptions)                    
+                        assumptions += self.assumptions
+                        args[assumptions_idx] = \
+                            defaults.checkedAssumptions(assumptions)
+                    else:
+                        assumptions = kwargs.get('assumptions', USE_DEFAULTS)
+                        assumptions = defaults.checkedAssumptions(assumptions)
+                        assumptions = tuple(assumptions) + self.assumptions
+                        kwargs['assumptions'] = \
+                            defaults.checkedAssumptions(assumptions)
+                    return attr.__call__(*args, **kwargs)
+                return call_method_with_known_truth_assumptions
         
         return attr
             
@@ -645,7 +665,7 @@ class KnownTruth:
         return self
     
     @staticmethod
-    def findKnownTruth(expression, assumptionsSet):
+    def findKnownTruth(expression, assumptions_set):
         '''
         Try to find a KnownTruth for this expression that applies to
         the given set of assumptions (its assumptions are a subset
@@ -657,11 +677,28 @@ class KnownTruth:
         suitableTruths = []
         for truth in truths:
             proof = truth.proof()
-            if proof is not None and proof.isUsable() and truth.assumptionsSet.issubset(assumptionsSet):
+            if (proof is not None and proof.isUsable() and 
+                    truth.assumptionsSet.issubset(assumptions_set)):
                 suitableTruths.append(truth)
         if len(suitableTruths)==0: return None # no suitable truth
         # return one wih the shortest proof, and among those the fewest assumptions
-        return min(suitableTruths, key=lambda truth : (truth.proof().numSteps(), len(truth.assumptions)))
+        best_known_truth = min(suitableTruths, 
+                               key=lambda truth : (truth.proof().numSteps(), 
+                                                   len(truth.assumptions)))
+        # Make sure we get the desired style (and labels) for the
+        # assumptions and 'truth'.
+        # Although this looks vacuous, it will map an assumption of
+        # any style to the assumption of the desired style.
+        assumptions_with_style = {assumption:assumption for 
+                                  assumption in assumptions_set}
+        if (best_known_truth.expr._style_id != expression._style_id or
+                any(assumption._style_id != assumptions_with_style[assumption]
+                    for assumption in best_known_truth.assumptions)):
+            assumptions = [assumptions_with_style[assumption] for assumption in
+                           best_known_truth.assumptions]
+            return best_known_truth.withMatchingStyles(expression,
+                                                       assumptions)
+        return best_known_truth
     
     @staticmethod
     def forgetKnownTruths():
@@ -678,7 +715,8 @@ class KnownTruth:
         if not proven_truth.isUsable():
             proven_truth.raiseUnusableProof()
         return proven_truth        
-        
+    
+    """
     def relabel(self, relabelMap):
         '''
         Performs a relabeling derivation step, deriving another KnownTruth
@@ -688,88 +726,176 @@ class KnownTruth:
         '''
         from proveit._core_.proof import Specialization
         return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
+    """
+    
+    def specialize(self, repl_map=None, relabel_map=None, assumptions=USE_DEFAULTS):
+        # TEMPORARY BACKWARD COMPATIBILITY
+        if repl_map is None:
+            repl_map = dict()
+        if relabel_map is not None:
+            repl_map.update(relabel_map)
+        return self.instantiate(repl_map, assumptions=assumptions)
+
         
-    def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+    def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
+                    assumptions=USE_DEFAULTS):
         '''
-        Performs a specialize derivation step to be proven under the given
-        assumptions, in addition to the assumptions of the KnownTruth.
-        This will eliminate one or more nested Forall operations, specializing
-        the instance variables according to specializeMap.  Eliminates
-        the number of Forall operations required to utilize all of the
-        specializeMap keys.  The default mapping of all instance variables
-        is a mapping to itself (e.g., {x:x, y:y}).  Simultaneously, variables 
-        may be relabeled via relabelMap (see the relabel method).  Note, there 
-        is a difference between  making substitutons simultaneously versus 
-        in-series.  For example, the {x:y, y:x} mapping will swap x and y 
-        variables, but mapping {x:y} then {y:x} in series would set both 
-        variables to x.
-        Returns the proven specialized KnownTruth, or throws an exception if the
-        proof fails.        
+        Performs an instantiation derivation step to be proven under the given
+        assumptions, in addition to the (possibly revised) assumptions of the 
+        KnownTruth.  This may instantiate Variables, according to the 
+        "replacement" map (repl_map), on either side of the turnstile of the 
+        KnownTruth, the assumptions side and the "truth" side.  It may also 
+        eliminate any number of nested Forall operations, instantiating the 
+        instance Variables according to repl_map, going to the depth
+        for which the instance variables occur as keys in repl_map.  
+        For Variables that map to Variables and occur as "internal" Lambda
+        map parameters (internal after the Forall operations are eliminated),
+        they will be relabeled within the "internal" Lambda map parameters.
+        For Variables that map to non-Variables, the replacement will not
+        penetrate into internal Lambda maps that use that Variable as a
+        parameter.  Replacements are made simultaneously.  For example,
+        the {x:y, y:x} mapping will swap x and y variables, but mapping {x:y} 
+        then {y:x} in series would set both variables to x.
+        
+        Returns the proven instantiated KnownTruth, or throws an exception if 
+        the proof fails.  For the proof to succeed, all conditions of
+        eliminated Forall operations, after replacements are made, must
+        be proven.  Furthermore, there may be additional requirements when
+        iterated parameters are instantiated (see Lambda.apply for details).
+        Automation will be used in attempting to prove these requirements.
         '''
-        from proveit import Operation, Variable, Lambda, singleOrCompositeExpression
+        from proveit import (Variable, Operation, Conditional, Lambda, 
+                             singleOrCompositeExpression, 
+                             ExprTuple, ExprRange, IndexedVar)
+        from proveit._core_.expression.lambda_expr.lambda_expr import \
+            getParamVar
         from proveit.logic import Forall
-        from .proof import Specialization, SpecializationFailure, ProofFailure
+        from .proof import Instantiation, ProofFailure
         
         if not self.isUsable():
-            # If this KnownTruth is not usable, see if there is an alternate under the
-            # set of assumptions that is usable.
+            # If this KnownTruth is not usable, see if there is an alternate 
+            # under the set of assumptions that is usable.
             try:
                 alternate = self.expr.prove(assumptions, automation=False)
             except ProofFailure:
                 self.raiseUnusableProof()
-            return alternate.specialize(specializeMap, relabelMap, assumptions)
+            return alternate.instantiate(repl_map, assumptions)
         
-        # if no specializeMap is provided, specialize the "explicitInstanceVars" of the Forall with default mappings 
-        # (mapping instance variables to themselves)
-        if specializeMap is None: specializeMap = {ivar:ivar for ivar in self.explicitInstanceVars()}
-        if relabelMap is None: relabelMap = dict()
-                
+        # If no repl_map is provided, specialize the "explicitInstanceVars" 
+        # of the Forall with default mappings (mapping instance variables to 
+        # themselves)
+        if repl_map is None: 
+            repl_map = {ivar:ivar for ivar in self.explicitInstanceVars()}
+                        
         # Include the KnownTruth assumptions along with any provided assumptions
         assumptions = defaults.checkedAssumptions(assumptions)
-        assumptions += self.assumptions
 
-        # For any entrys in the subMap with Operation keys, convert
+        # For any entrys in repl_map with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
         # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
-        # Convert to composite expressions as needed (via singleOrCompositeExpression).
-        processedSubMap = dict()
-        for key, sub in specializeMap.items():
-            sub = singleOrCompositeExpression(sub)
-            if isinstance(key, Operation):
+        # And any ExprTuple-wrapped ExprRange entries will be 
+        # Also, convert to composite expressions as needed
+        # (via singleOrCompositeExpression).
+        processed_repl_map = dict()
+        equiv_alt_expansions = dict()
+        for key, replacement in repl_map.items():
+            replacement = singleOrCompositeExpression(replacement)
+            '''
+            if isinstance(replacement, ExprRange):
+                raise TypeError("Not expecting an ExprRange for a replacement "
+                                "when instantiating.  Got %s.  Perhaps it "
+                                "should be wrapped in an ExprTuple."
+                                %replacement)
+            '''
+            if isinstance(key, Variable) or isinstance(key, IndexedVar):
+                processed_repl_map[key] = replacement
+            elif isinstance(key, ExprTuple) and len(key)>0:
+                if len(key)==1:
+                    if not (isinstance(key[0], ExprRange) 
+                          and isinstance(key[0].body, IndexedVar)):
+                        raise TypeError("%s is not the expected kind of "
+                                        "Expression as a repl_map key.  An "
+                                        "ExprTuple with one entry is expected "
+                                        "to contain an ExprRange of IndexedVars."
+                                        %key)
+                    # Replacement key of the form (x_i, ..., x_j)
+                    # which is valid for replacing a range of variables.
+                    processed_repl_map[key] = replacement
+                    # Although this is redundant (not really necessary
+                    # as an entry in `equiv_alt_expansions` as far
+                    # as Lambda.apply is concerned) it is useful for
+                    # bookkeeping to extract all of the instantiation
+                    # mappings:
+                    equiv_alt_expansions[key] = replacement
+                else:
+                    assert len(key)>1
+                    # An "alternative equivalent expansion" of
+                    # some (x_i, ..., x_j).  For example,
+                    # (x_i, x_{i+1}, ..., x_j).
+                    equiv_alt_expansions[key] = replacement
+            elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
                 operation = key
-                subVar = operation.operator
-                sub = Lambda(operation.operands, sub)
-                processedSubMap[subVar] = sub
-            elif isinstance(key, Variable):
-                processedSubMap[key] = sub
+                repl_var = operation.operator
+                replacement = Lambda(operation.operands, replacement)
+                processed_repl_map[repl_var] = replacement
             else:
-                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
-        remainingSubVars = set(processedSubMap.keys())
+                raise TypeError("%s is not the expected kind of Expression as "
+                                "a repl_map key.  Expecting repl_map keys to be "
+                                "Variables, Operations with Variable operators "
+                                "(for operation substitution), or an ExprTuple "
+                                "containing a single iterated IndexedVar "
+                                "like (x_i, ..., x_j)."%key)
         
-        # Determine the number of Forall eliminations.  There must be at least
-        # one (if zero is desired, relabel should be called instead).
-        # The number is determined by the instance variables that occur as keys
-        # in the subMap.
-        expr = self.expr
-        numForallEliminations = 0
-        while numForallEliminations==0 or len(remainingSubVars) > 0:
-            numForallEliminations += 1
-            if not isinstance(expr, Forall):
-                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
-            lambdaExpr = expr.operand
-            assert isinstance(lambdaExpr, Lambda), "Forall Operation operand must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
-            for iVar in instanceVars:
-                if iVar in remainingSubVars:
-                    # remove this instance variable from the remaining substitution variables
-                    remainingSubVars.remove(iVar)
-                elif iVar not in processedSubMap:
-                    # default is to map instance variables to themselves
-                    processedSubMap[iVar] = iVar
-
-        return self._checkedTruth(Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions))
+        def get_repl_var(repl_key):
+            if isinstance(repl_key, ExprTuple):
+                return getParamVar(repl_key.entries[0])
+            return getParamVar(repl_key)
         
-    def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
+        if num_forall_eliminations is None:
+            # Determine the number of Forall eliminations.  
+            # The number is determined by the instance variables that 
+            # occur as keys in repl_map.
+            expr = self.expr
+            remaining_repl_vars = \
+                {get_repl_var(repl_key) for repl_key 
+                 in processed_repl_map.keys()}
+            forall_depth = 0
+            num_forall_eliminations = 0
+            while len(remaining_repl_vars) > 0:
+                if not isinstance(expr, Forall):
+                    # No more directly nested universal quantifiers 
+                    break  # to eliminate.
+                lambda_expr = expr.operand
+                assert isinstance(lambda_expr, Lambda), (
+                        "Forall Operation operand must be a Lambda function")
+                instance_param_vars = lambda_expr.parameterVars
+                expr = lambda_expr.body
+                if isinstance(expr, Conditional):
+                    # Skip over the "conditions" of the Forall expression.
+                    expr = expr.value
+                forall_depth += 1
+                for iparam_var in instance_param_vars:
+                    if iparam_var in remaining_repl_vars:
+                        # Remove this instance parameter variable from 
+                        # the remaining variables to replace.
+                        remaining_repl_vars.remove(iparam_var)
+                        # Eliminate to this depth at least since there
+                        # is a replacement map for the instance 
+                        # variable:
+                        num_forall_eliminations = forall_depth
+                    else:
+                        # default is to map instance variables to 
+                        # themselves
+                        processed_repl_map[iparam_var] = iparam_var
+        return self._checkedTruth(
+                Instantiation(self, 
+                              num_forall_eliminations=num_forall_eliminations, 
+                              repl_map=processed_repl_map, 
+                              equiv_alt_expansions=equiv_alt_expansions,
+                              assumptions=assumptions))
+        
+    def generalize(self, forall_var_or_vars_or_var_lists, 
+                   domain_lists=None, domain=None, conditions=tuple()):
         '''
         Performs a generalization derivation step.  Returns the
         proven generalized KnownTruth.  Can introduce any number of
@@ -779,35 +905,60 @@ class KnownTruth:
         be provided to introduce a single Forall wrapper.
         '''
         from proveit._core_.proof import Generalization
-        from proveit import Variable, compositeExpression
+        from proveit._core_.expression.lambda_expr.lambda_expr import \
+            valid_params
+        from proveit._core_.expression.composite.composite import \
+            compositeExpression
         from proveit.logic import InSet
         
-        if isinstance(forallVarLists, Variable):
-            forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
-        else:
-            if not hasattr(forallVarLists, '__len__'):
-                raise ValueError("Must supply 'generalize' with a Variable, list of Variables, or list of Variable lists.")
-            if len(forallVarLists) == 0:
-                raise ValueError("Must provide at least one Variable to generalize over")
-            if all(isinstance(x, Variable) for x in forallVarLists):
-                # convert a list of Variable/MultiVariables to a list of lists
-                forallVarLists = [forallVarLists]
+        # Convert all forms of `forall_var_or_vars_or_var_lists` to
+        # forall_var_lists, the most general form.  Start with the
+        # default:
+        forall_var_lists = forall_var_or_vars_or_var_lists
+        try:
+            forall_vars = compositeExpression(forall_var_or_vars_or_var_lists)
+            if valid_params(forall_vars):
+                forall_var_lists = [forall_vars]
+        except:
+            pass # don't change the default
+            
+        if not hasattr(forall_var_lists, '__len__'):
+            raise ValueError("Must supply 'generalize' with a Variable, "
+                             "list of Variables (or variable ranges), or "
+                             "list of lists of Variables (or variable "
+                             "ranges).")
+        if len(forall_var_lists) == 0:
+            raise ValueError("Must provide at least one Variable to generalize over")
+        
+        for forall_var_list in forall_var_lists:
+            if not hasattr(forall_var_lists, '__iter__'):
+                raise ValueError(
+                        "`forallVarLists` must be a list of lists specifying "
+                        "instance parameters of forall operations to "
+                        "introduce (or, for convenience it may be a single "
+                        "variable)")
         
         # Add domain conditions as appropriate
-        if domain is not None and domainLists is not None:
-            raise ValueError("Either specify a 'domain' or a list of 'domainLists' but not both")
+        if domain is not None and domain_lists is not None:
+            raise ValueError("Either specify a `domain` or "
+                             "'domain_lists' but not both")
         if domain is not None:
-            domainLists = [[domain]*len(forallVarList) for forallVarList in forallVarLists]
-        if domainLists is not None:
-            domainConditions = []
-            for domainList, forallVarList in zip(domainLists, forallVarLists):
-                domainList = compositeExpression(domainList)
-                if len(domainList)==1:
-                    domainList = [domainList[0]]*len(forallVarList)
-                domainConditions += [InSet(instanceVar, domain) for instanceVar, domain in zip(forallVarList, domainList)]
-            conditions = domainConditions + list(conditions)
+            domain_lists = [[domain]*len(forall_var_lists) for 
+                            forall_var_list in forall_var_lists]
+        if domain_lists is not None:
+            domain_conditions = []
+            for domain_list, forall_var_list in zip(domain_lists, 
+                                                     forall_var_lists):
+                domain_list = compositeExpression(domain_list)
+                if len(domain_list)==1:
+                    domain_list = [domain_list[0]]*len(forall_var_list)
+                domain_conditions += [InSet(instanceVar, domain) for 
+                                      instanceVar, domain in 
+                                      zip(forall_var_list, domain_list)]
+            conditions = domain_conditions + list(conditions)
         
-        return self._checkedTruth(Generalization(self, forallVarLists, conditions))
+        return self._checkedTruth(Generalization(self, forall_var_lists, 
+                                                 conditions))
 
     def asImplication(self, hypothesis):
         '''
@@ -822,7 +973,7 @@ class KnownTruth:
             hypothesis = hypothesis.expr # we want the expression for this purpose
         return self._checkedTruth(HypotheticalReasoning(self, hypothesis))
         
-    def evaluation(self):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Calling evaluation on a KnownTruth results in deriving that its
         expression is equal to TRUE, under the assumptions of the KnownTruth.
@@ -837,7 +988,7 @@ class KnownTruth:
         return self.asImplication(hypothesis)
 
     def raiseUnusableProof(self):
-        from .proof import UnusableProof, Theorem, Axiom
+        from .proof import UnusableProof
         proof = self.proof()
         unusuable_proof = proof._meaningData._unusableProof
         if proof == unusuable_proof:
@@ -847,9 +998,8 @@ class KnownTruth:
 
     def string(self, performUsabilityCheck=True):
         '''
-        If the KnownTruth was proven under any assumptions, display the 
-        double-turnstyle notation to show that the set of assumptions proves
-        the statement/expression.  Otherwise, simply display the expression.
+        Display the turnstile notation to show that the known truth
+        on the right derives from the set of assumptions on the left.
         '''
         from proveit import ExprTuple
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
@@ -860,16 +1010,15 @@ class KnownTruth:
 
     def latex(self, performUsabilityCheck=True):
         '''
-        If the KnownTruth was proven under any assumptions, display the 
-        double-turnstyle notation to show that the set of assumptions proves
-        the statement/expression.  Otherwise, simply display the expression.
+        Display the turnstile notation to show that the known truth
+        on the right derives from the set of assumptions on the left.
         '''
         from proveit import ExprTuple
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
         if len(self.assumptions) > 0:
             assumptionsLatex = ExprTuple(*self.assumptions).formatted('latex', fence=False)
             return r'{' +assumptionsLatex + r'} \vdash ' + self.expr.latex()
-        return r'\vdash ' + self.expr.string()
+        return r'\vdash ' + self.expr.latex()
 
     def __str__(self):
         '''
@@ -893,6 +1042,8 @@ class KnownTruth:
         expr.ipynb notebooks for displaying the expression information.
         '''
         from proveit.logic import Set
+        if not defaults.display_latex:
+            return None # No LaTeX display at this time.
         if not self.isUsable(): self.raiseUnusableProof()
         html = ''
         proof = self.proof()
@@ -912,6 +1063,17 @@ class KnownTruth:
         html += self.expr._repr_html_()
         html += '</span>'
         return html
+    
+    def innerExpr(self):
+        '''
+        Return an InnerExpr object to wrap the KnownTruth and
+        access any inner sub-expression (including assumptions or
+        inner expressions of assumptions) for the purpose of 
+        replacing the inner expression, changing its style,
+        or relabeling variables.
+        '''
+        from .expression.inner_expr import InnerExpr
+        return InnerExpr(self)
 
 def asExpression(truthOrExpression):
     '''

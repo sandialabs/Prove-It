@@ -35,14 +35,18 @@ class Implies(TransitiveRelation):
 
     def sideEffects(self, knownTruth):
         '''
-        Yield the TransitiveRelation side-effects (which also records knownLeftSides
-        and knownRightSides).  Also derive the consequent as a side-effect.
-        As a special case, if the consequent is FALSE, do deriveViaContradiction.
+        Yield the TransitiveRelation side-effects (which also records
+        knownLeftSides nd knownRightSides).  Also derive the consequent
+        as a side-effect if the antecedent is known to be true
+        (under the "side-effect" assumptions).
+        As a special case, if the consequent is FALSE, do
+        deriveViaContradiction.
         '''
         from proveit.logic.boolean._common_ import FALSE
         for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
             yield sideEffect
-        #yield self.deriveConsequent # B given A=>B and A
+        if self.antecedent.proven():
+            yield self.deriveConsequent # B given A=>B and A
         if self.consequent == FALSE:
             yield self.deriveViaContradiction # Not(A) given A=>FALSE or A given Not(A)=>FALSE
 
@@ -57,9 +61,10 @@ class Implies(TransitiveRelation):
 
     def conclude(self, assumptions):
         '''
-        Try to automatically conclude this implication by reducing its operands
-        to true/false, or by doing a "transitivity" search amongst known true implications
-        whose assumptions are covered by the given assumptions.
+        Try to automatically conclude this implication by reducing its
+        operands to true/false, or by doing a "transitivity" search
+        amongst known true implications whose assumptions are covered by
+        the given assumptions.
         '''
         from ._axioms_ import untrueAntecedentImplication
         from ._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, falseAntecedentImplication
@@ -73,9 +78,10 @@ class Implies(TransitiveRelation):
                 return self.evaluation(assumptions)
             except:
                 return self.prove()
+
         try:
-            # Try evaluating the consequent.
-            evaluation = self.consequent.evaluation(assumptions)
+            # See of the consequent has an evaluation.
+            evaluation = self.consequent.evaluation(assumptions, automation=False)
             if evaluation.rhs == TRUE:
                 # If the consequent evaluates to true, we can prove trivially via hypothetical reasoning
                 return self.consequent.prove(assumptions).asImplication(self.antecedent)
@@ -89,21 +95,23 @@ class Implies(TransitiveRelation):
         except:
             pass
         try:
-            # Try evaluating the antecedent.
-            evaluation = self.antecedent.evaluation(assumptions)
+            # See if the antecedent has an evaluation.
+            evaluation = self.antecedent.evaluation(assumptions, automation=False)
             if evaluation.rhs == FALSE:
                 # Derive A => B given Not(A); it doesn't matter what B is if A is FALSE
                 return falseAntecedentImplication.specialize({A: self.antecedent, B: self.consequent}, assumptions=assumptions)
         except:
             pass
+
         try:
-            # Use a breadth-first search approach to find the shortest
-            # path to get from one end-point to the other.
-            return TransitiveRelation.conclude(self, assumptions)
-        except:
-            pass
-        # try to prove the implication via hypothetical reasoning.
-        return self.consequent.prove(tuple(assumptions) + (self.antecedent,)).asImplication(self.antecedent)
+            # try to prove the implication via hypothetical reasoning.
+            return self.consequent.prove(tuple(assumptions) + (self.antecedent,)).asImplication(self.antecedent)
+        except ProofFailure:
+            raise ProofFailure(self, assumptions,
+                               "Unable to automatically conclude by "
+                               "standard means.  To try to prove this via "
+                               "transitive implication relations, try "
+                               "'concludeViaTransitivity'.")
 
     def concludeNegation(self, assumptions=USE_DEFAULTS):
         '''
@@ -257,13 +265,13 @@ class Implies(TransitiveRelation):
         else:
             return toContraposition.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
         '''
         from ._theorems_ import impliesTT, impliesFT, impliesFF, impliesTF # load in truth-table evaluations
-        return Operation.evaluation(self, assumptions)
+        return Operation.evaluation(self, assumptions, automation=automation)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''

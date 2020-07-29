@@ -147,13 +147,13 @@ class Iff(TransitiveRelation):
         from ._theorems_ import iffIntro
         return iffIntro.specialize({A:self.A, B:self.B}, assumptions=assumptions)
     
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._theorems_ import iffTT, iffTF, iffFT, iffFF # IMPORTANT: load in truth-table evaluations
-        return Operation.evaluation(self, assumptions)
+        return Operation.evaluation(self, assumptions, automation)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''

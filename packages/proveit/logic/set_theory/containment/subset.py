@@ -10,15 +10,15 @@ class SubsetRelation(ContainmentRelation):
         ContainmentRelation.__init__(self, operator, subset, superset)
         self.subset = self.operands[0]
         self.superset = self.operands[1]
-    
+
     @staticmethod
     def WeakRelationClass():
-        return SubsetEq 
+        return SubsetEq
 
     @staticmethod
     def StrongRelationClass():
         return Subset
-    
+
     @staticmethod
     def SequenceClass():
         return SubsetSequence
@@ -26,7 +26,7 @@ class SubsetRelation(ContainmentRelation):
 class SubsetSequence(ContainmentSequence):
     def __init__(self, operators, operands):
         ContainmentSequence.__init__(self, operators, operands)
-    
+
     @staticmethod
     def RelationClass():
         return SubsetRelation
@@ -38,22 +38,22 @@ def subsetSequence(operators, operands):
     fewer than two operators.
     '''
     return makeSequenceOrRelation(SubsetSequence, operators, operands)
-  
-class Subset(SubsetRelation):    
+
+class Subset(SubsetRelation):
     # operator of the Subset operation
     _operator_ = Literal(stringFormat='subset', latexFormat=r'\subset',
-                         context=__file__)    
+                         context=__file__)
 
     # map left-hand-sides to Subset KnownTruths
     #   (populated in TransitivityRelation.sideEffects)
-    knownLeftSides = dict()    
+    knownLeftSides = dict()
     # map right-hand-sides to Subset KnownTruths
     #   (populated in TransitivityRelation.sideEffects)
-    knownRightSides = dict()        
-    
+    knownRightSides = dict()
+
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, Subset._operator_, subset, superset)
- 
+
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From A subset B, derive B supset A.
@@ -61,15 +61,23 @@ class Subset(SubsetRelation):
         from ._theorems_ import reverseSubset
         return reverseSubset.specialize(
                 {A:self.subset, B:self.superset}, assumptions=assumptions)
-       
+
     def deriveRelaxed(self, assumptions=USE_DEFAULTS):
         '''
         From A subset B, derive A subseteq B.
         '''
         from ._theorems_ import relaxSubset
-        return relaxSubset.specialize(
-                {A:self.subset, B:self.superset}, assumptions=assumptions)
-            
+        return relaxSubset.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
+
+    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+        '''
+        From A subset B and x in A, derive x in B.
+        '''
+        from ._theorems_ import supersetMembershipFromSubset
+        return supersetMembershipFromSubset.instantiate(
+                {A:self.subset, B:self.superset, x:element},
+                assumptions=assumptions)
+
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this A subset B
@@ -132,21 +140,21 @@ class ProperSubset(SubsetRelation):
     not in set A. Example usage: ProperSubset(A, B).
     Intended to replace the equivalent but more ambiguously-named
     Subset class.
-    '''   
+    '''
     # operator of the Subset operation
     _operator_ = Literal(stringFormat='proper_subset', latexFormat=r'\subset',
-                         context=__file__)    
+                         context=__file__)
 
     # map left-hand-sides to ProperSubset KnownTruths
     #   (populated in TransitivityRelation.sideEffects)
-    knownLeftSides = dict()    
+    knownLeftSides = dict()
     # map right-hand-sides to ProperSubset KnownTruths
     #   (populated in TransitivityRelation.sideEffects)
-    knownRightSides = dict()        
-    
+    knownRightSides = dict()
+
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, ProperSubset._operator_, subset, superset)
- 
+
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From ProperSubset(A, B), derive ProperSuperset(B, A).
@@ -154,7 +162,7 @@ class ProperSubset(SubsetRelation):
         from ._theorems_ import reverseProperSubset
         return reverseProperSubset.specialize({A:self.subset, B:self.superset},
                                               assumptions=assumptions)
-       
+
     def deriveRelaxed(self, assumptions=USE_DEFAULTS):
         '''
         From ProperSubset(A, B), derive SubsetEq(A, B).
@@ -162,7 +170,7 @@ class ProperSubset(SubsetRelation):
         from ._theorems_ import relaxProperSubset
         return relaxProperSubset.specialize({A:self.subset, B:self.superset},
                                             assumptions=assumptions)
-            
+
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this ProperSubset(A, B)
@@ -220,15 +228,15 @@ class ProperSubset(SubsetRelation):
 class SubsetEq(SubsetRelation):
     # operator of the SubsetEq operation
     _operator_ = Literal(stringFormat='subseteq', latexFormat=r'\subseteq',
-                         context=__file__)    
+                         context=__file__)
 
     # map left-hand-sides to SubsetEq KnownTruths
     #   (populated in TransitivityRelation.deriveSideEffects)
-    knownLeftSides = dict()    
+    knownLeftSides = dict()
     # map right-hand-sides to SubsetEq KnownTruths
     #   (populated in TransitivityRelation.deriveSideEffects)
-    knownRightSides = dict()      
-    
+    knownRightSides = dict()
+
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, SubsetEq._operator_, subset, superset)
 
@@ -239,7 +247,7 @@ class SubsetEq(SubsetRelation):
         from ._theorems_ import reverseSubsetEq
         return reverseSubsetEq.specialize(
                 {A:self.subset, B:self.superset}, assumptions=assumptions)
-        
+
     def conclude(self, assumptions=USE_DEFAULTS):
         from proveit import ProofFailure
         from proveit.logic import SetOfAll, Equals
@@ -250,13 +258,13 @@ class SubsetEq(SubsetRelation):
             return self.concludeViaEquality(assumptions)
         except ProofFailure:
             pass
-                
+
         try:
             # Attempt a transitivity search
             return ContainmentRelation.conclude(self, assumptions)
         except ProofFailure:
             pass # transitivity search failed
-        
+
         # Check for special case of [{x | Q*(x)}_{x \in S}] \subseteq S
         if isinstance(self.subset, SetOfAll):
             from proveit.logic.set_theory.comprehension._theorems_ import (
@@ -272,7 +280,7 @@ class SubsetEq(SubsetRelation):
                         {S:setOfAll.domain, Q_op:Q_op_sub},
                         relabelMap={x:setOfAll.allInstanceVars()[0]},
                         assumptions=assumptions)
-        
+
         # Finally, attempt to conclude A subseteq B via
         # forall_{x in A} x in B. Issue: Variables do not match when
         # using safeDummyVar: _x_ to x.
@@ -280,23 +288,23 @@ class SubsetEq(SubsetRelation):
         # practical to do concludeAsFolded manually.
         return self.concludeAsFolded(
                 elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
-    
+
     def concludeViaEquality(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import subsetEqViaEquality
         return subsetEqViaEquality.specialize(
                 {A: self.operands[0], B: self.operands[1]},
-                assumptions=assumptions)        
-    
+                assumptions=assumptions)
+
     def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
         From A subseteq B, derive and return (forall_{x in A} x in B).
         x will be relabeled if an elemInstanceVar is supplied.
-        '''        
+        '''
         from ._theorems_ import unfoldSubsetEq
         return unfoldSubsetEq.specialize(
                 {A:self.subset, B:self.superset},
                 relabelMap={x:elemInstanceVar}, assumptions=assumptions)
-    
+
     def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From A subseteq B and x in A, derive x in B.
@@ -305,18 +313,15 @@ class SubsetEq(SubsetRelation):
         return unfoldSubsetEq.specialize(
                 {A:self.subset, B:self.superset, x:element},
                 assumptions=assumptions)
-    
+
     def concludeAsFolded(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
         Derive this folded version, A subseteq B, from the unfolded
         version, (forall_{x in A} x in B).
         '''
         from ._theorems_ import foldSubsetEq
-        return foldSubsetEq.specialize(
-                {A:self.subset, B:self.superset},
-                relabelMap={x:elemInstanceVar},
-                assumptions=assumptions).deriveConsequent(assumptions)
-    
+        return foldSubsetEq.specialize({A:self.subset, B:self.superset, x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
+
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this A subseteq B
@@ -348,7 +353,7 @@ class SubsetEq(SubsetRelation):
         elif other.rhs == self.lhs:
             if isinstance(other,Subset) or isinstance(other, ProperSubset):
                 return transitivitySubsetEqSubset.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.lhs}, 
+                        {A:self.lhs, B:self.rhs, C:other.lhs},
                         assumptions=assumptions)
             elif isinstance(other,SubsetEq):
                 return transitivitySubsetEqSubsetEq.specialize(
@@ -372,11 +377,11 @@ class NotSubset(Operation):
     # operator of the NotSubset operation
     _operator_ = Literal(stringFormat='nsubset',
                          latexFormat=r'\not\subset',
-                         context=__file__)    
+                         context=__file__)
 
     def __init__(self, subset, superset):
         Operation.__init__(self, NotSubset._operator_, (subset, superset))
-    
+
     def deriveSideEffects(self, knownTruth):
         # unfold as an automatic side-effect
         self.unfold(knownTruth.assumptions)
@@ -416,11 +421,11 @@ class NotProperSubset(Operation):
     # operator for the NotProperSubset operation
     _operator_ = Literal(stringFormat='not_proper_subset',
                          latexFormat=r'\not\subset',
-                         context=__file__)    
+                         context=__file__)
 
     def __init__(self, subset, superset):
         Operation.__init__(self, NotProperSubset._operator_, (subset, superset))
-    
+
     def deriveSideEffects(self, knownTruth):
         # unfold as an automatic side-effect
         self.unfold(knownTruth.assumptions)
@@ -440,7 +445,7 @@ class NotProperSubset(Operation):
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
         Derive this folded version, A not_proper_subset B, from the
-        unfolded version, not(A propersubset B). 
+        unfolded version, not(A propersubset B).
         '''
         from ._theorems_ import foldNotProperSubset
         return foldNotProperSubset.specialize(
@@ -460,11 +465,11 @@ class NotProperSubset(Operation):
 class NotSubsetEq(Operation):
     # operator of the NotSubsetEq operation
     _operator_ = Literal(stringFormat='nsubseteq', latexFormat=r'\nsubseteq',
-                         context=__file__)    
+                         context=__file__)
 
     def __init__(self, subset, superset):
         Operation.__init__(self, NotSubsetEq._operator_, (subset, superset))
-    
+
     def deriveSideEffects(self, knownTruth):
         # unfold as an automatic side-effect
         self.unfold(knownTruth.assumptions)

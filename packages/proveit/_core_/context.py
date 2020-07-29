@@ -84,24 +84,26 @@ class Context:
         # if in a _proofs_ directory, go to the containing context directory
         if splitpath[-1] == '_proofs_':
             path = os.path.abspath(os.path.join(*([path] + ['..'])))
-        # Makes the case be consistent in operating systems (i.e. Windows)
-        # with a case insensitive filesystem: 
-        path = os.path.normcase(path)
         
         # move the path up to the directory level, not script file level
         if path[-3:]=='.py' or path[-4:]=='.pyc':
             path, _ = os.path.split(path)
+
+        # Makes the case be consistent in operating systems (i.e. Windows)
+        # with a case insensitive filesystem: 
+        normpath = os.path.normcase(path)
             
-        if path in Context.storages:
-            self._storage = Context.storages[path] # got the storage - we're good
+        if normpath in Context.storages:
+            self._storage = Context.storages[normpath] # got the storage - we're good
             self.name = self._storage.name
             return
         
         if os.path.isfile(path): # just in case checking for '.py' or '.pyc' wasn't sufficient
             path, _ = os.path.split(path)
+            normpath = os.path.normcase(path)
 
-        if path in Context.storages:
-            self._storage = Context.storages[path] # got the storage - we're good
+        if normpath in Context.storages:
+            self._storage = Context.storages[normpath] # got the storage - we're good
             self.name = self._storage.name
             return
         
@@ -120,13 +122,13 @@ class Context:
         if '.' in name:
             rootDirectory = os.path.join(remainingPath, name.split('.')[0])
         # Create the Storage object for this Context
-        if path not in Context.storages:
-            Context.storages[path] = ContextStorage(self, name, path, rootDirectory)
+        if normpath not in Context.storages:
+            Context.storages[normpath] = ContextStorage(self, name, path, rootDirectory)
             # if the _sub_contexts_.txt file has not been created, make an empty one
             sub_contexts_path = os.path.join(path, '_sub_contexts_.txt')
             if not os.path.isfile(sub_contexts_path):
                 open(sub_contexts_path, 'wt').close()
-        self._storage = Context.storages[path]
+        self._storage = Context.storages[normpath]
         self.name = self._storage.name
             
     def __eq__(self, other):
@@ -165,7 +167,7 @@ class Context:
         path = os.path.normpath(os.path.abspath(path))
         if contextName in Context._rootContextPaths:
             storedPath = Context._rootContextPaths[contextName]
-            if storedPath != path:
+            if os.path.normcase(storedPath) != os.path.normcase(path):
                 raise ContextException("Conflicting directory references to context '%s': %s vs %s"%(contextName, path, storedPath))
         Context._rootContextPaths[contextName] = path 
     
@@ -545,7 +547,7 @@ class CommonExpressions(ModuleType):
         return sorted(list(self.__dict__.keys()) + list(self._context.commonExpressionNames()))
 
     def __getattr__(self, name):
-        from proveit import Label
+        from proveit._core_.expression.label.label import TemporaryLabel
         if name[0:2]=='__': 
             raise AttributeError # don't handle internal Python attributes
         
@@ -573,7 +575,7 @@ class CommonExpressions(ModuleType):
             if isinstance(e, UnsetCommonExpressions):
                 # Use a temporary placeholder if the common expressions are not set.
                 # This avoids exceptions while common exppressions are being built/rebuilt.
-                return Label("Temporary_placeholder_for_undefined_%s.%s"%(self._context.name, name), "Temporary\_placeholder\_for\_undefined\_%s.%s"%(self._context.name, name))
+                return TemporaryLabel(self._context.name + '.' + name)
             
             raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self._context.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
 

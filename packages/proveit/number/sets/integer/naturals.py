@@ -37,9 +37,9 @@ class NaturalPosSet(NumberSet):
         '''
         Yield side-effects when proving 'n in NaturalsPos' for a given n.
         '''
-
         member = knownTruth.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
+        yield lambda assumptions : self.deduceMemberInNats(member, assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
@@ -57,6 +57,10 @@ class NaturalPosSet(NumberSet):
         from ._theorems_ import xInNatsPosInBool
         from proveit._common_ import x
         return xInNatsPosInBool.specialize({x:member}, assumptions=assumptions)
+    
+    def deduceMemberInNats(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import natsPosInNats
+        return natsPosInNats.deriveSupsersetMembership(member, assumptions)
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are

@@ -1,5 +1,6 @@
 sets
 rounding
+absolute_value
 numeral
 addition
 negation
@@ -7,11 +8,9 @@ ordering
 multiplication
 division
 divisibility
-absolute_value
 modular
 exponentiation
 summation
 product
 differentiation
 integration
-absolute_value

@@ -1,14 +1,15 @@
 # Arithmetic and number theory concepts.
 
-from .sets import (Integers, Naturals, NaturalsPos, Len,
-	                 Rationals, RationalsNonNeg, RationalsPos, 
+from .sets import (Integers, Naturals, NaturalsPos, 
+                   Rationals, RationalsPos, RationalsNonNeg, 
                    Reals, RealsNeg, RealsPos, RealsNonNeg, Complexes)
 from .sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .sets import e, pi, i, infinity
 from .sets import Rationals, RationalsPos, RationalsNeg, RationalsNonNeg
 from .numeral import num, Numeral, DecimalSequence, DIGITS, isLiteralInt
 from .numeral import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
-from .addition import Add, subtract, dist_subtract, dist_add
+from .addition import (Add, subtract, dist_subtract, dist_add,
+                       const_shift_decomposition, const_shift_composition)
 from .negation import Neg
 from .multiplication import Mult
 from .product import Prod

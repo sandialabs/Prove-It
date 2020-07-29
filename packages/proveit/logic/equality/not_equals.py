@@ -51,7 +51,14 @@ class NotEquals(Operation):
         '''
         from ._theorems_ import notEqualsSymmetry
         return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
-        
+
+    def reversed(self):
+        '''
+        Return an NotEquals expression with the right side and left side 
+        reversed from this one. This is not a derivation: see deriveReversed().
+        '''
+        return NotEquals(self.rhs, self.lhs)
+            
     def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         '''
         From A != FALSE, derive and return A assuming inBool(A).
@@ -98,17 +105,19 @@ class NotEquals(Operation):
         from ._theorems_ import foldNotEquals
         return foldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
         
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given operands that may be evaluated to irreducible values that
         may be compared, or if there is a known evaluation of this
         inequality, derive and return this expression equated to
         TRUE or FALSE.
         '''
-        definitionEquality = self.definition()
-        unfoldedEvaluation = definitionEquality.rhs.evaluation(assumptions)        
-        return Equals(self, unfoldedEvaluation.rhs).prove(assumptions)
-
+        if automation:
+            definitionEquality = self.definition()
+            unfoldedEvaluation = definitionEquality.rhs.evaluation(assumptions)        
+            return Equals(self, unfoldedEvaluation.rhs).prove(assumptions)
+        return Operation.evaluation(self, assumptions, automation)
+    
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
         From x != y, and assuming x = y, derive and return FALSE.

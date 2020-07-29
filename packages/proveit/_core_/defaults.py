@@ -8,7 +8,30 @@ class Defaults:
     
     def reset(self):
         self.assumptions = tuple()
+        
+        # Enable/disable `automation` by performing automatic
+        # side-effects (via `sideEffects` methods) when proving 
+        # statements as well as automatically concluding 
+        # statements (via `conclude` methods) when possible.
         self.automation = True
+        
+        # Display LaTeX versions of expressions.
+        self.display_latex = True
+        
+        # Automatic reductions may be applied to expressions that
+        # have an "auto_reduction" method if 'auto_reduce' is True
+        # and the Expression class is not in 
+        # 'disabled_auto_reduction_types'.
+        self.auto_reduce = True
+        # Note: you can do "with self.disabled_auto_reduction_types"
+        # for temporary changes to the disabled_auto_reduction_types
+        # set.  See DisabledAutoReductionTypes class definition
+        # below.
+        self.disabled_auto_reduction_types = DisabledAutoReductionTypes()
+        
+        # Put expression pngs inline versus using links.
+        self.inline_pngs = True
+        
         Defaults.consideredAssumptionSets.clear()
     
     def checkedAssumptions(self, assumptions):
@@ -49,16 +72,13 @@ class Defaults:
         try:
             assumptions = list(assumptions)
         except TypeError:
-            raise TypeError('The assumptions must be an iterable collection of Expression objects')
+            raise TypeError('The assumptions must be an iterable collection of '
+                            'Expression objects')
         for assumption in list(assumptions):
             if assumption not in assumptionsSet:
-                if assumption==WILDCARD_ASSUMPTIONS:
-                    # just pass the wildcard assumption along
-                    yield assumption
-                    assumptionsSet.add(assumption)
-                    continue
                 if not isinstance(assumption, Expression):
-                    raise TypeError("The assumptions must be an iterable collection of Expression objects (or '*' as a wildcard to include anything else that is needed)")
+                    raise TypeError("The assumptions must be an iterable "
+                                    "collection of Expression objects")
                 yield assumption
                 assumptionsSet.add(assumption)
         
@@ -69,7 +89,40 @@ class Defaults:
         '''
         if attr == 'assumptions' and hasattr(self, attr):
             value = tuple(self.checkedAssumptions(value))
-        self.__dict__[attr] = value             
+        self.__dict__[attr] = value         
+
+class DisabledAutoReductionTypes(set):
+    '''
+    The DisabledAutoReductionTypes class stores the set of Expression
+    class types whose auto-reduction feature is currently disabled.
+    It is a "context manager" with an __enter__() and __exit__() 
+    method such that one may do the following:
+        
+    with defaults.disabled_auto_reduction_types as disabled_types:
+        disabled_types.add(..)
+        disabled_types.discard(..)
+        etc.
+    
+    Or equivalently
+    with defaults.disabled_auto_reduction_types:
+        defaults.disabled_auto_reduction_types.add(..)
+        defaults.disabled_auto_reduction_types.discard(..)
+        etc.
+        
+    When it finishes, the disabled_auto_reduction_types will return
+    to its original state.
+    '''
+    def __init__(self):
+        set.__init__(self)
+    
+    def __enter__(self):
+        self._original_disabled_types = set(self)
+        return self
+    
+    def __exit__(self, type, value, traceback):
+        # Restore to the state of when we "entered".
+        self.clear()
+        self.update(self._original_disabled_types)
 
 class InvalidAssumptions:
     def __init__(self):
@@ -81,12 +134,5 @@ class InvalidAssumptions:
 # should be used.  This value is simply None, but with
 # USE_DEFAULTS, it is more explicit in the code.
 USE_DEFAULTS = None
-
-# use WILDCARD_ASSUMPTIONS (or simply '*'), in assumptions
-# lists to indicate that extra necessary assumptions should
-# be added automatically without trying to prove them from
-# other assumptions.  This is used in KnownTruth.deriveSideEffects
-# to derive side-effects with extra assumptions as needed.
-WILDCARD_ASSUMPTIONS = '*'
 
 defaults = Defaults()

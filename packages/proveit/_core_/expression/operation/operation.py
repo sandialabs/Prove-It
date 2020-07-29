@@ -1,7 +1,6 @@
 import inspect
-from proveit._core_.expression.expr import Expression, ImproperSubstitution
+from proveit._core_.expression.expr import Expression, ImproperReplacement
 from proveit._core_.expression.style_options import StyleOptions
-from proveit._core_.expression.fencing import maybeFenced
 from proveit._core_.defaults import USE_DEFAULTS
 
 class Operation(Expression):
@@ -19,8 +18,8 @@ class Operation(Expression):
         information.
         '''
         Operation.operationClassOfOperator.clear()
-        
-    def __init__(self, operator_or_operators, operand_or_operands, styles=None, requirements=tuple()):
+    
+    def __init__(self, operator_or_operators, operand_or_operands, styles=None):
         '''
         Create an operation with the given operator(s) and operand(s).
         The operator(s) must be Label(s) (a Variable or a Literal).
@@ -30,51 +29,84 @@ class Operation(Expression):
         'operators' and 'operands' attributes that bundle
         the one or more Expressions into a composite Expression.
         '''
-        from proveit._core_.expression.composite import Composite, compositeExpression, singleOrCompositeExpression, Iter, Indexed
+        from proveit._core_.expression.composite import (
+                Composite, compositeExpression, 
+                singleOrCompositeExpression, ExprTuple, ExprRange)
         from proveit._core_.expression.label.label import Label
+        from .indexed_var import IndexedVar
         if styles is None: styles = dict()
         if hasattr(self.__class__, '_operator_') and operator_or_operators==self.__class__._operator_:
             operator = operator_or_operators
-            if Expression.contexts[operator._style_id] != operator.context:
-                raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
+            #if Expression.contexts[operator._style_id] != operator.context:
+            #    raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
+        if isinstance(operator_or_operators, ExprRange):
+            operator_or_operators = [operator_or_operators]
+        if isinstance(operand_or_operands, ExprRange):
+            operand_or_operands = [operand_or_operands]
         self.operator_or_operators = singleOrCompositeExpression(operator_or_operators)
-        self.operand_or_operands = singleOrCompositeExpression(operand_or_operands)
+        
+        # Reduce to a single operand if it is just a tuple with
+        # one non-ExprRange and non-ExprTuple element.
+        self.operand_or_operands = singleOrCompositeExpression(
+                operand_or_operands, do_singular_reduction=True)
+        
+        def raiseBadOperatorType(operator):
+            raise TypeError('operator(s) must be a Label, an indexed variable '
+                            '(IndexedVar), or iteration (Iter) over indexed'
+                            'variables (IndexedVar). %s is none of those.'
+                            %str(operator))            
         if isinstance(self.operator_or_operators, Composite):
             # a composite of multiple operators:
             self.operators = self.operator_or_operators 
             for operator in self.operators:
-                if isinstance(operator, Iter):
-                    if not isinstance(operator.lambda_map.body, Indexed):
-                        raise TypeError('operators must be Labels, Indexed variables, or iteration (Iter) over Indexed variables.')                
-                elif not isinstance(operator, Label) and not isinstance(operator, Indexed):
-                    raise TypeError('operator must be a Label, Indexed variable, or iteration (Iter) over Indexed variables.')
+                if isinstance(operator, ExprRange):
+                    if not isinstance(operator.body, IndexedVar):
+                        raiseBadOperatorType(operator)
+                elif not isinstance(operator, Label) and not isinstance(operator, IndexedVar):
+                    raiseBadOperatorType(operator)
         else:
             # a single operator
             self.operator = self.operator_or_operators
-            if not isinstance(self.operator, Label) and not isinstance(self.operator, Indexed):
-                raise TypeError('operator must be a Label, Indexed variable, or iteration (Iter) over Indexed variables, not %s.'%str(self.operator.__class__))
+            if not isinstance(self.operator, Label) and not isinstance(self.operator, IndexedVar):
+                raiseBadOperatorType(self.operator)
             # wrap a single operator in a composite for convenience
             self.operators = compositeExpression(self.operator)
         if isinstance(self.operand_or_operands, Composite):
             # a composite of multiple operands
             self.operands = self.operand_or_operands
+            if (isinstance(self.operands, ExprTuple) and len(self.operands)==1
+                    and isinstance(self.operands[0], ExprTuple)):
+                # This is a single operand that is an ExprTuple.
+                self.operand = self.operands[0]
         else:
             # a single operand
             self.operand = self.operand_or_operands
             # wrap a single operand in a composite for convenience
             self.operands = compositeExpression(self.operand)
         if 'operation' not in styles:
-            styles['operation'] = 'normal' # vs 'function
+            styles['operation'] = 'infix' # vs 'function'
         if 'wrapPositions' not in styles:
             styles['wrapPositions'] = '()' # no wrapping by default
         if 'justification' not in styles:
             styles['justification'] = 'center'
-        Expression.__init__(self, ['Operation'], (self.operator_or_operators, self.operand_or_operands), styles=styles, requirements=requirements)
+        sub_exprs = (self.operator_or_operators, self.operand_or_operands)
+        if isinstance(self, IndexedVar):
+            core_type = 'IndexedVar'
+        else:
+            core_type = 'Operation'
+        Expression.__init__(self, [core_type], sub_exprs, styles=styles)
 
     def styleOptions(self):
         options = StyleOptions(self)
-        options.addOption('wrapPositions', "position(s) at which wrapping is to occur; '2 n - 1' is after the nth operand, '2 n' is after the nth operation.")
-        options.addOption('justification', "if any wrap positions are set, justify to the 'left', 'center', or 'right'")
+        options.addOption('operation', 
+                          ("'infix' or 'function' style formatting"))
+        options.addOption('wrapPositions', 
+                          ("position(s) at which wrapping is to occur; '2 n - 1' "
+                           "is after the nth operand, '2 n' is after the nth "
+                           "operation."))
+        options.addOption('justification', 
+                          ("if any wrap positions are set, justify to the 'left', "
+                           "'center', or 'right'"))
         return options
 
     def withWrappingAt(self, *wrapPositions):
@@ -133,7 +165,7 @@ class Operation(Expression):
         return self.__class__._extractInitArgs(self.operator_or_operators, self.operand_or_operands, obj=self)
     
     @classmethod
-    def _extractInitArgs(operationClass, operator_or_operators, operand_or_operands, obj=None):
+    def _extractInitArgs(cls, operator_or_operators, operand_or_operands, obj=None):
         '''
         For a particular Operation class and given operator(s) and operand(s),
         yield (name, value) pairs to pass into the initialization method
@@ -165,23 +197,24 @@ class Operation(Expression):
         each operand individually.
         '''
         from proveit._core_.expression.composite.composite import compositeExpression
-        implicit_operator = operationClass._implicitOperator()
+        implicit_operator = cls._implicitOperator()
         matches_implicit_operator = (operator_or_operators == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
             raise OperationError("An implicit operator may not be changed")
         operands = compositeExpression(operand_or_operands)
-        args, varargs, varkw, defaults = inspect.getargspec(operationClass.__init__)
+        args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
+            inspect.getfullargspec(cls.__init__)
         args = args[1:] # skip over the 'self' arg
-        if len(args)>0 and args[-1]=='requirements':
-            args = args[:-1] # NOT TREATING 'requirements' FULLY AT THIS TIME; THIS NEEDS WORK.
-            defaults = defaults[:-1]
         if len(args)>0 and args[-1]=='styles':
             args = args[:-1] # NOT TREATING 'styles' FULLY AT THIS TIME; THIS NEEDS WORK.
             defaults = defaults[:-1]
         if obj is None:
-            extract_init_arg_value_fn = lambda arg : operationClass.extractInitArgValue(arg, operator_or_operators, operand_or_operands)
+            extract_init_arg_value_fn = \
+                lambda arg : cls.extractInitArgValue(arg, operator_or_operators, 
+                                                     operand_or_operands)
         else:
-            extract_init_arg_value_fn = lambda arg : obj.extractMyInitArgValue(arg)
+            extract_init_arg_value_fn = \
+                lambda arg : obj.extractMyInitArgValue(arg)
         try:
             arg_vals = [extract_init_arg_value_fn(arg) for arg in args]
             if varargs is not None:
@@ -201,6 +234,11 @@ class Operation(Expression):
                 kw_arg_vals = extract_init_arg_value_fn(varkw)
                 for arg, val in kw_arg_vals.items():
                     yield (arg, val)
+            if kwonlyargs is not None:
+                for kwonlyarg in kwonlyargs:
+                    val = extract_init_arg_value_fn(kwonlyarg)
+                    if val != kwonlydefaults[kwonlyarg]:
+                        yield (kwonlyarg, val)
         except NotImplementedError:
             if (varkw is None): # and (operationClass.extractInitArgValue == Operation.extractInitArgValue):
                 # try some default scenarios (that do not involve keyword arguments)
@@ -225,7 +263,11 @@ class Operation(Expression):
                         for operand in operands:
                             yield operand
                         return
-                raise NotImplementedError("Must implement 'extractInitArgValue' for the Operation of type %s if it does not fall into one of the default cases for 'extractInitArgs'"%str(operationClass))
+                raise NotImplementedError(
+                        "Must implement 'extractInitArgValue' for the "
+                        "Operation of type %s if it does not fall into "
+                        "one of the default cases for 'extractInitArgs'"
+                        %str(cls))
 
     @classmethod
     def _make(operationClass, coreInfo, styles, subExpressions):
@@ -278,39 +320,17 @@ class Operation(Expression):
             call_strs.append('withWrappingAt(' + ','.join(str(pos) for pos in wrap_positions) + ')')
         justification = self.getStyle('justification')
         if justification != 'center':
-            call_strs.append('withJustification(' + justification + ')')
+            call_strs.append('withJustification("' + justification + '")')
         return call_strs
 
     def string(self, **kwargs):
-        if self.getStyle('operation')=='function' and hasattr(self, 'operand'):
-            # When there is a single operand, we must use the
-            # "function"-style formatting.
-            return (self.operator.string(fence=True) + '(' +
-                    self.operand_or_operands.string(fence=False, subFence=True)
-                    + ')')
-        if (self.getStyle('operation')=='function'
-            or not hasattr(self, 'operands')):
-            # When there is a single operand, we must use the
-            # "function"-style formatting.
-            return (self.operator.string(fence=True) +  '(' +
-                self.operand_or_operands.string(fence=False, subFence=False)
-                + ')')
+        if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
+            return self._function_formatted('string', **kwargs)
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        if self.getStyle('operation')=='function' and hasattr(self, 'operand'):
-            # When there is a single operand, we must use the
-            # "function"-style formatting.
-            return (self.operator.latex(fence=True) +  r'\left(' +
-                    self.operand_or_operands.latex(fence=False, subFence=True)
-                    + r'\right)')
-        if (self.getStyle('operation')=='function' or
-            not hasattr(self, 'operands')):
-            # When there is a single operand, we must use the
-            # "function"-style formatting.
-            return (self.operator.latex(fence=True) +  r'\left(' +
-                    self.operand_or_operands.latex(fence=False, subFence=False)
-                    + r'\right)')
+        if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
+            return self._function_formatted('latex', **kwargs)
         return self._formatted('latex', **kwargs)
     
     def wrapPositions(self):
@@ -319,6 +339,17 @@ class Operation(Expression):
         '''
         return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
     
+    def _function_formatted(self, formatType, **kwargs):
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
+        formatted_operator = self.operator.formatted(formatType, fence=True)
+        if hasattr(self, 'operand') and not isinstance(self.operand, ExprTuple):
+            return '%s(%s)'%(formatted_operator, 
+                             self.operand.formatted(formatType, fence=False))
+        return '%s(%s)'%(formatted_operator, 
+                         self.operand_or_operands.formatted(
+                                 formatType, fence=False, subFence=False))
+        
+    
     def _formatted(self, formatType, **kwargs):
         '''
         Format the operation in the form "A * B * C" where '*' is a stand-in for
@@ -326,43 +357,43 @@ class Operation(Expression):
         
         '''
         if hasattr(self, 'operator'):
-            return Operation._formattedOperation(formatType, self.operator, self.operands, self.wrapPositions(), self.getStyle('justification'), **kwargs)
+            return Operation._formattedOperation(formatType, self.operator, self.operands, 
+                                                 wrapPositions=self.wrapPositions(), justification=self.getStyle('justification'), 
+                                                 **kwargs)
         else:
-            return Operation._formattedOperation(formatType, self.operators, self.operands, self.wrapPositions(), self.getStyle('justification'), **kwargs)
+            return Operation._formattedOperation(formatType, self.operators, self.operands, 
+                                                 wrapPositions=self.wrapPositions(), justification=self.getStyle('justification'), 
+                                                 **kwargs)
     
     @staticmethod
     def _formattedOperation(formatType, operatorOrOperators, operands, wrapPositions, justification, implicitFirstOperator=False, **kwargs):
-        from proveit import Iter, ExprTuple, compositeExpression
+        from proveit import ExprRange, ExprTuple, compositeExpression
         if isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
             operator = operatorOrOperators
             # Single operator case.
-            # Different formatting when there is 0 or 1 element, unless it is an Iter
+            # Different formatting when there is 0 or 1 element, unless
+            # it is an ExprRange.
             if len(operands) < 2:
-                if len(operands) == 0 or not isinstance(operands[0], Iter):
+                if len(operands) == 0 or not isinstance(operands[0], ExprRange):
                     if formatType == 'string':
                         return '[' + operator.string(fence=True) +  '](' + operands.string(fence=False, subFence=False) + ')'
                     else:
                         return '\left[' + operator.latex(fence=True) +  r'\right]\left(' + operands.latex(fence=False, subFence=False) + r'\right)'
                     raise ValueError("Unexpected formatType: " + str(formatType))  
-            fence =  kwargs['fence'] if 'fence' in kwargs else False
-            subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
+            fence =  kwargs.get('fence', False)
+            subFence =  kwargs.get('subFence', True)
             do_wrapping = len(wrapPositions)>0
             formatted_str = ''
-            if fence: formatted_str = '(' if formatType=='string' else  r'\left('
-            if do_wrapping and formatType=='latex': 
-                formatted_str += r'\begin{array}{%s} '%justification[0]
-            formatted_str += operands.formatted(formatType, fence=False, subFence=subFence, operatorOrOperators=operator, wrapPositions=wrapPositions)
-            if do_wrapping and formatType=='latex': 
-                formatted_str += r' \end{array}'
-            if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
+            formatted_str += operands.formatted(formatType, fence=fence, subFence=subFence, operatorOrOperators=operator, 
+                                                wrapPositions=wrapPositions, justification=justification)
             return formatted_str
         else:
             operators = operatorOrOperators
             operands = compositeExpression(operands)
             # Multiple operator case.
-            # Different formatting when there is 0 or 1 element, unless it is an Iter
+            # Different formatting when there is 0 or 1 element, unless it is an ExprRange
             if len(operands) < 2:
-                if len(operands) == 0 or not isinstance(operands[0], Iter):
+                if len(operands) == 0 or not isinstance(operands[0], ExprRange):
                     raise OperationError("No defaut formatting with multiple operators and zero operands")
             fence =  kwargs['fence'] if 'fence' in kwargs else False
             subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
@@ -377,53 +408,126 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling,
+                  assumptions, requirements, equality_repl_requirements):
         '''
-        Return this expression with the variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
+        Returns this expression with sub-expressions substituted 
+        according to the replacement map (repl_map) dictionary.
+        
+        When an operater of an Operation is substituted by a Lambda map, 
+        the operation itself will be substituted with the Lambda map 
+        applied to the operands.  For example, substituting 
+        f : (x,y) -> x+y
+        on f(a, b) will result in a+b.  When performing operation
+        substitution with a range of parameters, the Lambda map 
+        application will require the number of these parameters 
+        to equal with the number of corresponding operand elements.  
+        For example,
+        f : (a, b_1, ..., b_n) -> a*b_1 + ... + a*b_n
+        n : 3
+        applied to f(w, x, y, z) will result in w*x + w*y + w*z provided
+        that |(b_1, ..., b_3)| = |(x, y, z)| is proven.
+        Assumptions may be needed to prove such requirements.  
+        Requirements will be appended to the 'requirements' list if one 
+        is provided.
+        
+        There are limitations with respect the Lambda map application involving
+        iterated parameters when perfoming operation substitution in order to
+        keep derivation rules (i.e., instantiation) simple.  For details,
+        see the Iter.substituted documentation.
         '''
-        from proveit._core_.expression.composite.composite import compositeExpression
-        from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
-        self._checkRelabelMap(relabelMap)
-        if len(exprMap)>0 and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)
-        subbed_operand_or_operands = self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-        subbed_operands = compositeExpression(subbed_operand_or_operands)
-        subbed_operator_or_operators = self.operator_or_operators.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        from proveit import (Lambda, singleOrCompositeExpression,
+                             compositeExpression, ExprTuple, ExprRange)
+        
+        if len(repl_map)>0 and (self in repl_map):
+            # The full expression is to be substituted.
+            return repl_map[self]  
+        
+        # Perform substitutions for the operator(s) and operand(s).
+        subbed_operator_or_operators = \
+            self.operator_or_operators.replaced(repl_map, allow_relabeling,
+                                                assumptions, requirements,
+                                                equality_repl_requirements)
+        subbed_operand_or_operands = \
+            self.operand_or_operands.replaced(repl_map, allow_relabeling,
+                                              assumptions, requirements,
+                                              equality_repl_requirements)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
+        
+        # Check if the operator is being substituted by a Lambda map in
+        # which case we should perform full operation substitution.
         if len(subbed_operators)==1:
-            subbedOperator = subbed_operators[0]
-            if isinstance(subbedOperator, Lambda):
-                # Substitute the entire operation via a Lambda body
-                # For example, f(x, y) -> x + y.
-                if len(subbed_operands) != len(subbedOperator.parameters):
-                    raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of parameters')
-                if len(subbedOperator.conditions) != 0:
-                    raise ImproperSubstitution('Operation substitution must be defined via an Unconditioned Lambda expression')
-                operandSubMap = {param:operand for param, operand in zip(subbedOperator.parameters, subbed_operands)}
-                if not reservedVars is None:
-                    # the reserved variables of the lambda body excludes the lambda parameters
-                    # (i.e., the parameters mask externally reserved variables).
-                    lambdaExprReservedVars = {k:v for k, v in reservedVars.items() if k not in subbedOperator.parameterVarSet}
-                else: lambdaExprReservedVars = None
-                return subbedOperator.body._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, assumptions=assumptions, requirements=requirements)
-        # remake the Expression with substituted operator and/or operands
+            subbed_operator = subbed_operators[0]
+            if isinstance(subbed_operator, Lambda):
+                # Substitute the entire operation via a Lambda map
+                # application.  For example, f(x, y) -> x + y,
+                # or g(a, b_1, ..., b_n) -> a * b_1 + ... + a * b_n.
+                
+                if isinstance(subbed_operator.body, ExprRange):
+                    raise ImproperReplacement(
+                            self, repl_map,
+                            "The function %s cannot be defined using this "
+                            "lambda, %s, that has an ExprRange for its body; "
+                            "that could lead to tuple length contradictions."
+                            %(self.operator, subbed_operator))
+                if len(self.operands)==1 and \
+                        not isinstance(self.operands[0], ExprRange):
+                    # A single operand case (even if that operand 
+                    # happens to be a tuple).
+                    subbed_operands = [subbed_operand_or_operands]
+                else:
+                    subbed_operands = subbed_operand_or_operands
+                return Lambda._apply(
+                        subbed_operator.parameters, subbed_operator.body,
+                        *subbed_operands, assumptions=assumptions, 
+                        requirements=requirements,
+                        equality_repl_requirements=equality_repl_requirements)
+        
+        had_singular_operand = hasattr(self, 'operand')
+        if (had_singular_operand and isinstance(subbed_operand_or_operands, 
+                                                ExprTuple)
+                and not isinstance(self.operand_or_operands, ExprTuple)):
+            # If a singular operand is replaced with an ExprTuple,
+            # we must wrap an extra ExprTuple around it to indicate
+            # that it is still a singular operand with the operand
+            # as the ExprTuple (rather than expanding to multiple
+            # operands).
+            subbed_operand_or_operands = ExprTuple(subbed_operand_or_operands)
+        else:
+            # Possibly collapse multiple operands to a single operand
+            # via "do_singular_reduction=True".
+            subbed_operand_or_operands = singleOrCompositeExpression(
+                subbed_operand_or_operands, do_singular_reduction=True)
+        
+        # Remake the Expression with substituted operator and/or 
+        # operands
         if len(subbed_operators)==1:
-            # If it is a single operator that is a literal operator of an Operation class
-            # defined via an "_operator_" class attribute, then create the Operation of that class.
+            # If it is a single operator that is a literal operator of 
+            # an Operation class defined via an "_operator_" class 
+            # attribute, then create the Operation of that class.
             operator = subbed_operators[0]
             if operator in Operation.operationClassOfOperator:
                 op_class = Operation.operationClassOfOperator[operator]
                 if op_class != self.__class__:
-                    # Don't transfer the styles; they may not apply in the same 
-                    # manner in the setting of the new operation.
-                    return op_class._make(['Operation'], styles=None, 
-                                          subExpressions=[operator, 
-                                                          subbed_operand_or_operands])
-        return self.__class__._make(['Operation'], self.getStyles(), 
-                                    [subbed_operator_or_operators, 
-                                     subbed_operand_or_operands])
+                    # Don't transfer the styles; they may not apply in 
+                    # the same manner in the setting of the new 
+                    # operation.
+                    subbed_sub_exprs = (operator, subbed_operand_or_operands)
+                    substituted = op_class._checked_make(
+                            ['Operation'], styles=None, 
+                            subExpressions=subbed_sub_exprs)
+                    return substituted._auto_reduced(
+                            assumptions, requirements,
+                            equality_repl_requirements)
+        
+        subbed_sub_exprs = (subbed_operator_or_operators, 
+                            subbed_operand_or_operands)
+        substituted = self.__class__._checked_make(
+                self._coreInfo, self.getStyles(), subbed_sub_exprs)
+        return substituted._auto_reduced(assumptions, requirements,
+                                         equality_repl_requirements)
 
+        
     
 class OperationError(Exception):
     def __init__(self, message):
