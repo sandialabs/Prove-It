@@ -4,9 +4,12 @@ from .boolean import Booleans, TRUE, FALSE
 from .boolean import And, Or, Not, Implies, Iff, compose, concludeViaImplication
 from .boolean import inBool
 from .boolean import Forall, Exists, NotExists
-from .set_theory import EmptySet
+from .set_theory import EmptySet, SetEquiv, SetNotEquiv
 from .set_theory import InSet, NotInSet, Membership, Nonmembership
-from .set_theory import Set, SubsetEq, SupersetEq, Subset, Superset, NotSubsetEq, NotSupersetEq
+from .set_theory import (NotProperSubset, NotProperSuperset, NotSubset,
+	                       NotSubsetEq, NotSuperset, NotSupersetEq,
+	                       ProperSubset, ProperSuperset, Set, Subset, SubsetEq,
+	                       SupersetEq, Superset)
 from .set_theory import Union, Intersect, Difference, SetOfAll, Disjoint, Distinct, Card
 from .equality import (Equals, NotEquals, reduceOperands, defaultSimplification,
                        evaluateTruth, SimplificationError, EvaluationError)
