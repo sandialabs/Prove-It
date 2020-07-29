@@ -9,8 +9,9 @@ class DecimalSequence(NumeralSequence):
 
     def __init__(self, *digits):
         NumeralSequence.__init__(self, DecimalSequence._operator_, *digits)
-        if not all(digit in DIGITS for digit in self.digits):
-            raise Exception('A DecimalSequence may only be composed of 0-9 digits')
+        for digit in self.digits:
+            if isinstance(digit, Literal) and digit not in DIGITS:
+                raise Exception('A DecimalSequence may only be composed of 0-9 digits')
     
     def asInt(self):
         return int(self.formatted('string'))
