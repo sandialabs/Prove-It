@@ -102,7 +102,7 @@ class InSet(Operation):
                     subRel = SubsetEq(knownMembership.domain, self.domain)
                     if subRel.proven(assumptions):
                         # S is a superset of R, so now we can prove x in S.
-                        return subRel.deriveSupsersetMembership(self.element,
+                        return subRel.deriveSupersetMembership(self.element,
                                                                 assumptions)
 
         # No known membership works.  Let's see if there is a known
