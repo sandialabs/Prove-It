@@ -134,10 +134,13 @@ class NumeralSequence(Operation, IrreducibleValue):
         return Numeral.notEquals(self, other, assumptions=assumptions)
     
     def _formatted(self, formatType, **kwargs):
+        from proveit import ExprRange, varRange
         outstr = ''
         for digit in self.digits:
             if isinstance(digit, Operation):
                 outstr += digit.formatted(formatType, fence=True)
+            elif isinstance(digit, ExprRange):
+                outstr += digit.formatted(formatType, operator=' ')
             else:
                 outstr += digit.formatted(formatType)
         return outstr
