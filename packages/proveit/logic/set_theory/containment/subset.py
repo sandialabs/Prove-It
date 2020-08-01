@@ -295,7 +295,7 @@ class SubsetEq(SubsetRelation):
                 {A: self.operands[0], B: self.operands[1]},
                 assumptions=assumptions)
 
-    def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
+    def unfold(self, elemInstanceVar=None, assumptions=USE_DEFAULTS):
         '''
         From A subseteq B, derive and return (forall_{x in A} x in B).
         x will be relabeled if an elemInstanceVar is supplied.
@@ -311,7 +311,7 @@ class SubsetEq(SubsetRelation):
 
     def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
-        From A subseteq B and x in A, derive x in B.
+        From A subseteq B and element x in A, derive x in B.
         '''
         from ._theorems_ import unfoldSubsetEq
         return unfoldSubsetEq.specialize(
