@@ -126,7 +126,7 @@ class EnumNonmembership(Nonmembership):
         element = self.element
         operands = self.domain.operands
         return nonmembershipFold.specialize(
-            {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+            {n:num(len(enum_elements)), x:self.element, y:enum_elements},
             assumptions=assumptions)
 
     def unfold(self, assumptions=USE_DEFAULTS):
@@ -143,7 +143,7 @@ class EnumNonmembership(Nonmembership):
                     assumptions=assumptions)
         else:
             return nonmembershipUnfold.specialize(
-                {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+                {n:num(len(enum_elements)), x:self.element, y:enum_elements},
                 assumptions=assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
