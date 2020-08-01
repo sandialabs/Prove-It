@@ -301,9 +301,13 @@ class SubsetEq(SubsetRelation):
         x will be relabeled if an elemInstanceVar is supplied.
         '''
         from ._theorems_ import unfoldSubsetEq
-        return unfoldSubsetEq.specialize(
-                {A:self.subset, B:self.superset},
-                relabelMap={x:elemInstanceVar}, assumptions=assumptions)
+        if elemInstanceVar is not None:
+            temp_result = unfoldSubsetEq.instantiate(
+                {A:self.subset, B:self.superset}, assumptions=assumptions)
+            return temp_result.instantiate({x:elemInstanceVar},
+                    num_forall_eliminations=0, assumptions=assumptions)
+        return unfoldSubsetEq.instantiate(
+                {A:self.subset, B:self.superset}, assumptions=assumptions)
 
     def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
