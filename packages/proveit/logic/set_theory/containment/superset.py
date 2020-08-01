@@ -276,28 +276,43 @@ class SupersetEq(SupersetRelation):
                 {A: self.operands[0], B: self.operands[1]},
                 assumptions=assumptions)
 
-    def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
+    # def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
+        '''
+        From A superseteq B, derive and return (forall_{x in B} x in A).
+        x will be relabeled if an elemInstanceVar is supplied.
+        '''
+    #     from ._theorems_ import unfoldSupsetEq
+    #     return unfoldSupsetEq.specialize({A:self.superset, B:self.subset, x:elemInstanceVar}, assumptions=assumptions)
+
+    def unfold(self, elemInstanceVar=None, assumptions=USE_DEFAULTS):
         '''
         From A superseteq B, derive and return (forall_{x in B} x in A).
         x will be relabeled if an elemInstanceVar is supplied.
         '''
         from ._theorems_ import unfoldSupsetEq
-        return unfoldSupsetEq.specialize({A:self.superset, B:self.subset, x:elemInstanceVar}, assumptions=assumptions)
+        if elemInstanceVar is not None:
+            temp_result = unfoldSupsetEq.instantiate(
+                {A:self.superset, B:self.subset}, assumptions=assumptions)
+            return temp_result.instantiate({x:elemInstanceVar},
+                    num_forall_eliminations=0, assumptions=assumptions)
+        return unfoldSupsetEq.instantiate(
+                {A:self.superset, B:self.subset}, assumptions=assumptions)
 
-    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+    def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From A superseteq B and x in B, derive x in A.
         '''
         from ._theorems_ import unfoldSupsetEq
-        _A, _B, _x = self.superset, self.subset, self.element
-        return unfoldSupsetEq.specialize({A:_A, B:_B, x:_x}, assumptions=assumptions)
+        _A, _B, _x = self.superset, self.subset, element
+        return unfoldSupsetEq.specialize(
+                {A:_A, B:_B, x:_x}, assumptions=assumptions)
 
     def deriveSubsetNonmembership(self, element, assumptions=USE_DEFAULTS):
         '''
-        From A superseteq B and x not in A, derive x not in B.
+        From A superseteq B and element x not in A, derive x not in B.
         '''
         from ._theorems_ import refinedNonmembership
-        _A, _B, _x = self.superset, self.subset, self.element
+        _A, _B, _x = self.superset, self.subset, element
         return refinedNonmembership.specialize({A:_A, B:_B, x:_x},
                                                assumptions=assumptions)
 
