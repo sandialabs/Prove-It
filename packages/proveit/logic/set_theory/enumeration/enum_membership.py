@@ -28,10 +28,10 @@ class EnumMembership(Membership):
         from ._theorems_ import foldSingleton, fold
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
-            return foldSingleton.specialize(
+            return foldSingleton.instantiate(
                 {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return fold.specialize({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
+            return fold.instantiate({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
 
     def equivalence(self, assumptions=USE_DEFAULTS):
         '''
@@ -44,19 +44,19 @@ class EnumMembership(Membership):
         enum_elements = self.domain.elements
 
         if len(enum_elements) == 1:
-            return singletonDef.specialize(
+            return singletonDef.instantiate(
                 {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return enumSetDef.specialize({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
+            return enumSetDef.instantiate({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
 
     def deriveInSingleton(self, expression, assumptions=USE_DEFAULTS):
         # implemented by JML 6/28/19
         from proveit.logic import TRUE, FALSE
         from ._theorems_ import inSingletonEvalFalse, inSingletonEvalTrue
         if expression.rhs == FALSE:
-            return inSingletonEvalFalse.specialize({x:expression.lhs.element, y:expression.lhs.domain.elements[0]}, assumptions=assumptions)
+            return inSingletonEvalFalse.instantiate({x:expression.lhs.element, y:expression.lhs.domain.elements[0]}, assumptions=assumptions)
         elif expression.rhs == TRUE:
-            return inSingletonEvalTrue.specialize({x:expression.lhs.element, y:expression.lhs.domain.elements[0]}, assumptions=assumptions)
+            return inSingletonEvalTrue.instantiate({x:expression.lhs.element, y:expression.lhs.domain.elements[0]}, assumptions=assumptions)
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -65,19 +65,19 @@ class EnumMembership(Membership):
         from ._theorems_ import unfoldSingleton, unfold
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
-            return unfoldSingleton.specialize({x:self.element, y:enum_elements[0]},assumptions=assumptions)
+            return unfoldSingleton.instantiate({x:self.element, y:enum_elements[0]},assumptions=assumptions)
         else:
-            return unfold.specialize({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
+            return unfold.instantiate({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import inSingletonIsBool, inEnumSetIsBool
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
-            return inSingletonIsBool.specialize(
+            return inSingletonIsBool.instantiate(
                 {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return inEnumSetIsBool.specialize(
-                {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+            return inEnumSetIsBool.instantiate(
+                {n:num(len(enum_elements)), x:self.element, y:enum_elements},
                 assumptions=assumptions)
 
 class EnumNonmembership(Nonmembership):
@@ -105,12 +105,12 @@ class EnumNonmembership(Nonmembership):
         from ._theorems_ import notInSingletonEquiv, nonmembershipEquiv
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
-            return notInSingletonEquiv.specialize(
+            return notInSingletonEquiv.instantiate(
                     {x:self.element, y:enum_elements})
         else:
-            return nonmembershipEquiv.specialize(
-                    {l:num(len(enum_elements)), x:self.element,
-                    yy:enum_elements})
+            return nonmembershipEquiv.instantiate(
+                    {n:num(len(enum_elements)), x:self.element,
+                    y:enum_elements})
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -125,7 +125,7 @@ class EnumNonmembership(Nonmembership):
         enum_elements = self.domain.elements
         element = self.element
         operands = self.domain.operands
-        return nonmembershipFold.specialize(
+        return nonmembershipFold.instantiate(
             {n:num(len(enum_elements)), x:self.element, y:enum_elements},
             assumptions=assumptions)
 
@@ -138,11 +138,11 @@ class EnumNonmembership(Nonmembership):
                 nonmembershipUnfold, nonmembershipUnfoldSingleton)
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
-            return nonmembershipUnfoldSingleton.specialize(
+            return nonmembershipUnfoldSingleton.instantiate(
                     {x:self.element, y:enum_elements[0]},
                     assumptions=assumptions)
         else:
-            return nonmembershipUnfold.specialize(
+            return nonmembershipUnfold.instantiate(
                 {n:num(len(enum_elements)), x:self.element, y:enum_elements},
                 assumptions=assumptions)
 
@@ -150,7 +150,10 @@ class EnumNonmembership(Nonmembership):
         from ._theorems_ import notInSingletonIsBool, notInEnumSetIsBool
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
-            return notInSingletonIsBool.specialize(
+            return notInSingletonIsBool.instantiate(
                 {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return nonmembershipEquiv.specialize({n:num(len(enum_elements)), x:self.element, y:enum_elements})
+            # return nonmembershipEquiv.instantiate(
+            #     {n:num(len(enum_elements)), x:self.element, y:enum_elements})
+            return notInEnumSetIsBool.instantiate(
+                {n:num(len(enum_elements)), x:self.element, y:enum_elements})
