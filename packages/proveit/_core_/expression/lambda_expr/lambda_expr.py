@@ -1,5 +1,6 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented, 
-                                            ImproperReplacement, free_vars,
+                                            ImproperReplacement, 
+                                            free_vars, used_vars,
                                             traverse_inner_expressions)
 from proveit._core_.expression.label.var import safeDummyVar, safeDummyVars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -140,16 +141,6 @@ class Lambda(Expression):
         assert isinstance(body, Expression)
         self.body = body
         
-        # The '_max_in_scope_bound_vars' attribute is used to make 
-        # unique variable assignments for Lambda parameters in the
-        # "generic version" which is invarian under 
-        # alpha-conversion.  For a Lambda, this attribute is
-        # set ahead of time.
-        self._max_in_scope_bound_vars = \
-            (max(self.parameters._max_in_scope_bound_vars, 
-                 self.body._max_in_scope_bound_vars)
-             + len(self.parameterVars))
-        
         # Parameter variables that are indexed and not fully and
         # explicitly covered under the currently introduced range 
         # cannot be relabeled.
@@ -239,19 +230,21 @@ class Lambda(Expression):
              for param_var, param in zip(parameterVars, parameters)
              if param_var not in self.nonrelabelable_param_vars] 
         
-        # Assign unique variables based upon then maximum number
-        # of bound variables in any internal scope, subtract the
-        # number of new parameters, and add the number of
-        # unbound (free) variables.
-        # To ensure assignments are deterministic (not rearranged in a 
-        # hysteretic manner), we use a starting index that is the 
-        # maximum number of in-scope bound variables plus the number
-        # of free variables, then we skip over the free variables as 
-        # they occur.
-        lambda_free_vars = (free_vars(self.body, err_inclusively=True) - 
-                            set(bound_parameter_vars))
-        start_index = (self._max_in_scope_bound_vars - len(parameters) + 
-                       len(lambda_free_vars))
+        # Assign canonical labels to the parameters using the first
+        # available dummy variable, skipping over free variables that
+        # happen to match any of these dummy variables.
+        generic_parameters = parameters._generic_version()
+        generic_body = self.body._generic_version()
+        generic_body_free_vars = free_vars(generic_body, err_inclusively=True)
+        lambda_free_vars = generic_body_free_vars - set(bound_parameter_vars)
+        internally_bound_vars = used_vars(generic_body) - generic_body_free_vars
+        start_index = len(internally_bound_vars)
+        dummy_index = 0
+        while dummy_index < start_index:
+            dummy_var = safeDummyVar(start_index=dummy_index)
+            if dummy_var in lambda_free_vars:
+                start_index += 1
+            dummy_index += 1
         generic_param_vars = list(reversed(
                 safeDummyVars(len(bound_parameter_vars), *lambda_free_vars,
                               start_index=start_index)))
@@ -266,13 +259,14 @@ class Lambda(Expression):
                     {param_var:generic_param_var 
                      for param_var, generic_param_var
                      in zip(bound_parameter_vars, generic_param_vars)}
-                generic_parameters = parameters._generic_version()
-                generic_parameters = generic_parameters.replaced(
+                generic_parameters = parameters.replaced(
                         relabel_map, assumptions=tuple())._generic_version()
-                generic_body = self.body._generic_version()
                 generic_body = generic_body.replaced(
                         relabel_map, assumptions=tuple())._generic_version()
                 generic_body = generic_body._generic_version()
+                return Lambda(generic_parameters, generic_body)
+            elif (generic_body._style_id != self.body._style_id or
+                  generic_parameters._style_id != self.parameters._style_id):
                 return Lambda(generic_parameters, generic_body)
             else:
                 return self
