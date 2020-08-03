@@ -29,7 +29,7 @@ class ExprType(type):
                  '_subExpressions', '_genericExpr', 
                  '_meaningData', '_meaning_id',
                  '_styleData', '_style_id',
-                 'is_parameter_independent')
+                 'is_parameter_independent', 'literal_int_extent')
     
     def __new__(meta, name, bases, attrs):
         # Tip from

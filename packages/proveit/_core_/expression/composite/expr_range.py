@@ -96,6 +96,27 @@ class ExprRange(Expression):
         return ExprRange(None, None, start_index, end_index, 
                          lambda_map=lambda_map) \
                 .withStyles(**styles)
+    
+    def literal_int_extent(self):
+        '''
+        If the start and end indices of this ExprRange are literal integers,
+        return the literal number of elements of the ExprRange.  For the
+        case of nested ExprRange's, all of the start and end indices must
+        be integers and the result will be the multiplied extent.  For
+        example: 
+            a_{1,1}, ..., a_{1,3}, ......, a_{4,1}, ..., a_{4,3}
+        has a literal_int_extent of 12.
+        '''
+        from proveit.number import isLiteralInt
+        if (isLiteralInt(self.start_index) and isLiteralInt(self.end_index)):
+            toplevel_extent = (self.end_index.asInt() - self.start_index.asInt() + 1)
+            if isinstance(self.body, ExprRange):
+                return toplevel_extent*self.body.literal_int_extent()
+            else:
+                return toplevel_extent
+        raise ValueError("literal_int_extent may only be used on an ExprRange  "
+                         "with start and end indices that are literal integers")
+        
             
     def remakeArguments(self):
         '''
