@@ -45,7 +45,8 @@ class Or(Operation):
                 return emptyDisjunctionEval
         elif self.operands.singular():
             try:
-                return self.unaryReduction(assumptions)
+                # return self.unaryReduction(assumptions)
+                return self.deduceUnaryEquiv(assumptions=assumptions)
             except:
                 # Cannot do the reduction if the operand is not known
                 # to be a boolean.
@@ -340,7 +341,8 @@ class Or(Operation):
         from proveit.logic import TRUE, SimplificationError
         from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations
         if len(self.operands)==0:
-            return self.unaryReduction(assumptions)
+            # return self.unaryReduction(assumptions)
+            return self.deduceUnaryEquiv(assumptions=assumptions)
 
         # First just see if it has a known evaluation.
         try:
@@ -558,13 +560,25 @@ class Or(Operation):
 
 
     def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
-        from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
+        '''
+        For the degenerate case of Or(A), where A is Boolean, derive
+        and return |–[V](A) = A. For example, calling
+            Or(A).deduceUnaryEquiv([inBool(A)])
+        will return:
+            {A in Bool} |– [V](A) = A
+        '''
+        # from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
+        from proveit.logic.boolean.disjunction._theorems_ import (
+                unaryOrReduction)
         if len(self.operands) != 1:
-            raise ValueError("Expression must have a single operand in order to invoke unaryDisjunctionDef")
+            raise ValueError("Or.deduceUnaryEquiv(): expression must have only "
+                             " a single operand in order to invoke "
+                             " unaryOrReduction theorem.")
         operand = self.operands[0]
         with defaults.disabled_auto_reduction_types as disable_reduction_types:
             disable_reduction_types.add(Or)
-            return unaryOrReduction.specialize({A:operand}, assumptions = assumptions)
+            return unaryOrReduction.specialize({A:operand},
+                                               assumptions=assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
