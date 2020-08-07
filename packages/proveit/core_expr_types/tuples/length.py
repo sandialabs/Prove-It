@@ -111,10 +111,11 @@ class Len(Operation):
                     repl_map[param] = entry
                 return len_thm.specialize(repl_map)
             else:
-                raise NotImplementedError("Can't handle length computation "
-                                         ">= 10 for %s"%self)
+                #raise NotImplementedError("Can't handle length computation "
+                 #                        ">= 10 for %s"%self)
                 from proveit.core_expr_types.tuples._axioms_ import tuple_len_incr
                 from proveit.number import num
+                print("specializgin")
                 return tuple_len_incr.specialize({i: num(len(entries) - 1), a: entries[:-1], b: entries[-1]},
                                                  assumptions=assumptions).rhs._integerBinaryEval(
                     assumptions=assumptions)
