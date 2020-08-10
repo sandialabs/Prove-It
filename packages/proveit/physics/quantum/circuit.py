@@ -413,6 +413,12 @@ class CircuitEquiv(TransitiveRelation):
     # operator for the CircuitEquiv relation
     _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong',
                          context=__file__)
+    # map left-hand-sides to Subset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()
+    # map right-hand-sides to Subset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict()
 
     def __init__(self, a, b):
         TransitiveRelation.__init__(self, CircuitEquiv._operator_, a, b)
@@ -441,6 +447,7 @@ class CircuitEquiv(TransitiveRelation):
                                  "%s as 'lambda_map'" % lambda_map)
         return lambda_map
 
+    """
     def substitution(self, lambda_map, assumptions=USE_DEFAULTS):
         '''
         From x equiv y, and given f(x), derive f(x) equiv f(y).
@@ -471,6 +478,7 @@ class CircuitEquiv(TransitiveRelation):
         # Regular single-operand substitution:
         return substitution.instantiate({f: lambda_map, x: self.lhs, y: self.rhs},
                                         assumptions=assumptions)
+    """
 
     def subLeftSideInto(self, lambda_map, assumptions=USE_DEFAULTS):
         '''
