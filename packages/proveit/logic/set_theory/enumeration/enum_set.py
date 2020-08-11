@@ -413,10 +413,10 @@ class Set(Operation):
                             break # b/c we just need 1 instance
                 if len(error_elems) > 0:
                     raise ValueError(
-                            "Specified subset {0} does not appear to be a subset "
-                            "of the original set {1}. The following elements "
-                            "appear in the requested subset Set but not in the "
-                            "original Set: {2}.".
+                            "Specified subset {0} does not appear to be a "
+                            "subset of the original set {1}. The following "
+                            "elements appear in the requested subset Set but "
+                            "not in the original Set: {2}.".
                             format(subset, self, error_elems))
 
         # Furthermore, we need to check that at least one superset
