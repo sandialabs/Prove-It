@@ -248,8 +248,7 @@ class Lambda(Expression):
         # maximum number of in-scope bound variables plus the number
         # of free variables, then we skip over the free variables as 
         # they occur.
-        lambda_free_vars = (free_vars(self.body, err_inclusively=True) - 
-                            set(bound_parameter_vars))
+        lambda_free_vars = free_vars(self, err_inclusively=True)
         start_index = (self._max_in_scope_bound_vars - len(parameters) + 
                        len(lambda_free_vars))
         generic_param_vars = list(reversed(
