@@ -367,17 +367,17 @@ class ExprRange(Expression):
         body_forms_dict = \
             self.body._possibly_free_var_ranges(exclusions=body_exclusions)
         forms_dict = dict(body_forms_dict)
-        for expr in self._subExpressions:
-            if expr == self.body: continue # already did that one
-            for var, forms in \
-                    expr._possibly_free_var_ranges(exclusions=exclusions).items():
-                forms_dict.setdefault(var, set()).update(forms)        
         param = self.parameter
         # Eliminate the parameter; it is not a free variable.
         if param in forms_dict.keys():
             forms_dict[param].discard(param)
             if len(forms_dict[param])==0:
                 forms_dict.pop(param)        
+        for expr in self._subExpressions[1:]:
+            # Skip the first sub-expression. We've already treated that.
+            for var, forms in \
+                    expr._possibly_free_var_ranges(exclusions=exclusions).items():
+                forms_dict.setdefault(var, set()).update(forms)        
         # The var ranges of the body that depend upon self.parameter
         # will be promoted to expression ranges over the range of this 
         # ExprRange.  For example, if x_k is one of the var ranges of
