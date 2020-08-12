@@ -79,6 +79,7 @@ class Exp(Operation):
         evaluated form. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
         '''
+        from proveit.logic import EvaluationError
         from proveit.number import zero, one
         from ._theorems_ import expZeroEqOne, exponentiatedZero, exponentiatedOne
         if self.exponent == zero:
@@ -88,8 +89,9 @@ class Exp(Operation):
         elif self.base == one:
             return exponentiatedOne.specialize({x:self.exponent}) # =1
         else:
-            raise ValueError('Only trivial simplification is implemented '
-                             '(zero or one for the base or exponent).')
+            raise EvaluationError('Only trivial evaluation is implemented '
+                                  '(zero or one for the base or exponent).',
+                                  assumptions)
                 
     def deduceInRealsPosDirectly(self, assumptions=frozenset()):
         import real.theorems
@@ -98,7 +100,7 @@ class Exp(Operation):
             deduceInReals(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
             return real.theorems.sqrdClosure.specialize(
-                {a:self.base}).checked(as5sumptions)
+                {a:self.base}).checked(assumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealsPos, assumptions)
 

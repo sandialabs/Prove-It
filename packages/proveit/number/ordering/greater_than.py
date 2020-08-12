@@ -182,7 +182,13 @@ class Greater(GreaterRelation):
                                %str(relation.__class__))
         return greaterAddBoth.specialize({a:self.lhs, b:self.rhs, c:c_val,
                                            d:d_val},
-                                          assumptions=assumptions)  
+                                          assumptions=assumptions)
+
+    def concludeViaEquality(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import relaxEqualToGreaterEq
+        return relaxEqualToGreaterEq.specialize(
+            {x: self.operands[0], y:self.operands[1]},
+            assumptions=assumptions) 
 
 
 class GreaterEq(GreaterRelation):

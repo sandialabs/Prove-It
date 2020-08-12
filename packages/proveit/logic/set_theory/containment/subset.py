@@ -64,7 +64,16 @@ class Subset(SubsetRelation):
         '''
         from ._theorems_ import relaxSubset
         return relaxSubset.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
-            
+
+    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+        '''
+        From A subset B and x in A, derive x in B.
+        '''
+        from ._theorems_ import supersetMembershipFromSubset
+        return supersetMembershipFromSubset.instantiate(
+                {A:self.subset, B:self.superset, x:element}, 
+                assumptions=assumptions)
+    
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this A subset B expression 
@@ -139,7 +148,7 @@ class SubsetEq(SubsetRelation):
             setOfAll = self.subset
             if len(setOfAll.instanceVars)==1 and setOfAll.instanceElement == setOfAll.instanceVars[0] and setOfAll.domain==self.superset:
                 Q_op, Q_op_sub = Operation(Qmulti, setOfAll.instanceVars), setOfAll.conditions
-                return comprehensionIsSubset.specialize({S:setOfAll.domain, Q_op:Q_op_sub}, relabelMap={x:setOfAll.instanceVars[0]}, assumptions=assumptions)
+                return comprehensionIsSubset.specialize({S:setOfAll.domain, Q_op:Q_op_sub, x:setOfAll.instanceVars[0]}, assumptions=assumptions)
         
         # Finally, attempt to conclude A subseteq B via forall_{x in A} x in B.
         # Issue: Variables do not match when using safeDummyVar: _x_ to x.
@@ -156,7 +165,7 @@ class SubsetEq(SubsetRelation):
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
         from ._theorems_ import unfoldSubsetEq
-        return unfoldSubsetEq.specialize({A:self.subset, B:self.superset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions)
+        return unfoldSubsetEq.specialize({A:self.subset, B:self.superset, x:elemInstanceVar}, assumptions=assumptions)
     
     def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
@@ -171,7 +180,7 @@ class SubsetEq(SubsetRelation):
         (forall_{x in A} x in B).
         '''
         from ._theorems_ import foldSubsetEq
-        return foldSubsetEq.specialize({A:self.subset, B:self.superset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
+        return foldSubsetEq.specialize({A:self.subset, B:self.superset, x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
     
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''

@@ -64,13 +64,22 @@ class Superset(SupersetRelation):
         from ._theorems_ import relaxSupset
         return relaxSupset.specialize({A:self.superset, B:self.subset}, assumptions=assumptions)
 
+    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+        '''
+        From A supset B and x in B, derive x in A.
+        '''
+        from ._theorems_ import supersetMembership
+        return supersetMembership.instantiate(
+                {A:self.subset, B:self.superset, x:element}, 
+                assumptions=assumptions)
+    
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this A superset B expression 
         and something of the form B supseteq C, B supset C, or B=C to 
         obtain A supset B as appropriate.
         '''
-        from proveit.logic import Equals, Subset, SubsetEq
+        from proveit.logic import Equals
         from ._theorems_ import transitivitySupsetSupset, transitivitySupsetSupsetEq
         other = asExpression(other)
         if isinstance(other, Equals):
@@ -145,14 +154,25 @@ class SupersetEq(SupersetRelation):
         x will be relabeled if an elemInstanceVar is supplied.
         '''
         from ._theorems_ import unfoldSupsetEq
-        return unfoldSupsetEq.specialize({A:self.superset, B:self.subset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions)
+        return unfoldSupsetEq.specialize({A:self.superset, B:self.subset, x:elemInstanceVar}, assumptions=assumptions)
     
     def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From A superseteq B and x in B, derive x in A.
         '''
         from ._theorems_ import unfoldSupsetEq
-        return unfoldSupsetEq.specialize({A:self.superset, B:self.subset, x:element}, assumptions=assumptions)
+        _A, _B, _x = self.superset, self.subset, self.element
+        return unfoldSupsetEq.specialize({A:_A, B:_B, x:_x}, assumptions=assumptions)
+
+    def deriveSubsetNonmembership(self, element, assumptions=USE_DEFAULTS):
+        '''
+        From A superseteq B and x not in A, derive x not in B.
+        '''
+        from ._theorems_ import refinedNonmembership
+        _A, _B, _x = self.superset, self.subset, self.element
+        return refinedNonmembership.specialize({A:_A, B:_B, x:_x}, 
+                                               assumptions=assumptions)
+
     
     def concludeAsFolded(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
@@ -160,7 +180,7 @@ class SupersetEq(SupersetRelation):
         (forall_{x in B} x in A).
         '''
         from ._theorems_ import foldSupsetEq
-        return foldSupsetEq.specialize({A:self.superset, B:self.subset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
+        return foldSupsetEq.specialize({A:self.superset, B:self.subset, x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''

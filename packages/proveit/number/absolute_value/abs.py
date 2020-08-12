@@ -6,11 +6,11 @@ from proveit.number import Add, Mult
 
 class Abs(Operation):
     # operator of the Abs operation.
-    _operator_ = Literal(stringFormat='Abs', context=__file__)    
-    
+    _operator_ = Literal(stringFormat='Abs', context=__file__)
+
     def __init__(self, A):
-        Operation.__init__(self, Abs._operator_, A)   
-    
+        Operation.__init__(self, Abs._operator_, A)
+
     def string(self, **kwargs):
         return '|'+self.operand.string()+'|'
 
@@ -18,7 +18,7 @@ class Abs(Operation):
         return r'\left|'+self.operand.latex()+r'\right|'
 
     def notEqual(self, rhs, assumptions=USE_DEFAULTS):
-        # accessed from conclude() method in not_equals.py 
+        # accessed from conclude() method in not_equals.py
         from ._theorems_ import absNotEqZero
         from proveit.number import zero
         if rhs == zero:
@@ -60,7 +60,7 @@ class Abs(Operation):
             raise ValueError(
                 'Unsupported operand type for Abs.distribute() '
                 'method: ', str(self.operand.__class__))
-    
+
     def absElimination(self, operand_type = None, assumptions=USE_DEFAULTS):
         '''
         For some |x| expression, deduce either |x| = x (the default) OR
@@ -87,7 +87,7 @@ class Abs(Operation):
     def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
         For the case Abs(x) where the operand x is already known to
-        be or assumed to be a non-negative real, derive and return 
+        be or assumed to be a non-negative real, derive and return
         this Abs expression equated with the operand itself:
         |- Abs(x) = x. For the case where x is already known or assumed
         to be a negative real, return the Abs expression equated with
@@ -183,29 +183,10 @@ class Abs(Operation):
 
                 if (count_of_known_relevant_memberships ==
                         len(self.operand.operands)):
+                    # Prove that the sum or product is in
+                    # RealsNonNeg and then instantiate absElimination.
                     for op in self.operand.operands:
                         InSet(op, RealsNonNeg).prove(assumptions=assumptions)
-                    # so prove that the sum or product is in RealsNonNeg
-                    from proveit import ExprTuple
-                    from proveit._common_ import m, AA
-                    from proveit.number import num
-                    from proveit.number.absolute_value._theorems_ import (
-                            absNonNegElim)
-                    from proveit.number.addition._theorems_ import (
-                            addRealNonNegClosure)
-                    if isinstance(self.operand, Add):
-                        addRealNonNegClosure.specialize(
-                                {AA:self.operand.operands,
-                                m:num(len(self.operand.operands))},
-                                assumptions=assumptions)
-                    elif isinstance(self.operand, Mult):
-                        from proveit.number.multiplication._theorems_ import (
-                                multRealNonNegClosure)
-                        multRealNonNegClosure.specialize(
-                                {AA:self.operand.operands,
-                                m:num(len(self.operand.operands))},
-                                assumptions=assumptions)
-                    # then apply the non-neg Abs theorem
                     return self.absElimination(assumptions=assumptions)
 
 
@@ -288,7 +269,7 @@ class Abs(Operation):
                       assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
         if Subset(RealsPos, number_set).proven(assumptions=assumptions):
-            absNonZeroClosure.specialize({a:self.operand},
+            absNonzeroClosure.specialize({a:self.operand},
                       assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
         if Subset(RealsNonNeg, number_set).proven(assumptions=assumptions):

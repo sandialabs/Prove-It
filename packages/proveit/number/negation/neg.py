@@ -30,35 +30,42 @@ class Neg(Operation):
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
 
-    def simplification(self, assumptions=USE_DEFAULTS):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this negation expression equated with a simpler form.
         Deals with double negation specifically.
         '''
-        from proveit.number import zero
-        from proveit.logic import Equals
-        from ._theorems_ import doubleNegation
         from proveit.relation import TransRelUpdater
 
+        expr = self
+        # For convenience updating our equation:
+        eq = TransRelUpdater(expr, assumptions)
         # Handle double negation:
         if isinstance(self.operand, Neg):
-            expr = self
-            eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
-
             # simplify double negation
             expr = eq.update(self.doubleNegSimplification(assumptions))
             # simplify what is inside the double-negation.
             expr = eq.update(expr.simplification(assumptions))
-            return eq.relation
+        return eq.relation
 
-        # otherwise, just use the default simplification
-        return Operation.simplification(self, assumptions)
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+        '''
+        Only handles -0 = 0 or double negation.
+        '''
+        from proveit.logic import EvaluationError
+        from ._theorems_ import negatedZero
+        from proveit.number import zero
+        if self.operand == zero:
+            return negatedZero
+        if isinstance(self.operand, Neg) and isIrreducibleValue(self.operand.operand):
+            return self.doubleNegSimplification(assumptions)
+        raise EvaluationError(self, assumptions)
 
     def doubleNegSimplification(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import doubleNegation
         assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)
         return doubleNegation.specialize({x:self.operand.operand},
-                                          assumptions=assumptions)
+                                         assumptions=assumptions)
 
 
     """
@@ -90,32 +97,7 @@ class Neg(Operation):
         only works if the operand is a literal int.
         '''
         return -self.operand.asInt()
-    """
-    def simplification(self, assumptions=frozenset()):
-        '''
-        For trivial cases, double negation or negating zero,
-        derive and return this Neg expression equated with the simplified form.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
-        '''
-        from ._theorems_ import negNeg, negZero
-        from proveit.number import zero
-        from proveit.logic import Equals
-        if isinstance(self.operand, Neg):
-            deduceInComplexes(self.operand.operand, assumptions)
-            return negNeg.specialize({a:self.operand.operand}).checked(assumptions)
-        elif self.operand == zero:
-            return negZero
-        return Equals(self, self)
-        raise ValueError('Only trivial simplification is implemented (double negation or negating zero)')
 
-    def simplified(self, assumptions=frozenset()):
-        '''
-        For trivial cases, double negation or negating zero,
-        derive and return the simplified form.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
-        '''
-        return self.simplification(assumptions).rhs
-    """
     def string(self, **kwargs):
         return maybeFencedString('-'+self.operand.string(fence=True), **kwargs)
 

@@ -6,7 +6,8 @@ class Set(Operation):
     '''
     
     # operator of the Set operation
-    _operator_ = Literal(stringFormat='Set', context=__file__) 
+    _operator_ = Literal(stringFormat='Set', 
+                         latexFormat=r'\textrm{Set}', context=__file__) 
     
     def __init__(self, *elems):
         Operation.__init__(self, Set._operator_, elems)

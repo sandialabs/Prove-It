@@ -4,45 +4,43 @@ from proveit._common_ import x, y, f, P, Q, QQ, S, yy
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
-    _operator_ = Literal(stringFormat='Set', context=__file__)    
+    _operator_ = Literal(stringFormat='SetOfAll', 
+                         latexFormat=r'\textrm{SetOfAll}', context=__file__)    
     _init_argname_mapping_ = {'instanceElement':'instanceExpr'}
     
-    def __init__(self, instanceVarOrVars, instanceElement, domain=None,
-                 domains=None, conditions=tuple(), _lambda_map=None):
+    # MAYBE ONLY ALLOW A SINGLE PARAMETER??
+    def __init__(self, instanceParamOrParams, instanceElement,
+                 domain=None, *, domains=None, condition=None, 
+                 conditions=None, _lambda_map=None):
         '''
         Create an expression representing the set of all
-        instanceElement for instanceVar(s) such that the conditions
+        instanceElement for instance parameter(s) such that the conditions
         are satisfied:
-        {instanceElement | conditions}_{instanceVar(s) \in S}
+        {instanceElement | conditions}_{instanceParamOrParams \in S}
         '''
-        # nestMultiIvars=False will ensure it does NOT treat multiple
-        # instance variables as nested SetOfAll operations -- that
-        # would not make sense (unlike forall, exists, summation, and
-        # product where it does make sense).
-        OperationOverInstances.__init__(self, SetOfAll._operator_,
-                                        instanceVarOrVars, instanceElement,
-                                        domain=domain, conditions=conditions,
-                                        nestMultiIvars=False,
-                                        _lambda_map=_lambda_map)
+        OperationOverInstances.__init__(
+                self, SetOfAll._operator_, instanceParamOrParams,
+                instanceElement, domain=domain, domains=domains,
+                condition=condition, conditions=conditions, _lambda_map=_lambda_map)
         self.instanceElement = self.instanceExpr
-        if hasattr(self, 'instanceVar'):
+        if hasattr(self, 'instanceParam'):
             if not hasattr(self, 'domain'):
                 raise ValueError("SetOfAll requires a domain")
-        elif hasattr(self, 'instanceVars'):
+        elif hasattr(self, 'instanceParams'):
             if not hasattr(self, 'domains') or None in self.domains:
                 raise ValueError("SetOfAll requires a domain(s)")
         else:
-            assert False, ("Expecting either 'instanceVar' or 'instanceVars' "
+            assert False, ("Expecting either 'instanceParam' or 'instanceParams' "
                            "to be set")
             
     def _formatted(self, formatType, fence=False, **kwargs):
         outStr = ''
         explicit_conditions = ExprTuple(*self.explicitConditions())
         inner_fence = (len(explicit_conditions) > 0)
-        formatted_instance_var = self.instanceVar.formatted(formatType)
         formatted_instance_element = self.instanceElement.formatted(
                 formatType, fence=inner_fence)
-        formatted_domain = self.domain.formatted(formatType, fence=True)
+        explicit_domains = self.explicitDomains()
+        domain_conditions = ExprTuple(*self.domainConditions())
         if formatType == 'latex': outStr += r"\left\{"
         else: outStr += "{"
         outStr += formatted_instance_element
@@ -54,11 +52,19 @@ class SetOfAll(OperationOverInstances):
             outStr += formatted_conditions
         if formatType == 'latex': outStr += r"\right\}"
         else: outStr += "}"
-        outStr += '_{' + formatted_instance_var
-        if self.domain is not None:
-            if formatType == 'latex': outStr += r' \in '
-            else: outStr += ' in '
-            outStr += formatted_domain
+        outStr += '_{' 
+        instance_param_or_params = self.instanceParamOrParams
+        if explicit_domains == [explicit_domains[0]]*len(explicit_domains):
+            # all in the same domain
+            outStr += instance_param_or_params.formatted(formatType, 
+                                                         operatorOrOperators=',',
+                                                         fence=False)
+            outStr += r' \in ' if formatType=='latex' else ' in '
+            outStr += explicit_domains[0].formatted(formatType)
+        else:
+            outStr += domain_conditions.formatted(formatType,  
+                                                operatorOrOperators=',',
+                                                fence=False)
         outStr += '}'
         return outStr
     

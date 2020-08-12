@@ -1,72 +1,101 @@
-from proveit import Expression, Literal, OperationOverInstances, defaults, USE_DEFAULTS, ExprTuple, Operation, ProofFailure
-from proveit._common_ import P, Q, R, S, xx, yy, QQ, RR
+from proveit import (Literal, Operation, OperationOverInstances, 
+                     ExprTuple, ExprRange, IndexedVar,
+                     defaults, USE_DEFAULTS, ProofFailure)
+from proveit._common_ import k, n, x, P, S
 from proveit._core_.proof import Generalization
 
 class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall', context=__file__)
     
-    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, 
-                 conditions = tuple(), _lambda_map=None):
+    def __init__(self, instanceParamOrParams, instanceExpr, *,
+                 domain=None, domains=None, condition=None, 
+                 conditions=None, _lambda_map=None):
         '''
         Create a Forall expression:
-        forall_{instanceVars | conditions} instanceExpr.
-        This expresses that the instanceExpr is true for all values of the instanceVar(s)
-        given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
+        forall_{instanceParamOrParams | conditions} instanceExpr.
+        This expresses that the instanceExpr is true for all values of the 
+        instance parameter(s) given that the optional condition(s) is/are 
+        satisfied.  The instance parameter(s) and condition(s)
         may be singular or plural (iterable).
         '''
-        # nestMultiIvars=True will cause it to treat multiple instance 
-        # variables as nested Forall operations internally
-        # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars, 
-                                        instanceExpr, domain, domains, conditions, 
-                                        nestMultiIvars=True, _lambda_map=_lambda_map)
+        OperationOverInstances.__init__(
+                self, Forall._operator_, instanceParamOrParams, 
+                instanceExpr, domain=domain, domains=domains,
+                condition=condition, conditions=conditions, 
+                _lambda_map=_lambda_map)
         
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically for this forall operation.
         '''
-        if self.hasDomain() and hasattr(self.domain, 'unfoldForall'):
-            yield self.unfold # derive an unfolded version (dependent upon the domain)
+        if hasattr(self, 'instanceParam') and self.hasDomain() and hasattr(self.domain, 'unfoldForall'):
+            if len(self.conditions)==0:
+                yield self.unfold # derive an unfolded version (dependent upon the domain)
         
     def conclude(self, assumptions):
         '''
-        If the domain has a 'foldForall' method, attempt to conclude this Forall statement
-        via 'concludeAsFolded' or by proving the instance expression under proper assumptions
-        and then generalizing.
+        If the instance expression, or some instance expression of 
+        nested universal quantifiers, is known to be true, conclude
+        via generalization.  Otherwise, if the domain has a 'foldForall'
+        method, attempt to conclude this Forall statement
+        via 'concludeAsFolded'.
         '''
         # first try to prove via generalization without automation
-        extra_assumptions = tuple(self.inclusiveConditions())
-        try:
-            proven_inst_expr = self.explicitInstanceExpr().prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions), automation=False)
-            return proven_inst_expr.generalize(self.explicitInstanceVars(), conditions=extra_assumptions)
-        except:
-            pass
+        assumptions = defaults.checkedAssumptions(assumptions)
+        expr = self
+        instanceParamLists = []
+        conditions = []
+        while isinstance(expr, Forall):
+            new_params = expr.explicitInstanceParams()
+            instanceParamLists.append(list(new_params))
+            conditions += list(expr.conditions)
+            expr = expr.instanceExpr
+            new_assumptions = assumptions + tuple(conditions)
+            if expr.proven(assumptions=assumptions + tuple(conditions)):
+                proven_inst_expr = expr.prove(new_assumptions)
+                return proven_inst_expr.generalize(instanceParamLists, 
+                                                   conditions=conditions)
         # next try 'foldAsForall' on the domain (if applicable)
-        hasFoldAsForall=False
-        if self.hasDomain() and hasattr(self.domain, 'foldAsForall'):
+        if self.hasDomain() and hasattr(self.first_domain(), 'foldAsForall'):
             # try foldAsForall first
-            hasFoldAsForall=True
             try:
                 return self.concludeAsFolded(assumptions)
             except:
-                pass
-        # lastly, try to prove via generalization with automation
-        try:
-            proven_inst_expr = self.explicitInstanceExpr().prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions))
-            instanceVarLists = [list(self.explicitInstanceVars())]
-            conditions = list(self.inclusiveConditions())
-            # see if we can generalize multiple levels simultaneously for a shorter proof
-            while isinstance(proven_inst_expr.proof(), Generalization):
-                instanceVarLists.append(list(proven_inst_expr.explicitInstanceVars()))
-                conditions += proven_inst_expr.conditions
-                proven_inst_expr = proven_inst_expr.proof().requiredTruths[0]
-            return proven_inst_expr.generalize(forallVarLists=instanceVarLists, conditions=conditions)
-        except ProofFailure:
-            if hasFoldAsForall:
-                raise ProofFailure(self, assumptions, "Unable to conclude automatically; both the 'foldAsForall' method on the domain and automated generalization failed.")
-            else:
-                raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method and automated generalization failed.")
+                raise ProofFailure(self, assumptions, 
+                                   "Unable to conclude automatically; "
+                                   "the 'foldAsForall' method on the "
+                                   "domain failed.")
+        else:
+            # If there is no 'foldAsForall' strategy to try, we can
+            # attempt a different non-trivial strategy of proving
+            # via generalization with automation.
+            try:
+                conditions = list(self.conditions)
+                proven_inst_expr = self.instanceExpr.prove(
+                        assumptions=assumptions + tuple(conditions))
+                instanceParamLists = [list(self.explicitInstanceParams())]
+                # see if we can generalize multiple levels 
+                # simultaneously for a shorter proof
+                while isinstance(proven_inst_expr.proof(), Generalization):
+                    new_params = proven_inst_expr.explicitInstanceParams()
+                    instanceParamLists.append(list(new_params))
+                    conditions += proven_inst_expr.conditions
+                    proven_inst_expr = proven_inst_expr.proof().requiredTruths[0]
+                return proven_inst_expr.generalize(instanceParamLists, 
+                                                   conditions=conditions)
+            except ProofFailure:
+                raise ProofFailure(self, assumptions, 
+                                   "Unable to conclude automatically; "
+                                   "the domain has no 'foldAsForall' method "
+                                   "and automated generalization failed.")
+                    
+            
+        raise ProofFailure(self, assumptions, 
+                           "Unable to conclude automatically; a "
+                           "universally quantified instance expression "
+                           "is not known to be true and the domain has "
+                           "no 'foldAsForall' method.")
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -84,48 +113,117 @@ class Forall(OperationOverInstances):
         
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
-        Conclude this forall statement from an "unfolded" version dependent upon the domain of the forall,
+        Conclude this forall statement from an "unfolded" version 
+        dependent upon the domain of the forall,
         calling foldAsForall on the condition.
-        For example, conclude forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
-        '''    
-        from proveit import KnownTruth
+        For example, conclude 
+        forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
+        '''
         assert self.hasDomain(), "Cannot fold a forall statement with no domain"
-        #assert len(self.instanceVars)==1, "Cannot fold a forall statement with more than 1 instance variable (not implemented beyond this)"
-        #expr = self.unraveled()
-        return self.domain.foldAsForall(self, assumptions)
-        #print(truth)
-        #return truth.generalize(self.instanceVar, conditions=self.conditions)
+        if len(self.instanceParams) > 1:
+            # When there are more than one instance variables, we
+            # must conclude the unbundled form first and the
+            # derive the bundled form from that.
+            unbundled = self.unbundle_equality(assumptions=assumptions).rhs
+            unbundled = unbundled.concludeAsFolded(assumptions)
+            return unbundled.bundle(assumptions=assumptions)
+        blah = self.domain.foldAsForall(self, assumptions)
+        return blah
     
-    def deriveBundled(self, assumptions=USE_DEFAULTS):
+    def bundle(self, num_levels=2, *, assumptions=USE_DEFAULTS):
         '''
-        From a nested forall statement, derive the bundled forall statement.  For example,
-        forall_{x | Q(x)} forall_{y | R(y)} P(x, y) becomes forall_{x, y | Q(x), R(y)} P(x, y).
-        '''
-        raise NotImplementedError("Need to update")
-        from ._theorems_ import bundling
-        assert isinstance(self.instanceExpr, Forall), "Can only bundle nested forall statements"
-        innerForall = self.instanceExpr
-        composedInstanceVars = ExprTuple([self.instanceVars, innerForall.instanceVars])
-        P_op, P_op_sub = Operation(P, composedInstanceVars), innerForall.instanceExpr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
-        R_op, R_op_sub = Operation(Rmulti, innerForall.instanceVars), innerForall.conditions
-        return bundling.specialize({xMulti:self.instanceVars, yMulti:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion(assumptions)
-
-    def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
-        '''
-        First attempt to prove that this Forall statement is true under the assumptions,
-        and then call specialize on the KnownTruth.
-        '''
-        return self.prove(assumptions).specialize(specializeMap, relabelMap, assumptions=assumptions)
+        Given a nested forall, derive an equivalent form in which a 
+        given number of nested levels is bundled together.
         
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+        For example,
+            \forall_{x, y | Q(x, y)} \forall_{z | R(z)} P(x, y, z)
+        can become
+            \forall_{x, y, z | Q(x, y), R(z)} P(x, y, z)
+        via bundle with num_levels=2.
+        '''
+        from proveit import bundle # generic for OperationOverInstances
+        from ._theorems_ import bundle as bundle_thm
+        return bundle(self, bundle_thm, num_levels=num_levels, 
+                      assumptions=assumptions)
+
+    def bundle_equality(self, num_levels=2, *, assumptions=USE_DEFAULTS):
+        '''
+        Given a nested forall, equate it with an equivalent form in 
+        which a given number of nested levels is bundled together.
+        
+        For example,
+            \forall_{x, y | Q(x, y)} \forall_{z | R(z)} P(x, y, z)
+        can be equated with
+            \forall_{x, y, z | Q(x, y), R(z)} P(x, y, z)
+        via bundle with num_levels=2.
+        '''
+        from proveit import bundle # generic for OperationOverInstances
+        from ._theorems_ import bundling
+        return bundle(self, bundling, num_levels=num_levels, 
+                      assumptions=assumptions)
+
+
+    def unbundle(self, num_param_entries=(1,), *, assumptions=USE_DEFAULTS):
+        '''
+        From a nested forall, derive an equivalent form in which the 
+        parameter entries are split in number according to
+        'num_param_entries'.
+        
+        For example,
+            \forall_{x, y, z | Q(x, y), R(z)} P(x, y, z)
+        can become
+            \forall_{x, y | Q(x, y)} \forall_{z | R(z)} P(x, y, z)
+        via bundle with num_param_entries=(2, 1) or 
+        num_param_entries=(2,) -- the last number can be implied
+        by the remaining number of parameters.
+        '''
+        from proveit import unbundle # generic for OperationOverInstances
+        from ._theorems_ import unbundle as unbundle_thm
+        return unbundle(self, unbundle_thm, 
+                        num_param_entries=num_param_entries, 
+                        assumptions=assumptions)
+    
+    def unbundle_equality(self, num_param_entries=(1,), *,
+                          assumptions=USE_DEFAULTS):
+        '''
+        From a nested forall, equate it with an equivalent form in 
+        which the parameter entries are split in number according to
+        'num_param_entries'.
+        
+        For example,
+            \forall_{x, y, z | Q(x, y), R(z)} P(x, y, z)
+        can equate with
+            \forall_{x, y | Q(x, y)} \forall_{z | R(z)} P(x, y, z)
+        via bundle with num_param_entries=(2, 1) or 
+        num_param_entries=(2,) -- the last number can be implied
+        by the remaining number of parameters.
+        '''
+        from proveit import unbundle # generic for OperationOverInstances
+        from ._theorems_ import bundling
+        return unbundle(self, bundling, num_param_entries=num_param_entries, 
+                        assumptions=assumptions)
+
+    def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
+        '''
+        First attempt to prove that this Forall statement is true under the 
+        assumptions, and then call specialize on the KnownTruth.
+        '''
+        return self.prove(assumptions).instantiate(repl_map, assumptions=assumptions)
+
+    def specialize(self, repl_map=None, assumptions=USE_DEFAULTS):
+        '''
+        TEMPORARY FOR BACKWARD COMPATIBILITY
+        '''
+        return self.prove(assumptions).instantiate(repl_map, assumptions=assumptions)    
+        
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if possible
         by calling the condition's forallEvaluation method
         '''
         assert self.hasDomain(), "Cannot automatically evaluate a forall statement with no domain"
 
-        if len(list(self.instanceVarLists())) == 1:
+        if len(list(self.instanceParamLists())) == 1:
             # Use the domain's forallEvaluation method
             return self.domain.forallEvaluation(self, assumptions)
         else:
@@ -138,8 +236,12 @@ class Forall(OperationOverInstances):
         Attempt to deduce, then return, that this forall expression is in the set of BOOLEANS,
         as all forall expressions are (they are taken to be false when not true).
         '''
-        raise NotImplementedError("Need to update")
-        from ._axioms_ import forallInBool
-        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
-        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
+        from proveit.number import one
+        from ._axioms_ import forall_in_bool
+        _x = self.instanceParams
+        P_op, _P_op = Operation(P, _x), self.instanceExpr
+        _n = _x.length(assumptions)
+        x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
+        return forall_in_bool.specialize(
+                {n:_n, P_op:_P_op, x_1_to_n:_x},
+                assumptions=assumptions)
