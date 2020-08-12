@@ -60,7 +60,11 @@ class Len(Operation):
                 disable_range_reduction=disable_range_reduction,
                 simplify=simplify)
     
-    def _computation(self, assumptions=USE_DEFAULTS):
+    def _computation(self, assumptions=USE_DEFAULTS, must_evaluate=False):
+        # Currently not doing anything with must_evaluate
+        # What it should do is make sure it evaluates to a number
+        # and can circumvent any attempt that will not evaluate to
+        # number.
         from proveit.number import one
         if not isinstance(self.operand, ExprTuple):
             # Don't know how to compute the length if the operand is
