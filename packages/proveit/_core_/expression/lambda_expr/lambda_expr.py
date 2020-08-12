@@ -1063,9 +1063,10 @@ def extract_param_replacements(parameters, parameter_vars, body,
     # For example, (x_1, ..., x_n, y) has an element-wise lenght of
     # n+1.
     try:
+        from proveit.number import zero, one
         for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
-                from proveit.number import zero, one, isLiteralInt
+                from proveit.number import isLiteralInt
                 # This is a parameter range which corresponds with
                 # one or more operand entries in order to match the
                 # element-wise length.
