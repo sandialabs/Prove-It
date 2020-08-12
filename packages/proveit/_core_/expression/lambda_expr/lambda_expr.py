@@ -1174,6 +1174,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
                     # Rangle lengths must be known values and sum 
                     # to 1.
                     try:
+                        from proveit.number import zero,one 
                         while True:
                             operand_len_evaluation = \
                                 Len(operand).evaluation(
