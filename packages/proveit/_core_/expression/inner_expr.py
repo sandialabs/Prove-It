@@ -42,10 +42,11 @@ class InnerExpr:
     For example, let "expr = [((a - 1) + b + (a - 1)/d) < e]", and let
     "inner_expr = expr.innterExpr().lhs.terms[2].numerator".  Then
     
-    1. inner_expr.repl_lambda() will return _x_ -> [(a + b + _x_/d) < e],
-       replacing the particular innerexpr.
+    1. inner_expr.repl_lambda() will return 
+       _x_ -> [((a - 1) + b + _x_/d) < e],
+       replacing the particular inner expression.
        (note that the second "a - 1" is singled out, distinct from
-       the first "a*1" because the subexpr object tracks the
+       the first "a - 1" because the subexpr object tracks the
        sub-expression by "location").
     2. inner_expr.withSubtractionAt([]) will return an
        expression that is the same but with an altered style for the
@@ -55,7 +56,8 @@ class InnerExpr:
        inner expression class that start with 'with' and assumes
        they function to alter the style.
     3. inner_expr.commutation(0, 1) would return: 
-           |- [((a - 1) + b + (a - 1)/d) < e] = [((a - 1) + b + (-1 + a)/d) < e]
+           |- [((a - 1) + b + (a - 1)/d) < e]
+              = [((a - 1) + b + (-1 + a)/d) < e]
        assuming 'a' is known to be a number.
     4. inner_expr.commuted(0, 1) would return: 
            [((a - 1) + b + (-1 + a)/d) < e]
@@ -64,10 +66,16 @@ class InnerExpr:
            |-  ((a - 1) + b + (-1 + a)/d) < e
        assuming the original expr may be proven via automation and
        'a' is known to be a number.
+    6. inner_expr.substitution(a + 1 - 2) would return
+           |- [((a - 1) + b + (a - 1)/d) < e]
+              = [((a - 1) + b + (a + 1 - 2)/d) < e]
+    7. inner_expr.substitute(a + 1 - 2) would return
+           |- [((a - 1) + b + (a + 1 - 2)/d) < e]
     
     In addition, the InnerExpr class has 'simplifyOperands' and
     'evaluateOperands' methods for effecting 'simplify' or 'evaluate'
     (respectively) on all of the operands of the inner expression.
+    
     '''
     
     def __init__(self, topLevel, _innerExprPath=tuple(),
@@ -420,7 +428,39 @@ class InnerExpr:
             kt._addProof(self.exprHierarchy[0].proof())
             return kt
         return revised_expr
-        
+    
+    def substitution(self, replacement, assumptions=USE_DEFAULTS):
+        '''
+        Equate the top level expression with a similar expression
+        with the inner expression replaced by the replacement.
+        '''
+        from proveit.logic import Equals
+        cur_inner_expr = self.exprHierarchy[-1]
+        equality = Equals(cur_inner_expr, replacement).prove(assumptions)
+        equality.substitution(self.repl_lambda(), assumptions=assumptions)
+    
+    def substitute(self, replacement, assumptions=USE_DEFAULTS):
+        '''
+        Substitute the replacement in place of the inner expression
+        and return a new proven statement (assuming the top
+        level expression is proven, or can be proven automatically).
+        '''
+        from proveit._common_ import x, P
+        from proveit.logic import TRUE, FALSE, Equals
+        from proveit.logic.equality._theorems_ import (
+                substituteTruth, substituteFalsehood)
+        cur_inner_expr = self.exprHierarchy[-1]
+        if cur_inner_expr == TRUE:
+            return substituteTruth.instantiate(
+                    {P:self.repl_lambda(), x:replacement},
+                    assumptions=assumptions)
+        elif cur_inner_expr == FALSE:
+            return substituteFalsehood.instantiate(
+                    {P:self.repl_lambda(), x:replacement},
+                    assumptions=assumptions)            
+        else:
+            Equals(cur_inner_expr, replacement).subRightSideInto(
+                    self.repl_lambda(), assumptions=assumptions)
     
     def _expr_rep(self):
         '''
