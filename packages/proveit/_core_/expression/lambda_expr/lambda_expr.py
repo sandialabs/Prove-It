@@ -268,10 +268,10 @@ class Lambda(Expression):
                      in zip(bound_parameter_vars, generic_param_vars)}
                 generic_parameters = parameters._generic_version()
                 generic_parameters = generic_parameters.replaced(
-                        relabel_map, assumptions=tuple())
+                        relabel_map, assumptions=tuple())._generic_version()
                 generic_body = self.body._generic_version()
                 generic_body = generic_body.replaced(
-                        relabel_map, assumptions=tuple())
+                        relabel_map, assumptions=tuple())._generic_version()
                 generic_body = generic_body._generic_version()
                 return Lambda(generic_parameters, generic_body)
             else:
