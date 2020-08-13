@@ -142,7 +142,7 @@ class Lambda(Expression):
         
         # The '_max_in_scope_bound_vars' attribute is used to make 
         # unique variable assignments for Lambda parameters in the
-        # "generic version" which is invarian under 
+        # "generic version" which is invariant under 
         # alpha-conversion.  For a Lambda, this attribute is
         # set ahead of time.
         self._max_in_scope_bound_vars = \

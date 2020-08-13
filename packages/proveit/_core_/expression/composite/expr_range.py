@@ -347,7 +347,7 @@ class ExprRange(Expression):
         if exclusions is not None:
             if self in exclusions:
                 return dict() # this is excluded
-            # For the body, extent the exclusion set as necessary to
+            # For the body, extend the exclusion set as necessary to
             # exclude anything contributing directly to a form that is
             # in the exclusion set.  For example, if 
             # x_1, ..., x_n is in the exclusion set and 
