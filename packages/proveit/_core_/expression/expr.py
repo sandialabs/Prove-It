@@ -648,7 +648,7 @@ class Expression(metaclass=ExprType):
         from proveit.logic import Not
         return Not(self).prove(assumptions=assumptions, automation=automation)
                         
-    def diproven(self, assumptions=USE_DEFAULTS):
+    def disproven(self, assumptions=USE_DEFAULTS):
         '''
         Return True if and only if the expression is known to be false.
         '''
