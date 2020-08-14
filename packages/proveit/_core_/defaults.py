@@ -23,7 +23,7 @@ class Defaults:
         # and the Expression class is not in 
         # 'disabled_auto_reduction_types'.
         self.auto_reduce = True
-        # Note: you can do "with self.disabled_auto_reduction_types"
+        # Note: you can do "with defaults.disabled_auto_reduction_types"
         # for temporary changes to the disabled_auto_reduction_types
         # set.  See DisabledAutoReductionTypes class definition
         # below.
