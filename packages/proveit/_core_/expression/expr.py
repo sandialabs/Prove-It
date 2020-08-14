@@ -720,7 +720,7 @@ class Expression(metaclass=ExprType):
         replaced by a Lambda map that has a range of parameters
         (e.g., x_1, ..., x_n) such that the length of the parameters
         and operands must be proven to be equal.  For more details,
-        see Operation.replaced, Lambda.apply, and Iter.replaced
+        see Operation.replaced, Lambda.apply, and ExprRange.replaced
         (which is the sequence of calls involved).  They may also
         be used to ensure indices match when performing parameter-
         dependent ExprRange expansions that require indices to match.
