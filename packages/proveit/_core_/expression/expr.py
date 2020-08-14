@@ -152,20 +152,6 @@ class Expression(metaclass=ExprType):
         """
         for subExpression in subExpressions: # update Expression.parent_expr_map
             self._styleData.addChild(self, subExpression)
-        
-        if not hasattr(self, '_max_in_scope_bound_vars'):
-            # The '_max_inscope_bound_vars' attribute is used to make 
-            # unique variable assignments for Lambda parameters in the
-            # "generic version" which is invariant under 
-            # alpha-conversion.  For a Lambda, this attribute is
-            # set ahead of time.
-            if len(self._subExpressions)==0:
-                self._max_in_scope_bound_vars = 0
-            else:
-                self._max_in_scope_bound_vars = \
-                    max(subexpr._max_in_scope_bound_vars for subexpr 
-                        in self._subExpressions)
-            
     
     def _generic_version(self):
         '''

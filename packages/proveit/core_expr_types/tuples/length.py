@@ -60,8 +60,12 @@ class Len(Operation):
                 disable_range_reduction=disable_range_reduction,
                 simplify=simplify)
     
-    def _computation(self, assumptions=USE_DEFAULTS):
-        from proveit.number import one
+    def _computation(self, assumptions=USE_DEFAULTS, must_evaluate=False):
+        # Currently not doing anything with must_evaluate
+        # What it should do is make sure it evaluates to a number
+        # and can circumvent any attempt that will not evaluate to
+        # number.
+        from proveit.number import zero, one
         if not isinstance(self.operand, ExprTuple):
             # Don't know how to compute the length if the operand is
             # not a tuple. For example, it could be a variable that
@@ -134,12 +138,15 @@ class Len(Operation):
                         assumptions=assumptions)
         else:
             # Handle the general cases via general_len_val,
-            # len_of_ranges_with_repeated_indices, or
-            # len_of_ranges_with_repeated_indices_from_1
+            # len_of_ranges_with_repeated_indices,
+            # len_of_ranges_with_repeated_indices_from_1,
+            # or len_of_empty_range_of_range
             from proveit.core_expr_types.tuples._theorems_ import (
                     general_len, len_of_ranges_with_repeated_indices,
-                    len_of_ranges_with_repeated_indices_from_1)
+                    len_of_ranges_with_repeated_indices_from_1,
+                    len_of_empty_range_of_ranges)
             _x = safeDummyVar(self)
+
             def entry_map(entry):
                 if isinstance(entry, ExprRange):
                     if isinstance(entry.body, ExprRange):
@@ -154,6 +161,7 @@ class Len(Operation):
                 # For individual elements, just map to the 
                 # elemental entry.
                 return Lambda(_x, entry)
+
             def entry_start(entry):
                 if isinstance(entry, ExprRange): 
                     if isinstance(entry.body, ExprRange):
@@ -164,7 +172,8 @@ class Len(Operation):
                                          entry.end_index)
                     else:
                         return entry.start_index
-                return one # for individual elements, use start=end=1
+                return one  # for individual elements, use start=end=1
+
             def entry_end(entry):
                 if isinstance(entry, ExprRange): 
                     if isinstance(entry.body, ExprRange):
@@ -175,11 +184,38 @@ class Len(Operation):
                                          entry.end_index)
                     else:
                         return entry.end_index
-                return one # for individual elements, use start=end=1
+                return one  # for individual elements, use start=end=1
+
+            def empty_range(_i, _j, _f, assumptions):
+                # If the start and end are literal ints and form an
+                # empty range, then it should be straightforward to
+                # prove that the range is empty.
+                from proveit.number import isLiteralInt, Add
+                from proveit.logic import Equals
+                from proveit._common_ import m
+                _m = entries[0].start_index
+                _n = entries[0].end_index
+                empty_req = Equals(Add(_n, one), _m)
+                if isLiteralInt(_m) and isLiteralInt(_n):
+                    if _n.asInt() + 1 == _m.asInt():
+                        empty_req.prove()
+                if empty_req.proven(assumptions):
+                    _f = Lambda((entries[0].parameter, entries[0].body.parameter), entries[0].body.body)
+                    _i = [entry_map(entry) for entry in _i]
+                    _j = [entry_map(entry) for entry in _j]
+                    return len_of_empty_range_of_ranges.instantiate(
+                        {m: _m, n: _n, f: _f, i: _i, j: _j}, assumptions=assumptions)
+
             _f = [entry_map(entry) for entry in entries]
             _i = [entry_start(entry) for entry in entries]
             _j = [entry_end(entry) for entry in entries]
             _n = Len(_i).computed(assumptions=assumptions, simplify=False)
+
+            from proveit.number import isLiteralInt
+            if isLiteralInt(entries[0].start_index) and isLiteralInt(entries[0].end_index):
+                if entries[0].end_index.asInt() + 1 == entries[0].start_index.asInt():
+                    return empty_range(_i, _j, _f, assumptions)
+
             if all(_==_i[0] for _ in _i) and all(_==_j[0] for _ in _j):
                 if isinstance(_i[0], ExprRange):
                     if _i[0].is_parameter_independent:
@@ -197,15 +233,16 @@ class Len(Operation):
                     if _i[0] == one:
                         thm = len_of_ranges_with_repeated_indices_from_1
                         return thm.instantiate(
-                                {n:_n, f:_f, i:_j[0]}, 
+                                {n:_n, f:_f, i:_j[0]},
                                 assumptions=assumptions)
                     else:
                         thm = len_of_ranges_with_repeated_indices
                         return thm.instantiate(
                                 {n:_n, f:_f, i:_i[0], j:_j[0]}, 
                                 assumptions=assumptions)
+
             return general_len.instantiate(
-                    {n:_n, f:_f, i:_i, j:_j}, assumptions=assumptions)
+                       {n:_n, f:_f, i:_i, j:_j}, assumptions=assumptions)
     
     def typical_equiv(self, assumptions=USE_DEFAULTS):
         '''

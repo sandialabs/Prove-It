@@ -388,17 +388,17 @@ class ExprRange(Expression):
         body_forms_dict = \
             self.body._possibly_free_var_ranges(exclusions=body_exclusions)
         forms_dict = dict(body_forms_dict)
-        for expr in self._subExpressions:
-            if expr == self.body: continue # already did that one
-            for var, forms in \
-                    expr._possibly_free_var_ranges(exclusions=exclusions).items():
-                forms_dict.setdefault(var, set()).update(forms)        
         param = self.parameter
         # Eliminate the parameter; it is not a free variable.
         if param in forms_dict.keys():
             forms_dict[param].discard(param)
             if len(forms_dict[param])==0:
                 forms_dict.pop(param)        
+        for expr in self._subExpressions[1:]:
+            # Skip the first sub-expression. We've already treated that.
+            for var, forms in \
+                    expr._possibly_free_var_ranges(exclusions=exclusions).items():
+                forms_dict.setdefault(var, set()).update(forms)        
         # The var ranges of the body that depend upon self.parameter
         # will be promoted to expression ranges over the range of this 
         # ExprRange.  For example, if x_k is one of the var ranges of
@@ -451,7 +451,7 @@ class ExprRange(Expression):
         wrapped in an ExprTuple rather than 'self' itself.
         '''
         from proveit import KnownTruth
-        from proveit._common_ import f, i, j
+        from proveit._common_ import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.number import Add, one
         if (not defaults.auto_reduce 
@@ -467,12 +467,19 @@ class ExprRange(Expression):
             # Temporarily disable automation to avoid infinite
             # recursion.
             from proveit.core_expr_types.tuples._theorems_ import \
-                singular_range_reduction
+                singular_range_reduction, singular_nested_range_reduction
             defaults.disabled_auto_reduction_types.add(ExprRange)
             try:
-                reduction = singular_range_reduction.instantiate(
-                        {f:lambda_map, i:start_index},
-                        assumptions=assumptions)
+                if expr_range.nested_range_depth() > 1:
+                    lambda_map = Lambda((expr_range.parameter, expr_range.body.parameter), expr_range.body.body)
+                    reduction = singular_nested_range_reduction.instantiate({f: lambda_map, m: start_index,
+                                                                             i: expr_range.first().start_index,
+                                                                             j: expr_range.first().end_index},
+                                                                            assumptions=assumptions)
+                else:
+                    reduction = singular_range_reduction.instantiate(
+                            {f:lambda_map, i:start_index},
+                            assumptions=assumptions)
             finally:
                 # Re-enable automation.
                 defaults.disabled_auto_reduction_types.remove(ExprRange)
@@ -489,16 +496,69 @@ class ExprRange(Expression):
                 # We can do an empty range reduction
                 # Temporarily disable automation to avoid infinite
                 # recursion.
-                from proveit.core_expr_types.tuples._axioms_ import \
-                    empty_range_def
-                defaults.disabled_auto_reduction_types.add(ExprRange)
-                try:
-                    reduction = empty_range_def.instantiate(
-                            {f:lambda_map, i:start_index, j:end_index},
+                if expr_range.nested_range_depth() > 1:
+                    # this is a nested range, but we know
+                    # that the outer range reduces to an empty range,
+
+                    # We can do an empty range reduction on the entire expression
+                    # Temporarily disable automation to avoid infinite
+                    # recursion.
+                    from proveit.core_expr_types.tuples._theorems_ import \
+                        empty_outside_range_of_range
+                    defaults.disabled_auto_reduction_types.add(ExprRange)
+                    try:
+                        nest_end_index = expr_range.first().end_index
+                        nest_start_index = expr_range.first().start_index
+                        lambda_map = Lambda((expr_range.parameter, expr_range.body.parameter), expr_range.body.body)
+                        reduction = empty_outside_range_of_range.instantiate(
+                            {f: lambda_map, m: start_index, n: end_index, i: nest_start_index, j: nest_end_index},
                             assumptions=assumptions)
-                finally:
-                    # Re-enable automation.
-                    defaults.disabled_auto_reduction_types.remove(ExprRange)               
+                    finally:
+                        # Re-enable automation.
+                        defaults.disabled_auto_reduction_types.remove(ExprRange)
+                else:
+                        from proveit.core_expr_types.tuples._axioms_ import \
+                            empty_range_def
+                        defaults.disabled_auto_reduction_types.add(ExprRange)
+                        try:
+                            reduction = empty_range_def.instantiate(
+                                    {f:lambda_map, i:start_index, j:end_index},
+                                    assumptions=assumptions)
+                        finally:
+                            # Re-enable automation.
+                            defaults.disabled_auto_reduction_types.remove(ExprRange)
+            elif expr_range.nested_range_depth() > 1:
+                # this is a nested range so the inner range could be empty.
+
+                # If the start and end of the inner range are literal ints and form an
+                # empty range, then it should be straightforward to
+                # prove that the entire range is empty.
+                from proveit.number import isLiteralInt
+                empty_req = Equals(Add(expr_range.first().end_index, one), expr_range.first().start_index)
+                if isLiteralInt(expr_range.first().start_index) and isLiteralInt(expr_range.first().end_index):
+                    if expr_range.first().end_index.asInt() + 1 == expr_range.first().start_index.asInt():
+                        empty_req.prove()
+                if empty_req.proven(assumptions):
+                    # We can do an empty range reduction on the entire expression
+                    # Temporarily disable automation to avoid infinite
+                    # recursion.
+                    from proveit.core_expr_types.tuples._theorems_ import \
+                        empty_inside_range_of_range
+                    defaults.disabled_auto_reduction_types.add(ExprRange)
+                    try:
+                        nest_end_index = expr_range.first().end_index
+                        nest_start_index = expr_range.first().start_index
+                        lambda_map = Lambda((expr_range.parameter, expr_range.body.parameter), expr_range.body.body)
+                        reduction = empty_inside_range_of_range.instantiate(
+                            {f: lambda_map, m: start_index, n: end_index, i: nest_start_index, j: nest_end_index},
+                            assumptions=assumptions)
+                    finally:
+                        # Re-enable automation.
+                        defaults.disabled_auto_reduction_types.remove(ExprRange)
+                else:
+                    yield expr_range  # no reduction
+                    return
+
             else:
                 yield expr_range # no reduction
                 return
