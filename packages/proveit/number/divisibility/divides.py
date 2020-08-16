@@ -19,7 +19,7 @@ class Divides(Operation):
         logic.booleans. Attempt to deduce, then return, that this 'Divides'
         expression is in the set of BOOLEANS.
         '''
-        from ._axioms_ import dividesInBool
+        from ._theorems_ import dividesInBool
         from proveit._common_ import m, n
         return dividesInBool.specialize(
         	  {m:self.operands[0], n:self.operands[1]}, assumptions=assumptions)
