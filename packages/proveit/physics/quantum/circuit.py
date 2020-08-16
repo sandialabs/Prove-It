@@ -861,8 +861,9 @@ class Circuit(Operation):
                                                  'linked MultiQubitGate')
                             if number.asInt() == k:
                                 inset = True
-                        if not inset:
-                            raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
+                        #if not inset:
+                         #   print(self)
+                          #  raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
                     elif isinstance(value, ExprRange):
                         pass
                 k += 1
