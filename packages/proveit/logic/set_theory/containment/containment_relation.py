@@ -1,4 +1,6 @@
-from proveit.relation import TransitiveRelation, TransitiveSequence, makeSequenceOrRelation
+from proveit import USE_DEFAULTS
+from proveit.relation import (
+    TransitiveRelation, TransitiveSequence, makeSequenceOrRelation)
 
 class ContainmentRelation(TransitiveRelation):
     r'''
@@ -20,6 +22,22 @@ class ContainmentRelation(TransitiveRelation):
         if hasattr(self, 'deriveRelaxed'):
             yield self.deriveRelaxed
         yield self.deriveReversed
+
+    @staticmethod
+    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
+        '''
+        applyTransitivity(Subset(A,B), Equals(B,C)) returns Subset(A,C)
+        '''
+        from proveit.logic import Equals
+        if isinstance(other, Equals):
+            if (self.proven(assumptions=assumptions) and
+                other.proven(assumptions=assumptions)):
+                if other.lhs == self.rhs:
+                    return other.subRightSideInto(self, assumptions=assumptions)
+                elif other.rhs == self.rhs:
+                    return other.subLeftSideInto(self, assumptions=assumptions)
+
+
 
 class ContainmentSequence(TransitiveSequence):
     r'''
