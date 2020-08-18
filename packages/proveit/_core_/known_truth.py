@@ -728,11 +728,15 @@ class KnownTruth:
         return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
     """
     
-    def specialize(self, repl_map=None, relabel_map=None, assumptions=USE_DEFAULTS):
+    def specialize(self, repl_map=None, relabel_map=None,
+                   assumptions=USE_DEFAULTS):
         # TEMPORARY BACKWARD COMPATIBILITY
-        if repl_map is None:
+        # if repl_map is None:
+        #     repl_map = dict()
+        # if relabel_map is not None:
+        #     repl_map.update(relabel_map)
+        if repl_map is None and relabel_map is not None:
             repl_map = dict()
-        if relabel_map is not None:
             repl_map.update(relabel_map)
         return self.instantiate(repl_map, assumptions=assumptions)
 
@@ -810,16 +814,15 @@ class KnownTruth:
             if isinstance(key, Variable) or isinstance(key, IndexedVar):
                 processed_repl_map[key] = replacement
             elif isinstance(key, ExprTuple) and len(key)>0:
+                try:
+                    for param_entry in key:
+                        getParamVar(param_entry)
+                except (ValueError, TypeError) as e:
+                    raise TypeError("%s is not the expected kind of Expression "
+                                    "as a repl_map key:\n%s"%str(e))
                 if len(key)==1:
-                    if not (isinstance(key[0], ExprRange) 
-                          and isinstance(key[0].body, IndexedVar)):
-                        raise TypeError("%s is not the expected kind of "
-                                        "Expression as a repl_map key.  An "
-                                        "ExprTuple with one entry is expected "
-                                        "to contain an ExprRange of IndexedVars."
-                                        %key)
-                    # Replacement key of the form (x_i, ..., x_j)
-                    # which is valid for replacing a range of variables.
+                    # Replacement key for replacing a range of indexed
+                    # variables, or range of ranges of indexed variables, etc.
                     processed_repl_map[key] = replacement
                     # Although this is redundant (not really necessary
                     # as an entry in `equiv_alt_expansions` as far
@@ -830,7 +833,8 @@ class KnownTruth:
                 else:
                     assert len(key)>1
                     # An "alternative equivalent expansion" of
-                    # some (x_i, ..., x_j).  For example,
+                    # some range of indexed variables (or range of ranges, 
+                    # etc.).    For example,
                     # (x_i, x_{i+1}, ..., x_j).
                     equiv_alt_expansions[key] = replacement
             elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
