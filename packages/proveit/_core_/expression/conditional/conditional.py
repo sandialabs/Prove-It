@@ -201,7 +201,7 @@ class Conditional(Expression):
         replaced by a Lambda map that has iterated parameters such that 
         the length of the parameters and operands must be proven to be equal.
         For more details, see Operation.replaced, Lambda.apply, and
-        Iter.replaced (which is the sequence of calls involved).
+        ExprRange.replaced (which is the sequence of calls involved).
         
         For a Conditional, the 'condition' is added to the assumptions 
         when 'replaced' is called on the 'value'.

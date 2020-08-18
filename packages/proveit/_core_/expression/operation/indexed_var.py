@@ -10,7 +10,7 @@ class IndexedVar(Operation):
     An IndexedVar Expression expresses a Variable or nested IndexedVar, 
     representing an ExprTuple (or ExprArray which is really just an ExprTuple
     of ExprTuples), being indexed to yield an element.  The index must be
-    is typically a parameter of a containing Iter.
+    is typically a parameter of a containing ExprRange.
     When IndexedVar's are nested, the default style is to display it as a 
     single variable with multiple indices.  That is,
     (x_i)_j will display, by default, as x_{i, j}.

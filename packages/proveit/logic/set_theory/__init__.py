@@ -1,6 +1,10 @@
 from .membership import InSet, NotInSet, Membership, Nonmembership
 from .enumeration import Set
-from .containment import SupersetEq, SubsetEq, Superset, Subset, NotSubsetEq, NotSupersetEq
+from .containment import NotProperSubset, NotSubset, NotSubsetEq, ProperSubset
+from .containment import Subset, SubsetEq, SubsetProper
+from .containment import NotSuperset, NotProperSuperset, NotSupersetEq, ProperSuperset
+from .containment import StrictSuperset, Superset, SupersetEq, SupersetProper
+from .equivalence import SetEquiv, SetNotEquiv
 from .unification import Union
 from .intersection import Intersect
 from .subtraction import Difference
