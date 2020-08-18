@@ -694,11 +694,12 @@ class Add(Operation):
         # print("last equals!")
         return eq.relation
     
-    def _integerBinaryEval(self):
+    def _integerBinaryEval(self, assumptions=USE_DEFAULTS):
         '''
         Evaluate the sum of possibly negated single digit numbers.
         '''
         from proveit.number import Neg, isLiteralInt, num
+        from proveit.number.numeral import NumeralSequence
         abs_terms = [term.operand if isinstance(term, Neg) else term for term in self.terms]
         if len(abs_terms)!=2 or not all(isLiteralInt(abs_term) for abs_term in abs_terms):
             raise ValueError("_integerBinaryEval only applicable for binary addition of integers")
@@ -724,6 +725,10 @@ class Add(Operation):
         assert _a>=0 and _b>=0
         #print(_a, _b)
         if not all(term in DIGITS for term in (num(_a), num(_b))):
+            if isinstance(num(_a), NumeralSequence):
+                return num(_a).numAddEval(_a, _b, assumptions=assumptions)
+            elif isinstance(num(_b), NumeralSequence):
+                return num(_a).numAddEval(_a, _b, assumptions=assumptions)
             raise NotImplementedError(
                     "Currently, _integerBinaryEval only works for single "
                     "digit addition and related subtractions: %d, %d"%(_a, _b))
@@ -741,8 +746,8 @@ class Add(Operation):
             raise Exception("Should have an evaluation for %s now.  Why not?  "
                               "Perhaps we were not able to prove that the involved numbers "
                               "are in the Complexes set."%self)
-        return self.evaluation() 
-    
+        return self.evaluation()
+
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         created by JML on 7/31/19. modified by WMW on 9/7/19.

@@ -115,8 +115,16 @@ class Len(Operation):
                     repl_map[param] = entry
                 return len_thm.specialize(repl_map)
             else:
-                raise NotImplementedError("Can't handle length computation "
-                                          ">= 10 for %s"%self)
+                #raise NotImplementedError("Can't handle length computation "
+                 #                        ">= 10 for %s"%self)
+                from proveit.core_expr_types.tuples._axioms_ import tuple_len_incr
+                from proveit.number import num
+                print("specializgin")
+                return tuple_len_incr.specialize({i: num(len(entries) - 1), a: entries[:-1], b: entries[-1]},
+                                                 assumptions=assumptions).rhs._integerBinaryEval(
+                    assumptions=assumptions)
+                #raise NotImplementedError("Can't handle length computation "
+                 #                         ">= 10 for %s"%self)
         elif (len(entries)==2 and not isinstance(entries[1], ExprRange)
                 and not isinstance(entries[0].body, ExprRange)):
             # Case of an extended range:
@@ -448,14 +456,14 @@ class Len(Operation):
         simplified to the extent possible.  An item may be a singular element
         (contribution 1 to the length) or an iteration contributing its length.
         '''
-        return self._computation(must_evaluate=False, assumptions=assumptions)
+        return self._computation(assumptions=assumptions)  # must_evaluate=False, assumptions=assumptions)
     
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Return the evaluation of the length which equates that Len expression
         to an irreducible result.
         '''
-        return self._computation(must_evaluate=True, assumptions=assumptions)
+        return self._computation(assumptions=assumptions)  # must_evaluate=True, assumptions=assumptions)
     
 # Register these expression equivalence methods:
 InnerExpr.register_equivalence_method(Len, 'computation', 'computed', 'compute')
