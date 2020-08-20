@@ -134,20 +134,24 @@ class ExprArray(ExprTuple):
         of the ExprRange.  If not, raise an error.
         '''
         from .expr_range import ExprRange
+        from proveit.physics.quantum.circuit import MultiQubitGate, Gate
         pos = []
-        m = 0
+
         k = 0
-        for expr in self:
+        for m, expr in enumerate(self):
             if isinstance(expr, ExprTuple):
-                i = 0
                 count = 0
-                for entry in expr:
+                for i, entry in enumerate(expr):
                     if isinstance(entry, ExprRange):
+
+                        if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
+                            # we break in this instance because we have a check in Circuit
+                            return
                         if m == 0:
                             placeholder = []
                             placeholder.append(i)
-                            placeholder.append(entry.first().subExpr(1))
-                            placeholder.append(entry.last().subExpr(1))
+                            placeholder.append(entry.start_index)
+                            placeholder.append(entry.end_index)
                             pos.append(placeholder)
                         else:
                             if len(pos) == 0:
@@ -157,16 +161,15 @@ class ExprArray(ExprTuple):
                                     if entry.first().subExpr(1) != item[1]:
                                         raise ValueError('Columns containing ExprRanges '
                                                          'must agree for every row. %s is '
-                                                         'not equal to %s.' % (entry.first().subExpr(1), item[1]))
+                                                         'not equal to %s.' % (entry.start_index, item[1]))
                                     if entry.last().subExpr(1) != item[2]:
                                         raise ValueError('Columns containing ExprRanges '
                                                          'must agree for every row. %s is '
-                                                         'not equal to %s.' % (entry.last().subExpr(1), item[2]))
+                                                         'not equal to %s.' % (entry.end_index, item[2]))
                                     k += 1
                         count += 3
                     else:
                         count += 1
-                    i += 1
 
                 if count != self.getRowLength():
                     raise ValueError('One or more rows are a different length.  Please double check your entries.')
@@ -174,49 +177,68 @@ class ExprArray(ExprTuple):
                 if isinstance(expr.first(), ExprTuple):
                     first = None
                     last = None
-                    for entry in expr.first():
+                    for i, entry in enumerate(expr.first()):
+
                         if isinstance(entry, ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
+                            if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
+                                # we break in this instance because we have a check in Circuit
+                                return
+                            if m == 0:
+                                # we are checking that i in Aij matches all the other i's
+                                placeholder = []
+                                placeholder.append(i)
+                                placeholder.append(entry.first().indices[0])
+                                placeholder.append(entry.last().indices[0])
+                                pos.append(placeholder)
                             if first is None:
-                                first = entry.first().subExpr(0).subExpr(1)
-                            if first != entry.first().subExpr(0).subExpr(1):
+                                first = entry.first().indices[0]
+                            if first != entry.first().indices[0]:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.first().subExpr(0).subExpr(1)))
-                            if first != entry.last().subExpr(0).subExpr(1):
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.last().subExpr(0).subExpr(1)))
+                                                 'not equal to %s.' % (first, entry.first().indices[0]))
+
                         else:
+                            if isinstance(entry, MultiQubitGate) or isinstance(entry, Gate):
+                                # we break in this instance because we have a check in Circuit
+                                return
                             if first is None:
-                                first = entry.subExpr(1)
-                            if first != entry.subExpr(1):
+                                first = entry.indices[0]
+                            if first != entry.indices[0]:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.subExpr(1)))
+                                                 'not equal to %s.' % (first, entry.indices[0]))
                     for entry in expr.last():
                         if isinstance(entry, ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
+                            if isinstance(entry.last(), MultiQubitGate) or isinstance(entry.last(), Gate):
+                                # we break in this instance because we have a check in Circuit
+                                return
                             if last is None:
-                                last = entry.first().subExpr(0).subExpr(1)
-                            if last != entry.first().subExpr(0).subExpr(1):
+                                last = entry.last().indices[0]
+                            if last != entry.last().indices[0]:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.first().subExpr(0).subExpr(1)))
-                            if last != entry.last().subExpr(0).subExpr(1):
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.last().subExpr(0).subExpr(1)))
-                        else:
-                            if last is None:
-                                last = entry.subExpr(1)
-                            if last != entry.subExpr(1):
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.subExpr(1)))
+                                                 'not equal to %s.' % (last, entry.last().indices[0]))
 
-            m += 1
+                        else:
+                            if isinstance(entry, MultiQubitGate) or isinstance(entry, Gate):
+                                # we break in this instance because we have a check in Circuit
+                                return
+                            if last is None:
+                                last = entry.indices[0]
+                            if last != entry.indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (last, entry.indices[0]))
+            n = m
+
         if k != len(pos):
-            raise ValueError('The ExprRange in the first tuple is not in the same column '
-                             'as the ExprRange in tuple number %s' % str(m))
+            if n == 0:
+                pass
+            else:
+                raise ValueError('The ExprRange in the first tuple is not in the same column '
+                                 'as the ExprRange in tuple number %s' % str(n))
 
     def getColHeight(self, explicit=False):
         '''
