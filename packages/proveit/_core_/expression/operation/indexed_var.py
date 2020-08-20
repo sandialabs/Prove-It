@@ -36,7 +36,7 @@ class IndexedVar(Operation):
             self.index = self.indices[0]
             self.index_or_indices = self.index
         else:
-            self.index_or_indices = self.index
+            self.index_or_indices = self.indices
         Operation.__init__(self, var, self.index_or_indices)
         self.var = var
         
@@ -130,13 +130,10 @@ class IndexedVar(Operation):
         '''
         if exclusions is not None and self in exclusions: 
             return dict() # this is excluded
-        var = self
         forms_dict = dict()
-        while isinstance(var, IndexedVar):
-            forms_dict.update(
-                    var.index._possibly_free_var_ranges(exclusions=exclusions))
-            var = var.var
-        forms_dict.update({var:{self}})
+        forms_dict.update(
+                self.indices._possibly_free_var_ranges(exclusions=exclusions))
+        forms_dict.update({self.var:{self}})
         return forms_dict
     
     

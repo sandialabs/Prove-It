@@ -43,14 +43,9 @@ def getParamVar(parameter, *, _required_indices=None):
                     "variable"%parameter)
         return var
     elif isinstance(parameter, IndexedVar):
-        var = parameter
-        while isinstance(var, IndexedVar):
-            if _required_indices is not None:
-                 # requirement met:
-                _required_indices.discard(var.index)
-            # May be a nested IndexedVar.  We want the innermost var.
-            var = var.var 
-        return var
+        if _required_indices is not None:
+            _required_indices.difference_update(parameter.indices)
+        return parameter.var
     elif isinstance(parameter, Variable) or isinstance(parameter, TemporaryLabel):
         return parameter
     else:
