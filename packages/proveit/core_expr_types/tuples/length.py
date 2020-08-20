@@ -119,7 +119,6 @@ class Len(Operation):
                  #                        ">= 10 for %s"%self)
                 from proveit.core_expr_types.tuples._axioms_ import tuple_len_incr
                 from proveit.number import num
-                print("specializgin")
                 return tuple_len_incr.specialize({i: num(len(entries) - 1), a: entries[:-1], b: entries[-1]},
                                                  assumptions=assumptions).rhs._integerBinaryEval(
                     assumptions=assumptions)
@@ -220,9 +219,10 @@ class Len(Operation):
             _n = Len(_i).computed(assumptions=assumptions, simplify=False)
 
             from proveit.number import isLiteralInt
-            if isLiteralInt(entries[0].start_index) and isLiteralInt(entries[0].end_index):
-                if entries[0].end_index.asInt() + 1 == entries[0].start_index.asInt():
-                    return empty_range(_i, _j, _f, assumptions)
+            if len(entries)==1 and isinstance(entries[0], ExprRange):
+                if isLiteralInt(entries[0].start_index) and isLiteralInt(entries[0].end_index):
+                    if entries[0].end_index.asInt() + 1 == entries[0].start_index.asInt():
+                        return empty_range(_i, _j, _f, assumptions)
 
             if all(_==_i[0] for _ in _i) and all(_==_j[0] for _ in _j):
                 if isinstance(_i[0], ExprRange):
