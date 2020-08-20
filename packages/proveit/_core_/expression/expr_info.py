@@ -54,7 +54,10 @@ class ExpressionInfo:
                     outStr += indent + key + ': ' + str(expr_num_map[expr[key]]) + '\n'
             elif isinstance(expr, IndexedVar):
                 outStr +=  r'variable: ' + str(expr_num_map[expr.var]) + '\n'
-                outStr +=  r'index: ' + str(expr_num_map[expr.index])   + '\n'                  
+                if hasattr(expr, 'index'):
+                    outStr +=  r'index: ' + str(expr_num_map[expr.index])   + '\n'        
+                else:
+                    outStr +=  r'indices: ' + str(expr_num_map[expr.indices])   + '\n'                            
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
                     outStr += indent + r'operator: ' + str(expr_num_map[expr.operator]) + '\n'

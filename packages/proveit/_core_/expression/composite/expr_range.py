@@ -628,8 +628,6 @@ class ExprRange(Expression):
         See the Lambda.apply documentation for a related discussion.
         '''
         from proveit._core_.expression.expr import attempt_to_simplify
-        from proveit._core_.expression.operation.indexed_var import \
-            IndexedVar, extract_indices, extract_base_var
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             getParamVar, extract_param_replacements
         from proveit.logic import Equals#, InSet
@@ -761,8 +759,8 @@ class ExprRange(Expression):
             # x_{k+1} with k going from 1 to n should change to
             # x_k with k going from 1+1 to n+1.
             indexed_var = innermost_body(occurrence)
-            var_indices = extract_indices(indexed_var)
-            var = extract_base_var(indexed_var)
+            var_indices = indexed_var.indices
+            var = indexed_var.var
             
             param_index = None
             for idx in var_indices:
@@ -1289,12 +1287,12 @@ def nestedRange(parameters, body, start_indices, end_indices):
     
 def varRange(var, start_index_or_indices, end_index_or_indices):
     from proveit import (safeDummyVars, compositeExpression,
-                         indexed_var)
+                         IndexedVar)
     start_indices = compositeExpression(start_index_or_indices)
     end_indices = compositeExpression(end_index_or_indices)
     parameters = safeDummyVars(len(start_indices), var, start_indices, 
                                end_indices)
-    return nestedRange(parameters, indexed_var(var, parameters),
+    return nestedRange(parameters, IndexedVar(var, parameters),
                        start_indices, end_indices)
 
 class RangeInstanceError(Exception):
