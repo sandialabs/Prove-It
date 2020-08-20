@@ -134,7 +134,6 @@ class ExprArray(ExprTuple):
         of the ExprRange.  If not, raise an error.
         '''
         from .expr_range import ExprRange
-        from proveit.physics.quantum.circuit import MultiQubitGate, Gate
         pos = []
 
         k = 0
@@ -144,9 +143,6 @@ class ExprArray(ExprTuple):
                 for i, entry in enumerate(expr):
                     if isinstance(entry, ExprRange):
 
-                        if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
-                            # we break in this instance because we have a check in Circuit
-                            return
                         if m == 0:
                             placeholder = []
                             placeholder.append(i)
@@ -183,9 +179,7 @@ class ExprArray(ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
-                            if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
-                                # we break in this instance because we have a check in Circuit
-                                return
+
                             if m == 0:
                                 # we are checking that i in Aij matches all the other i's
                                 placeholder = []
@@ -200,9 +194,7 @@ class ExprArray(ExprTuple):
                                                  'not equal to %s.' % (first, entry.first().indices[0]))
 
                         else:
-                            if isinstance(entry, MultiQubitGate) or isinstance(entry, Gate):
-                                # we break in this instance because we have a check in Circuit
-                                return
+
                             if first is None:
                                 first = entry.indices[0]
                             if first != entry.indices[0]:
@@ -213,9 +205,7 @@ class ExprArray(ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
-                            if isinstance(entry.last(), MultiQubitGate) or isinstance(entry.last(), Gate):
-                                # we break in this instance because we have a check in Circuit
-                                return
+
                             if last is None:
                                 last = entry.last().indices[0]
                             if last != entry.last().indices[0]:
@@ -223,9 +213,7 @@ class ExprArray(ExprTuple):
                                                  'not equal to %s.' % (last, entry.last().indices[0]))
 
                         else:
-                            if isinstance(entry, MultiQubitGate) or isinstance(entry, Gate):
-                                # we break in this instance because we have a check in Circuit
-                                return
+
                             if last is None:
                                 last = entry.indices[0]
                             if last != entry.indices[0]:
