@@ -696,15 +696,19 @@ class Circuit(Operation):
                             placeholder.append(i)
                             # adding the column number
                             if isinstance(entry.first(), MultiQubitGate):
-                                placeholder.append(entry.first().subExpr(1).subExpr(0).subExpr(1))
+                                placeholder.append(entry.first().gate.indices[0])
+                            elif isinstance(entry.first(), Gate):
+                                placeholder.append(entry.first().gate_operation.indices[0])
                             else:
-                                placeholder.append(entry.first().subExpr(1))
+                                placeholder.append(entry.first().start_index)
                             # add the row index, eg for Aij, we add j for the beginning and the end.
                             # accessing j is different for a MultiQubitGate.
                             if isinstance(entry.last(), MultiQubitGate):
-                                placeholder.append(entry.last().subExpr(1).subExpr(0).subExpr(1))
+                                placeholder.append(entry.last().gate.indices[0])
+                            elif isinstance(entry.first(), Gate):
+                                placeholder.append(entry.first().gate_operation.indices[0])
                             else:
-                                placeholder.append(entry.last().subExpr(1))
+                                placeholder.append(entry.last().end_index)
                             pos.append(placeholder)
                         else:
                             if len(pos) == 0:
@@ -713,22 +717,22 @@ class Circuit(Operation):
                                 if item[0] == i:
                                     # if we are in the current column
                                     if isinstance(entry.first(), MultiQubitGate):
-                                        current = entry.first().subExpr(1).subExpr(0).subExpr(1)
+                                        current = entry.first().gate.indices[0]
                                     elif isinstance(entry.first(), Gate):
-                                        current = entry.first().subExpr(1).subExpr(1)
+                                        current = entry.first().gate_operation.indices[0]
                                     else:
-                                        current = entry.first().subExpr(1)
+                                        current = entry.first().start_index
                                     # check the current j value against the first row j value
                                     if current != item[1]:
                                         raise ValueError('Columns containing ExprRanges '
                                                          'must agree for every row. %s is '
                                                          'not equal to %s.' % (current, item[1]))
                                     if isinstance(entry.last(), MultiQubitGate):
-                                        current = entry.last().subExpr(1).subExpr(0).subExpr(1)
+                                        current = entry.last().gate.indices[0]
                                     elif isinstance(entry.last(), Gate):
-                                        current = entry.last().subExpr(1).subExpr(1)
+                                        current = entry.last().gate_operation.indices[0]
                                     else:
-                                        current = entry.last().subExpr(1)
+                                        current = entry.last().end_index
                                     if current != item[2]:
                                         raise ValueError('Columns containing ExprRanges '
                                                          'must agree for every row. %s is '
@@ -758,24 +762,24 @@ class Circuit(Operation):
                                 placeholder.append(i)
                                 # add the first and last values for Aij (j)
                                 if isinstance(entry.first(), MultiQubitGate):
-                                    placeholder.append(entry.first().subExpr(1).subExpr(0).subExpr(1))
+                                    placeholder.append(entry.first().gate.indices[0])
                                 else:
-                                    placeholder.append(entry.first().subExpr(1).subExpr(1))
+                                    placeholder.append(entry.first().start_index)
                                 if isinstance(entry.last(), MultiQubitGate):
-                                    placeholder.append(entry.last().subExpr(1).subExpr(0).subExpr(1))
+                                    placeholder.append(entry.last().gate.indices[1])
                                 else:
-                                    placeholder.append(entry.last().subExpr(1).subExpr(1))
+                                    placeholder.append(entry.last().end_index)
                                 pos.append(placeholder)
                             if first is None:
                                 # first and last are only used by ExprRange
                                 if isinstance(entry.first(), MultiQubitGate):
-                                    first = entry.first().subExpr(1).subExpr(0).subExpr(1)
+                                    first = entry.first().gate.indices[0]
                                 else:
-                                    first = entry.first().subExpr(1).subExpr(1)
+                                    first = entry.first().start_index
                             if isinstance(entry.first(), MultiQubitGate):
-                                current = entry.first().subExpr(1).subExpr(0).subExpr(1)
+                                current = entry.first().gate.indices[1]
                             else:
-                                current = entry.first().subExpr(1).subExpr(1)
+                                current = entry.first().start_index
                             if first != current:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (first, current))
@@ -785,16 +789,16 @@ class Circuit(Operation):
                             k += 1
                         elif isinstance(entry, MultiQubitGate):
                             if first is None:
-                                first = entry.subExpr(1).subExpr(0).subExpr(1)
-                            if first != entry.subExpr(1).subExpr(0).subExpr(1):
+                                first = entry.gate.indices[0]
+                            if first != entry.gate.indices[0]:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.subExpr(1).subExpr(0).subExpr(1)))
+                                                 'not equal to %s.' % (first, entry.gate.indices[0]))
                         else:
                             if first is None:
-                                first = entry.subExpr(1)
-                            if first != entry.subExpr(1):
+                                first = entry.start_index
+                            if first != entry.start_index:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.subExpr(1)))
+                                                 'not equal to %s.' % (first, entry.start_index))
                     for entry in expr.last():
                         # loop through the ExprTuple (last)
                         if isinstance(entry, ExprTuple):
@@ -805,13 +809,13 @@ class Circuit(Operation):
                             # are in agreement.
                             if last is None:
                                 if isinstance(entry.last(), MultiQubitGate):
-                                    last = entry.last().subExpr(1).subExpr(0).subExpr(0).subExpr(1)
+                                    last = entry.last().gate.indices[0]
                                 else:
-                                    last = entry.last().subExpr(1).subExpr(1)
+                                    last = entry.last().end_index
                             if isinstance(entry.last(), MultiQubitGate):
-                                current = entry.last().subExpr(1).subExpr(0).subExpr(0).subExpr(1)
+                                current = entry.last().gate.indices[0]
                             else:
-                                current = entry.last().subExpr(1).subExpr(1)
+                                current = entry.last().end_index
                             if last != current:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
                                                  'not equal to %s.' % (last, current))
@@ -820,16 +824,16 @@ class Circuit(Operation):
                                                  'not equal to %s.' % (last, current))
                         elif isinstance(entry, MultiQubitGate):
                             if last is None:
-                                last = entry.subExpr(1).subExpr(0).subExpr(1)
-                            if last != entry.subExpr(1).subExpr(0).subExpr(1):
+                                last = entry.gate.indices[0]
+                            if last != entry.gate.indices[0]:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, entry.subExpr(1).subExpr(0).subExpr(1)))
+                                                 'not equal to %s.' % (last, entry.gate.indices[0]))
                         else:
                             if last is None:
-                                last = entry.subExpr(1)
-                            if last != entry.subExpr(1):
+                                last = entry.end_index
+                            if last != entry.end_index:
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, entry.subExpr(1)))
+                                                 'not equal to %s.' % (last, entry.end_index))
             n = m
 
             if k != len(pos):
