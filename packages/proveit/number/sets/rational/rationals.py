@@ -1,61 +1,106 @@
-import proveit
 from proveit import USE_DEFAULTS, maybeFencedString
-from proveit._common_ import a
+from proveit.logic import Membership
 from proveit.number.sets.number_set import NumberSet
 
 class RationalsSet(NumberSet):
+
     def __init__(self):
-        NumberSet.__init__(self, 'Rationals',r'\mathbb{Q}', context=__file__)
+        NumberSet.__init__(self, 'Rationals', r'\mathbb{Q}',
+                           context=__file__)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsInBool
         from proveit._common_ import x
         return xInRationalsInBool.specialize(
                 {x:member}, assumptions=assumptions)
-    
+
 class RationalsPosSet(NumberSet):
+
     def __init__(self):
-        NumberSet.__init__(self, 'RationalsPos', r'\mathbb{Q}^+',
+        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{Q}^+',
                            context=__file__)
-    
+
+    def string(self, **kwargs):
+        inner_str = NumberSet.string(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        return maybeFencedString(inner_str, **kwargs)
+
+    def latex(self, **kwargs):
+        inner_str = NumberSet.latex(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        return maybeFencedString(inner_str, **kwargs)
+
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsPosInBool
         from proveit._common_ import x
         return xInRationalsPosInBool.specialize(
                 {x:member}, assumptions=assumptions)
-    
-    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from real.theorems import inRationalsPos_iff_positive
-        return inRationalsPos_iff_positive.specialize(
-                {a:member},
-                assumptions=assumptions).deriveRightImplication(assumptions)
+
+class RationalsNegSet(NumberSet):
+
+    def __init__(self):
+        NumberSet.__init__(self, 'NaturalsNeg', r'\mathbb{Q}^-',
+                           context=__file__)
+
+    def string(self, **kwargs):
+        inner_str = NumberSet.string(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        return maybeFencedString(inner_str, **kwargs)
+
+    def latex(self, **kwargs):
+        inner_str = NumberSet.latex(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        return maybeFencedString(inner_str, **kwargs)
+
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import xInRationalsNegInBool
+        from proveit._common_ import x
+        return xInRationalsNegInBool.specialize(
+                {x:member}, assumptions=assumptions)
 
 class RationalsNonNegSet(NumberSet):
+
     def __init__(self):
-        NumberSet.__init__(self, 'RationalsNonNeg', r'\mathbb{Q}^{\ge 0}',
-                context=__file__)
-    
+        NumberSet.__init__(self, 'NaturalsNonNeg', r'\mathbb{Q}^{\geq 0}',
+                           context=__file__)
+
+    def string(self, **kwargs):
+        inner_str = NumberSet.string(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        return maybeFencedString(inner_str, **kwargs)
+
+    def latex(self, **kwargs):
+        inner_str = NumberSet.latex(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        return maybeFencedString(inner_str, **kwargs)
+
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsNonNegInBool
         from proveit._common_ import x
         return xInRationalsNonNegInBool.specialize(
                 {x:member}, assumptions=assumptions)
-    
-    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import inRationalsNonNeg_iff_nonNeg
-        return inRationalsNonNeg_iff_nonNeg.specialize(
-                {q:member}, assumptions=assumptions).deriveRightImplication(
-                        assumptions)
 
-# if proveit.defaults.automation:
-#     # Import some fundamental theorems without quantifiers that are
-#     # imported when automation is used.
-#     from ._theorems_ import rationalsPosInRationals, intsInRationals, natsInRationals, natsPosInRationals
-
-if proveit.defaults.automation:
-    # Import some fundamental theorems without quantifiers that are
-    # imported when automation is used.
-    from ._theorems_ import (
-        natsInRationals, natsInRationalsNonNeg, natsPosInRationals,
-        natsPosInRationalsNonNeg, intsInRationals, rationalsPosInRationals,
-        rationalsPosInRationalsNonNeg, rationalsNonNegInRationals)
+try:
+    # Import some fundamental axioms and theorems without quantifiers.
+    # Fails before running the _axioms_ and _theorems_ notebooks for
+    # the first time, but fine after that.
+    from ._theorems_ import (rationalsInReals,
+                             rationalsPosInRationals,
+                             rationalsNegInRationals, 
+                             rationalsNonNegInRationals,
+                             rationalsPosInRationalsNonNeg,
+                             zeroInRationals)
+except:
+    pass

@@ -136,6 +136,7 @@ class NumeralSequence(Operation, IrreducibleValue):
     def _formatted(self, formatType, **kwargs):
         from proveit import ExprRange, varRange
         outstr = ''
+
         for digit in self.digits:
             if isinstance(digit, Operation):
                 outstr += digit.formatted(formatType, fence=True)

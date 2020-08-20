@@ -497,13 +497,12 @@ def extract_var_tuple_indices(indexed_var_tuple):
     indices and nested ranges of indices).
     '''
     from proveit import IndexedVar, ExprRange
-    from proveit._core_.expression.operation.indexed_var import extract_indices
     indices = []
     if not isinstance(indexed_var_tuple, ExprTuple):
         raise TypeError("'indexed_var_tuple' must be an ExprTuple")
     for entry in indexed_var_tuple:
         if isinstance(entry, IndexedVar):
-            entry_indices = extract_indices(entry)
+            entry_indices = entry.indices
             if len(entry_indices)==1: 
                 indices.append(entry_indices[0])
             else:

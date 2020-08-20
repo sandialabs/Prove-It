@@ -368,7 +368,7 @@ class ExprRange(Expression):
         if exclusions is not None:
             if self in exclusions:
                 return dict() # this is excluded
-            # For the body, extent the exclusion set as necessary to
+            # For the body, extend the exclusion set as necessary to
             # exclude anything contributing directly to a form that is
             # in the exclusion set.  For example, if 
             # x_1, ..., x_n is in the exclusion set and 
@@ -628,8 +628,6 @@ class ExprRange(Expression):
         See the Lambda.apply documentation for a related discussion.
         '''
         from proveit._core_.expression.expr import attempt_to_simplify
-        from proveit._core_.expression.operation.indexed_var import \
-            IndexedVar
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             getParamVar, extract_param_replacements
         from proveit.logic import Equals#, InSet
@@ -746,10 +744,13 @@ class ExprRange(Expression):
         # Create `expansions_dict` to map each of the variables being
         # expanded to the expansion that is relevent for this ExprRange.
         expansions_dict = dict()
-        orig_parameters = extract_parameters(self)
-        starts = extract_start_indices(subbed_expr_range)
-        ends = extract_end_indices(subbed_expr_range)
-        assert len(starts)==len(ends)==len(orig_parameters)
+        #orig_parameters = extract_parameters(self)
+        #starts = extract_start_indices(subbed_expr_range)
+        #ends = extract_end_indices(subbed_expr_range)
+        orig_parameter = self.parameter
+        subbed_start_index = subbed_expr_range.start_index
+        subbed_end_index = subbed_expr_range.end_index
+        #assert len(starts)==len(ends)==len(orig_parameters)
         for occurrence in expanding_occurrences:
             # We need to create a proper "variable range" with simple
             # parameterized indices.  Any shifts of the indices of
@@ -758,22 +759,36 @@ class ExprRange(Expression):
             # x_{k+1} with k going from 1 to n should change to
             # x_k with k going from 1+1 to n+1.
             indexed_var = innermost_body(occurrence)
-            var = indexed_var
-            var_indices = []
-            for _ in range(len(starts)):
-                if not isinstance(var, IndexedVar): break
-                var_indices.append(var.index)
-                var = var.var
-            var_indices = list(reversed(var_indices))
+            var_indices = indexed_var.indices
+            var = indexed_var.var
             
-            starts_with_absorbed_shift = [
-                    idx.replaced({param:start_idx}) for (idx, param, start_idx)
-                    in zip(var_indices, orig_parameters, starts)]
-            ends_with_absorbed_shift = [
-                    idx.replaced({param:end_idx}) for (idx, param, end_idx)
-                    in zip(var_indices, orig_parameters, ends)]
-            var_range = varRange(var, starts_with_absorbed_shift, 
-                                 ends_with_absorbed_shift)
+            param_index = None
+            for idx in var_indices:
+                if orig_parameter in free_vars(idx, err_inclusively=True):
+                    if param_index is not None:
+                        raise ImproperReplacement(
+                                self, repl_map,
+                                "Failure to expand %s because %s is not a valid "
+                                "occurrence with the range parameter %s; multiple "
+                                "index occurrences are not allowed."
+                                %(self, occurrence, orig_parameter))
+                    param_index = idx
+                    start_with_absorbed_shift = \
+                        idx.replaced({orig_parameter:subbed_start_index})
+                    end_with_absorbed_shift = \
+                        idx.replaced({orig_parameter:subbed_end_index})
+            if param_index is None:
+                raise ImproperReplacement(
+                        self, repl_map,
+                        "Failure to expand %s because %s is not a valid "
+                        "occurrence with the range parameter %s; not used as "
+                        "an index."
+                        %(self, occurrence, orig_parameter))
+            var_range = ExprRange(orig_parameter, 
+                                  occurrence.replaced({param_index:orig_parameter}), 
+                                  start_with_absorbed_shift,
+                                  end_with_absorbed_shift)
+                        
             # Now wrap this "variable range" in an ExprTuple and see
             # if it has a known expansion.
             var_tuple = ExprTuple(var_range)
@@ -817,7 +832,7 @@ class ExprRange(Expression):
         if indices_must_match:
             # Yes.  Prepare to do that.
             new_indices = []
-            next_index = starts[0]
+            next_index = subbed_start_index
         
         # Divy up the expansions into aligned entries, each with
         # its own replacement map.  This is in preparation to yield
@@ -953,7 +968,7 @@ class ExprRange(Expression):
                 #                         Interval(start_index, end_index))
                 
                 entry_assumptions = inner_assumptions # + [range_assumption]
-                full_entry_repl_map[orig_parameters[0]] = new_param
+                full_entry_repl_map[orig_parameter] = new_param
                 entry = ExprRange(new_param,
                                   body.replaced(full_entry_repl_map, 
                                                 allow_relabeling,
@@ -981,7 +996,7 @@ class ExprRange(Expression):
                     next_index = attempt_to_simplify(
                             next_index, assumptions, requirements)
                     # The actual range parameter index is needed:
-                    full_entry_repl_map[orig_parameters[0]] = next_index
+                    full_entry_repl_map[orig_parameter] = next_index
                 if isinstance(body, ExprRange):
                     # A nested ExprRange may need to be expanded.
                     for subentry in body._replaced_entries(
@@ -1006,7 +1021,8 @@ class ExprRange(Expression):
             # and original indices precisely, not just their length.
             requirement = Equals(ExprTuple(*new_indices), 
                                  ExprTuple(ExprRange(new_param, new_param,
-                                                     starts[0], ends[0])))
+                                                     subbed_start_index, 
+                                                     subbed_end_index)))
             if requirement.lhs==requirement.rhs:
                 # No need for the requirement if it is a trivial
                 # reflexive identity.
@@ -1271,12 +1287,12 @@ def nestedRange(parameters, body, start_indices, end_indices):
     
 def varRange(var, start_index_or_indices, end_index_or_indices):
     from proveit import (safeDummyVars, compositeExpression,
-                         indexed_var)
+                         IndexedVar)
     start_indices = compositeExpression(start_index_or_indices)
     end_indices = compositeExpression(end_index_or_indices)
     parameters = safeDummyVars(len(start_indices), var, start_indices, 
                                end_indices)
-    return nestedRange(parameters, indexed_var(var, parameters),
+    return nestedRange(parameters, IndexedVar(var, parameters),
                        start_indices, end_indices)
 
 class RangeInstanceError(Exception):

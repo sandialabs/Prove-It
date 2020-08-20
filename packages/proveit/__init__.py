@@ -8,7 +8,7 @@ from ._core_ import (
         Expression, traverse_inner_expressions, used_vars, 
         possibly_free_var_ranges, free_vars, attempt_to_simplify,
         InnerExpr, expressionDepth,
-        Operation, IndexedVar, indexed_var, Function, OperationSequence, 
+        Operation, IndexedVar, Function, OperationSequence, 
         OperationOverInstances, bundle, unbundle, OperationError,
         Conditional, 
         Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
