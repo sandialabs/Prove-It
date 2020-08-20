@@ -1145,7 +1145,7 @@ class Instantiation(Proof):
                     # should be replaced by the corresponding range
                     # of variables.
                     # For example
-                    #   x : (x_1, ..., x_n, )
+                    #   x : (x_1, ..., x_n)
                     # which may be introduced after eliminating a
                     #   \forall_{x_1, ..., x_n} ...
                     # universal quantifier.
