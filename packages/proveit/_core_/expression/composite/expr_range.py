@@ -763,6 +763,7 @@ class ExprRange(Expression):
             var = indexed_var.var
             
             param_index = None
+            index_repl = dict() 
             for idx in var_indices:
                 if orig_parameter in free_vars(idx, err_inclusively=True):
                     if param_index is not None:
@@ -772,11 +773,16 @@ class ExprRange(Expression):
                                 "occurrence with the range parameter %s; multiple "
                                 "index occurrences are not allowed."
                                 %(self, occurrence, orig_parameter))
-                    param_index = idx
                     start_with_absorbed_shift = \
                         idx.replaced({orig_parameter:subbed_start_index})
                     end_with_absorbed_shift = \
                         idx.replaced({orig_parameter:subbed_end_index})
+                    param_index = idx
+                    index_repl[idx] = orig_parameter
+                else:
+                    index_repl[idx] = idx.replaced(
+                            repl_map, allow_relabeling, assumptions, requirements,
+                            equality_repl_requirements)
             if param_index is None:
                 raise ImproperReplacement(
                         self, repl_map,
@@ -784,8 +790,8 @@ class ExprRange(Expression):
                         "occurrence with the range parameter %s; not used as "
                         "an index."
                         %(self, occurrence, orig_parameter))
-            var_range = ExprRange(orig_parameter, 
-                                  occurrence.replaced({param_index:orig_parameter}), 
+            occurrence = occurrence.replaced(index_repl)
+            var_range = ExprRange(orig_parameter, occurrence, 
                                   start_with_absorbed_shift,
                                   end_with_absorbed_shift)
                         
@@ -803,7 +809,7 @@ class ExprRange(Expression):
                 raise ImproperReplacement(
                         self, repl_map,
                         "Failure to expand %s because there is no explicit "
-                        "expansion for %s.  The known expansions are for "
+                        "expansion for %s.  The known expansions for "
                         "this variable are %s.  "
                         "(Note that multiple, equivalent expansion forms "
                         "may be provided to fulfill this requirement)."
@@ -813,7 +819,7 @@ class ExprRange(Expression):
                 raise ImproperReplacement(
                         self, repl_map,
                         "Invalid replacement %s for %s; it must be an "
-                        "ExprTuple."%(var_tuple, repl))                
+                        "ExprTuple."%(var_tuple, repl))
             expansions_dict[occurrence] = repl.entries
 
         def raise_failed_expansion_match(first_expansion, expansion,
@@ -871,8 +877,10 @@ class ExprRange(Expression):
                     # The replacement map will map 
                     # 'indexed_var_or_range' to the body of the entry
                     # with the parameter changed to our 'new_param'.
-                    new_body = entry.body.replaced({entry.parameter:new_param})
-                    entry_repl_map[indexed_var_or_range] = new_body
+                    param_repl_map = {entry.parameter:new_param}
+                    new_body = entry.body.replaced(param_repl_map)
+                    entry_repl_map[indexed_var_or_range.replaced(param_repl_map)] \
+                        = new_body
                     expansion_entry_ranges.append(entry)
                     # Advance the "expansion iter".
                     next(expansion_iter)
@@ -938,6 +946,23 @@ class ExprRange(Expression):
                         entry_repl_maps, expansion_repl_maps):
                     entry_repl_map.update(expansion_repl_map)
         
+        def update_map(orig_repl_map, update):
+            '''
+            Given an original replacement map, use the 'update' dictionary
+            to make replacements in all of its keys and values and then
+            add the update entrie(s).
+            '''
+            new_repl_map = dict()
+            for key, val in orig_repl_map.items():
+                key = key.replaced(update)
+                if isinstance(val, set):
+                    val = {elem.replaced(update) for elem in val}
+                else:
+                    val = val.replaced(update)
+                new_repl_map[key] = val
+            new_repl_map.update(update)
+            return new_repl_map
+        
         # Yield a replacement for each of the aligned entry of the
         # expansions.  May be a singular entry or an ExprRange entry
         # representing a portion of the original range.
@@ -968,7 +993,8 @@ class ExprRange(Expression):
                 #                         Interval(start_index, end_index))
                 
                 entry_assumptions = inner_assumptions # + [range_assumption]
-                full_entry_repl_map[orig_parameter] = new_param
+                param_repl_map= {orig_parameter:new_param}
+                full_entry_repl_map = update_map(full_entry_repl_map, param_repl_map)
                 entry = ExprRange(new_param,
                                   body.replaced(full_entry_repl_map, 
                                                 allow_relabeling,
@@ -996,7 +1022,10 @@ class ExprRange(Expression):
                     next_index = attempt_to_simplify(
                             next_index, assumptions, requirements)
                     # The actual range parameter index is needed:
-                    full_entry_repl_map[orig_parameter] = next_index
+                    param_repl_map= {orig_parameter:next_index}
+                    full_entry_repl_map = update_map(full_entry_repl_map, param_repl_map)
+                    #full_entry_repl_map[orig_parameter] = next_index
+
                 if isinstance(body, ExprRange):
                     # A nested ExprRange may need to be expanded.
                     for subentry in body._replaced_entries(
