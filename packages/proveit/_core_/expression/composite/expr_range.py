@@ -630,13 +630,14 @@ class ExprRange(Expression):
         from proveit._core_.expression.expr import attempt_to_simplify
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             getParamVar, extract_param_replacements
+        from proveit._core_.expression.label.var import safeDummyVar
         from proveit.logic import Equals#, InSet
         from proveit.number import Add, one#, Interval
                         
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be replaced.
             return repl_map[self]
-        
+
         if requirements is None: requirements = []
         assumptions = defaults.checkedAssumptions(assumptions)
         # We will turn on the `indices_must_match` flag when the
@@ -724,6 +725,7 @@ class ExprRange(Expression):
         
         assert len(new_params)==1
         new_param = new_params[0]
+        safe_dummy_var = safeDummyVar(self.body, self.parameter)
         # Restore the repl_map, adding back in what was temporarily
         # popped out.
         repl_map.update(repl_map_stash)
@@ -763,7 +765,13 @@ class ExprRange(Expression):
             var = indexed_var.var
             
             param_index = None
-            index_repl = dict() 
+            
+            # Note: We'll make replacements of IndexedVar indices and start
+            # and end range indices of the occurrence, but not the variable
+            # itself, before we look up the replacement for the corresponding
+            # variable range.
+            occurrence_map = dict(repl_map)
+            occurrence_map.pop(var)
             for idx in var_indices:
                 if orig_parameter in free_vars(idx, err_inclusively=True):
                     if param_index is not None:
@@ -778,11 +786,12 @@ class ExprRange(Expression):
                     end_with_absorbed_shift = \
                         idx.replaced({orig_parameter:subbed_end_index})
                     param_index = idx
-                    index_repl[idx] = orig_parameter
-                else:
-                    index_repl[idx] = idx.replaced(
-                            repl_map, allow_relabeling, assumptions, requirements,
-                            equality_repl_requirements)
+                    occurrence_map[idx] = orig_parameter
+                    if idx != orig_parameter:
+                        # We'll map the original parameter to a safe dummy var
+                        # so we can detect if there are other instances of
+                        # the original parameter with a different shift.
+                        occurrence_map[orig_parameter] = safe_dummy_var
             if param_index is None:
                 raise ImproperReplacement(
                         self, repl_map,
@@ -790,7 +799,19 @@ class ExprRange(Expression):
                         "occurrence with the range parameter %s; not used as "
                         "an index."
                         %(self, occurrence, orig_parameter))
-            occurrence = occurrence.replaced(index_repl)
+            orig_occurrence = occurrence
+            occurrence = occurrence.replaced(
+                    occurrence_map, allow_relabeling, assumptions, requirements,
+                    equality_repl_requirements)
+            if safe_dummy_var in free_vars(occurrence, err_inclusively=True):
+                # There was an instance of the original parameter with a
+                # different shift than what we used.  That's not allowed.
+                raise ImproperReplacement(
+                        self, repl_map,
+                        "Failure to expand %s because %s does not use a "
+                        "consistent shift the range parameter %s."
+                        %(self, orig_occurrence, orig_parameter))
+                
             var_range = ExprRange(orig_parameter, occurrence, 
                                   start_with_absorbed_shift,
                                   end_with_absorbed_shift)
@@ -806,6 +827,7 @@ class ExprRange(Expression):
                 var_replacements = \
                     {key:value for key, value in inner_repl_map.items() if 
                      key_var(key)==var}
+                print('problem self', self, repl_map)
                 raise ImproperReplacement(
                         self, repl_map,
                         "Failure to expand %s because there is no explicit "
@@ -945,7 +967,7 @@ class ExprRange(Expression):
                 for entry_repl_map, expansion_repl_map in zip(
                         entry_repl_maps, expansion_repl_maps):
                     entry_repl_map.update(expansion_repl_map)
-        
+                
         def update_map(orig_repl_map, update):
             '''
             Given an original replacement map, use the 'update' dictionary
