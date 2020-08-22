@@ -1,5 +1,5 @@
 import sys
-from proveit import Lambda, Literal, Operation, TransitiveRelation, USE_DEFAULTS
+from proveit import Lambda, Literal, Operation, TransitiveRelation, USE_DEFAULTS, defaults
 from proveit._common_ import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
@@ -261,7 +261,13 @@ class MultiQubitGate(Operation):
         if isinstance(gate_set, Set):
             self.indices = gate_set.operands
         self.gate_set = gate_set
-        self.gate = gate
+
+        #if isinstance(gate, Gate):
+         #   self.gate = gate.gate_operation
+        if isinstance(gate, MultiQubitGate):
+            self.gate = gate.gate
+        else:
+            self.gate = gate
 
         if styles is None: styles = dict()
         if 'representation' not in styles:
@@ -272,18 +278,22 @@ class MultiQubitGate(Operation):
         '''
         Automatically reduce "MultiQubitGate() = IdentityOp()" and "MultiQubitGate(Gate(a), Set(n)) = Gate(a)".
         '''
-        from proveit.number import Numeral
-        if len(self.operands) == 0:
-            # from proveit.physics.quantum._axioms_ import emptyMultiQubitGate
-            # return emptyMultiQuibitGate
-            pass
-        elif self.gate_set.operands.singular() and isinstance(self.gate_set.operands, Numeral):
+        from proveit.number import isLiteralInt
+
+        if isinstance(self.gate_set, Set) and self.gate_set.operands.singular() and \
+                isLiteralInt(self.gate_set.operands[0]):
             try:
                 return self.unaryReduction(assumptions)
             except:
                 # Cannot do the reduction if the operand is not known
                 # to be in NaturalsPos.
                 pass
+
+        if isinstance(self.gate_set, Set) and len(self.gate_set.operands) == 0:
+            return self.emptySetReduction(assumptions)
+            # need to implement an empty set reduction theorem
+
+
 
     def styleOptions(self):
         from proveit._core_.expression.style_options import StyleOptions
@@ -306,7 +316,19 @@ class MultiQubitGate(Operation):
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unaryReduction")
         operand = self.gate_set.operands[0]
-        return unary_multiQubitGate_reduction.specialize({U: self.gate, A: operand}, assumptions=assumptions)
+        with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            disable_reduction_types.add(MultiQubitGate)
+            return unary_multiQubitGate_reduction.specialize({U: self.gate, A: operand}, assumptions=assumptions)
+
+    def emptySetReduction(self, assumptions=USE_DEFAULTS):
+        from proveit.physics.quantum._theorems_ import empty_multiQubitGate_reduction
+        if not len(self.gate_set.operands) == 0:
+            raise ValueError("Expression must have an empty Set() in "
+                             "order to invoke emptySetReduction")
+        #operand = self.gate_set
+        with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            disable_reduction_types.add(MultiQubitGate)
+            return empty_multiQubitGate_reduction.specialize({U: self.gate}, assumptions=assumptions)
 
     def formatted(self, formatType, representation=None, **kwargs):
         if representation is None:
@@ -318,13 +340,9 @@ class MultiQubitGate(Operation):
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
             out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
-            if formattedGateOperation == 'X':
-                if representation != 'implicit':
-                    # we want to explicitly see the type of gate as a 'letter' representation
-                    out_str += formattedGateOperation
-                else:
-                    # this is formatted as a target.
-                    out_str += r'\targ'
+            if formattedGateOperation == 'X' and representation == 'implicit':
+               # this is formatted as a target.
+                out_str += r'\targ'
             elif formattedGateOperation == 'CONTROL':
                 # this is formatted as a solid dot using \control
                 out_str += r'\control \qw'
@@ -342,7 +360,13 @@ class MultiQubitGate(Operation):
 
                     if count == len(self.gate_set.operands):
                         if len(self.gate_set.operands) == 1:
-                            out_str += r'\gate{' + formattedGateOperation + r'}'
+                            out_str += r'\gate{' + formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(
+                                formatType) + r'}'
+                        elif len(self.gate_set.operands) == 0:
+                            # there should only be 1 or 0 gate operands
+                            #out_str += formattedGateOperation
+                            out_str += r'\gate{' + formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(
+                                formatType) + r'}'
                         else:
                             out_str += formattedGateOperation
                     else:
@@ -643,7 +667,7 @@ class Circuit(Operation):
 
         Operation.__init__(self, Circuit._operator_, [array], styles=styles)
 
-        self.array = self.operand
+        self.array = array
 
         if not isinstance(self.array, ExprArray): #or len(self.operands) != 1:
             raise ValueError("Expected contents of a Circuit expression to be an ExprArray object not %s"
@@ -669,9 +693,10 @@ class Circuit(Operation):
             raise ValueError('The replacement piece must be a circuit element.')
         if current.getColHeight() != new.getColHeight() or current.getRowLength() != new.getRowLength():
             raise ValueError('The current circuit element and the replacement circuit element must be the same size.')
-        #if current.getRowLength() == 1 and current.getColHeight() == self.getColHeight():
+        if current.getRowLength() == 1 and current.getColHeight() == self.getColHeight():
             #return sing_time_equiv.specialize({h:l, k:l, m: self.getColHeight, n:l, A:l, B: current, C:l, D: new, R:l, S: , Q:l},
              #           assumptions=assumptions)
+            pass
 
     def checkRange(self):
         '''
@@ -692,6 +717,7 @@ class Circuit(Operation):
                     if isinstance(entry, ExprRange):
                         if m == 0:
                             # if this is the first row
+                            print(entry.first(), entry.last())
                             placeholder = []
                             placeholder.append(i)
                             # adding the column number
@@ -705,8 +731,8 @@ class Circuit(Operation):
                             # accessing j is different for a MultiQubitGate.
                             if isinstance(entry.last(), MultiQubitGate):
                                 placeholder.append(entry.last().gate.indices[0])
-                            elif isinstance(entry.first(), Gate):
-                                placeholder.append(entry.first().gate_operation.indices[0])
+                            elif isinstance(entry.last(), Gate):
+                                placeholder.append(entry.last().gate_operation.indices[0])
                             else:
                                 placeholder.append(entry.last().end_index)
                             pos.append(placeholder)
@@ -715,6 +741,7 @@ class Circuit(Operation):
                                 raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
                             for item in pos:
                                 if item[0] == i:
+                                    print(entry.first(), entry.last())
                                     # if we are in the current column
                                     if isinstance(entry.first(), MultiQubitGate):
                                         current = entry.first().gate.indices[0]
@@ -725,8 +752,8 @@ class Circuit(Operation):
                                     # check the current j value against the first row j value
                                     if current != item[1]:
                                         raise ValueError('Columns containing ExprRanges '
-                                                         'must agree for every row. %s is '
-                                                         'not equal to %s.' % (current, item[1]))
+                                                         'must agree for every row. %s from %s is '
+                                                         'not equal to %s.' % (current, entry.first(), item[1]))
                                     if isinstance(entry.last(), MultiQubitGate):
                                         current = entry.last().gate.indices[0]
                                     elif isinstance(entry.last(), Gate):
@@ -735,8 +762,8 @@ class Circuit(Operation):
                                         current = entry.last().end_index
                                     if current != item[2]:
                                         raise ValueError('Columns containing ExprRanges '
-                                                         'must agree for every row. %s is '
-                                                         'not equal to %s.' % (current, item[2]))
+                                                         'must agree for every row. %s from is '
+                                                         'not equal to %s.' % (current, entry.last(), item[2]))
                                     k += 1
                         count += 3
                     else:
@@ -757,16 +784,21 @@ class Circuit(Operation):
                             if m == 0:
                                 # placeholder/pos is only used if the row is an ExprTuple, however, if the first
                                 # row is an ExprRange, it needs to be defined here.
+                                print(entry.first(), entry.last())
                                 placeholder = []
                                 # add which column we are in
                                 placeholder.append(i)
                                 # add the first and last values for Aij (j)
                                 if isinstance(entry.first(), MultiQubitGate):
-                                    placeholder.append(entry.first().gate.indices[0])
+                                    placeholder.append(entry.first().gate.indices[1])
+                                elif isinstance(entry.first(), Gate):
+                                    placeholder.append(entry.first().gate_operation.indices[1])
                                 else:
                                     placeholder.append(entry.first().start_index)
                                 if isinstance(entry.last(), MultiQubitGate):
                                     placeholder.append(entry.last().gate.indices[1])
+                                elif isinstance(entry.last(), Gate):
+                                    placeholder.append(entry.last().gate_operation.indices[1])
                                 else:
                                     placeholder.append(entry.last().end_index)
                                 pos.append(placeholder)
@@ -774,31 +806,39 @@ class Circuit(Operation):
                                 # first and last are only used by ExprRange
                                 if isinstance(entry.first(), MultiQubitGate):
                                     first = entry.first().gate.indices[0]
+                                elif isinstance(entry.first(), Gate):
+                                    first = entry.first().gate_operation.indices[0]
                                 else:
                                     first = entry.first().start_index
                             if isinstance(entry.first(), MultiQubitGate):
-                                current = entry.first().gate.indices[1]
+                                current = entry.first().gate.indices[0]
+                            elif isinstance(entry.first(), Gate):
+                                current = entry.first().gate_operation.indices[0]
                             else:
                                 current = entry.first().start_index
                             if first != current:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, current))
-                            if first != current:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, current))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry.first(), current))
                             k += 1
                         elif isinstance(entry, MultiQubitGate):
                             if first is None:
                                 first = entry.gate.indices[0]
                             if first != entry.gate.indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.gate.indices[0]))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry.gate, entry.gate.indices[0]))
+                        elif isinstance(entry, Gate):
+                            if first is None:
+                                first = entry.gate_operation.indices[0]
+                            if first != entry.gate_operation.indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry.gate_operation,
+                                                                          entry.gate_operation.indices[0]))
                         else:
                             if first is None:
                                 first = entry.start_index
                             if first != entry.start_index:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.start_index))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry, entry.start_index))
                     for entry in expr.last():
                         # loop through the ExprTuple (last)
                         if isinstance(entry, ExprTuple):
@@ -810,30 +850,37 @@ class Circuit(Operation):
                             if last is None:
                                 if isinstance(entry.last(), MultiQubitGate):
                                     last = entry.last().gate.indices[0]
+                                elif isinstance(entry.last(), Gate):
+                                    last = entry.last().gate_operation.indices[0]
                                 else:
                                     last = entry.last().end_index
                             if isinstance(entry.last(), MultiQubitGate):
                                 current = entry.last().gate.indices[0]
+                            elif isinstance(entry.last(), Gate):
+                                current = entry.last().gate_operation.indices[0]
                             else:
                                 current = entry.last().end_index
                             if last != current:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, current))
-                            if last != current:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, current))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry.last(), current))
                         elif isinstance(entry, MultiQubitGate):
                             if last is None:
                                 last = entry.gate.indices[0]
                             if last != entry.gate.indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, entry.gate.indices[0]))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry.gate, entry.gate.indices[0]))
+                        elif isinstance(entry, Gate):
+                            if last is None:
+                                last = entry.gate_operation.indices[0]
+                            if last != entry.gate_operation.indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry.gate_operation, entry.indices[0]))
                         else:
                             if last is None:
                                 last = entry.end_index
                             if last != entry.end_index:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, entry.end_index))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry, entry.end_index))
             n = m
 
             if k != len(pos):

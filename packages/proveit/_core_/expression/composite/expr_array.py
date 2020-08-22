@@ -178,14 +178,14 @@ class ExprArray(ExprTuple):
                                 raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
                             for item in pos:
                                 if item[0] == i:
-                                    if entry.first().subExpr(1) != item[1]:
+                                    if entry.start_index != item[1]:
                                         raise ValueError('Columns containing ExprRanges '
-                                                         'must agree for every row. %s is '
-                                                         'not equal to %s.' % (entry.start_index, item[1]))
-                                    if entry.last().subExpr(1) != item[2]:
+                                                         'must agree for every row. %s from %s is '
+                                                         'not equal to %s.' % (entry.start_index, entry, item[1]))
+                                    if entry.end_index != item[2]:
                                         raise ValueError('Columns containing ExprRanges '
-                                                         'must agree for every row. %s is '
-                                                         'not equal to %s.' % (entry.end_index, item[2]))
+                                                         'must agree for every row. %s from %s is '
+                                                         'not equal to %s.' % (entry.end_index, entry, item[2]))
                                     k += 1
                         count += 3
                     else:
@@ -211,47 +211,48 @@ class ExprArray(ExprTuple):
                                 # we are checking that i in Aij matches all the other i's
                                 placeholder = []
                                 placeholder.append(i)
-                                placeholder.append(entry.first().indices[0])
-                                placeholder.append(entry.last().indices[0])
+                                placeholder.append(entry.first().indices[1])
+                                placeholder.append(entry.last().indices[1])
                                 pos.append(placeholder)
                             if first is None:
                                 first = entry.first().indices[0]
                             if first != entry.first().indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.first().indices[0]))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry.first(),
+                                                                          entry.first().indices[0]))
 
                         else:
-                            if isinstance(entry, MultiQubitGate) or isinstance(entry.first(), Gate):
+                            if isinstance(entry, MultiQubitGate) or isinstance(entry, Gate):
                                 # we break in this instance because we have a check in Circuit
                                 return
                             if first is None:
                                 first = entry.indices[0]
                             if first != entry.indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.indices[0]))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry, entry.indices[0]))
                     for entry in expr.last():
                         if isinstance(entry, ExprTuple):
                             raise ValueError('Nested ExprTuples are not supported. Fencing is an '
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
-                            if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
+                            if isinstance(entry.first(), MultiQubitGate) or isinstance(entry, Gate):
                                 # we break in this instance because we have a check in Circuit
                                 return
                             if last is None:
                                 last = entry.last().indices[0]
                             if last != entry.last().indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, entry.last().indices[0]))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry.last(), entry.last().indices[0]))
 
                         else:
-                            if isinstance(entry, MultiQubitGate) or isinstance(entry.first(), Gate):
+                            if isinstance(entry, MultiQubitGate) or isinstance(entry, Gate):
                                 # we break in this instance because we have a check in Circuit
                                 return
                             if last is None:
                                 last = entry.indices[0]
                             if last != entry.indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, entry.indices[0]))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry, entry.indices[0]))
             n = m
 
         if k != len(pos):
