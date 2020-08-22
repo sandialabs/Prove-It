@@ -227,6 +227,8 @@ class Gate(Operation):
             out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
             if formattedGateOperation == 'MES':
                 out_str += r'\meter'
+            elif formattedGateOperation == 'SPACE':
+                out_str += formattedGateOperation
             else:
                 out_str += r'\gate{' + formattedGateOperation + r'}'
             out_str += ' \n' + '}'
@@ -336,7 +338,6 @@ class MultiQubitGate(Operation):
 
         formattedGateOperation = (
             self.gate.formatted(formatType, fence=False))
-
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
             out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
@@ -351,6 +352,8 @@ class MultiQubitGate(Operation):
                 out_str += r'\control \cw'
             elif formattedGateOperation == 'SWAP':
                 out_str += r'\qswap'
+            elif formattedGateOperation == 'SPACE':
+                out_str += formattedGateOperation
             else:
                 if isinstance(self.gate_set, Set):
                     count = 0
@@ -717,7 +720,7 @@ class Circuit(Operation):
                     if isinstance(entry, ExprRange):
                         if m == 0:
                             # if this is the first row
-                            print(entry.first(), entry.last())
+                            #print(entry.first(), entry.last())
                             placeholder = []
                             placeholder.append(i)
                             # adding the column number
@@ -741,7 +744,7 @@ class Circuit(Operation):
                                 raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
                             for item in pos:
                                 if item[0] == i:
-                                    print(entry.first(), entry.last())
+                                    #print(entry.first(), entry.last())
                                     # if we are in the current column
                                     if isinstance(entry.first(), MultiQubitGate):
                                         current = entry.first().gate.indices[0]
@@ -784,7 +787,7 @@ class Circuit(Operation):
                             if m == 0:
                                 # placeholder/pos is only used if the row is an ExprTuple, however, if the first
                                 # row is an ExprRange, it needs to be defined here.
-                                print(entry.first(), entry.last())
+                                #print(entry.first(), entry.last())
                                 placeholder = []
                                 # add which column we are in
                                 placeholder.append(i)
@@ -1343,19 +1346,8 @@ class Circuit(Operation):
                 # we add one to compensate for the added wrapping slash
                 row += 1
                 column = 0
-            if entry == '& SPACE':
-                # we have to include the '& ' because it has already been formatted according to an ExprArray
-                # SPACE is formatted as an empty space in the circuit, denoted by '&' for latex and SPACE for string
-                if formatType == 'latex':
-                    formatted_sub_expressions.append('&')
-                else:
-                    formatted_sub_expressions.append(entry)
-            elif entry == '& WIRE':
-                if formatType == 'latex':
-                    formatted_sub_expressions.append(r'& \cw')
-                else:
-                    formatted_sub_expressions.append(entry)
-            elif formatType == 'latex':
+
+            if formatType == 'latex':
                 if entry[0] == '&':
                     entry = entry[2:]
                     add = '& '
@@ -1370,7 +1362,15 @@ class Circuit(Operation):
                     # we add three  to include the n and the & and the space after then &
                     # we subtract 3 to get rid of the ending bracket and \n
                 out_str = ''
-                if wires is not None and wires[row] is not None and len(wires[row]) != 0 and column in wires[row]:
+
+                if entry == 'SPACE':
+                    # we have to include the '& ' because it has already been formatted according to an ExprArray
+                    # SPACE is formatted as an empty space in the circuit, denoted by '&' for latex and SPACE for string
+                    out_str += add + ' & '
+                elif entry == ' WIRE':
+                    out_str += add + r' \cw'
+
+                elif wires is not None and wires[row] is not None and len(wires[row]) != 0 and column in wires[row]:
                     if column == 0:
                         add = '& '
                     if isinstance(wires[row][column], list):
@@ -1399,6 +1399,9 @@ class Circuit(Operation):
                         elif entry == r'\control \cw':
                             # this is formatted as a solid dot, but with classical wires.
                             out_str += add + r'\control \cw'
+                        elif entry == r'\targ':
+                            # this is a target X gate (representation=implicit)
+                            out_str += add + entry
                         else:
                             if r'\gate' in entry:
                                 out_str += add + entry
@@ -1407,7 +1410,9 @@ class Circuit(Operation):
                     # if we are adding wires, we add the length according to self.wires
                     elif wires[row][column] == 'gate':
                         # a gate with no wires
-                        if r'\gate' in entry:
+                        if entry == r'\targ':
+                            out_str += add + entry
+                        elif r'\gate' in entry:
                             out_str += add + entry
                         else:
                             out_str += add + r'\gate{' + entry + r'}'
@@ -1419,6 +1424,8 @@ class Circuit(Operation):
                         elif entry == r'\control \cw':
                             # this is formatted as a solid dot, but with classical wires.
                             out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
+                        elif entry == r'\targ':
+                            out_str += add + r'\targ \qwx[' + str(wires[row][column]) + r']'
                         elif r'\gate' in entry:
                             out_str += add + entry + r' \qwx[' + str(wires[row][column]) + r']'
                         else:
@@ -1446,6 +1453,7 @@ class Circuit(Operation):
                 else:
                     formatted_sub_expressions.append(add + entry)
             else:
+
                 formatted_sub_expressions.append(add + entry)
             column += 1
 
