@@ -81,9 +81,13 @@ class Input(Operation):
     def formatted(self, formatType, fence=False):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
-            return r'\lstick{' + formattedState + r'}' 
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str += r'\lstick{' + formattedState + r'}'
+            out_str += ' \n' + '}'
+            return out_str
         else:
-            return Operation._formatted(self, formatType, fence=fence)
+            return 'Input(' + formattedState + ')'
 
     def _config_latex_tool(self, lt):
         Operation._config_latex_tool(self, lt)
@@ -113,9 +117,13 @@ class Output(Operation):
     def formatted(self, formatType, fence=False):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
-            return r'\rstick{' + formattedState + r'} \qw' 
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str += r'\rstick{' + formattedState + r'} \qw'
+            out_str += ' \n' + '}'
+            return out_str
         else:
-            return Operation._formatted(self, formatType)
+            return 'Output(' + formattedState + ')'
 
     def _config_latex_tool(self, lt):
         Operation._config_latex_tool(self, lt)
@@ -169,7 +177,7 @@ class IdentityOp(Literal):
             if gate == 'wire':
                 return r'\qw'
             else:
-                return r'I'
+                return r'\gate{I}'
         else:
             if gate == 'wire':
                 return '--'
@@ -207,7 +215,22 @@ class Gate(Operation):
         '''
         if len(self.operands) == 0:
             from proveit.physics.quantum._axioms_ import emptyGate
-            return emptyGate
+            with defaults.disabled_auto_reduction_types as disable_reduction_types:
+                disable_reduction_types.add(Gate)
+                return emptyGate
+
+        if isinstance(self.gate_operation, Input):
+            from proveit.physics.quantum._theorems_ import input_gate_to_ket
+            # with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            #   disable_reduction_types.add(Gate)
+
+            return input_gate_to_ket.instantiate({U: self.gate_operation.state}, assumptions=assumptions)
+        elif isinstance(self.gate_operation, Output):
+            from proveit.physics.quantum._theorems_ import output_gate_to_ket
+            #with defaults.disabled_auto_reduction_types as disable_reduction_types:
+             #   disable_reduction_types.add(Gate)
+
+            return output_gate_to_ket.instantiate({U:self.gate_operation.state}, assumptions=assumptions)
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -229,12 +252,16 @@ class Gate(Operation):
                 out_str += r'\meter'
             elif formattedGateOperation == 'SPACE':
                 out_str += formattedGateOperation
+            elif isinstance(self.gate_operation, Input):
+                out_str += r'\gate{ Input(' + self.gate_operation.state.formatted(formatType='latex') + ')}'
+            elif isinstance(self.gate_operation, Output):
+                out_str += r'\gate{ Output(' + self.gate_operation.state.formatted(formatType='latex') + ')}'
             else:
                 out_str += r'\gate{' + formattedGateOperation + r'}'
             out_str += ' \n' + '}'
             return out_str
         else:
-            return Operation._formatted(self, formatType)
+            return 'Gate(' + formattedGateOperation + ')'
 
     def _config_latex_tool(self, lt):
         Operation._config_latex_tool(self, lt)
@@ -264,12 +291,7 @@ class MultiQubitGate(Operation):
             self.indices = gate_set.operands
         self.gate_set = gate_set
 
-        #if isinstance(gate, Gate):
-         #   self.gate = gate.gate_operation
-        if isinstance(gate, MultiQubitGate):
-            self.gate = gate.gate
-        else:
-            self.gate = gate
+        self.gate = gate
 
         if styles is None: styles = dict()
         if 'representation' not in styles:
@@ -278,7 +300,7 @@ class MultiQubitGate(Operation):
 
     def auto_reduction(self, assumptions=USE_DEFAULTS):
         '''
-        Automatically reduce "MultiQubitGate() = IdentityOp()" and "MultiQubitGate(Gate(a), Set(n)) = Gate(a)".
+        Automatically reduce "MultiQubitGate(a, Set()) = IdentityOp()" and "MultiQubitGate(a, Set(n)) = Gate(a)".
         '''
         from proveit.number import isLiteralInt
 
@@ -314,6 +336,7 @@ class MultiQubitGate(Operation):
 
     def unaryReduction(self, assumptions=USE_DEFAULTS):
         from proveit.physics.quantum._theorems_ import unary_multiQubitGate_reduction
+
         if not self.gate_set.operands.singular():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unaryReduction")
@@ -347,6 +370,9 @@ class MultiQubitGate(Operation):
             elif formattedGateOperation == 'CONTROL':
                 # this is formatted as a solid dot using \control
                 out_str += r'\control \qw'
+            elif formattedGateOperation == 'MES':
+                # this is formatted as a solid dot using \control
+                out_str += r'\meter'
             elif formattedGateOperation == r'CLASSICAL\_CONTROL':
                 # this is formatted as a solid dot, but with classical wires.
                 out_str += r'\control \cw'
@@ -383,12 +409,7 @@ class MultiQubitGate(Operation):
             out_str += ' \n' + '}'
             return out_str
         else:
-            return Operation._formatted(self, formatType)
-
-    def _config_latex_tool(self, lt):
-        Operation._config_latex_tool(self, lt)
-        if 'qcircuit' not in lt.packages:
-            lt.packages.append('qcircuit')
+            return "MultiQubitGate(" + formattedGateOperation + ", " + self.gate_set.formatted(formatType) + ')'
 
  # original below
  # def formatted(self, formatType, fence=false):
@@ -668,6 +689,9 @@ class Circuit(Operation):
         if 'orientation' not in styles:
             styles['orientation'] = 'horizontal'
 
+        if 'spacing' not in styles:
+            styles['spacing'] = '@C=1em @R=.7em'
+
         Operation.__init__(self, Circuit._operator_, [array], styles=styles)
 
         self.array = array
@@ -683,6 +707,14 @@ class Circuit(Operation):
         # check each column for same expression throughout
         self.checkRange()
         self.check_indices()
+
+    def styleOptions(self):
+        from proveit._core_.expression.style_options import StyleOptions
+
+        options = StyleOptions(self)
+        options.addOption('spacing',
+                          ("change the spacing of a circuit using the format '@C=1em @R=.7em' where C is the column"
+                           " spacing and R is the row spacing"))
 
     def replace_equiv_circ(self, current, new, assumptions=USE_DEFAULTS):
         '''
@@ -1318,7 +1350,7 @@ class Circuit(Operation):
         return self.formatted('latex', **kwargs)
 
     def formatted(self, formatType, fence=False, subFence=False, operatorOrOperators=None, implicitFirstOperator=False,
-                  wrapPositions=None, orientation=None, **kwargs):
+                  wrapPositions=None, orientation=None, spacing=None, **kwargs):
         from proveit._core_.expression.expr import Expression
         default_style = ("explicit" if formatType == 'string' else 'implicit')
         outStr = ''
@@ -1329,7 +1361,8 @@ class Circuit(Operation):
         if orientation is None:
             orientation = self.getStyle('orientation', 'horizontal')
 
-        spacing = '@C=1em @R=.7em'
+        if spacing is None:
+            spacing = self.getStyle('spacing', '@C=1em @R=.7em')
 
         if formatType == 'latex':
             outStr += r'\Qcircuit' + spacing + '{' + '\n'
@@ -1402,6 +1435,8 @@ class Circuit(Operation):
                         elif entry == r'\targ':
                             # this is a target X gate (representation=implicit)
                             out_str += add + entry
+                        elif entry == r'\meter':
+                            out_str += add + entry
                         else:
                             if r'\gate' in entry:
                                 out_str += add + entry
@@ -1411,6 +1446,8 @@ class Circuit(Operation):
                     elif wires[row][column] == 'gate':
                         # a gate with no wires
                         if entry == r'\targ':
+                            out_str += add + entry
+                        elif entry == r'\meter':
                             out_str += add + entry
                         elif r'\gate' in entry:
                             out_str += add + entry
@@ -1426,7 +1463,7 @@ class Circuit(Operation):
                             out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
                         elif entry == r'\targ':
                             out_str += add + r'\targ \qwx[' + str(wires[row][column]) + r']'
-                        elif r'\gate' in entry:
+                        elif r'\gate' in entry or entry == r'\meter':
                             out_str += add + entry + r' \qwx[' + str(wires[row][column]) + r']'
                         else:
                             out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
@@ -1445,6 +1482,8 @@ class Circuit(Operation):
                     elif entry == r'\control \cw':
                         # this is formatted as a solid dot using \ctrl and \cw since there is a classical wire
                         out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
+                    elif entry == r'\meter':
+                        out_str += add + entry
                     else:
                         # gate with wire
                         out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
