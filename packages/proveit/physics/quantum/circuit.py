@@ -174,15 +174,24 @@ class IdentityOp(Literal):
         if gate is None:
             gate = self.getStyle('gate', 'wire')
         if formatType == 'latex':
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
             if gate == 'wire':
-                return r'\qw'
+                out_str += r'\qw'
             else:
-                return r'\gate{I}'
+                out_str += r'\gate{I}'
+            out_str += ' \n' + '}'
+            return out_str
         else:
             if gate == 'wire':
                 return '--'
             else:
                 return '[I]'
+
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
 
 # OUTPUT = Literal(pkg, 'OUTPUT')  # , operationMaker=lambda operands: Output(*operands))
 # An output state (exiting the right of the circuit)
@@ -244,7 +253,7 @@ class Gate(Operation):
         else:
             formattedGateOperation = self.gate_operation.formatted(formatType, fence=False)
         if isinstance(self.gate_operation, IdentityOp):
-            return self.gate_operation.formatted(formatType)
+            formattedGateOperation = 'I'
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
             out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
@@ -289,6 +298,8 @@ class MultiQubitGate(Operation):
         '''
         if isinstance(gate_set, Set):
             self.indices = gate_set.operands
+        else:
+            self.indices = None
         self.gate_set = gate_set
 
         self.gate = gate
@@ -361,7 +372,19 @@ class MultiQubitGate(Operation):
 
         formattedGateOperation = (
             self.gate.formatted(formatType, fence=False))
+        if isinstance(self.gate, IdentityOp):
+            formattedGateOperation = 'I'
+        if isinstance(self.gate, Input):
+            formattedGateOperation = 'Input(' + self.gate.state.formatted(formatType, fence=False) + ')'
+        if isinstance(self.gate, Output):
+            formattedGateOperation = 'Output(' + self.gate.state.formatted(formatType, fence=False) + ')'
         if formatType == 'latex':
+            if r'\Qcircuit' in formattedGateOperation:
+                idx = formattedGateOperation.index('\n')
+                formattedGateOperation = formattedGateOperation[idx + 3:len(formattedGateOperation) - 3]
+                #add = '& '
+                # we add three  to include the n and the & and the space after then &
+                # we subtract 3 to get rid of the ending bracket and \n
             spacing = '@C=1em @R=.7em'
             out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
             if formattedGateOperation == 'X' and representation == 'implicit':
@@ -380,36 +403,29 @@ class MultiQubitGate(Operation):
                 out_str += r'\qswap'
             elif formattedGateOperation == 'SPACE':
                 out_str += formattedGateOperation
-            else:
-                if isinstance(self.gate_set, Set):
-                    count = 0
-                    for entry in self.gate_set.operands:
-                        if isinstance(entry, Literal):
-                            count += 1
 
-                    if count == len(self.gate_set.operands):
-                        if len(self.gate_set.operands) == 1:
-                            out_str += r'\gate{' + formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(
-                                formatType) + r'}'
-                        elif len(self.gate_set.operands) == 0:
-                            # there should only be 1 or 0 gate operands
-                            #out_str += formattedGateOperation
-                            out_str += r'\gate{' + formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(
-                                formatType) + r'}'
-                        else:
-                            out_str += formattedGateOperation
+            else:
+                from proveit.number import isLiteralInt
+                if isinstance(self.gate_set, Set) and all(isLiteralInt(entry) for entry in self.gate_set.operands):
+                    # everything is a literal
+                    if len(self.gate_set.operands) <= 1:
+                        out_str += r'\gate{' + formattedGateOperation + r'{\Big \{} ' + self.gate_set.formatted(
+                            formatType) + r'}'
                     else:
-                        if len(self.gate_set.operands) == 1:
-                            out_str += r'\gate{' + formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(
-                                formatType) + r'}'
-                        else:
-                            out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
+                        out_str += formattedGateOperation
                 else:
-                    out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
+                    out_str += r'\gate{' + formattedGateOperation + r'{\Big \{} ' + self.gate_set.formatted(
+                        formatType) + r'}'
+                    #out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
             out_str += ' \n' + '}'
             return out_str
         else:
             return "MultiQubitGate(" + formattedGateOperation + ", " + self.gate_set.formatted(formatType) + ')'
+
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
 
  # original below
  # def formatted(self, formatType, fence=false):
@@ -938,15 +954,16 @@ class Circuit(Operation):
                     if isinstance(value, MultiQubitGate):
                         inset = False
                         # a check to see if the current row index is in the set of MultiQubitGate indices
-                        for n, number in enumerate(value.indices, 0):
-                            # cycle through each row location of each QubitGate; n keeps track of which gate we are on.
-                            if self.array.entries[number.asInt() - 1].entries[i].indices != value.indices:
-                                # each list of indices for each MultiQubitGate must match the current one (starting
-                                # at 0).
-                                raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
-                                                 'linked MultiQubitGate')
-                            if number.asInt() == k:
-                                inset = True
+                        if value.indices is not None:
+                            for n, number in enumerate(value.indices, 0):
+                                # cycle through each row location of each QubitGate; n keeps track of which gate we are on.
+                                if self.array.entries[number.asInt() - 1].entries[i].indices != value.indices:
+                                    # each list of indices for each MultiQubitGate must match the current one (starting
+                                    # at 0).
+                                    raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
+                                                     'linked MultiQubitGate')
+                                if number.asInt() == k:
+                                    inset = True
                         #if not inset:
                          #   print(self)
                           #  raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
@@ -1060,7 +1077,8 @@ class Circuit(Operation):
                     else:
                         connect = False
                     '''
-                    if isinstance(value, MultiQubitGate):
+                    if isinstance(value, MultiQubitGate) and value.indices is not None:
+                        # we only want MQGs that have a valid Set().
                         index = value.indices.index(num(k))
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
                         # across all gates in the MultiQubitGate
@@ -1415,10 +1433,17 @@ class Circuit(Operation):
                             out_str += add + r'\ghost{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
                         elif wires[row][column][0] == 'gate':
                             if len(wires[row][column]) == 3:
-                                out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r'] ' \
+                                if r'\gate' in entry:
+                                    out_str += add + entry + r' \qwx[' + str(wires[row][column][1]) + r'] ' \
                                                                        r'\qwx[' + str(wires[row][column][2]) + r']'
+                                else:
+                                    out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + \
+                                               r'] \qwx[' + str(wires[row][column][2]) + r']'
                             else:
-                                out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
+                                if r'\gate' in entry:
+                                    out_str += add + entry + r' \qwx[' + str(wires[row][column][1]) + r']'
+                                else:
+                                    out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
                     elif wires[row][column] == 'ghost':
                         # this is a member of a block multiqubit gate
                         out_str += add + r'\ghost{' + entry + '}'
@@ -1484,8 +1509,11 @@ class Circuit(Operation):
                         out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
                     elif entry == r'\meter':
                         out_str += add + entry
+                    elif r'\gate' in entry:
+                        out_str += add + entry + r' \qwx[' + str(wires[row][column]) + r']'
                     else:
                         # gate with wire
+
                         out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
 
                     formatted_sub_expressions.append(out_str)
