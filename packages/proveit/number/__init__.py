@@ -22,6 +22,7 @@ from .modular import Mod, ModAbs
 from .rounding import Floor, Ceil, Round
 from .ordering import Less, LessEq, LesserSequence, LessOnlySeq, LessEqOnlySeq, lesserSequence, Greater, GreaterEq, GreaterSequence, GreaterOnlySeq, GreaterEqOnlySeq, greaterSequence, Min, Max
 from .divisibility import Divides, GCD
+from .number_relation import NumberRelation
 
 import proveit
 
