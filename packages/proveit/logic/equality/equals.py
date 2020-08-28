@@ -118,7 +118,7 @@ class Equals(TransitiveRelation):
         '''
         Attempt to conclude the equality various ways:
         simple reflexivity (x=x), via an evaluation (if one side is an
-        irreducible), or via transitivity.
+        irreducible). Use concludeViaTransitivity for transitivity cases.
         '''
         from proveit.logic import TRUE, FALSE, Implies, Iff, inBool
         if self.lhs==self.rhs:
