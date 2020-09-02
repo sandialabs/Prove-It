@@ -223,7 +223,7 @@ class OperationOverInstances(Operation):
                 n_domains = len(self.domains)
                 if (not any (isinstance(entry, ExprRange) for entry
                              in self.domains)
-                        and self.domains == [self.domains[0]]*n_domains):
+                        and self.domains == tuple([self.domains[0]]*n_domains)):
                     # Multiple domains that are all the same.
                     self.domain = self.domains[0]
             else:
