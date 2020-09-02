@@ -20,26 +20,28 @@ class DividesRelation(TransitiveRelation):
     
     @staticmethod
     def WeakRelationClass():
-        # Divides is weaker than DividesProper (yet to be defined)
+        # Divides is weaker than DividesProper (in development)
         # analogous to <= being weaker than <
         return Divides # Divides is weaker than DividesProper
 
     @staticmethod
     def StrongRelationClass():
-        # might later have a DividesProper here, which would
-        # be like Divides(x, y) but requiring x != y
+        # DividesProper (in development) is stronger than Divides.
+        # DividesProper(x, y) is like Divides(x, y) but requires x != y
         return DividesProper # DividesProper is stronger than Divides               
 
 
 class Divides(DividesRelation):
     '''
     Divides(x, y) represents the claim that x divides y (i.e. x|y)
-    (equivalently, that x is a factor of y, y is a multiple of x,
-    or y/x is an integer). The underlying axiomatic definition uses
+    (equivalently, x is a factor of y, y is a multiple of x, or
+    y/x is an integer). The axiomatic definition in Prove-It uses
     x|y = (y/x in Z), with no prerequisites on x and y. Extending
-    DividesRelation allows the possibility (later) of having not only
-    this weak relation class but also a strong relation class, perhaps
-    DividesProper, yet to be defined.
+    DividesRelation allows us to have not only this weak relation
+    class but also a strong relation class, DividesProper, the pair
+    combined then allowing the calling of
+    Divides.concludeViaTransitivity()
+    utilizing the TransitiveRelation.concludeViaTransitivity() method.
     '''
 
     _operator_ = Literal(
@@ -63,11 +65,9 @@ class Divides(DividesRelation):
         (2) simple x|0 for x ≠ 0;
         (3) via transitivity.
         '''
-        # among other things, convert any assumptions=None
+        # First, among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
         assumptions = defaults.checkedAssumptions(assumptions)
-
-        from proveit.logic import TRUE, FALSE, Implies, Iff, inBool
 
         #-- -------------------------------------------------------- --#
         #-- Case (1): x|x with x ≠ 0 known or assumed                --#
@@ -189,7 +189,7 @@ class DividesProper(DividesRelation):
     '''
 
     _operator_ = Literal(
-          stringFormat='|', latexFormat=r'\rvert_{P}', context=__file__
+          stringFormat='|', latexFormat=r'{\rvert_{P}}', context=__file__
           )
 
     # map left-hand-sides to "Divides" KnownTruths
