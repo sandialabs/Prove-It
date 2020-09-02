@@ -43,9 +43,6 @@ class Interval(Operation):
 
     def deduceMemberInNaturals(self, member, assumptions=frozenset()):
         from ._theorems_ import allInDiscreteInterval_InNats
-        from numberSets import deduceInNaturals
-        deduceInNaturals(self.lowerBound, assumptions=assumptions)
-        deduceInNaturals(self.upperBound, assumptions=assumptions)
         return allInDiscreteInterval_InNats.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
     def deduceMemberInNaturalsPos(self, member, assumptions=frozenset()):

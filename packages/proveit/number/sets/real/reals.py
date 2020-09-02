@@ -150,7 +150,13 @@ class RealNonNegSet(NumberSet):
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
-    from ._theorems_ import (
-        realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
-        natsInReals, natsPosInReals, natPosInRealsPos, natsInRealsNonNeg,
-        natsPosInRealsNonNeg, realsPosInRealsNonNeg)
+    try:
+        # This can fails before running the _axioms_ and _theorems_
+        # notebooks for the first time, but fine after that.
+        from ._theorems_ import (
+            realsPosInReals, realsNegInReals, realsNonNegInReals,
+            intsInReals, natsInReals, natsPosInReals, natPosInRealsPos,
+            natsInRealsNonNeg, natsPosInRealsNonNeg,
+            realsPosInRealsNonNeg)
+    except:
+        pass
