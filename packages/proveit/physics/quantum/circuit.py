@@ -82,9 +82,9 @@ class Input(Operation):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
             out_str += r'\lstick{' + formattedState + r'}'
-            out_str += ' \n' + '}'
+            out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Input(' + formattedState + ')'
@@ -118,9 +118,9 @@ class Output(Operation):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
             out_str += r'\rstick{' + formattedState + r'} \qw'
-            out_str += ' \n' + '}'
+            out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Output(' + formattedState + ')'
@@ -175,12 +175,12 @@ class IdentityOp(Literal):
             gate = self.getStyle('gate', 'wire')
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
             if gate == 'wire':
                 out_str += r'\qw'
             else:
                 out_str += r'\gate{I}'
-            out_str += ' \n' + '}'
+            out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             if gate == 'wire':
@@ -256,7 +256,7 @@ class Gate(Operation):
             formattedGateOperation = 'I'
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
             if formattedGateOperation == 'MES':
                 out_str += r'\meter'
             elif formattedGateOperation == 'SPACE':
@@ -267,7 +267,7 @@ class Gate(Operation):
                 out_str += r'\gate{ Output(' + self.gate_operation.state.formatted(formatType='latex') + ')}'
             else:
                 out_str += r'\gate{' + formattedGateOperation + r'}'
-            out_str += ' \n' + '}'
+            out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Gate(' + formattedGateOperation + ')'
@@ -381,12 +381,12 @@ class MultiQubitGate(Operation):
         if formatType == 'latex':
             if r'\Qcircuit' in formattedGateOperation:
                 idx = formattedGateOperation.index('\n')
-                formattedGateOperation = formattedGateOperation[idx + 3:len(formattedGateOperation) - 3]
+                formattedGateOperation = formattedGateOperation[idx + 3:len(formattedGateOperation) - 16]
                 #add = '& '
                 # we add three  to include the n and the & and the space after then &
-                # we subtract 3 to get rid of the ending bracket and \n
+                # we subtract 16 to get rid of the ending bracket, the \hspace, and \n
             spacing = '@C=1em @R=.7em'
-            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
             if formattedGateOperation == 'X' and representation == 'implicit':
                # this is formatted as a target.
                 out_str += r'\targ'
@@ -417,7 +417,7 @@ class MultiQubitGate(Operation):
                     out_str += r'\gate{' + formattedGateOperation + r'{\Big \{} ' + self.gate_set.formatted(
                         formatType) + r'}'
                     #out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
-            out_str += ' \n' + '}'
+            out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return "MultiQubitGate(" + formattedGateOperation + ", " + self.gate_set.formatted(formatType) + ')'
@@ -1383,7 +1383,7 @@ class Circuit(Operation):
             spacing = self.getStyle('spacing', '@C=1em @R=.7em')
 
         if formatType == 'latex':
-            outStr += r'\Qcircuit' + spacing + '{' + '\n'
+            outStr += r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n'
 
         wires = self._find_wires()
         formatted_sub_expressions = []
@@ -1408,10 +1408,10 @@ class Circuit(Operation):
                     add = ' '
                 if r'\Qcircuit' in entry:
                     idx = entry.index('\n')
-                    entry = entry[idx + 3:len(entry) - 3]
+                    entry = entry[idx + 3:len(entry) - 16]
                     add = '& '
                     # we add three  to include the n and the & and the space after then &
-                    # we subtract 3 to get rid of the ending bracket and \n
+                    # we subtract 16 to get rid of the ending bracket, the \hspace, and \n
                 out_str = ''
 
                 if entry == 'SPACE':
@@ -1602,7 +1602,7 @@ class Circuit(Operation):
                     "also, operator ranges must be in correspondence with operand ranges.")
 
         if formatType == 'latex':
-            outStr += ' \n' + '}'
+            outStr += ' \n' + r'} \hspace{2em}'
         #print(outStr)
         return outStr
 
