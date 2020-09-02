@@ -828,6 +828,7 @@ class Add(Operation):
             expr = expr.group(0, -1)
         return addNegAsSubtract.specialize({x:expr.operands[0], y:expr.operands[-1].operand})
     
+    """
     def deduceInNaturalsPosDirectly(self, assumptions=frozenset(), ruledOutSets=frozenset(), dontTryPos=False, dontTryNeg=False):
         '''
         If all of the terms are in Naturals and just one is positive, then the sum is positive.
@@ -845,6 +846,7 @@ class Add(Operation):
                # pass
         # need to have one of the elements positive for the sum to be positive
         raise DeduceInNumberSetException(self, NaturalsPos, assumptions)
+    """
 
     def deduceInNumberSet(self, number_set,assumptions=USE_DEFAULTS):
         '''
