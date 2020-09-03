@@ -34,6 +34,7 @@ class SetOfAll(OperationOverInstances):
                            "to be set")
             
     def _formatted(self, formatType, fence=False, **kwargs):
+        from proveit import ExprRange
         outStr = ''
         explicit_conditions = ExprTuple(*self.explicitConditions())
         inner_fence = (len(explicit_conditions) > 0)
@@ -54,7 +55,8 @@ class SetOfAll(OperationOverInstances):
         else: outStr += "}"
         outStr += '_{' 
         instance_param_or_params = self.instanceParamOrParams
-        if explicit_domains == [explicit_domains[0]]*len(explicit_domains):
+        if (not any (isinstance(entry, ExprRange) for entry in explicit_domains)
+                and explicit_domains == [explicit_domains[0]]*len(explicit_domains)):
             # all in the same domain
             outStr += instance_param_or_params.formatted(formatType, 
                                                          operatorOrOperators=',',

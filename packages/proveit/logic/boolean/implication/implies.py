@@ -66,9 +66,11 @@ class Implies(TransitiveRelation):
         amongst known true implications whose assumptions are covered by
         the given assumptions.
         '''
-        from ._axioms_ import untrueAntecedentImplication
-        from ._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, falseAntecedentImplication
-        from proveit.logic import TRUE, FALSE
+        from ._theorems_ import (
+                trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, 
+                falseAntecedentImplication, falsifiedAntecedentImplication,
+                untrueAntecedentImplication)
+        from proveit.logic import TRUE, FALSE, NotEquals
         if self.antecedent == self.consequent:
             return self.concludeSelfImplication()
 
@@ -79,29 +81,30 @@ class Implies(TransitiveRelation):
             except:
                 return self.prove()
         
-        try:
-            # See of the consequent has an evaluation.
-            evaluation = self.consequent.evaluation(assumptions, automation=False)
-            if evaluation.rhs == TRUE:
-                # If the consequent evaluates to true, we can prove trivially via hypothetical reasoning
-                return self.consequent.prove(assumptions).asImplication(self.antecedent)
-            elif evaluation.rhs == FALSE:
-                if self.antecedent.evaluation(assumptions).rhs == FALSE:
-                    # Derive A => B given Not(A); it doesn't matter what B is if A is FALSE
-                    return falseAntecedentImplication.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
-                else:
-                    # Derive A => B given (A != TRUE); it doesn't matter what B is if A is not TRUE
-                    return untrueAntecedentImplication.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
-        except:
-            pass
-        try:
-            # See if the antecedent has an evaluation.
-            evaluation = self.antecedent.evaluation(assumptions, automation=False)
-            if evaluation.rhs == FALSE:
-                # Derive A => B given Not(A); it doesn't matter what B is if A is FALSE
-                return falseAntecedentImplication.specialize({A: self.antecedent, B: self.consequent}, assumptions=assumptions)
-        except:
-            pass
+        if self.antecedent == FALSE:
+            # The antecedent is FALSE, so we should try to prove the 
+            # implication via falseAntecedentImplication.
+            return falseAntecedentImplication.instantiate(
+                    {A:self.consequent}, assumptions=assumptions)
+        elif NotEquals(self.antecedent, TRUE).proven(assumptions):
+            # The antecedent is known to be not equal to true, so
+            # prove the implication via untrueAntecedentImplication.
+            return untrueAntecedentImplication.instantiate(
+                    {A:self.antecedent, B:self.consequent},
+                    assumptions=assumptions)
+        elif (self.antecedent.disproven(assumptions) or
+              self.consequent.disproven(assumptions)):
+            # Either the consequent or the antecedent has been disproven 
+            # so we should try to prove the implication via 
+            # falsifiedAntecedentImplication.
+            return falsifiedAntecedentImplication.instantiate(
+                    {A:self.antecedent, B:self.consequent},
+                    assumptions=assumptions)
+        elif self.consequent.proven(assumptions):
+            # The consequent is proven, so we can prove the implication
+            # via Deduction.
+            return self.consequent.prove(assumptions).asImplication(
+                    self.antecedent)
         
         try:
             # try to prove the implication via hypothetical reasoning.
@@ -198,17 +201,17 @@ class Implies(TransitiveRelation):
         Or from (A => FALSE), derive and return A != TRUE.
         '''
         from proveit.logic import FALSE, inBool
-        from ._theorems_ import affirmViaContradiction, denyViaContradiction, notTrueViaContradiction
+        from ._axioms_ import affirmViaContradiction, denyViaContradiction
+        from ._theorems_ import notTrueViaContradiction
         if self.consequent != FALSE:
             raise ValueError('deriveViaContradiction method is only applicable if FALSE is implicated, not for ' + str(self))
         if isinstance(self.antecedent, Not):
             stmt = self.antecedent.operand
             return affirmViaContradiction.specialize({A:stmt}, assumptions=assumptions)
         else:
-            try:
-                inBool(self.antecedent).prove(assumptions, automation=False)
+            if inBool(self.antecedent).proven(assumptions):
                 return denyViaContradiction.specialize({A:self.antecedent}, assumptions=assumptions)
-            except ProofFailure:
+            else:
                 return notTrueViaContradiction.specialize({A:self.antecedent},assumptions=assumptions)
     
     def concludeSelfImplication(self):
@@ -270,7 +273,9 @@ class Implies(TransitiveRelation):
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from ._theorems_ import impliesTT, impliesFT, impliesFF, impliesTF # load in truth-table evaluations
+        # load in truth-table evaluations
+        from ._axioms_ import impliesTF
+        from ._theorems_ import impliesTT, impliesFT, impliesFF
         return Operation.evaluation(self, assumptions, automation=automation)
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
