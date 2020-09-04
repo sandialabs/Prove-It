@@ -1,5 +1,4 @@
 from proveit import Literal, Operation
-from proveit.number.numberSets import NumberOp
 # from proveit.basiclogic.genericOps import BinaryOperation
 # from proveit.number.numberSets import NumberOp, Integers
 
@@ -89,7 +88,7 @@ class Pfail(Operation):
     
 # MOD_ADD = Literal(pkg, 'MOD_ADD', {LATEX:r'\oplus'}, operationMaker = lambda operands : ModAdd(*operands))
 
-class ModAdd(Operation, NumberOp):
+class ModAdd(Operation):
     '''
     Addition module 2^t
     Generated/updated from original above by wdc, beginning 1/26/2020.

@@ -434,7 +434,7 @@ class Operation(Expression):
         There are limitations with respect the Lambda map application involving
         iterated parameters when perfoming operation substitution in order to
         keep derivation rules (i.e., instantiation) simple.  For details,
-        see the Iter.substituted documentation.
+        see the ExprRange.substituted documentation.
         '''
         from proveit import (Lambda, singleOrCompositeExpression,
                              compositeExpression, ExprTuple, ExprRange)

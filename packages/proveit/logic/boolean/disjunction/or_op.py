@@ -1,4 +1,4 @@
-from proveit import (Literal, Operation, defaults, USE_DEFAULTS, 
+from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr)
 from proveit._common_ import A, B, C, D, E, i, j, k, l, m, n
 from proveit.logic.boolean.booleans import inBool
@@ -8,7 +8,7 @@ class Or(Operation):
     # The operator of the Or operation
     _operator_ = Literal(stringFormat='or', latexFormat=r'\lor', context=__file__)
 
-    trivialDisjunctions = set() #used to avoid infinite recursion inside of deduceUnaryEquiv
+    trivialDisjunctions = set() #used to avoid infinite recursion inside of unaryReduction
 
     def __init__(self, *operands):
         '''
@@ -27,10 +27,10 @@ class Or(Operation):
                 pass # emptyDisjunction not initially defined when doing a clean rebuild
         if len(operands) == 1:
             operand = operands[0]
-            try: 
+            try:
                 Or.trivialDisjunctions.add(self)
                 inBool(operand).prove(automation = False)
-                self.deduceUnaryEquiv()
+                self.unaryReduction()
             except:
                 pass
 
@@ -45,7 +45,7 @@ class Or(Operation):
                 return emptyDisjunctionEval
         elif self.operands.singular():
             try:
-                return self.unaryReduction(assumptions)
+                return self.unaryReduction(assumptions=assumptions)
             except:
                 # Cannot do the reduction if the operand is not known
                 # to be a boolean.
@@ -55,13 +55,13 @@ class Or(Operation):
         '''
         Try to automatically conclude this disjunction.  If any of its
         operands have pre-existing proofs, it will be proven via the orIfAny
-        theorem.  Otherwise, a reduction proof will be attempted 
+        theorem.  Otherwise, a reduction proof will be attempted
         (evaluating the operands).
         '''
         from ._theorems_ import trueOrTrue, trueOrFalse, falseOrTrue
         if self in {trueOrTrue.expr, trueOrFalse.expr, falseOrTrue.expr}:
             # should be proven via one of the imported theorems as a simple special case
-            return self.prove() 
+            return self.prove()
         # Prove that the disjunction is true by proving that ANY of its operands is true.
         # In the first attempt, don't use automation to prove any of the operands so that
         # we don't waste time trying to prove operands when we already know one to be true
@@ -76,7 +76,7 @@ class Or(Operation):
                     pass
             if len(self.operands) == 2 and len(provenOperandIndices) > 0:
                 # One or both of the two operands were known to be true (without automation).
-                # Try a possibly simpler proof than concludeViaExample. 
+                # Try a possibly simpler proof than concludeViaExample.
                 try:
                     if len(provenOperandIndices)==2:
                         return self.concludeViaBoth(assumptions)
@@ -94,7 +94,7 @@ class Or(Operation):
                 except:
                     # orIf[Any,Left,Right] must not have been a usable theorem; use the default below.
                     break
-    
+
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically.
@@ -142,20 +142,28 @@ class Or(Operation):
         else:
             from proveit.number import num
             return notOrIfNotAny.specialize({m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
-    
+
     def concludeViaBoth(self, assumptions):
         from ._theorems_ import orIfBoth
-        assert len(self.operands) == 2        
+        assert len(self.operands) == 2
         return orIfBoth.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-    
+
     def concludeViaOnlyLeft(self, assumptions):
         from ._theorems_ import orIfOnlyLeft
-        assert len(self.operands) == 2        
+        assert len(self.operands) == 2
         return orIfOnlyLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-    
+
+    def concludeViaLeft(self, assumptions):
+        '''
+        From A being (or assumed) True, conclude that (A V B) is True.
+        '''
+        from ._theorems_ import orIfLeft
+        assert len(self.operands) == 2
+        return orIfLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
     def concludeViaOnlyRight(self, assumptions):
         from ._theorems_ import orIfOnlyRight
-        assert len(self.operands) == 2        
+        assert len(self.operands) == 2
         return orIfOnlyRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def concludeViaDemorgans(self, assumptions=USE_DEFAULTS):
@@ -169,16 +177,16 @@ class Or(Operation):
             return demorgansLawAndToOrBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             return demorgansLawAndToOr.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
-                
+
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].
         '''
         return inBool(self).prove(assumptions=assumptions)
-    
+
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
-        From (A or B) derive and return B assuming Not(A), inBool(B). 
+        From (A or B) derive and return B assuming Not(A), inBool(B).
         '''
         from ._theorems_ import rightIfNotLeft
         assert len(self.operands) == 2
@@ -253,7 +261,7 @@ class Or(Operation):
         from ._axioms_ import leftInBool
         if len(self.operands) == 2:
             return leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-        
+
     def deduceRightInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce B in Booleans from (A or B) in Booleans.
@@ -268,7 +276,7 @@ class Or(Operation):
         from (A or B or ... or Z) in Booleans.
         '''
         for _i in range(len(self.operands)):
-            self.deducePartInBool(_i, assumptions)        
+            self.deducePartInBool(_i, assumptions)
 
     def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
         '''
@@ -283,12 +291,12 @@ class Or(Operation):
         if len(self.operands)==2:
             if idx==0: return self.deduceLeftInBool(assumptions)
             elif idx==1: return self.deduceRightInBool(assumptions)
-        #attempt to replace with AA and CC over Amulti and Cmulti    
+        #attempt to replace with AA and CC over Amulti and Cmulti
         return eachInBool.specialize({m:num(idx), n:num(len(self.operands)-idx-1), A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}, assumptions=assumptions)
-                
+
     def deduceNotLeftIfNeither(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce not(A) assuming not(A or B) where self is (A or B). 
+        Deduce not(A) assuming not(A or B) where self is (A or B).
         '''
         from ._theorems_ import notLeftIfNeither
         assert len(self.operands) == 2
@@ -297,7 +305,7 @@ class Or(Operation):
 
     def deduceNotRightIfNeither(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce not(B) assuming not(A or B) where self is (A or B). 
+        Deduce not(B) assuming not(A or B) where self is (A or B).
         '''
         from ._theorems_ import notRightIfNeither
         assert len(self.operands) == 2
@@ -318,29 +326,29 @@ class Or(Operation):
         # (A=>C and B=>C) assuming A=>C, B=>C
         compose([leftImplConclusion, rightImplConclusion], assumptions)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
-        
+
     def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
                    minimal_automation=False, **kwargs):
         '''
         Attempt to determine whether this disjunction evaluates
         to true or false under the given assumptions.  If automation
         is false, it will only succeed if the evaluation is already
-        known.  If automation and minimal_automation are True, it will 
-        only rely upon known evaluations of the operands to determine 
+        known.  If automation and minimal_automation are True, it will
+        only rely upon known evaluations of the operands to determine
         whether to try to prove or disprove the disjunction.
         '''
         from proveit.logic import TRUE, SimplificationError
         from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations
         if len(self.operands)==0:
-            return self.unaryReduction(assumptions)
-        
+            return self.unaryReduction(assumptions=assumptions)
+
         # First just see if it has a known evaluation.
         try:
             return Operation.evaluation(self, assumptions, automation=False)
         except SimplificationError as e:
-            if not automation: 
+            if not automation:
                 raise e
-    
+
         # Depending upon evaluations of operands, we will either
         # attempt to prove or disprove this conjunction.
         if minimal_automation:
@@ -371,11 +379,11 @@ class Or(Operation):
                 # to false if it can be evaluated.
                 self.disprove(assumptions)
                 break
-        
+
         # If we had any success proving or disproving this conjunction
         # there should be a known evaluation now.
         return Operation.evaluation(self, assumptions, automation=False)
-        
+
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
         From (A or B), and assuming not(A) and not(B), derive and return FALSE.
@@ -429,7 +437,7 @@ class Or(Operation):
         '''
         from proveit.logic.boolean.implication import denyViaContradiction
         return denyViaContradiction(self, conclusion, assumptions)
-                                                
+
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
@@ -440,7 +448,7 @@ class Or(Operation):
             return binaryClosure.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             return closure.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
-        
+
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
         From one true operand, conclude that this 'or' expression is true.
@@ -453,19 +461,120 @@ class Or(Operation):
             if index == 0:
                 return orIfLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
             elif index == 1:
-                return orIfRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)                
+                return orIfRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), A:self.operands[:index], B:self.operands[index], C:self.operands[index+1:]}, assumptions=assumptions)
 
+    def concludeViaSome(self, subset_disjunction, assumptions=USE_DEFAULTS):
+        '''
+        From some true (or assumed true) disjunctive subset of the
+        operands, conclude that this 'or' expression is true. This is
+        similar to the concludeViaExample method above. For example,
+        we might have a disjunction such as:
+            exampleDisj = A V B V C V D,
+        where we know (or assume) that B V D is true. We could call
+            exampleDisj.concludeViaSome(B V D, assumptions=[B V D]),
+        which will return
+            {B V D} |– A V B V C V D
+        '''
+        # Check that the subset_disjunction is an instance of OR
+        if not isinstance(subset_disjunction, Or):
+            raise TypeError(('subset_disjunction arg should be '
+                             'a disjunction (Or)'))
+        # Check that each of the operands in subset_disjunction occur as
+        # operands in self (otherwise throw a ValueError).
+        self_operands = self.operands
+        subset_operands = subset_disjunction.operands
+        unexpected_operands = list(set(subset_operands)-set(self_operands))
+        if len(unexpected_operands) != 0:
+            raise ValueError('the disjunctive subset (subset_disjunction) you '
+                             'provided contains unexpected items: {}'.
+                             format(unexpected_operands))
+        # collect the operands not present in the proffered subset
+        # (in using set() we are (temporarily) assuming no repeated operands)
+        # and let's assume we get a non-empty set
+        complementary_operands = list(set(self_operands) - set(subset_operands))
+        if len(complementary_operands) == 1:
+            complementary_disjunction = complementary_operands[0]
+        else:
+            complementary_disjunction = Or(*complementary_operands)
+        # the following produces a permutated, associated version of the
+        # original disjunction
+        binary_disjunction = (
+                Or(subset_disjunction, complementary_disjunction)
+                .concludeViaLeft(assumptions)
+        )
+        # remove the extra parentheses (not yet un-permuting)
+        permuted_disjunction = (
+            binary_disjunction.disassociate(0, assumptions)
+            .disassociate(-1, assumptions)
+        )
+
+        return self.concludeViaPermutation(permuted_disjunction, assumptions)
+
+    def concludeViaPermutation(self, permuted_disjunction,
+                               assumptions=USE_DEFAULTS):
+        '''
+        From some true (or assumed true) but permutated version of this
+        'or' expression, conclude that this 'or' expression is true.
+        For example, let thisOr = A V B V C V D
+        and let permOfThisOr = S |- B V A V C V D.
+        From permOfThisOr, conclude thisOr, using the following:
+        thisOr.concludeViaPermuation(permOfThisOr, assumptions = S),
+        which will return S |– A V B V C V D.
+        '''
+
+        # Check that the permuted_disjunction is an instance of OR
+        # perm_disj_expr = permuted_disjunction.expr
+        if not isinstance(permuted_disjunction.expr, Or):
+            raise TypeError(('permuted_disjunction arg should be '
+                             'a disjunction (Or)'))
+        # Check that each of the operands in subset_disjunction occur as
+        # operands in self (otherwise throw a ValueError).
+        self_operands = self.operands
+        perm_operands = permuted_disjunction.operands
+        unexpected_operands = list(set(perm_operands)-set(self_operands))
+        if len(unexpected_operands) != 0:
+            raise ValueError('the permuted disjunction (permuted_disjunction) '
+                             'you provided contains unexpected items: {}'.
+                             format(unexpected_operands))
+
+        # NOTICE we are assuming no repetition of operands and that
+        # len(perm_operands) = len(self_operands)
+
+        for i in range(len(self_operands)):
+            # update the operands list each time for the permuting version
+            perm_operands = permuted_disjunction.operands
+            temp_operand = self_operands[i]
+            j = perm_operands.index(temp_operand)
+            equiv_permuted_disjunction = (
+                permuted_disjunction.commutation(j, i)
+            )
+            permuted_disjunction = (
+                    equiv_permuted_disjunction
+                    .subRightSideInto(permuted_disjunction,assumptions)
+            )
+
+        return permuted_disjunction
+
     def unaryReduction(self, assumptions=USE_DEFAULTS):
+        '''
+        For the degenerate case of Or(A), where A is Boolean, derive
+        and return |–[V](A) = A. For example, calling
+            Or(A).unaryReduction([inBool(A)])
+        will return:
+            {A in Bool} |– [V](A) = A
+        '''
         from proveit.logic.boolean.disjunction._theorems_ import \
             unaryOrReduction
         if not self.operands.singular():
-            raise ValueError("Expression must have a single operand in "
-                             "order to invoke unaryReduction")
+            raise ValueError("Or.unaryReduction: expression must have only a "
+                             "single operand in order to invoke the "
+                             "unaryOrReduction theorem.")
         operand = self.operands[0]
         with defaults.disabled_auto_reduction_types as disable_reduction_types:
             disable_reduction_types.add(Or)
-            return unaryOrReduction.specialize({A:operand}, assumptions = assumptions)
+            return unaryOrReduction.specialize({A:operand},
+                                               assumptions = assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
@@ -474,18 +583,37 @@ class Or(Operation):
         For example, (A or B or ... or Y or Z) = (A or ... or Y or B or Z)
         via initIdx = 1 and finalIdx = -2.
         '''
-        from ._theorems_ import commutation, leftwardCommutation, rightwardCommutation
-        return apply_commutation_thm(self, initIdx, finalIdx, commutation, leftwardCommutation, rightwardCommutation, assumptions)
+        from ._theorems_ import (commutation, leftwardCommutation,
+                                 rightwardCommutation)
+        return apply_commutation_thm(self, initIdx, finalIdx, commutation,
+                                     leftwardCommutation, rightwardCommutation,
+                                     assumptions)
 
-    def groupCommutation(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
+    def groupCommutation(self, initIdx, finalIdx, length, disassociate=True,
+                         assumptions=USE_DEFAULTS):
         '''
-        Given Boolean operands, deduce that this expression is equal to a form in which the operands
-        at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
-        It will do this by performing association first.  If disassocate is True, it
-        will be disassociated afterwards.
+        Given Boolean operands, deduce that this expression is equal
+        to a form in which the operands at indices
+        [initIdx, initIdx+length) have been moved to
+        [finalIdx, finalIdx+length). It will do this by performing
+        association first. If disassociate is True, it will be
+        disassociated afterward. For example, the call
+        Or(A,B,C,D).groupCommutation(0, 1, length=2,
+                                 assumptions=inBool(A,B,C,D))
+        will conceptually follow the steps:
+        (1) associates 2 elements (i.e. length = 2) starting at index 0
+            to obtain (A V B) V C V D
+        (2) removes the element to be commuted to obtain C V D
+        (3) inserts the element to be commuted at the desire index 1 to
+            obtain C V (A V B) V D
+        (4) then disassociates to obtain C V A V B V D
+        (5) eventually producing the output:
+            {A in Bool, ..., D in Bool} |-
+            (A V B V C V D) = (C V A V B V D)
         '''
-        return groupCommutation(self, initIdx, finalIdx, length, disassociate, assumptions)
-    
+        return groupCommutation(self, initIdx, finalIdx, length, disassociate,
+                                assumptions)
+
     def commute(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
         From self, derive and return a form in which the operand
@@ -493,9 +621,9 @@ class Or(Operation):
         For example, given (A or B or ... or Y or Z) derive (A or ... or Y or B or Z)
         via initIdx = 1 and finalIdx = -2.
         '''
-        from ._theorems_ import commute, leftwardCommute, rightwardCommute      
-        return apply_commutation_thm(self, initIdx, finalIdx, commute, leftwardCommute, rightwardCommute, assumptions)  
-    
+        from ._theorems_ import commute, leftwardCommute, rightwardCommute
+        return apply_commutation_thm(self, initIdx, finalIdx, commute, leftwardCommute, rightwardCommute, assumptions)
+
     def groupCommute(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
         '''
         Given self, deduce and return a form in which the operands
@@ -503,8 +631,8 @@ class Or(Operation):
         It will do this by performing association first.  If disassocate is True, it
         will be disassociated afterwards.
         '''
-        return groupCommute(self, initIdx, finalIdx, length, disassociate, assumptions)        
-    
+        return groupCommute(self, initIdx, finalIdx, length, disassociate, assumptions)
+
     def association(self, startIdx, length, assumptions=USE_DEFAULTS):
         '''
         Given Boolean operands, deduce that this expression is equal to a form in which operands in the

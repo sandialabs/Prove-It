@@ -728,11 +728,15 @@ class KnownTruth:
         return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
     """
     
-    def specialize(self, repl_map=None, relabel_map=None, assumptions=USE_DEFAULTS):
+    def specialize(self, repl_map=None, relabel_map=None,
+                   assumptions=USE_DEFAULTS):
         # TEMPORARY BACKWARD COMPATIBILITY
-        if repl_map is None:
+        # if repl_map is None:
+        #     repl_map = dict()
+        # if relabel_map is not None:
+        #     repl_map.update(relabel_map)
+        if repl_map is None and relabel_map is not None:
             repl_map = dict()
-        if relabel_map is not None:
             repl_map.update(relabel_map)
         return self.instantiate(repl_map, assumptions=assumptions)
 
