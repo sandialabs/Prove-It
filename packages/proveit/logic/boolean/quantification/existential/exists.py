@@ -64,13 +64,15 @@ class Exists(OperationOverInstances):
         P_skolem = self.instanceExpr.replaced(repl_dict)
         Q_skolem = self.conditions.replaced(repl_dict)
 
-        # Update the defaul assumptions with the Skolem versions
+        # Update the default assumptions with the Skolem versions
         # of the conditions and instance expression
         defaults.assumptions = (*defaults.assumptions, *Q_skolem, P_skolem)
         if print_message:
             print("Corresponding to the desired Skolem constant(s) {0}, "
                   "Exists.choose() has added the following assumptions "
-                  "to the defaults.assumptions: {1}.".
+                  "to the defaults.assumptions: {1}. Later you will use "
+                  "the KnownTruth.eliminate() method to complete the "
+                  "Skolemization.".
                   format(skolem_constants, (*Q_skolem, P_skolem)))
 
         return ExprTuple(*Q_skolem, P_skolem)
