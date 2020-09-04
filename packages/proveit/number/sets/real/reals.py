@@ -52,7 +52,7 @@ class RealPosSet(NumberSet):
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import realsPosInReals
-        return realsPosInReals.deriveSupsersetMembership(member, assumptions)
+        return realsPosInReals.deriveSupersetMembership(member, assumptions)
 
 class RealNegSet(NumberSet):
     def __init__(self):

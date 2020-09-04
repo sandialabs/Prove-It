@@ -60,7 +60,7 @@ class NaturalPosSet(NumberSet):
     
     def deduceMemberInNats(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import natsPosInNats
-        return natsPosInNats.deriveSupsersetMembership(member, assumptions)
+        return natsPosInNats.deriveSupersetMembership(member, assumptions)
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are

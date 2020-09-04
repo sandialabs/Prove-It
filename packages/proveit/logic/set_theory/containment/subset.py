@@ -69,7 +69,7 @@ class Subset(SubsetRelation):
         from ._theorems_ import relaxSubset
         return relaxSubset.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
 
-    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+    def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From A subset B and x in A, derive x in B.
         '''
