@@ -252,11 +252,23 @@ class Exp(Operation):
                   expRealClosureExpNonZero,expRealClosureBasePos,
                   expRealPosClosure, sqrtComplexClosure, sqrtRealClosure,
                   sqrtRealPosClosure)
-        from proveit.number import Complexes, NaturalsPos, Reals, RealsPos
+        from proveit.number import (
+                Complexes, NaturalsPos, RationalsPos, Reals, RealsPos)
 
         if number_set == NaturalsPos:
             return expNatClosure.specialize({a:self.base, b:self.exponent},
                       assumptions=assumptions)
+
+        if number_set == RationalsPos:
+            # if we have a^b with a Rational and b Integer
+            # if b is proven to be any Integer
+
+            # if we already know a^b is
+
+            # if b = 0, then a^b = 1 (if a≠0)
+
+            # to be continued later
+            pass
 
         # the following would be useful to replace the next two Reals
         # closure theorems, once we get the system to deal
