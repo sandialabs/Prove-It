@@ -63,56 +63,77 @@ class Divides(DividesRelation):
         Attempt to conclude the divisibility claim in various ways:
         (1) simple reflexivity (x|x);
         (2) simple x|0 for x ≠ 0;
-        (3) via transitivity.
+        (3) simple x|xy or x|yx scenario
+        (4) via transitivity.
         '''
-        # First, among other things, convert any assumptions=None
-        # to assumptions=() (thus averting len(None) errors)
+        # Check validity of assumptions (and convert assumptions=None
+        # to assumptions=(), thus averting len(None) errors).
         assumptions = defaults.checkedAssumptions(assumptions)
 
         #-- -------------------------------------------------------- --#
-        #-- Case (1): x|x with x ≠ 0 known or assumed                --#
+        #-- Case (1): x|x with x != 0 known or assumed               --#
         #-- -------------------------------------------------------- --#
         from proveit.logic import InSet, NotEquals
         from proveit.number import zero, Complexes
+        err_str = "In Divides.conclude() we tried:\n"
         if self.lhs==self.rhs:
             if (NotEquals(self.lhs, zero).proven(assumptions=assumptions) and
                 InSet(self.lhs, Complexes).proven(assumptions=assumptions)):
                 # Trivial x|x with complex x ≠ 0
                 return self.concludeViaReflexivity(assumptions)
             else:
-                err_str =  (
-                        "Divides.conclude() Failure. Unable to "
-                        "automatically conclude by standard means. "
-                        "Although lhs = rhs = {0}, either {0} is not "
-                        "known to be unequal to 0 or {0} is not known "
-                        "to be in the complex numbers (or both). "
-                        "Try proving one or both of those claims first.".
-                        format(self.lhs))
-                raise ProofFailure(self, assumptions, err_str)
+                err_str =  err_str + (
+                        "Case: lhs = rhs. "
+                        "Although lhs = rhs = {0}, either {0} is not known to "
+                        "be non-zero or {0} is not known to be in the complex "
+                        "numbers (or both). Try proving one or both of those "
+                        "claims first.\n".format(self.lhs))
+                # raise ProofFailure(self, assumptions, err_str)
 
         #-- -------------------------------------------------------- --#
-        #-- Case (2): x|0 with x ≠ 0 known or assumed                --#
+        #-- Case (2): x|0 with x != 0 known or assumed               --#
         #-- -------------------------------------------------------- --#
         if self.rhs==zero:
             if (NotEquals(self.lhs, zero).proven(assumptions=assumptions) and
                 InSet(self.lhs, Complexes).proven(assumptions=assumptions)):
                 # We have 0/x with complex x ≠ 0
                 return self.concludeViaZeroFactor(assumptions)
+            else:
+                err_str = err_str + (
+                        "Case: rhs = 0. "
+                        "Although rhs = 0, either the lhs {0} is not known to "
+                        "be non-zero or {0} is not known to be in the complex "
+                        "numbers (or both). Try proving one or both of those "
+                        "claims first.\n".format(self.lhs))
 
         #-- -------------------------------------------------------- --#
-        #-- Case (3): x|z with x|y and y|z known or assumed          --#
+        #-- Case (3): very simple version of x|xy or x|yx            --#
         #-- -------------------------------------------------------- --#
-        # seek out the appropriate x|y and y|z and use transitivity
-        # to get x|z
-        # try:
-        #     return self.concludeViaTransitivity(assumptions)
-        # except:
-        #     pass
-        return self.concludeViaTransitivity(assumptions)
+        # return self.concludeViaFactor(assumptions)
+        try:
+            return self.concludeViaFactor(assumptions)
+        except Exception as e:
+            err_str = err_str + (
+                    "Case: x|xy. This possible case returned the following "
+                    "error message: {0} \n".format(e))
+            pass
 
-        raise ProofFailure(self, assumptions,
-                           "Unable to automatically conclude by "
-                           "standard means.")
+        #-- -------------------------------------------------------- --#
+        #-- Case (4): x|z with x|y and y|z known or assumed          --#
+        #-- -------------------------------------------------------- --#
+        # Seek out the appropriate x|y and y|z and use transitivity
+        # to get x|z, utilizing the concludeViaTransitivity() method
+        # available for instances of TransitiveRelation
+        try:
+            return self.concludeViaTransitivity(assumptions)
+        except Exception as e:
+            err_str = err_str + (
+                    "Case: transitivity search. In attempting to use "
+                    "concludeViaTransitivity(), obtained the following "
+                    "error message: {0}.".format(e))
+            pass
+
+        raise ProofFailure(self, assumptions, err_str)
 
 
     def concludeViaReflexivity(self, assumptions=USE_DEFAULTS):
@@ -133,6 +154,47 @@ class Divides(DividesRelation):
        _x = nonZeroDividesZero.instanceVar
        return nonZeroDividesZero.instantiate(
                 {_x:self.lhs}, assumptions=assumptions)
+
+    def concludeViaFactor(self, assumptions=USE_DEFAULTS):
+        '''
+        Prove and return self of the form x|xy for x ≠ 0 and y in Ints
+        '''
+        from proveit.number import Mult
+        if isinstance(self.rhs, Mult):
+            if len(self.rhs.operands) == 2:
+                # should check to make sure none of the operands
+                # are actually ExprRanges (later!)
+                if self.lhs == self.rhs.operands[0]:
+                    # apply left version
+                    from ._theorems_ import leftFactorDivisibility
+                    _x, _y = leftFactorDivisibility.instanceParams
+                    return leftFactorDivisibility.instantiate(
+                            {_x:self.lhs, _y:self.rhs.operands[1]},
+                            assumptions=assumptions)
+                elif self.lhs == self.rhs.operands[1]:
+                    # apply right version
+                    from ._theorems_ import rightFactorDivisibility
+                    _x, _y = rightFactorDivisibility.instanceParams
+                    return rightFactorDivisibility.instantiate(
+                            {_x:self.lhs, _y:self.rhs.operands[0]},
+                            assumptions=assumptions)
+                else:
+                    raise ValueError(
+                        "concludeViaFactor only applies for an explicit "
+                        "factor appearing on both sides of the Divides. "
+                        "{0} does not appear in {1} as an explicit factor.".
+                        format(self.lhs, self.rhs))
+            else:
+                raise NotImplementedError(
+                    "concludeViaFactor implemented only for binary "
+                    "multiplication.")
+        else:
+            raise ValueError(
+                    "concludeViaFactor only applies for an explicit "
+                    "Mult expression on the rhs of the Divides, "
+                    "but received {0} on the right side.".
+                    format(self.rhs))
+
 
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
