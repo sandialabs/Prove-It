@@ -1,4 +1,5 @@
 from proveit import USE_DEFAULTS, maybeFencedString
+from proveit._common_ import q
 from proveit.logic import Membership
 from proveit.number.sets.number_set import NumberSet, NumberMembership
 
@@ -104,9 +105,10 @@ class RationalsNonNegSet(NumberSet):
 
 class RationalsMembership(NumberMembership):
     def __init__(self, element, number_set):
-        Membership.__init__(self, element)
+        NumberMembership.__init__(self, element, number_set)
         
-    def choose_rational_fraction(numerator_var, denominator_var):
+    def choose_rational_fraction(self, numerator_var, denominator_var,
+                                 *, assumptions=USE_DEFAULTS):
         '''
         Choose Skolem "constants" (really variables with proper a
         ssumptions) for 
@@ -118,7 +120,8 @@ class RationalsMembership(NumberMembership):
         '''
         pass
 
-    def choose_reduced_rational_fraction(numerator_var, denominator_var):
+    def choose_reduced_rational_fraction(self, numerator_var, denominator_var,
+                                         *, assumptions=USE_DEFAULTS):
         '''
         Choose Skolem "constants" (really variables with proper a
         ssumptions) for 
@@ -128,7 +131,18 @@ class RationalsMembership(NumberMembership):
         For the RationalsPos set, use "a in N"; otherwise, use "a in Z".
         Call "eliminate" to finish the Skolemization proof.
         '''
-        pass
+        from proveit.number import RationalsPos
+        from ._theorems_ import reducedNatsPosRatio
+
+        if self.number_set == RationalsPos:
+            return reducedNatsPosRatio.instantiate(
+                    {q:self.element}, assumptions=assumptions).choose(
+                        numerator_var, denominator_var)
+        else:
+            raise NotImplementedError(
+                    "choose_reduced_rational_fraction() implemented only "
+                    "for the RationalsPos NumberSet (but the {0} NumberSet "
+                    "was provided instead).".format(self.number_set))
 
 
 try:
