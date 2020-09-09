@@ -335,7 +335,7 @@ class KnownTruth:
             raise Exception('qed proof should not have any remaining assumptions')
         KnownTruth.qedInProgress = True
         try:
-            proof = self.expr.prove().proof()
+            proof = self.expr.prove(assumptions=[]).proof()
             if not proof.isUsable():
                 proof.provenTruth.raiseUnusableProof()
             KnownTruth.theoremBeingProven.recordProof(proof)
