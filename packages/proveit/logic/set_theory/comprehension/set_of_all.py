@@ -8,7 +8,6 @@ class SetOfAll(OperationOverInstances):
                          latexFormat=r'\textrm{SetOfAll}', context=__file__)
     _init_argname_mapping_ = {'instanceElement':'instanceExpr'}
 
-    # MAYBE ONLY ALLOW A SINGLE PARAMETER??
     def __init__(self, instanceParamOrParams, instanceElement,
                  domain=None, *, domains=None, condition=None,
                  conditions=None, _lambda_map=None):
@@ -28,7 +27,7 @@ class SetOfAll(OperationOverInstances):
                 raise ValueError("SetOfAll requires a domain")
         elif hasattr(self, 'instanceParams'):
             if not hasattr(self, 'domains') or None in self.domains:
-                raise ValueError("SetOfAll requires a domain(s)")
+                raise ValueError("SetOfAll requires domains")
         else:
             assert False, ("Expecting either 'instanceParam' or 'instanceParams' "
                            "to be set")

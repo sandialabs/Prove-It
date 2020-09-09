@@ -10,7 +10,8 @@ from .set_theory import (NotProperSubset, NotProperSuperset, NotSubset,
 	                       NotSubsetEq, NotSuperset, NotSupersetEq,
 	                       ProperSubset, ProperSuperset, Set, Subset, SubsetEq,
 	                       SubsetProper, SupersetEq, Superset)
-from .set_theory import Union, Intersect, Difference, SetOfAll, Disjoint, Distinct, Card
+from .set_theory import (Union, UnionAll, Intersect, IntersectAll, Difference, 
+                         SetOfAll, PowerSet, Disjoint, Distinct, Card)
 from .equality import (Equals, NotEquals, reduceOperands, defaultSimplification,
                        evaluateTruth, SimplificationError, EvaluationError)
 from .irreducible_value import IrreducibleValue, isIrreducibleValue
