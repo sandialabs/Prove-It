@@ -233,8 +233,11 @@ class ComplexSet(NumberSet):
         Take the square root of both sides of the NotEquals relation.
         '''
         from proveit.number import frac, one, two
-        return ComplexSet.exponentiate_both_sides_of_notequals(relation,
+        new_rel = ComplexSet.exponentiate_both_sides_of_notequals(relation,
                 frac(one, two), assumptions=assumptions)
+        new_rel.innerExpr().lhs.withStyles(exponent='radical')
+        new_rel.innerExpr().rhs.withStyles(exponent='radical')
+        return new_rel
     
     
 # if proveit.defaults.automation:
