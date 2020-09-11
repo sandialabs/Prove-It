@@ -1,22 +1,49 @@
 from proveit import (asExpression, Context, defaults, Literal, Operation,
                      ProofFailure, TransitiveRelation, USE_DEFAULTS)
+from proveit.logic import Equals, InSet, NotEquals
+from proveit.number import Exp, Mult, num
+from proveit.number import zero, Complexes, Integers, NaturalsPos
 
 class DividesRelation(TransitiveRelation):
 
     def __init__(self, operator, lhs, rhs):
         TransitiveRelation.__init__(self, operator, lhs, rhs)
 
-    def lower(self):
+    def sideEffects(self, knownTruth):
         '''
-        Returns the lower bound side of this inequality.
+        In addition to the TransitiveRelation side-effects, also
+        attempt (where applicable) eliminateDividenExponent,
+        eliminate_common_exponent, and eliminate_common_factor.
         '''
-        return self.lhs
+        for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
+            yield sideEffect
+        
+        # For each of the following, use the default assumptions to
+        # verify some conditions before yielding the side effect method
+        # (i.e. check using .proven() without arguments)
 
-    def upper(self):
-        '''
-        Returns the upper bound side of this inequality.
-        '''
-        return self.rhs
+        # for a|(b^n)
+        if (isinstance(self.rhs, Exp) and
+            InSet(self.lhs, Integers).proven() and
+            InSet(self.rhs.base, Integers).proven() and
+            InSet(self.rhs.exponent, Integers).proven()):
+            yield self.eliminateDividendExponent
+
+        # for (a^n)|(b^n)
+        if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp) and
+            InSet(self.lhs.base, Integers).proven() and
+            InSet(self.rhs.base, Integers).proven() and
+            Equals(self.lhs.exponent, self.rhs.exponent).proven() and
+            InSet(self.lhs.exponent, NaturalsPos).proven()):
+            yield self.eliminate_common_exponent
+
+        # for (ka)|(kb)
+        if (isinstance(self.lhs, Mult) and len(self.lhs.operands)==2 and
+            isinstance(self.rhs, Mult) and len(self.rhs.operands)==2):
+            operands_intersection = (set(self.lhs.operands).
+                                     intersection(set(self.lhs.operands)))
+            if(len(operands_intersection)>0):
+                yield self.eliminate_common_factor
 
     @staticmethod
     def WeakRelationClass():
@@ -64,7 +91,9 @@ class Divides(DividesRelation):
         (1) simple reflexivity (x|x);
         (2) simple x|0 for x ≠ 0;
         (3) simple x|xy or x|yx scenario
-        (4) via transitivity.
+        (4) x^n | y^n if x|y is known or assumed
+        (5) x|y if (x^n)|(y^n) is known or assumed
+        (6) via transitivity.
         '''
         # Check validity of assumptions (and convert assumptions=None
         # to assumptions=(), thus averting len(None) errors).
@@ -119,7 +148,49 @@ class Divides(DividesRelation):
             pass
 
         #-- -------------------------------------------------------- --#
-        #-- Case (4): x|z with x|y and y|z known or assumed          --#
+        #-- Case (4): x^n|y^n if x|y                                 --#
+        #-- -------------------------------------------------------- --#
+        if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp)):
+            if (InSet(self.lhs.base, Integers).proven(assumptions) and
+                InSet(self.rhs.base, Integers).proven(assumptions) and
+                Equals(self.lhs.exponent, self.rhs.exponent) and
+                InSet(self.lhs.exponent, NaturalsPos).proven(assumptions) and
+                Divides(self.lhs.base, self.rhs.base).proven(assumptions)):
+
+                return (Divides(self.lhs.base, self.rhs.base).
+                            introduce_common_exponent(
+                                self.lhs.exponent, assumptions=assumptions))
+
+            else:
+                err_str = err_str + (
+                        "Case: (x^n) | (y^n). One or more of the conditions "
+                        "(such as domain requirements or x|y) were not "
+                        "already proven. Check the conditions for the "
+                        "common_exponent_introduction theorem in the "
+                        "number/divisibility package.\n")
+
+        else:
+            err_str = err_str + (
+                    "Case: (x^n) | (y^n). Does not appear applicable.\n")
+        #-- -------------------------------------------------------- --#
+        #-- Case (5): x|y if x^n|y^n (for some small pos nat n)      --#
+        #-- -------------------------------------------------------- --#
+        possible_exps = range(2,10)
+        for e in possible_exps:
+            # print("exp = {}".format(e))
+            if (Divides(Exp(self.lhs, num(e)), Exp(self.rhs, num(e))).
+                proven(assumptions)):
+                # print("    Divides found for exp = {}".format(test_exp))
+                return (Divides(Exp(self.lhs, test_exp),
+                                Exp(self.rhs, test_exp)).
+                        eliminate_common_exponent(assumptions=assumptions))
+
+        err_str = err_str + (
+                "Case: x|y where we already have (x^n)|(y^n). "
+                "Does not appear applicable.\n")
+
+        #-- -------------------------------------------------------- --#
+        #-- Case (6): x|z with x|y and y|z known or assumed          --#
         #-- -------------------------------------------------------- --#
         # Seek out the appropriate x|y and y|z and use transitivity
         # to get x|z, utilizing the concludeViaTransitivity() method
@@ -194,6 +265,107 @@ class Divides(DividesRelation):
                     "Mult expression on the rhs of the Divides, "
                     "but received {0} on the right side.".
                     format(self.rhs))
+
+    def eliminateDividendExponent(self, assumptions=USE_DEFAULTS):
+        '''
+        From k|a^n (self), derive and return k|a. k, a, and n must all
+        be integers. This method is called from the DividesRelation
+        sideEffects() method.
+        '''
+        from ._theorems_ import divides_if_divides_power
+        k_, a_, n_ = divides_if_divides_power.instanceParams
+        return divides_if_divides_power.instantiate(
+            {k_:self.lhs, a_:self.rhs.base, n_:self.rhs.exponent},
+            assumptions=assumptions)
+
+    def eliminate_common_exponent(self, assumptions=USE_DEFAULTS):
+        '''
+        From self of the form (k^n)|(a^n), derive and return k|a.
+        k, a, must be integers, with n a positive integer. This method
+        is called from the DividesRelation sideEffects() method.
+        '''
+        if (isinstance(self.lhs, Exp) and
+            isinstance(self.rhs, Exp) and
+            self.lhs.exponent == self.rhs.exponent):
+
+            k = self.lhs.base
+            a = self.rhs.base
+            n = self.lhs.exponent
+
+            if (InSet(k, Integers).proven(assumptions) and 
+                InSet(a, Integers).proven(assumptions) and
+                InSet(n, NaturalsPos).proven(assumptions)):
+
+                from ._theorems_ import common_exponent_elimination
+                _k, _a, _n = common_exponent_elimination.instanceParams
+                return common_exponent_elimination.instantiate(
+                        {_k:k, _a:a, _n:n}, assumptions=assumptions)
+            else:
+                err_msg = ("In using Divides.eliminate_common_exponent(), "
+                           "the exponent ({0}) must already be known to be "
+                           "a positive natural and each base ({1}, {2}) "
+                           "must already been know to be an integer.".
+                           format(n, k, a))
+        else:
+            err_msg = ("In using Divides.eliminate_common_exponent(), "
+                       "the lhs {0} and rhs {1} must both be exponential.".
+                       format(self.lhs, self.rhs))
+
+        raise ValueError(err_msg)
+
+    def introduce_common_exponent(self, exponent, assumptions=USE_DEFAULTS):
+        '''
+        From self of the form (k)|(a), with integers k and a, derive
+        and return k^n|a^n where n = exponent is a positive natural.
+        '''
+        from ._theorems_ import common_exponent_introduction
+        _k, _a, _n = common_exponent_introduction.instanceParams
+        return common_exponent_introduction.instantiate(
+                        {_k:self.lhs, _a:self.rhs, _n:exponent},
+                        assumptions=assumptions)
+
+    def eliminate_common_factor(self, assumptions=USE_DEFAULTS):
+        '''
+        From self of the form (k a)|(k b), derive and return a|b.
+        k must be a non-zero complex number. This method
+        is called from the DividesRelation sideEffects() method.
+        Need to generalize this later for more than two operands on
+        each side! Could use sets for detecting common factors.
+        '''
+        if (isinstance(self.lhs, Mult) and
+            isinstance(self.rhs, Mult)):
+
+            if (len(self.lhs.operands)==2 and
+                len(self.rhs.operands)==2):
+
+                lhs1 = self.lhs.operands[0]
+                lhs2 = self.lhs.operands[1]
+                rhs1 = self.rhs.operands[0]
+                rhs2 = self.rhs.operands[1]
+
+                if (lhs1 == rhs1 and InSet(lhs1, Complexes).proven() and
+                    NotEquals(lhs1, zero).proven()):
+
+                    print("inside eliminate_common_factor()!")
+                    from ._theorems_ import common_factor_elimination
+                    from proveit._common_ import a, b, k
+                    print("lhs1 = {0}, lhs2 = {1}, rhs2 = {2}".
+                          format(lhs1, lhs2, rhs2))
+                    return common_factor_elimination.instantiate(
+                        {a: lhs2, b: rhs2, k:lhs1 }, assumptions=assumptions)
+
+                else:
+                    err_msg = ("Error!")
+
+            else:
+                err_msg = ("In using Divides.eliminate_common_factor(), "
+                           "each product can have only two multiplicands.")
+        else:
+            err_msg = ("In using Divides.eliminate_common_factor(), "
+                       "the lhs {0} and rhs {1} must both be products.".
+                       format(self.lhs, self.rhs))
+
+        raise ValueError(err_msg)
 
 
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
