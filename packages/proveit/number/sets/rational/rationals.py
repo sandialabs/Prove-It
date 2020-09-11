@@ -8,11 +8,22 @@ class RationalsSet(NumberSet):
         NumberSet.__init__(self, 'Rationals', r'\mathbb{Q}',
                            context=__file__)
 
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'n in NaturalsPos' for a given n.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
+    
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsInBool
         from proveit._common_ import x
         return xInRationalsInBool.specialize(
                 {x:member}, assumptions=assumptions)
+
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
+        from proveit.number.sets.real._theorems_ import rationalsInReals
+        return rationalsInReals.deriveSupsersetMembership(member, assumptions)
 
 class RationalsPosSet(NumberSet):
 
@@ -40,6 +51,9 @@ class RationalsPosSet(NumberSet):
         return xInRationalsPosInBool.specialize(
                 {x:member}, assumptions=assumptions)
 
+    def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
+        return rationalsPosInRationals.deriveSupsersetMembership(member, assumptions)
+
 class RationalsNegSet(NumberSet):
 
     def __init__(self):
@@ -66,6 +80,10 @@ class RationalsNegSet(NumberSet):
         return xInRationalsNegInBool.specialize(
                 {x:member}, assumptions=assumptions)
 
+    def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
+        return rationalsNegInRationals.deriveSupsersetMembership(
+                member, assumptions)
+
 class RationalsNonNegSet(NumberSet):
 
     def __init__(self):
@@ -91,13 +109,17 @@ class RationalsNonNegSet(NumberSet):
         from proveit._common_ import x
         return xInRationalsNonNegInBool.specialize(
                 {x:member}, assumptions=assumptions)
+    
+    def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
+        return rationalsNonNegInRationals.deriveSupsersetMembership(
+                member, assumptions)
+
 
 try:
     # Import some fundamental axioms and theorems without quantifiers.
     # Fails before running the _axioms_ and _theorems_ notebooks for
     # the first time, but fine after that.
-    from ._theorems_ import (rationalsInReals,
-                             rationalsPosInRationals,
+    from ._theorems_ import (rationalsPosInRationals,
                              rationalsNegInRationals, 
                              rationalsNonNegInRationals,
                              rationalsPosInRationalsNonNeg,

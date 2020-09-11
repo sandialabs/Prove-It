@@ -1,16 +1,28 @@
 import proveit
+from proveit.logic import Equals, NotEquals
 from proveit import USE_DEFAULTS, maybeFencedString
-from proveit._common_ import a
+from proveit._common_ import a, x, y
 from proveit.number.sets.number_set import NumberSet
 
 class RealSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
 
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'n in RealsPos' for a given n.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInComplexes(member, 
+                                                                assumptions)
+    
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsInBool
-        from proveit._common_ import x
         return xInRealsInBool.specialize({x:member}, assumptions=assumptions)
+
+    def deduceMemberInComplexes(self, member, assumptions=USE_DEFAULTS):
+        from proveit.number.sets.complex._theorems_ import realsInComplexes
+        return realsInComplexes.deriveSupsersetMembership(member, assumptions)
 
 class RealPosSet(NumberSet):
     def __init__(self):
@@ -155,6 +167,7 @@ if proveit.defaults.automation:
         # notebooks for the first time, but fine after that.
         from ._theorems_ import (
             realsPosInReals, realsNegInReals, realsNonNegInReals,
+            rationalsInReals,
             intsInReals, natsInReals, natsPosInReals, natPosInRealsPos,
             natsInRealsNonNeg, natsPosInRealsNonNeg,
             realsPosInRealsNonNeg)
