@@ -103,6 +103,40 @@ class Mult(Operation):
                                a:self.operands},
                               assumptions=assumptions)
 
+    def deduceDividedBy(self, divisor, assumptions=USE_DEFAULTS):
+        '''
+        Deduce that the product represented by Mult(a,b) is divisible
+        by the mult_factor a or b. For example,
+           Mult(a, b).deduceDividedBy(a)
+        returns |- Divides(a, Mult(a,b)), that is |- a|ab, (assuming
+        complex a≠0 and integer b).
+        Later: possibly consider an Equals(divisor,self.lhs) case?
+        '''
+        if divisor==self.operands[0]: # a|ab
+            from proveit.number.divisibility._theorems_ import (
+                    leftFactorDivisibility)
+            _x, _y = leftFactorDivisibility.instanceParams
+            return leftFactorDivisibility.instantiate(
+                    {_x:self.operands[0], _y:self.operands[1]},
+                    assumptions=assumptions)
+
+        elif divisor==self.operands[1]: # a|ba
+            from proveit.number.divisibility._theorems_ import (
+                    rightFactorDivisibility)
+            _x, _y = rightFactorDivisibility.instanceParams
+            return rightFactorDivisibility.instantiate(
+                    {_x:self.operands[0], _y:self.operands[1]},
+                    assumptions=assumptions)
+
+        else:
+            raise ValueError(
+                    "In Mult({0}, {1}).deduceDividedBy({2}), "
+                    "the supplied divisor {2} does not appear "
+                    "to be equal to either of the multiplicands "
+                    "{0} or {1}.".
+                    format(self.operands[0], self.operands[1], divisor))
+
+
     def notEqual(self, rhs, assumptions=USE_DEFAULTS):
         from ._theorems_ import multNotEqZero
         from proveit.number import zero
