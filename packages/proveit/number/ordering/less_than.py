@@ -37,12 +37,16 @@ class LesserRelation(OrderingRelation):
                                             assumptions=assumptions)
 
     def square_root_both_sides(self, *, simplify=True, assumptions=USE_DEFAULTS):
-        from proveit.number import frac, one, two
+        from proveit.number import frac, one, two, Exp
         new_rel = self.exponentiate_both_sides(frac(one, two), 
                                                simplify=simplify,
                                                assumptions=assumptions)  
-        new_rel.innerExpr().lhs.withStyles(exponent='radical')
-        new_rel.innerExpr().rhs.withStyles(exponent='radical')
+        if (isinstance(new_rel.lhs, Exp) 
+                and new_rel.lhs.exponent==frac(one, two)):
+            new_rel.innerExpr().lhs.withStyles(exponent='radical')
+        if (isinstance(new_rel.rhs, Exp) 
+                and new_rel.rhs.exponent==frac(one, two)):
+            new_rel.innerExpr().rhs.withStyles(exponent='radical')
         return new_rel    
 
 class LesserSequence(OrderingSequence):
