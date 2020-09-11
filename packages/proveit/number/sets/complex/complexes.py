@@ -200,6 +200,9 @@ class ComplexSet(NumberSet):
     @staticmethod
     def square_both_sides_of_equals(relation,
                                     assumptions=USE_DEFAULTS):
+        '''
+        Square both sides of the Equals relation.
+        '''
         from proveit.number import two
         return ComplexSet.exponentiate_both_sides_of_equals(relation,
                 two, assumptions=assumptions)
@@ -207,12 +210,18 @@ class ComplexSet(NumberSet):
     @staticmethod
     def square_both_sides_of_notequals(relation,
                                        assumptions=USE_DEFAULTS):
+        '''
+        Square both sides of the NotEquals relation.
+        '''
         from proveit.number import two
         return ComplexSet.exponentiate_both_sides_of_notequals(relation,
                 two, assumptions=assumptions)
 
     @staticmethod
     def square_root_both_sides_of_equals(relation, assumptions=USE_DEFAULTS):
+        '''
+        Take the square root of both sides of the Equals relation.
+        '''
         from proveit.number import frac, one, two
         return ComplexSet.exponentiate_both_sides_of_equals(relation,
                 frac(one, two), assumptions=assumptions)
@@ -220,6 +229,9 @@ class ComplexSet(NumberSet):
     @staticmethod
     def square_root_both_sides_of_notequals(relation, 
                                             assumptions=USE_DEFAULTS):
+        '''
+        Take the square root of both sides of the NotEquals relation.
+        '''
         from proveit.number import frac, one, two
         return ComplexSet.exponentiate_both_sides_of_notequals(relation,
                 frac(one, two), assumptions=assumptions)
