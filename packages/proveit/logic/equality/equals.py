@@ -780,7 +780,8 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     elif (not mustEvaluate and
           known_simplifications_key in Equals.known_simplifications):
         simplification = Equals.known_simplifications[known_simplifications_key]
-        return innerSimplification(simplification)
+        if simplification.isUsable():
+            return innerSimplification(simplification)
 
     # ================================================================ #
     
