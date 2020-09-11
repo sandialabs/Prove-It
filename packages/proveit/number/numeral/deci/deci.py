@@ -16,14 +16,14 @@ class DecimalSequence(NumeralSequence):
     def asInt(self):
         return int(self.formatted('string'))
 
-    @staticmethod
-    def numAddEval(num1, num2, assumptions=USE_DEFAULTS):
+
+    def numAddEval(self, num2, assumptions=USE_DEFAULTS):
         '''
         evaluates the addition of two integers
         '''
         from proveit._common_ import a, b, k, m
         from ._theorems_ import md_only_nine_add_one, md_nine_add_one
-        num1 = num(num1)
+        num1 = self
         num2 = num(num2)
         if num2 is one:
             # if the second number (num2) is one, we set it equal to the first number and then assume the
@@ -33,7 +33,7 @@ class DecimalSequence(NumeralSequence):
         elif num2 is not one:
             raise NotImplementedError(
                     "Currently, numAddEval only works for the addition of Decimal "
-                    "Sequences and one, not %d, %d"%(num1, num2))
+                    "Sequences and one, not %s, %s" % (str(num1), str(num2)))
         if all(digit is nine for digit in num2.digits):
             # every digit is 9
             return md_only_nine_add_one.specialize({k: num(len(num2.digits))}, assumptions=assumptions)

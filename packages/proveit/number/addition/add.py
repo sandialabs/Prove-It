@@ -726,12 +726,12 @@ class Add(Operation):
         #print(_a, _b)
         if not all(term in DIGITS for term in (num(_a), num(_b))):
             if isinstance(num(_a), NumeralSequence):
-                return num(_a).numAddEval(_a, _b, assumptions=assumptions)
+                return num(_a).numAddEval(_b, assumptions=assumptions)
             elif isinstance(num(_b), NumeralSequence):
-                return num(_a).numAddEval(_a, _b, assumptions=assumptions)
+                return num(_a).numAddEval(_b, assumptions=assumptions)
             raise NotImplementedError(
-                    "Currently, _integerBinaryEval only works for single "
-                    "digit addition and related subtractions: %d, %d"%(_a, _b))
+                    "Currently, _integerBinaryEval only works for integer "
+                    " addition and related subtractions: %d, %d"%(_a, _b))
         if (_a, _b) not in Add.addedNumerals:
             try:
                 # for single digit addition, import the theorem that provides the evaluation
