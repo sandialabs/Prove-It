@@ -18,11 +18,16 @@ class NaturalSet(NumberSet):
         '''
         member = knownTruth.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
+        yield lambda assumptions : self.deduceMemberInInts(member, assumptions)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInNatsInBool
         from proveit._common_ import x
         return xInNatsInBool.specialize({x:member}, assumptions=assumptions)
+
+    def deduceMemberInInts(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import natsInInts
+        return natsInInts.deriveSupsersetMembership(member, assumptions)
 
 
 class NaturalPosSet(NumberSet):

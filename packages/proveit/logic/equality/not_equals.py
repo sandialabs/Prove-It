@@ -2,8 +2,9 @@ from proveit import Literal, Operation, USE_DEFAULTS
 from .equals import Equals
 from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit._common_ import x, y, A, X
+from proveit.relation import Relation
 
-class NotEquals(Operation):
+class NotEquals(Relation):
     # operator of the NotEquals operation
     _operator_ = Literal(stringFormat='!=', latexFormat=r'\neq', context=__file__)
     

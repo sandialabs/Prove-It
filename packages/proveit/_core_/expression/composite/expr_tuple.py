@@ -137,6 +137,13 @@ class ExprTuple(Composite, Expression):
         from .expr_range import ExprRange
         return len(self)==1 and not isinstance(self[0], ExprRange)
     
+    def contains_range(self):
+        '''
+        Returns true if the entry contains an ExprRange.
+        '''
+        from .expr_range import ExprRange
+        return any(isinstance(entry, ExprRange) for entry in self.entries)
+    
     def index(self, entry, start=0, stop=None):
         if stop is None:
             return self.entries.index(entry, start)
