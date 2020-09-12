@@ -62,6 +62,14 @@ class Greater(GreaterRelation):
         '''
         OrderingRelation.__init__(self, Greater._operator_,lhs,rhs)
         
+    def conclude(self, assumptions):
+        from ._theorems_ import positiveIfInRealsPos
+        from proveit.number import zero
+        if self.rhs == zero:
+            positiveIfInRealsPos.instantiate({a:self.lhs},
+                                             assumptions=assumptions)
+        return GreaterRelation.conclude(self, assumptions)
+    
     def reversed(self):
         '''
         Returns the reversed inequality Expression.
@@ -207,6 +215,16 @@ class GreaterEq(GreaterRelation):
         See if first number is at least as big as second.
         '''
         GreaterRelation.__init__(self, GreaterEq._operator_,lhs,rhs)
+    
+    def conclude(self, assumptions):
+        # See if the right side is the left side plus something 
+        # positive added to it.
+        from proveit.number import zero
+        if self.rhs == zero:
+            from ._theorems import nonNegIfInRealsNonNeg
+            return nonNegIfInRealsNonNeg.instantiate(
+                    {a:self.rhs}, assumptions=assumptions)
+        return GreaterRelation.conclude(self, assumptions)
     
     def reversed(self):
         '''

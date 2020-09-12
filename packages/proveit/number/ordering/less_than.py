@@ -43,10 +43,10 @@ class LesserRelation(OrderingRelation):
                                                assumptions=assumptions)  
         if (isinstance(new_rel.lhs, Exp) 
                 and new_rel.lhs.exponent==frac(one, two)):
-            new_rel.innerExpr().lhs.withStyles(exponent='radical')
+            new_rel = new_rel.innerExpr().lhs.withStyles(exponent='radical')
         if (isinstance(new_rel.rhs, Exp) 
                 and new_rel.rhs.exponent==frac(one, two)):
-            new_rel.innerExpr().rhs.withStyles(exponent='radical')
+            new_rel = new_rel.innerExpr().rhs.withStyles(exponent='radical')
         return new_rel    
 
 class LesserSequence(OrderingSequence):
@@ -84,7 +84,11 @@ class Less(LesserRelation):
     def conclude(self, assumptions):
         # See if the right side is the left side plus something 
         # positive added to it.
-        from proveit.number import Add
+        from proveit.number import Add, zero
+        if self.rhs == zero:
+            from ._theorems import negativeIfInRealsNeg
+            return negativeIfInRealsNeg.instantiate(
+                    {a:self.lhs}, assumptions=assumptions)
         if isinstance(self.rhs, Add):
             if self.lhs in self.rhs.terms:
                 return self.concludeViaIncrease(assumptions)
@@ -402,7 +406,7 @@ class LessEq(LesserRelation):
         See if second number is at least as big as first.
         '''
         LesserRelation.__init__(self, LessEq._operator_,lhs,rhs)
-            
+    
     def reversed(self):
         '''
         Returns the reversed inequality Expression.
