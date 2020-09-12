@@ -27,7 +27,7 @@ class NaturalSet(NumberSet):
 
     def deduceMemberInInts(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import natsInInts
-        return natsInInts.deriveSupsersetMembership(member, assumptions)
+        return natsInInts.deriveSupersetMembership(member, assumptions)
 
 
 class NaturalPosSet(NumberSet):

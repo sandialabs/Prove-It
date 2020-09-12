@@ -27,7 +27,7 @@ class RationalsSet(NumberSet):
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.real._theorems_ import rationalsInReals
-        return rationalsInReals.deriveSupsersetMembership(member, assumptions)
+        return rationalsInReals.deriveSupersetMembership(member, assumptions)
 
 class RationalsPosSet(NumberSet):
 
@@ -68,7 +68,7 @@ class RationalsPosSet(NumberSet):
                 {x:member}, assumptions=assumptions)
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
-        return rationalsPosInRationals.deriveSupsersetMembership(member, assumptions)
+        return rationalsPosInRationals.deriveSupersetMembership(member, assumptions)
 
 class RationalsNegSet(NumberSet):
 
@@ -109,7 +109,7 @@ class RationalsNegSet(NumberSet):
                 {x:member}, assumptions=assumptions)
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
-        return rationalsNegInRationals.deriveSupsersetMembership(
+        return rationalsNegInRationals.deriveSupersetMembership(
                 member, assumptions)
 
 class RationalsNonNegSet(NumberSet):
@@ -151,14 +151,43 @@ class RationalsNonNegSet(NumberSet):
                 {x:member}, assumptions=assumptions)
     
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
-        return rationalsNonNegInRationals.deriveSupsersetMembership(
+        return rationalsNonNegInRationals.deriveSupersetMembership(
                 member, assumptions)
-
 
 
 class RationalsMembership(NumberMembership):
     def __init__(self, element, number_set):
         NumberMembership.__init__(self, element, number_set)
+    
+    def conclude(self, assumptions):
+        from proveit.logic import InSet
+        from proveit.number import (
+                Rationals, RationalsPos, RationalsNeg, RationalsNonNeg,
+                Less, Greater, GreaterEq, zero)
+        
+        # If we known the element is in Q, we may be able to
+        # prove that is in RationalsPos, RationalsNeg, or 
+        # RationalsNonNeg if we know its relation to zero.
+        if (self.number_set != Rationals and 
+                InSet(self.element, Rationals).proven(assumptions)):
+            if self.number_set == RationalsPos:
+                if Greater(self.element, zero).proven(assumptions):
+                    from ._theorems_ import positiveRationalInRationalsPos
+                    return positiveRationalInRationalsPos.instantiate(
+                            {q:self.element}, assumptions=assumptions)
+            if self.number_set == RationalsNeg:
+                if Less(self.element, zero).proven():
+                    from ._theorems_ import negativeRationalInRationalsNeg
+                    return negativeRationalInRationalsNeg.instantiate(
+                            {q:self.element}, assumptions=assumptions)                
+            if self.number_set == RationalsNonNeg:
+                if GreaterEq(self.element, zero).proven():
+                    from ._theorems_ import nonNegRationalInRationalsNeg
+                    return nonNegRationalInRationalsNeg.instantiate(
+                            {q:self.element}, assumptions=assumptions)   
+
+        # Resort to the default NumberMembership.conclude strategies.
+        return NumberMembership.conclude(self, assumptions)
     
     def choose_rational_fraction(self, numerator_var, denominator_var,
                                  *, assumptions=USE_DEFAULTS):

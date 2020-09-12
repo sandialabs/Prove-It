@@ -223,8 +223,11 @@ class ComplexSet(NumberSet):
         Take the square root of both sides of the Equals relation.
         '''
         from proveit.number import frac, one, two
-        return ComplexSet.exponentiate_both_sides_of_equals(relation,
+        new_rel = ComplexSet.exponentiate_both_sides_of_equals(relation,
                 frac(one, two), assumptions=assumptions)
+        new_rel = new_rel.innerExpr().lhs.withStyles(exponent='radical')
+        new_rel = new_rel.innerExpr().rhs.withStyles(exponent='radical')
+        return new_rel
     
     @staticmethod
     def square_root_both_sides_of_notequals(relation, 
@@ -235,8 +238,8 @@ class ComplexSet(NumberSet):
         from proveit.number import frac, one, two
         new_rel = ComplexSet.exponentiate_both_sides_of_notequals(relation,
                 frac(one, two), assumptions=assumptions)
-        new_rel.innerExpr().lhs.withStyles(exponent='radical')
-        new_rel.innerExpr().rhs.withStyles(exponent='radical')
+        new_rel = new_rel.innerExpr().lhs.withStyles(exponent='radical')
+        new_rel = new_rel.innerExpr().rhs.withStyles(exponent='radical')
         return new_rel
     
     

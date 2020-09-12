@@ -28,4 +28,4 @@ class IntegerSet(NumberSet):
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.rational._theorems_ import intsInRationals
-        return intsInRationals.deriveSupsersetMembership(member, assumptions)
+        return intsInRationals.deriveSupersetMembership(member, assumptions)

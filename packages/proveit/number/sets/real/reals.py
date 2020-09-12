@@ -22,7 +22,7 @@ class RealSet(NumberSet):
 
     def deduceMemberInComplexes(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.complex._theorems_ import realsInComplexes
-        return realsInComplexes.deriveSupsersetMembership(member, assumptions)
+        return realsInComplexes.deriveSupersetMembership(member, assumptions)
 
 class RealPosSet(NumberSet):
     def __init__(self):
@@ -106,7 +106,7 @@ class RealNegSet(NumberSet):
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import realsNegInReals
-        return realsNegInReals.deriveSupsersetMembership(member, assumptions)
+        return realsNegInReals.deriveSupersetMembership(member, assumptions)
 
 class RealNonNegSet(NumberSet):
     def __init__(self):
@@ -150,7 +150,7 @@ class RealNonNegSet(NumberSet):
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import realsNonNegInReals
-        return realsNonNegInReals.deriveSupsersetMembership(member, assumptions)
+        return realsNonNegInReals.deriveSupersetMembership(member, assumptions)
 
 # if proveit.defaults.automation:
 #     # Import some fundamental theorems without quantifiers that are
