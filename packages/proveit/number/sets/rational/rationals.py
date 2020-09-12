@@ -1,6 +1,6 @@
 from proveit import USE_DEFAULTS, maybeFencedString
 from proveit.logic import Membership
-from proveit.number.sets.number_set import NumberSet
+from proveit.number.sets.number_set import NumberSet, NumberMembership
 
 class RationalsSet(NumberSet):
 
@@ -15,6 +15,9 @@ class RationalsSet(NumberSet):
         member = knownTruth.element
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
     
+    def membershipObject(self, element):
+        return RationalsMembership(element, self)
+
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsInBool
         from proveit._common_ import x
@@ -31,6 +34,9 @@ class RationalsPosSet(NumberSet):
         NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{Q}^+',
                            context=__file__)
 
+    def membershipObject(self, element):
+        return RationalsMembership(element, self)
+    
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
         # only fence if forceFence=True (nested exponents is an
@@ -59,6 +65,9 @@ class RationalsNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'NaturalsNeg', r'\mathbb{Q}^-',
                            context=__file__)
+
+    def membershipObject(self, element):
+        return RationalsMembership(element, self)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
@@ -113,6 +122,36 @@ class RationalsNonNegSet(NumberSet):
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
         return rationalsNonNegInRationals.deriveSupsersetMembership(
                 member, assumptions)
+
+
+
+class RationalsMembership(NumberMembership):
+    def __init__(self, element, number_set):
+        Membership.__init__(self, element)
+        
+    def choose_rational_fraction(numerator_var, denominator_var):
+        '''
+        Choose Skolem "constants" (really variables with proper a
+        ssumptions) for 
+            x = a/b, either "a in Z" or "a in N", b in N
+        where x is the element in the rationals set, a and b are the
+        Skolem "constants".
+        For the RationalsPos set, use "a in N"; otherwise, use "a in Z".
+        Call "eliminate" to finish the Skolemization proof.
+        '''
+        pass
+
+    def choose_reduced_rational_fraction(numerator_var, denominator_var):
+        '''
+        Choose Skolem "constants" (really variables with proper a
+        ssumptions) for 
+            x = a/b, either "a in Z" or "a in N", b in N, gcd(a, b) = 1
+        where x is the element in the rationals set, a and b are the
+        Skolem "constants".
+        For the RationalsPos set, use "a in N"; otherwise, use "a in Z".
+        Call "eliminate" to finish the Skolemization proof.
+        '''
+        pass
 
 
 try:
