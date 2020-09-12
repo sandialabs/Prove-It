@@ -10,7 +10,7 @@ class RationalsSet(NumberSet):
 
     def membershipSideEffects(self, knownTruth):
         '''
-        Yield side-effects when proving 'n in NaturalsPos' for a given n.
+        Yield side-effects when proving 'q in Rationals' for a given q.
         '''
         member = knownTruth.element
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
@@ -31,9 +31,18 @@ class RationalsSet(NumberSet):
 class RationalsPosSet(NumberSet):
 
     def __init__(self):
-        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{Q}^+',
+        NumberSet.__init__(self, 'RationalsPos', r'\mathbb{Q}^+',
                            context=__file__)
 
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'q in RationalsPos'
+        for a given q.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInRationals(member, 
+                                                                assumptions)
+    
     def membershipObject(self, element):
         return RationalsMembership(element, self)
     
@@ -63,9 +72,18 @@ class RationalsPosSet(NumberSet):
 class RationalsNegSet(NumberSet):
 
     def __init__(self):
-        NumberSet.__init__(self, 'NaturalsNeg', r'\mathbb{Q}^-',
+        NumberSet.__init__(self, 'RationalsNeg', r'\mathbb{Q}^-',
                            context=__file__)
 
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'q in RationalsNeg' 
+        for a given q.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInRationals(member, 
+                                                                assumptions)
+    
     def membershipObject(self, element):
         return RationalsMembership(element, self)
 
@@ -96,9 +114,21 @@ class RationalsNegSet(NumberSet):
 class RationalsNonNegSet(NumberSet):
 
     def __init__(self):
-        NumberSet.__init__(self, 'NaturalsNonNeg', r'\mathbb{Q}^{\geq 0}',
+        NumberSet.__init__(self, 'RationalsNonNeg', r'\mathbb{Q}^{\geq 0}',
                            context=__file__)
 
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'q in RationalsNonNeg' 
+        for a given q.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInRationals(member, 
+                                                                assumptions)
+    
+    def membershipObject(self, element):
+        return RationalsMembership(element, self)
+        
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
         # only fence if forceFence=True (nested exponents is an
@@ -128,7 +158,7 @@ class RationalsNonNegSet(NumberSet):
 class RationalsMembership(NumberMembership):
     def __init__(self, element, number_set):
         Membership.__init__(self, element)
-        
+            
     def choose_rational_fraction(numerator_var, denominator_var):
         '''
         Choose Skolem "constants" (really variables with proper a
