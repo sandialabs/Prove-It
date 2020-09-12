@@ -346,11 +346,8 @@ class Divides(DividesRelation):
                 if (lhs1 == rhs1 and InSet(lhs1, Complexes).proven() and
                     NotEquals(lhs1, zero).proven()):
 
-                    print("inside eliminate_common_factor()!")
                     from ._theorems_ import common_factor_elimination
                     from proveit._common_ import a, b, k
-                    print("lhs1 = {0}, lhs2 = {1}, rhs2 = {2}".
-                          format(lhs1, lhs2, rhs2))
                     return common_factor_elimination.instantiate(
                         {a: lhs2, b: rhs2, k:lhs1 }, assumptions=assumptions)
 
