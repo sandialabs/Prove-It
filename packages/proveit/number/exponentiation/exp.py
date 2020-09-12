@@ -3,7 +3,7 @@ from proveit import (Literal, Operation, ExprTuple, ProofFailure,
 from proveit.logic import Membership
 import proveit._common_
 from proveit._common_ import a, b, x, S
-from proveit.number import one, two, frac
+from proveit.number import one, two, Div, frac, num
 
 class Exp(Operation):
     # operator of the Exp operation.
@@ -70,6 +70,15 @@ class Exp(Operation):
         from ._theorems_ import complexXToFirstPowerIsX
         if self.exponent == one:
             return complexXToFirstPowerIsX.specialize({a:self.base})
+        if (isinstance(self.base, Exp) and
+            isinstance(self.base.exponent, Div) and
+            self.base.exponent.numerator==one and
+            self.base.exponent.denominator == self.exponent):
+            from ._theorems_ import nth_power_of_nth_root
+            _n, _x = nth_power_of_nth_root.instanceParams
+            return nth_power_of_nth_root.instantiate(
+                {_n:self.exponent, _x:self.base.base}, assumptions=assumptions)
+
         return Equals(self, self).prove()
 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
@@ -103,6 +112,30 @@ class Exp(Operation):
                 {a:self.base}).checked(assumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealsPos, assumptions)
+
+    def expansion(self, assumptions=USE_DEFAULTS):
+        '''
+        From self of the form x^n return x^n = x(x)...(x).
+        For example, Exp(x, two).expansion(assumptions)
+        should return: assumptions |- (x^2) =  (x)(x). Currently only
+        implemented explicitly for powers of n=2 and n=3.
+        '''
+        exponent = self.exponent
+        if exponent == num(2):
+            from ._theorems_ import square_expansion
+            _x = square_expansion.instanceParam
+            return square_expansion.instantiate(
+                    {_x:self.base}, assumptions=assumptions)
+
+        if exponent == 3:
+            from ._theorems_ import  cube_expansion
+            _x = cube_expansion.instanceParam
+            return cube_expansion.instantiate(
+                    {_x:self.base}, assumptions=assumptions)
+
+        raise ValueError("Exp.expansion() implemented only for exponential "
+                         "powers n=2 or n=3, but received an exponential "
+                         "power of {0}.".format(exponent))
 
     def _notEqZeroTheorem(self):
         import complex.theorems
@@ -252,11 +285,23 @@ class Exp(Operation):
                   expRealClosureExpNonZero,expRealClosureBasePos,
                   expRealPosClosure, sqrtComplexClosure, sqrtRealClosure,
                   sqrtRealPosClosure)
-        from proveit.number import Complexes, NaturalsPos, Reals, RealsPos
+        from proveit.number import (
+                Complexes, NaturalsPos, RationalsPos, Reals, RealsPos)
 
         if number_set == NaturalsPos:
             return expNatClosure.specialize({a:self.base, b:self.exponent},
                       assumptions=assumptions)
+
+        if number_set == RationalsPos:
+            # if we have a^b with a Rational and b Integer
+            # if b is proven to be any Integer
+
+            # if we already know a^b is
+
+            # if b = 0, then a^b = 1 (if a≠0)
+
+            # to be continued later
+            pass
 
         # the following would be useful to replace the next two Reals
         # closure theorems, once we get the system to deal

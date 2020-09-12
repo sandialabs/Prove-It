@@ -1,7 +1,7 @@
 # Arithmetic and number theory concepts.
 
-from .sets import (Integers, Naturals, NaturalsPos, 
-                   Rationals, RationalsPos, RationalsNonNeg, 
+from .sets import (Integers, Naturals, NaturalsPos,
+                   Rationals, RationalsPos, RationalsNonNeg,
                    Reals, RealsNeg, RealsPos, RealsNonNeg, Complexes)
 from .sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .sets import e, pi, i, infinity
@@ -21,7 +21,7 @@ from .absolute_value import Abs
 from .modular import Mod, ModAbs
 from .rounding import Floor, Ceil, Round
 from .ordering import Less, LessEq, LesserSequence, LessOnlySeq, LessEqOnlySeq, lesserSequence, Greater, GreaterEq, GreaterSequence, GreaterOnlySeq, GreaterEqOnlySeq, greaterSequence, Min, Max
-from .divisibility import Divides, GCD
+from .divisibility import Divides, DividesProper, GCD
 
 import proveit
 

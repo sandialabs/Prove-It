@@ -158,7 +158,7 @@ class ProperSuperset(SupersetRelation):
         return relaxProperSuperset.specialize(
                 {A:self.superset, B:self.subset}, assumptions=assumptions)
 
-    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+    def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From A supset B and x in B, derive x in A.
         '''

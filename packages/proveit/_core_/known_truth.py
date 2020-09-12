@@ -335,7 +335,7 @@ class KnownTruth:
             raise Exception('qed proof should not have any remaining assumptions')
         KnownTruth.qedInProgress = True
         try:
-            proof = self.expr.prove().proof()
+            proof = self.expr.prove(assumptions=[]).proof()
             if not proof.isUsable():
                 proof.provenTruth.raiseUnusableProof()
             KnownTruth.theoremBeingProven.recordProof(proof)
@@ -976,7 +976,20 @@ class KnownTruth:
         if isinstance(hypothesis, KnownTruth):
             hypothesis = hypothesis.expr # we want the expression for this purpose
         return self._checkedTruth(HypotheticalReasoning(self, hypothesis))
-        
+
+    def eliminate(self, *skolem_constants, assumptions=USE_DEFAULTS):
+        '''
+        Performs a Skolem constant elimination derivation step on this
+        KnownTruth (KT), where this KT has the form S |– alpha and the
+        set S of assumptions includes one or more assumptions involving
+        one or more Skolem constants sk1, …, skn specified by
+        skolem_constants, where the Skolem constant-related assumptions
+        were previously generated using the Exists.choose(sk1, …, skn)
+        method.
+        '''
+        from proveit.logic import Exists
+        return Exists.eliminate(skolem_constants, self, assumptions)
+
     def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Calling evaluation on a KnownTruth results in deriving that its
