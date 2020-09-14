@@ -1,7 +1,7 @@
-from proveit import (Literal, maybeFencedLatex, Operation, StyleOptions,
-                     USE_DEFAULTS)
+from proveit import (Literal, maybeFencedLatex, Operation, InnerExpr,
+                     StyleOptions, USE_DEFAULTS)
 from proveit import TransRelUpdater
-from proveit._common_ import x, y, z
+from proveit._common_ import a, b, c, m, n, x, y, z
 
 class Div(Operation):
     # operator of the Add operation
@@ -50,7 +50,9 @@ class Div(Operation):
             return eq.relation
         
         return eq.relation
-
+    
+    """
+    # outdated.  obsolete.
     def combineExponents(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import fracIntExp, fracNatPosExp
         from proveit.number import Exp
@@ -62,6 +64,7 @@ class Div(Operation):
                 except:
                     return fracIntExp.specialize({n:exponent}).specialize({a:self.numerator.base, b:self.denominator.base})
         raise Exception('Unable to combine exponents of this fraction')
+    """
 
     def cancelations(self, assumptions=USE_DEFAULTS):
         '''
@@ -176,6 +179,67 @@ class Div(Operation):
         else:
             raise Exception("Unsupported operand type to distribute over: " + self.numerator.__class__)
     
+    def exponentCombination(self, startIdx=None, endIdx=None,
+                            assumptions=USE_DEFAULTS):
+        '''
+        Equates $a^m/a^n$ to $a^{m-n} or
+        $a^c/b^c$ to $(a/b)^c$.
+        '''
+        from proveit.logic import InSet
+        from proveit.number import (Exp, NaturalsPos, RealsPos, Reals,
+                                    Complexes)
+        from proveit.number.exponentiation._theorems_ import (
+                quotient_of_posnat_powers, quotient_of_pos_powers,
+                quotient_of_real_powers, quotient_of_complex_powers)
+        if (isinstance(self.numerator, Exp) 
+                and isinstance(self.denominator, Exp)):
+            if self.numerator.base == self.denominator.base:
+                # Same base: (a^b/a^c) = a^{b-c}
+                same_base = self.numerator.bas
+                exponents = (self.numerator.exponent, 
+                             self.denominator.exponent)
+                # Find out the known type of the exponents.
+                possible_exponent_types = [NaturalsPos, RealsPos, Reals,
+                                           Complexes]
+                for exponent in exponents:
+                    while len(possible_exponent_types) > 1:
+                        exponent_type = possible_exponent_types[0]
+                        if InSet(exponent, exponent_type).proven(assumptions):
+                            # This type is known for this exponent.
+                            break
+                        # We've eliminated a type from being known. 
+                        possible_exponent_types.pop(0)
+                known_exponent_type = possible_exponent_types[0]
+                
+                if known_exponent_type==NaturalsPos:
+                    _m, _n = exponents
+                    return quotient_of_posnat_powers.instantiate(
+                            {a:same_base, m:_m, n:_n}, assumptions=assumptions)        
+                else:
+                    _b, _c = exponents
+                    if known_exponent_type==RealsPos:
+                        thm = quotient_of_pos_powers
+                    elif known_exponent_type==Reals:
+                        thm = quotient_of_real_powers
+                    else: # Complex is the default
+                        thm = quotient_of_complex_powers
+                    thm.instantiate({a:same_base, b:_b, c:_c}, 
+                                    assumptions=assumptions)
+            
+            elif self.numerator.exponent == self.denominator.exponent:
+                # Same exponent: (a^c/b^c) = (a/b)^c
+                same_exponent = self.numerator.exponent
+                bases = (self.numerator.base, self.denominator.base)
+                # Combining the exponents in this case is the reverse
+                # of disibuting an exponent.
+                quotient = Div(*bases).withMatchingStyle(self)
+                exp = Exp(quotient, same_exponent)
+                return exp.distribution(assumptions).deriveReversed(assumptions)    
+        else:
+            raise NotImplementedError("Need to implement degenerate cases "
+                                      "of a^b/a and a/a^b.")            
+        
+    
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
         Given a number set number_set, attempt to prove that the given
@@ -266,3 +330,6 @@ class Div(Operation):
 
 def frac(numer, denom):
     return Div(numer, denom).withStyles(division='fraction')
+
+# Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(Div, 'exponentCombination', 'combinedExponents', 'combineExponents')

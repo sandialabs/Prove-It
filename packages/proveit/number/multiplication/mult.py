@@ -6,7 +6,7 @@ from proveit.number.sets import (Integers, Naturals, NaturalsPos, Reals,
                                  RealsNonNeg, RealsPos, Complexes)
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
-from proveit._common_ import a, b, c, d, i, j, k, n, w, x, y, z
+from proveit._common_ import a, b, c, d, i, j, k, m, n, w, x, y, z
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, pairwiseEvaluation
 from proveit import TransRelUpdater
 
@@ -528,16 +528,18 @@ class Mult(Operation):
         $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b}, or
         $a^c b^c$ to $(a b)^c$.
         '''
-        from proveit._common_ import n, xx
+        from proveit import ExprRange, free_vars
+        from proveit.logic import And
         from proveit.number.exponentiation._theorems_ import (
-                expOfPositivesProd, intExpOfProd, natsPosExpOfProd)
-        from proveit.number.exponentiation._theorems_ import (
-                sumInExp, diffInExp, diffFracInExp)
+                product_of_posnat_powers, products_of_posnat_powers,
+                product_of_pos_powers, products_of_pos_powers,
+                product_of_real_powers, products_of_real_powers,
+                product_of_complex_powers, products_of_complex_powers)
+        #from proveit.number.exponentiation._theorems_ import (
+        #        sumInExp, diffInExp, diffFracInExp)
         from proveit.number.exponentiation._theorems_ import (
                 addOneRightInExp, addOneLeftInExp)
-        # from proveit.number.exponentiation._theorems_ import prodOfSqrts
-        from proveit.number.exponentiation._theorems_ import sqrtOfProd
-        from proveit.number import one, sqrt, Exp, Neg, Div
+        from proveit.number import Exp
         if startIdx is not None or endIdx is not None:
             dummyVar = self.safeDummyVar()
             grouped = self.group(startIdx, endIdx, assumptions=assumptions)
@@ -558,51 +560,141 @@ class Mult(Operation):
         # the following sqrt specialization modified by wdc on 2/29/2020
         # based on the above-commented-out code (kept here temporarily
         # until we're sure this works ok)
-        if len(self.operands) != 2 or not isinstance(self.operands[0], Exp) or not isinstance(self.operands[1], Exp):
-            if len(self.operands) == 2 and isinstance(self.operands[0], Exp) and self.operands[0].base == self.operands[1]:
+        
+        exp_operand_msg = (
+                'Combine exponents only implemented for a product '
+                'of two exponentiated operands (or a simple variant)')
+        
+        if not self.operands.is_binary() or not isinstance(self.operands[0], Exp) or not isinstance(self.operands[1], Exp):
+            if self.operands.is_binary() and isinstance(self.operands[0], Exp) and self.operands[0].base == self.operands[1]:
                 # Of the form a^b a
                 return addOneRightInExp.specialize({a:self.operands[1], b:self.operands[0].exponent}, assumptions=assumptions).deriveReversed(assumptions)
-            elif len(self.operands) == 2 and isinstance(self.operands[1], Exp) and self.operands[1].base == self.operands[0]:
+            elif self.operands.is_binary() and isinstance(self.operands[1], Exp) and self.operands[1].base == self.operands[0]:
                 # Of the form a a^b
                 return addOneLeftInExp.specialize({a:self.operands[0], b:self.operands[1].exponent}, assumptions=assumptions).deriveReversed(assumptions)
-            raise Exception('Combine exponents only implemented for a product of two exponentiated operands (or a simple variant)')
-        if self.operands[0].base == self.operands[1].base:
-            # Same base: a^b a^c = a^{b+c}$, or something similar
-            aSub = self.operands[0].base
-            bSub = self.operands[0].exponent
-            if isinstance(self.operands[1].exponent, Neg):
-                # equate $a^b a^{-c} = a^{b-c}$
-                thm = diffInExp
-                cSub = self.operands[1].exponent.operand
-            elif isinstance(self.operands[1].exponent, Div) and isinstance(self.operands[1].exponent.numerator, Neg):
-                # equate $a^b a^{-c/d} = a^{b-c/d}$
-                thm = diffFracInExp
-                cSub = self.operands[1].exponent.numerator.operand
-                dSub = self.operands[1].exponent.denominator
-                return thm.specialize({a:aSub, b:bSub, c:cSub, d:dSub}, assumptions=assumptions)
+            raise NotImplementedError("Need to better implement degenerate cases "
+                                      "of a^b*a and a*a^b.")                 
+            #raise ValueError(exp_operand_msg)
+        
+        # Create a list of bases and ranges of bases,
+        # and a list of exponents and ranges of exponents,
+        # and determine if all of the represented bases are the same
+        # or if all of the represented exponents are the same.
+        # For example, 
+        #   (a_1^c * ... * a_n^c * b^c)
+        # would result in:
+        #   same_base=False, same_exponent=c,
+        #   operand_bases = [a_1, ..., a_n, b]
+        #   operand_exonents = [c, ..n repeats.. c, c]
+        operand_bases = []
+        operand_exponents = []
+        same_base = None
+        same_exponent = None
+        for operand in self.operands:
+            if isinstance(operand, ExprRange):
+                if not isinstance(operand.body, Exp):
+                    raise ValueError(exp_operand_msg)
+                operand_bases.append(operand.mapped_range(
+                        lambda exponential : exponential.base))
+                operand_exponents.append(operand.mapped_range(
+                        lambda exponential : exponential.exponent))
+                base = operand_bases.innermost_body()
+                exponent = operand_exponents.innermost_body()
+                operand_parameters = operand.parameters()
+                if not free_vars(base, err_inclusively=True).isdisjoint(
+                        operand_parameters):
+                    # Can't have the same base unless the base
+                    # is independent of range parameters.
+                    same_base = False
+                if not free_vars(exponent, err_inclusively=True).isdisjoint(
+                        operand_parameters):
+                    # Can't have the same exponent unless the exponent
+                    # is independent of range parameters.
+                    same_exponent = False
             else:
-                # standard $a^b a^c = a^{b+c}$
-                thm = sumInExp
-                cSub = self.operands[1].exponent
-        elif self.operands[0].exponent == self.operands[1].exponent:
+                if not isinstance(operand, Exp):
+                    raise ValueError(exp_operand_msg)
+                base = operand.base
+                exponent = operand.exponent
+                operand_bases.append(base)
+                operand_exponents.append(exponent)
+            if same_base is None:
+                same_base = base
+            elif same_base != base:
+                # Not all bases are the same
+                same_base = False
+            if same_exponent is None:
+                same_exponent = base
+            elif same_exponent != base:
+                # Not all exponents are the same
+                same_exponent = False
+        
+        if same_base not in (None, False):
+            # Same base: a^b a^c = a^{b+c}$, or something similar
+            
+            # Find out the known type of the exponents.
+            possible_exponent_types = [NaturalsPos, RealsPos, Reals,
+                                       Complexes]
+            for exponent in operand_exponents:
+                while len(possible_exponent_types) > 1:
+                    exponent_type = possible_exponent_types[0]
+                    if isinstance(exponent, ExprRange):
+                        in_sets = exponent.mapped_range(
+                                lambda exp_range_body : 
+                                    InSet(exp_range_body, exponent_type))
+                        if And(in_sets).proven(assumptions):
+                            # This type is known for these exponents.
+                            break
+                    else:
+                        if InSet(exponent, exponent_type).proven(assumptions):
+                            # This type is known for this exponent.
+                            break
+                    # We've eliminated a type from being known. 
+                    possible_exponent_types.pop(0)
+            known_exponent_type = possible_exponent_types[0]
+            
+            if known_exponent_type == NaturalsPos:
+                if self.base.operands.is_binary():
+                    _m, _n = operand_exponents
+                    return product_of_posnat_powers.instantiate(
+                            {a:same_base, m:_m, n:_n}, assumptions=assumptions)
+                else:
+                    _k = ExprTuple(*operand_exponents)
+                    _m = _k.length(assumptions)                    
+                    return products_of_posnat_powers.instantiate(
+                            {a:same_base, m:_m, k:_k}, assumptions=assumptions)
+            else:
+                if self.operands.is_binary():
+                    _b, _c = operand_exponents
+                    if known_exponent_type == RealsPos:
+                        thm = product_of_pos_powers
+                    elif known_exponent_type == Reals:
+                        thm = product_of_real_powers
+                    else: # Complex is default
+                        thm = product_of_complex_powers
+                    return thm.instantiate({a:same_base, b:_b, c:_c},
+                                           assumptions=assumptions)                    
+                else:
+                    _b = ExprTuple(*operand_exponents)
+                    _m = _b.length(assumptions)
+                    if known_exponent_type == RealsPos:
+                        thm = products_of_pos_powers # plural products
+                    elif known_exponent_type == Reals:
+                        thm = products_of_real_powers # plural products
+                    else: # Complex is default
+                        thm = products_of_complex_powers 
+                    return thm.instantiate({m:_m, a:same_base, b:_b},
+                                           assumptions=assumptions)                 
+            
+        elif same_exponent not in (None, False):
             # Same exponent: equate $a^c b^c = (a b)^c$
-            aSub = self.operands[0].base
-            bSub = self.operands[1].base
-            expSub = self.operands[0].exponent
-            try:
-                return natsPosExpOfProd.specialize({n:expSub}, assumptions=assumptions).deriveReversed(assumptions).specialize({a:aSub, b:bSub}, assumptions=assumptions)
-            except:
-                pass
-            try:
-                return intExpOfProd.specialize({n:expSub}, assumptions=assumptions).deriveReversed(assumptions).specialize({a:aSub, b:bSub}, assumptions=assumptions)
-            except:
-                return expOfPositivesProd.specialize({c:expSub}, assumptions=assumptions).deriveReversed(assumptions).specialize({a:aSub, b:bSub}, assumptions=assumptions)
-        else:
-            raise Exception('Product is not in the correct form to '
-                            'combine exponents: ' + str(self))
-        return thm.specialize(
-                {a:aSub, b:bSub, c:cSub},
-                assumptions=assumptions).deriveReversed(assumptions)
+            # Combining the exponents in this case is the reverse
+            # of disibuting an exponent.
+            prod = Mult(*operand_bases)
+            exp = Exp(prod, same_exponent)
+            return exp.distribution(assumptions).deriveReversed(assumptions)
+        raise ValueError('Product is not in a correct form to '
+                         'combine exponents: ' + str(self))
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''

@@ -939,6 +939,53 @@ class ExprRange(Expression):
                         "which is necessary because %s: %s."
                         %(reason_indices_must_match, e))
     
+    def parameters(self):
+        '''
+        Return a list of parameters, one for each nested
+        ExprRange.   
+        '''
+        return extract_parameters(self)
+        
+    def innermost_body(self):
+        '''
+        Return the innermost body of a nested ExprRange.
+        '''
+        return innermost_body(self)
+
+    def start_indices(self):
+        '''
+        Return a list of starting indices, one for each nested
+        ExprRange.  For example,
+            (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
+             x_{n, i_{n}}, ..., x_{n, j_{n}}).
+        has start indices (m, i_m).  
+        '''
+        return extract_start_indices(self)    
+
+    def end_indices(self):
+        '''
+        Return a list of ending indices, one for each nested
+        ExprRange.  For example,
+            (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
+             x_{n, i_{n}}, ..., x_{n, j_{n}}).
+        has end indices (n, j_n).      
+        '''
+        return extract_end_indices(self)    
+    
+    def mapped_range(self, body_map_fn):
+        '''
+        Generate an ExprRange with the same external structure
+        as this range but converts the innermost by applying the
+        'body_map_fn' to it.
+        '''
+        inner_body = self.innermost_body(self)
+        new_inner_body = body_map_fn(inner_body)
+        parameters = extract_parameters(self)
+        start_indices = extract_start_indices(self)
+        end_indices = extract_end_indices(self)
+        return nestedRange(parameters, new_inner_body, start_indices,
+                           end_indices)
+        
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
         '''
         Return the equation between this range within an ExprTuple

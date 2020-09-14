@@ -129,13 +129,19 @@ class ExprTuple(Composite, Expression):
         '''
         return ExprTuple(*(self.entries + tuple(other)))
     
-    def singular(self):
+    def singular(self): # should change to is_singular
         '''
         Return True if this has a single element that is not an
         ExprRange.
         '''
         from .expr_range import ExprRange
         return len(self)==1 and not isinstance(self[0], ExprRange)
+    
+    def is_binary(self):
+        '''
+        Returns True if this has two elements that are not ExprRanges.
+        '''
+        return len(self)==2 and not self.contains_range()
     
     def contains_range(self):
         '''
