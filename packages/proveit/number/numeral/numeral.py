@@ -122,7 +122,7 @@ class NumeralSequence(Operation, IrreducibleValue):
         Operation.__init__(self, operator, digits)
         # if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
         #     raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
-        self.digits = digits
+        self.digits = self.operands
 
     def evalEquality(self, other, assumptions=USE_DEFAULTS):
         if other==self:
