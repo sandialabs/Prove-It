@@ -168,7 +168,13 @@ class InnerExpr:
                 # parameter is accessed by that attribute. 
                 deeper_inner_expr = InnerExpr(top_level_expr, 
                                               self.innerExprPath + (i,),
-                                              assumptions=self.assumptions)       
+                                              assumptions=self.assumptions)
+                if attr=='operands':
+                    # We'll make an exception for 'operands' where it
+                    # should always be allowed and the following test 
+                    # can fail for binary operations for example but
+                    # it is okay to use if one operand will be indexed.
+                    return deeper_inner_expr
                 repl_lambda = deeper_inner_expr.repl_lambda()
                 sub_expr = repl_lambda .body
                 for j in self.innerExprPath[:cur_depth]:
@@ -447,6 +453,9 @@ class InnerExpr:
                 [('$%s$'%make_fn(lambda_param).latex(), sub_expr)
                 for lambda_param, sub_expr in zip(lambda_params, sub_exprs)]            
         return NamedExprs(named_expr_dict)
+    
+    def curSubExpr(self):
+        return self.exprHierarchy[-1]
         
     def simplifyOperands(self, assumptions=USE_DEFAULTS):
         from proveit.logic import defaultSimplification
