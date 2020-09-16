@@ -6,7 +6,7 @@ from proveit.number.sets import (Integers, Naturals, NaturalsPos, Reals,
                                  RealsNonNeg, RealsPos, Complexes)
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
-from proveit._common_ import a, b, c, d, i, j, k, m, n, w, x, y, z
+from proveit._common_ import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, pairwiseEvaluation
 from proveit import TransRelUpdater
 
@@ -24,7 +24,7 @@ class Mult(Operation):
         Multiply together any number of operands from first operand.
         '''
         Operation.__init__(self, Mult._operator_, operands)
-        self.factors = operands
+        self.factors = self.operands
         if len(self.factors)==2 and all(factor in DIGITS for factor in self.factors):
             if self not in Mult.multipliedNumerals:
                 try:
@@ -181,9 +181,11 @@ class Mult(Operation):
             eq.update(expr.simplification(assumptions))
             return eq.relation
 
-        # Eliminate any factors of one.
-        expr = eq.update(expr.oneEliminations(assumptions))
-
+        # Peform any cancelations between numerators and
+        # denominators of different factors.  This will also
+        # eliminate factors of one.
+        expr = eq.update(expr.cancelations(assumptions))
+        
         return eq.relation
 
     def negSimplifications(self, assumptions=USE_DEFAULTS):
@@ -293,7 +295,292 @@ class Mult(Operation):
         _j = _b.length(assumptions)
         return elimOneAny.specialize({i:_i, j:_j, a:_a, b:_b},
                                      assumptions=assumptions)
+    
+    def deepOneEliminations(self, assumptions=USE_DEFAULTS):
+        '''
+        Eliminate ones from direct factors as well as grouped
+        factors and in fraction factors.
+        '''
+        expr = self
+        
+        # A convenience to allow successive update to the equation 
+        # via transitivities (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        for _i, factor in enumerate(self.factors):
+            if hasattr(factor, 'deepOneEliminations'):
+                expr = eq.update(expr.innerExpr().factors[_i]. \
+                                 deepOneEliminations(assumptions))
+        
+        expr = eq.update(expr.oneEliminations(assumptions))
+        return eq.relation
+    
+    def cancelations(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return an equality between self and a form in which
+        all simple division cancellations are performed across the
+        factors of this multiplication.
+        '''
+        from proveit.number import Div
+        expr = self
+        
+        # A convenience to allow successive update to the equation via transitivities.
+        # (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        # Eliminate any ones "deeply".  Ones can be eliminated without
+        # any cancelation.
+        expr = eq.update(self.deepOneEliminations(assumptions))
+        
+        numer_factors = []
+        denom_factors = []
+        for _i, factor in enumerate(self.factors):
+            if isinstance(factor, Div):
+                if isinstance(factor.numerator, Mult):
+                    numer_factors.extend(factor.numerator.factors)
+                else:
+                    numer_factors.append(factor.numerator)
+                if isinstance(factor, Div):
+                    if isinstance(factor.denominator, Mult):
+                        denom_factors.extend(factor.denominator.factors)
+                    else:
+                        denom_factors.append(factor.denominator)
+            elif isinstance(factor, Mult):
+                numer_factors.extend(factor.factors)
+            else:
+                numer_factors.append(factor)
+        denom_factors_set = set(denom_factors)
 
+        for numer_factor in numer_factors:
+            if numer_factor in denom_factors_set:
+                expr = eq.update(expr.cancelation(numer_factor, assumptions))
+                denom_factors_set.remove(numer_factor)
+        
+        return eq.relation            
+    
+    def cancelation(self, term_to_cancel, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return an equality between self and a form in which
+        the given factor has been canceled in a numerator (or factor) 
+        and denominator.  For example,
+        [a*b*c*(1/b)].cancelation(b) would return
+        a*b*c*(1/b) = a*c
+        '''        
+        from proveit.number import Div, zero, one
+        expr = self
+        eq = TransRelUpdater(expr, assumptions)
+        
+        if term_to_cancel in (zero, one):
+            raise ValueError("'term_to_cancel' must not be zero or one")
+        
+        numer_occurrence_indices = []
+        denom_occurrence_indices = []
+        
+        for _i, factor in enumerate(self.factors):
+            if isinstance(factor, Div):
+                numer_factors = (factor.numerator.factors if
+                                 isinstance(factor.numerator, Mult)
+                                 else [factor.numerator])
+                denom_factors = (factor.denominator.factors if
+                                 isinstance(factor.denominator, Mult)
+                                 else [factor.denominator])
+            else:
+                numer_factors = (factor.factors if 
+                                 isinstance(factor, Mult) else [factor])
+                denom_factors = []
+            if term_to_cancel in numer_factors:
+                numer_occurrence_indices.append(_i)
+            if term_to_cancel in denom_factors:
+                denom_occurrence_indices.append(_i)
+            
+        if (len(numer_occurrence_indices) == 0 or
+                len(denom_occurrence_indices) == 0):
+            raise ValueError("No occurrences of %s to cancel were found "
+                             "in %s"%(term_to_cancel, self))
+        
+        # If there is an occurrence of the numerator and denominator
+        # within the same Div factor, that's ideal.
+        intersection_indices = set(numer_occurrence_indices).intersection(
+                set(denom_occurrence_indices))
+        if len(intersection_indices) > 0:
+            idx = sorted(intersection_indices)[0]
+            eq.update(expr.innerExpr().factors[idx].cancellation(
+                    term_to_cancel, assumptions=assumptions))
+            return eq.relation
+        
+        # Handle the special case of two neighboring factors which
+        # serves as the base case.
+        if len(expr.factors) == 2:
+            from proveit.number.division._theorems_ import (
+                    multFracCancelNumerLeft, multFracCancelDenomLeft)
+            
+            # First, let's eliminate any ones from the canceling
+            # parts (and division by one).  We'll also do this
+            # for the instantiated theorm to ensure there is a match.
+            numer_idx = numer_occurrence_indices[0]
+            denom_idx = denom_occurrence_indices[0]
+            def updated_canceling_numer_inner_expr():
+                inner_expr = expr.innerExpr().factors[numer_idx]
+                if isinstance(inner_expr.curSubExpr(), Div):
+                    inner_expr = inner_expr.numerator
+                return inner_expr, inner_expr.curSubExpr()
+            def updated_canceling_denom_inner_expr():
+                inner_expr = expr.innerExpr().factors[denom_idx]
+                assert isinstance(inner_expr.curSubExpr(), Div)
+                inner_expr = inner_expr.denominator        
+                return inner_expr, inner_expr.curSubExpr()                
+            canceling_numer_inner_expr, canceling_numer_expr = \
+                updated_canceling_numer_inner_expr()
+            if isinstance(canceling_numer_expr, Mult):
+                one_elims = canceling_numer_inner_expr.deepOneEliminations(
+                        assumptions)
+                if one_elims.lhs != one_elims.rhs:
+                    # Update canceling numerator with one eliminations.
+                    expr = eq.update(one_elims)
+                    canceling_numer_inner_expr, canceling_numer_expr = \
+                        updated_canceling_numer_inner_expr()
+            canceling_denom_inner_expr, canceling_denom_expr = \
+                updated_canceling_denom_inner_expr()
+            if isinstance(canceling_denom_expr, Mult):
+                one_elims = canceling_denom_inner_expr.deepOneEliminations(
+                        assumptions)
+                if one_elims.lhs != one_elims.rhs:
+                    # Update canceling denominator with one elims.
+                    expr = eq.update(one_elims)
+                    canceling_denom_inner_expr, canceling_denom_expr = \
+                        updated_canceling_denom_inner_expr()
+            
+            # Factor the canceling numerator and denominator as
+            # appropriate.
+            if canceling_numer_expr != term_to_cancel:
+                assert isinstance(canceling_numer_expr, Mult)
+                pull = 'right' if numer_idx==0 else 'left'
+                expr = eq.update(canceling_numer_inner_expr.factorization(
+                        term_to_cancel, pull=pull, groupFactor=True,
+                        groupRemainder=True, assumptions=assumptions))
+                canceling_numer_inner_expr, canceling_numer_expr = \
+                    updated_canceling_numer_inner_expr()
+            if canceling_denom_expr != term_to_cancel:
+                assert isinstance(canceling_denom_expr, Mult)
+                pull = 'right' if denom_idx==0 else 'left'
+                expr = eq.update(canceling_denom_inner_expr.factorization(
+                        term_to_cancel, pull=pull, groupFactor=True,
+                        groupRemainder=True, assumptions=assumptions))
+                canceling_numer_inner_expr, canceling_numer_expr = \
+                    updated_canceling_numer_inner_expr()
+            
+            left_factor, right_factor = expr.factors
+            
+            if numer_idx == 0:
+                # numerator on the left side:
+                assert denom_idx == 1
+                assert isinstance(expr.factors[denom_idx], Div)
+                # [(a*b)/c]*[(d/(b*e))] = (a/c)*(d/e)
+                _b = term_to_cancel
+                if isinstance(left_factor, Div):
+                    _c = left_factor.denominator
+                else:
+                    _c = one
+                if canceling_numer_expr == term_to_cancel:
+                    _a = one
+                else:
+                    assert (isinstance(canceling_numer_expr, Mult) and
+                            len(canceling_numer_expr.factors)==2)
+                    _a = canceling_numer_expr.factors[0]
+                assert isinstance(right_factor, Div)
+                _d = right_factor.numerator
+                if canceling_denom_expr == term_to_cancel:
+                    _e = one
+                else:
+                    assert (isinstance(canceling_denom_expr, Mult) and
+                            len(canceling_denom_expr.factors)==2)
+                    _e = canceling_denom_expr.factors[1]
+                cancelation = multFracCancelNumerLeft.instantiate(
+                        {a:_a, b:_b, c:_c, d:_d, e:_e},
+                        assumptions=assumptions)
+            else:
+                # numerator on the right side
+                assert numer_idx == 1 and denom_idx == 0
+                assert isinstance(expr.factors[denom_idx], Div)
+                # [a/(b*c)]*[((c*e)/d)] = (a/b)*(d/e)
+                _c = term_to_cancel
+                if isinstance(left_factor, Div):
+                    _a = left_factor.numerator
+                else:
+                    _a = one
+                if canceling_denom_expr == term_to_cancel:
+                    _b = one
+                else:
+                    assert (isinstance(canceling_denom_expr, Mult) and
+                            len(canceling_denom_expr.factors)==2)
+                    _b = canceling_denom_expr.factors[0]
+                if isinstance(right_factor, Div):
+                    _d = right_factor.denominator
+                else:
+                    _d = one
+                if canceling_numer_expr == term_to_cancel:
+                    _e = one
+                else:
+                    assert (isinstance(canceling_numer_expr, Mult) and
+                            len(canceling_numer_expr.factors)==2)
+                    _e = canceling_numer_expr.factors[1]
+                cancelation = multFracCancelDenomLeft.instantiate(
+                        {a:_a, b:_b, c:_c, d:_d, e:_e},
+                        assumptions=assumptions)
+            # Eliminate ones in the cancelation; it should now
+            # match with the expression where we have already
+            # eliminated ones.
+            cancelation = cancelation.innerExpr().lhs.deepEliminateOnes()
+            cancelation = cancelation.innerExpr().rhs.deepEliminateOnes()
+            eq.update(cancelation)
+            return eq.relation
+        
+        # If there are neighboring occurrences, that is the next
+        # best thing.
+        denom_occurrence_indices_set = set(denom_occurrence_indices)
+        for numer_idx in numer_occurrence_indices:
+            if numer_idx-1 in denom_occurrence_indices_set:
+                left_idx = numer_idx-1
+            elif numer_idx+1 in denom_occurrence_indices_set:
+                left_idx = numer_idx
+            else:
+                continue
+            # Found neighboring occurrences.  Group, cancel,
+            # then ungroup (if necessary).
+            expr = eq.update(expr.innerExpr().association(
+                    left_idx, 2, assumptions=assumptions))
+            expr = eq.update(
+                    expr.innerExpr().factors[left_idx].cancellation(
+                            term_to_cancel, assumptions=assumptions))
+            if isinstance(expr.factors[left_idx], Mult):
+                expr = eq.update(
+                        expr.innerExpr().disassociation(left_idx,
+                                assumptions=assumptions))
+            return eq.relation
+        
+        # As the last resort, we simply move the first occurrences
+        # next to each other, cancel, then move them back if needed.
+        # (This specific approach is a little funny since it will end up
+        # swapping sides when they move next to each other, but it
+        # should work fine and makes the code more straightforward.)
+        numer_idx = numer_occurrence_indices[0]
+        denom_idx = denom_occurrence_indices[0]
+        expr = eq.update(
+                expr.innerExpr().commutation(
+                        denom_idx, numer_idx, assumptions=assumptions))
+        expr = eq.update(expr.innerExpr().cancelation(
+                term_to_cancel, assumptions=assumptions))
+        if len(expr.factors) < len(self.factors):
+            # It must have been a complete cancelation, so no
+            # reason to move anything back.
+            return eq.relation
+        # We should put things back where they were to play nice.
+        expr = eq.update(
+                expr.innerExpr().commutation(
+                        numer_idx, denom_idx, assumptions=assumptions))
+        return eq.relation
+        
+    
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this multiplication expression equated with an irreducible value.
@@ -734,6 +1021,7 @@ class Mult(Operation):
         return apply_disassociation_thm(self, idx, disassociation, assumptions)
 
 # Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(Mult, 'deepOneEliminations', 'deepEliminatedOnes', 'deepEliminateOnes')
 InnerExpr.register_equivalence_method(Mult, 'commutation', 'commuted', 'commute')
 InnerExpr.register_equivalence_method(Mult, 'groupCommutation', 'groupCommuted', 'groupCommute')
 InnerExpr.register_equivalence_method(Mult, 'association', 'associated', 'associate')

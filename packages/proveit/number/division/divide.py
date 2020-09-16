@@ -7,11 +7,12 @@ class Div(Operation):
     # operator of the Add operation
     _operator_ = Literal(stringFormat='/', latexFormat= r'\div', context=__file__)    
     
-    def __init__(self, operandA, operandB):
+    def __init__(self, numerator, denominator):
         r'''
         Divide two operands.
         '''
-        Operation.__init__(self, Div._operator_, [operandA, operandB], styles={'division':'inline'})
+        Operation.__init__(self, Div._operator_, [numerator, denominator], 
+                           styles={'division':'inline'})
         self.numerator = self.operands[0]
         self.denominator = self.operands[1]
     
@@ -32,14 +33,14 @@ class Div(Operation):
         if self.getStyle('division') == 'fraction':
             return 'frac' # use a different constructor if using the fraction style
         return Operation.remakeConstructor(self)
-
-
+    
     def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Perform simplifications of a Divide expression after the 
         operands have individually been simplified.  
         Cancels common factors...
         '''        
+        from proveit.number import one
         expr = self
         eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
         
@@ -48,6 +49,11 @@ class Div(Operation):
         if not isinstance(expr, Div):
             # complete cancelation.
             return eq.relation
+        
+        if self.denominator == one:
+            # eliminate division by one
+            eq.update(expr.eliminate_divide_by_one(assumptions))
+            return eq.relation # no more division simplifications.
         
         return eq.relation
     
@@ -78,20 +84,22 @@ class Div(Operation):
         # (starting with self=self).
         eq = TransRelUpdater(self, assumptions)
         
-        num_factors = (self.numerator.operands if
-                       isinstance(self.numerator, Mult) else 
-                       [self.numerator])
+        numer_factors = (self.numerator.operands if
+                         isinstance(self.numerator, Mult) else 
+                         [self.numerator])
         denom_factors = (self.denominator.operands if
                          isinstance(self.denominator, Mult) else 
                          [self.denominator])
-        for num_factor in num_factors:
-            if num_factor in denom_factors:
-                expr = eq.update(expr.cancelation(num_factor, assumptions))
-                denom_factors.pop(denom_factors.index(num_factor))
+        denom_factors_set = set(denom_factors)
+        
+        for numer_factor in numer_factors:
+            if numer_factor in denom_factors_set:
+                expr = eq.update(expr.cancelation(numer_factor, assumptions))
+                denom_factors_set.remove(numer_factor)
         
         return eq.relation    
     
-    def cancelation(self, operand, assumptions=USE_DEFAULTS):
+    def cancelation(self, term_to_cancel, assumptions=USE_DEFAULTS):
         '''
         Deduce and return an equality between self and a form in which
         the given operand has been canceled on the numerator and
@@ -103,51 +111,80 @@ class Div(Operation):
         expr = self
         eq = TransRelUpdater(expr, assumptions)
         
-        if self.numerator == self.denominator == operand:
+        if self.numerator == self.denominator == term_to_cancel:
             # x/x = 1
             from ._theorems_ import fracCancelComplete
-            return fracCancelComplete.specialize({x:operand}).checked(assumptions)
+            return fracCancelComplete.specialize({x:term_to_cancel}).checked(assumptions)
         
-        if operand != self.numerator:
+        if term_to_cancel != self.numerator:
             if (not isinstance(self.numerator, Mult) or
-                    operand not in self.numerator.operands):
+                    term_to_cancel not in self.numerator.operands):
                 raise ValueError("%s not in the denominator of %s"
-                                 %(operand, self))            
-            # Factor the operand from the numerator to the left.
+                                 %(term_to_cancel, self))            
+            # Factor the term_to_cancel from the numerator to the left.
             expr = eq.update(expr.innerExpr().numerator.factorization(
-                    operand, groupFactor=True, groupRemainder=True,
+                    term_to_cancel, groupFactor=True, groupRemainder=True,
                     assumptions=assumptions))
-        if operand != self.denominator:
+        if term_to_cancel != self.denominator:
             if (not isinstance(self.denominator, Mult) or
-                    operand not in self.denominator.operands):
+                    term_to_cancel not in self.denominator.operands):
                 raise ValueError("%s not in the denominator of %s"
-                                 %(operand, self))            
-            # Factor the operand from the denominator to the left.
+                                 %(term_to_cancel, self))            
+            # Factor the term_to_cancel from the denominator to the left.
             expr = eq.update(expr.innerExpr().denominator.factorization(
-                    operand, groupFactor=True, groupRemainder=True,
+                    term_to_cancel, groupFactor=True, groupRemainder=True,
                     assumptions=assumptions))
-        if operand == self.numerator:
+        if term_to_cancel == self.numerator:
             from ._theorems_ import fracCancelNumerLeft
             assert len(expr.denominator.operands) == 2, "Should be grouped"
             expr = eq.update(fracCancelNumerLeft.instantiate(
-                    {x:operand,y:expr.denominator.operands[1]},
+                    {x:term_to_cancel,y:expr.denominator.operands[1]},
                     assumptions=assumptions))
             return eq.relation
-        elif operand == self.denominator:
+        elif term_to_cancel == self.denominator:
             from ._theorems_ import fracCancelDenomLeft
             assert len(expr.numerator.operands) == 2, "Should be grouped"
             expr = eq.update(fracCancelDenomLeft.instantiate(
-                    {x:operand,y:expr.numerator.operands[1]},
+                    {x:term_to_cancel,y:expr.numerator.operands[1]},
                     assumptions=assumptions))
             return eq.relation
         else:
             from ._theorems_ import fracCancelLeft
             expr = eq.update(fracCancelLeft.instantiate(
-                    {x:operand,y:expr.numerator.operands[1],
+                    {x:term_to_cancel,y:expr.numerator.operands[1],
                      z:expr.denominator.operands[1]}, 
                      assumptions=assumptions))
             return eq.relation
-
+        
+    def deepOneEliminations(self, assumptions=USE_DEFAULTS):
+        '''
+        Eliminate ones from the numerator, the denominator,
+        and as a division by one.
+        '''
+        from proveit.number import one
+        expr = self
+        
+        # A convenience to allow successive update to the equation 
+        # via transitivities (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        for _i, operand in enumerate(self.operands):
+            if hasattr(operand, 'deepOneEliminations'):
+                expr = eq.update(expr.innerExpr().operands[_i]. \
+                                 deepOneEliminations(assumptions))
+        
+        if expr.denominator == one:
+            expr = eq.update(expr.eliminate_divide_by_one(assumptions))
+        return eq.relation        
+    
+    def eliminate_divide_by_one(self, assumptions=USE_DEFAULTS):
+        from proveit.number import one
+        from ._theorems_ import fracOneDenom
+        if self.denominator != one:
+            raise ValueError("'eliminate_divide_by_one' is only applicable "
+                             "if the denominator is precisely one.")
+        return fracOneDenom.instantiate({x:self.numerator},
+                                        assumptions=assumptions)
 
     def distribution(self, assumptions=USE_DEFAULTS):
         r'''
@@ -332,4 +369,5 @@ def frac(numer, denom):
     return Div(numer, denom).withStyles(division='fraction')
 
 # Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(Div, 'deepOneEliminations', 'deepEliminatedOnes', 'deepEliminateOnes')
 InnerExpr.register_equivalence_method(Div, 'exponentCombination', 'combinedExponents', 'combineExponents')
