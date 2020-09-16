@@ -199,7 +199,7 @@ class Exp(Operation):
         '''
         from proveit.logic import InSet
         from proveit.number import Mult, Div, NaturalsPos, RealsPos, Reals
-        from ._theorems import (
+        from ._theorems_ import (
                 posnat_power_of_product, posnat_power_of_products,
                 posnat_power_of_quotient, posnat_power_of_posnat_power,
                 pos_power_of_product, pos_power_of_products, 
