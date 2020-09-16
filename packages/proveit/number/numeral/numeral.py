@@ -120,8 +120,8 @@ class NumeralSequence(Operation, IrreducibleValue):
     def __init__(self, operator, *digits):
         from proveit import ExprRange
         Operation.__init__(self, operator, digits)
-        if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
-            raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
+        # if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
+        #     raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
         self.digits = digits
 
     def evalEquality(self, other, assumptions=USE_DEFAULTS):

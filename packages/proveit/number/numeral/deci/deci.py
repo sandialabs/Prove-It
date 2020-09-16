@@ -12,6 +12,16 @@ class DecimalSequence(NumeralSequence):
         for digit in self.digits:
             if isinstance(digit, Literal) and digit not in DIGITS:
                 raise Exception('A DecimalSequence may only be composed of 0-9 digits')
+
+    def auto_reduction(self, assumptions=USE_DEFAULTS):
+        """
+        Tries to reduce each value in the Numeral Sequence to a single digit
+        """
+        from proveit.number import Add
+        for digit in self.digits:
+            if isinstance(digit, Add):
+                # if at least one digit is an addition object, we can use the evaluate_add_digit method
+                return self.evaluate_add_digit(assumptions=assumptions)
     
     def asInt(self):
         return int(self.formatted('string'))
@@ -55,7 +65,43 @@ class DecimalSequence(NumeralSequence):
             _k = num(0)
             _a = num2.digits[:-1]
             _b = num2.digits[-1]
-        return md_nine_add_one.specialize({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
+        eq = md_nine_add_one.specialize({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
+        return eq.innerExpr().rhs.operands[-1].evaluate(assumptions=assumptions)
+
+    def evaluate_add_digit(self, assumptions=USE_DEFAULTS):
+        """
+        Evaluates each addition within the DecimalSequence
+        """
+        from proveit import ExprRange
+        from proveit.number import Add
+        from proveit._common_ import a, b, c, d, k, m, n
+        from ._theorems_ import deci_sequence_reduction
+        current = self
+        for i, digit in enumerate(self.digits):
+            if isinstance(digit, Literal) or isinstance(digit, ExprRange):
+                pass
+            elif isinstance(digit, Add):
+                # only implemented for addition.
+                if current == self:
+                    _m = num(i)
+                    _n = num(len(digit.operands))
+                    _k = num(len(self.digits) - i - 1)
+                    _a = self.digits[:i]
+                    _b = digit.operands
+                    _c = digit.evaluation(assumptions=assumptions).rhs
+                    _d = self.digits[i + 1:]
+                else:
+                    _m = num(i)
+                    _n = num(len(digit.operands))
+                    _k = num(len(self.digits) - i - 1)
+                    _a = current.innerExpr().rhs.operands[:i]
+                    _b = digit.operands
+                    _c = digit.evaluation(assumptions=assumptions).rhs
+                    _d = current.innerExpr().rhs.operands[i + 1:]
+
+                current = deci_sequence_reduction.instantiate({m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d},
+                                                              assumptions=assumptions)
+        return current
 
     def _formatted(self, formatType, operator=None, **kwargs):
         from proveit import ExprRange, varRange
