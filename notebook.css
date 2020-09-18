@@ -11738,5 +11738,8 @@ div#notebook {
     display: block;
     page-break-inside: avoid; 
   }
+  a:after {
+      display: none
+  }
 }
 </style>
