@@ -26,6 +26,9 @@ class DecimalSequence(NumeralSequence):
         num1 = num(num1)
         num2 = num(num2)
         if num2 is one:
+            # if the second number (num2) is one, we set it equal to the first number and then assume the
+            # first number to be one and the second number to not be one.  SHOULD BE DELETED once addition works
+            # for numbers greater than one.
             num2 = num1
         elif num2 is not one:
             raise NotImplementedError(
