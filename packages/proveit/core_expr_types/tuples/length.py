@@ -457,14 +457,14 @@ class Len(Operation):
         simplified to the extent possible.  An item may be a singular element
         (contribution 1 to the length) or an iteration contributing its length.
         '''
-        return self._computation(assumptions=assumptions)  # must_evaluate=False, assumptions=assumptions)
+        return self._computation(must_evaluate=False, assumptions=assumptions)
     
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Return the evaluation of the length which equates that Len expression
         to an irreducible result.
         '''
-        return self._computation(assumptions=assumptions)  # must_evaluate=True, assumptions=assumptions)
+        return self._computation(must_evaluate=True, assumptions=assumptions)
     
 # Register these expression equivalence methods:
 InnerExpr.register_equivalence_method(Len, 'computation', 'computed', 'compute')

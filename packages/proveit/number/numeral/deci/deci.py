@@ -34,7 +34,8 @@ class DecimalSequence(NumeralSequence):
         from proveit._common_ import a, b, k, m
         from ._theorems_ import md_only_nine_add_one, md_nine_add_one
         num1 = self
-        num2 = num(num2)
+        if isinstance(num2, int):
+            num2 = num(num2)
         if num2 is one:
             # if the second number (num2) is one, we set it equal to the first number and then assume the
             # first number to be one and the second number to not be one.  SHOULD BE DELETED once addition works
@@ -49,6 +50,8 @@ class DecimalSequence(NumeralSequence):
             return md_only_nine_add_one.specialize({k: num(len(num2.digits))}, assumptions=assumptions)
         elif num2.digits[-1] is nine:
             # the last digit is nine
+            from proveit.logic import Equals
+            from proveit.number import Add
             count = 0
             idx = -1
             while num2.digits[idx] is nine:
@@ -59,6 +62,7 @@ class DecimalSequence(NumeralSequence):
             _k = num(count)
             _a = num2.digits[:-(count + 1)]
             _b = num2.digits[-(count + 1)]
+            return md_nine_add_one.specialize({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
         else:
             # the last digit is not nine
             _m = num(len(num2.digits) - 1)
@@ -76,6 +80,7 @@ class DecimalSequence(NumeralSequence):
         from proveit.number import Add
         from proveit._common_ import a, b, c, d, k, m, n
         from ._theorems_ import deci_sequence_reduction
+        from proveit.core_expr_types import Len
         current = self
         for i, digit in enumerate(self.digits):
             if isinstance(digit, Literal) or isinstance(digit, ExprRange):
@@ -83,17 +88,18 @@ class DecimalSequence(NumeralSequence):
             elif isinstance(digit, Add):
                 # only implemented for addition.
                 if current == self:
-                    _m = num(i)
-                    _n = num(len(digit.operands))
-                    _k = num(len(self.digits) - i - 1)
+                    _m = Len(self.digits[:i]).computation(assumptions=assumptions).rhs
+                    # we have to use computation because we don't know if there is a range of digits
+                    _n = Len(digit.operands).computation(assumptions=assumptions).rhs
+                    _k = Len(self.digits[i + 1:]).computation(assumptions=assumptions).rhs
                     _a = self.digits[:i]
                     _b = digit.operands
                     _c = digit.evaluation(assumptions=assumptions).rhs
                     _d = self.digits[i + 1:]
                 else:
-                    _m = num(i)
-                    _n = num(len(digit.operands))
-                    _k = num(len(self.digits) - i - 1)
+                    _m = Len(current.digits[:i]).computation(assumptions=assumptions).rhs
+                    _n = Len(digit.operands).computation(assumptions=assumptions).rhs
+                    _k = Len(current.digits[i + 1:]).computation(assumptions=assumptions).rhs
                     _a = current.innerExpr().rhs.operands[:i]
                     _b = digit.operands
                     _c = digit.evaluation(assumptions=assumptions).rhs
