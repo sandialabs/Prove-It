@@ -508,7 +508,7 @@ class ProveItMagicCommands:
                 required_axioms, required_unproven_theorems = tuple(), tuple()
                 
             if len(required_unproven_theorems) > 0:
-                display(HTML('<h3>Unproven theorems required (directly or indirectly) to prove %s</h3>'%name))
+                display(HTML('<h3>Unproven conjectures required (directly or indirectly) to prove %s</h3>'%name))
                 display(HTML('<dl>'))
                 for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
                     displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
@@ -522,9 +522,9 @@ class ProveItMagicCommands:
         
         dependents = proof.directDependents()
         if len(dependents) == 0:
-            display(HTML('<h3>No theorems depend upon %s</h3>'%name))
+            display(HTML('<h3>No theorems/conjectures depend upon %s</h3>'%name))
         else:
-            display(HTML('<h3>Theorems that depend directly on %s</h3>'%name))
+            display(HTML('<h3>Theorems/conjectures that depend directly on %s</h3>'%name))
             display(HTML('<dl>'))
             for dependent in sorted(proof.directDependents(), key=stmt_sort):
                 displaySpecialStmt(Context.findTheorem(dependent))
@@ -722,7 +722,7 @@ class Assignments:
             proveItMagic.keys.append(name)
     
     def html_line(self, name, rightSide):
-        lhs_html = name
+        lhs_html = name + ':'
         unofficialNameKindContext = None
         kind = proveItMagic.kind
         if kind in ('axioms', 'theorems', 'common'):
@@ -739,8 +739,18 @@ class Assignments:
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
             proof_notebook_relurl = proveItMagic.context.thmProofNotebook(name, expr)
-            lhs_html = '<a class="ProveItLink" href="%s">%s</a>'%(proof_notebook_relurl, lhs_html)
-        html = '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
+            status = 'conjecture without proof' # default
+            try:
+                thm = proveItMagic.context.getTheorem(name)
+                if thm.isFullyProven():
+                    status = 'established theorem'
+                elif thm.hasProof():
+                    status = 'conjecture with conjecture-based proof'
+            except:
+                pass # e.g., a new theorem.
+            lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
+                        %(proof_notebook_relurl, name, status))
+        html = '<strong id="%s">%s</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
             expr_notebook_path = proveItMagic.context.expressionNotebook(expr)
             dependencies_notebook_path = os.path.join(os.path.split(expr_notebook_path)[0], 'dependencies.ipynb')

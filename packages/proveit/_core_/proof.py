@@ -576,6 +576,8 @@ class Theorem(Proof):
         return self.stepType() + '_' + str(self) + ':'
 
     def stepType(self):
+        if self.isConjecture():
+            return 'conjecture'
         return 'theorem'
 
     def usedTheorems(self):
@@ -669,13 +671,19 @@ class Theorem(Proof):
         '''
         return self._storedTheorem().hasProof()
 
-    def isFullyProven(self, theorem):
+    def isFullyProven(self):
         '''
         Returns true if and only if this theorem is fully proven
         (it has a recorded proof and all dependent theorems are fully
         proven, all the way to axioms which don't require proofs).
         '''
         return self._storedTheorem().isComplete()
+    
+    def isConjecture(self):
+        '''
+        A "Theorem" that is not fully proven is a "conjecture".
+        '''
+        return not self.isFullyProven()
 
     def allRequirements(self):
         '''
