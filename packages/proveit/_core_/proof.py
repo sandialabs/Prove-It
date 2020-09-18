@@ -811,7 +811,7 @@ class ModusPonens(Proof):
     def stepType(self):
         return 'modus ponens'
 
-class HypotheticalReasoning(Proof):
+class Deduction(Proof):
     def __init__(self, consequentTruth, antecedentExpr):
         from proveit import ExprRange
         from proveit.logic import Implies, And
@@ -837,7 +837,7 @@ class HypotheticalReasoning(Proof):
             defaults.assumptions = prev_default_assumptions
 
     def stepType(self):
-        return 'hypothetical reasoning'
+        return 'deduction'
 
 class Instantiation(Proof):
     def __init__(self, orig_known_truth, num_forall_eliminations,

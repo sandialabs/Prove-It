@@ -966,16 +966,16 @@ class KnownTruth:
 
     def asImplication(self, hypothesis):
         '''
-        Performs a hypothetical reasoning derivation step, forming an
-        implication statement with the given hypothesis and this statement
+        Performs a "deduction" derivation step, forming an implication 
+        statement with the given hypothesis and self.expr
         as the conclusion.  The hypothesis is removed from the set of
         the conclusion statement's assumptions for the implication
         statement's assumptions.
         '''
-        from proveit._core_.proof import HypotheticalReasoning
+        from proveit._core_.proof import Deduction
         if isinstance(hypothesis, KnownTruth):
             hypothesis = hypothesis.expr # we want the expression for this purpose
-        return self._checkedTruth(HypotheticalReasoning(self, hypothesis))
+        return self._checkedTruth(Deduction(self, hypothesis))
 
     def eliminate(self, *skolem_constants, assumptions=USE_DEFAULTS):
         '''

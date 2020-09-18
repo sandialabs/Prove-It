@@ -24,7 +24,7 @@ from .known_truth import KnownTruth, asExpression, asExpressions
 from .defaults import defaults, USE_DEFAULTS, InvalidAssumptions
 from .context import Context, ContextException
 from .proof import (Proof, Assumption, Axiom, Theorem, ModusPonens, 
-                    HypotheticalReasoning, Instantiation, Generalization)
+                    Deduction, Instantiation, Generalization)
 from .proof import (ProofFailure, ModusPonensFailure, 
                     InstantiationFailure, GeneralizationFailure)
 #import _context_storage
