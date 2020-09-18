@@ -1,3 +1,4 @@
+natural
 integer
 rational
 real

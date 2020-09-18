@@ -1,10 +1,11 @@
 membership
+equivalence
 enumeration
 containment
 unification
 intersection
 subtraction
 comprehension
+power_set
 disjointness
 cardinality
-equivalence
