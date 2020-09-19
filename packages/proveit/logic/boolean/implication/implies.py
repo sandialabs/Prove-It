@@ -70,7 +70,7 @@ class Implies(TransitiveRelation):
                 trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, 
                 falseAntecedentImplication, falsifiedAntecedentImplication,
                 untrueAntecedentImplication)
-        from proveit.logic import TRUE, FALSE, NotEquals
+        from proveit.logic import TRUE, FALSE, NotEquals, EvaluationError
         if self.antecedent == self.consequent:
             return self.concludeSelfImplication()
 
@@ -107,7 +107,23 @@ class Implies(TransitiveRelation):
                     self.antecedent)
         
         try:
-            # try to prove the implication via hypothetical reasoning.
+            antecedent_eval = self.antecedent.evaluated(assumptions)
+            if antecedent_eval == FALSE:
+                # try again with the antecedent disproven
+                return self.conclude(assumptions)
+        except EvaluationError:
+            pass
+
+        try:
+            consequent_eval = self.consequent.evaluated(assumptions)
+            if consequent_eval in (FALSE, TRUE):
+                # try again with the consequent proven or disproven.
+                return self.conclude(assumptions)
+        except EvaluationError:
+            pass
+        
+        try:
+            # try to prove the implication via deduction.
             return self.consequent.prove(tuple(assumptions) + (self.antecedent,)).asImplication(self.antecedent)
         except ProofFailure:
             raise ProofFailure(self, assumptions,
