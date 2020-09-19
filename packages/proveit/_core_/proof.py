@@ -1364,7 +1364,7 @@ class _ShowProof:
             # Must be an axiom or theorem with the format
             # axiom_context.name or theorem_context.name
             self.step_type_str, full_name = stepInfo.split('_', 1)
-            assert self.step_type_str in ('axiom', 'theorem')
+            assert self.step_type_str in ('axiom', 'theorem', 'conjecture')
             full_name_segments = full_name.split('.')
             context_name = '.'.join(full_name_segments[:-1])
             self.context =  Context.getContext(context_name)
@@ -1402,7 +1402,7 @@ class _ShowProof:
         from ._context_storage import StoredAxiom, StoredTheorem
         if self.step_type_str=='axiom':
             return StoredAxiom(self.context, self.name).getDefLink()
-        elif self.step_type_str=='theorem':
+        elif self.step_type_str in ('theorem', 'conjecture'):
             return StoredTheorem(self.context, self.name).getProofLink()
         else:
             return self.context.proofNotebook(self)
