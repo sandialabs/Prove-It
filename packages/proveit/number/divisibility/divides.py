@@ -8,6 +8,8 @@ class DividesRelation(TransitiveRelation):
 
     def __init__(self, operator, lhs, rhs):
         TransitiveRelation.__init__(self, operator, lhs, rhs)
+        self.divisor = self.lhs
+        self.dividend = self.rhs
 
     def sideEffects(self, knownTruth):
         '''
@@ -15,6 +17,8 @@ class DividesRelation(TransitiveRelation):
         attempt (where applicable) eliminateDividenExponent,
         eliminate_common_exponent, and eliminate_common_factor.
         '''
+        from proveit.number import two
+        
         for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
             yield sideEffect
         
@@ -22,24 +26,25 @@ class DividesRelation(TransitiveRelation):
         # verify some conditions before yielding the side effect method
         # (i.e. check using .proven() without arguments)
 
-        # for a|(b^n)
+        # for 2|(b^n), derive 2|b.  
+        # (can be generalized to any prime number).
         if (isinstance(self.rhs, Exp) and
-            InSet(self.lhs, Integers).proven() and
-            InSet(self.rhs.base, Integers).proven() and
-            InSet(self.rhs.exponent, Integers).proven()):
+                self.lhs == two and
+                InSet(self.rhs.base, Integers).proven() and
+                InSet(self.rhs.exponent, Integers).proven()):
             yield self.eliminateDividendExponent
 
         # for (a^n)|(b^n)
         if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp) and
-            InSet(self.lhs.base, Integers).proven() and
-            InSet(self.rhs.base, Integers).proven() and
-            Equals(self.lhs.exponent, self.rhs.exponent).proven() and
-            InSet(self.lhs.exponent, NaturalsPos).proven()):
+                InSet(self.lhs.base, Integers).proven() and
+                InSet(self.rhs.base, Integers).proven() and
+                Equals(self.lhs.exponent, self.rhs.exponent).proven() and
+                InSet(self.lhs.exponent, NaturalsPos).proven()):
             yield self.eliminate_common_exponent
 
         # for (ka)|(kb)
         if (isinstance(self.lhs, Mult) and len(self.lhs.operands)==2 and
-            isinstance(self.rhs, Mult) and len(self.rhs.operands)==2):
+                isinstance(self.rhs, Mult) and len(self.rhs.operands)==2):
             operands_intersection = (set(self.lhs.operands).
                                      intersection(set(self.lhs.operands)))
             if(len(operands_intersection)>0):
@@ -268,14 +273,25 @@ class Divides(DividesRelation):
 
     def eliminateDividendExponent(self, assumptions=USE_DEFAULTS):
         '''
-        From k|a^n (self), derive and return k|a. k, a, and n must all
-        be integers. This method is called from the DividesRelation
-        sideEffects() method.
+        From k|a^n (self), derive and return k|a if k is prime
+        and a and n are integers.  Currently, this is only implement
+        for k=2.  This method is called from the 
+        DividesRelation.sideEffects() method.
         '''
-        from ._theorems_ import divides_if_divides_power
-        k_, a_, n_ = divides_if_divides_power.instanceParams
-        return divides_if_divides_power.instantiate(
-            {k_:self.lhs, a_:self.rhs.base, n_:self.rhs.exponent},
+        from proveit.number import two
+        from ._theorems_ import even__if__power_is_even
+        if not isinstance(self.rhs, Exp):
+            raise ValueError(
+                    "'eliminateDividendExponent' is only applicable "
+                    "when the dividend is raised to an integer power.")
+        if self.lhs != two:
+            raise NotImplementedError(
+                    "'eliminateDividendExponent' currently only implemented "
+                    "for a divisor of 2, but should eventually be "
+                    "generalized for any prime divisor.")
+        a_, n_ = even__if__power_is_even.instanceParams
+        return even__if__power_is_even.instantiate(
+            {a_:self.rhs.base, n_:self.rhs.exponent},
             assumptions=assumptions)
 
     def eliminate_common_exponent(self, assumptions=USE_DEFAULTS):
