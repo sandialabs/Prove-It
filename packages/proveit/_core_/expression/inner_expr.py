@@ -334,7 +334,7 @@ class InnerExpr:
         if hasattr(expr_class, past_tense_name):
             raise Exception("Should not manually define '%s' in class '%s'.  This 'past-tense' equivalence method will be generated automatically by registering it in InnerExpr."%(past_tense_name, str(expr_class)))
         def equiv_rhs(expr, *args, **kwargs):
-            return getattr(expr_class, equiv_method)(expr, *args, **kwargs).rhs
+            return getattr(expr, equiv_method)(*args, **kwargs).rhs
         equiv_rhs.__name__ = past_tense_name
         equiv_rhs.__doc__ = "Return an equivalent form of this expression derived via '%s'."%equiv_method
         setattr(expr_class, past_tense_name, equiv_rhs)
