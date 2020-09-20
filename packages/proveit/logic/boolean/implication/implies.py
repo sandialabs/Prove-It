@@ -111,7 +111,7 @@ class Implies(TransitiveRelation):
             if antecedent_eval == FALSE:
                 # try again with the antecedent disproven
                 return self.conclude(assumptions)
-        except EvaluationError:
+        except (EvaluationError, ProofFailure):
             pass
 
         try:
@@ -119,7 +119,7 @@ class Implies(TransitiveRelation):
             if consequent_eval in (FALSE, TRUE):
                 # try again with the consequent proven or disproven.
                 return self.conclude(assumptions)
-        except EvaluationError:
+        except (EvaluationError, ProofFailure):
             pass
         
         try:
