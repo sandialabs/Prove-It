@@ -407,7 +407,7 @@ class Proof:
             html += '</tr>\n'
             if proof.stepType()=='instantiation':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
-            if proof.stepType()=='axiom' or proof.stepType()=='theorem':
+            if proof.stepType() in {'axiom', 'theorem', 'conjecture'}:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
