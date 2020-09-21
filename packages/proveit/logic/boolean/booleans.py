@@ -30,8 +30,8 @@ class BooleanSet(Literal):
         instanceVar = instanceList[0][0]
         instanceExpr = forallStmt.instanceExpr
         P_op = Operation(P, instanceVar)
-        trueInstance = instanceExpr.substituted({instanceVar:TRUE})
-        falseInstance = instanceExpr.substituted({instanceVar:FALSE})
+        trueInstance = instanceExpr.replaced({instanceVar:TRUE})
+        falseInstance = instanceExpr.replaced({instanceVar:FALSE})
         if trueInstance == TRUE and falseInstance == FALSE:
             # special case of Forall_{A in BOOLEANS} A
             falseEqFalse # FALSE = FALSE
