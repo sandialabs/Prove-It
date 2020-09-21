@@ -1,7 +1,7 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit._common_ import a, b, x
 from proveit.logic import InSet
-from proveit.logic.set_theory import Subset, SubsetEq
+from proveit.logic.set_theory import ProperSubset, SubsetEq
 from proveit.number import Add, Mult
 
 class Abs(Operation):
@@ -264,15 +264,15 @@ class Abs(Operation):
         # but we don't have specific thms for those supersets Y.
         # If so, use the appropiate thm to determine that self is in X,
         # then prove that self must also be in Y since Y contains X.
-        if Subset(Reals, number_set).proven(assumptions=assumptions):
+        if SubsetEq(Reals, number_set).proven(assumptions=assumptions):
             absComplexClosure.specialize({a:self.operand},
                       assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
-        if Subset(RealsPos, number_set).proven(assumptions=assumptions):
+        if SubsetEq(RealsPos, number_set).proven(assumptions=assumptions):
             absNonzeroClosure.specialize({a:self.operand},
                       assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
-        if Subset(RealsNonNeg, number_set).proven(assumptions=assumptions):
+        if SubsetEq(RealsNonNeg, number_set).proven(assumptions=assumptions):
             absComplexClosureNonNegReals.specialize({a:self.operand},
                       assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
@@ -312,6 +312,6 @@ def isEqualToOrSubsetEqOf(
                 return True
     if not subset_sets == None:
         for temp_set in subset_sets:
-            if Subset(number_set, temp_set).proven(assumptions):
+            if ProperSubset(number_set, temp_set).proven(assumptions):
                 return True
     return False

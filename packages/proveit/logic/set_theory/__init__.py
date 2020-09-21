@@ -1,9 +1,11 @@
 from .membership import InSet, NotInSet, Membership, Nonmembership
 from .enumeration import Set
-from .containment import NotProperSubset, NotSubset, NotSubsetEq, ProperSubset
-from .containment import Subset, SubsetEq, SubsetProper
-from .containment import NotSuperset, NotProperSuperset, NotSupersetEq, ProperSuperset
-from .containment import StrictSuperset, Superset, SupersetEq, SupersetProper
+# StrictSubset and SubsetProper are aliases for ProperSubset.
+# StrictSuperset and SupersetProper are aliases for ProperSuperset.
+from .containment import (
+        SubsetEq, NotSubsetEq, ProperSubset, StrictSubset, SubsetProper,
+        NotProperSubset, SupersetEq, NotSupersetEq, ProperSuperset, 
+        StrictSuperset, SupersetProper, NotProperSuperset)
 from .equivalence import SetEquiv, SetNotEquiv
 from .unification import Union, UnionAll
 from .intersection import Intersect, IntersectAll

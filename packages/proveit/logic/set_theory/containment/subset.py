@@ -17,7 +17,7 @@ class SubsetRelation(ContainmentRelation):
 
     @staticmethod
     def StrongRelationClass():
-        return Subset
+        return ProperSubset
 
     @staticmethod
     def SequenceClass():
@@ -38,192 +38,6 @@ def subsetSequence(operators, operands):
     fewer than two operators.
     '''
     return makeSequenceOrRelation(SubsetSequence, operators, operands)
-
-class Subset(SubsetRelation):
-    # operator of the Subset operation
-    _operator_ = Literal(stringFormat='subset', latexFormat=r'\subset',
-                         context=__file__)
-
-    # map left-hand-sides to Subset KnownTruths
-    #   (populated in TransitivityRelation.sideEffects)
-    knownLeftSides = dict()
-    # map right-hand-sides to Subset KnownTruths
-    #   (populated in TransitivityRelation.sideEffects)
-    knownRightSides = dict()
-
-    def __init__(self, subset, superset):
-        SubsetRelation.__init__(self, Subset._operator_, subset, superset)
-
-    def deriveReversed(self, assumptions=USE_DEFAULTS):
-        '''
-        From A subset B, derive B supset A.
-        '''
-        from ._theorems_ import reverseSubset
-        return reverseSubset.specialize(
-                {A:self.subset, B:self.superset}, assumptions=assumptions)
-
-    def deriveRelaxed(self, assumptions=USE_DEFAULTS):
-        '''
-        From A subset B, derive A subseteq B.
-        '''
-        from ._theorems_ import relaxSubset
-        return relaxSubset.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
-
-    def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
-        '''
-        From A subset B and x in A, derive x in B.
-        '''
-        from ._theorems_ import supersetMembershipFromSubset
-        return supersetMembershipFromSubset.instantiate(
-                {A:self.subset, B:self.superset, x:element},
-                assumptions=assumptions)
-
-    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
-        '''
-        Apply a transitivity rule to derive from this A subset B
-        expression and something of the form B subseteq C, B subset C,
-        or B=C to obtain A subset C as appropriate.
-        '''
-        from proveit.logic import (
-                Equals, ProperSubset, ProperSuperset, Subset, SubsetEq,
-                Superset, SupersetEq)
-        from ._theorems_ import (
-                transitivitySubsetSubset, transitivitySubsetSubsetEq)
-        other = asExpression(other)
-        if isinstance(other, Equals):
-            return ContainmentRelation.applyTransitivity(
-                    self, other, assumptions=assumptions)
-        if (isinstance(other, Superset) or isinstance(other, ProperSuperset)
-            or isinstance(other,SupersetEq)):
-            other = other.deriveReversed(assumptions=assumptions)
-            other = asExpression(other)
-        if other.lhs == self.rhs:
-            if isinstance(other,Subset):
-                result = transitivitySubsetSubset.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.rhs},
-                        assumptions=assumptions)
-                return result
-            elif isinstance(other,SubsetEq):
-                result = transitivitySubsetSubsetEq.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.rhs},
-                        assumptions=assumptions)
-                return result
-        elif other.rhs == self.lhs:
-            if isinstance(other,Subset):
-                result = transitivitySubsetSubset.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.lhs},
-                        assumptions=assumptions)
-                return result
-            elif isinstance(other,SubsetEq):
-                result = transitivitySubsetSubsetEq.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.lhs},
-                        assumptions=assumptions)
-                return result
-        else:
-            raise ValueError(
-                    "Cannot perform transitivity with {0} and {1}!".
-                    format(self, other))
-
-    def deduceInBool(self, assumptions=USE_DEFAULTS):
-        '''
-        Deduce and return that this Subset statement is in the set of Booleans.
-        '''
-        from ._theorems_ import subsetInBool
-        return subsetInBool.specialize({A:self.lhs, B:self.rhs})
-
-
-class ProperSubset(SubsetRelation):
-    '''
-    Class to represent proper subset relation, such as
-    A proper_subset B, to represent the claim that any element in
-    set A is also in set B, while B also has at least one element
-    not in set A. Example usage: ProperSubset(A, B).
-    Intended to replace the equivalent but more ambiguously-named
-    Subset class.
-    '''
-    # operator of the Subset operation
-    _operator_ = Literal(stringFormat='proper_subset', latexFormat=r'\subset',
-                         context=__file__)
-
-    # map left-hand-sides to ProperSubset KnownTruths
-    #   (populated in TransitivityRelation.sideEffects)
-    knownLeftSides = dict()
-    # map right-hand-sides to ProperSubset KnownTruths
-    #   (populated in TransitivityRelation.sideEffects)
-    knownRightSides = dict()
-
-    def __init__(self, subset, superset):
-        SubsetRelation.__init__(self, ProperSubset._operator_, subset, superset)
-
-    def deriveReversed(self, assumptions=USE_DEFAULTS):
-        '''
-        From ProperSubset(A, B), derive ProperSuperset(B, A).
-        '''
-        from ._theorems_ import reverseProperSubset
-        return reverseProperSubset.specialize({A:self.subset, B:self.superset},
-                                              assumptions=assumptions)
-
-    def deriveRelaxed(self, assumptions=USE_DEFAULTS):
-        '''
-        From ProperSubset(A, B), derive SubsetEq(A, B).
-        '''
-        from ._theorems_ import relaxProperSubset
-        return relaxProperSubset.specialize({A:self.subset, B:self.superset},
-                                            assumptions=assumptions)
-
-    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
-        '''
-        Apply a transitivity rule to derive from this ProperSubset(A, B)
-        expression and something of the form SubsetEq(B, C),
-        ProperSubset(B, C), or B=C, to obtain ProperSubset(A, C) as
-        appropriate.
-        '''
-        from proveit.logic import (
-                Equals, ProperSubset, ProperSuperset, Subset, SubsetEq,
-                Superset, SupersetEq)
-        from ._theorems_ import (
-                transitivitySubsetSubset, transitivitySubsetSubsetEq,)
-        if isinstance(other, Equals):
-            return ContainmentRelation.applyTransitivity(
-                    self, other, assumptions=assumptions)
-        if (isinstance(other, Superset) or isinstance(other, ProperSuperset)
-            or isinstance(other,SupersetEq)):
-            other = other.deriveReversed(assumptions=assumptions)
-            other = asExpression(other)
-        if other.lhs == self.rhs:
-            if isinstance(other, ProperSubset) or isinstance(other, Subset):
-                result = transitivitySubsetSubset.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.rhs},
-                        assumptions=assumptions)
-                return result#.checked({self})
-            elif isinstance(other, SubsetEq):
-                result = transitivitySubsetSubsetEq.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.rhs},
-                        assumptions=assumptions)
-                return result
-        elif other.rhs == self.lhs:
-            if isinstance(other, ProperSubset) or isinstance(other, Subset):
-                result = transitivitySubsetSubset.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.lhs},
-                        assumptions=assumptions)
-                return result
-            elif isinstance(other,SubsetEq):
-                result = transitivitySubsetSubsetEq.specialize(
-                        {A:self.lhs, B:self.rhs, C:other.lhs},
-                        assumptions=assumptions)
-                return result
-        else:
-            raise ValueError(
-                    "Cannot perform transitivity with {0} and {1}!".
-                    format(self, other))
-
-    def deduceInBool(self, assumptions=USE_DEFAULTS):
-        '''
-        Deduce and return that this ProperSubset expression
-        is in the set of Booleans.
-        '''
-        from ._theorems_ import properSubsetInBool
-        return properSubsetInBool.specialize({A:self.lhs, B:self.rhs})
 
 class SubsetEq(SubsetRelation):
     # operator of the SubsetEq operation
@@ -324,7 +138,7 @@ class SubsetEq(SubsetRelation):
         version, (forall_{x in A} x in B).
         '''
         from ._theorems_ import foldSubsetEq
-        return foldSubsetEq.specialize({A:self.subset, B:self.superset, x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
+        return foldSubsetEq.specialize({A:self.subset, B:self.superset, x:elemInstanceVar}, assumptions=assumptions)
 
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -333,20 +147,18 @@ class SubsetEq(SubsetRelation):
         or B=C to obtain A subset B or A subseteq B as appropriate.
         '''
         from proveit.logic import (
-                Equals, ProperSubset, ProperSuperset, Subset, SubsetEq,
-                Superset, SupersetEq)
+                Equals, ProperSubset, ProperSuperset, SubsetEq, SupersetEq)
         from ._theorems_ import (transitivitySubsetEqSubset,
                                  transitivitySubsetEqSubsetEq)
         other = asExpression(other)
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(
                     self, other, assumptions=assumptions)
-        if (isinstance(other, Superset) or isinstance(other, ProperSuperset)
-            or isinstance(other,SupersetEq)):
+        if isinstance(other, ProperSuperset) or isinstance(other ,SupersetEq):
             other = other.deriveReversed(assumptions=assumptions)
             other = asExpression(other)
         if other.lhs == self.rhs:
-            if isinstance(other, Subset) or isinstance(other, ProperSubset):
+            if isinstance(other, ProperSubset):
                 return transitivitySubsetEqSubset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.rhs},
                         assumptions=assumptions)
@@ -355,7 +167,7 @@ class SubsetEq(SubsetRelation):
                         {A:self.lhs, B:self.rhs, C:other.rhs},
                         assumptions=assumptions)
         elif other.rhs == self.lhs:
-            if isinstance(other,Subset) or isinstance(other, ProperSubset):
+            if isinstance(other, ProperSubset):
                 return transitivitySubsetEqSubset.specialize(
                         {A:self.lhs, B:self.rhs, C:other.lhs},
                         assumptions=assumptions)
@@ -376,15 +188,13 @@ class SubsetEq(SubsetRelation):
         from ._theorems_ import subsetEqInBool
         return subsetEqInBool.specialize({A:self.lhs, B:self.rhs})
 
-
-class NotSubset(Operation):
-    # operator of the NotSubset operation
-    _operator_ = Literal(stringFormat='nsubset',
-                         latexFormat=r'\not\subset',
+class NotSubsetEq(Operation):
+    # operator of the NotSubsetEq operation
+    _operator_ = Literal(stringFormat='nsubseteq', latexFormat=r'\nsubseteq',
                          context=__file__)
 
     def __init__(self, subset, superset):
-        Operation.__init__(self, NotSubset._operator_, (subset, superset))
+        Operation.__init__(self, NotSubsetEq._operator_, (subset, superset))
 
     def deriveSideEffects(self, knownTruth):
         # unfold as an automatic side-effect
@@ -395,10 +205,10 @@ class NotSubset(Operation):
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
-        From A nsubset B, derive and return not(supset(A, B)).
+        From A nsubseteq B, derive and return not(supseteq(A, B)).
         '''
-        from ._theorems_ import unfoldNotSubset
-        return unfoldNotSubset.specialize(
+        from ._theorems_ import unfoldNotSubsetEq
+        return unfoldNotSubsetEq.specialize(
             {A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
@@ -406,20 +216,120 @@ class NotSubset(Operation):
         Derive this folded version, A nsupset B, from the unfolded
         version, not(A supset B).
         '''
-        from ._theorems_ import foldNotSubset
-        return foldNotSubset.specialize(
+        from ._theorems_ import foldNotSubsetEq
+        return foldNotSubsetEq.specialize(
             {A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce and return that this NotSubset statement is in the set
-        of Booleans. NOTE that the NotSubset class has been created as
-        an Operation and thus has operands instead of lhs and rhs
-        attributes.
+        Deduce and return that this NotSubsetEq statement is in the
+        set of Booleans. NOTE that the NotSubsetEq class has been
+        created as an Operation and thus has operands instead of lhs
+        and rhs attributes.
         '''
-        from ._theorems_ import notSubsetInBool
-        return notSubsetInBool.specialize(
+        from ._theorems_ import notSubsetEqInBool
+        return notSubsetEqInBool.specialize(
                 {A:self.operands[0],B:self.operands[1]})
+
+class ProperSubset(SubsetRelation):
+    '''
+    Class to represent proper subset relation, such as
+    A proper_subset B, to represent the claim that any element in
+    set A is also in set B, while B also has at least one element
+    not in set A. Example usage: ProperSubset(A, B).
+    Intended to replace the equivalent but more ambiguously-named
+    Subset class.
+    '''
+    # operator of the Subset operation
+    _operator_ = Literal(stringFormat='proper_subset', latexFormat=r'\subset',
+                         context=__file__)
+
+    # map left-hand-sides to ProperSubset KnownTruths
+    #   (populated in TransitivityRelation.sideEffects)
+    knownLeftSides = dict()
+    # map right-hand-sides to ProperSubset KnownTruths
+    #   (populated in TransitivityRelation.sideEffects)
+    knownRightSides = dict()
+
+    def __init__(self, subset, superset):
+        SubsetRelation.__init__(self, ProperSubset._operator_, subset, superset)
+
+    def deriveReversed(self, assumptions=USE_DEFAULTS):
+        '''
+        From ProperSubset(A, B), derive ProperSuperset(B, A).
+        '''
+        from ._theorems_ import reverseProperSubset
+        return reverseProperSubset.specialize({A:self.subset, B:self.superset},
+                                              assumptions=assumptions)
+
+    def deriveRelaxed(self, assumptions=USE_DEFAULTS):
+        '''
+        From ProperSubset(A, B), derive SubsetEq(A, B).
+        '''
+        from ._theorems_ import relaxProperSubset
+        return relaxProperSubset.specialize({A:self.subset, B:self.superset},
+                                            assumptions=assumptions)
+    
+    def deriveSupersetMembership(self, element, assumptions=USE_DEFAULTS):
+        '''
+        From A subset B and x in A, derive x in B.
+        '''
+        from ._theorems_ import supersetMembershipFromProperSubset
+        return supersetMembershipFromProperSubset.instantiate(
+                {A:self.subset, B:self.superset, x:element},
+                assumptions=assumptions)
+
+    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
+        '''
+        Apply a transitivity rule to derive from this ProperSubset(A, B)
+        expression and something of the form SubsetEq(B, C),
+        ProperSubset(B, C), or B=C, to obtain ProperSubset(A, C) as
+        appropriate.
+        '''
+        from proveit.logic import (
+                Equals, ProperSubset, ProperSuperset, SubsetEq, SupersetEq)
+        from ._theorems_ import (
+                transitivitySubsetSubset, transitivitySubsetSubsetEq,)
+        if isinstance(other, Equals):
+            return ContainmentRelation.applyTransitivity(
+                    self, other, assumptions=assumptions)
+        if isinstance(other, ProperSuperset) or isinstance(other,SupersetEq):
+            other = other.deriveReversed(assumptions=assumptions)
+            other = asExpression(other)
+        if other.lhs == self.rhs:
+            if isinstance(other, ProperSubset):
+                result = transitivitySubsetSubset.specialize(
+                        {A:self.lhs, B:self.rhs, C:other.rhs},
+                        assumptions=assumptions)
+                return result#.checked({self})
+            elif isinstance(other, SubsetEq):
+                result = transitivitySubsetSubsetEq.specialize(
+                        {A:self.lhs, B:self.rhs, C:other.rhs},
+                        assumptions=assumptions)
+                return result
+        elif other.rhs == self.lhs:
+            if isinstance(other, ProperSubset):
+                result = transitivitySubsetSubset.specialize(
+                        {A:self.lhs, B:self.rhs, C:other.lhs},
+                        assumptions=assumptions)
+                return result
+            elif isinstance(other,SubsetEq):
+                result = transitivitySubsetSubsetEq.specialize(
+                        {A:self.lhs, B:self.rhs, C:other.lhs},
+                        assumptions=assumptions)
+                return result
+        else:
+            raise ValueError(
+                    "Cannot perform transitivity with {0} and {1}!".
+                    format(self, other))
+
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this ProperSubset expression
+        is in the set of Booleans.
+        '''
+        from ._theorems_ import properSubsetInBool
+        return properSubsetInBool.specialize({A:self.lhs, B:self.rhs})
 
 class NotProperSubset(Operation):
     # operator for the NotProperSubset operation
@@ -464,49 +374,6 @@ class NotProperSubset(Operation):
         '''
         from ._theorems_ import notProperSubsetInBool
         return notProperSubsetInBool.specialize(
-                {A:self.operands[0],B:self.operands[1]})
-
-class NotSubsetEq(Operation):
-    # operator of the NotSubsetEq operation
-    _operator_ = Literal(stringFormat='nsubseteq', latexFormat=r'\nsubseteq',
-                         context=__file__)
-
-    def __init__(self, subset, superset):
-        Operation.__init__(self, NotSubsetEq._operator_, (subset, superset))
-
-    def deriveSideEffects(self, knownTruth):
-        # unfold as an automatic side-effect
-        self.unfold(knownTruth.assumptions)
-
-    def conclude(self, assumptions):
-        return self.concludeAsFolded(assumptions)
-
-    def unfold(self, assumptions=USE_DEFAULTS):
-        '''
-        From A nsubseteq B, derive and return not(supseteq(A, B)).
-        '''
-        from ._theorems_ import unfoldNotSubsetEq
-        return unfoldNotSubsetEq.specialize(
-            {A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-
-    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
-        '''
-        Derive this folded version, A nsupset B, from the unfolded
-        version, not(A supset B).
-        '''
-        from ._theorems_ import foldNotSubsetEq
-        return foldNotSubsetEq.specialize(
-            {A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-
-    def deduceInBool(self, assumptions=USE_DEFAULTS):
-        '''
-        Deduce and return that this NotSubsetEq statement is in the
-        set of Booleans. NOTE that the NotSubsetEq class has been
-        created as an Operation and thus has operands instead of lhs
-        and rhs attributes.
-        '''
-        from ._theorems_ import notSubsetEqInBool
-        return notSubsetEqInBool.specialize(
                 {A:self.operands[0],B:self.operands[1]})
 
 # Provide aliases for ProperSubset to augment user's ease-of-use
