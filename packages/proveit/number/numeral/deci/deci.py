@@ -25,7 +25,9 @@ class DecimalSequence(NumeralSequence):
                 return self.evaluate_add_digit(assumptions=assumptions)
             if isinstance(digit, ExprRange):
                 # if at least one digit is an ExprRange, we can try to reduce it to an ExprTuple
-                return self.reduce_exprRange(assumptions=assumptions)
+                pass
+                # commenting out for merge on 9/21/2020 to get master up to date for the paper
+                #return self.reduce_exprRange(assumptions=assumptions)
     
     def asInt(self):
         return int(self.formatted('string'))
@@ -47,23 +49,24 @@ class DecimalSequence(NumeralSequence):
         for i, digit in enumerate(self.digits):
             if isinstance(digit, ExprRange) and isinstance(digit.body, Numeral):
                 if digit.end_index.asInt() < 10:
-                    # Automatically get the count and equivalence with
-                    # the length of the proper iteration starting from
-                    # 1.  For example,
-                    # |(a, b, c)| = 3
-                    # |(a, b, c)| = |(1, .., 3)|
+                    # Automatically reduce an Expression range of
+                    # a single numeral to an Expression tuple
+                    # (3 .. 4 repeats.. 3) = 3333
+                    # (5 ..3 repeats.. 5) = 555
                     import proveit.number.numeral.deci
                     _n = digit.end_index
                     len_thm = proveit.number.numeral.deci._theorems_ \
                         .__getattr__('%s_repeats_reduction' % _n)
                     _x = digit.body
-                    return len_thm.instantiate({x: _x}, assumptions=assumptions)
+                    expr = len_thm.instantiate({x: _x}, assumptions=assumptions)
+                    expr = eq.update()
                 else:
                     _x = digit.body
                     _n = digit.end_index
 
-                    expr = eq.update(n_repeats_reduction.instantiate({n: _n, x: _x},
-                                                                     assumptions=assumptions).subLeftSideInto(expr))
+                    expr = n_repeats_reduction.instantiate({n: _n, x: _x},
+                                                                     assumptions=assumptions).subLeftSideInto(expr)
+                    expr = eq.update()
 
         return eq.relation
 
