@@ -529,6 +529,51 @@ class ProveItMagicCommands:
             for dependent in sorted(proof.directDependents(), key=stmt_sort):
                 displaySpecialStmt(Context.findTheorem(dependent))
             display(HTML('</dl>'))
+
+    def display_dependencies_latex(self, name, known_truth):
+        '''
+        Show the dependencies of an axiom or theorem.
+        '''
+        proof = known_truth.proof() # Axiom or Theorem
+        
+        def displaySpecialStmt(stmt):
+            '''
+            Given an Axiom or Theorem, display HTML with a link
+            to the definition.
+            '''
+            expr = stmt.provenTruth.expr
+            print('\item $' + expr.latex() + '$')
+        
+        def stmt_sort(stmt):
+            return str(stmt)
+        
+        if isinstance(proof, Theorem):
+            try:
+                required_axioms, required_unproven_theorems = proof.allRequirements()
+            except:
+                print('This theorem has not been proven yet.')
+                required_axioms, required_unproven_theorems = tuple(), tuple()
+                
+            if len(required_unproven_theorems) > 0:
+                print('Unproven conjectures required (directly or indirectly) to prove %s'%name)
+                print(r'\begin{itemize}')
+                for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
+                    displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
+                print(r'\end{itemize}')
+            if len(required_axioms) > 0:
+                print('Axioms required (directly or indirectly) to prove %s'%name)
+                print(r'\begin{itemize}')
+                for required_axiom in sorted(required_axioms, key=stmt_sort):       
+                    displaySpecialStmt(Context.findAxiom(required_axiom))
+                print(r'\end{itemize}')
+        
+        dependents = proof.directDependents()
+        if len(dependents) == 0:
+            print('No theorems/conjectures depend upon %s'%name)
+        else:
+            print('Theorems/conjectures that depend directly on %s'%name)
+            for dependent in sorted(proof.directDependents(), key=stmt_sort):
+                displaySpecialStmt(Context.findTheorem(dependent))
     
 
 @magics_class
@@ -655,6 +700,15 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         name = line.strip()
         known_truth = self.shell.user_ns[line.strip()]
         ProveItMagicCommands.display_dependencies(self, name, known_truth)
+        
+    @line_magic
+    def dependencies_latex(self, line):
+        '''
+        Show the dependencies of an axiom or theorem.
+        '''
+        name = line.strip()
+        known_truth = self.shell.user_ns[line.strip()]
+        ProveItMagicCommands.display_dependencies_latex(self, name, known_truth)
         
 class Assignments:    
     def __init__(self, names, rightSides, beginningProof=False):
