@@ -10,7 +10,7 @@ from ._core_ import (
         InnerExpr, expressionDepth,
         Operation, IndexedVar, indexed_var, Function, OperationSequence, 
         OperationOverInstances, bundle, unbundle, OperationError,
-        Conditional, 
+        Conditional, ConditionalSet,
         Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError, 
         Label, Variable, Literal, DuplicateLiteralError,

@@ -8,7 +8,7 @@ from .fencing import maybeFencedString, maybeFencedLatex, maybeFenced
 from .operation import (
         Operation, IndexedVar, indexed_var, Function, OperationSequence, 
         OperationOverInstances, bundle, unbundle, OperationError)
-from .conditional import Conditional
+from .conditional import Conditional, ConditionalSet
 from .lambda_expr import (
         Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError)
