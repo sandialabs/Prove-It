@@ -120,9 +120,14 @@ class Len(Operation):
                 from proveit.core_expr_types.tuples._axioms_ import tuple_len_incr
                 from proveit.number import num
                 from proveit.logic import Equals
-                thm = tuple_len_incr.specialize({i: num(len(entries) - 1), a: entries[:-1], b: entries[-1]},
+
+                eq = tuple_len_incr.instantiate({i: num(len(entries) - 1), a: entries[:-1], b: entries[-1]},
                                                  assumptions=assumptions)
-                return Equals(thm.lhs, thm.rhs._integerBinaryEval(assumptions=assumptions).rhs).prove(assumptions=assumptions)
+
+                rhs_simp = eq.rhs._integerBinaryEval(assumptions=assumptions)
+
+                return rhs_simp.subRightSideInto(eq, assumptions=assumptions)
+                #return Equals(eq.lhs, eq.rhs._integerBinaryEval(assumptions=assumptions).rhs).prove(assumptions=assumptions)
                 #raise NotImplementedError("Can't handle length computation "
                  #                         ">= 10 for %s"%self)
         elif (len(entries)==2 and not isinstance(entries[1], ExprRange)

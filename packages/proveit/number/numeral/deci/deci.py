@@ -17,15 +17,55 @@ class DecimalSequence(NumeralSequence):
         """
         Tries to reduce each value in the Numeral Sequence to a single digit
         """
+        from proveit import ExprRange
         from proveit.number import Add
         for digit in self.digits:
             if isinstance(digit, Add):
                 # if at least one digit is an addition object, we can use the evaluate_add_digit method
                 return self.evaluate_add_digit(assumptions=assumptions)
+            if isinstance(digit, ExprRange):
+                # if at least one digit is an ExprRange, we can try to reduce it to an ExprTuple
+                return self.reduce_exprRange(assumptions=assumptions)
     
     def asInt(self):
         return int(self.formatted('string'))
 
+    def reduce_exprRange(self, assumptions=USE_DEFAULTS):
+        '''
+        Tries to reduce a decimal sequence containing an ExprRange.
+        For example, reduce #(3 4 2 .. 4 repeats .. 2 3) to 3422223
+        '''
+        from proveit import ExprRange, TransRelUpdater
+        from proveit._common_ import a, b, c, d, k, m, n, x
+        from proveit.core_expr_types.tuples._theorems_ import n_repeats_reduction
+
+        expr = self
+        # A convenience to allow successive update to the equation via transitivities.
+        # (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+
+        for i, digit in enumerate(self.digits):
+            if isinstance(digit, ExprRange) and isinstance(digit.body, Numeral):
+                if digit.end_index.asInt() < 10:
+                    # Automatically get the count and equivalence with
+                    # the length of the proper iteration starting from
+                    # 1.  For example,
+                    # |(a, b, c)| = 3
+                    # |(a, b, c)| = |(1, .., 3)|
+                    import proveit.number.numeral.deci
+                    _n = digit.end_index
+                    len_thm = proveit.number.numeral.deci._theorems_ \
+                        .__getattr__('%s_repeats_reduction' % _n)
+                    _x = digit.body
+                    return len_thm.instantiate({x: _x}, assumptions=assumptions)
+                else:
+                    _x = digit.body
+                    _n = digit.end_index
+
+                    expr = eq.update(n_repeats_reduction.instantiate({n: _n, x: _x},
+                                                                     assumptions=assumptions).subLeftSideInto(expr))
+
+        return eq.relation
 
     def numAddEval(self, num2, assumptions=USE_DEFAULTS):
         '''
@@ -50,7 +90,6 @@ class DecimalSequence(NumeralSequence):
             return md_only_nine_add_one.specialize({k: num(len(num2.digits))}, assumptions=assumptions)
         elif num2.digits[-1] is nine:
             # the last digit is nine
-            from proveit.logic import Equals
             from proveit.number import Add
             count = 0
             idx = -1
@@ -76,38 +115,35 @@ class DecimalSequence(NumeralSequence):
         """
         Evaluates each addition within the DecimalSequence
         """
-        from proveit import ExprRange
+        from proveit import TransRelUpdater
         from proveit.number import Add
         from proveit._common_ import a, b, c, d, k, m, n
         from ._theorems_ import deci_sequence_reduction
         from proveit.core_expr_types import Len
-        current = self
-        for i, digit in enumerate(self.digits):
-            if isinstance(digit, Literal) or isinstance(digit, ExprRange):
-                pass
-            elif isinstance(digit, Add):
-                # only implemented for addition.
-                if current == self:
-                    _m = Len(self.digits[:i]).computation(assumptions=assumptions).rhs
-                    # we have to use computation because we don't know if there is a range of digits
-                    _n = Len(digit.operands).computation(assumptions=assumptions).rhs
-                    _k = Len(self.digits[i + 1:]).computation(assumptions=assumptions).rhs
-                    _a = self.digits[:i]
-                    _b = digit.operands
-                    _c = digit.evaluation(assumptions=assumptions).rhs
-                    _d = self.digits[i + 1:]
-                else:
-                    _m = Len(current.digits[:i]).computation(assumptions=assumptions).rhs
-                    _n = Len(digit.operands).computation(assumptions=assumptions).rhs
-                    _k = Len(current.digits[i + 1:]).computation(assumptions=assumptions).rhs
-                    _a = current.innerExpr().rhs.operands[:i]
-                    _b = digit.operands
-                    _c = digit.evaluation(assumptions=assumptions).rhs
-                    _d = current.innerExpr().rhs.operands[i + 1:]
 
-                current = deci_sequence_reduction.instantiate({m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d},
-                                                              assumptions=assumptions)
-        return current
+        expr = self
+        # A convenience to allow successive update to the equation via transitivities.
+        # (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+
+        for i, digit in enumerate(self.digits):
+            if isinstance(digit, Add):
+                # only implemented for addition.
+
+                _m = Len(expr.digits[:i]).computation(assumptions=assumptions).rhs
+                _n = Len(digit.operands).computation(assumptions=assumptions).rhs
+                _k = Len(expr.digits[i + 1:]).computation(assumptions=assumptions).rhs
+                # _a = expr.innerExpr().operands[:i]
+                _b = digit.operands
+                _c = digit.evaluation(assumptions=assumptions).rhs
+                # _d = expr.innerExpr().operands[i + 1:]
+
+                _a = expr.digits[:i]
+                _d = expr.digits[i + 1:]
+
+                expr = eq.update(deci_sequence_reduction.instantiate({m: _m, n: _n, k: _k, a: _a, b: _b, c: _c,
+                                                                      d: _d}, assumptions=assumptions))
+        return eq.relation
 
     def _formatted(self, formatType, operator=None, **kwargs):
         from proveit import ExprRange, varRange

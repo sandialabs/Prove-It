@@ -758,17 +758,9 @@ class Add(Operation):
 
         abs_terms = [term.operand if isinstance(term, Neg) else term for term in self.terms]
         if len(abs_terms)==2 and all(isLiteralInt(abs_term) for abs_term in abs_terms):
-            # Change the default assumptions will not be necessary after we handle multiple
-            # digits properly.  But for now, we need to assume things like "10 in Naturals"
-            # and derive side effects under such assumptions.
-            from proveit import defaults
-            prev_default_assumptions = list(defaults.assumptions)
-            defaults.assumptions = assumptions
-            evaluation = self._integerBinaryEval()
-            defaults.assumptions = prev_default_assumptions # revert back
+            evaluation = self._integerBinaryEval(assumptions=assumptions)
             return evaluation
-        #assert not isinstance(self.operands[0], Add)
-                
+
         expr = self
         eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
         
