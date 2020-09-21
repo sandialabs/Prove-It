@@ -38,7 +38,7 @@ class DividesRelation(TransitiveRelation):
         if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp) and
                 InSet(self.lhs.base, Integers).proven() and
                 InSet(self.rhs.base, Integers).proven() and
-                Equals(self.lhs.exponent, self.rhs.exponent).proven() and
+                self.lhs.exponent == self.rhs.exponent and
                 InSet(self.lhs.exponent, NaturalsPos).proven()):
             yield self.eliminate_common_exponent
 
@@ -177,6 +177,10 @@ class Divides(DividesRelation):
         else:
             err_str = err_str + (
                     "Case: (x^n) | (y^n). Does not appear applicable.\n")
+        
+        """
+        # This case should be handled on the "side-effect" end.
+        
         #-- -------------------------------------------------------- --#
         #-- Case (5): x|y if x^n|y^n (for some small pos nat n)      --#
         #-- -------------------------------------------------------- --#
@@ -193,6 +197,7 @@ class Divides(DividesRelation):
         err_str = err_str + (
                 "Case: x|y where we already have (x^n)|(y^n). "
                 "Does not appear applicable.\n")
+        """
 
         #-- -------------------------------------------------------- --#
         #-- Case (6): x|z with x|y and y|z known or assumed          --#
