@@ -253,7 +253,16 @@ class ProperSubset(SubsetRelation):
 
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, ProperSubset._operator_, subset, superset)
-
+    
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From A not_proper_subset B, derive and return
+        not(propersubset(A, B)).
+        '''
+        from ._theorems_ import unfoldProperSubset
+        return unfoldProperSubset.specialize(
+            {A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+    
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From ProperSubset(A, B), derive ProperSuperset(B, A).

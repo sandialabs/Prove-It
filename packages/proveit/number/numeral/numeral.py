@@ -82,7 +82,7 @@ class Numeral(Literal, IrreducibleValue):
         
     def deduceInNaturals(self, assumptions=USE_DEFAULTS):
         if Numeral._inNaturalsStmts is None:
-            from proveit.number.sets.natural._theorems_ import zero_in_nats
+            from proveit.number.sets.natural._axioms_ import zero_in_nats
             from .deci._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
             Numeral._inNaturalsStmts = {0:zero_in_nats, 1:nat1, 2:nat2, 
                                         3:nat3, 4:nat4, 5:nat5, 6:nat6, 
