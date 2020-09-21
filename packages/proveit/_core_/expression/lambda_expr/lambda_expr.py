@@ -794,7 +794,8 @@ class Lambda(Expression):
                   if (key not in self.parameterVarSet 
                       and not isinstance(value, set))])
         for param_var in self.parameterVarSet:
-            if inner_repl_map.get(param_var, param_var) in restricted_vars:
+            param_var_repl = inner_repl_map.get(param_var, param_var)
+            if param_var_repl in restricted_vars:
                 # Avoid this collision by relabeling to a safe dummy 
                 # variable.
                 if param_var in self.nonrelabelable_param_vars:
@@ -807,7 +808,14 @@ class Lambda(Expression):
                 inner_repl_map[param_var] = dummy_var
                 restricted_vars.add(dummy_var)
             else:
-                restricted_vars.add(param_var)
+                if isinstance(param_var_repl, set):
+                    # If param_var_repl is a set, it's for possile
+                    # expansions of an indexed variable.  For the
+                    # purpose of checking collisions, we just want
+                    # the variable being indexed.
+                    restricted_vars.add(param_var)
+                else:
+                    restricted_vars.add(param_var_repl)
         
         # Generate the new set of parameters which may be relabeled or, 
         # in the case of a parameter range, may be altered due a change
