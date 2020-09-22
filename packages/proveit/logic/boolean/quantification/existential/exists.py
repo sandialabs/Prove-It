@@ -1,6 +1,6 @@
-from proveit import OperationOverInstances, KnownTruth
+from proveit import Lambda, Conditional, OperationOverInstances, KnownTruth
 from proveit import defaults, Literal, Operation, ExprTuple, USE_DEFAULTS
-from proveit._common_ import A, B, P, R, S, xx, yy, QQ
+from proveit._common_ import n, A, B, P, Q, R, S, xx, yy, QQ
 
 class Exists(OperationOverInstances):
     # operator of the Exists operation
@@ -140,6 +140,34 @@ class Exists(OperationOverInstances):
                  x_1_to__n:skolem_constants,
                  y_1_to__n:existential.instanceParams},
                 assumptions=assumptions).deriveConsequent(assumptions)
+    
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From this existential quantifier, derive the "unfolded"
+        version according to its definition (the negation of
+        a universal quantification).
+        '''
+        from proveit.logic.boolean.quantification.existential._theorems_ \
+            import existsUnfolding
+        _n = self.instanceParams.length(assumptions)
+        _P = Lambda(self.instanceParams, self.operand.body.value)
+        _Q = Lambda(self.instanceParams, self.operand.body.condition)
+        return existsUnfolding.instantiate(
+                {n:_n, P:_P, Q:_Q}, assumptions=assumptions). \
+                deriveConsequent(assumptions)
+    
+    def definition(self, assumptions=USE_DEFAULTS):
+        '''
+        Return definition of this existential quantifier as an
+        equation with this existential quantifier on the left
+        and a negated universal quantification on the right.
+        '''
+        from proveit.logic.boolean.quantification.existential._axioms_ \
+            import existsDef
+        _n = self.instanceParams.length(assumptions)
+        _P = Lambda(self.instanceParams, self.operand.body.value)
+        _Q = Lambda(self.instanceParams, self.operand.body.condition)
+        return existsDef.instantiate({n:_n, P:_P, Q:_Q}, assumptions=assumptions)
         
     def deduceNotExists(self, assumptions=USE_DEFAULTS):
         r'''
