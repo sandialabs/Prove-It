@@ -881,13 +881,17 @@ class Instantiation(Proof):
                                 %(repl, repl.__class__))
             if isinstance(key, ExprTuple):
                 # If the key is an ExprTuple, it must either be a
-                # single range of an indexed variable for a full
-                # expansion, or it is an "equivalent alternative
+                # range (or range of ranges, etc.) of an indexed variable 
+                # for a full expansion, or it is an "equivalent alternative
                 # expansion".
                 # Should already have been checked in
                 # KnownTruth.instantiate:
-                assert (len(key)==1 and isinstance(key[0], ExprRange)
-                    and isinstance(key[0].body, IndexedVar))
+                try:
+                    for param_entry in key:
+                        getParamVar(param_entry)
+                except TypeError as e:
+                    assert False, ("Should have been checked in 'instantiate' "
+                                   "method:\n%s"%str(e))
                 parameters.append(key[0])
             else:
                 parameters.append(key)
@@ -1149,7 +1153,7 @@ class Instantiation(Proof):
                     # should be replaced by the corresponding range
                     # of variables.
                     # For example
-                    #   x : (x_1, ..., x_n, )
+                    #   x : (x_1, ..., x_n)
                     # which may be introduced after eliminating a
                     #   \forall_{x_1, ..., x_n} ...
                     # universal quantifier.

@@ -54,7 +54,10 @@ class ExpressionInfo:
                     outStr += indent + key + ': ' + str(expr_num_map[expr[key]]) + '\n'
             elif isinstance(expr, IndexedVar):
                 outStr +=  r'variable: ' + str(expr_num_map[expr.var]) + '\n'
-                outStr +=  r'index: ' + str(expr_num_map[expr.index])   + '\n'                  
+                if hasattr(expr, 'index'):
+                    outStr +=  r'index: ' + str(expr_num_map[expr.index])   + '\n'        
+                else:
+                    outStr +=  r'indices: ' + str(expr_num_map[expr.indices])   + '\n'                            
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
                     outStr += indent + r'operator: ' + str(expr_num_map[expr.operator]) + '\n'
@@ -73,13 +76,6 @@ class ExpressionInfo:
                 else:        
                     outStr += indent + r'parameters: %s\n'%(expr_num_map[expr.parameters])
                 outStr += indent + r'body: ' + str(expr_num_map[expr.body]) + '\n'
-            elif isinstance(expr, IndexedVar):
-                outStr += indent + 'var: %d\n'%(expr_num_map[expr.var])
-                if hasattr(expr, 'index'):
-                    outStr += indent +'index: %d\n'%(expr_num_map[expr.index])
-                else:
-                    outStr += indent +'indices: %d\n'%(expr_num_map[expr.indices])
-                outStr += indent +'base: "%d"\n'%expr.base        
             elif isinstance(expr, ExprRange):
                 outStr += indent + 'lambda_map: %d\n'%(expr_num_map[expr.lambda_map])
                 outStr += indent + 'start_index: %d\n'%(expr_num_map[expr.start_index])
@@ -115,7 +111,10 @@ class ExpressionInfo:
                     sub_expressions += '%s: %d<br>'%(key, expr_num_map[expr[key]])
             elif isinstance(expr, IndexedVar):
                 sub_expressions = 'variable:&nbsp;%d<br>'%(expr_num_map[expr.var])
-                sub_expressions += 'index:&nbsp;%d<br>'%(expr_num_map[expr.index])                    
+                if hasattr(expr, 'index'):
+                    sub_expressions += 'index:&nbsp;%d<br>'%(expr_num_map[expr.index])
+                else:
+                    sub_expressions += 'indices:&nbsp;%d<br>'%(expr_num_map[expr.indices])                    
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
                     sub_expressions = 'operator:&nbsp;%d<br>'%(expr_num_map[expr.operator])

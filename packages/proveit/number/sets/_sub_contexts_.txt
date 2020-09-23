@@ -3,4 +3,3 @@ integer
 rational
 real
 complex
-rational

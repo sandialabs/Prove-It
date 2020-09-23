@@ -8,7 +8,7 @@ from .expression import (
         InnerExpr,
         Label, Literal, Variable, DuplicateLiteralError,
         safeDummyVar, safeDummyVars, safeDefaultOrDummyVar,
-        Operation, IndexedVar, indexed_var, Function, OperationSequence, 
+        Operation, IndexedVar, Function, OperationSequence, 
         OperationOverInstances, bundle, unbundle, OperationError, 
         Conditional, ConditionalSet,
         Lambda, ParameterCollisionError, DisallowedParameterRelabeling,

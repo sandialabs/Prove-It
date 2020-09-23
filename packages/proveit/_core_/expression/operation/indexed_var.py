@@ -9,48 +9,37 @@ class IndexedVar(Operation):
     '''
     An IndexedVar Expression expresses a Variable or nested IndexedVar, 
     representing an ExprTuple (or ExprArray which is really just an ExprTuple
-    of ExprTuples), being indexed to yield an element.  The index must be
-    is typically a parameter of a containing ExprRange.
-    When IndexedVar's are nested, the default style is to display it as a 
-    single variable with multiple indices.  That is,
-    (x_i)_j will display, by default, as x_{i, j}.
+    of ExprTuples), being indexed to yield an element.  The indices are
+    typically parameters of containing ExprRanges, or additively shifted 
+    versions of such parameters.  For example,
+        (x_{1, 1+1} + ... + x_{1, j+1} + ... + x_{1, n+1}) * ... *
+        (x_{i, 1+1} + ... + x_{i, j+1} + ... + x_{i, n+1}) * ... *
+        (x_{m, 1+1} + ... + x_{m, j+1} + ... + x_{m, n+1})
+    is represented by a doubly-nested ExprRange using the IndexedVar
+    x_{i, j+1}.
     '''
     
-    def __init__(self, var, index, flatten_nested_indexing=True):
+    def __init__(self, var, index_or_indices):
         '''
         Initialize an IndexedVar to represent the given 'var' being indexed
-        via 'index'.  The 'var' must be a Variable or an IndexedVar in a
-        nested fashion.  The 'index' must be a Variable (typically the
-        parameter of a containing Iter).  By default, nested indexed variables
-        will display as a singe indexed variable with multiple indices,
-        unless flatten_nested_indexing is False or the 'multi_indexed_var'
-        style is changed.
+        via 'index_or_indices'.  The 'var' must be a Variable.  
         '''
+        from proveit._core_.expression.composite import compositeExpression
         from proveit._core_.expression.label.label import TemporaryLabel
-        if not isinstance(var, Variable) and not isinstance(var, IndexedVar):
+        if not isinstance(var, Variable):
             if not isinstance(var, TemporaryLabel):
                 raise TypeError("'var' being indexed should be a Variable "
                                 "or IndexedVar itself; got %s"%str(var))
-        if isinstance(var, IndexedVar):
-            if flatten_nested_indexing:
-                styles = {'multi_indexed_var':'flat'}
-            else:
-                styles = {'multi_indexed_var':'nested'}                
+        self.indices = compositeExpression(index_or_indices)
+        if len(self.indices) == 1:
+            # has a single index
+            self.index = self.indices[0]
+            self.index_or_indices = self.index
         else:
-            styles = None
-        
-        self.index = index
-        Operation.__init__(self, var, self.index, styles=styles)
+            self.index_or_indices = self.indices
+        Operation.__init__(self, var, self.index_or_indices)
         self.var = var
-    
-    def styleOptions(self):
-        options = StyleOptions(self)
-        if isinstance(self.var, IndexedVar):
-            options.add('multi_indexed_var', 
-                        ("'flat' or 'nested' to show multipe "
-                         "indices or the true nested structure"))
-        return options
-    
+        
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != IndexedVar: 
@@ -66,9 +55,7 @@ class IndexedVar(Operation):
         that could be used to recreate the Indexed.
         '''
         yield self.var
-        yield self.index
-        if self.getStyle('multi_indexed_var', 'flat') == 'nested':
-            yield ('flatten_nested_indexing', False)       
+        yield self.index_or_indices
     
     def _replaced(self, repl_map, allow_relabeling,
                   assumptions, requirements,
@@ -80,9 +67,9 @@ class IndexedVar(Operation):
         if len(repl_map)>0 and (self in repl_map):
             return repl_map[self]
         # First do a replacement after temporarily removing the base 
-        # variable from the repl_map so we can see of the result of
+        # variable from the repl_map so we can see if the result of
         # that is in the repl_map.
-        base_var = extract_base_var(self)
+        base_var = self.var
         base_var_sub = repl_map.pop(base_var, None)
         replaced_sans_base_var_sub = \
             Expression._replaced(self, repl_map, allow_relabeling, 
@@ -104,17 +91,8 @@ class IndexedVar(Operation):
                                     equality_repl_requirements)
     
     def _formatted(self, formatType, **kwargs):
-        if self.getStyle('multi_indexed_var', 'nested') == 'flat' and \
-                isinstance(self.var, IndexedVar):
-            # Start with the inner-most index, so reverse the order
-            # relative to the "indices" function.
-            indices_str = ','.join(index.formatted(formatType) 
-                                   for index in extract_indices(self))
-            result = (extract_base_var(self).formatted(formatType) + 
-                      '_{'+indices_str+'}')
-        else:
-            index_str = self.index.formatted(formatType, fence=False)
-            result = self.var.formatted(formatType, forceFence=True) + '_{' + index_str + '}'
+        indices_str = self.index_or_indices.formatted(formatType, fence=False)
+        result = self.var.formatted(formatType) + '_{' + indices_str + '}'
         if kwargs.get('forceFence', False) == True:
             if formatType=='latex':
                 return r'\left(' + result + r'\right)'
@@ -152,13 +130,10 @@ class IndexedVar(Operation):
         '''
         if exclusions is not None and self in exclusions: 
             return dict() # this is excluded
-        var = self
         forms_dict = dict()
-        while isinstance(var, IndexedVar):
-            forms_dict.update(
-                    var.index._possibly_free_var_ranges(exclusions=exclusions))
-            var = var.var
-        forms_dict.update({var:{self}})
+        forms_dict.update(
+                self.indices._possibly_free_var_ranges(exclusions=exclusions))
+        forms_dict.update({self.var:{self}})
         return forms_dict
     
     
@@ -185,43 +160,4 @@ class IndexedVar(Operation):
         return None
     """
 
-def extract_base_var(indexed_var):
-    '''
-    Return the Variable being indexed, or if it is a nested IndexedVar,
-    that of the nested IndexedVar until we get to the actual Variable.
-    '''
-    expr = indexed_var
-    while isinstance(expr, IndexedVar):
-        expr = expr.var
-    return expr
-
-def extract_indices(indexed_var):
-    '''
-    Return the indices of the IndexedVar, starting from the outer-most
-    nested IndexedVar going in.
-    '''
-    expr = indexed_var
-    indices = []
-    while isinstance(expr, IndexedVar):
-        indices.append(expr.index)
-        expr = expr.var
-    return list(reversed(indices))
-
-def indexed_var(var, index_or_indices):
-    '''
-    Create an IndexedVar with the given index_or_indices.  When there
-    are multiple indices, make a nested IndexedVar.
-    '''
-    try:
-        if len(index_or_indices) > 1:
-            # multiple indices
-            indices = index_or_indices
-            return IndexedVar(indexed_var(var, indices[:-1]), indices[-1])
-        else:
-            # single index.
-            index = index_or_indices[0]
-    except TypeError:
-        # single index.
-        index = index_or_indices
-    return IndexedVar(var, index)
  

@@ -43,14 +43,9 @@ def getParamVar(parameter, *, _required_indices=None):
                     "variable"%parameter)
         return var
     elif isinstance(parameter, IndexedVar):
-        var = parameter
-        while isinstance(var, IndexedVar):
-            if _required_indices is not None:
-                 # requirement met:
-                _required_indices.discard(var.index)
-            # May be a nested IndexedVar.  We want the innermost var.
-            var = var.var 
-        return var
+        if _required_indices is not None:
+            _required_indices.difference_update(parameter.indices)
+        return parameter.var
     elif isinstance(parameter, Variable) or isinstance(parameter, TemporaryLabel):
         return parameter
     else:
@@ -1078,12 +1073,10 @@ def extract_param_replacements(parameters, parameter_vars, body,
                 param_indices = extract_var_tuple_indices(
                         ExprTuple(parameter))
                 param_len = Len(param_indices)
-                if (isLiteralInt(parameter.start_index) and
-                        isLiteralInt(parameter.end_index)):
-                    # Known integer value for param_len.
-                    int_param_len = (parameter.end_index.asInt() -
-                                     parameter.start_index.asInt() + 1)
-                else:
+                try:
+                    # Maybe a known integer value for param_len.
+                    int_param_len = parameter.literal_int_extent()
+                except ValueError:
                     # Unknown integer value for param_len.
                     int_param_len = None
                 if is_complete and (parameters[-1] == parameter):
@@ -1145,15 +1138,13 @@ def extract_param_replacements(parameters, parameter_vars, body,
                         # Update min/max number of param-operand 
                         # elements.
                         if isinstance(operand_entry, ExprRange):
-                            if (isLiteralInt(operand_entry.start_index) and
-                                    isLiteralInt(operand_entry.end_index)):
-                                # Known integer ExprRange length.
-                                entry_len = (operand_entry.end_index.asInt() -
-                                             operand_entry.start_index.asInt()+1)
+                            try:
+                                # Maybe a known integer ExprRange length.
+                                entry_len = operand_entry.literal_int_extent()
                                 min_int_param_operands_len += entry_len
                                 if max_int_param_operands_len is not None:
                                     max_int_param_operands_len += entry_len
-                            else:
+                            except ValueError:
                                 # Unnown ExprRange length, but >= 0.
                                 max_int_param_operands_len = None
                         else:
@@ -1179,7 +1170,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
                     # Rangle lengths must be known values and sum 
                     # to 1.
                     try:
-                        from proveit.number import zero,one 
+                        from proveit.number import zero, one
                         while True:
                             operand_len_evaluation = \
                                 Len(operand).evaluation(
