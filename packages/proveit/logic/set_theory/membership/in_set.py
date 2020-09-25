@@ -115,6 +115,7 @@ class InSet(Operation):
         except SimplificationError:
             elem_simplification = None
 
+        # might be that the following 'if' block should be moved further down
         if elem_simplification is None:
             # Let's try harder to simplify the element.
             try:
