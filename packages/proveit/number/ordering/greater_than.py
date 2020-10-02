@@ -221,9 +221,9 @@ class GreaterEq(GreaterRelation):
         # positive added to it.
         from proveit.number import zero
         if self.rhs == zero:
-            from ._theorems import nonNegIfInRealsNonNeg
+            from ._theorems_ import nonNegIfInRealsNonNeg
             return nonNegIfInRealsNonNeg.instantiate(
-                    {a:self.rhs}, assumptions=assumptions)
+                    {a:self.lhs}, assumptions=assumptions)
         return GreaterRelation.conclude(self, assumptions)
     
     def reversed(self):
