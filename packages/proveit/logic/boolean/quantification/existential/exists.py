@@ -68,12 +68,11 @@ class Exists(OperationOverInstances):
         # of the conditions and instance expression
         defaults.assumptions = (*defaults.assumptions, *Q_skolem, P_skolem)
         if print_message:
-            print("Corresponding to the desired Skolem constant(s) {0}, "
-                  "Exists.choose() has added the following assumptions "
-                  "to the defaults.assumptions: {1}. Later you will use "
-                  "the KnownTruth.eliminate() method to complete the "
-                  "Skolemization.".
-                  format(skolem_constants, (*Q_skolem, P_skolem)))
+            print("Creating Skolem 'constant(s)': {0}.\n"
+                  "Call the KnownTruth.eliminate{0} to complete the "
+                  "Skolemization\n(when the 'constant(s)' are no longer needed).\n"
+                  "Adding to defaults.assumptions:".
+                  format(skolem_constants, (*Q_skolem)))
 
         return ExprTuple(*Q_skolem, P_skolem)
 
