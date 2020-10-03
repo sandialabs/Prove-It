@@ -40,6 +40,7 @@ class DecimalSequence(NumeralSequence):
         from proveit import ExprRange, TransRelUpdater
         from proveit._common_ import a, b, c, d, k, m, n, x
         from proveit.core_expr_types.tuples._theorems_ import n_repeats_reduction
+        from proveit.number.numeral.deci._theorems_ import deci_sequence_reduction
 
         expr = self
         # A convenience to allow successive update to the equation via transitivities.
@@ -56,17 +57,18 @@ class DecimalSequence(NumeralSequence):
                     import proveit.number.numeral.deci
                     _n = digit.end_index
                     len_thm = proveit.number.numeral.deci._theorems_ \
-                        .__getattr__('%s_repeats_reduction' % _n)
+                        .__getattr__('reduce_%s_repeats' % _n)
                     _x = digit.body
                     expr = len_thm.instantiate({x: _x}, assumptions=assumptions)
-                    expr = eq.update()
+                    expr = eq.update(expr.subLeftSideInto(expr))
                 else:
                     _x = digit.body
                     _n = digit.end_index
 
                     expr = n_repeats_reduction.instantiate({n: _n, x: _x},
                                                                      assumptions=assumptions).subLeftSideInto(expr)
-                    expr = eq.update()
+                    expr = eq.update(deci_sequence_reduction.instantiate({m: _m, n: _n, k: _k, a: _a, b: _b, c: _c,
+                                                                      d: _d}, assumptions=assumptions))
 
         return eq.relation
 
