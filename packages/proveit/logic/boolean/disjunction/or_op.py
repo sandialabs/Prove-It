@@ -43,7 +43,7 @@ class Or(Operation):
                 emptyDisjunctionEval
             if emptyDisjunctionEval.isUsable():
                 return emptyDisjunctionEval
-        elif self.operands.singular():
+        elif self.operands.is_singular():
             try:
                 return self.unaryReduction(assumptions=assumptions)
             except:
@@ -566,7 +566,7 @@ class Or(Operation):
         '''
         from proveit.logic.boolean.disjunction._theorems_ import \
             unaryOrReduction
-        if not self.operands.singular():
+        if not self.operands.is_singular():
             raise ValueError("Or.unaryReduction: expression must have only a "
                              "single operand in order to invoke the "
                              "unaryOrReduction theorem.")

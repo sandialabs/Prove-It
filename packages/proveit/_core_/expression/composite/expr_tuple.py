@@ -129,7 +129,7 @@ class ExprTuple(Composite, Expression):
         '''
         return ExprTuple(*(self.entries + tuple(other)))
     
-    def singular(self): # should change to is_singular
+    def is_singular(self): 
         '''
         Return True if this has a single element that is not an
         ExprRange.

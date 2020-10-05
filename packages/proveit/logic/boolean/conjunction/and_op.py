@@ -24,7 +24,7 @@ class And(Operation):
                 emptyConjunctionEval
             if emptyConjunctionEval.isUsable():
                 return emptyConjunctionEval
-        elif self.operands.singular():
+        elif self.operands.is_singular():
             try:
                 return self.unaryReduction(assumptions)
             except:
@@ -239,7 +239,7 @@ class And(Operation):
     def unaryReduction(self, assumptions=USE_DEFAULTS):
         from proveit.logic.boolean.conjunction._theorems_ import \
             unary_and_reduction
-        if not self.operands.singular():
+        if not self.operands.is_singular():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unaryReduction")
         operand = self.operands[0]

@@ -98,7 +98,7 @@ class Lambda(Expression):
                 compositeExpression, singleOrCompositeExpression)
         self.parameters = compositeExpression(parameter_or_parameters)
         parameterVars = [getParamVar(parameter) for parameter in self.parameters]
-        if len(self.parameters) == 1:
+        if self.parameters.is_singular():
             # has a single parameter
             self.parameter = self.parameters[0]
             self.parameter_or_parameters = self.parameter
@@ -369,7 +369,7 @@ class Lambda(Expression):
         outStr = '[' if fence else ''
         parameterListStr = ', '.join([parameter.string(abbrev=True) for parameter 
                                       in parameters])
-        if parameters.singular():
+        if parameters.is_singular():
             outStr += parameterListStr + ' -> '
         else:
             outStr += '(' + parameterListStr + ') -> '
@@ -382,7 +382,7 @@ class Lambda(Expression):
         outStr = r'\left[' if fence else ''
         parameterListStr = ', '.join([parameter.latex(abbrev=True) for parameter 
                                       in self.parameters])
-        if self.parameters.singular():
+        if self.parameters.is_singular():
             outStr +=  parameterListStr + r' \mapsto '
         else:
             outStr += r'\left(' + parameterListStr + r'\right) \mapsto '
