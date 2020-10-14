@@ -1,5 +1,5 @@
 from collections import deque
-from proveit import Expression, Operation, OperationSequence
+from proveit import Expression, Operation, OperationSequence, StyleOptions
 from proveit import defaults, USE_DEFAULTS, KnownTruth, ProofFailure
 from .sorter import TransitivitySorter
 
@@ -10,11 +10,54 @@ class Relation(Operation):
     '''
     
     def __init__(self, operator, lhs, rhs):
-        Operation.__init__(self,operator, (lhs, rhs))
+        Operation.__init__(self,operator, (lhs, rhs), 
+                           styles={"direction":"normal"})
         assert(len(self.operands)==2)
-        self.lhs = self.operands[0]
-        self.rhs = self.operands[1]
+        # The 'lhs' and 'rhs' attributes will access the respective
+        # operands, but this is effected in __getattr__ because
+        # they will be switched when the 'direction' style is
+        # 'reversed'.
+
+    @staticmethod
+    def reversedOperatorStr(formatType):
+        raise NotImplementedError(
+                "'reverseOperatorStr' must be implemented as a class/ "
+                "static method for a Relation class to support the "
+                "'direction' style of 'reversed'.  It should take a "
+                "'formatType' argument which may be 'latex' or 'string'.")
     
+    def _formatted(self, formatType, **kwargs):
+        '''
+        Format the binary relation operation.  Note: it may
+        be reversed if the "direction" style is "reversed".
+        '''
+        wrapPositions=self.wrapPositions()
+        justification=self.getStyle('justification')
+        fence =  kwargs.get('fence', False)
+        subFence =  kwargs.get('subFence', True)
+        operator_str = self.operator.formatted(formatType)
+        if self.getStyle("direction", "normal")=="reversed":
+            operator_str = self.__class__.reversedOperatorStr(formatType)
+        operands = self.operands
+        return operands.formatted(formatType, 
+                                  fence=fence, subFence=subFence, 
+                                  operatorOrOperators=operator_str, 
+                                  wrapPositions=wrapPositions, justification=justification)
+    
+    def reversed(self):
+        return self.withReverseStyle()
+    
+    def withDirectionReversed(self):
+        if self.getStyle("direction", "normal") == "reverse":
+            return self.withStyles(direction="normal")
+        return self.withStyles(direction="reversed")
+    
+    def styleOptions(self):
+        options = StyleOptions(self)
+        options.add('direction', ("Direction of the relation "
+                                  "(normal or reversed)"))
+        return options
+        
     def _simplify_both_sides(self, *, simplify, assumptions=USE_DEFAULTS):
         '''
         Simplify both sides iff 'simplify' is True.
@@ -62,7 +105,22 @@ class Relation(Operation):
         for the TransitiveRelation class will take an extra optional 
         'simplify' argument, True by default, for automatically
         simplifying both sides of the new relation.
+        
+        Also, 'lhs' and 'rhs' attributes are implemented here
+        because they will be reversed if the 'direction' style
+        is 'reversed'.
         '''
+        if name in ('lhs', 'rhs'):
+            # For some reason, self.getStyleData('direction', None)
+            # leads to errors, but 
+            # self._styleData.styles.get('direction', None) is fine.
+            if self._styleData.styles.get('direction', 'normal') == 'reversed':
+                if name=='lhs': return self.operands[1]
+                else: return self.operands[0]
+            else:
+                if name=='lhs': return self.operands[0]
+                else: return self.operands[1]
+        
         both_sides_str = '_both_sides'
         if name[-len(both_sides_str):] == both_sides_str:
             from proveit.logic import InSet

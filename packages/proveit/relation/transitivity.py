@@ -36,6 +36,10 @@ class TransitiveRelation(Relation):
     
     def __init__(self, operator, lhs, rhs):
         Relation.__init__(self,operator, lhs, rhs)
+        # lhs and rhs with the "direction" style of "normal"
+        # (not subject to reversal)
+        self.normal_lhs = self.operands[0]
+        self.normal_rhs = self.operands[1]
     
     def sideEffects(self, knownTruth):
         '''
@@ -47,8 +51,8 @@ class TransitiveRelation(Relation):
         '''
         if not hasattr(self.__class__, 'knownLeftSides') or not hasattr(self.__class__, 'knownRightSides'):
             raise NotImplementedError("Expressions derived from TransitiveRelation should define 'knownLeftSides' and 'knownRightSides' as class variables")
-        self.__class__.knownLeftSides.setdefault(self.lhs, set()).add(knownTruth)
-        self.__class__.knownRightSides.setdefault(self.rhs, set()).add(knownTruth)
+        self.__class__.knownLeftSides.setdefault(self.normal_lhs, set()).add(knownTruth)
+        self.__class__.knownRightSides.setdefault(self.normal_rhs, set()).add(knownTruth)
         return
         yield # makes this a generator as it should be
 
@@ -70,7 +74,7 @@ class TransitiveRelation(Relation):
     def concludeViaTransitivity(self, assumptions=USE_DEFAULTS):
         from proveit.logic import Equals
         assumptions = defaults.checkedAssumptions(assumptions)
-        proven_relation = self.__class__._transitivitySearch(self.lhs, self.rhs, assumptions=assumptions)
+        proven_relation = self.__class__._transitivitySearch(self.normal_lhs, self.normal_rhs, assumptions=assumptions)
         relation = proven_relation.expr
         if relation.__class__ != self.__class__:
             if self.__class__ == self.__class__._checkedWeakRelationClass():
@@ -117,7 +121,7 @@ class TransitiveRelation(Relation):
             for Relation in relation_classes:
                 for knownTruth in list(Relation.knownLeftSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
-                        yield (knownTruth, knownTruth.rhs)
+                        yield (knownTruth, knownTruth.normal_rhs)
                 
     @classmethod
     def knownRelationsFromRight(RelationClass, expr, assumptionsSet):
@@ -142,7 +146,7 @@ class TransitiveRelation(Relation):
             for Relation in relation_classes:
                 for knownTruth in list(Relation.knownRightSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
-                        yield (knownTruth, knownTruth.lhs)
+                        yield (knownTruth, knownTruth.normal_lhs)
     
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -156,20 +160,20 @@ class TransitiveRelation(Relation):
         #print 'apply transitivity', self, other
         assumptions = defaults.checkedAssumptions(assumptions)        
         if isinstance(other,equiv_class):
-            if other.lhs in (self.lhs, self.rhs):
+            if other.normal_lhs in (self.normal_lhs, self.normal_rhs):
                 subrule = other.subRightSideInto
-                commonExpr = other.lhs
-            elif other.rhs in (self.lhs, self.rhs):
+                commonExpr = other.normal_lhs
+            elif other.normal_rhs in (self.normal_lhs, self.normal_rhs):
                 subrule = other.subLeftSideInto
-                commonExpr = other.rhs
+                commonExpr = other.normal_rhs
             else:
                 raise ValueError("Equality does not involve either side of inequality!")
-            if commonExpr == self.lhs:
-                # replace the lhs of self with its counterpart from the "other" equality.
-                return subrule(self.innerExpr().lhs, assumptions=assumptions)
-            elif commonExpr == self.rhs:
-                # replace the rhs of self with its counterpart from the "other" equality.
-                return subrule(self.innerExpr().rhs, assumptions=assumptions)
+            if commonExpr == self.normal_lhs:
+                # replace the normal_lhs of self with its counterpart from the "other" equality.
+                return subrule(self.innerExpr().normal_lhs, assumptions=assumptions)
+            elif commonExpr == self.normal_rhs:
+                # replace the normal_rhs of self with its counterpart from the "other" equality.
+                return subrule(self.innerExpr().normal_rhs, assumptions=assumptions)
         raise NotImplementedError('Must implement applyTransitivity appropriately for each kind of TransitiveRelation')
 
     @staticmethod
@@ -242,8 +246,8 @@ class TransitiveRelation(Relation):
         Sequence = self.SequenceClass()
         assert issubclass(Sequence, TransitiveSequence), "SequenceClass() should return a sub-class TransitiveSequence"
         operators = [relation.operator for relation in relations]
-        operands = [relation.lhs for relation in relations] + [relations[-1].rhs]
-        alt_operands = [relations[0].lhs] + [relation.rhs for relation in relations]
+        operands = [relation.normal_lhs for relation in relations] + [relations[-1].normal_rhs]
+        alt_operands = [relations[0].normal_lhs] + [relation.normal_rhs for relation in relations]
         if operands != alt_operands:
             raise TypeError("The relations do not have the expected operands in common to form a sequence")
         return Sequence(operators, operands)
