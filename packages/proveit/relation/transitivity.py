@@ -36,8 +36,12 @@ class TransitiveRelation(Relation):
     '''
 
     def __init__(self, operator, lhs, rhs):
-        Relation.__init__(self, operator, lhs, rhs)
-
+        Relation.__init__(self,operator, lhs, rhs)
+        # lhs and rhs with the "direction" style of "normal"
+        # (not subject to reversal)
+        self.normal_lhs = self.operands[0]
+        self.normal_rhs = self.operands[1]
+    
     def side_effects(self, judgment):
         '''
         Automatically derive the reversed form of transitive
@@ -46,17 +50,16 @@ class TransitiveRelation(Relation):
         in class member dictionaries: known_left_sides, known_right_sides
         whilc will enable transitivity searches.
         '''
-        if not hasattr(
-                self.__class__,
-                'known_left_sides') or not hasattr(
-                self.__class__,
-                'known_right_sides'):
+        if (not hasattr(self.__class__, 'known_left_sides') 
+                or not hasattr(self.__class__, 'known_right_sides')):
             raise NotImplementedError(
-                "Expressions derived from TransitiveRelation should define 'known_left_sides' and 'known_right_sides' as class variables")
+                "Expressions derived from TransitiveRelation should define "
+                "'known_left_sides' and 'known_right_sides' as class "
+                "variables")
         self.__class__.known_left_sides.setdefault(
-            self.lhs, set()).add(judgment)
+            self.normal_lhs, set()).add(judgment)
         self.__class__.known_right_sides.setdefault(
-            self.rhs, set()).add(judgment)
+            self.normal_rhs, set()).add(judgment)
         return
         yield  # makes this a generator as it should be
 
@@ -80,7 +83,7 @@ class TransitiveRelation(Relation):
         from proveit.logic import Equals
         assumptions = defaults.checked_assumptions(assumptions)
         proven_relation = self.__class__._transitivitySearch(
-            self.lhs, self.rhs, assumptions=assumptions)
+            self.normal_lhs, self.normal_rhs, assumptions=assumptions)
         relation = proven_relation.expr
         if relation.__class__ != self.__class__:
             if self.__class__ == self.__class__._checkedWeakRelationClass():
@@ -128,7 +131,7 @@ class TransitiveRelation(Relation):
             for Relation in relation_classes:
                 for judgment in list(Relation.known_left_sides.get(expr, [])):
                     if judgment.is_sufficient(assumptions_set):
-                        yield (judgment, judgment.rhs)
+                        yield (judgment, judgment.normal_rhs)
 
     @classmethod
     def known_relations_from_right(RelationClass, expr, assumptions_set):
@@ -154,7 +157,7 @@ class TransitiveRelation(Relation):
             for Relation in relation_classes:
                 for judgment in list(Relation.known_right_sides.get(expr, [])):
                     if judgment.is_sufficient(assumptions_set):
-                        yield (judgment, judgment.lhs)
+                        yield (judgment, judgment.normal_lhs)
 
     def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -168,25 +171,28 @@ class TransitiveRelation(Relation):
         # print 'apply transitivity', self, other
         assumptions = defaults.checked_assumptions(assumptions)
         if isinstance(other, equiv_class):
-            if other.lhs in (self.lhs, self.rhs):
+            if other.normal_lhs in (self.normal_lhs, self.normal_rhs):
                 subrule = other.sub_right_side_into
-                common_expr = other.lhs
-            elif other.rhs in (self.lhs, self.rhs):
+                common_expr = other.normal_lhs
+            elif other.normal_rhs in (self.normal_lhs, self.normal_rhs):
                 subrule = other.sub_left_side_into
-                common_expr = other.rhs
+                common_expr = other.normal_rhs
             else:
                 raise ValueError(
                     "Equality does not involve either side of inequality!")
-            if common_expr == self.lhs:
-                # replace the lhs of self with its counterpart from the "other"
-                # equality.
-                return subrule(self.inner_expr().lhs, assumptions=assumptions)
-            elif common_expr == self.rhs:
-                # replace the rhs of self with its counterpart from the "other"
-                # equality.
-                return subrule(self.inner_expr().rhs, assumptions=assumptions)
+            if common_expr == self.normal_lhs:
+                # replace the normal_lhs of self with its counterpart 
+                # from the "other" equality.
+                return subrule(self.inner_expr().normal_lhs, 
+                               assumptions=assumptions)
+            elif common_expr == self.normal_rhs:
+                # replace the normal_rhs of self with its counterpart 
+                # from the "other" equality.
+                return subrule(self.inner_expr().normal_rhs, 
+                               assumptions=assumptions)
         raise NotImplementedError(
-            'Must implement apply_transitivity appropriately for each kind of TransitiveRelation')
+            'Must implement apply_transitivity appropriately for each '
+            'kind of TransitiveRelation')
 
     @staticmethod
     def apply_transitivities(chain, assumptions=USE_DEFAULTS):
@@ -273,10 +279,10 @@ class TransitiveRelation(Relation):
         assert issubclass(
             Sequence, TransitiveSequence), "SequenceClass() should return a sub-class TransitiveSequence"
         operators = [relation.operator for relation in relations]
-        operands = [relation.lhs for relation in relations] + \
-            [relations[-1].rhs]
-        alt_operands = [relations[0].lhs] + \
-            [relation.rhs for relation in relations]
+        operands = [relation.normal_lhs for relation in relations] + \
+            [relations[-1].normal_rhs]
+        alt_operands = [relations[0].normal_lhs] + \
+            [relation.normal_rhs for relation in relations]
         if operands != alt_operands:
             raise TypeError(
                 "The relations do not have the expected operands in common to form a sequence")

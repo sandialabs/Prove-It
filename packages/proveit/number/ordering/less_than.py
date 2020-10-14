@@ -12,14 +12,14 @@ class LesserRelation(OrderingRelation):
         '''
         Returns the lower bound side of this inequality.
         '''
-        return self.lhs
+        return self.operands[0]
 
     def upper(self):
         '''
         Returns the upper bound side of this inequality.
         '''
-        return self.rhs
-
+        return self.operands[1]
+    
     @staticmethod
     def WeakRelationClass():
         return LessEq  # <= is weaker than <
@@ -87,7 +87,14 @@ class Less(LesserRelation):
         See if second number is at bigger than first.
         '''
         OrderingRelation.__init__(self, Less._operator_, lhs, rhs)
-
+    
+    @staticmethod
+    def reversed_operator_str(formatType):
+        '''
+        Reversing '<' gives '>'.
+        '''
+        return '>' 
+    
     def conclude(self, assumptions):
         # See if the right side is the left side plus something
         # positive added to it.
@@ -434,7 +441,14 @@ class LessEq(LesserRelation):
         See if second number is at least as big as first.
         '''
         LesserRelation.__init__(self, LessEq._operator_, lhs, rhs)
-
+    
+    @staticmethod
+    def reversed_operator_str(formatType):
+        '''
+        Reversing '<=' gives '>='.
+        '''
+        return r'\geq' if formatType=='latex' else '>=' 
+    
     def reversed(self):
         '''
         Returns the reversed inequality Expression.
