@@ -1,7 +1,23 @@
 # Contributing to Prove-It
 
-<font size=3>Thanks for considering contributing to Prove-It, a Python- and
-Jupiter Notebook-based theorem-proving assistant.
+<font size=3>
+Welcome, and thank you for considering contributing to Prove-It,
+a Python- and Jupiter Notebook-based theorem-proving assistant.</p>
+
+The Prove-It project is still under development and not quite ready for public
+contributions yet. The intent is to begin accepting public contributions
+to the project in the near future, which will allow contributors to help
+expand Prove-It's theory packages, broaden Prove-It's functionality, and
+benefit from Prove-It's adaptability to individual interests and needs.</p>
+
+In the meantime, potential contributors are gratefully acknowledged and
+encouraged to browse through this contributing documentation (under development
+as well) and the broader project documentation and source files, such as the
+draft of the [introductory paper](https://github.com/PyProveIt/Prove-It/blob/master/ProveIt_Introduction.pdf),
+a variety of [tutorial notebooks](https://github.com/PyProveIt/Prove-It/tree/master/tutorial),
+or the brief [readme.txt](https://github.com/PyProveIt/Prove-It/blob/master/readme.txt)
+with information about downloading and installing Prove-It. Also feel encouraged
+to contact the primary developer, Wayne Witzel, at wwitzel@sandia.gov with questions.</p>
 
 This is a general guide for contributing to Prove-It via the project's
 GitHub repository at <https://github.com/PyProveIt/Prove-It> using
