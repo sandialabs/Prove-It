@@ -25,9 +25,7 @@ class DecimalSequence(NumeralSequence):
                 return self.evaluate_add_digit(assumptions=assumptions)
             if isinstance(digit, ExprRange):
                 # if at least one digit is an ExprRange, we can try to reduce it to an ExprTuple
-                pass
-                # commenting out for merge on 9/21/2020 to get master up to date for the paper
-                #return self.reduce_exprRange(assumptions=assumptions)
+                return self.reduce_exprRange(assumptions=assumptions)
     
     def asInt(self):
         return int(self.formatted('string'))
@@ -39,8 +37,9 @@ class DecimalSequence(NumeralSequence):
         '''
         from proveit import ExprRange, TransRelUpdater
         from proveit._common_ import a, b, c, d, k, m, n, x
+        from proveit.core_expr_types import Len
         from proveit.core_expr_types.tuples._theorems_ import n_repeats_reduction
-        from proveit.number.numeral.deci._theorems_ import deci_sequence_reduction
+        from proveit.number.numeral.deci._theorems_ import deci_sequence_reduction_ER
 
         expr = self
         # A convenience to allow successive update to the equation via transitivities.
@@ -49,26 +48,39 @@ class DecimalSequence(NumeralSequence):
 
         for i, digit in enumerate(self.digits):
             if isinstance(digit, ExprRange) and isinstance(digit.body, Numeral):
-                if digit.end_index.asInt() < 10:
+                import proveit.number.numeral.deci
+
+                _m = Len(expr.digits[:i]).computation(assumptions=assumptions).rhs
+                _n = digit.end_index
+                _k = Len(expr.digits[i + 1:]).computation(assumptions=assumptions).rhs
+                _a = expr.digits[:i]
+                _b = digit.body
+                _d = expr.digits[i + 1:]
+
+                #if digit.end_index.asInt() >= 10:
                     # Automatically reduce an Expression range of
                     # a single numeral to an Expression tuple
                     # (3 .. 4 repeats.. 3) = 3333
-                    # (5 ..3 repeats.. 5) = 555
-                    import proveit.number.numeral.deci
-                    _n = digit.end_index
-                    len_thm = proveit.number.numeral.deci._theorems_ \
-                        .__getattr__('reduce_%s_repeats' % _n)
-                    _x = digit.body
-                    expr = len_thm.instantiate({x: _x}, assumptions=assumptions)
-                    expr = eq.update(expr.subLeftSideInto(expr))
-                else:
-                    _x = digit.body
-                    _n = digit.end_index
+                    # #(2 3 4 (5 ..3 repeats.. 5) 6 7 8) = 234555678
 
-                    expr = n_repeats_reduction.instantiate({n: _n, x: _x},
-                                                                     assumptions=assumptions).subLeftSideInto(expr)
-                    expr = eq.update(deci_sequence_reduction.instantiate({m: _m, n: _n, k: _k, a: _a, b: _b, c: _c,
+                while _n.asInt() > 9:
+                    _x = digit.body
+
+                    _c = n_repeats_reduction.instantiate({n: _n, x: _x}, assumptions=assumptions).rhs
+
+                    eq.update(deci_sequence_reduction_ER.instantiate({m: _m, n: _n, k: _k, a: _a, b: _b, c: _c,
                                                                       d: _d}, assumptions=assumptions))
+                    _n = num(_n.asInt() - 1)
+
+                #_n = digit.end_index
+                len_thm = proveit.number.numeral.deci._theorems_ \
+                    .__getattr__('reduce_%s_repeats' % _n)
+                _x = digit.body
+
+                _c = len_thm.instantiate({x: _x}, assumptions=assumptions).rhs
+
+                eq.update(deci_sequence_reduction_ER.instantiate({m: _m, n: _n, k: _k, a: _a, b: _b, c: _c,
+                                                                             d: _d}, assumptions=assumptions))
 
         return eq.relation
 
