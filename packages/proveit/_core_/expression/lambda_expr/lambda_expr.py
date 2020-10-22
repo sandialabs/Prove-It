@@ -43,14 +43,9 @@ def getParamVar(parameter, *, _required_indices=None):
                     "variable"%parameter)
         return var
     elif isinstance(parameter, IndexedVar):
-        var = parameter
-        while isinstance(var, IndexedVar):
-            if _required_indices is not None:
-                 # requirement met:
-                _required_indices.discard(var.index)
-            # May be a nested IndexedVar.  We want the innermost var.
-            var = var.var 
-        return var
+        if _required_indices is not None:
+            _required_indices.difference_update(parameter.indices)
+        return parameter.var
     elif isinstance(parameter, Variable) or isinstance(parameter, TemporaryLabel):
         return parameter
     else:
@@ -103,7 +98,7 @@ class Lambda(Expression):
                 compositeExpression, singleOrCompositeExpression)
         self.parameters = compositeExpression(parameter_or_parameters)
         parameterVars = [getParamVar(parameter) for parameter in self.parameters]
-        if len(self.parameters) == 1:
+        if self.parameters.is_singular():
             # has a single parameter
             self.parameter = self.parameters[0]
             self.parameter_or_parameters = self.parameter
@@ -374,7 +369,7 @@ class Lambda(Expression):
         outStr = '[' if fence else ''
         parameterListStr = ', '.join([parameter.string(abbrev=True) for parameter 
                                       in parameters])
-        if parameters.singular():
+        if parameters.is_singular():
             outStr += parameterListStr + ' -> '
         else:
             outStr += '(' + parameterListStr + ') -> '
@@ -387,7 +382,7 @@ class Lambda(Expression):
         outStr = r'\left[' if fence else ''
         parameterListStr = ', '.join([parameter.latex(abbrev=True) for parameter 
                                       in self.parameters])
-        if self.parameters.singular():
+        if self.parameters.is_singular():
             outStr +=  parameterListStr + r' \mapsto '
         else:
             outStr += r'\left(' + parameterListStr + r'\right) \mapsto '
@@ -794,7 +789,8 @@ class Lambda(Expression):
                   if (key not in self.parameterVarSet 
                       and not isinstance(value, set))])
         for param_var in self.parameterVarSet:
-            if inner_repl_map.get(param_var, param_var) in restricted_vars:
+            param_var_repl = inner_repl_map.get(param_var, param_var)
+            if param_var_repl in restricted_vars:
                 # Avoid this collision by relabeling to a safe dummy 
                 # variable.
                 if param_var in self.nonrelabelable_param_vars:
@@ -807,7 +803,14 @@ class Lambda(Expression):
                 inner_repl_map[param_var] = dummy_var
                 restricted_vars.add(dummy_var)
             else:
-                restricted_vars.add(param_var)
+                if isinstance(param_var_repl, set):
+                    # If param_var_repl is a set, it's for possile
+                    # expansions of an indexed variable.  For the
+                    # purpose of checking collisions, we just want
+                    # the variable being indexed.
+                    restricted_vars.add(param_var)
+                else:
+                    restricted_vars.add(param_var_repl)
         
         # Generate the new set of parameters which may be relabeled or, 
         # in the case of a parameter range, may be altered due a change
@@ -1070,12 +1073,10 @@ def extract_param_replacements(parameters, parameter_vars, body,
                 param_indices = extract_var_tuple_indices(
                         ExprTuple(parameter))
                 param_len = Len(param_indices)
-                if (isLiteralInt(parameter.start_index) and
-                        isLiteralInt(parameter.end_index)):
-                    # Known integer value for param_len.
-                    int_param_len = (parameter.end_index.asInt() -
-                                     parameter.start_index.asInt() + 1)
-                else:
+                try:
+                    # Maybe a known integer value for param_len.
+                    int_param_len = parameter.literal_int_extent()
+                except ValueError:
                     # Unknown integer value for param_len.
                     int_param_len = None
                 if is_complete and (parameters[-1] == parameter):
@@ -1137,15 +1138,13 @@ def extract_param_replacements(parameters, parameter_vars, body,
                         # Update min/max number of param-operand 
                         # elements.
                         if isinstance(operand_entry, ExprRange):
-                            if (isLiteralInt(operand_entry.start_index) and
-                                    isLiteralInt(operand_entry.end_index)):
-                                # Known integer ExprRange length.
-                                entry_len = (operand_entry.end_index.asInt() -
-                                             operand_entry.start_index.asInt()+1)
+                            try:
+                                # Maybe a known integer ExprRange length.
+                                entry_len = operand_entry.literal_int_extent()
                                 min_int_param_operands_len += entry_len
                                 if max_int_param_operands_len is not None:
                                     max_int_param_operands_len += entry_len
-                            else:
+                            except ValueError:
                                 # Unnown ExprRange length, but >= 0.
                                 max_int_param_operands_len = None
                         else:
@@ -1171,7 +1170,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
                     # Rangle lengths must be known values and sum 
                     # to 1.
                     try:
-                        from proveit.number import zero,one 
+                        from proveit.number import zero, one
                         while True:
                             operand_len_evaluation = \
                                 Len(operand).evaluation(

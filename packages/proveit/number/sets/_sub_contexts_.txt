@@ -1,5 +1,5 @@
+natural
 integer
 rational
 real
 complex
-rational

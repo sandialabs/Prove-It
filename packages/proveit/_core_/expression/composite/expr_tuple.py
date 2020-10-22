@@ -129,13 +129,26 @@ class ExprTuple(Composite, Expression):
         '''
         return ExprTuple(*(self.entries + tuple(other)))
     
-    def singular(self):
+    def is_singular(self): 
         '''
         Return True if this has a single element that is not an
         ExprRange.
         '''
         from .expr_range import ExprRange
         return len(self)==1 and not isinstance(self[0], ExprRange)
+    
+    def is_binary(self):
+        '''
+        Returns True if this has two elements that are not ExprRanges.
+        '''
+        return len(self)==2 and not self.contains_range()
+    
+    def contains_range(self):
+        '''
+        Returns true if the entry contains an ExprRange.
+        '''
+        from .expr_range import ExprRange
+        return any(isinstance(entry, ExprRange) for entry in self.entries)
     
     def index(self, entry, start=0, stop=None):
         if stop is None:
@@ -494,13 +507,12 @@ def extract_var_tuple_indices(indexed_var_tuple):
     indices and nested ranges of indices).
     '''
     from proveit import IndexedVar, ExprRange
-    from proveit._core_.expression.operation.indexed_var import extract_indices
     indices = []
     if not isinstance(indexed_var_tuple, ExprTuple):
         raise TypeError("'indexed_var_tuple' must be an ExprTuple")
     for entry in indexed_var_tuple:
         if isinstance(entry, IndexedVar):
-            entry_indices = extract_indices(entry)
+            entry_indices = entry.indices
             if len(entry_indices)==1: 
                 indices.append(entry_indices[0])
             else:

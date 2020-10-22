@@ -224,8 +224,9 @@ class Forall(OperationOverInstances):
         assert self.hasDomain(), "Cannot automatically evaluate a forall statement with no domain"
 
         if len(list(self.instanceParamLists())) == 1:
-            # Use the domain's forallEvaluation method
-            return self.domain.forallEvaluation(self, assumptions)
+            if hasattr(self.domain, 'forallEvaluation'):
+                # Use the domain's forallEvaluation method
+                return self.domain.forallEvaluation(self, assumptions)
         else:
             # Evaluate an unravelled version
             unravelledEquiv = self.deriveUnraveledEquiv([var for var in (list(self.instanceVarLists()))])

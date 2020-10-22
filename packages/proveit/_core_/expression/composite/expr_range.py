@@ -96,6 +96,27 @@ class ExprRange(Expression):
         return ExprRange(None, None, start_index, end_index, 
                          lambda_map=lambda_map) \
                 .withStyles(**styles)
+    
+    def literal_int_extent(self):
+        '''
+        If the start and end indices of this ExprRange are literal integers,
+        return the literal number of elements of the ExprRange.  For the
+        case of nested ExprRange's, all of the start and end indices must
+        be integers and the result will be the multiplied extent.  For
+        example: 
+            a_{1,1}, ..., a_{1,3}, ......, a_{4,1}, ..., a_{4,3}
+        has a literal_int_extent of 12.
+        '''
+        from proveit.number import isLiteralInt
+        if (isLiteralInt(self.start_index) and isLiteralInt(self.end_index)):
+            toplevel_extent = (self.end_index.asInt() - self.start_index.asInt() + 1)
+            if isinstance(self.body, ExprRange):
+                return toplevel_extent*self.body.literal_int_extent()
+            else:
+                return toplevel_extent
+        raise ValueError("literal_int_extent may only be used on an ExprRange  "
+                         "with start and end indices that are literal integers")
+        
             
     def remakeArguments(self):
         '''
@@ -430,7 +451,7 @@ class ExprRange(Expression):
         wrapped in an ExprTuple rather than 'self' itself.
         '''
         from proveit import KnownTruth
-        from proveit._common_ import f, i, j
+        from proveit._common_ import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.number import Add, one
         if (not defaults.auto_reduce 
@@ -446,12 +467,19 @@ class ExprRange(Expression):
             # Temporarily disable automation to avoid infinite
             # recursion.
             from proveit.core_expr_types.tuples._theorems_ import \
-                singular_range_reduction
+                singular_range_reduction, singular_nested_range_reduction
             defaults.disabled_auto_reduction_types.add(ExprRange)
             try:
-                reduction = singular_range_reduction.instantiate(
-                        {f:lambda_map, i:start_index},
-                        assumptions=assumptions)
+                if expr_range.nested_range_depth() > 1:
+                    lambda_map = Lambda((expr_range.parameter, expr_range.body.parameter), expr_range.body.body)
+                    reduction = singular_nested_range_reduction.instantiate({f: lambda_map, m: start_index,
+                                                                             i: expr_range.first().start_index,
+                                                                             j: expr_range.first().end_index},
+                                                                            assumptions=assumptions)
+                else:
+                    reduction = singular_range_reduction.instantiate(
+                            {f:lambda_map, i:start_index},
+                            assumptions=assumptions)
             finally:
                 # Re-enable automation.
                 defaults.disabled_auto_reduction_types.remove(ExprRange)
@@ -468,16 +496,69 @@ class ExprRange(Expression):
                 # We can do an empty range reduction
                 # Temporarily disable automation to avoid infinite
                 # recursion.
-                from proveit.core_expr_types.tuples._axioms_ import \
-                    empty_range_def
-                defaults.disabled_auto_reduction_types.add(ExprRange)
-                try:
-                    reduction = empty_range_def.instantiate(
-                            {f:lambda_map, i:start_index, j:end_index},
+                if expr_range.nested_range_depth() > 1:
+                    # this is a nested range, but we know
+                    # that the outer range reduces to an empty range,
+
+                    # We can do an empty range reduction on the entire expression
+                    # Temporarily disable automation to avoid infinite
+                    # recursion.
+                    from proveit.core_expr_types.tuples._theorems_ import \
+                        empty_outside_range_of_range
+                    defaults.disabled_auto_reduction_types.add(ExprRange)
+                    try:
+                        nest_end_index = expr_range.first().end_index
+                        nest_start_index = expr_range.first().start_index
+                        lambda_map = Lambda((expr_range.parameter, expr_range.body.parameter), expr_range.body.body)
+                        reduction = empty_outside_range_of_range.instantiate(
+                            {f: lambda_map, m: start_index, n: end_index, i: nest_start_index, j: nest_end_index},
                             assumptions=assumptions)
-                finally:
-                    # Re-enable automation.
-                    defaults.disabled_auto_reduction_types.remove(ExprRange)               
+                    finally:
+                        # Re-enable automation.
+                        defaults.disabled_auto_reduction_types.remove(ExprRange)
+                else:
+                        from proveit.core_expr_types.tuples._axioms_ import \
+                            empty_range_def
+                        defaults.disabled_auto_reduction_types.add(ExprRange)
+                        try:
+                            reduction = empty_range_def.instantiate(
+                                    {f:lambda_map, i:start_index, j:end_index},
+                                    assumptions=assumptions)
+                        finally:
+                            # Re-enable automation.
+                            defaults.disabled_auto_reduction_types.remove(ExprRange)
+            elif expr_range.nested_range_depth() > 1:
+                # this is a nested range so the inner range could be empty.
+
+                # If the start and end of the inner range are literal ints and form an
+                # empty range, then it should be straightforward to
+                # prove that the entire range is empty.
+                from proveit.number import isLiteralInt
+                empty_req = Equals(Add(expr_range.first().end_index, one), expr_range.first().start_index)
+                if isLiteralInt(expr_range.first().start_index) and isLiteralInt(expr_range.first().end_index):
+                    if expr_range.first().end_index.asInt() + 1 == expr_range.first().start_index.asInt():
+                        empty_req.prove()
+                if empty_req.proven(assumptions):
+                    # We can do an empty range reduction on the entire expression
+                    # Temporarily disable automation to avoid infinite
+                    # recursion.
+                    from proveit.core_expr_types.tuples._theorems_ import \
+                        empty_inside_range_of_range
+                    defaults.disabled_auto_reduction_types.add(ExprRange)
+                    try:
+                        nest_end_index = expr_range.first().end_index
+                        nest_start_index = expr_range.first().start_index
+                        lambda_map = Lambda((expr_range.parameter, expr_range.body.parameter), expr_range.body.body)
+                        reduction = empty_inside_range_of_range.instantiate(
+                            {f: lambda_map, m: start_index, n: end_index, i: nest_start_index, j: nest_end_index},
+                            assumptions=assumptions)
+                    finally:
+                        # Re-enable automation.
+                        defaults.disabled_auto_reduction_types.remove(ExprRange)
+                else:
+                    yield expr_range  # no reduction
+                    return
+
             else:
                 yield expr_range # no reduction
                 return
@@ -547,17 +628,16 @@ class ExprRange(Expression):
         See the Lambda.apply documentation for a related discussion.
         '''
         from proveit._core_.expression.expr import attempt_to_simplify
-        from proveit._core_.expression.operation.indexed_var import \
-            IndexedVar
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             getParamVar, extract_param_replacements
+        from proveit._core_.expression.label.var import safeDummyVar
         from proveit.logic import Equals#, InSet
         from proveit.number import Add, one#, Interval
                         
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be replaced.
             return repl_map[self]
-        
+
         if requirements is None: requirements = []
         assumptions = defaults.checkedAssumptions(assumptions)
         # We will turn on the `indices_must_match` flag when the
@@ -645,6 +725,7 @@ class ExprRange(Expression):
         
         assert len(new_params)==1
         new_param = new_params[0]
+        safe_dummy_var = safeDummyVar(self.body, self.parameter)
         # Restore the repl_map, adding back in what was temporarily
         # popped out.
         repl_map.update(repl_map_stash)
@@ -665,10 +746,13 @@ class ExprRange(Expression):
         # Create `expansions_dict` to map each of the variables being
         # expanded to the expansion that is relevent for this ExprRange.
         expansions_dict = dict()
-        orig_parameters = extract_parameters(self)
-        starts = extract_start_indices(subbed_expr_range)
-        ends = extract_end_indices(subbed_expr_range)
-        assert len(starts)==len(ends)==len(orig_parameters)
+        #orig_parameters = extract_parameters(self)
+        #starts = extract_start_indices(subbed_expr_range)
+        #ends = extract_end_indices(subbed_expr_range)
+        orig_parameter = self.parameter
+        subbed_start_index = subbed_expr_range.start_index
+        subbed_end_index = subbed_expr_range.end_index
+        #assert len(starts)==len(ends)==len(orig_parameters)
         for occurrence in expanding_occurrences:
             # We need to create a proper "variable range" with simple
             # parameterized indices.  Any shifts of the indices of
@@ -677,22 +761,61 @@ class ExprRange(Expression):
             # x_{k+1} with k going from 1 to n should change to
             # x_k with k going from 1+1 to n+1.
             indexed_var = innermost_body(occurrence)
-            var = indexed_var
-            var_indices = []
-            for _ in range(len(starts)):
-                if not isinstance(var, IndexedVar): break
-                var_indices.append(var.index)
-                var = var.var
-            var_indices = list(reversed(var_indices))
+            var_indices = indexed_var.indices
+            var = indexed_var.var
             
-            starts_with_absorbed_shift = [
-                    idx.replaced({param:start_idx}) for (idx, param, start_idx)
-                    in zip(var_indices, orig_parameters, starts)]
-            ends_with_absorbed_shift = [
-                    idx.replaced({param:end_idx}) for (idx, param, end_idx)
-                    in zip(var_indices, orig_parameters, ends)]
-            var_range = varRange(var, starts_with_absorbed_shift, 
-                                 ends_with_absorbed_shift)
+            param_index = None
+            
+            # Note: We'll make replacements of IndexedVar indices and start
+            # and end range indices of the occurrence, but not the variable
+            # itself, before we look up the replacement for the corresponding
+            # variable range.
+            occurrence_map = dict(repl_map)
+            occurrence_map.pop(var)
+            for idx in var_indices:
+                if orig_parameter in free_vars(idx, err_inclusively=True):
+                    if param_index is not None:
+                        raise ImproperReplacement(
+                                self, repl_map,
+                                "Failure to expand %s because %s is not a valid "
+                                "occurrence with the range parameter %s; multiple "
+                                "index occurrences are not allowed."
+                                %(self, occurrence, orig_parameter))
+                    start_with_absorbed_shift = \
+                        idx.replaced({orig_parameter:subbed_start_index})
+                    end_with_absorbed_shift = \
+                        idx.replaced({orig_parameter:subbed_end_index})
+                    param_index = idx
+                    occurrence_map[idx] = orig_parameter
+                    if idx != orig_parameter:
+                        # We'll map the original parameter to a safe dummy var
+                        # so we can detect if there are other instances of
+                        # the original parameter with a different shift.
+                        occurrence_map[orig_parameter] = safe_dummy_var
+            if param_index is None:
+                raise ImproperReplacement(
+                        self, repl_map,
+                        "Failure to expand %s because %s is not a valid "
+                        "occurrence with the range parameter %s; not used as "
+                        "an index."
+                        %(self, occurrence, orig_parameter))
+            orig_occurrence = occurrence
+            occurrence = occurrence.replaced(
+                    occurrence_map, allow_relabeling, assumptions, requirements,
+                    equality_repl_requirements)
+            if safe_dummy_var in free_vars(occurrence, err_inclusively=True):
+                # There was an instance of the original parameter with a
+                # different shift than what we used.  That's not allowed.
+                raise ImproperReplacement(
+                        self, repl_map,
+                        "Failure to expand %s because %s does not use a "
+                        "consistent shift the range parameter %s."
+                        %(self, orig_occurrence, orig_parameter))
+                
+            var_range = ExprRange(orig_parameter, occurrence, 
+                                  start_with_absorbed_shift,
+                                  end_with_absorbed_shift)
+                        
             # Now wrap this "variable range" in an ExprTuple and see
             # if it has a known expansion.
             var_tuple = ExprTuple(var_range)
@@ -704,10 +827,11 @@ class ExprRange(Expression):
                 var_replacements = \
                     {key:value for key, value in inner_repl_map.items() if 
                      key_var(key)==var}
+                print('problem self', self, repl_map)
                 raise ImproperReplacement(
                         self, repl_map,
                         "Failure to expand %s because there is no explicit "
-                        "expansion for %s.  The known expansions are for "
+                        "expansion for %s.  The known expansions for "
                         "this variable are %s.  "
                         "(Note that multiple, equivalent expansion forms "
                         "may be provided to fulfill this requirement)."
@@ -717,7 +841,7 @@ class ExprRange(Expression):
                 raise ImproperReplacement(
                         self, repl_map,
                         "Invalid replacement %s for %s; it must be an "
-                        "ExprTuple."%(var_tuple, repl))                
+                        "ExprTuple."%(var_tuple, repl))
             expansions_dict[occurrence] = repl.entries
 
         def raise_failed_expansion_match(first_expansion, expansion,
@@ -736,7 +860,7 @@ class ExprRange(Expression):
         if indices_must_match:
             # Yes.  Prepare to do that.
             new_indices = []
-            next_index = starts[0]
+            next_index = subbed_start_index
         
         # Divy up the expansions into aligned entries, each with
         # its own replacement map.  This is in preparation to yield
@@ -775,8 +899,10 @@ class ExprRange(Expression):
                     # The replacement map will map 
                     # 'indexed_var_or_range' to the body of the entry
                     # with the parameter changed to our 'new_param'.
-                    new_body = entry.body.replaced({entry.parameter:new_param})
-                    entry_repl_map[indexed_var_or_range] = new_body
+                    param_repl_map = {entry.parameter:new_param}
+                    new_body = entry.body.replaced(param_repl_map)
+                    entry_repl_map[indexed_var_or_range.replaced(param_repl_map)] \
+                        = new_body
                     expansion_entry_ranges.append(entry)
                     # Advance the "expansion iter".
                     next(expansion_iter)
@@ -841,6 +967,23 @@ class ExprRange(Expression):
                 for entry_repl_map, expansion_repl_map in zip(
                         entry_repl_maps, expansion_repl_maps):
                     entry_repl_map.update(expansion_repl_map)
+                
+        def update_map(orig_repl_map, update):
+            '''
+            Given an original replacement map, use the 'update' dictionary
+            to make replacements in all of its keys and values and then
+            add the update entrie(s).
+            '''
+            new_repl_map = dict()
+            for key, val in orig_repl_map.items():
+                key = key.replaced(update)
+                if isinstance(val, set):
+                    val = {elem.replaced(update) for elem in val}
+                else:
+                    val = val.replaced(update)
+                new_repl_map[key] = val
+            new_repl_map.update(update)
+            return new_repl_map
         
         # Yield a replacement for each of the aligned entry of the
         # expansions.  May be a singular entry or an ExprRange entry
@@ -872,7 +1015,8 @@ class ExprRange(Expression):
                 #                         Interval(start_index, end_index))
                 
                 entry_assumptions = inner_assumptions # + [range_assumption]
-                full_entry_repl_map[orig_parameters[0]] = new_param
+                param_repl_map= {orig_parameter:new_param}
+                full_entry_repl_map = update_map(full_entry_repl_map, param_repl_map)
                 entry = ExprRange(new_param,
                                   body.replaced(full_entry_repl_map, 
                                                 allow_relabeling,
@@ -900,7 +1044,10 @@ class ExprRange(Expression):
                     next_index = attempt_to_simplify(
                             next_index, assumptions, requirements)
                     # The actual range parameter index is needed:
-                    full_entry_repl_map[orig_parameters[0]] = next_index
+                    param_repl_map= {orig_parameter:next_index}
+                    full_entry_repl_map = update_map(full_entry_repl_map, param_repl_map)
+                    #full_entry_repl_map[orig_parameter] = next_index
+
                 if isinstance(body, ExprRange):
                     # A nested ExprRange may need to be expanded.
                     for subentry in body._replaced_entries(
@@ -925,7 +1072,8 @@ class ExprRange(Expression):
             # and original indices precisely, not just their length.
             requirement = Equals(ExprTuple(*new_indices), 
                                  ExprTuple(ExprRange(new_param, new_param,
-                                                     starts[0], ends[0])))
+                                                     subbed_start_index, 
+                                                     subbed_end_index)))
             if requirement.lhs==requirement.rhs:
                 # No need for the requirement if it is a trivial
                 # reflexive identity.
@@ -939,6 +1087,53 @@ class ExprRange(Expression):
                         "which is necessary because %s: %s."
                         %(reason_indices_must_match, e))
     
+    def parameters(self):
+        '''
+        Return a list of parameters, one for each nested
+        ExprRange.   
+        '''
+        return extract_parameters(self)
+        
+    def innermost_body(self):
+        '''
+        Return the innermost body of a nested ExprRange.
+        '''
+        return innermost_body(self)
+
+    def start_indices(self):
+        '''
+        Return a list of starting indices, one for each nested
+        ExprRange.  For example,
+            (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
+             x_{n, i_{n}}, ..., x_{n, j_{n}}).
+        has start indices (m, i_m).  
+        '''
+        return extract_start_indices(self)    
+
+    def end_indices(self):
+        '''
+        Return a list of ending indices, one for each nested
+        ExprRange.  For example,
+            (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
+             x_{n, i_{n}}, ..., x_{n, j_{n}}).
+        has end indices (n, j_n).      
+        '''
+        return extract_end_indices(self)    
+    
+    def mapped_range(self, body_map_fn):
+        '''
+        Generate an ExprRange with the same external structure
+        as this range but converts the innermost by applying the
+        'body_map_fn' to it.
+        '''
+        inner_body = self.innermost_body(self)
+        new_inner_body = body_map_fn(inner_body)
+        parameters = extract_parameters(self)
+        start_indices = extract_start_indices(self)
+        end_indices = extract_end_indices(self)
+        return nestedRange(parameters, new_inner_body, start_indices,
+                           end_indices)
+        
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
         '''
         Return the equation between this range within an ExprTuple
@@ -1190,12 +1385,12 @@ def nestedRange(parameters, body, start_indices, end_indices):
     
 def varRange(var, start_index_or_indices, end_index_or_indices):
     from proveit import (safeDummyVars, compositeExpression,
-                         indexed_var)
+                         IndexedVar)
     start_indices = compositeExpression(start_index_or_indices)
     end_indices = compositeExpression(end_index_or_indices)
     parameters = safeDummyVars(len(start_indices), var, start_indices, 
                                end_indices)
-    return nestedRange(parameters, indexed_var(var, parameters),
+    return nestedRange(parameters, IndexedVar(var, parameters),
                        start_indices, end_indices)
 
 class RangeInstanceError(Exception):

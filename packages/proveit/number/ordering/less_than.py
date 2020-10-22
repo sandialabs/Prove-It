@@ -30,6 +30,24 @@ class LesserRelation(OrderingRelation):
     @staticmethod
     def SequenceClass():
         return LesserSequence
+    
+    def square_both_sides(self, *, simplify=True, assumptions=USE_DEFAULTS):
+        from proveit.number import two
+        return self.exponentiate_both_sides(two, simplify=simplify, 
+                                            assumptions=assumptions)
+
+    def square_root_both_sides(self, *, simplify=True, assumptions=USE_DEFAULTS):
+        from proveit.number import frac, one, two, Exp
+        new_rel = self.exponentiate_both_sides(frac(one, two), 
+                                               simplify=simplify,
+                                               assumptions=assumptions)  
+        if (isinstance(new_rel.lhs, Exp) 
+                and new_rel.lhs.exponent==frac(one, two)):
+            new_rel = new_rel.innerExpr().lhs.withStyles(exponent='radical')
+        if (isinstance(new_rel.rhs, Exp) 
+                and new_rel.rhs.exponent==frac(one, two)):
+            new_rel = new_rel.innerExpr().rhs.withStyles(exponent='radical')
+        return new_rel    
 
 class LesserSequence(OrderingSequence):
     def __init__(self, operators, operands):
@@ -66,7 +84,11 @@ class Less(LesserRelation):
     def conclude(self, assumptions):
         # See if the right side is the left side plus something 
         # positive added to it.
-        from proveit.number import Add
+        from proveit.number import Add, zero
+        if self.rhs == zero:
+            from ._theorems import negativeIfInRealsNeg
+            return negativeIfInRealsNeg.instantiate(
+                    {a:self.lhs}, assumptions=assumptions)
         if isinstance(self.rhs, Add):
             if self.lhs in self.rhs.terms:
                 return self.concludeViaIncrease(assumptions)
@@ -219,7 +241,154 @@ class Less(LesserRelation):
                                %str(relation.__class__))
         return lessAddBoth.specialize({a:self.lhs, b:self.rhs, c:c_val,
                                         d:d_val},
-                                        assumptions=assumptions)      
+                                        assumptions=assumptions)   
+    
+    def left_mult_both_sides(self, multiplier, *, simplify=True, 
+                             assumptions=USE_DEFAULTS):  
+        '''
+        Multiply both sides of the relation by the 'multiplier' 
+        on the left.
+        '''  
+        from proveit.number import Less, LessEq, Greater, GreaterEq, zero
+        from proveit.number.multiplication._theorems_ import (
+                left_mult_pos_less, left_mult_nonneg_less, 
+                left_mult_neg_less, left_mult_nonpos_less)
+        if Greater(multiplier, zero).proven(assumptions):
+            return left_mult_pos_less.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif Less(multiplier, zero).proven(assumptions):
+            return left_mult_neg_less.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif GreaterEq(multiplier, zero).proven(assumptions):
+            return left_mult_nonneg_less.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif LessEq(multiplier, zero).proven(assumptions):
+            return left_mult_nonpos_less.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        else:
+            raise Exception(
+                    "Cannot 'left_mult_both_sides' a Less relation without "
+                    "knowing the multiplier's relation with zero.")
+        
+    def right_mult_both_sides(self, multiplier, *, simplify=True, 
+                              assumptions=USE_DEFAULTS):
+        '''
+        Multiply both sides of the relation by the 'multiplier' 
+        on the right.
+        '''  
+        from proveit.number import Less, LessEq, Greater, GreaterEq, zero
+        from proveit.number.multiplication._theorems_ import (
+                right_mult_pos_less, right_mult_nonneg_less, 
+                right_mult_neg_less, right_mult_nonpos_less)
+        if Greater(multiplier, zero).proven(assumptions):
+            return right_mult_pos_less.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif Less(multiplier, zero).proven(assumptions):
+            return right_mult_neg_less.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif GreaterEq(multiplier, zero).proven(assumptions):
+            return right_mult_nonneg_less.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif LessEq(multiplier, zero).proven(assumptions):
+            return right_mult_nonpos_less.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        else:
+            raise Exception(
+                    "Cannot 'right_mult_both_sides' a Less relation without "
+                    "knowing the multiplier's relation with zero.")
+    
+    def divide_both_sides(self, divisor, *, simplify=True, 
+                          assumptions=USE_DEFAULTS):
+        '''
+        Divide both sides of the relation by the 'divisor'.
+        '''
+        from proveit.number import Less, Greater, zero
+        from proveit.number.division._theorems_ import (
+                div_pos_less, div_neg_less)
+        if Greater(divisor, zero).proven(assumptions):
+            return div_pos_less.instantiate(
+                    {a:divisor, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif Less(divisor, zero).proven(assumptions):
+            return div_neg_less.instantiate(
+                    {a:divisor, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        else:
+            raise Exception("Cannot 'divide' a Less relation without "
+                            "knowing whether the divisor is greater than "
+                            "or less than zero.")
+    
+    def left_add_both_sides(self, addend, *, simplify=True, 
+                            assumptions=USE_DEFAULTS):
+        '''
+        Add to both sides of the relation by the 'addend' on the left.
+        '''  
+        from proveit.number.addition._theorems_ import left_add_less
+        return left_add_less.instantiate(
+                {a:addend, x:self.lhs, y:self.rhs},
+                assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+    
+    def right_add_both_sides(self, addend, *, simplify=True, 
+                             assumptions=USE_DEFAULTS):
+        '''
+        Add to both sides of the relation by the 'addend' on the right.
+        '''  
+        from proveit.number.addition._theorems_ import right_add_less
+        return right_add_less.instantiate(
+                {a:addend, x:self.lhs, y:self.rhs},
+                assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+    
+    def exponentiate_both_sides(self, exponent, *, simplify=True, 
+                                assumptions=USE_DEFAULTS):
+        '''
+        Exponentiate both sides of the relation by the 'exponent'.
+        '''  
+        from proveit.number import Less, LessEq, Greater, GreaterEq, zero
+        from proveit.number.exponentiation._theorems_ import (
+                exp_pos_less, exp_nonneg_less, exp_neg_less, exp_nonpos_less)
+        if Greater(exponent, zero).proven(assumptions):
+            return exp_pos_less.instantiate(
+                    {a:exponent, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif Less(exponent, zero).proven(assumptions):
+            return exp_neg_less.instantiate(
+                    {a:exponent, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif GreaterEq(exponent, zero).proven(assumptions):
+            return exp_nonneg_less.instantiate(
+                    {a:exponent, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif LessEq(exponent, zero).proven(assumptions):
+            return exp_nonpos_less.instantiate(
+                    {a:exponent, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        else:
+            raise Exception("Cannot 'exponentiate' a Less relation without "
+                            "knowing the exponent's relation with zero")
 
 class LessEq(LesserRelation):
     # operator of the LessEq operation.
@@ -237,7 +406,7 @@ class LessEq(LesserRelation):
         See if second number is at least as big as first.
         '''
         LesserRelation.__init__(self, LessEq._operator_,lhs,rhs)
-            
+    
     def reversed(self):
         '''
         Returns the reversed inequality Expression.
@@ -358,7 +527,132 @@ class LessEq(LesserRelation):
         return relaxEqualToLessEq.specialize(
             {x: self.operands[0], y:self.operands[1]},
             assumptions=assumptions)
+
+    def left_mult_both_sides(self, multiplier, *, simplify=True, 
+                             assumptions=USE_DEFAULTS):  
+        '''
+        Multiply both sides of the relation by the 'multiplier' 
+        on the left.
+        '''  
+        from proveit.number import GreaterEq, zero
+        from proveit.number.multiplication._theorems_ import (
+                left_mult_pos_lesseq, left_mult_neg_lesseq)
+        if GreaterEq(multiplier, zero).proven(assumptions):
+            return left_mult_pos_lesseq.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif LessEq(multiplier, zero).proven(assumptions):
+            return left_mult_neg_lesseq.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        else:
+            raise Exception(
+                    "Cannot 'left_mult_both_sides' a LessEq relation without "
+                    "knowing the multiplier's relation with zero.")
+        
+    def right_mult_both_sides(self, multiplier, *, simplify=True, 
+                              assumptions=USE_DEFAULTS):
+        '''
+        Multiply both sides of the relation by the 'multiplier' 
+        on the right.
+        '''  
+        from proveit.number import GreaterEq, zero
+        from proveit.number.multiplication._theorems_ import (
+                right_mult_pos_lesseq, right_mult_neg_lesseq)
+        if GreaterEq(multiplier, zero).proven(assumptions):
+            return right_mult_pos_lesseq.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif LessEq(multiplier, zero).proven(assumptions):
+            return right_mult_neg_lesseq.instantiate(
+                    {a:multiplier, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)      
+        else:
+            raise Exception(
+                    "Cannot 'right_mult_both_sides' a LessEq relation without "
+                    "knowing the multiplier's relation with zero.")
     
+    def divide_both_sides(self, divisor, *, simplify=True, 
+                          assumptions=USE_DEFAULTS):
+        '''
+        Divide both sides of the relation by the 'divisor'.
+        '''
+        from proveit.number import Greater, zero
+        from proveit.number.division._theorems_ import (
+                div_pos_lesseq, div_neg_lesseq)
+        if Greater(divisor, zero).proven(assumptions):
+            return div_pos_lesseq.instantiate(
+                    {a:divisor, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif Less(divisor, zero).proven(assumptions):
+            return div_neg_lesseq.instantiate(
+                    {a:divisor, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)       
+        else:
+            raise Exception("Cannot 'divide' a LessEq relation without "
+                            "knowing whether the divisor is greater than "
+                            "or less than zero.")
+    
+    def left_add_both_sides(self, addend, *, simplify=True, 
+                            assumptions=USE_DEFAULTS):
+        '''
+        Add to both sides of the relation by the 'addend' on the left.
+        '''  
+        from proveit.number.addition._theorems_ import left_add_lesseq
+        return left_add_lesseq.instantiate(
+                {a:addend, x:self.lhs, y:self.rhs},
+                assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+    
+    def right_add_both_sides(self, addend, *, simplify=True, 
+                             assumptions=USE_DEFAULTS):
+        '''
+        Add to both sides of the relation by the 'addend' on the right.
+        '''  
+        from proveit.number.addition._theorems_ import right_add_lesseq
+        return right_add_lesseq.instantiate(
+                {a:addend, x:self.lhs, y:self.rhs},
+                assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+    
+    def exponentiate_both_sides(self, exponent, *, simplify=True, 
+                                assumptions=USE_DEFAULTS):
+        '''
+        Exponentiate both sides of the relation by the 'exponent'.
+        '''  
+        from proveit.number import Greater, GreaterEq, zero
+        from proveit.number.exponentiation._theorems_ import (
+                exp_pos_lesseq, exp_nonneg_lesseq, 
+                exp_neg_lesseq, exp_nonpos_lesseq)
+        if Greater(exponent, zero).proven(assumptions):
+            return exp_pos_lesseq.instantiate(
+                    {a:exponent, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif Less(exponent, zero).proven(assumptions):
+            return exp_neg_lesseq.instantiate(
+                    {a:exponent, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif GreaterEq(exponent, zero).proven(assumptions):
+            return exp_nonneg_lesseq.instantiate(
+                    {a:exponent, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)
+        elif LessEq(exponent, zero).proven(assumptions):
+            return exp_nonpos_lesseq.instantiate(
+                    {a:exponent, x:self.lhs, y:self.rhs},
+                    assumptions=assumptions)  ._simplify_both_sides(
+                            simplify=simplify, assumptions=assumptions)     
+        else:
+            raise Exception("Cannot 'exponentiate' a Less relation without "
+                            "knowing the exponent's relation with zero")        
         
 def LessOnlySeq(*operands):
     return LesserSequence([Less._operator_]*(len(operands)-1), operands)

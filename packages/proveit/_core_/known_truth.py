@@ -335,7 +335,7 @@ class KnownTruth:
             raise Exception('qed proof should not have any remaining assumptions')
         KnownTruth.qedInProgress = True
         try:
-            proof = self.expr.prove().proof()
+            proof = self.expr.prove(assumptions=[]).proof()
             if not proof.isUsable():
                 proof.provenTruth.raiseUnusableProof()
             KnownTruth.theoremBeingProven.recordProof(proof)
@@ -814,16 +814,15 @@ class KnownTruth:
             if isinstance(key, Variable) or isinstance(key, IndexedVar):
                 processed_repl_map[key] = replacement
             elif isinstance(key, ExprTuple) and len(key)>0:
+                try:
+                    for param_entry in key:
+                        getParamVar(param_entry)
+                except (ValueError, TypeError) as e:
+                    raise TypeError("%s is not the expected kind of Expression "
+                                    "as a repl_map key:\n%s"%str(e))
                 if len(key)==1:
-                    if not (isinstance(key[0], ExprRange) 
-                          and isinstance(key[0].body, IndexedVar)):
-                        raise TypeError("%s is not the expected kind of "
-                                        "Expression as a repl_map key.  An "
-                                        "ExprTuple with one entry is expected "
-                                        "to contain an ExprRange of IndexedVars."
-                                        %key)
-                    # Replacement key of the form (x_i, ..., x_j)
-                    # which is valid for replacing a range of variables.
+                    # Replacement key for replacing a range of indexed
+                    # variables, or range of ranges of indexed variables, etc.
                     processed_repl_map[key] = replacement
                     # Although this is redundant (not really necessary
                     # as an entry in `equiv_alt_expansions` as far
@@ -834,7 +833,8 @@ class KnownTruth:
                 else:
                     assert len(key)>1
                     # An "alternative equivalent expansion" of
-                    # some (x_i, ..., x_j).  For example,
+                    # some range of indexed variables (or range of ranges, 
+                    # etc.).    For example,
                     # (x_i, x_{i+1}, ..., x_j).
                     equiv_alt_expansions[key] = replacement
             elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
@@ -966,17 +966,30 @@ class KnownTruth:
 
     def asImplication(self, hypothesis):
         '''
-        Performs a hypothetical reasoning derivation step, forming an
-        implication statement with the given hypothesis and this statement
+        Performs a "deduction" derivation step, forming an implication 
+        statement with the given hypothesis and self.expr
         as the conclusion.  The hypothesis is removed from the set of
         the conclusion statement's assumptions for the implication
         statement's assumptions.
         '''
-        from proveit._core_.proof import HypotheticalReasoning
+        from proveit._core_.proof import Deduction
         if isinstance(hypothesis, KnownTruth):
             hypothesis = hypothesis.expr # we want the expression for this purpose
-        return self._checkedTruth(HypotheticalReasoning(self, hypothesis))
-        
+        return self._checkedTruth(Deduction(self, hypothesis))
+
+    def eliminate(self, *skolem_constants, assumptions=USE_DEFAULTS):
+        '''
+        Performs a Skolem constant elimination derivation step on this
+        KnownTruth (KT), where this KT has the form S |– alpha and the
+        set S of assumptions includes one or more assumptions involving
+        one or more Skolem constants sk1, …, skn specified by
+        skolem_constants, where the Skolem constant-related assumptions
+        were previously generated using the Exists.choose(sk1, …, skn)
+        method.
+        '''
+        from proveit.logic import Exists
+        return Exists.eliminate(skolem_constants, self, assumptions)
+
     def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Calling evaluation on a KnownTruth results in deriving that its
