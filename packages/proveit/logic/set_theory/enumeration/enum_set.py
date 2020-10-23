@@ -38,6 +38,38 @@ class Set(Operation):
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
 
+    def prove_from_cases(self, forallStmt, assumptions=USE_DEFAULTS):
+        '''
+        Given forall_{x in S} P(x) for some enumerated set S =
+        {x1, x2, ..., xn}, conclude and return the forall expression
+        from [P(x1) and P(x2) and ... P(xn)].
+        '''
+        from proveit.logic import Forall, And
+        from ._theorems_ import true_for_each_is_true_for_all
+        # from ._common_ import Booleans
+        assert(isinstance(forallStmt, Forall)), "May only apply prove_from_cases method of Booleans to a forall statement"
+        # if(len(forallStmt.conditions)>1):
+        #     if len(forallStmt.conditions)==2:
+        #         condition = forallStmt.conditions[1]
+        #     else:
+        #         condition = And(*forallStmt.conditions[1:])
+        #     Qx = Operation(Q, forallStmt.instanceVar)
+        #     _Qx = condition
+        #     Px = Operation(P, forallStmt.instanceVar)
+        #     _Px = forallStmt.instanceExpr
+        #     _A = forallStmt.instanceVar
+        #     return foldConditionedForallOverBool.instantiate(
+        #             {Qx:_Qx, Px:_Px, A:_A}, num_forall_eliminations=1,
+        #             assumptions=assumptions)
+        # else:
+        #     # forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)
+        #     Px = Operation(P, forallStmt.instanceVar)
+        #     _Px = forallStmt.instanceExpr
+        #     _A = forallStmt.instanceVar
+        #     return foldForallOverBool.instantiate(
+        #             {Px:_Px, A:_A}, num_forall_eliminations=1,
+        #             assumptions=assumptions)
+
     def permutation_move(self, initIdx=None, finalIdx=None,
                          assumptions=USE_DEFAULTS):
         '''
