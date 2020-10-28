@@ -9,11 +9,12 @@ class Variable(Label):
     over one or more Variables, those Variables may each be replaced 
     with a general Expression.
     """    
-    def __init__(self, stringFormat, latexFormat=None):
+    def __init__(self, stringFormat, latexFormat=None, fence_when_forced=False):
         '''
         Create a Variable.  If latexFormat is not supplied, the stringFormat is used for both.
         '''
-        Label.__init__(self, stringFormat, latexFormat, 'Variable')
+        Label.__init__(self, stringFormat, latexFormat, 'Variable', 
+                       fence_when_forced=fence_when_forced)
                                         
     def _replaced(self, repl_map, allow_relabeling=False,
                   assumptions=USE_DEFAULTS, requirements=None,

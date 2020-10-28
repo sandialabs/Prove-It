@@ -633,8 +633,8 @@ class Expression(metaclass=ExprType):
         '''
         from proveit.logic import Not
         return Not(self).prove(assumptions=assumptions, automation=automation)
-
-    def diproven(self, assumptions=USE_DEFAULTS):
+    
+    def disproven(self, assumptions=USE_DEFAULTS):
         '''
         Return True if and only if the expression is known to be false.
         '''
@@ -858,9 +858,9 @@ class Expression(metaclass=ExprType):
                     self.innerExpr(), mustEvaluate=True,
                     assumptions=assumptions, automation=automation)
             method_called = defaultSimplification
-        except SimplificationError as e:
+        except SimplificationError:
             if automation is False:
-                raise e # Nothing else we can try when automation is off.
+                raise EvaluationError(self, assumptions)
             # The default failed, let's try the Expression-class specific version.
             try:
                 evaluation = self.doReducedEvaluation(assumptions, **kwargs)

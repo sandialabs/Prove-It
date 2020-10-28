@@ -5,7 +5,14 @@ from proveit.number.sets.number_set import NumberSet
 class IntegerSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Integers', r'\mathbb{Z}', context=__file__)
-
+    
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'n in NaturalsPos' for a given n.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInRationals(member, assumptions)
+    
     def deduceInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from ._theorems_ import inIntsIsBool
         return inIntsIsBool.specialize({a:element}, assumptions=assumptions)
@@ -18,3 +25,7 @@ class IntegerSet(NumberSet):
         from ._theorems_ import xInIntsInBool
         from proveit._common_ import x
         return xInIntsInBool.specialize({x:member}, assumptions=assumptions)
+
+    def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
+        from proveit.number.sets.rational._theorems_ import intsInRationals
+        return intsInRationals.deriveSupersetMembership(member, assumptions)

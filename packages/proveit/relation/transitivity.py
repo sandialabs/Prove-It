@@ -24,8 +24,9 @@ from collections import deque
 from proveit import Expression, Operation, OperationSequence
 from proveit import defaults, USE_DEFAULTS, KnownTruth, ProofFailure
 from .sorter import TransitivitySorter
+from .relation import Relation
 
-class TransitiveRelation(Operation):
+class TransitiveRelation(Relation):
     r'''
     Base class for generic transitive relations.  Examples
     are <, <=, >, >= as well as subset, subseteq, superset,
@@ -34,11 +35,8 @@ class TransitiveRelation(Operation):
     '''
     
     def __init__(self, operator, lhs, rhs):
-        Operation.__init__(self,operator, (lhs, rhs))
-        assert(len(self.operands)==2)
-        self.lhs = self.operands[0]
-        self.rhs = self.operands[1]
-
+        Relation.__init__(self,operator, lhs, rhs)
+    
     def sideEffects(self, knownTruth):
         '''
         Automatically derive the reversed form of transitive
@@ -572,7 +570,6 @@ class TransitiveRelation(Operation):
         if len(relations)==1:
             return relations[0]
         return cls.makeSequenceOrRelation(*relations)
-
 
 class TransitiveSequence(OperationSequence):
     '''

@@ -135,12 +135,12 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #--           to be an Integer.                              --#
     #-- -------------------------------------------------------- --#
     if expr.operand in InSet.knownMemberships.keys():
-        from proveit.logic.set_theory import Subset, SubsetEq
+        from proveit.logic.set_theory import ProperSubset, SubsetEq
         for kt in InSet.knownMemberships[expr.operand]:
             if kt.isSufficient(assumptions):
                 if (SubsetEq(kt.expr.operands[1], Integers).proven(assumptions)
                     or 
-                    Subset(kt.expr.operands[1], Integers).proven(assumptions)):
+                    ProperSubset(kt.expr.operands[1], Integers).proven(assumptions)):
                     InSet(expr.operand, Integers).prove()
                     return expr.roundingElimination(assumptions)
 
@@ -176,12 +176,12 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
 
             # (b) then try something just a little harder
             elif the_subop in InSet.knownMemberships.keys():
-                from proveit.logic.set_theory import Subset, SubsetEq
+                from proveit.logic.set_theory import ProperSubset, SubsetEq
                 for kt in InSet.knownMemberships[the_subop]:
                     if kt.isSufficient(assumptions):
                         if (SubsetEq(kt.expr.operands[1], Integers).
                                 proven(assumptions) or
-                            Subset(kt.expr.operands[1], Integers).
+                            ProperSubset(kt.expr.operands[1], Integers).
                                 proven(assumptions)):
                             InSet(the_subop, Integers).prove()
                             indices_of_known_ints.append(i)

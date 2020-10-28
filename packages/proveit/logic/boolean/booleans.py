@@ -30,8 +30,8 @@ class BooleanSet(Literal):
         instanceVar = instanceList[0][0]
         instanceExpr = forallStmt.instanceExpr
         P_op = Operation(P, instanceVar)
-        trueInstance = instanceExpr.substituted({instanceVar:TRUE})
-        falseInstance = instanceExpr.substituted({instanceVar:FALSE})
+        trueInstance = instanceExpr.replaced({instanceVar:TRUE})
+        falseInstance = instanceExpr.replaced({instanceVar:FALSE})
         if trueInstance == TRUE and falseInstance == FALSE:
             # special case of Forall_{A in BOOLEANS} A
             falseEqFalse # FALSE = FALSE
@@ -270,6 +270,15 @@ class FalseLiteral(Literal, IrreducibleValue):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import falseInBool
         return falseInBool
+    
+    def denyAssumption(self, assumption_to_deny, assumptions=USE_DEFAULTS):
+        '''
+        If FALSE can be proven under a set of assumptions, any one
+        of those assumptions may be proven untrue given the other
+        assumptions.
+        '''
+        impl = self.prove(assumptions).asImplication(assumption_to_deny)
+        return impl.denyAntecedent()
 
 def inBool(*elements):
     from proveit.logic.set_theory import InSet

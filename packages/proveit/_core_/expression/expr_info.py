@@ -128,7 +128,7 @@ class ExpressionInfo:
                 sub_expressions = 'value:&nbsp;%s<br>'%expr_num_map[expr.value]
                 sub_expressions += 'condition:&nbsp;%s<br>'%expr_num_map[expr.condition]
             elif isinstance(expr, Lambda):
-                if hasattr(expr, 'parameter'): # has a single parameter
+                if hasattr(expr, 'parameter') and not isinstance(expr.parameter, ExprRange): # has a single parameter
                     sub_expressions = 'parameter:&nbsp;%s<br>'%(expr_num_map[expr.parameter])
                 else:                        
                     sub_expressions = 'parameters:&nbsp;%s<br>'%(expr_num_map[expr.parameters])

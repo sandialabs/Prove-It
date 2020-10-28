@@ -43,7 +43,7 @@ class Or(Operation):
                 emptyDisjunctionEval
             if emptyDisjunctionEval.isUsable():
                 return emptyDisjunctionEval
-        elif self.operands.singular():
+        elif self.operands.is_singular():
             try:
                 return self.unaryReduction(assumptions=assumptions)
             except:
@@ -225,21 +225,21 @@ class Or(Operation):
         # Check for destructive versus constructive dilemma cases.
         if all(isinstance(operand, Not) for operand in self.operands) and all(isinstance(operand, Not) for operand in conclusion.operands):
             # destructive case.
-            if len(self.operands) == 2:
+            if len(self.operands) == 2 and destructiveDilemma.isUsable():
                 # From Not(C) or Not(D), A => C, B => D, conclude Not(A) or Not(B)
                 return destructiveDilemma.specialize({C:self.operands[0].operand, D:self.operands[1].operand, A:conclusion.operands[0].operand, B:conclusion.operands[1].operand}, assumptions=assumptions)
-            # raise NotImplementedError("Generalized destructive multi-dilemma not implemented yet.")
-            # Iterated destructive case.  From (Not(A) or Not(B) or Not(C) or Not(D)) as self
-            negatedOperandsSelf = [operand.operand for operand in self.operands]
-            negatedOperandsConc = [operand.operand for operand in conclusion.operands]
-            return destructiveMultiDilemma.specialize({m: num(len(self.operands)), A: negatedOperandsSelf, B: negatedOperandsConc}, assumptions=assumptions)
-        else:
-            # constructive case.
-            if len(self.operands) == 2:
-                # From (A or B), A => C, B => D, conclude C or D.
-                return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion.operands[0], D:conclusion.operands[1]}, assumptions=assumptions)
-            #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
-            return constructiveMultiDilemma.specialize({m: num(len(self.operands)), A: self.operands, B: conclusion.operands},assumptions=assumptions)
+            elif destructiveMultiDilemma.isUsable():
+                # raise NotImplementedError("Generalized destructive multi-dilemma not implemented yet.")
+                # Iterated destructive case.  From (Not(A) or Not(B) or Not(C) or Not(D)) as self
+                negatedOperandsSelf = [operand.operand for operand in self.operands]
+                negatedOperandsConc = [operand.operand for operand in conclusion.operands]
+                return destructiveMultiDilemma.specialize({m: num(len(self.operands)), A: negatedOperandsSelf, B: negatedOperandsConc}, assumptions=assumptions)
+        # constructive case.
+        if len(self.operands) == 2:
+            # From (A or B), A => C, B => D, conclude C or D.
+            return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion.operands[0], D:conclusion.operands[1]}, assumptions=assumptions)
+        #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
+        return constructiveMultiDilemma.specialize({m: num(len(self.operands)), A: self.operands, B: conclusion.operands},assumptions=assumptions)
 
     def deriveViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -566,7 +566,7 @@ class Or(Operation):
         '''
         from proveit.logic.boolean.disjunction._theorems_ import \
             unaryOrReduction
-        if not self.operands.singular():
+        if not self.operands.is_singular():
             raise ValueError("Or.unaryReduction: expression must have only a "
                              "single operand in order to invoke the "
                              "unaryOrReduction theorem.")
