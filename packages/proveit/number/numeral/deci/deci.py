@@ -1,4 +1,5 @@
 from proveit import Literal, USE_DEFAULTS, Operation
+from proveit.number.sets.number_set import NumberSet
 from proveit.number.numeral.numeral import NumeralSequence, Numeral
 from proveit.number.numeral._common_ import zero, one, two, three, four, five, six, seven, eight, nine
 DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
@@ -25,10 +26,65 @@ class DecimalSequence(NumeralSequence):
                 return self.evaluate_add_digit(assumptions=assumptions)
             if isinstance(digit, ExprRange):
                 # if at least one digit is an ExprRange, we can try to reduce it to an ExprTuple
-                return self.reduce_exprRange(assumptions=assumptions)
+               # return self.reduce_exprRange(assumptions=assumptions)
+                pass
     
     def asInt(self):
         return int(self.formatted('string'))
+
+    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+        from proveit.number import Naturals, NaturalsPos
+        from proveit.logic import InSet
+        if number_set == Naturals:
+            return self.deduceInNaturals(assumptions)
+        elif number_set == NaturalsPos:
+            return self.deduceInNaturalsPos(assumptions)
+        else:
+            try:
+                # Do this to avoid infinite recursion -- if
+                # we already know this numeral is in NaturalsPos
+                # we should know how to prove that it is in any
+                # number set that contains the naturals.
+                if self.asInt() > 0:
+                    InSet(self, NaturalsPos).prove(automation=False)
+                else:
+                    InSet(self, Naturals).prove(automation=False)
+            except:
+                # Try to prove that it is in the given number
+                # set after proving that the numeral is in
+                # Naturals and NaturalsPos.
+                self.deduceInNaturals()
+                if self.asInt() > 0:
+                    self.deduceInNaturalsPos()
+            #return InSet(self, number_set).conclude(assumptions)
+
+    def deduceInNaturals(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import deci_sequence_in_naturals
+        from proveit._common_ import a, n
+        from proveit.core_expr_types import Len
+        return deci_sequence_in_naturals.instantiate({n: Len(self), a: self.digits}, assumptions=assumptions)
+        # if Numeral._inNaturalsStmts is None:
+        #     from proveit.number.sets.integer._theorems_ import zeroInNats
+        #     from proveit.number.numeral.deci._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
+        #     Numeral._inNaturalsStmts = {0: zeroInNats, 1: nat1, 2: nat2, 3: nat3, 4: nat4, 5: nat5, 6: nat6, 7: nat7,
+        #                                 8: nat8, 9: nat9}
+        # return Numeral._inNaturalsStmts[self.n]
+
+    def deduceInNaturalsPos(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import deci_sequence_in_naturalsPos
+        from proveit._common_ import a, n
+        from proveit.core_expr_types import Len
+        return deci_sequence_in_naturalsPos.instantiate({n: Len(self), a: self.digits}, assumptions=assumptions)
+        # from proveit import ProofFailure
+        # if Numeral._inNaturalsPosStmts is None:
+        #     from proveit.number.numeral.deci._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
+        #     from proveit.number.numeral.deci._theorems_ import posnat6, posnat7, posnat8, posnat9
+        #     Numeral._inNaturalsPosStmts = {1: posnat1, 2: posnat2, 3: posnat3, 4: posnat4, 5: posnat5, 6: posnat6,
+        #                                    7: posnat7, 8: posnat8, 9: posnat9}
+        # if self.n <= 0:
+        #     raise ProofFailure(self, [],
+        #                        "Cannot prove %d in NaturalsPos" % self.n)
+        # return Numeral._inNaturalsPosStmts[self.n]
 
     def reduce_exprRange(self, assumptions=USE_DEFAULTS):
         '''
@@ -186,6 +242,27 @@ class DecimalSequence(NumeralSequence):
             outstr += r')'
         return outstr
 
+
+class DecimalSet(NumberSet):
+    def __init__(self):
+        NumberSet.__init__(self, 'Digits', r'\mathbb{N}^{\leq 9}', context=__file__)
+
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import naturalsLowerBound
+        return naturalsLowerBound.specialize({n:member}, assumptions=assumptions)
+
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'n in Naturals' for a given n.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
+
+    def deduceMembership(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import deci_sequence_in_naturals
+        from proveit._common_ import a, n
+        from proveit.core_expr_types import Len
+        return deci_sequence_in_naturals.instantiate({n: Len(member), a: member}, assumptions=assumptions)
 
 def num(x):
     from proveit.number import Neg
