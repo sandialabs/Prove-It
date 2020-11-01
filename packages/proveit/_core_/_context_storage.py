@@ -722,8 +722,14 @@ class ContextFolderStorage:
     # Map expr style ids to the ContextFolderStorage where
     # it is stored.
     expr_style_to_folder_storage = dict()
-    
+    # The active context folder storage (e.g., corresponding to the
+    # notebook being executed).
     active_context_folder_storage = None
+    
+    # Map Prove-It objects (Expressions, KnownTruths, and Proofs)
+    # to a (ContextFolderStorage, hash_id) tuple where it is being 
+    # stored.
+    proveit_object_to_storage = dict()
     
     def __init__(self, context_storage, folder):
         self.context_storage = context_storage
@@ -734,12 +740,6 @@ class ContextFolderStorage:
         if not os.path.isdir(self.path):
             # make the folder
             os.makedirs(self.path)
-        
-        # For retrieved pv_it files that represent Prove-It object 
-        # (Expressions, KnownTruths, and Proofs),
-        # this maps the object to the pv_it file so we
-        # can recall this without searching the hard drive again.
-        self._proveItObjects = dict()
         
         # For 'common', 'axioms', 'theorems' folders, we map
         # expression hash folder names to the name of the
@@ -866,7 +866,7 @@ class ContextFolderStorage:
                 # assumed to be a style id if it's an int
                 style_id = proveItObjectOrId 
                 (context_folder_storage, hash_directory) = \
-                    self._proveItObjects[style_id]
+                    ContextFolderStorage.proveit_object_to_storage[style_id]
             else:
                 (context_folder_storage, hash_directory) = \
                     self._retrieve(proveItObjectOrId)
@@ -982,8 +982,9 @@ class ContextFolderStorage:
         '''
         from proveit import Expression
         from proveit._core_.proof import Axiom, Theorem
-        if proveItObject._style_id in self._proveItObjects:
-            return self._proveItObjects[proveItObject._style_id]
+        proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
+        if proveItObject._style_id in proveit_obj_to_storage:
+            return proveit_obj_to_storage[proveItObject._style_id]
         if isinstance(proveItObject, Expression):
             expr = proveItObject
             context_folder_storage = \
@@ -1028,7 +1029,7 @@ class ContextFolderStorage:
             # found a match; it is already in storage
             # remember this for next time
             result = (self, rep_hash + str(index))
-            self._proveItObjects[proveItObject._style_id] = result
+            proveit_obj_to_storage[proveItObject._style_id] = result
             return result
         indexed_hash_path = hash_path + str(index)
         # store the unique representation in the appropriate file
@@ -1039,7 +1040,7 @@ class ContextFolderStorage:
             f.write(unique_rep) 
         # remember this for next time
         result = (self, rep_hash + str(index))
-        self._proveItObjects[proveItObject._style_id] = result
+        proveit_obj_to_storage[proveItObject._style_id] = result
         return result
     
     @staticmethod
@@ -1626,19 +1627,24 @@ class ContextFolderStorage:
             else:
                 expr = expr_class._checked_make(exprInfo, styles, 
                                                 subExpressions)
-            if ContextFolderStorage.owning_folder_storage(expr) is None:
+            if (ContextFolderStorage.owning_folder_storage(expr) != 
+                    context_folder_storage):
                 # This is a "new" expression in this session.
                 context_folder_storage.take_ownership(expr)
+                # Set the proveit_object_to_storage mapping for the
+                # sub-expression, if it wasn't already set.
+                (folder_storage_check, hash_directory) = \
+                    context_folder_storage._retrieve(expr)
+                #assert folder_storage_check==context_folder_storage
                 # Load the "special names" of the context so we
                 # will know, for future reference, if this is a special 
                 # expression that may be addressed as such.
-                (folder_storage_check, hash_directory) = \
-                    context_folder_storage._retrieve(expr)
-                assert folder_storage_check==context_folder_storage
                 context_folder_storage.context_storage.loadSpecialNames()
             return expr
         expr = self._makeExpression(exprId, importFn, exprBuilderFn)
-        self.take_ownership(expr)
+        #self.take_ownership(expr)
+        #ContextFolderStorage.proveit_object_to_storage[expr._style_id] \
+        #    = (self, exprId)        
         return expr
         
     def _makeExpression(self, exprId, importFn, exprBuilderFn):
@@ -1765,6 +1771,7 @@ class ContextFolderStorage:
                     styles_map[expr_id], sub_expressions, generic_expr, 
                     context_folder_storage)
             built_expr_map[expr_id] = expr
+        
         return built_expr_map[master_expr_id]        
     
     def makeKnownTruth(self, truth_id):
@@ -1805,7 +1812,8 @@ class ContextFolderStorage:
             unique_rep = f.read()
         # full storage id:
         proof_id = context.name + '.' + folder + '.' + hash_directory 
-        self._proveItObjects[proof_id] = (
+        proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
+        proveit_obj_to_storage[proof_id] = (
                 context_folder_storage, hash_directory)   
         return Proof._showProof(context, folder, proof_id, unique_rep)
         
@@ -1870,7 +1878,8 @@ class ContextFolderStorage:
         '''
         Remove all of the hash sub-folders of the 'folder'
         under the directory of this ContextStorage that are
-        not currently being referenced via self._proveItObjects.  
+        not currently being referenced via 
+        ContextFolderStorage.proveit_obj_to_storage.  
         If 'clear' is True, the entire folder will be removed
         (if possible).
         '''
@@ -1894,7 +1903,7 @@ class ContextFolderStorage:
                     self._retrieve(literal)
         currently_referenced = {
                 hash_directory for context_folder_storage, hash_directory
-                in self._proveItObjects.values() 
+                in ContextFolderStorage.proveit_object_to_storage.values() 
                 if context_folder_storage==self}
         
         paths_to_remove = list()
