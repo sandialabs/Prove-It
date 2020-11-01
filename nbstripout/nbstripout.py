@@ -14,14 +14,6 @@ changes).
 
 import io, sys, argparse, json
 
-if sys.stdin: input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-output_stream = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
-parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--textconv', action="store_true", help="Print results to output")
-parser.add_argument('files', nargs='*', help='Files to strip output from')
-args = parser.parse_args()
-
 # define which fields need to be kept:
 cell_metadata_keep = []
 nb_metadata_keep   = ['kernelspec', 'jekyll']
@@ -41,34 +33,43 @@ def clean_cell(o):
 # 1. keep only nb_metadata_keep fields
 # 2. the other rules apply based on clean_cell alias
 
-def clean_nb(s):
+def clean_nb(input_stream):
+    s = json.load(input_stream)
     s['cells']    = [ clean_cell(o) for o in s['cells'] ]
     s['metadata'] = { k:s['metadata'][k] for k in s['metadata'].keys() if k in nb_metadata_keep }
     # Hopefully the minor format won't matter and we can use the lowest common denominator for now:
     s['nbformat_minor'] = 0
+    return json.dumps(s, sort_keys=True, indent=1, ensure_ascii=False)
 
-for filename in args.files:
-    if not filename.endswith('.ipynb'): continue
-    with io.open(filename, 'r', encoding='utf-8') as f: s = json.load(f)
-    clean_nb(s)
-    x = json.dumps(s, sort_keys=True, indent=1, ensure_ascii=False)
+if __name__ == '__main__':
+    if sys.stdin: input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+    output_stream = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-    if args.textconv:
-        # XXX: if there is more than one file, this is probably wrong
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-t', '--textconv', action="store_true", help="Print results to output")
+    parser.add_argument('files', nargs='*', help='Files to strip output from')
+    args = parser.parse_args()
+    
+
+    for filename in args.files:
+        if not filename.endswith('.ipynb'): continue
+        with io.open(filename, 'r', encoding='utf-8') as f: 
+            x = clean_nb(f)
+        
+        if args.textconv:
+            # XXX: if there is more than one file, this is probably wrong
+            output_stream.write(x)
+            output_stream.write("\n")
+            output_stream.flush()
+        else:
+            with io.open(filename, 'w', encoding='utf-8') as f:
+                f.write(x)
+                f.write("\n")
+    
+    # implied textconv mode
+    if not args.files and input_stream:
+        x = clean_nb(input_stream)
         output_stream.write(x)
         output_stream.write("\n")
         output_stream.flush()
-    else:
-        with io.open(filename, 'w', encoding='utf-8') as f:
-            f.write(x)
-            f.write("\n")
-
-# implied textconv mode
-if not args.files and input_stream:
-    s = json.load(input_stream)
-    clean_nb(s)
-    x = json.dumps(s, sort_keys=True, indent=1, ensure_ascii=False)
-    output_stream.write(x)
-    output_stream.write("\n")
-    output_stream.flush()
-
+    

@@ -78,12 +78,7 @@ class KnownTruth:
     presumingTheoremNamess = None # set of full names of presumed theorems when in use
     presumingPrefixes = None # set of context names or full theorem names when in use.
     qedInProgress = False # set to true when "%qed" is in progress
-    
-    # Set of (style-id, Proof) tuples of hyperlinked Proofs for
-    # KnownTruths that are displayed.  We need to add reference counts
-    # to these.
-    hyperlinked_proof_styles = set()
-    
+        
     # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
     # recursion when deducing side effects after something is proven.
     in_progress_to_derive_sideeffects = set() 
@@ -101,7 +96,6 @@ class KnownTruth:
         KnownTruth.presumingTheorems = None
         KnownTruth.presumingPrefixes = None
         KnownTruth.qedInProgress = False
-        KnownTruth.hyperlinked_proof_styles.clear()
         _ExprProofs.all_expr_proofs.clear()
         assert len(KnownTruth.in_progress_to_derive_sideeffects)==0, "Unexpected remnant 'in_progress_to_derive_sideeffects' items (should have been temporary)"
 
@@ -1071,9 +1065,6 @@ class KnownTruth:
         if proof is not None:
             # link to the proof
             html += '<a class="ProveItLink" href="%s" style="text-decoration: none">'%proof.getLink()
-            # Record as a proof of a "displayed" (style-specific) 
-            # KnownTruth.
-            KnownTruth.hyperlinked_proof_styles.add((proof._style_id, proof)) 
         html += '&#x22A2;&nbsp;' # turnstile symbol
         if proof is not None:
             html += '</a>'

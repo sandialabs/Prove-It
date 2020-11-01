@@ -22,8 +22,7 @@ the theorem proofs, and it stores theorem proof dependencies.
 
 import os
 import json
-from ._context_storage import ContextStorage, relurl#Comment out for python 3
-#from _context_storage import ContextStorage, relurl#Comment in for python 3
+from ._context_storage import ContextStorage, ContextFolderStorage, relurl
 from types import ModuleType
 
 class Context:
@@ -43,11 +42,12 @@ class Context:
     _rootContextPaths = dict()
     
     # The current default Context when a Literal is created.
-    # If this is None, use Context(), the Context at the current working directory.
+    # If this is None, use Context(), the Context at the current working
+    # directory.
     default = None
     
-    # track the storage object associated with each context, mapped
-    # by the absolute path
+    # Track the storage object associated with each context and folder, 
+    # mapped by the absolute path.
     storages = dict()
 
     specialExprKindToModuleName = {'common':'_common_', 'axiom':'_axioms_', 'theorem':'_theorems_'}
@@ -61,29 +61,32 @@ class Context:
         Context._rootContextPaths.clear()
         Context.default = None
         Context.storages.clear()
-        CommonExpressions.expr_id_contexts.clear()
         CommonExpressions.referenced_contexts.clear()        
+        ContextFolderStorage.expr_style_to_folder_storage.clear()
         
     # externals.txt at top level to track relative path to external
     # contexts.
-    def __init__(self, path='.'):
+    def __init__(self, path='.', active_folder=None):
         '''
         Create a Context for the given path.  If given a file name instead,
         use the path of the containing directory.  If no path
         is provided, base the context on the current working directory.
-        '''
+        '''        
         if not os.path.exists(path):
             raise ContextException("%s is not a valid path; unable to create Context."%path)
         
         path = os.path.abspath(path)
-        # if in a __pv_it_ directory, go to the containing context directory
+        # If in a __pv_it_ directory, go to the containing context 
+        # directory.  If in a sub-folder of the __pv_it directory,
+        # take that as the 'active_folder' if nothing else was
+        # specified.
         splitpath = path.split(os.path.sep)
         if '__pv_it' in splitpath:
-            num_up_levels = (len(splitpath)-splitpath.index('__pv_it'))
+            pv_it_idx = splitpath.index('__pv_it')
+            num_up_levels = (len(splitpath)-pv_it_idx)
+            if num_up_levels > 1:
+                active_folder = splitpath[pv_it_idx+1]
             path = os.path.abspath(os.path.join(*([path] + ['..']*num_up_levels)))
-        # if in a _proofs_ directory, go to the containing context directory
-        if splitpath[-1] == '_proofs_':
-            path = os.path.abspath(os.path.join(*([path] + ['..'])))
         
         # move the path up to the directory level, not script file level
         if path[-3:]=='.py' or path[-4:]=='.pyc':
@@ -96,6 +99,7 @@ class Context:
         if normpath in Context.storages:
             self._storage = Context.storages[normpath] # got the storage - we're good
             self.name = self._storage.name
+            self.set_active_folder(active_folder)
             return
         
         if os.path.isfile(path): # just in case checking for '.py' or '.pyc' wasn't sufficient
@@ -105,6 +109,7 @@ class Context:
         if normpath in Context.storages:
             self._storage = Context.storages[normpath] # got the storage - we're good
             self.name = self._storage.name
+            self.set_active_folder(active_folder)
             return
         
         # the name of the context is based upon the directory, going
@@ -129,8 +134,9 @@ class Context:
             if not os.path.isfile(sub_contexts_path):
                 open(sub_contexts_path, 'wt').close()
         self._storage = Context.storages[normpath]
+        self.set_active_folder(active_folder)
         self.name = self._storage.name
-            
+    
     def __eq__(self, other):
         return self._storage is other._storage
     
@@ -139,6 +145,12 @@ class Context:
     
     def __str__(self):
         return self._storage.name
+    
+    def set_active_folder(self, active_folder):
+        self.active_folder = active_folder
+        if active_folder is not None:
+            ContextFolderStorage.active_context_folder_storage = \
+                self._contextFolderStorage(active_folder)
     
     def links(self, from_directory='.'):
         context_name_segments = self._storage.name.split('.')
@@ -179,7 +191,7 @@ class Context:
         splitContextName = contextName.split('.')
         rootName = splitContextName[0]
         if rootName not in Context._rootContextPaths:
-            raise ContextException("Context root '%s' is unknown"%rootName)
+            raise ContextException("Context root '%s' is unknown (%s)"%(rootName, Context._rootContextPaths))
         rootDirectory = Context._rootContextPaths[rootName]
         return Context(os.path.join(*([rootDirectory]+splitContextName[1:])))        
         
@@ -200,10 +212,12 @@ class Context:
         return self._storage.appendSubContextName(subContextName)
                 
     def _setAxioms(self, axiomNames, axiomDefinitions):
-        self._storage.setSpecialStatements(axiomNames, axiomDefinitions, 'axiom')
+        self._storage.setSpecialExpressions(axiomNames, axiomDefinitions, 
+                                            'axiom')
     
     def _setTheorems(self, theoremNames, theoremDefinitions):
-        self._storage.setSpecialStatements(theoremNames, theoremDefinitions, 'theorem')
+        self._storage.setSpecialExpressions(theoremNames, theoremDefinitions, 
+                                            'theorem')
     
     def _clearAxioms(self):
         self._setAxioms([], dict())
@@ -215,8 +229,8 @@ class Context:
     def _clearCommonExressions(self):
         self._setCommonExpressions([], dict(), clear=True)
         
-    def _setCommonExpressions(self, exprNames, exprDefinitions, clear=False):
-        self._storage.setCommonExpressions(exprNames, exprDefinitions, clear)
+    def _setCommonExpressions(self, exprNames, exprDefinitions):
+        self._storage.setCommonExpressions(exprNames, exprDefinitions)
     
     def makeSpecialExprModule(self, kind):
         '''
@@ -248,11 +262,12 @@ class Context:
     
     def recordCommonExprDependencies(self):
         '''
-        Record the context names of any referenced common expressions in storage
-        while creating the common expressions for this context
-        (for the purposes of checking for illegal cyclic dependencies).
+        Record the context names of any referenced common expressions
+        in storage while creating the common expressions for this
+        context (for the purposes of checking for illegal cyclic
+        dependencies).
         '''
-        self._storage.recordCommonExprDependencies()
+        self._common_storage().recordCommonExprDependencies()
 
     def storedCommonExprDependencies(self):
         '''
@@ -266,7 +281,7 @@ class Context:
         Check for illegal cyclic dependencies of common expression notebooks.
         If there is one, return the name; otherwise return None.
         '''
-        return self._storage.cyclicallyReferencedCommonExprContext()
+        return self._common_storage().cyclicallyReferencedCommonExprContext()
         
     def referenceHyperlinkedObjects(self, name, clear=False):
         '''
@@ -284,7 +299,7 @@ class Context:
         Return the Axiom of the given name in this context.
         '''
         return self._storage.getAxiom(name)
-            
+                
     def getTheorem(self, name):
         '''
         Return the Theorem of the given name in this context.
@@ -314,25 +329,6 @@ class Context:
         context = Context.getContext(context_name)
         if kind == 'axiom': return context.getAxiom(stmt_name)
         if kind == 'theorem': return context.getTheorem(stmt_name)
-
-    def specialExpr(self, expr):
-        '''
-        Return the kind and name of the special expression as a tuple,
-        assuming the 'expr' is a special expression of this Context.
-        '''
-        return self._storage.specialExpressions[expr._style_id]
-    
-    def specialExprAddress(self, expr):
-        '''
-        A special expression "address" consists of a kind ('common', 'axiom', or
-        'theorem'), module and the name of the expression.
-        Provided that the given expression is one of the special expressions
-        of this context, return the address as a tuple.
-        '''
-        kind, name = self._storage.specialExpressions[expr._style_id]
-        if kind == 'axiom' or kind=='theorem':
-            name = name + '.expr'
-        return kind, self._storage._specialExprModules[kind], name
     
     def proofNotebook(self, proof):
         '''
@@ -341,7 +337,9 @@ class Context:
         notebook which generates the proof.  This just shows the
         proof as Prove-It stores it.
         '''
-        return self._storage.proofNotebook(proof)    
+        context_folder_storage = \
+            ContextFolderStorage.active_context_folder_storage
+        return context_folder_storage.proofNotebook(proof)    
     
     def thmProofNotebook(self, theoremName, expr):
         '''
@@ -353,12 +351,15 @@ class Context:
 
     def stashExtraneousThmProofNotebooks(self):
         '''
-        For any proof notebooks for theorem names not included in the context, 
-        stash them or remove them if they are generic notebooks.
+        For any proof notebooks for theorem names not included in the 
+        context, stash them or remove them if they are generic notebooks.
         '''
-        self._storage.stashExtraneousThmProofNotebooks(self.theoremNames())
-                
-    def expressionNotebook(self, expr, unofficialNameKindContext=None):
+        self._storage.stashExtraneousThmProofNotebooks(
+                self.theoremNames())
+    
+    @staticmethod
+    def expressionNotebook(expr, unofficialNameKindContext=None,
+                           useActiveFolder=False):
         '''
         Return the path of the expression notebook, creating it if it does not
         already exist.  If 'unofficialNameKindContext' is provided,
@@ -367,7 +368,8 @@ class Context:
         called yet in the special expressions notebook).
         '''
         # use the Storage object to generate/grab the expression notebook.
-        return self._storage.expressionNotebook(expr, unofficialNameKindContext)
+        return ContextFolderStorage.expressionNotebook(
+                expr, unofficialNameKindContext, useActiveFolder)
                  
     @staticmethod
     def getStoredAxiom(fullname):
@@ -398,40 +400,64 @@ class Context:
         '''
         return self._storage.getCommonExpr(name)
     
-    def getStoredExpr(self, expr_id):
+    def getStoredExpr(self, expr_id, folder=None):
         '''
         Return the stored Expression with the given id (hash string).
+        Use the "active folder" as the default folder.
         '''
-        return self._storage.makeExpression(expr_id)
+        context_folder_storage = self._contextFolderStorage(folder)
+        return context_folder_storage.makeExpression(expr_id)
     
-    def getStoredKnownTruth(self, truth_id):
+    def getStoredKnownTruth(self, truth_id, folder=None):
         '''
         Return the stored KnownTruth with the given id (hash string).
+        Use the "active folder" as the default folder.
         '''
-        return self._storage.makeKnownTruth(truth_id)
+        context_folder_storage = self._contextFolderStorage(folder)
+        return context_folder_storage.makeKnownTruth(truth_id)
     
-    def getShowProof(self, proof_id):
+    def getShowProof(self, proof_id, folder=None):
         '''
         Return the _ShowProof representing the proof with the 
         given id (hash string) for display purposes.
+        Use the "active folder" as the default folder.
         '''
-        return self._storage.makeShowProof(proof_id)
+        context_folder_storage = self._contextFolderStorage(folder)
+        return context_folder_storage.makeShowProof(proof_id)
     
-    def _stored_png(self, expr, latex, configLatexToolFn):
+    @staticmethod
+    def _stored_png(expr, latex, configLatexToolFn):
         '''
         Find the .png file for the stored Expression.
         Create it if it did not previously exist.
         Return the png data and path where the png is stored as a tuple.
         '''
-        return self._storage.retrieve_png(expr, latex, configLatexToolFn)        
+        return ContextFolderStorage.retrieve_png(
+                expr, latex, configLatexToolFn)        
+
+    def _contextFolderStorage(self, folder=None):
+        '''
+        Return the ContextFolderStorage object associated with this
+        context and the folder.  The default folder is the
+        "active_folder".
+        '''
+        if folder is None:
+            folder = self.active_folder
+        if folder is None:
+            raise ValueError("A 'folder' must be specified")        
+        return self._storage.contextFolderStorage(folder)
     
-    def clean(self):
+    def _common_storage(self):
+        return self._contextFolderStorage('common')
+        
+    def clean_active_folder(self, clear=False):
         '''
         Clean the corresponding __pv_it directory of any stored expressions
         or proofs that have a reference count of zero.
         '''
-        return self._storage.clean()
+        return self._contextFolderStorage(self.active_folder).clean(clear)
     
+    """
     def clear(self):
         '''
         Remove reference counts to all common expressions, axioms,
@@ -444,7 +470,6 @@ class Context:
         self._setTheorems([], dict())
         self._setAxioms([], dict())
         self._setCommonExpressions([], dict())
-        self._storage.clearHyperlinkedObjectReferences()
         self.clean()
         
     def clearAll(self):
@@ -454,6 +479,7 @@ class Context:
         for sub_context in self.getSubContexts():
             sub_context.clear()
         self.clear()
+    """
 
     def containsAnyExpression(self):
         '''
@@ -532,9 +558,6 @@ class CommonExpressions(ModuleType):
     Used in _common_.py modules for accessing common sub-expressions.
     '''
     
-    # map storage ids of common expression to the Context of the common expression
-    expr_id_contexts = dict() # populated in Context.commonExpressionNames()
-    
     # set of contexts that has a common expression being referenced
     referenced_contexts = set() # populated in Storage._addReference(...)
     
@@ -552,26 +575,25 @@ class CommonExpressions(ModuleType):
             raise AttributeError # don't handle internal Python attributes
         
         # Is the current directory a "context" directory?
-        in_context = os.path.isfile('_context_.ipynb')
+        #in_context = os.path.isfile('_context_.ipynb')
         
         # File to store information about a failure to import a common expression:
-        failed_common_import_filename = os.path.join('__pv_it', 'failed_common_import.txt')
+        #failed_common_import_filename = os.path.join('__pv_it', 'failed_common_import.txt')
         # This is used to track dependencies which automatically executing 
         # notebooks via 'build.py' (at the root level of Prove-It).
         
         try:
             expr = self._context.getCommonExpr(name)
-            if in_context and os.path.isfile(failed_common_import_filename):
-                # successful import -- don't need this 'failure' file anymore.
-                os.remove(failed_common_import_filename)
+            #if in_context and os.path.isfile(failed_common_import_filename):
+            #    # successful import -- don't need this 'failure' file anymore.
+            #    os.remove(failed_common_import_filename)
             return expr
         except (UnsetCommonExpressions, KeyError) as e:
             # if this is a context directory, store the context that failed to import.
-            if in_context:
-                # store the context in which a common expression failed to import.
-                with open(failed_common_import_filename, 'w') as f:
-                    f.write(self._context.name + '\n')
-            
+            #if in_context:
+            #    # store the context in which a common expression failed to import.
+            #    with open(failed_common_import_filename, 'w') as f:
+            #        f.write(self._context.name + '\n')
             if isinstance(e, UnsetCommonExpressions):
                 # Use a temporary placeholder if the common expressions are not set.
                 # This avoids exceptions while common exppressions are being built/rebuilt.

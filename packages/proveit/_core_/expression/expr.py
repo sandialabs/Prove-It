@@ -21,7 +21,7 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_generic_version', '_setContext',
+    protected = ('_generic_version', 
                  'replaced', '_replaced', '_replaced_entries', 'relabeled',
                  '_make', '_checked_make', '_auto_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
@@ -51,12 +51,6 @@ class ExprType(type):
                 Operation.operationClassOfOperator[cls._operator_] = cls
 
 class Expression(metaclass=ExprType):
-    # set of (style-id, Expression) tuples
-    displayed_expression_styles = set()
-
-    # map expression style ids to contexts (for expressions that "belong" to a Context)
-    contexts = dict()
-
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
     in_progress_to_conclude = set()
@@ -68,8 +62,6 @@ class Expression(metaclass=ExprType):
         the Expression jurisdiction.  All Expression classes that store Prove-It
         state information must implement _clear_ to clear that information.
         '''
-        Expression.displayed_expression_styles.clear()
-        Expression.contexts.clear()
         assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
 
     def __init__(self, coreInfo, subExpressions=tuple(), styles=None):
@@ -183,23 +175,7 @@ class Expression(metaclass=ExprType):
                 self._meaningData._coreInfo, dict(self._styleData.styles),
                 generic_sub_expressions)
         return self._genericExpr
-
-
-    def _setContext(self, context):
-        '''
-        Assign a Context to this expression.
-        '''
-        self.context = context
-        Expression.contexts[self._style_id] = context
-        """
-        # Commenting this out because this make a strange first-come, first-serve
-        # context assignment that might keep changing expression representations around;
-        # that can be a nuisance for version controlling the Prove-It notebooks.
-        for sub_expr in self._subExpressions:
-            if sub_expr._style_id not in Expression.contexts:
-                sub_expr._setContext(context)
-        """
-
+    
     def _generate_unique_rep(self, objectRepFn, coreInfo=None, styles=None):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
@@ -1028,7 +1004,7 @@ class Expression(metaclass=ExprType):
             for expr in subExpr.orderOfAppearance(subExpressions):
                 yield expr
 
-    def _repr_html_(self, context=None, unofficialNameKindContext=None):
+    def _repr_html_(self, unofficialNameKindContext=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
         from memory or storage if it was generated previously) with a link to
@@ -1042,13 +1018,11 @@ class Expression(metaclass=ExprType):
         '''
         if not defaults.display_latex:
             return None # No LaTeX display at this time.
-        if context is None:
-            context = Context()
         if not hasattr(self._styleData,'png'):
-            self._styleData.png, png_url = context._stored_png(self, self.latex(), self._config_latex_tool)
+            self._styleData.png, png_url = Context._stored_png(self, self.latex(), self._config_latex_tool)
             self._styleData.png_url = png_url
         if self._styleData.png_url is not None:
-            expr_notebook_rel_url = context.expressionNotebook(self, unofficialNameKindContext)
+            expr_notebook_rel_url = Context.expressionNotebook(self, unofficialNameKindContext)
             html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
             if defaults.inline_pngs:
                 encoded_png = encodebytes(self._styleData.png).decode("utf-8")
@@ -1056,8 +1030,6 @@ class Expression(metaclass=ExprType):
             else:
                 html += '<img src="' + self._styleData.png_url + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
-        # record as a "displayed" (style-specific) expression
-        Expression.displayed_expression_styles.add((self._style_id, self))
         return html
 
     def _config_latex_tool(self, lt):

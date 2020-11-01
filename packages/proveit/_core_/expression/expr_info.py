@@ -93,14 +93,10 @@ class ExpressionInfo:
         from .conditional import Conditional
         from .lambda_expr import Lambda
         from .label import Variable, Literal
-        from .expr import Expression
         
         # get the enumerated sub-expressions; parents come before children.
         enumerated_expressions = self._getEnumeratedExpressions()
         expr_num_map = {expr:k for k, expr in enumerate(enumerated_expressions)}
-        
-        # map each sub-Expression to an appropriate Context
-        expr_context_map = {expr : Expression.contexts.get(expr._style_id, None) for expr in enumerated_expressions}
         
         # generate the html as a table with the enumerated expressions on the rows.
         html = '<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>\n'
@@ -146,8 +142,7 @@ class ExpressionInfo:
                 sub_expressions += 'end_index:&nbsp;%d<br>'%(expr_num_map[expr.end_index])
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
-            context = expr_context_map[expr]
-            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
+            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_())
             if self.show_details and expr.__class__ not in \
                     (Variable, Literal, Operation, Lambda, IndexedVar, 
                      NamedExprs, ExprTuple, ExprArray, ExprRange):

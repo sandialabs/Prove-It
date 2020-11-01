@@ -205,7 +205,7 @@ class Proof:
         return [objId.rstrip('*') for objId in objIds if len(objId) > 0]
 
     @staticmethod
-    def _showProof(context, proof_id, unique_rep):
+    def _showProof(context, folder, proof_id, unique_rep):
         '''
         Given a unique representation string, returns a _ShowProof
         object that mocks up a stored proof for the purposes of
@@ -236,7 +236,7 @@ class Proof:
             groups.append([objId for objId in objIds if len(objId) > 0])
         if proof_id in _ShowProof.show_proof_by_id:
             return _ShowProof.show_proof_by_id[proof_id]
-        return _ShowProof(context, proof_id, step_info, groups)
+        return _ShowProof(context, folder, proof_id, step_info, groups)
 
     def isUsable(self):
         '''
@@ -573,7 +573,9 @@ class Theorem(Proof):
         Theorem.allTheorems.append(self)
 
     def _generate_step_info(self, objectRepFn):
-        return self.stepType() + '_' + str(self) + ':'
+        # For these purposes, we should use 'theorem' even if the
+        # status is 'conjecture'.
+        return 'theorem_' + str(self) + ':'
 
     def stepType(self):
         if self.isConjecture():
@@ -1362,7 +1364,8 @@ class _ShowProof:
     # Map proof_id's to _ShowProof objects that have been created.
     show_proof_by_id = dict()
 
-    def __init__(self, context, proof_id, stepInfo, refObjIdGroups):
+    def __init__(self, context, folder, proof_id, stepInfo,
+                 refObjIdGroups):
         self._style_id = proof_id
         if '_' in stepInfo:
             # Must be an axiom or theorem with the format
@@ -1376,15 +1379,19 @@ class _ShowProof:
         else:
             self.context = context
             self.step_type_str = stepInfo
+        self.context_folder_storage = context_folder_storage = \
+            self.context._contextFolderStorage(folder)
         if self.step_type_str=='instantiation':
             # Extract the mapping information.
             group = refObjIdGroups[0]
-            var_mapping_pairs = [(context.getStoredExpr(group[i]),
-                                  context.getStoredExpr(group[i+1])) \
-                                 for i in range(0, len(group), 2)]
+            var_mapping_pairs = \
+                [(context_folder_storage.makeExpression(group[i]),
+                  context_folder_storage.makeExpression(group[i+1])) 
+                    for i in range(0, len(group), 2)]
             self.mapping_var_order = [key for key, value in var_mapping_pairs]
             self.mapping = dict(var_mapping_pairs)
-        self.provenTruth = context.getStoredKnownTruth(refObjIdGroups[-2][0])
+        self.provenTruth = \
+            context_folder_storage.makeKnownTruth(refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
             [context.getShowProof(obj_id.rstrip('*')) for obj_id
@@ -1409,7 +1416,7 @@ class _ShowProof:
         elif self.step_type_str in ('theorem', 'conjecture'):
             return StoredTheorem(self.context, self.name).getProofLink()
         else:
-            return self.context.proofNotebook(self)
+            return self.context_folder_storage.proofNotebook(self)
 
     def _single_mapping(self, *args):
         return Instantiation._single_mapping(self, *args)

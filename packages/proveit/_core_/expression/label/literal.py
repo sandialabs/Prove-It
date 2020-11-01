@@ -23,14 +23,21 @@ class Literal(Label):
         
     def __init__(self, stringFormat, latexFormat=None, extraCoreInfo=tuple(), context=None):
         '''
-        Create a Literal.  If latexFormat is not supplied, the stringFormat is used for both.
+        Create a Literal.  If latexFormat is not supplied, the 
+        stringFormat is used for both.  The Literal will be stored
+        in the 'common' folder of its context.  For this reason, it
+        is important that the _common__ notebook imports all of the
+        Literal's that belong to it (which will typically be done
+        without any extra effort); otherwise, it will have to be
+        recreated each session.
         '''
         from proveit._core_.context import Context
         if context is None:
             # use the default
             context = Context.default
             if context is None:
-                # if no default is specified; use the current working directory
+                # if no default is specified; use the current working 
+                # directory
                 context = Context()
         elif isinstance(context, str):
             # convert a path string to a Context
@@ -44,7 +51,8 @@ class Literal(Label):
                 Context() 
                 context = Context.getContext(context)
         Label.__init__(self, stringFormat, latexFormat, 'Literal', (context.name,)+tuple(extraCoreInfo))
-        self._setContext(context)
+        self.context = context
+        context._contextFolderStorage('common').take_ownership(self)
         #if self._coreInfo in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same context and string/latex formats")
         Literal.instances[self._coreInfo] = self
@@ -116,11 +124,13 @@ class Literal(Label):
         Yield the argument values that could be used to recreate the
         Literal.
         '''
-        for arg in Label.remakeArguments(self):
-            yield arg
         import inspect
         init_args = inspect.getargspec(self.__class__.__init__)[0]
         if len(init_args)==1:
+            return # nothing needed
+        for arg in Label.remakeArguments(self):
+            yield arg
+        if len(init_args)==3:
             return # nothing more
         if (len(init_args)==5 and init_args[3]=='extraCoreInfo' \
                 and init_args[4]=='context'):
