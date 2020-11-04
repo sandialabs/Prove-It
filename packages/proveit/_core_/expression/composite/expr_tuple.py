@@ -1,84 +1,67 @@
-from .composite import Composite, _simplifiedCoord
+import types
+from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.expression.style_options import StyleOptions
 
 class ExprTuple(Composite, Expression):
     """
-    An ExprTuple is a composite Exporession composed of an ordered list 
-    of member Expressions.
+    An ExprTuple is a composite Expression composed of an ordered list 
+    of member Expression "entries".  The ExprTuple represents a 
+    mathematical tuple as an ordered collection of "elements".
+    Each entry may either represent a single element or a "range"
+    of elements.  An entry that is an ExprRange represents a range
+    of elements.  For example,
+    (a, b, x_1, ..., x_n, c, d)
+    Is represented by an ExprTuple with 5 entries representing
+    n+4 elements.
     """
-    def __init__(self, *expressions):
+    
+    def __init__(self, *expressions, styles=None):
         '''
         Initialize an ExprTuple from an iterable over Expression 
-        objects.  When subsequent iterations in the tuple form a
-        self-evident continuation, these iterations will be joined.
-        For example, (a_1, ..., a_n, a_{n+1}, ..., a_m) will join to
-        form (a_1, ..., a_m).  "Self-evident" falls under two 
-        categories: the start of the second iteration is the
-        successor to the end of the first iteration (e.g., n and n+1)
-        or the end of the first iteration is the predecessor of the
-        start of the second iteration (e.g., n-1 and n).  To be a
-        valid ExprTuple, all iterations must span a range whose
-        extent is a natural number.  In the above example with the
-        tuple of "a"-indexed iterations, n must be a natural number
-        and m-n must be a natural number for the ExprTuple to be
-        valid (note that iterations may have an extent of zero).
-        When an ExprTuple is created, there is not a general check
-        that it is valid.  However, when deriving new known truths
-        from valid existing known truths, validity is guaranteed to
-        be maintained (in particular, specializations that transform
-        ExprTuples ensure that validity is maintained).  The joining
-        of iterations is valid as long as the original iterations
-        are valid, so this process is also one that maintains validity
-        which is the thing that is important.
+        objects.
         '''
         from proveit._core_ import KnownTruth
         from .composite import singleOrCompositeExpression
-        from .iteration import Iter
-        prev_entry = None
         entries = []
         for entry in expressions:
             if isinstance(entry, KnownTruth):
                 # Extract the Expression from the KnownTruth:
                 entry = entry.expr 
-            try:
+            if not isinstance(entry, Expression):
                 entry = singleOrCompositeExpression(entry)
-                assert isinstance(entry, Expression)
-            except:
-                raise TypeError("ExprTuple must be created out of "
-                                  "Expressions.")
-            # See if this entry should be joined with the previous
-            # entry.
-            if isinstance(prev_entry, Iter) and isinstance(entry, Iter):
-                from proveit.number import dist_add, dist_subtract, one
-                if prev_entry.lambda_map==entry.lambda_map:
-                    prev_end_successor = dist_add(prev_entry.end_index, one)
-                    next_start_predecessor = dist_subtract(entry.start_index, 
-                                                           one)
-                    if entry.start_index == prev_end_successor:
-                        # Join the entries of the form
-                        # (a_i, ..., a_n, a_{n+1}, ..., a_m).
-                        prev_entry.end_index=entry.end_index
-                        entry=None
-                    elif prev_entry.end_index == next_start_predecessor:
-                        # Join the entries of the form
-                        # (a_i, ..., a_{n-1}, a_{n}, ..., a_m).
-                        prev_entry.end_index=entry.end_index
-                        entry=None
-            if entry is not None:
-                # Safe to append the previous entry since it does
-                # not join with the new entry.
-                if prev_entry is not None: entries.append(prev_entry)
-                prev_entry = entry
-        if prev_entry is not None:
-            # One last entry to append.
-            entries.append(prev_entry)
+            assert isinstance(entry, Expression)
+            entries.append(entry)
         self.entries = tuple(entries)
         self._lastEntryCoordInfo = None
         self._lastQueriedEntryIndex = 0
-        Expression.__init__(self, ['ExprTuple'], self.entries)
         
+        if styles is None: styles = dict()
+        if 'wrapPositions' not in styles:
+            styles['wrapPositions'] = '()' # no wrapping by default
+        if 'justification' not in styles:
+            styles['justification'] = 'left'
+
+        Expression.__init__(self, ['ExprTuple'], self.entries, styles=styles)
+
+    def styleOptions(self):
+        options = StyleOptions(self)
+        options.addOption('wrapPositions', 
+                          ("position(s) at which wrapping is to occur; 'n' "
+                           "is after the nth comma."))
+        options.addOption('justification', 
+                          ("if any wrap positions are set, justify to the 'left', "
+                           "'center', or 'right'"))
+        return options
+
+    def withWrappingAt(self, *wrapPositions):
+        return self.withStyles(wrapPositions='(' + ' '.join(str(pos) for pos in wrapPositions) + ')')
+    
+    def withJustification(self, justification):
+        return self.withStyles(justification=justification)
+    
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != ExprTuple: 
@@ -95,11 +78,28 @@ class ExprTuple(Composite, Expression):
         '''
         for subExpr in self.subExprIter():
             yield subExpr
+
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'withWrappingAt'
+        and 'withJustification' calls.
+        '''
+        wrap_positions = self.wrapPositions()
+        call_strs = []
+        if len(wrap_positions) > 0:
+            call_strs.append('withWrappingAt(' + ','.join(str(pos) for pos in wrap_positions) + ')')
+        justification = self.getStyle('justification')
+        if justification != 'left':
+            call_strs.append('withJustification("' + justification + '")')
+        return call_strs
                                         
     def __iter__(self):
         '''
         Iterator over the entries of the list.
-        Some entries may be iterations (Iter) that 
+        Some entries may be ranges (ExprRange) that 
         represent multiple elements of the list.
         '''
         return iter(self.entries)
@@ -107,180 +107,19 @@ class ExprTuple(Composite, Expression):
     def __len__(self):
         '''
         Return the number of entries of the list.
-        Some entries may be iterations (Iter) that 
+        Some entries may be ranges (ExprRange) that 
         represent multiple elements of the list.
         '''
         return len(self.entries)
 
-    def __getitem__(self, i):
+    def __getitem__(self, idx):
         '''
         Return the list entry at the ith index.
         This is a relative entry-wise index where
         entries may represent multiple elements
-        via iterations (Iter).
+        via ranges (ExprRange).
         '''
-        return self.entries[i]
-
-    def getElem(self, coord, base=1, hint_idx=None,
-                assumptions=USE_DEFAULTS, requirements=None):
-        '''
-        Return the tuple element at the coordinate, given as an 
-        Expression, using the given assumptions as needed to interpret 
-        the location indicated by this expression.  Required truths, 
-        proven under the given assumptions, that  were used to make this
-        interpretation will be appended to the given 'requirements' 
-        (if provided).
-        If a hint_idx is provided, use it as a starting entry
-        index from which to search for the coordinate.  Otherwise,
-        use the previously queried entry as the 'hint'.
-        '''
-        from .composite import _generateCoordOrderAssumptions, \
-            _simplifiedCoord
-        from proveit.number import num, Naturals, Less, LessEq, \
-            dist_add, Neg, dist_subtract
-        from proveit.logic import Equals, InSet
-        from proveit.relation import TransitivityException
-        from .iteration import Iter
-        
-        if len(self)==0:
-            raise ValueError("An empty ExprTuple has no elements to get")
-        
-        if requirements is None:
-            requirements = [] # create the requirements list, but it won't be used
-        
-        nentries = len(self.entries)
-                
-        # First handle the likely case that the coordinate of the
-        # element is just the starting coordinate of an entry.
-        coord_to_idx = self.entryCoordToIndex(base, assumptions, requirements)
-        
-        coord = _simplifiedCoord(coord, assumptions, requirements)
-        if coord in coord_to_idx:
-            # Found the coordinate as the start of an entry.
-            start_idx = coord_to_idx[coord]
-            entry = self.entries[start_idx]
-            if not isinstance(entry, Iter):
-                self._lastQueriedEntryIndex = start_idx
-                return entry # just a normal entry
-            # If this is an iteration entry, we need to be careful.  
-            # Ostensibly, we would want to return entry.first() but we 
-            # need to be make sure it is not an empty iteration.  
-            # Instead, we'll treat it like the "hard" case starting
-            # from start_idx.
-        elif hint_idx is not None:
-            # Use the provided hint as the starting point entry
-            # index.
-            start_idx = hint_idx
-        else:
-            # We use the last queried index as the starting point
-            # to make typical use-cases more efficient.
-            start_idx = self._lastQueriedEntryIndex
-            
-        try:
-            # First we need to find an entry whose starting coordinate
-            # is at or beyond our desired 'coord'.  Search starting
-            # from the "hint".
-            coord_simp_requirements = []
-            coords = self.entryCoords(base, assumptions, requirements, 
-                                      coord_simp_requirements)
-            coord_order_assumptions = \
-                list(_generateCoordOrderAssumptions(coords))
-            extended_assumptions = assumptions + coord_order_assumptions
-
-            # Record relations between the given 'coord' and each
-            # entry coordinate in case we want to reuse it.'
-            relations = [None]*(nentries+1)
-            
-            # Search for the right 'idx' of the entry starting
-            # from start_idx and going forward until we have gone
-            # too far.
-            for idx in range(start_idx, nentries+1):
-                # Check if 'coord' is less than coords[idx]
-                #print("sort", coord, coords[idx], assumptions)
-                relation = LessEq.sort([coord, coords[idx]], 
-                                       assumptions=extended_assumptions)
-                relations[idx] = relation
-                rel_first, rel_op = relation.operands[0], relation.operator
-                if rel_first==coord and rel_op==Less._operator_:
-                    break
-                elif idx==nentries:
-                    raise IndexError("Coordinate %s past the range of "
-                                       "the ExprTuple, %s"%(str(coord), 
-                                                            str(self)))
-            
-            # Now go back to an entry whose starting coordinate is less 
-            # than or equal to the desired 'coord'.
-            while idx > 0:
-                idx -= 1
-                try:
-                    # Try to prove coords[idx] <= coord.
-                    relation = LessEq.sort([coords[idx], coord], 
-                                            assumptions=extended_assumptions,
-                                            reorder = False)
-                    relations[idx] = relation
-                    break
-                except TransitivityException:
-                    # Since we could not prove that 
-                    # coords[idx] <= coord, we must prove
-                    # coord < coords[idx] and keep going back.
-                    relation = Less(coord, coords[idx]).prove(extended_assumptions)
-                    relations[idx] = relation
-                    continue
-            
-            # We have the right index.  Include coordinate 
-            # simplifications up to that point as requirements.
-            coord_simp_req_map = {eq.rhs:eq for eq in coord_simp_requirements}
-            for prev_coord in coords[:idx+1]:
-                if prev_coord in coord_simp_req_map:
-                    requirements.append(coord_simp_req_map[prev_coord])           
-            
-            # The 'coord' is within this particular entry.
-            # Record the required relations that prove that.
-            self._lastQueriedEntryIndex = idx
-            requirements.append(relations[idx])
-            requirements.append(relations[idx+1])
-            
-            # And return the appropriate element within the
-            # entry.
-            entry = self.entries[idx]
-            if relations[idx].operator == Equals._operator_:
-                # Special case -- coord at the entry origin.
-                if isinstance(entry, Iter):
-                    return entry.first()
-                else:
-                    return entry
-            
-            # The entry must be an iteration.
-            if not isinstance(entry, Iter):
-                raise ExprTupleError("Invalid coordinate, %s, in "
-                                        "ExprTuple, %s."%(str(coord), 
-                                                        str(self)))
-            
-            # Make sure the coordinate is valid and not "in between"
-            # coordinates at unit intervals.
-            valid_coord = InSet(dist_subtract(coord, coords[idx]), Naturals)
-            requirements.append(valid_coord.prove(assumptions))
-            
-            # Get the appropriate element within the iteration.
-            iter_start_index = entry.start_index
-            iter_loc = dist_add(iter_start_index, 
-                                dist_subtract(coord, coords[idx]))
-            simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, 
-                                                    requirements)
-            # Does the same as 'entry.getInstance' but without checking
-            # requirements; we don't need to worry about these requirements
-            # because we already satisfied the requirements that we need.
-            return entry.lambda_map.mapped(simplified_iter_loc)
-        
-        except ProofFailure as e:
-            msg = ("Could not determine the element at "
-                   "%s of the ExprTuple %s under assumptions %s."
-                   %(str(coord), str(self), str(e.assumptions)))
-            raise ExprTupleError(msg)
-
-        raise IndexError("Unable to prove that "
-                           "%s > %d to be within ExprTuple %s."
-                           %(str(coord), base, str(self)))
+        return self.entries[idx]
     
     def __add__(self, other):
         '''
@@ -290,13 +129,26 @@ class ExprTuple(Composite, Expression):
         '''
         return ExprTuple(*(self.entries + tuple(other)))
     
-    def singular(self):
+    def is_singular(self): 
         '''
         Return True if this has a single element that is not an
-        iteration.
+        ExprRange.
         '''
-        from .iteration import Iter
-        return len(self)==1 and not isinstance(self[0], Iter)
+        from .expr_range import ExprRange
+        return len(self)==1 and not isinstance(self[0], ExprRange)
+    
+    def is_binary(self):
+        '''
+        Returns True if this has two elements that are not ExprRanges.
+        '''
+        return len(self)==2 and not self.contains_range()
+    
+    def contains_range(self):
+        '''
+        Returns true if the entry contains an ExprRange.
+        '''
+        from .expr_range import ExprRange
+        return any(isinstance(entry, ExprRange) for entry in self.entries)
     
     def index(self, entry, start=0, stop=None):
         if stop is None:
@@ -304,31 +156,68 @@ class ExprTuple(Composite, Expression):
         else:
             return self.entries.index(entry, start, stop)
 
+    def wrapPositions(self):
+        '''
+        Return a list of wrap positions according to the current style setting.
+        Position 'n' is after the nth comma.
+        '''
+        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
+    
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=True, subFence=False, operatorOrOperators=None, implicitFirstOperator=False, wrapPositions=tuple()):
-        from .iteration import Iter
+    def formatted(self, formatType, fence=True, subFence=False, operatorOrOperators=None, implicitFirstOperator=False, 
+                  wrapPositions=None, justification=None, **kwargs):
+        from .expr_range import ExprRange
+
         outStr = ''
         if len(self) == 0 and fence: 
             # for an empty list, show the parenthesis to show something.            
             return '()'
-        ellipses = r'\ldots' if formatType=='latex' else ' ... '
+        
+        if wrapPositions is None:
+            # Convert from a convention where position 'n' is after the nth comma to one in which the position '2n' is 
+            # after the nth operator (which also allow for position before operators).
+            wrapPositions = [2*pos for pos in self.wrapPositions()]
+        if justification is None:
+            justification = self.getStyle('justification', 'left')
+        
+        do_wrapping = len(wrapPositions)>0
+        if fence: outStr = '(' if formatType=='string' else  r'\left('
+        if do_wrapping and formatType=='latex': 
+            outStr += r'\begin{array}{%s} '%justification[0]
+        
         formatted_sub_expressions = []
+        # Track whether or not ExprRange operands are using
+        # "explicit" parameterization, becuase the operators must
+        # follow suit.
+        using_explicit_parameterization = []
         for sub_expr in self:
-            if isinstance(sub_expr, Iter):
-                formatted_sub_expressions += [sub_expr.first().formatted(formatType, fence=subFence), ellipses, sub_expr.last().formatted(formatType, fence=subFence)]
+            if isinstance(sub_expr, ExprRange):
+                # Handle an ExprRange entry; here the "sub-expressions"
+                # are really ExprRange "checkpoints" (first, last, as
+                # well as the ExprRange body in the middle if using
+                # an 'explicit' style for 'parameterization) as well as
+                # ellipses between the checkpoints..
+                using_explicit_parameterization.append(
+                        sub_expr._use_explicit_parameterization(formatType))
+                if isinstance(sub_expr.body, ExprTuple):
+                    _fence=True
+                else:
+                    _fence=subFence
+                formatted_sub_expressions += sub_expr._formatted_checkpoints(
+                        formatType, fence=_fence, with_ellipses=True,
+                        operator=operatorOrOperators)
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists                
                 formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=True))
             else:
                 formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=subFence))
+        
         # put the formatted operator between each of formattedSubExpressions
-        if fence: 
-            outStr += '(' if formatType=='string' else  r'\left('
         for wrap_position in wrapPositions:
             if wrap_position%2==1:
                 # wrap after operand (before next operation)
@@ -343,13 +232,27 @@ class ExprTuple(Composite, Expression):
         if isinstance(operatorOrOperators, str):
             # single operator
             formatted_operator = operatorOrOperators
-            outStr += (' '+formatted_operator+' ').join(formatted_sub_expressions)
+            if operatorOrOperators == ',':
+                # e.g.: a, b, c, d
+                outStr += (formatted_operator+' ').join(formatted_sub_expressions)
+            else:
+                # e.g.: a + b + c + d
+                outStr += (' '+formatted_operator+' ').join(formatted_sub_expressions)
         else:
             # assume all different operators
             formatted_operators = []
             for operator in operatorOrOperators:
-                if isinstance(operator, Iter):
-                    formatted_operators += [operator.first().formatted(formatType), '', operator.last().formatted(formatType)]
+                if isinstance(operator, ExprRange):
+                    # Handle an ExprRange entry; here the "operators"
+                    # are really ExprRange "checkpoints" (first, last, 
+                    # as well as the ExprRange body in the middle if 
+                    # using an 'explicit' style for 'parameterization').
+                    # For the 'ellipses', we will just use a 
+                    # placeholder.
+                    be_explicit = using_explicit_parameterization.pop(0)
+                    formatted_operators += operator._formatted_checkpoints(
+                        formatType, fence=subFence, ellipses='',
+                        use_explicit_parameterization=be_explicit)
                 else:
                     formatted_operators.append(operator.formatted(formatType))
             if len(formatted_sub_expressions) == len(formatted_operators):
@@ -365,134 +268,276 @@ class ExprTuple(Composite, Expression):
                 outStr = ' '.join(formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in zip(formatted_sub_expressions, formatted_operators))
                 outStr += ' ' + formatted_sub_expressions[-1]
             elif len(formatted_sub_expressions) != len(formatted_operators):
-                raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator iterations must be in correpsondence with operand iterations.")
-        if fence:            
-            outStr += ')' if formatType=='string' else  r'\right)'
+                raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator ranges must be in correpsondence with operand ranges.")
+
+        if do_wrapping and formatType=='latex': 
+            outStr += r' \end{array}'
+        if fence: outStr += ')' if formatType=='string' else  r'\right)'
+        
         return outStr
     
-    def entryCoords(self, base, assumptions=USE_DEFAULTS, 
-                     entry_span_requirements=None,
-                     coord_simp_requirements=None):
+    def length(self, assumptions=USE_DEFAULTS):
         '''
-        Return the simplified expressions for the coordinates of each
-        entry of this ExprTuple in the proper order.  For each iteration
-        entry (Iter), subsequent coordinates will account for the extent
-        of that iteration.  The last coordinate is the length of the
-        tuple + the base, including the extent of each iteration.
-        These simplified coordinate expressions
-        will be remembered and reused when a query is repeated.
-        
-        Appends to entry_span_requirements the requirements that ensure
-        that iterations have a length that is a natural number.
-        Appends to coord_simp_requirements the simplification
-        equations for each coordinate.
+        Return the proven length of this ExprTuple as an Expression.  
+        This length includes the extent of all contained ranges. 
         '''
-        from proveit.logic import InSet
-        from proveit.number import one, num, Naturals, \
-            dist_add, dist_subtract
-        from .iteration import Iter
-        
-        if entry_span_requirements is None: entry_span_requirements = []
-        if coord_simp_requirements is None: coord_simp_requirements = []
-        
-        # Check to see if this was the same query as last time.
-        # If so, reuse the last result.
-        if self._lastEntryCoordInfo is not None:
-            last_base, last_assumptions, last_span_requirements, \
-            last_simp_requirements, last_coords, _ \
-                = self._lastEntryCoordInfo
-            if (last_base, last_assumptions) == (base, assumptions):
-                # Reuse the previous result, including the requirements.
-                entry_span_requirements.extend(last_span_requirements)
-                coord_simp_requirements.extend(last_simp_requirements)
-                return last_coords
-        
-        # Generate the coordinate list.
-        coords = []
-        new_span_requirements = []
-        new_simp_requirements = []
-        coord = num(base)
-        for k, entry in enumerate(self):
-            coords.append(coord)
-            if isinstance(entry, Iter):
-                entry_delta = _simplifiedCoord(dist_subtract(entry.end_index, 
-                                                             entry.start_index),
-                                               assumptions, new_span_requirements)
-                # Add one, to get to the start of the next entry, and simplify.
-                entry_span = _simplifiedCoord(dist_add(entry_delta, one), 
-                                              assumptions, new_span_requirements)
-                # From one entry to the next should be a natural number (could be
-                # an empty entry).
-                #print("simplified entry span", entry_span)
-                new_span_requirements.append(InSet(entry_span, Naturals).prove(assumptions))
-                coord = _simplifiedCoord(dist_add(coord, entry_span), 
-                                        assumptions, new_simp_requirements)
-            else:
-                coord = _simplifiedCoord(dist_add(coord, one), 
-                                         assumptions, new_simp_requirements)
-        # The last included 'coordinate' is one past the last
-        # coordinate within the tuple range.  This value minus the base
-        # is the length of the tuple, the number of elements it
-        # conceptually contains.
-        coords.append(coord)
-
-                
-        # Remember this result for next time in case the query is
-        # repeated.
-        coords_to_indices = {coord:i for i, coord in enumerate(coords)}
-        coord_info = (base, assumptions, new_span_requirements, \
-                      new_simp_requirements, coords, coords_to_indices)
-        self._lastEntryCoordInfo = coord_info
-        entry_span_requirements.extend(new_span_requirements)
-        coord_simp_requirements.extend(new_simp_requirements)
-        
-        # Return the coordinate list.
-        return coords
+        from proveit.core_expr_types import Len
+        return Len(self).computed(assumptions)
     
-    def entryCoordToIndex(self, base, assumptions, requirements=None):
+    def has_matching_ranges(self, other_tuple):
         '''
-        Return a dictionary that maps simplified expressions for the 
-        coordinates to respective integer indices of this ExprTuple.
-        For each Iter entry, subsequent coordinates will account for 
-        the extent of that Iter.  These simplified coordinate 
-        expressions will be remembered and reused when a query is repeated.
+        Return True iff the `other_tuple` matches this ExprTuple
+        with respect to which entries are ExprRanges and, where they
+        are, the start and end indices of the ExprRanges match.
         '''
-        self.entryCoords(base, assumptions, requirements)
-        return self._lastEntryCoordInfo[-1]
-    
-    def length(self, assumptions, requirements=None):
-        '''
-        Return the length of this tuple as an Expression.  This
-        length includes the extent of all contained iterations. 
-        '''
-        return self.entryCoords(0, assumptions, requirements)[-1]
+        from proveit import ExprRange, compositeExpression
+        if not isinstance(other_tuple, ExprTuple):
+            other_tuple = compositeExpression(other_tuple)
+        if len(self) != len(other_tuple):
+            return False # don't have the same number of entries
+        for entry, other_entry in zip(self, other_tuple):
+            if (isinstance(entry, ExprRange) 
+                    != isinstance(other_entry, ExprRange)):
+                return False # range vs singular mismatch
+            if isinstance(entry, ExprRange):
+                if entry.start_index != other_entry.start_index:
+                    return False # start indices don't match
+                if entry.end_index != other_entry.end_index:
+                    return False # end indices don't match
+        return True # everything matches.
             
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling, assumptions, 
+                  requirements, equality_repl_requirements):
         '''
-        Returns this expression with the substitutions made 
-        according to exprMap and/or relabeled according to relabelMap.
-        Flattens nested ExprTuples that arise from Embed substitutions.
+        Returns this expression with sub-expressions replaced 
+        according to the replacement map (repl_map) dictionary.
+        
+        'assumptions' and 'requirements' are used when an operator is
+        replaced by a Lambda map that has a range of parameters 
+        (e.g., x_1, ..., x_n) such that the length of the parameters 
+        and operands must be proven to be equal.  For more details, 
+        see Operation._replaced, Lambda.apply, and ExprRange._replaced 
+        (which is the sequence of calls involved).        
+        
+        For an ExprTuple, each entry is 'replaced' independently.  
+        For an entry that is an ExprRange, its "replaced entries" are 
+        embedded as one or more entries of the ExprTuple.
         '''
-        from .iteration import Iter
-        self._checkRelabelMap(relabelMap)
-        if len(exprMap)>0 and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)
+        from .expr_range import ExprRange
+        if len(repl_map)>0 and (self in repl_map):
+            # The full expression is to be replaced.
+            return repl_map[self]
+        
         subbed_exprs = []
-        for expr in self:
-            subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars, 
-                                           assumptions, requirements)
-            if isinstance(expr, Iter) and isinstance(subbed_expr, ExprTuple):
-                # The iterated expression is being expanded 
-                # and should be embedded into the list.
-                for iter_expr in subbed_expr:
-                    subbed_exprs.append(iter_expr)
+        for expr in self.entries:
+            if isinstance(expr, ExprRange):
+                # ExprRange.replaced is a generator that yields items
+                # to be embedded into the tuple.
+                subbed_exprs.extend(expr._replaced_entries(
+                        repl_map, allow_relabeling, assumptions, 
+                        requirements, equality_repl_requirements))
             else:
+                subbed_expr = expr.replaced(repl_map, allow_relabeling, 
+                                            assumptions, requirements,
+                                            equality_repl_requirements)
                 subbed_exprs.append(subbed_expr)
         return ExprTuple(*subbed_exprs)
+    
+    def merger(self, assumptions=USE_DEFAULTS):
+        '''
+        If this is an tuple of expressions that can be directly merged 
+        together into a single ExprRange, return this proven 
+        equivalence.  For example,
+        {j \in Naturals, k-(j+1) \in Naturals} 
+        |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)
+        '''
+        from proveit._core_.expression.lambda_expr import Lambda
+        from .expr_range import ExprRange
+        from proveit.relation import TransRelUpdater
+        from proveit.core_expr_types.tuples._theorems_ import (
+                merge, merge_front, merge_back, merge_extension,
+                merge_pair, merge_series)
+        from proveit._common_ import f, i, j, k, l, x
+        from proveit.number import Add, one
+        
+        # A convenience to allow successive update to the equation via 
+        # transitivities (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        # Determine the position of the first ExprRange item and get the 
+        # lambda map.
+        first_range_pos = len(self)
+        lambda_map = None
+        for _k, item in enumerate(self):
+            if isinstance(item, ExprRange):
+                lambda_map = Lambda(item.lambda_map.parameter, 
+                                    item.lambda_map.body)
+                first_range_pos = _k
+                break
+        
+        if 1 < first_range_pos:
+            if lambda_map is None:
+                raise NotImplementedError("Means of extracting a lambda "
+                                          "map has not been implemented")
+                pass # need the lambda map
+            # Collapse singular items at the beginning.
+            front_singles = ExprTuple(eq.expr[:first_range_pos])
+            i_sub = lambda_map.extractArgument(front_singles[0])
+            j_sub = lambda_map.extractArgument(front_singles[-1])
+            if len(front_singles)==2:
+                # Merge a pair of singular items.
+                front_merger = merge_pair.specialize(
+                        {f:lambda_map, i:i_sub, j:j_sub}, 
+                        assumptions=assumptions)
+            else:
+                # Merge a series of singular items in one shot.
+                front_merger = merge_series.specialize(
+                        {f:lambda_map, x:front_singles, i:i_sub, j:j_sub}, 
+                        assumptions=assumptions)
+            eq.update(front_merger.substitution(self.innerExpr()[:first_range_pos], 
+                                                assumptions=assumptions))
+            
+        if len(eq.expr) == 1:
+            # We have accomplished a merger down to one item.
+            return eq.relation
+        
+        if len(eq.expr) == 2:
+            # Merge a pair.
+            if isinstance(eq.expr[0], ExprRange):
+                if isinstance(eq.expr[1], ExprRange):
+                    # Merge a pair of ExprRanges.
+                    item = eq.expr[1]
+                    other_lambda_map = Lambda(item.lambda_map.parameter, 
+                                              item.lambda_map.body)
+                    if other_lambda_map != lambda_map:
+                        raise ExprTupleError("Cannot merge together ExprRanges "
+                                             "with different lambda maps: %s vs %s"
+                                             %(lambda_map, other_lambda_map))
+                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
+                    _k, _l = eq.expr[1].start_index, eq.expr[1].end_index
+                    merger = \
+                        merge.specialize({f:lambda_map, i:_i, j:_j, k:_k, l:_l},
+                                         assumptions=assumptions)
+                else:
+                    # Merge an ExprRange and a singular item.
+                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index    
+                    _k = lambda_map.extractArgument(eq.expr[1])
+                    if _k == Add(_j, one):
+                        merger = merge_extension.specialize(
+                                {f:lambda_map, i:_i, j:_j}, 
+                                assumptions=assumptions)                    
+                    else:
+                        merger = merge_back.specialize(
+                                {f:lambda_map, i:_i, j:_j, k:_k}, 
+                                assumptions=assumptions)                    
+            else:
+                # Merge a singular item and ExprRange.
+                iSub = lambda_map.extractArgument(eq.expr[0])
+                jSub, kSub = eq.expr[1].start_index, eq.expr[1].end_index
+                merger = \
+                    merge_front.specialize({f:lambda_map, i:iSub, j:jSub,
+                                            k:kSub}, assumptions=assumptions)
+            eq.update(merger)
+            return eq.relation
+        
+        while len(eq.expr) > 1:
+            front_merger = ExprTuple(*eq.expr[:2]).merger(assumptions)
+            eq.update(front_merger.substitution(
+                    eq.expr.innerExpr(assumptions)[:2], 
+                    assumptions=assumptions))
+        return eq.relation
+    
+    def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
+                       minimal_automation=False):
+        from proveit import ExprRange
+        from proveit.logic import Equals
+        if not isinstance(equality, Equals):
+            raise ValueError("The 'equality' should be an Equals expression")        
+        if equality.lhs != self:
+            raise ValueError("The left side of 'equality' should be 'self'")
+
+        from proveit.number import num, one
+        
+        # Handle the special counting cases.  For example,
+        #   (1, 2, 3, 4) = (1, ..., 4)
+        _n = len(self)
+        if all(self[_k] == num(_k+1) for _k in range(_n)):
+            if (isinstance(equality.rhs, ExprTuple)
+                    and len(equality.rhs)==1 
+                    and isinstance(equality.rhs[0], ExprRange)):
+                expr_range = equality.rhs[0]
+                if (expr_range.start_index == one and
+                        expr_range.end_index == num(_n)):
+                    if len(self) >= 10:
+                        raise NotImplementedError("counting range equality "
+                                                  "not implemented for more "
+                                                  "then 10 elements")
+                    import proveit.number.numeral.deci
+                    equiv_thm = proveit.number.numeral.deci._theorems_\
+                                .__getattr__('count_to_%d_range'%_n)
+                    return equiv_thm
+        raise NotImplementedError("ExprTuple.deduceEquality not implemented "
+                                  "for this case: %s."%self)
+        
+        
+    """
+    TODO: change register_equivalence_method to allow and fascilitate these
+    method stubs for purposes of generating useful documentation.
+    
+    def merged(self, assumptions=USE_DEFAULTS):
+        '''
+        Return the right-hand-side of a 'merger'.
+        '''
+        raise Exception("Should be implemented via InnerExpr.register_equivalence_method")
+    
+    def merge(self, assumptions=USE_DEFAULTS):
+        '''
+        As an InnerExpr method when the inner expression is an ExprTuple,
+        return the expression with the inner expression replaced by its
+        'merged' version.
+        '''
+        raise Exception("Implemented via InnerExpr.register_equivalence_method "
+                        "only to be applied to an InnerExpr object.")
+    """
+
+def extract_var_tuple_indices(indexed_var_tuple):
+    '''
+    Given an ExprTuple of only IndexedVar and ExprRange entries, returns
+    an ExprTuple of just the corresponding indices (including ranges of 
+    indices and nested ranges of indices).
+    '''
+    from proveit import IndexedVar, ExprRange
+    indices = []
+    if not isinstance(indexed_var_tuple, ExprTuple):
+        raise TypeError("'indexed_var_tuple' must be an ExprTuple")
+    for entry in indexed_var_tuple:
+        if isinstance(entry, IndexedVar):
+            entry_indices = entry.indices
+            if len(entry_indices)==1: 
+                indices.append(entry_indices[0])
+            else:
+                indices.append(entry_indices)
+        elif isinstance(entry, ExprRange):
+            inner_indices = extract_var_tuple_indices(ExprTuple(entry.body))
+            assert len(inner_indices)==1
+            body = inner_indices[0]
+            indices.append(ExprRange(entry.parameter, body,
+                                     entry.start_index, entry.end_index))
+        else:
+            raise TypeError("'var_range' must be an ExprTuple only of "
+                            "IndexedVar or (nested) ExprRange entries.")
+    return ExprTuple(*indices)
+            
 
 class ExprTupleError(Exception):
     def __init__(self, msg):
         self.msg = msg
     def __str__(self):
         return self.msg
+
+class ConvertToMapError(Exception):
+    def __init__(self, extra_msg):
+        self.extra_msg = extra_msg
+    def __str__(self):
+        return ("The indices must be in correspondence with ExprTuple items "
+                "when performing ExprTuple.convert_to_map: %s"%self.extr_msg)

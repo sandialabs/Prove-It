@@ -1,716 +1,1076 @@
-from .composite import Composite
 from .expr_tuple import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.defaults import defaults, USE_DEFAULTS
-from .iteration import Iter
-import itertools
-from ast import literal_eval
-                
+from proveit._core_.expression.style_options import StyleOptions
 
-class ExprArray(Composite, Expression): 
+
+class ExprArray(ExprTuple):
     '''
-    An ExprArray is a composite Expression representing
-    an n-dimensional tensor.  It serves to map n-coordinate 
-    "locations" to Expression elements.  The coordinates may 
-    be general Expressions that are intended to represent 
-    Integer numbers.
-    
-    The ExprArray stores entries in terms of "relative
-    element locations".  For each axis, all relevent coordinate 
-    expressions are sorted into a sorting-relation expression 
-    (for example, "a < b <= c = d < e", or some such form).  
-    The index of these  operands serve as coordinates for 
-    the "relative element locations".  We can translate from 
-    one "location" representation to the other using the
-    coordinate sorting relations.
-    
-    There may be Embed Expression elements for embedding
-    a tensor within the tensor that may be substituted into
-    the outer tensor.  When this happens, new coordinates may
-    be added, generating new coordinate sorting relations.
-    A specialization step that results in such a substitution
-    will be conditioned upon the proof of any new coordinate
-    sorting relations (these are extra conditions in addition
-    to any explicit conditions of the universal quantifier(s)
-    being specialized).
-    
-    Axioms involving an ExprArray should properly be stated
-    by way of an implication -- the statement involving
-    the ExprArray is the consequent that is only valid
-    provided the coordinate sorting relations, in the
-    antecedent, is true.  Corresponding theorems can then be
-    proven by showing that the coordinate sorting relations
-    are true (under the conditions of any universal quantifiers
-    or other axioms).
+    An ExprArray is simply an ExprTuple of ExprTuples or ExprRanges.
+    The array is broken up into different rows after each ExprTuple
+    or ExprRange. Each column MUST contain the same type of expression.
     '''
-    
-    def __init__(self, tensor, shape=None, styles=None, assumptions=USE_DEFAULTS, requirements=tuple()):
+    def __init__(self, *expressions, styles=None):
         '''
-        Create an ExprArray either with a simple, dense tensor (list of lists ... of lists) or
-        with a dictionary mapping coordinates (as tuples of expressions that represent integers) 
-        to expr elements or Blocks.
-        Providing starting and/or ending location(s) can extend the bounds of the tensor beyond
-        the elements that are supplied.
+        Initialize an ExprTuple from an iterable over Expression
+        objects.
         '''
-        from .composite import _simplifiedCoord
-        from proveit._core_ import KnownTruth
-        from proveit.number import Less, Greater, zero, one, num, Add, subtract
-        
-        assumptions = defaults.checkedAssumptions(assumptions)
-        requirements = []                
-        if not isinstance(tensor, dict):
-            tensor = {loc:element for loc, element in ExprArray._tensorDictFromIterables(tensor, assumptions, requirements)}
-                
-        # Map direct compositions for the end-coordinate of Iter elements
-        # to their simplified forms.
-        self.endCoordSimplifications = dict()
-                
-        # generate the set of distinct coordinates for each dimension
-        coord_sets = None # simplified versions
-        full_tensor = dict()
-        ndims = None
-        if shape is not None:
-            shape = ExprArray.locAsExprs(shape)
-            ndims = len(shape)
-        for loc, element in tensor.items():
-            if isinstance(element, KnownTruth):
-                element = element.expr # extract the Expression from the KnownTruth
-            ndims = len(loc)
-            if coord_sets is None:
-                coord_sets = [set() for _ in range(ndims)]
-            elif len(coord_sets) != ndims:
-                if shape is not None:
-                    raise ValueError("length of 'shape' is inconsistent with number of dimensions for ExprArray locations")
-                else:
-                    raise ValueError("inconsistent number of dimensions for locations of the ExprArray")
-            for axis, coord in enumerate(list(loc)):
-                if isinstance(coord, int):
-                    coord = num(coord) # convert from Python int to an Expression
-                    loc[axis] = coord
-                coord_sets[axis].add(coord)
-                if isinstance(element, Iter):
-                    # Add (end-start)+1 of the Iter to get to the end
-                    # location of the entry along this axis. 
-                    orig_end_coord = Add(coord, subtract(element.end_indices[axis], element.start_indices[axis]), one)
-                    end_coord = _simplifiedCoord(orig_end_coord, assumptions, requirements)
-                    self.endCoordSimplifications[orig_end_coord] = end_coord
-                    coord_sets[axis].add(end_coord)
-            full_tensor[tuple(loc)] = element
+        from .expr_range import ExprRange
+        if styles is None: styles = dict()
+        if 'orientation' not in styles:
+            styles['orientation'] = 'horizontal'
+        if 'justification' not in styles:
+            styles['justification'] = 'center'
 
-        if ndims is None:
-            raise ExprArrayError("Empty ExprArray is not allowed")
-        if ndims <= 1:
-            raise ExprArrayError("ExprArray must be 2 or more dimensions (use an ExprTuple for something 1-dimensional")
+        ExprTuple.__init__(self, *expressions, styles=styles)
 
-        # in each dimension, coord_indices will be a dictionary
-        # that maps each tensor location coordinate to its relative entry index.
-        coord_rel_indices = []
-        self.sortedCoordLists = []
-        self.coordDiffRelationLists = []
-        for axis in range(ndims): # for each axis
-            # KnownTruth sorting relation for the simplified coordinates used along this axis
-            # (something with a form like a < b <= c = d <= e, that sorts the tensor location coordinates): 
-            coord_sorting_relation = Less.sort(coord_sets[axis], assumptions=assumptions)
-            sorted_coords = list(coord_sorting_relation.operands)
-            
-            if shape is None:
-                # Since nothing was explicitly specified, the shape is dictacted by extending
-                # one beyond the last coordinate entry. 
-                sorted_coords.append(Add(sorted_coords[-1], one))
-            else:
-                sorted_coords.append(shape[axis]) # append the coordinate for the explicitly specified shape
-            if sorted_coords[0] != zero:
-                sorted_coords.insert(0, zero) # make sure the first of the sorted coordinates is zero.
-            
-            self.sortedCoordLists.append(ExprTuple(sorted_coords))
-            
-            # Add in coordinate expressions that explicitly indicate the difference between coordinates.
-            # These may be used in generating the latex form of the ExprArray.
-            diff_relations = []
-            for c1, c2 in zip(sorted_coords[:-1], sorted_coords[1:]):
-                diff = _simplifiedCoord(subtract(c2, c1), assumptions, requirements)
-                # get the relationship between the difference of successive coordinate and zero.
-                diff_relation = Greater.sort([zero, diff], assumptions=assumptions)
-                if isinstance(diff_relation, Greater):
-                    if c2 == sorted_coords[-1] and shape is not None:
-                        raise ExprArrayError("Coordinates extend beyond the specified shape in axis %d: %s after %s"%(axis, str(coord_sorting_relation.operands[-1]), str(shape[axis])))                        
-                    assert tuple(diff_relation.operands) == (diff, zero), 'Inconsistent Less.sort results'
-                    # diff > 0, let's compare it with one now
-                    diff_relation = Greater.sort([one, diff], assumptions=assumptions)
-                requirements.append(diff_relation)
-                diff_relations.append(diff_relation)
-            self.coordDiffRelationLists.append(ExprTuple(diff_relations))
-                
-            # map each coordinate expression to its index into the sorting_relation operands
-            coord_rel_indices.append({coord:k for k, coord in enumerate(sorted_coords)})
-            
-        # convert from the full tensor with arbitrary expression coordinates to coordinates that are
-        # mapped according to sorted relation enumerations.
-        rel_index_tensor = dict()
-        for loc, element in full_tensor.items():
-            rel_index_loc = (rel_index_map[coord] for coord, rel_index_map in zip(loc, coord_rel_indices))
-            rel_index_tensor[rel_index_loc] = element
-                
-        sorted_keys = sorted(rel_index_tensor.keys())
-        Expression.__init__(self, ['ExprArray', str(ndims), ';'.join(str(key) for key in sorted_keys)], self.sortedCoordLists + self.coordDiffRelationLists + [rel_index_tensor[key] for key in sorted_keys], styles=styles, requirements=requirements)
-        self.ndims = ndims
-        self.relIndexTensor = rel_index_tensor
-        
-        # entryOrigins maps relative indices that contain tensor elements to
-        # the relative indices of the origin for the corresponding entry.
-        # Specifically, single-element entries map indices to themselves, but
-        # multi-element Iter entries map each of the encompassed 
-        # relative index location to the origin relative index location where
-        # that Iter entry is stored.
-        self.relEntryOrigins = self._makeEntryOrigins()
-        
-        # the last coordinates of the sorted coordinates along each eaxis define the shape:        
-        self.shape = ExprTuple([sorted_coords[-1] for sorted_coords in self.sortedCoordLists])
-    
-    @staticmethod
-    def make_empty_entries(shape):
-        '''
-        Prepare an array as nested lists of empty (None) entries.
-        Replace the entries with Expression objects to prepare
-        an array to construct an ExprArray.
-        '''
-        if len(shape)==0: return None
-        cur_shape = shape[0]
-        reduced_shape = shape[1:]
-        return [ExprArray.make_empty_entries(reduced_shape) for _ in
-                 range(cur_shape)]
+        for entry in self:
+            if not isinstance(entry, ExprTuple) and not isinstance(entry, ExprRange):
+                raise ValueError("Contents of an ExprArray must be wrapped in either an ExprRange or ExprTuple.")
 
-    @staticmethod
-    def set_entry(entries, indices, expr):
-        '''
-        Set a particular entry of the entries array having the specified
-        indices with the given Expression entry value.
-        '''
-        idx = indices[0]
-        if len(indices)==1: 
-            entries[idx] = expr
-        else:
-            ExprArray.set_entry(entries[idx], indices[1:], expr)
+        # check each column for same expression throughout
+        self.checkRange()
     
-    @staticmethod
-    def locAsExprs(loc):
-        from proveit.number import num
-        loc_exprs = []
-        for coord in loc:
-            if isinstance(coord, int):
-                coord = num(coord) # convert int to an Expression
-            if not isinstance(coord, Expression):
-                raise TypeError("location coordinates must be Expression objects (or 'int's to convert to Expressions)")
-            loc_exprs.append(coord)
-        return loc_exprs
-    
-    
-    def getCoords(self, base, axis, assumptions, requirements):
-        pass
-
-    @staticmethod
-    def _tensorDictFromIterables(tensor, assumptions, requirements):
-        '''
-        From nested lists of Expressions, create a tensor dictionary, 
-        mapping multi-dimensional indices to Expression elements.
-        Yields location, element pairs that define a tensor.
-        '''
-        from proveit._core_ import KnownTruth        
-        from .composite import _simplifiedCoord
-        from proveit.number import zero, one, Add, subtract
-        try:
-            coord = zero
-            for entry in tensor:
-                # simplify the coordinate before moving on
-                # (the simplified form will be equated with the original in the
-                # sorting relations of the ExprArray).
-                coord = _simplifiedCoord(coord, assumptions, requirements)
-                if isinstance(entry, KnownTruth):
-                    entry = entry.expr # extract the Expression from the KnownTruth
-                if isinstance(entry, Expression):
-                    loc = (coord,)
-                    if isinstance(entry, Iter) and entry.ndims > 1:
-                        loc += (zero,)*(entry.ndims-1) # append zeros for the extra dimensions
-                    yield loc, entry # yield the location and element
-                    if isinstance(entry, Iter):
-                        # skip the coordinate ahead over the Embed expression
-                        coord = Add(coord, subtract(entry.end_indices[0], entry.start_indices[0]), one)
-                    else:
-                        coord = Add(coord, one) # shift the coordinate ahead by one
-                else:
-                    for sub_loc, entry in ExprArray.TensorDictFromIterables(entry):
-                        loc = (coord,)+sub_loc
-                        yield loc, entry
-        except TypeError:
-            raise TypeError('An ExprArray must be a dictionary of indices to elements or a nested iterables of Expressions')
-    
-    def _makeEntryOrigins(self):
-        '''
-        entryOrigins maps relative indices that contain tensor elements to
-        the relative indices of the origin for the corresponding entry.
-        Specifically, single-element entries map indices to themselves, but
-        multi-element Iter entries map each of the encompassed 
-        relative index location to the origin relative index location where
-        that Iter entry is stored.
-        
-        Raise an ExprArrayError if there are overlapping entries.
-        '''
-        from .iteration import Iter
-        from proveit.number import Add, subtract, one
-        
-        # Create the entry_origins dictionary and check for invalid
-        # overlapping entries while we are at it.
-        rel_entry_origins = dict()
-        rel_index_tensor = self.relIndexTensor
-        for rel_entry_loc, entry in rel_index_tensor.items():
-            if isinstance(entry, Iter):
-                loc = self.tensorLoc(rel_entry_loc)
-                
-                # corner location at the end of the Embed block:
-                end_corner = []
-                for axis, coord in enumerate(loc):
-                    end_coord = Add(coord, subtract(entry.end_indices[axis], entry.start_indices[axis]), one)
-                    end_corner.append(self.endCoordSimplifications[end_coord])
-                
-                # translate the end corner location to the corresponding relative indices
-                rel_entry_end_corner = self.relEntryLoc(end_corner)
-                
-                # iterate over all of the relative indexed locations from the starting corner to 
-                # the ending corner of the Iter block, populating the entry_origins dictionary and 
-                # making sure none of the locations overlap with something else.
-                for p in itertools.product(*[range(start, end) for start, end in zip(rel_entry_loc, rel_entry_end_corner)]):
-                    p = tuple(p)
-                    if p in rel_entry_origins:
-                        raise ExprArrayError("Overlapping blocks in the ExprArray")
-                    rel_entry_origins[p] = rel_entry_loc
-            else:
-                # single-element entry.  check for overlap and add to the entry_origins dictionary
-                if rel_entry_loc in rel_entry_origins:
-                    raise ExprArrayError("Overlapping blocks in the ExprArray")
-                rel_entry_origins[rel_entry_loc] = rel_entry_loc
-                
-        # Return the entry_origins dictionary that we generated.
-        return rel_entry_origins 
-    
-    def relEntryLoc(self, loc):
-        '''
-        Return the relative entry location given the absolute tensor location.
-        '''
-        return ExprArray.relEntryLocation(loc, self.coordSortingRelations)
-
-    def tensorLoc(self, rel_entry_loc):
-        '''
-        Return the absolute tensor location given the relative entry location.
-        '''
-        return ExprArray.tensorLocation(rel_entry_loc, self.coordSortingRelations)
-    
-    @staticmethod
-    def relEntryLocation(self, loc, coord_sorting_relations):
-        '''
-        Return the relative entry location given the absolute tensor location using 
-        the given relations for sorting the absolute tensor coordinates.
-        '''
-        rel_entry_loc = (sorting_relation.operands.index(coord) for coord, sorting_relation in zip(loc, coord_sorting_relations))
-        return rel_entry_loc
-            
-    @staticmethod
-    def tensorLocation(self, rel_entry_loc, coord_sorting_relations):
-        '''
-        Return the absolute tensor location given the relative entry location using 
-        the given relations for sorting the absolute tensor coordinates.
-        '''
-        loc = (sorting_relation.operands[index] for index, sorting_relation in zip(rel_entry_loc, coord_sorting_relations))
-        return loc
-                        
-    def numEntries(self):
-        '''
-        Return the number of tensor entries.
-        '''
-        return len(self.relIndexTensor)
-        
-    def items(self):
-        '''
-        Yield each relative entry location and corresponding element.
-        '''
-        return iter(self.relIndexTensor.items())
-
-    def values(self):
-        '''
-        Yield each tensor element.
-        '''
-        return iter(self.relIndexTensor.values())
-    
-    def keys(self):
-        '''
-        Returns the relative entry location keys
-        '''
-        return list(self.relIndexTensor.keys())
-    
-    def relEndCorner(self, rel_entry_loc):
-        '''
-        Given a relative location of one of the tensor entries,
-        return the relative location for the "end-corner" of
-        the entry.  If the entry is an Iter, then this
-        relative end corner gives the relative range of the
-        iteration inclusively.  Otherwise, the end-corner is
-        simply rel_loc; that is, the start and the end are
-        the same for single-element entries.
-        '''
-        # Translate from relative to absolute location, use
-        # the endCorner method, then translate this result from
-        # absolute to relative.
-        return self.relEntryLoc(self.endCorner(self.tensorLoc(rel_entry_loc)))
-    
-    def endCorner(self, tensor_entry_loc):
-        '''
-        Given an absolute tensor entry location,
-        return the absolute location for the "end-corner" of
-        the entry.  If the entry is an Iter, then this
-        absolute end corner gives the range of the
-        iteration inclusively.  Otherwise, the end-corner is
-        simply tensor_entry_loc; that is, the start and the 
-        end are the same for single-element entries.
-        '''
-        from proveit.number import one, Add, subtract
-        from .iteration import Iter
-        entry = self[self.relEntryLoc(tensor_entry_loc)]
-        if isinstance(entry, Iter):
-            end_corner = []
-            for axis, coord in enumerate(tensor_entry_loc):
-                # Add (end-start)+1 of the Iter to get to the end
-                # location of the entry along this axis. 
-                orig_end_coord = Add(coord, subtract(entry.end_indices[axis], entry.start_indices[axis]), one)
-                end_corner.append(self.endCoordSimplifications[orig_end_coord]) # use the simplified version
-            return end_corner # absolute end-corner for the tensor entry
-        return tensor_entry_loc # single-element entry
-
-    def __getitem__(self, rel_entry_loc):
-        '''
-        Return the tensor entry at the given relative
-        entry location key.  See getElem(..) for
-        getting the element at an absolute location.
-        '''
-        return self.relIndexTensor[rel_entry_loc]
-    
-    def getElem(self, indices, base=0, assumptions=USE_DEFAULTS, requirements=None):
-        '''
-        Return the tensor element at the indices location, given
-        as an Expression, using the given assumptions as needed
-        to interpret the location expression.  Required
-        truths, proven under the given assumptions, that 
-        were used to make this interpretation will be
-        appended to the given 'requirements' (if provided).
-        '''
-        from proveit.number import num, Less, Add, subtract
-        from .iteration import Iter
-        from .composite import _simplifiedCoord
-        if len(indices) != self.ndims:
-            raise ExprArrayError("The 'indices' has the wrong number of dimensions: %d instead of %d"%(len(indices), self.ndims))
-        
-        if requirements is None: requirements = [] # requirements won't be passed back in this case
-
-        if base != 0: 
-            # subtract off the base if it is not zero
-            indices = [subtract(index, num(self.base)) for index in indices]
-        tensor_loc = [_simplifiedCoord(index, assumptions, requirements) for index in indices]
-
-        lower_indices = []
-        upper_indices = []
-        for coord, sorted_coords in zip(tensor_loc, self.sortedCoordLists):
-            lower, upper = None, None
-            try:
-                lower, upper = Less.insert(sorted_coords, coord, assumptions=assumptions)
-            except:
-                raise ExprArrayError("Could not determine the 'indices' range within the tensor coordinates under the given assumptions")
-            # The relationship to the lower and upper coordinate bounds are requirements for determining
-            # the element being assessed.
-            requirements.append(Less.sort((sorted_coords[lower], coord), reorder=False, assumptions=assumptions))
-            requirements.append(Less.sort((coord, sorted_coords[upper]), reorder=False, assumptions=assumptions))
-            lower_indices.append(lower)
-            upper_indices.append(upper)
-        
-        if tuple(lower_indices) not in self.entryOrigins or tuple(upper_indices) not in self.entryOrigins:
-            raise ExprArrayError("Tensor element could not be found at %s"%str(tensor_loc))
-        rel_entry_origin = self.relEntryOrigins[lower_indices]
-        if self.relEntryOrigins[upper_indices] != rel_entry_origin:
-            raise ExprArrayError("Tensor element is ambiguous for %s under the given assumptions"%str(tensor_loc))
-        
-        entry = self[rel_entry_origin]
-        if isinstance(entry, Iter):
-            # indexing into an iteration
-            entry_origin = self.tensorLoc(rel_entry_origin)
-            iter_start_indices = entry.start_indices
-            iter_loc = [Add(iter_start, subtract(coord, origin)) for iter_start, coord, origin in zip(iter_start_indices, tensor_loc, entry_origin)] 
-            simplified_iter_loc = [_simplifiedCoord(coord, assumptions, requirements) for coord in iter_loc]
-            return entry.getInstance(simplified_iter_loc, assumptions=assumptions, requirements=requirements)
-        else:
-            # just a single-element entry
-            assert lower_indices==upper_indices, "A single-element entry should not have been determined if there was an ambiguous range for 'tensor_loc'"
-            return entry
-        
-    def yieldLocationDeltas(self, axis):
-        '''
-        For the given axis, yield the difference between each
-        successive coordinate at which an element is explicitly
-        located for this tensor (or where an Embed block ends).
-        '''
-        from proveit.number import zero, Add
-        from proveit.logic import Equals
-        prev_coord = zero
-        for coord in self.sorting_relations[axis]:
-            if not Equals(prev_coord, coord).prove(assumptions=[self.sorting_relations[axis]], automation=False):
-                assert isinstance(coord, Add) and len(coord.operands)==2 and coord.operands[0]==prev_coord, "The first of a set of equal coordinates in the sorting relations are supposed to indicate the difference from the previous one."
-                yield coord.operands[1] # this term is the difference between this coordinate and the simplified form of the previous one
-            prev_coord = coord
-    
-
-
-    """
-    def yieldRequirements(self):
-        '''
-        Yield KnownTruth's that are prerequisites for this
-        Expression.
-        '''
-        for sub_req in Expression.yieldRequirements(self):
-            yield sub_req
-        for sorting_relations in self.sorting_relations:
-            yield sorting_relations
-    """
-            
-    def remakeArguments(self):
-        '''
-        Yield the argument (key, value) pairs that could be used to 
-        recreate the ExprArray.
-        '''
-        tensor = {loc:element for loc, element in self.items()}
-        yield tensor
-                                    
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != ExprArray: 
-            MakeNotImplemented(subClass) 
-        if len(coreInfo) != 3:
-            raise ValueError("Expecting ExprArray coreInfo to contain exactly 3 items: 'ExprArray', the number of dimensions, and the indexed locations")
-        if coreInfo[0] != 'ExprArray':
-            raise ValueError("Expecting ExprArray coreInfo[0] to be 'ExprArray'")
-        ndims = literal_eval(coreInfo[1])
-        indexed_loc_strs = coreInfo[2].split(';')
-        # coordinate-sorting relations in each dimension
-        sorting_relations = subExpressions[:ndims]
-        indexed_tensor = {literal_eval(indexed_loc_str):element for indexed_loc_str, element in zip(indexed_loc_strs, subExpressions[ndims+1:])}
-        tensor = {ExprArray.tensorLocation(indexed_loc, sorting_relations):element for indexed_loc, element in indexed_tensor.items()}
-        return ExprArray(tensor).withStyles(**styles)
-                                                                              
-    def string(self, fence=False):
-        return '{' + ', '.join(loc.string(fence=True) + ':' + element.string(fence=True) for loc, element in self.items()) + '}'
+            MakeNotImplemented(subClass)
+        if len(coreInfo) != 1 or coreInfo[0] != 'ExprTuple':
+            raise ValueError("An ExprArray is an ExprTuple of ExprTuples, "
+                             "so the ExprArray coreInfo should contain "
+                             "exactly one item: 'ExprTuple'")
+        return ExprArray(*subExpressions).withStyles(**styles)      
     
-    def _config_latex_tool(self, lt):
-        Expression._config_latex_tool(self, lt)
-        if not 'xy' in lt.packages:
-            lt.packages.append('xy')
-        if r'\newcommand{\exprtensorelem}' not in lt.preamble:
-            lt.preamble += r'\newcommand{\exprtensorelem}[1]{*+<1em,.9em>{\hphantom{#1}} \POS [0,0]="i",[0,0].[0,0]="e",!C *{#1},"e"+UR;"e"+UL **\dir{-};"e"+DL **\dir{-};"e"+DR **\dir{-};"e"+UR **\dir{-}, "i"}' + '\n'
-        if r'\newcommand{\exprtensorblock}' not in lt.preamble:
-            lt.preamble += r'\newcommand{\exprtensorblock}[3]{\POS [0,0]="i",[0,0].[#1,#2]="e",!C *{#3},"e"+UR;"e"+UL **\dir{-};"e"+DL **\dir{-};"e"+DR **\dir{-};"e"+UR **\dir{-}, "i"}' + '\n'
-        if r'\newcommand{\exprtensorghost}' not in lt.preamble:
-            lt.preamble += r'\newcommand{\exprtensorghost}[1]{*+<1em,.9em>{\hphantom{#1}}}' + '\n'        
+    def styleOptions(self):
+        options = StyleOptions(self)
+        options.addOption('justification',
+                          ("justify to the 'left', 'center', or 'right' in the array cells"))
+        options.addOption('orientation',
+                          ("to be read from left to right then top to bottom ('horizontal') "
+                           "or to be read top to bottom then left to right ('vertical')"))
+        options.addOption(
+                'parameterization', 
+                ("'implicit' (default for LaTeX formatting) hides "
+                 "the parameter the ExprRange so the parameterization "
+                 "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
+                 "'explicit' (default for string formatting) reveals "
+                 "the parameterization "
+                 "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
+        return options
     
-    def latex(self, fence=False):
-        from proveit._core_.expression.bundle import Block
-        if len(self.shape) != 2:
-            raise NotImplementedError('Only 2-dimensional ExprArray formatting has been implemented.')
-        _, ncolumns = self.shape
-        outStr = r'\xymatrix @*=<0em> @C=1em @R=.7em{' + '\n'
-        current_row = -1
-        current_col = -1
-        # first add arrows at the top for all column alignment indices
-        for c in range(-1, ncolumns):
-            if c in self.alignmentCoordinates[1]:
-                outStr += ' \ar @{->} [0,1]'
-            outStr += ' & '
-        outStr += r'\\'
-        isAlignmentRow = 0 in self.alignmentCoordinates[0]
-        # next add the populated elements
-        for (r, c) in list(self.keys()):
-            element = self[(r, c)]
-            blockAlignmentStr = ''
-            if isAlignmentRow and current_col == -1:
-                outStr += ' \ar @{<-} [0,1]'                
-            if r > current_row:
-                if isAlignmentRow:
-                    # add an arrow for the alignment index on the right side
-                    while ncolumns > current_col: 
-                        outStr += ' & '
-                        current_col += 1
-                    outStr += ' \ar @{<-} [0,-1]'
-                outStr += r' \\' + '\n'
-                current_row += 1
-                isAlignmentRow = current_row in self.alignmentCoordinates[0]
-                current_col = -1
-            while c > current_col:
-                outStr += ' & '
-                current_col += 1
-            if isinstance(element, Block):
-                block = element
-                outStr += r'\exprtensorblock{' + str(block.shape[0] - 1) + '}{' + str(block.shape[1] - 1) + '}'
-            elif isinstance(element, _ExpresisonTensorBlockGhost):
-                outStr += r'\exprtensorghost'
-                block = element.ghosted_block
-                block_r, block_c = element.block_coord
-                # Add arrow(s) to indicate alignment coordinates "into" a block
-                if block_r == 0 and block_c in block.alignmentCoordinates[1]:
-                    blockAlignmentStr += r' \ar @{<-} [0,-1]'
-                elif block_r == block.shape[0]-1 and block_c in block.alignmentCoordinates[1]:
-                    blockAlignmentStr += r' \ar @{<-} [0,1]'
-                if block_c == 0 and block_r in block.alignmentCoordinates[0]:
-                    blockAlignmentStr = r' \ar @{<-} [-1,0]'
-                elif block_c == block.shape[1]-1 and block_c in block.alignmentCoordinates[0]:
-                    blockAlignmentStr = r' \ar @{<-} [1,0]'
-            else:                
-                outStr += r'\exprtensorelem'
-            outStr += '{' + element.latex(fence=True) + '}' + blockAlignmentStr
-        # finally add arrows at the bottom for all column alignment indices
-        for c in range(-1, ncolumns):
-            if c in self.alignmentCoordinates[1]:
-                outStr += ' \ar @{->} [0,-1]'
-            outStr += ' & '
-        outStr += r'\\'
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'withWrappingAt'
+        and 'withJustification' calls.
+        '''
+        call_strs = []
+        orientation = self.getStyle('orientation')
+        if orientation != 'horizontal':
+            call_strs.append('withOrientation("' + orientation + '")')
+        justification = self.getStyle('justification')
+        if justification != 'center':
+            call_strs.append('withJustification("' + justification + '")')
+        parameterization = self.getStyle('parameterization', 'default')
+        if parameterization != 'default':
+            if parameterization == 'explicit':
+                call_strs.append('withExplicitParameterization()')
+            if parameterization == 'implicit':
+                call_strs.append('withImplicitParameterization()')
+        return call_strs
+    
+    def withJustification(self, justification):
+        return self.withStyles(justification=justification)
+    
+    def withOrientation(self, orientation):
+        '''
+        Wrap the expression according to the orientation: 'horizontal' or 'vertical'
+        '''
+        if not orientation in ('horizontal', 'vertical'):
+            raise ValueError("'orientation' must be 'horizontal' or "
+                             "'vertical', not %s"%orientation)
+        return self.withStyles(orientation=orientation)
+    
+    def withExplicitParameterization(self):
+        '''
+        The 'parameterization':'explicit' style shows the 
+        parameterization of the ExprRange explicitly.  For example,
+        x_{1+1}, ..x_{k+1}.., x_{n+1}).
+        '''
+        return self.withStyles(parameterization='explicit')
 
-        outStr += '\n}\n'
+    def withImplicitParameterization(self):
+        '''
+        The 'parameterization':'implicit' style does not show the
+        parameterization of the ExprRange explicitly and such that the
+        parameterization may be ambiguous but is more compact.  
+        For example, x_{1+1}, ..., x_{n+1} could be
+        x_{1+1}, ..x_{k+1}.., x_{n+1}
+        or could be
+        x_{1+1}, ..x_{k}.., x_{n+1}.
+        '''
+        return self.withStyles(parameterization='implicit')
+
+    def withDefaultParameterizationStyle(self):
+        '''
+        The default is to use an 'implicit' parameterization for
+        string formatting (see 'withImplicitParameterization') and
+        and 'explicit' parameterization for LaTeX formatting
+        (see 'withExplicitParameterization').
+        '''
+        return self.withoutStyle('parameterization')
+    
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+
+    def checkRange(self):
+        '''
+        If there is an ExprRange contained in the array,
+        every item in the same column MUST agree in length
+        of the ExprRange.  If not, raise an error.
+        '''
+        from .expr_range import ExprRange
+        pos = []
+
+        k = 0
+        for m, expr in enumerate(self):
+            if isinstance(expr, ExprTuple):
+                count = 0
+                for i, entry in enumerate(expr):
+                    if isinstance(entry, ExprRange):
+
+                        if m == 0:
+                            placeholder = []
+                            placeholder.append(i)
+                            placeholder.append(entry.start_index)
+                            placeholder.append(entry.end_index)
+                            pos.append(placeholder)
+                        else:
+                            if len(pos) == 0:
+                                raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
+                            for item in pos:
+                                if item[0] == i:
+                                    if entry.first().subExpr(1) != item[1]:
+                                        raise ValueError('Columns containing ExprRanges '
+                                                         'must agree for every row. %s is '
+                                                         'not equal to %s.' % (entry.start_index, item[1]))
+                                    if entry.last().subExpr(1) != item[2]:
+                                        raise ValueError('Columns containing ExprRanges '
+                                                         'must agree for every row. %s is '
+                                                         'not equal to %s.' % (entry.end_index, item[2]))
+                                    k += 1
+                        count += 3
+                    else:
+                        count += 1
+
+                if count != self.getRowLength():
+                    raise ValueError('One or more rows are a different length.  Please double check your entries.')
+            elif isinstance(expr, ExprRange):
+                if isinstance(expr.first(), ExprTuple):
+                    first = None
+                    last = None
+                    for i, entry in enumerate(expr.first()):
+
+                        if isinstance(entry, ExprTuple):
+                            raise ValueError('Nested ExprTuples are not supported. Fencing is an '
+                                             'extraneous feature for the ExprArray class.')
+                        elif isinstance(entry, ExprRange):
+
+                            if m == 0:
+                                # we are checking that i in Aij matches all the other i's
+                                placeholder = []
+                                placeholder.append(i)
+                                placeholder.append(entry.first().indices[0])
+                                placeholder.append(entry.last().indices[0])
+                                pos.append(placeholder)
+                            if first is None:
+                                first = entry.first().indices[0]
+                            if first != entry.first().indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (first, entry.first().indices[0]))
+
+                        else:
+
+                            if first is None:
+                                first = entry.indices[0]
+                            if first != entry.indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (first, entry.indices[0]))
+                    for entry in expr.last():
+                        if isinstance(entry, ExprTuple):
+                            raise ValueError('Nested ExprTuples are not supported. Fencing is an '
+                                             'extraneous feature for the ExprArray class.')
+                        elif isinstance(entry, ExprRange):
+
+                            if last is None:
+                                last = entry.last().indices[0]
+                            if last != entry.last().indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (last, entry.last().indices[0]))
+
+                        else:
+
+                            if last is None:
+                                last = entry.indices[0]
+                            if last != entry.indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (last, entry.indices[0]))
+            n = m
+
+        if k != len(pos):
+            if n == 0:
+                pass
+            else:
+                raise ValueError('The ExprRange in the first tuple is not in the same column '
+                                 'as the ExprRange in tuple number %s' % str(n))
+
+    def getColHeight(self, explicit=False):
+        '''
+        Return the height of the first column of the array in an integer form.
+        (Horizontal orientation is assumed)
+        '''
+        from .expr_range import ExprRange
+        output = 0
+        for expr in self:
+            if isinstance(expr, ExprTuple):
+                output += 1
+            elif isinstance(expr, ExprRange):
+                if isinstance(expr.first(), ExprRange):
+                    if explicit:
+                        output += 7
+                    else:
+                        output += 8
+                else:
+                    output += 3
+        return output
+
+    def getRowLength(self, explicit=False):
+        '''
+        Return the length of the first row of the array in an integer form.
+        (Horizontal orientation is assumed)
+        '''
+        from .expr_range import ExprRange
+        from proveit import Variable, IndexedVar
+        output = 0
+
+        for expr in self:
+            if isinstance(expr, ExprRange):
+                if isinstance(expr.first(), ExprRange):
+                    if isinstance(expr.first().first(), ExprTuple):
+                        for value in expr.first().first():
+                            output += 1
+                elif isinstance(expr.first(), ExprTuple):
+                    for value in expr.first():
+                        if isinstance(value, Variable) or isinstance(value, IndexedVar):
+                            output += 1
+                        elif isinstance(value, ExprTuple):
+                            for var in value:
+                                if isinstance(var, Variable) or isinstance(var, IndexedVar):
+                                    output += 1
+                                elif isinstance(value, ExprTuple):
+                                    for operand in value:
+                                        if isinstance(operand, ExprRange) or isinstance(operand, ExprTuple):
+                                            raise ValueError('This expression is nested too many times to get an '
+                                                             'accurate row length. Please consolidate your ExprRange')
+                                        else:
+                                            output += 1
+                        elif isinstance(value, ExprRange):
+                            if explicit:
+                                output += 5
+                            else:
+                                output += 3
+            if isinstance(expr, ExprTuple):
+                for value in expr:
+                    if isinstance(value, Variable) or isinstance(value, IndexedVar):
+                        output += 1
+                    if isinstance(value, ExprTuple):
+                        for var in value:
+                            if isinstance(var, Variable) or isinstance(var, IndexedVar):
+                                output += 1
+                            elif isinstance(var, ExprTuple):
+                                for operand in value:
+                                    if isinstance(operand, ExprRange) or isinstance(operand, ExprTuple):
+                                        raise ValueError('This expression is nested too many times to get an '
+                                                         'accurate row length. Please consolidate your ExprTuple')
+                                    else:
+                                        output += 1
+                    if isinstance(value, ExprRange):
+                        if explicit:
+                            output += 5
+                        else:
+                            output += 3
+            break
+        return output
+
+    def formatted(self, formatType, fence=False, subFence=False, operatorOrOperators=None, implicitFirstOperator=False,
+                  wrapPositions=None, justification=None, orientation=None, **kwargs):
+        from .expr_range import ExprRange
+        default_style = ("explicit" if formatType == 'string' else 'implicit')
+
+        outStr = ''
+        if len(self) == 0 and fence:
+            # for an empty list, show the parenthesis to show something.
+            return '()'
+
+        if justification is None:
+            justification = self.getStyle('justification', 'center')
+        if orientation is None:
+            orientation = self.getStyle('orientation', 'horizontal')
+
+        if fence:
+            outStr = '(' if formatType == 'string' else r'\left('
+
+        if orientation == 'horizontal':
+            length = self.getRowLength()
+        else:
+            if self.getStyle('parameterization', default_style):
+                length = self.getColHeight(True)
+            else:
+                length = self.getColHeight()
+        if formatType == 'latex':
+            outStr += r'\begin{array} {%s} ' % (justification[0] * length) + '\n '
+
+        formatted_sub_expressions = []
+        # Track whether or not ExprRange operands are using
+        # "explicit" parameterization, because the operators must
+        # follow suit.
+        using_explicit_parameterization = []
+        k = 0
+        for sub_expr in self:
+            if k != 0 and orientation == 'horizontal':
+                # wrap before each expression, excluding the first.
+                formatted_sub_expressions.append(r' \\' + ' \n ')
+            if isinstance(sub_expr, ExprRange):
+                # Handle an ExprRange entry; here the "sub-expressions"
+                # are really ExprRange "checkpoints" (first, last, as
+                # well as the ExprRange body in the middle if using
+                # an 'explicit' style for 'parameterization) as well as
+                # ellipses between the checkpoints..
+                using_explicit_parameterization.append(
+                    sub_expr._use_explicit_parameterization(formatType))
+
+                i = 0
+                ell = r''
+                vell = []
+                # ell will be used to store the vertical ellipses
+                # for the horizontal orientation while vell will store
+                # the horizontal ellipses for the vertical orientation
+                for expr in sub_expr._formatted_checkpoints(formatType,
+                                                            fence=False, subFence=False,
+                                                            operator=operatorOrOperators):
+                    # if orientation is 'vertical' replace all \vdots with \cdots and vice versa.
+                    if i == 0 and isinstance(sub_expr.first(), ExprTuple):
+                        # only do this once, right away
+                        m = 0
+                        for entry in sub_expr.first().entries:
+                            if m == 0:
+                                # for the first entry, don't include '&' for formatting purposes
+                                if isinstance(entry, ExprTuple):
+                                    n = 0
+                                    for var in entry:
+                                        if n != 0:
+                                            if orientation == 'horizontal':
+                                                formatted_sub_expressions.append('& ' + var.formatted(formatType,
+                                                                                                      fence=False))
+                                                if self.getStyle('parameterization', default_style) == 'explicit':
+                                                    ell += r' & \colon'
+                                                else:
+                                                    ell += r' & \vdots'
+                                            else:
+                                                # if the orientation is 'vertical', include the ellipses
+                                                if k == 0:
+                                                    formatted_sub_expressions.append(var.formatted(formatType,
+                                                                                                   fence=False))
+                                                    vell.append(r'& \cdots')
+                                                else:
+                                                    formatted_sub_expressions.append('& '
+                                                                                     + var.formatted(formatType,
+                                                                                                     fence=False))
+                                                    vell.append(r'& \cdots')
+                                        else:
+                                            # for the first entry, don't include '&' for formatting purposes
+
+                                            if orientation == 'horizontal':
+                                                formatted_sub_expressions.append(var.formatted(formatType, fence=False))
+                                                if self.getStyle('parameterization', default_style) == 'explicit':
+                                                    ell += r'\colon'
+                                                else:
+                                                    ell += r'\vdots'
+                                            else:
+                                                # if the orientation is 'vertical', include the ellipses
+                                                if k == 0:
+                                                    formatted_sub_expressions.append(var.formatted(formatType,
+                                                                                                   fence=False))
+                                                    vell.append(r'& \cdots')
+                                                else:
+                                                    formatted_sub_expressions.append('& ' + var.formatted(formatType,
+                                                                                                          fence=False))
+                                                    vell.append(r'& \cdots')
+                                        n += 1
+                                elif isinstance(entry, ExprRange):
+                                    # this is first for both orientations so don't include the '&' for either
+                                    using_explicit_parameterization.append(
+                                        entry._use_explicit_parameterization(formatType))
+                                    formatted_sub_expressions.append(entry.first().formatted(formatType, fence=False))
+                                    if orientation == 'horizontal':
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
+                                                                                                           fence=False)
+                                                                             + '..')
+                                            ell += r'\colon & \colon & \colon'
+                                        else:
+                                            formatted_sub_expressions.append(r'& \cdots')
+                                            ell += r'\vdots & & \vdots'
+
+                                        formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                                       fence=False))
+                                    else:
+                                        # we add an '&' after the \vdots because this is a range of a tuple of a range
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            formatted_sub_expressions.append(r'\colon')
+                                            formatted_sub_expressions.append(entry.body.formatted(formatType,
+                                                                                                  fence=False))
+                                            formatted_sub_expressions.append(r'\colon')
+                                        else:
+                                            formatted_sub_expressions.append(r'\vdots')
+                                        vell.append(r'& \cdots')
+                                        vell.append('&')
+                                        formatted_sub_expressions.append(entry.last().formatted(formatType,
+                                                                                                fence=False))
+                                        vell.append(r'& \cdots')
+                                else:
+                                    if orientation == 'horizontal':
+                                        formatted_sub_expressions.append(entry.formatted(formatType,
+                                                                                         fence=False))
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            ell += r'\colon'
+                                        else:
+                                            ell += r'\vdots'
+                                    else:
+                                        # if the orientation is 'vertical', include the ellipses
+                                        if k == 0:
+                                            formatted_sub_expressions.append(entry.formatted(formatType,
+                                                                                             fence=False))
+                                            vell.append(r'& \cdots')
+                                        else:
+                                            formatted_sub_expressions.append('& '
+                                                                             + entry.formatted(formatType,
+                                                                                               fence=False))
+                                            vell.append(r'& \cdots')
+                            else:
+                                if isinstance(entry, ExprTuple):
+                                    for var in entry:
+                                        if orientation == 'horizontal':
+                                            # this is not the first so we add '&'
+                                            formatted_sub_expressions.append('& ' + var.formatted(formatType,
+                                                                                                  fence=False))
+                                            if self.getStyle('parameterization', default_style) == 'explicit':
+                                                ell += r' & \colon'
+                                            else:
+                                                ell += r' & \vdots'
+                                        else:
+                                            if k == 0:
+                                                # this is still technically the first column so we don't include
+                                                # the '&' for formatting purposes
+                                                formatted_sub_expressions.append(var.formatted(formatType, fence=False))
+                                                vell.append(r'& \cdots')
+                                            else:
+                                                formatted_sub_expressions.append('& ' + var.formatted(formatType,
+                                                                                                      fence=False))
+                                                vell.append(r'& \cdots')
+                                elif isinstance(entry, ExprRange):
+                                    using_explicit_parameterization.append(
+                                        entry._use_explicit_parameterization(formatType))
+                                    if orientation == 'horizontal':
+                                        formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
+                                                                                                        fence=False))
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            ell += r' & \colon &\colon & \colon'
+                                            formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
+                                                                                                           fence=False)
+                                                                             + '..')
+                                        else:
+                                            ell += r' & \vdots & & \vdots'
+                                            formatted_sub_expressions.append(r'& \cdots')
+                                        formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                                       fence=False))
+
+                                    else:
+                                        # this is still technically the first column so we don't include
+                                        # the '&' for formatting purposes
+                                        formatted_sub_expressions.append(entry.first().formatted(formatType,
+                                                                                                 fence=False))
+
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            formatted_sub_expressions.append(r'\colon')
+                                            formatted_sub_expressions.append(entry.body.formatted(formatType,
+                                                                                                  fence=False))
+                                            formatted_sub_expressions.append(r'\colon')
+                                        else:
+                                            formatted_sub_expressions.append(r'\vdots')
+                                        formatted_sub_expressions.append(entry.last().formatted(formatType,
+                                                                                                fence=False))
+                                        vell.append(r'& \cdots ')
+                                        vell.append('&')
+                                        vell.append(r'& \cdots ')
+                                else:
+                                    if orientation == 'horizontal':
+                                        # this is not the first so we add '&'
+                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                fence=False))
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            ell += r' & \colon'
+                                        else:
+                                            ell += r' & \vdots'
+                                    else:
+                                        if k == 0:
+                                            # this is still technically the first column so we don't include
+                                            # the '&' for formatting purposes
+                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                            vell.append(r'& \cdots')
+                                        else:
+                                            formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                    fence=False))
+                                            vell.append(r'& \cdots')
+                            m += 1
+
+                    elif (expr == sub_expr.last().formatted(formatType, fence=False)) \
+                            and isinstance(sub_expr.last(), ExprTuple):
+                        # if orientation is 'horizontal' this is the last row
+                        # if orientation is 'vertical' this is the last column
+                        m = 0
+                        for entry in sub_expr.last().entries:
+                            if m == 0:
+                                if isinstance(entry, ExprTuple):
+                                    n = 0
+                                    for var in entry:
+                                        if n != 0:
+                                            # regardless of orientation add the '&'
+                                            formatted_sub_expressions.append('& ' + var.formatted(formatType,
+                                                                                                  fence=False))
+                                        else:
+                                            if orientation == 'horizontal':
+                                                # if its the first one, omit '&' for formatting purposes
+                                                formatted_sub_expressions.append(var.formatted(formatType, fence=False))
+                                            else:
+                                                # add the '&' because this is technically the last column
+                                                formatted_sub_expressions.append('& ' + var.formatted(formatType,
+                                                                                                      fence=False))
+                                        n += 1
+                                elif isinstance(sub_expr.last().entries[0], ExprRange):
+                                    using_explicit_parameterization.append(
+                                        entry._use_explicit_parameterization(formatType))
+                                    if orientation == 'horizontal':
+                                        # this is the first of the last row so we omit the '&'
+                                        formatted_sub_expressions.append(entry.first().formatted(formatType,
+                                                                                                 fence=False))
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            formatted_sub_expressions.append(r'& ..' + entry.body.formatted(formatType,
+                                                                                                            fence=False)
+                                                                             + '..')
+                                        else:
+                                            formatted_sub_expressions.append(r'& \cdots')
+                                        formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                                       fence=False))
+                                    else:
+                                        # this is the last column so we include all '&'
+                                        formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
+                                                                                                        fence=False))
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            formatted_sub_expressions.append(r'& \colon')
+                                            formatted_sub_expressions.append('& ' + entry.body.formatted(formatType,
+                                                                                                         fence=False))
+                                            formatted_sub_expressions.append(r'& \colon')
+                                        else:
+                                            formatted_sub_expressions.append(r'& \vdots')
+                                        formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                                       fence=False))
+                                else:
+                                    if orientation == 'horizontal':
+                                        formatted_sub_expressions.append(entry.formatted(formatType,
+                                                                                         fence=False))
+                                    else:
+                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                         fence=False))
+                            else:
+                                if isinstance(entry, ExprTuple):
+                                    for var in entry:
+                                        # this is not the first entry for either orientation so we include an '&'
+                                        formatted_sub_expressions.append('& ' + var.formatted(formatType, fence=False))
+
+                                elif isinstance(entry, ExprRange):
+                                    using_explicit_parameterization.append(
+                                        entry._use_explicit_parameterization(formatType))
+                                    # this is not the first entry for either orientation so we include an '&'
+                                    formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
+                                                                                                    fence=False))
+
+                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                        if orientation == 'horizontal':
+                                            formatted_sub_expressions.append(r'& ..' + entry.body.formatted(formatType,
+                                                                                                            fence=False)
+                                                                             + '..')
+                                        else:
+                                            formatted_sub_expressions.append(r'& \colon')
+                                            formatted_sub_expressions.append('& ' + entry.body.formatted(formatType,
+                                                                                                         fence=False))
+                                            formatted_sub_expressions.append(r'& \colon')
+                                    else:
+                                        if orientation == 'horizontal':
+                                            formatted_sub_expressions.append(r'& \cdots')
+                                        else:
+                                            formatted_sub_expressions.append(r'& \vdots')
+                                    formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                                   fence=False))
+                                else:
+                                    # this is not the first entry for either orientation so we include an '&'
+                                    formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False))
+                            m += 1
+                    elif i == 1 and isinstance(sub_expr.first(), ExprTuple):
+                        if self.getStyle('parameterization', default_style) == 'explicit':
+                            if orientation == 'horizontal':
+                                formatted_sub_expressions.append(r' \\ ' + '\n ' + ell + r' \\ ' + '\n ')
+                                n = 0
+                                for entry in sub_expr.body:
+                                    if n == 0:
+                                        if isinstance(entry, ExprRange):
+                                            formatted_sub_expressions.append(entry.first().formatted(formatType,
+                                                                                                     fence=False))
+                                            formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
+                                                                                                           fence=False)
+                                                                             + '..')
+                                            formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                                           fence=False))
+                                        else:
+                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                    else:
+                                        if isinstance(entry, ExprRange):
+                                            formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
+                                                                                                            fence=False)
+                                                                             )
+                                            formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
+                                                                                                           fence=False)
+                                                                             + '..')
+                                            formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                                           fence=False))
+                                        else:
+                                            formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                    fence=False))
+                                    n += 1
+                                formatted_sub_expressions.append(r' \\ ' + '\n ' + ell + r' \\ ' + '\n ')
+                            else:
+                                for entry in sub_expr.body:
+                                    if isinstance(entry, ExprRange):
+                                        formatted_sub_expressions.append('& ..' + entry.first().formatted(formatType,
+                                                                                                          fence=False)
+                                                                         + '..')
+                                        formatted_sub_expressions.append(r'& \colon')
+                                        formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
+                                                                                                       fence=False)
+                                                                         + '..')
+                                        formatted_sub_expressions.append(r'& \colon')
+                                        formatted_sub_expressions.append('& ..' + entry.last().formatted(formatType,
+                                                                                                         fence=False)
+                                                                         + '..')
+                                    else:
+                                        formatted_sub_expressions.append('& ..' + entry.formatted(formatType,
+                                                                                                  fence=False) + '..')
+                        else:
+                            if orientation == 'horizontal':
+                                formatted_sub_expressions.append(r' \\ ' + '\n ' + ell + r' \\ ' + '\n ')
+                            else:
+                                for entry in vell:
+                                    formatted_sub_expressions.append(entry)
+                    elif isinstance(sub_expr.first(), ExprRange):
+                        # ExprRange of an ExprRange
+                        if isinstance(sub_expr.first().first(), ExprTuple):
+                            # ExprRange of an ExprRange of an ExprTuple
+                            if i == 0:
+                                # we just want to do this once
+                                ell = []
+                                vell = ''
+                                n = 0
+                                for entry in sub_expr.first().first():
+                                    if n == 0:
+                                        formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            vell += r'\colon'
+                                        else:
+                                            vell += r'\vdots'
+                                            ell.append(r' & \cdots')
+
+                                    else:
+                                        if orientation == 'horizontal':
+                                            formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                    fence=False))
+                                        else:
+                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            vell += r' & \colon'
+                                        else:
+                                            vell += r' & \vdots'
+                                            ell.append(r' & \cdots')
+                                    n += 1
+                                if orientation == 'horizontal':
+                                    formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                else:
+                                    for item in ell:
+                                        formatted_sub_expressions.append(item)
+
+                                if self.getStyle('parameterization', default_style) == 'explicit':
+                                    n = 0
+                                    for entry in sub_expr.first().body:
+                                        if n == 0 and orientation == 'horizontal':
+                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                        else:
+                                            if orientation == 'horizontal':
+                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                        fence=False))
+                                            else:
+                                                formatted_sub_expressions.append('& ..' + entry.formatted(formatType,
+                                                                                                          fence=False)
+                                                                                 + '..')
+                                        n += 1
+                                    if orientation == 'horizontal':
+                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                    else:
+                                        for item in ell:
+                                            formatted_sub_expressions.append(item)
+                                n = 0
+                                for entry in sub_expr.first().last():
+                                    if n == 0 and orientation == 'horizontal':
+                                        formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                    else:
+                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False)
+                                                                         )
+                                    n += 1
+                                if orientation == 'horizontal':
+                                    formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                        formatted_sub_expressions.append(vell + r'\\ ' + '\n')
+                                        n = 0
+                                        for entry in sub_expr.body.first():
+                                            if n == 0:
+                                                formatted_sub_expressions.append(entry.formatted(formatType,
+                                                                                                 fence=False))
+                                            else:
+                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                        fence=False)
+                                                                                 )
+                                            n += 1
+                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                        n = 0
+                                        for entry in sub_expr.body.body:
+                                            if n == 0:
+                                                formatted_sub_expressions.append(entry.formatted(formatType,
+                                                                                                 fence=False))
+                                            else:
+                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                        fence=False)
+                                                                                 )
+                                            n += 1
+                                        n = 0
+                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                        for entry in sub_expr.body.last():
+                                            if n == 0:
+                                                formatted_sub_expressions.append(entry.formatted(formatType,
+                                                                                                 fence=False))
+                                            else:
+                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                        fence=False)
+                                                                                 )
+                                            n += 1
+                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+
+                                    formatted_sub_expressions.append(vell + r'\\ ' + '\n')
+                                else:
+                                    if self.getStyle('parameterization', default_style) == 'explicit':
+
+                                        n = 0
+                                        for entry in sub_expr.body.first():
+                                            placeholder = ''
+                                            placeholder += '& ....' + sub_expr.body.first().entries[n].formatted(
+                                                formatType, fence=False)
+                                            placeholder += '..' + sub_expr.body.body.entries[n].formatted(
+                                                formatType, fence=False)
+                                            placeholder += '..' + sub_expr.body.last().entries[n].formatted(
+                                                formatType, fence=False) + '....'
+                                            n += 1
+                                            formatted_sub_expressions.append(placeholder)
+                                    else:
+                                        for item in ell:
+                                            formatted_sub_expressions.append(item)
+                                            formatted_sub_expressions.append(item)
+                                n = 0
+                                for entry in sub_expr.last().first():
+                                    if n == 0 and orientation == 'horizontal':
+                                        formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                    else:
+                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False)
+                                                                         )
+                                    n += 1
+                                if orientation == 'horizontal':
+                                    formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                else:
+                                    for item in ell:
+                                        formatted_sub_expressions.append(item)
+                                if self.getStyle('parameterization', default_style) == 'explicit':
+                                    n = 0
+                                    for entry in sub_expr.last().body:
+                                        if n == 0 and orientation == 'horizontal':
+                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                        else:
+                                            if orientation == 'horizontal':
+                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
+                                                                                                        fence=False))
+                                            else:
+                                                formatted_sub_expressions.append('& ..' + entry.formatted(formatType,
+                                                                                                          fence=False)
+                                                                                 + '..')
+                                        n += 1
+                                    if orientation == 'horizontal':
+                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                    else:
+                                        for item in ell:
+                                            formatted_sub_expressions.append(item)
+                                n = 0
+                                for entry in sub_expr.last().last():
+                                    if n == 0 and orientation == 'horizontal':
+                                        formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                    else:
+                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False)
+                                                                         )
+                                    n += 1
+                        else:
+                            raise ValueError('ExprArrays of ExprRanges of ExprRanges are one-dimensional and therefore '
+                                             'not valid ExprArrays.  Please wrap either the second ExprRange in an '
+                                             'ExprTuple or place an ExprTuple in the second ExprRange.')
+                    i += 1
+            elif isinstance(sub_expr, ExprTuple):
+                # always fence nested expression lists
+                inc = 0
+                for expr in sub_expr:
+                    if inc == 0:
+                        # for the first instance, we don't include '&' for formatting purposes
+                        if isinstance(expr, ExprRange):
+                            using_explicit_parameterization.append(
+                                expr._use_explicit_parameterization(formatType))
+                            if orientation == 'horizontal':
+                                formatted_sub_expressions.append(expr.first().formatted(formatType,
+                                                                                        fence=False, subFence=False))
+                                if self.getStyle('parameterization', default_style) == 'explicit':
+                                    formatted_sub_expressions.append(r'& ..' + expr.body.formatted(formatType,
+                                                                                                   fence=False,
+                                                                                                   subFence=False)
+                                                                     + '..')
+                                else:
+                                    formatted_sub_expressions.append(r'& \cdots')
+                                formatted_sub_expressions.append('& ' + expr.last().formatted(formatType,
+                                                                                              fence=False,
+                                                                                              subFence=False))
+                            else:
+                                if k == 0:
+                                    # this is the first column so we don't include '&'
+                                    formatted_sub_expressions.append(expr.first().formatted(formatType,
+                                                                                            fence=False,
+                                                                                            subFence=False))
+                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                        formatted_sub_expressions.append(r'\colon')
+                                        formatted_sub_expressions.append(expr.body.formatted(formatType, fence=False,
+                                                                                             subFence=False))
+                                        formatted_sub_expressions.append(r'\colon')
+                                    else:
+                                        formatted_sub_expressions.append(r'\vdots')
+                                    formatted_sub_expressions.append(expr.last().formatted(formatType,
+                                                                                           fence=False,
+                                                                                           subFence=False))
+                                else:
+                                    formatted_sub_expressions.append('& ' + expr.first().formatted(formatType,
+                                                                                                   fence=False,
+                                                                                                   subFence=False))
+                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                        formatted_sub_expressions.append(r'& \colon')
+                                        formatted_sub_expressions.append(r'& ' + expr.body.formatted(formatType,
+                                                                                                     fence=False,
+                                                                                                     subFence=False))
+                                        formatted_sub_expressions.append(r'& \colon')
+                                    else:
+                                        formatted_sub_expressions.append(r'& \vdots')
+                                    formatted_sub_expressions.append('& ' + expr.last().formatted(formatType,
+                                                                                                  fence=False,
+                                                                                                  subFence=False))
+                        else:
+                            if orientation == 'horizontal':
+                                # this is the first item in the first row so we do not include the '&'
+                                formatted_sub_expressions.append(expr.formatted(formatType,
+                                                                                fence=False, subFence=False))
+                            else:
+                                if k == 0:
+                                    # this is still the first column
+                                    formatted_sub_expressions.append(expr.formatted(formatType,
+                                                                                    fence=False, subFence=False))
+                                else:
+                                    # this is not the first column
+                                    formatted_sub_expressions.append('& ' + expr.formatted(formatType,
+                                                                                           fence=False,
+                                                                                           subFence=False))
+                    else:
+                        if isinstance(expr, ExprRange):
+                            using_explicit_parameterization.append(
+                                expr._use_explicit_parameterization(formatType))
+                            if orientation == 'horizontal':
+                                # for this orientation this is not the first so we add '&'
+                                formatted_sub_expressions.append('& ' + expr.first().formatted(formatType,
+                                                                                               fence=False,
+                                                                                               subFence=False))
+                                if self.getStyle('parameterization', default_style) == 'explicit':
+                                    formatted_sub_expressions.append(r'& ..' + expr.body.formatted(formatType,
+                                                                                                   fence=False,
+                                                                                                   subFence=False)
+                                                                     + '..')
+                                else:
+                                    formatted_sub_expressions.append(r'& \cdots')
+                                formatted_sub_expressions.append('& ' + expr.last().formatted(formatType,
+                                                                                              fence=False,
+                                                                                              subFence=False))
+                            else:
+                                if k == 0:
+                                    # this is still the first column so we don't add '&'
+                                    formatted_sub_expressions.append(expr.first().formatted(formatType,
+                                                                                            fence=False,
+                                                                                            subFence=False))
+                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                        formatted_sub_expressions.append(r'\colon')
+                                        formatted_sub_expressions.append(expr.body.formatted(formatType,
+                                                                                             fence=False,
+                                                                                             subFence=False))
+                                        formatted_sub_expressions.append(r'\colon')
+                                    else:
+                                        formatted_sub_expressions.append(r'\vdots')
+                                    formatted_sub_expressions.append(expr.last().formatted(formatType,
+                                                                                           fence=False,
+                                                                                           subFence=False))
+                                else:
+                                    formatted_sub_expressions.append('& ' + expr.first().formatted(formatType,
+                                                                                                   fence=False,
+                                                                                                   subFence=False))
+                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                        formatted_sub_expressions.append(r'& \colon')
+                                        formatted_sub_expressions.append('& ' + expr.body.formatted(formatType,
+                                                                                                    fence=False,
+                                                                                                    subFence=False))
+                                        formatted_sub_expressions.append(r'& \colon')
+                                    else:
+                                        formatted_sub_expressions.append(r'& \vdots')
+                                    formatted_sub_expressions.append('& ' + expr.last().formatted(formatType,
+                                                                                                  fence=False,
+                                                                                                  subFence=False))
+
+                        else:
+                            if orientation == 'horizontal':
+                                # this is following along the row so we include '&'
+                                formatted_sub_expressions.append('& ' + expr.formatted(formatType,
+                                                                                       fence=False, subFence=False))
+                            else:
+                                if k == 0:
+                                    # this is the first column so we don't include '&'
+                                    formatted_sub_expressions.append(expr.formatted(formatType,
+                                                                                    fence=False, subFence=False))
+                                else:
+                                    # this is not the first column so we do include '&'
+                                    formatted_sub_expressions.append('& ' + expr.formatted(formatType,
+                                                                                           fence=False, subFence=False))
+                    inc += 1
+            else:
+                raise ValueError("Expressions must be wrapped in either an ExprTuple or ExprRange")
+            k += 1
+
+        if orientation == "vertical":
+            # up until now, the formatted_sub_expression is still
+            # in the order of the horizontal orientation regardless of orientation type
+            k = 1
+            vert = []
+            if self.getStyle('parameterization', default_style) == 'explicit':
+                ex = True
+            else:
+                ex = False
+            m = self.getColHeight(ex)
+            while k <= self.getRowLength(ex):
+                i = 1
+                j = k
+                for var in formatted_sub_expressions:
+                    if i == j:
+                        vert.append(var)
+                        m -= 1
+                        if m == 0:
+                            vert.append(r' \\' + ' \n ')
+                            m = self.getColHeight(ex)
+                        j += self.getRowLength(ex)
+                    i += 1
+                k += 1
+            formatted_sub_expressions = vert
+
+        if operatorOrOperators is None:
+            operatorOrOperators = ','
+        elif isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
+            operatorOrOperators = operatorOrOperators.formatted(formatType, fence=False)
+        if isinstance(operatorOrOperators, str):
+            # single operator
+            formatted_operator = operatorOrOperators
+            if operatorOrOperators == ',':
+                # e.g.: a, b, c, d
+                outStr += (' ').join(formatted_sub_expressions)
+            else:
+                # e.g.: a + b + c + d
+                outStr += (' '+formatted_operator+' ').join(formatted_sub_expressions)
+        else:
+            # assume all different operators
+            formatted_operators = []
+            for operator in operatorOrOperators:
+                if isinstance(operator, ExprRange):
+                    # Handle an ExprRange entry; here the "operators"
+                    # are really ExprRange "checkpoints" (first, last,
+                    # as well as the ExprRange body in the middle if
+                    # using an 'explicit' style for 'parameterization').
+                    # For the 'ellipses', we will just use a
+                    # placeholder.
+                    be_explicit = using_explicit_parameterization.pop(0)
+                    formatted_operators += operator._formatted_checkpoints(
+                        formatType, fence=False, subFence=False, ellipses='',
+                        use_explicit_parameterization=be_explicit)
+                else:
+                    formatted_operators.append(operator.formatted(formatType, fence=False, subFence=False))
+            if len(formatted_sub_expressions) == len(formatted_operators):
+                # operator preceeds each operand
+                if implicitFirstOperator:
+                    outStr = formatted_sub_expressions[0]  # first operator is implicit
+                else:
+                    outStr = formatted_operators[0] + formatted_sub_expressions[0]  # no space after first operator
+                outStr += ' '  # space before next operator
+                outStr += ' '.join(
+                    formatted_operator + ' ' + formatted_operand for formatted_operator, formatted_operand in
+                    zip(formatted_operators[1:], formatted_sub_expressions[1:]))
+            elif len(formatted_sub_expressions) == len(formatted_operators) + 1:
+                # operator between each operand
+                outStr = ' '.join(
+                    formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in
+                    zip(formatted_sub_expressions, formatted_operators))
+                outStr += ' ' + formatted_sub_expressions[-1]
+            elif len(formatted_sub_expressions) != len(formatted_operators):
+                raise ValueError(
+                    "May only perform ExprTuple formatting if the number of operators is equal to the number "
+                    "of operands(precedes each operand) or one less (between each operand); "
+                    "also, operator ranges must be in correspondence with operand ranges.")
+
+        if formatType == 'latex':
+            outStr += r' \end{array}' + ' \n'
+        if fence:
+            outStr += ')' if formatType == 'string' else r'\right)'
         return outStr
-    
-    def entryRanges(self, base, start_indices, end_indices, assumptions, requirements):
-        '''
-        For each entry of the tensor that is fully or partially contained in the window defined
-        via start_indices and end_indices (as Expressions that can be provably sorted
-        against tensor coordinates), yield the start and end of the intersection of the
-        entry range and the window.
-        '''
-        
-        from proveit.number import Less, Greater
-        if requirements is None: requirements = [] # requirements won't be passed back in this case
-                                
-        # For each axis, obtain the sorted coordinates of the substituted tensor,
-        # insert the start and end indices for the desired range, and determine
-        # the starting and ending locations relative to operator positions of the 
-        # expanded sorting relations.
-        coord_sorting_relations = [] # expanded sorting relations (including start and end indices) along each axis
-        rel_start_loc = [] # start location relative to the new sorting locations along each axis
-        rel_end_loc = [] # end location relative to the new sorting locations along each axis
-        for axis in range(self.ndims): # for each axis
-            start_index =start_indices[axis]
-            end_index = end_indices[axis]
-            
-            sorted_coords = self.sortedCoordLists[axis]
-            # insert the start_index and the end_index into the sorted list of coordinates in their proper places
-            coord_sorting_relation = Less.sort(sorted_coords + [start_index, end_index], assumptions=assumptions)
-            # get the relative start and end integer coordinates
-            rel_start_loc.append(coord_sorting_relation.operands.index(start_index))
-            rel_end_loc.append(coord_sorting_relation.operands.index(end_index))
-            # remember these sorting relations
-            coord_sorting_relations.append(coord_sorting_relation)
-        
-        # For each entry of the substituted tensor, determine if it is within the start/end
-        # "window".  If so, yield the intersected range in terms of parameter values
-        # (inverted from the tensor coordinates).  Keep track of the requirements.
-        for rel_loc_in_tensor, entry in self.items():
-            # convert from the relative location within the tensor to the
-            # tensor location in absolute coordinates.
-            entry_start = self.tensorLoc(rel_loc_in_tensor)
-            entry_end = self.endCorner(rel_loc_in_tensor)
-            
-            # convert from the absolute tensor location to the relative
-            # location w.r.t. the  coord_sorting_relations that include
-            # the startArgs and endArgs of the window.
-            rel_entry_start = [coord_sorting_relation.index(coord) for coord, coord_sorting_relation in zip(entry_start, coord_sorting_relations)]
-            rel_entry_end = [coord_sorting_relation.index(coord) for coord, coord_sorting_relation in zip(entry_end, coord_sorting_relations)]
-            
-            # get the intersection of the entry range and the considered window,
-            rel_intersection_start = [max(a, b) for a, b in zip(rel_start_loc, rel_entry_start)]
-            rel_intersection_end = [min(a, b) for a, b in zip(rel_end_loc, rel_entry_end)]
-            
-            # translate the intersection region to absolute coordinates
-            intersection_start = [coord_sorting_relation.operands[i] for i, coord_sorting_relation in zip(rel_intersection_start, coord_sorting_relations)]
-            intersection_end = [coord_sorting_relation.operands[i] for i, coord_sorting_relation in zip(rel_intersection_end, coord_sorting_relations)]
-                                
-            if any(a > b for a, b in zip(rel_intersection_start, rel_intersection_end)):
-                # empty intersection, but we need to include requirements that prove this.
-                for axis, (a, b) in enumerate(zip(rel_intersection_start, rel_intersection_end)):
-                    if a > b:
-                        # add the requirements showing the intersection is empty along the first such axis.
-                        coord_sorting_relation =  coord_sorting_relations[axis]
-                        aCoord, bCoord = coord_sorting_relation.operands[a], coord_sorting_relation.operands[b]
-                        empty_intersection_relation = Greater.sort([aCoord, bCoord], assumptions=assumptions)
-                        requirements.append(empty_intersection_relation)
-            else:
-                # There is a non-empty intersection rectangle to yield for a particular entry.
-                
-                # Let's get the requirements that prove the intersection:
-                for axis, (a, b, c, d, e, f) in enumerate(zip(rel_intersection_start, rel_intersection_end, rel_start_loc, rel_entry_start, rel_end_loc, rel_entry_end)):
-                    # add the requirements that determine the intersection along this axis.
-                    for j, k in ((a, b), (c, d), (e, f)):
-                        coord_sorting_relation =  coord_sorting_relations[axis]
-                        jCoord, kCoord = coord_sorting_relation.operands[j], coord_sorting_relation.operands[k]
-                        empty_intersection_relation = Less.sort([jCoord, kCoord], assumptions=assumptions)
-                        requirements.append(empty_intersection_relation)
-                yield (intersection_start, intersection_end)        
-        
-    
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
-        '''
-        Returns this expression with the substitutions made 
-        according to exprMap and/or relabeled according to relabelMap.
-        Flattens nested tensors (or lists of lists) that arise from Embed substitutions.
-        '''
-        from .composite import _simplifiedCoord
-        from .iteration import Iter
-        from proveit.number import Add
-        self._checkRelabelMap(relabelMap)
-        if len(exprMap)>0 and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)
 
-        if requirements is None: requirements = [] # requirements won't be passed back in this case
 
-        tensor = dict()
-        for loc, element in self.items():
-            subbed_loc = loc.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
-            subbed_elem = element.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
-            if isinstance(element, Iter) and isinstance(subbed_elem, ExprArray):
-                # An iteration element became an ExprArray upon substitution,
-                # so insert the elements directly into this outer ExprArray.
-                for sub_loc, sub_elem in subbed_elem.items():
-                    net_loc = [_simplifiedCoord(Add(main_coord, sub_coord), assumptions, requirements) for main_coord, sub_coord in zip(subbed_loc, sub_loc)]
-                    tensor[net_loc] = subbed_elem
-            else:
-                tensor[subbed_loc] = subbed_elem
-        expr_array = ExprArray(tensor, assumptions)
-        expr_array_requirements = expr_array.getRequirements()
-        for requirement in expr_array_requirements:
-            # check that all ExprArray requirements satisfy restrictions
-            requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope
-        
-        # pass back the new requirements that are different from the ExprArray requirements after making substitutions.
-        old_requirements = {requirement.substituted(exprMap, relabelMap, reservedVars) for requirement in self.getRequirements()}
-        new_requirements = [requirement for requirement in expr_array_requirements if requirement not in old_requirements]
-            
-        requirements += new_requirements
-        
-        return expr_array
-                           
-    def usedVars(self):
-        '''
-        Returns the union of the used Variables of the sub-Expressions.
-        '''
-        return set().union(*([expr.usedVars for expr in self.sorting_relations] + [expr.usedVars() for expr in list(self.values())]))
-        
-    def freeVars(self):
-        '''
-        Returns the union of the free Variables of the sub-Expressions.
-        '''
-        return set().union(*([expr.freeVars for expr in self.sorting_relations] + [expr.freeVars() for expr in list(self.values())]))
 
-class ExprArrayError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg

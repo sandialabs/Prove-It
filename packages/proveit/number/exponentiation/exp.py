@@ -1,9 +1,9 @@
-from proveit import (Literal, Operation, ExprTuple, ProofFailure,
+from proveit import (Literal, Operation, ExprTuple, InnerExpr, ProofFailure,
                      maybeFencedString, USE_DEFAULTS, StyleOptions)
 from proveit.logic import Membership
 import proveit._common_
-from proveit._common_ import a, b, x, S
-from proveit.number import one, two, frac
+from proveit._common_ import a, b, c, k, m, n, x, S
+from proveit.number import one, two, Div, frac, num
 
 class Exp(Operation):
     # operator of the Exp operation.
@@ -70,6 +70,15 @@ class Exp(Operation):
         from ._theorems_ import complexXToFirstPowerIsX
         if self.exponent == one:
             return complexXToFirstPowerIsX.specialize({a:self.base})
+        if (isinstance(self.base, Exp) and
+            isinstance(self.base.exponent, Div) and
+            self.base.exponent.numerator==one and
+            self.base.exponent.denominator == self.exponent):
+            from ._theorems_ import nth_power_of_nth_root
+            _n, _x = nth_power_of_nth_root.instanceParams
+            return nth_power_of_nth_root.instantiate(
+                {_n:self.exponent, _x:self.base.base}, assumptions=assumptions)
+
         return Equals(self, self).prove()
 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
@@ -79,6 +88,7 @@ class Exp(Operation):
         evaluated form. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
         '''
+        from proveit.logic import EvaluationError
         from proveit.number import zero, one
         from ._theorems_ import expZeroEqOne, exponentiatedZero, exponentiatedOne
         if self.exponent == zero:
@@ -88,8 +98,9 @@ class Exp(Operation):
         elif self.base == one:
             return exponentiatedOne.specialize({x:self.exponent}) # =1
         else:
-            raise ValueError('Only trivial simplification is implemented '
-                             '(zero or one for the base or exponent).')
+            raise EvaluationError('Only trivial evaluation is implemented '
+                                  '(zero or one for the base or exponent).',
+                                  assumptions)
                 
     def deduceInRealsPosDirectly(self, assumptions=frozenset()):
         import real.theorems
@@ -98,9 +109,33 @@ class Exp(Operation):
             deduceInReals(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
             return real.theorems.sqrdClosure.specialize(
-                {a:self.base}).checked(as5sumptions)
+                {a:self.base}).checked(assumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealsPos, assumptions)
+
+    def expansion(self, assumptions=USE_DEFAULTS):
+        '''
+        From self of the form x^n return x^n = x(x)...(x).
+        For example, Exp(x, two).expansion(assumptions)
+        should return: assumptions |- (x^2) =  (x)(x). Currently only
+        implemented explicitly for powers of n=2 and n=3.
+        '''
+        exponent = self.exponent
+        if exponent == num(2):
+            from ._theorems_ import square_expansion
+            _x = square_expansion.instanceParam
+            return square_expansion.instantiate(
+                    {_x:self.base}, assumptions=assumptions)
+
+        if exponent == 3:
+            from ._theorems_ import  cube_expansion
+            _x = cube_expansion.instanceParam
+            return cube_expansion.instantiate(
+                    {_x:self.base}, assumptions=assumptions)
+
+        raise ValueError("Exp.expansion() implemented only for exponential "
+                         "powers n=2 or n=3, but received an exponential "
+                         "power of {0}.".format(exponent))
 
     def _notEqZeroTheorem(self):
         import complex.theorems
@@ -152,6 +187,99 @@ class Exp(Operation):
             kwargs['forceFence'] if 'forceFence' in kwargs else False)
         return maybeFencedString(inner_str, **kwargs)
     
+    def distribution(self, assumptions=USE_DEFAULTS):
+        '''
+        Equate this exponential to a form in which the exponent
+        is distributed over factors, or a power of a power reduces to
+        a power of multiplied exponents.
+        Examples:
+            (a*b*c)^f = a^f * b^f * c^f
+            (a/b)^f = (a^f / b^f) 
+            (a^b)^c = a^(b*c)
+        '''
+        from proveit.logic import InSet
+        from proveit.number import Mult, Div, NaturalsPos, RealsPos, Reals
+        from ._theorems_ import (
+                posnat_power_of_product, posnat_power_of_products,
+                posnat_power_of_quotient, posnat_power_of_posnat_power,
+                pos_power_of_product, pos_power_of_products, 
+                pos_power_of_quotient, pos_power_of_pos_power,
+                real_power_of_product, real_power_of_products,
+                real_power_of_quotient, real_power_of_real_power,
+                complex_power_of_product, complex_power_of_products, 
+                complex_power_of_quotient, complex_power_of_complex_power)
+        base = self.base
+        exponent = self.exponent
+        if isinstance(base, Mult):
+            if self.base.operands.is_binary():
+                _a, _b = self.base.operands
+            else:
+                _m = self.operands.length(assumptions)
+                _a = self.operands
+            if InSet(exponent, NaturalsPos).proven(assumptions):
+                if self.base.operands.is_binary():
+                    return posnat_power_of_product.instantiate(
+                            {a:_a, b:_b, n:exponent}, assumptions=assumptions)
+                else:
+                    return posnat_power_of_products.instantiate(
+                            {m:_m, a:_a, n:exponent}, assumptions=assumptions)
+            elif InSet(exponent, RealsPos).proven(assumptions):
+                if self.base.operands.is_binary():
+                    return pos_power_of_product.instantiate(
+                            {a:_a, b:_b, c:exponent}, assumptions=assumptions)
+                else:
+                    return pos_power_of_products.instantiate(
+                            {m:_m, a:_a, c:exponent}, assumptions=assumptions)
+            elif InSet(exponent, Reals).proven(assumptions):
+                if self.base.operands.is_binary():
+                    return real_power_of_product.instantiate(
+                            {a:_a, b:_b, c:exponent}, assumptions=assumptions)
+                else:
+                    return real_power_of_products.instantiate(
+                            {m:_m, a:_a, c:exponent}, assumptions=assumptions)
+            else: # Complex is the default
+                if self.base.operands.is_binary():
+                    return complex_power_of_product.instantiate(
+                            {a:_a, b:_b, c:exponent}, assumptions=assumptions)
+                else:
+                    return complex_power_of_products.instantiate(
+                            {m:_m, a:_a, c:exponent}, assumptions=assumptions)                      
+        elif isinstance(base, Div):
+            assert self.base.operands.is_binary()
+            _a, _b = self.base.operands
+            if InSet(exponent, NaturalsPos).proven(assumptions):
+                return posnat_power_of_quotient.instantiate(
+                        {a:_a, b:_b, n:exponent}, assumptions=assumptions)
+            else:
+                if InSet(exponent, RealsPos).proven(assumptions):
+                    thm = pos_power_of_quotient
+                elif InSet(exponent, Reals).proven(assumptions):
+                    thm = real_power_of_quotient
+                else: # Complex is the default
+                    thm = complex_power_of_quotient
+                return thm.instantiate(
+                        {a:_a, b:_b, c:exponent}, assumptions=assumptions)
+        elif isinstance(base, Exp):
+            _a = base.base
+            if InSet(exponent, NaturalsPos).proven(assumptions):
+                _m, _n = base.exponent, exponent
+                return posnat_power_of_posnat_power.instantiate(
+                        {a:_a, m:_m, n:_n}, assumptions=assumptions)
+            else:
+                _b, _c = base.exponent, exponent
+                if InSet(exponent, RealsPos).proven(assumptions):
+                    thm = pos_power_of_pos_power
+                elif InSet(exponent, Reals).proven(assumptions):
+                    thm = real_power_of_real_power
+                else: # Complex is the default
+                    thm = complex_power_of_complex_power 
+                return thm.instantiate(
+                            {a:_a, b:_b, c:_c}, assumptions=assumptions)
+        else:
+            raise ValueError("May only distribute an exponent over a "
+                             "product or fraction.")
+        
+    """
     def distributeExponent(self, assumptions=frozenset()):
         from proveit.number import Div
         from proveit.number.division.theorems import (
@@ -177,8 +305,12 @@ class Exp(Operation):
                             {a:self.base.numerator, b:self.base.denominator})
         raise Exception('distributeExponent currently only implemented for a '
                         'fraction base')
+    """
         
-    def raiseExpFactor(self, expFactor, assumptions=frozenset()):
+    def raiseExpFactor(self, expFactor, assumptions=USE_DEFAULTS):
+        # Note: this is out-of-date.  Distribution handles this now,
+        # except it doesn't deal with the negation part
+        # (do we need it to?)
         from proveit.number import Neg
         from .theorems import intExpOfExp, intExpOfNegExp
         if isinstance(self.exponent, Neg):
@@ -208,6 +340,7 @@ class Exp(Operation):
         return thm.specialize({n:nSub}).specialize({a:aSub, b:bSub}).deriveReversed()
 
     def lowerOuterExp(self, assumptions=frozenset()):
+        # 
         from proveit.number import Neg
         from .theorems import (
                 intExpOfExp, intExpOfNegExp, negIntExpOfExp, negIntExpOfNegExp)
@@ -250,11 +383,23 @@ class Exp(Operation):
                   expRealClosureExpNonZero,expRealClosureBasePos,
                   expRealPosClosure, sqrtComplexClosure, sqrtRealClosure,
                   sqrtRealPosClosure)
-        from proveit.number import Complexes, NaturalsPos, Reals, RealsPos
+        from proveit.number import (
+                Complexes, NaturalsPos, RationalsPos, Reals, RealsPos)
 
         if number_set == NaturalsPos:
             return expNatClosure.specialize({a:self.base, b:self.exponent},
                       assumptions=assumptions)
+
+        if number_set == RationalsPos:
+            # if we have a^b with a Rational and b Integer
+            # if b is proven to be any Integer
+
+            # if we already know a^b is
+
+            # if b = 0, then a^b = 1 (if a≠0)
+
+            # to be continued later
+            pass
 
         # the following would be useful to replace the next two Reals
         # closure theorems, once we get the system to deal
@@ -392,3 +537,6 @@ def sqrt(base):
     Could later generalize this to cube roots or general nth roots.
     '''
     return Exp(base, frac(one, two)).withStyles(exponent='radical')
+
+# Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(Exp, 'distribution', 'distributed', 'distribute')

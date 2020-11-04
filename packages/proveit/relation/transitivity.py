@@ -24,8 +24,9 @@ from collections import deque
 from proveit import Expression, Operation, OperationSequence
 from proveit import defaults, USE_DEFAULTS, KnownTruth, ProofFailure
 from .sorter import TransitivitySorter
+from .relation import Relation
 
-class TransitiveRelation(Operation):
+class TransitiveRelation(Relation):
     r'''
     Base class for generic transitive relations.  Examples
     are <, <=, >, >= as well as subset, subseteq, superset,
@@ -34,10 +35,8 @@ class TransitiveRelation(Operation):
     '''
     
     def __init__(self, operator, lhs, rhs):
-        Operation.__init__(self,operator, (lhs, rhs))
-        self.lhs = lhs
-        self.rhs = rhs
-
+        Relation.__init__(self,operator, lhs, rhs)
+    
     def sideEffects(self, knownTruth):
         '''
         Automatically derive the reversed form of transitive
@@ -64,15 +63,15 @@ class TransitiveRelation(Operation):
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
         try:
-            self.concludeViaTransitivity(assumptions)
+            return self.concludeViaTransitivity(assumptions)
         except TransitivityException as e:
             raise TransitivityException(self, assumptions, e.message) # indicate the expression we were trying to prove
-        return self.prove(assumptions=assumptions, automation=False) # may need to derive a weaker form, which should occur as a side-effect
-        
+    
     def concludeViaTransitivity(self, assumptions=USE_DEFAULTS):
         from proveit.logic import Equals
         assumptions = defaults.checkedAssumptions(assumptions)
-        relation = self.__class__._transitivitySearch(self.lhs, self.rhs, assumptions=assumptions).expr
+        proven_relation = self.__class__._transitivitySearch(self.lhs, self.rhs, assumptions=assumptions)
+        relation = proven_relation.expr
         if relation.__class__ != self.__class__:
             if self.__class__ == self.__class__._checkedWeakRelationClass():
                 if relation.__class__ == self.__class__._checkedStrongRelationClass():
@@ -85,7 +84,7 @@ class TransitiveRelation(Operation):
                     " from the proven relation of %s."
                     %(str(self), str(relation)))
             raise TransitivityException(self, assumptions, msg)
-        return relation
+        return proven_relation
     
     @classmethod
     def _RelationClasses(cls):
@@ -571,7 +570,6 @@ class TransitiveRelation(Operation):
         if len(relations)==1:
             return relations[0]
         return cls.makeSequenceOrRelation(*relations)
-
 
 class TransitiveSequence(OperationSequence):
     '''

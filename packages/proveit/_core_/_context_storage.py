@@ -539,7 +539,7 @@ class ContextStorage:
             context_name, theorem_name = presumption_name.rsplit('.', 1)
             context = Context.getContext(context_name)
             if theorem_name not in context.theoremNames():
-                raise KeyError("Theorem %s not found in context %s"%theorem_name, context.name)
+                raise KeyError("Theorem %s not found in context %s"%(theorem_name, context.name))
             if presumption_name in presumption_chain:
                 chain_index = presumption_chain.index(presumption_name)
                 presumption = context.getTheorem(theorem_name)
@@ -700,12 +700,15 @@ class ContextStorage:
             CommonExpressions.referenced_contexts.add(CommonExpressions.expr_id_contexts[proveItStorageId].name)
         hash_path = self._storagePath(proveItStorageId)
         file_path = os.path.join(hash_path, 'ref_count.txt')
-        with open(file_path, 'r') as f:
-            # read the current reference count
-            refCount = int(f.read().strip()) + 1
-            # change the reference count in the file
-            with open(file_path, 'w') as f2:
-                f2.write(str(refCount) + '\n')
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as f:
+                # read the current reference count
+                refCount = int(f.read().strip()) + 1
+        else:
+            refCount = 0
+        # change the reference count in the file
+        with open(file_path, 'w') as f2:
+            f2.write(str(refCount) + '\n')
 
     def _getRefCount(self, proveItStorageId):
         '''
@@ -1350,10 +1353,11 @@ class ContextStorage:
             if issubclass(expr_class, Lambda):
                 # For efficiency, make the Lambda expression with its generic
                 # version known to avoid needing to generate it via relabeling.
-                expr = expr_class._make(exprInfo, styles, subExpressions, 
-                                        genericExpr)
+                expr = expr_class._checked_make(
+                        exprInfo, styles, subExpressions, genericExpr)
             else:
-                expr = expr_class._make(exprInfo, styles, subExpressions)
+                expr = expr_class._checked_make(exprInfo, styles, 
+                                                subExpressions)
             if context is not None and expr._style_id not in Expression.contexts:
                 expr._setContext(context)
                 # see if it is a special expression with an addressable name.

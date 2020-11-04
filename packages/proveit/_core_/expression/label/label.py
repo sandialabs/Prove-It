@@ -1,4 +1,7 @@
 from proveit._core_.expression.expr import Expression
+from proveit._core_.expression.style_options import StyleOptions
+from proveit._core_.expression.fencing import (
+        maybeFencedString, maybeFencedLatex)
 import re
 
 class Label(Expression):
@@ -7,7 +10,9 @@ class Label(Expression):
     classes (Label is not itself an expr class).  It is a mathematical label
     with string and latex formatting.
     """
-    def __init__(self, stringFormat, latexFormat=None, labelType = 'Label', extraCoreInfo = tuple(), subExpressions=tuple()):
+    def __init__(self, stringFormat, latexFormat=None, labelType = 'Label', 
+                 extraCoreInfo = tuple(), subExpressions=tuple(),
+                 fence_when_forced=False):
         '''
         Create a Label with the given string and latex formatting.
         By default, the latex formatting is the same as the string formatting.
@@ -23,19 +28,36 @@ class Label(Expression):
             raise TypeError("'latexFormat' must be a str")
         if ',' in self.stringFormat or ',' in self.latexFormat:
             raise ValueError("Comma not allowed within a label's formatting")
+        styles = dict()
+        if fence_when_forced: 
+            styles['fence'] = 'when forced'
         coreInfo = [labelType] + self._labelInfo() + list(extraCoreInfo)
-        Expression.__init__(self, coreInfo, subExpressions=subExpressions)
+        Expression.__init__(self, coreInfo, subExpressions=subExpressions,
+                            styles=styles)
+
+    def styleOptions(self):
+        options = StyleOptions(self)
+        options.add('fence', "Do we need to wrap in paranthesis: 'when forced' or 'never'?")
+        return options
         
     def string(self, **kwargs):
         '''
         Return a string representation of the Label.
         '''
+        if self.getStyle('fence', 'never')=='when forced':
+            kwargs['fence'] = (kwargs['forceFence'] if 'forceFence' in 
+                               kwargs else False)
+            return maybeFencedString(self.stringFormat, **kwargs)
         return self.stringFormat
 
     def latex(self, **kwargs):
         '''
         Return a latex representation of the Label.
         '''
+        if self.getStyle('fence', 'never')=='when forced':
+            kwargs['fence'] = (kwargs['forceFence'] if 'forceFence' in 
+                               kwargs else False)
+            return maybeFencedLatex(self.latexFormat, **kwargs)
         return self.latexFormat
 
     def _labelInfo(self):
@@ -71,7 +93,35 @@ class Label(Expression):
         else:
             raise LabelError("Must properly implement the 'remakeArguments' method for class %s"%str(self.__class__))
 
-class LabelError:
+class TemporaryLabel(Label):
+    '''
+    A TemporaryLabel is used temporarily during a build process until
+    mutual dependencies of common expressions are resolved.
+    '''
+    _prefix = "Temporary_placeholder_for_undefined_"
+    
+    def __init__(self, name):
+        string_format = "%s%s"%(TemporaryLabel._prefix, name)
+        latex_format = "%s%s"%(TemporaryLabel._prefix.replace('_', '\_'),
+                               name)
+        Label.__init__(self, string_format, latex_format, 
+                       labelType = 'TemporaryLabel')
+
+    @classmethod
+    def _make(labelClass, coreInfo, styles, subExpressions):
+        name = coreInfo[1][len(TemporaryLabel._prefix):]
+        return TemporaryLabel(name)
+    
+    def remakeArguments(self):
+        '''
+        Yield the argument values that could be used to recreate the 
+        TemporaryLabel.
+        '''
+        name = self.stringFormat[len(TemporaryLabel._prefix):]
+        yield name
+
+
+class LabelError(Exception):
     def __init__(self, msg):
         self.msg = msg
     

@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, OperationOverInstances, maybeFenced, USE_DEFAULTS, ProofFailure
+from proveit import (Literal, Operation, OperationOverInstances, free_vars,
+                     maybeFenced, USE_DEFAULTS, ProofFailure)
 from proveit.logic import InSet
 from proveit.number.sets import RealInterval, Interval, Reals, Integers, Naturals, Complexes
 from proveit.number.negation import Neg
@@ -7,12 +8,15 @@ from proveit._common_ import a, f, P, S, QQ, xx
 class Sum(OperationOverInstances):
     # operator of the Sum operation.
     _operator_ = Literal(stringFormat='Sum', latexFormat=r'\sum', context=__file__)   
-    _init_argname_mapping_ = {'indexOrIndices':'instanceVarOrVars', 'summand':'instanceExpr'}
+    _init_argname_mapping_ = {'indexOrIndices':'instanceParamOrParams', 
+                              'summand':'instanceExpr'}
     
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
-    def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple(), _lambda_map=None):
+    def __init__(self, indexOrIndices, summand, *, 
+                 domain=None, domains=None, condition=None, 
+                 conditions=None, _lambda_map=None):
         r'''
         Sum summand over indices over domains.
         Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
@@ -20,9 +24,10 @@ class Sum(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        # nestMultiIvars=True will cause it to treat multiple instance variables as nested Sum operations internally
-        # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True, _lambda_map=_lambda_map)
+        OperationOverInstances.__init__(
+                self, Sum._operator_, indexOrIndices, summand, 
+                domain=domain, domains=domains, condition=condition,
+                conditions=conditions, _lambda_map=_lambda_map)
         if hasattr(self, 'instanceVar'):
             self.index = self.instanceVar
         if hasattr(self, 'instanceVars'):
@@ -231,7 +236,7 @@ class Sum(OperationOverInstances):
         '''
         from proveit.number.multiplication.theorems import distributeThroughSummationRev
         from proveit.number import Mult
-        if not theFactor.freeVars().isdisjoint(self.indices):
+        if not free_vars(theFactor).isdisjoint(self.indices):
             raise Exception('Cannot factor anything involving summation indices out of a summation')
         # We may need to factor the summand within the summation
         summand_assumptions = assumptions | {InSet(index, self.domain) for index in self.indices}

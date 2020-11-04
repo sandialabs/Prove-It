@@ -6,14 +6,14 @@ from proveit._common_ import a, b, m, n, x, y, xx, AA, B, CC
 class Neg(Operation):
     # operator of the Neg operation.
     _operator_ = Literal(stringFormat='-', context=__file__)
-    
+
     def __init__(self,A):
         Operation.__init__(self, Neg._operator_, A)
-    
+
     def irreducibleValue(self):
         from proveit.number import zero
         return isIrreducibleValue(self.operand) and self.operand != zero
-        
+
     def deduceInNumberSet(self, NumberSet, assumptions=USE_DEFAULTS):
         '''
         given a number set, attempt to prove that the given expression is in that
@@ -29,37 +29,45 @@ class Neg(Operation):
             return complexClosure.specialize({a:self.operand})
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
-    
-    def simplification(self, assumptions=USE_DEFAULTS):
+
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this negation expression equated with a simpler form.
         Deals with double negation specifically.
         '''
-        from proveit.number import zero
-        from proveit.logic import Equals
-        from ._theorems_ import doubleNegation
         from proveit.relation import TransRelUpdater
-        
+
+        expr = self
+        # For convenience updating our equation:
+        eq = TransRelUpdater(expr, assumptions)
         # Handle double negation:
         if isinstance(self.operand, Neg):
-            expr = self
-            eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
-            
             # simplify double negation
             expr = eq.update(self.doubleNegSimplification(assumptions))
             # simplify what is inside the double-negation.
             expr = eq.update(expr.simplification(assumptions))
-            return eq.relation
-        
-        # otherwise, just use the default simplification
-        return Operation.simplification(self, assumptions)
-    
+        return eq.relation
+
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+        '''
+        Only handles -0 = 0 or double negation.
+        '''
+        from proveit.logic import EvaluationError
+        from ._theorems_ import negatedZero
+        from proveit.number import zero
+        if self.operand == zero:
+            return negatedZero
+        if isinstance(self.operand, Neg) and isIrreducibleValue(self.operand.operand):
+            return self.doubleNegSimplification(assumptions)
+        raise EvaluationError(self, assumptions)
+
     def doubleNegSimplification(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import doubleNegation
         assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)
-        return doubleNegation.specialize({x:self.operand.operand}, assumptions=assumptions)
-        
-    
+        return doubleNegation.specialize({x:self.operand.operand},
+                                         assumptions=assumptions)
+
+
     """
     def _closureTheorem(self, numberSet):
         import _theorems_
@@ -82,39 +90,14 @@ class Neg(Operation):
         import _theorems_
         return _theorems_.negNotEqZero
     """
-    
+
     def asInt(self):
         '''
         Convert a literal integer into a Python int.  This
         only works if the operand is a literal int.
         '''
-        return -self.operand.asInt()    
-    """
-    def simplification(self, assumptions=frozenset()):
-        '''
-        For trivial cases, double negation or negating zero,
-        derive and return this Neg expression equated with the simplified form.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
-        '''
-        from ._theorems_ import negNeg, negZero
-        from proveit.number import zero
-        from proveit.logic import Equals
-        if isinstance(self.operand, Neg):
-            deduceInComplexes(self.operand.operand, assumptions)
-            return negNeg.specialize({a:self.operand.operand}).checked(assumptions)
-        elif self.operand == zero:
-            return negZero
-        return Equals(self, self)
-        raise ValueError('Only trivial simplification is implemented (double negation or negating zero)')
-        
-    def simplified(self, assumptions=frozenset()):
-        '''
-        For trivial cases, double negation or negating zero,
-        derive and return the simplified form.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
-        '''
-        return self.simplification(assumptions).rhs
-    """
+        return -self.operand.asInt()
+
     def string(self, **kwargs):
         return maybeFencedString('-'+self.operand.string(fence=True), **kwargs)
 
@@ -132,7 +115,7 @@ class Neg(Operation):
         from proveit.relation import TransRelUpdater
         expr = self
         eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
-        
+
         if isinstance(self.operand, Add):
             # Distribute negation through a sum.
             add_expr = self.operand
@@ -140,7 +123,7 @@ class Neg(Operation):
                 # special case of 2 operands
                 if isinstance(add_expr.operands[1], Neg):
                     expr = eq.update(distributeNegThroughSubtract.specialize({a:add_expr.operands[0], b:add_expr.operands[1].operand}, assumptions=assumptions))
-                else:                    
+                else:
                     expr = eq.update(distributeNegThroughBinarySum.specialize({a:add_expr.operands[0], b:add_expr.operands[1]}, assumptions=assumptions))
             else:
                 # distribute the negation over the sum
@@ -158,7 +141,7 @@ class Neg(Operation):
     def factorization(self, theFactor, pull="left", groupFactor=None, groupRemainder=None, assumptions=USE_DEFAULTS):
         '''
         Pull out a factor from a negated expression, pulling it either to the "left" or "right".
-        groupFactor and groupRemainder are not relevant but kept for compatibility with 
+        groupFactor and groupRemainder are not relevant but kept for compatibility with
         other factor methods.
         Returns the equality that equates self to this new version.
         Give any assumptions necessary to prove that the operands are in Complexes so that
@@ -179,13 +162,13 @@ class Neg(Operation):
                 thm = negTimesPos
         if hasattr(self.operand, 'factor'):
             operandFactorEqn = self.operand.factor(theFactor, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
-            eqn1 = operandFactorEqn.substitution(self.innerExpr().operand) 
+            eqn1 = operandFactorEqn.substitution(self.innerExpr().operand)
             new_operand = operandFactorEqn.rhs
             eqn2 = thm.specialize({x:new_operand.operands[0], y:new_operand.operands[1]}, assumptions=assumptions).deriveReversed(assumptions)
             return eqn1.applyTransitivity(eqn2)
         else:
             if self.operand != theFactor:
-                raise ValueError("%s is a factor in %s!"%(theFactor, self))     
+                raise ValueError("%s is a factor in %s!"%(theFactor, self))
             if thm==negTimesPos: thm=multNegOneLeft
             if thm==posTimesNeg: thm=multNegOneRight
             return thm.specialize({x:self.operand}, assumptions=assumptions).deriveReversed(assumptions)
@@ -199,13 +182,13 @@ class Neg(Operation):
         '''
         from proveit.number import Mult, num
         from ._theorems_ import multNegLeftDouble, multNegRightDouble, multNegAnyDouble
-        
+
         mult_expr = self.operand
         if not isinstance(mult_expr, Mult):
-            raise ValueError("Operand expected to be a Mult expression for %s"%(idx, str(self)))            
+            raise ValueError("Operand expected to be a Mult expression for %s"%(idx, str(self)))
         if not isinstance(mult_expr.operands[idx], Neg):
             raise ValueError("Operand at the index %d expected to be a negation for %s"%(idx, str(mult_expr)))
-        
+
         if len(mult_expr.operands)==2:
             if idx==0:
                 return multNegLeftDouble.specialize({a:mult_expr.operands[1]}, assumptions=assumptions)
@@ -223,4 +206,3 @@ InnerExpr.register_equivalence_method(Neg, 'doubleNegSimplification', 'doubleNeg
 InnerExpr.register_equivalence_method(Neg, 'distribution', 'distributed', 'distribute')
 InnerExpr.register_equivalence_method(Neg, 'factorization', 'factorized', 'factor')
 InnerExpr.register_equivalence_method(Neg, 'innerNegMultSimplification', 'innerNegMultSimplified', 'innerNegMultSimplify')
-

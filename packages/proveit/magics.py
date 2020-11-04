@@ -5,8 +5,7 @@ Define some custom magic for Prove-It in IPython notebooks.
 from IPython.core.magic import Magics, magics_class, line_magic
 from IPython import get_ipython
 from IPython.display import display, HTML
-import nbformat
-from proveit._core_.expression import Expression
+from proveit._core_.expression import Expression, free_vars
 from proveit._core_ import KnownTruth, Theorem
 from proveit._core_.context import Context
 import ipywidgets as widgets
@@ -26,7 +25,7 @@ class AssignmentBehaviorModifier:
             # remember the original version of 'run_cell'
             ipython.orig_run_cell = ipython.run_cell
     
-    def _setBehavior(self, assignmentFn):
+    def _setBehavior(self, assignmentFn, lastLineFn):
         ipython = self.ipython
         def new_run_cell(self, raw_cell, *args, **kwargs):
             lines = raw_cell.split('\n')
@@ -45,6 +44,9 @@ class AssignmentBehaviorModifier:
                     lhs = lhs.strip(); rhs = rhs.strip()
                     if lhs != 'context' and rhs.find("proveit.Context('.')") != 0:
                         lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
+            elif re.match("[a-zA-Z_][a-zA-Z0-9_\.]*$", last_python_stmt) is not None:
+                # We may alter the last line for dispaly purposes.
+                lines.append(lastLineFn(last_python_stmt))
             new_raw_cell = '\n'.join(lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
 #        ipython.run_cell = new.instancemethod(new_run_cell, ipython)#Comment out for python 3
@@ -57,7 +59,8 @@ class AssignmentBehaviorModifier:
     def displayAssignments(self, shell):
 #        shell.ex("from proveit._core_.magics import Assignments")#Comment out for Python 3
         shell.ex("import proveit.magics")#Comment in for Python 3
-        self._setBehavior(lambda varnames: "proveit.magics.Assignments([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])")
+        self._setBehavior(lambda varnames: "proveit.magics.Assignments([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])",
+                          lambda orig_last_line: "proveit.magics.possibly_wrap_html_display_objects(%s)"%orig_last_line)
 
 class ContextInterface:
     '''
@@ -151,7 +154,6 @@ class ContextInterface:
         creating it if necessary.
         '''
         import proveit
-        import json
         notebook_name = os.path.join(subContextName, '_context_.ipynb')
         if not os.path.isdir(subContextName):
             os.mkdir(subContextName)
@@ -506,7 +508,7 @@ class ProveItMagicCommands:
                 required_axioms, required_unproven_theorems = tuple(), tuple()
                 
             if len(required_unproven_theorems) > 0:
-                display(HTML('<h3>Unproven theorems required (directly or indirectly) to prove %s</h3>'%name))
+                display(HTML('<h3>Unproven conjectures required (directly or indirectly) to prove %s</h3>'%name))
                 display(HTML('<dl>'))
                 for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
                     displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
@@ -520,13 +522,58 @@ class ProveItMagicCommands:
         
         dependents = proof.directDependents()
         if len(dependents) == 0:
-            display(HTML('<h3>No theorems depend upon %s</h3>'%name))
+            display(HTML('<h3>No theorems/conjectures depend upon %s</h3>'%name))
         else:
-            display(HTML('<h3>Theorems that depend directly on %s</h3>'%name))
+            display(HTML('<h3>Theorems/conjectures that depend directly on %s</h3>'%name))
             display(HTML('<dl>'))
             for dependent in sorted(proof.directDependents(), key=stmt_sort):
                 displaySpecialStmt(Context.findTheorem(dependent))
             display(HTML('</dl>'))
+
+    def display_dependencies_latex(self, name, known_truth):
+        '''
+        Show the dependencies of an axiom or theorem.
+        '''
+        proof = known_truth.proof() # Axiom or Theorem
+        
+        def displaySpecialStmt(stmt):
+            '''
+            Given an Axiom or Theorem, display HTML with a link
+            to the definition.
+            '''
+            expr = stmt.provenTruth.expr
+            print('\item $' + expr.latex() + '$')
+        
+        def stmt_sort(stmt):
+            return str(stmt)
+        
+        if isinstance(proof, Theorem):
+            try:
+                required_axioms, required_unproven_theorems = proof.allRequirements()
+            except:
+                print('This theorem has not been proven yet.')
+                required_axioms, required_unproven_theorems = tuple(), tuple()
+                
+            if len(required_unproven_theorems) > 0:
+                print('Unproven conjectures required (directly or indirectly) to prove %s'%name)
+                print(r'\begin{itemize}')
+                for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
+                    displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
+                print(r'\end{itemize}')
+            if len(required_axioms) > 0:
+                print('Axioms required (directly or indirectly) to prove %s'%name)
+                print(r'\begin{itemize}')
+                for required_axiom in sorted(required_axioms, key=stmt_sort):       
+                    displaySpecialStmt(Context.findAxiom(required_axiom))
+                print(r'\end{itemize}')
+        
+        dependents = proof.directDependents()
+        if len(dependents) == 0:
+            print('No theorems/conjectures depend upon %s'%name)
+        else:
+            print('Theorems/conjectures that depend directly on %s'%name)
+            for dependent in sorted(proof.directDependents(), key=stmt_sort):
+                displaySpecialStmt(Context.findTheorem(dependent))
     
 
 @magics_class
@@ -654,6 +701,15 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         known_truth = self.shell.user_ns[line.strip()]
         ProveItMagicCommands.display_dependencies(self, name, known_truth)
         
+    @line_magic
+    def dependencies_latex(self, line):
+        '''
+        Show the dependencies of an axiom or theorem.
+        '''
+        name = line.strip()
+        known_truth = self.shell.user_ns[line.strip()]
+        ProveItMagicCommands.display_dependencies_latex(self, name, known_truth)
+        
 class Assignments:    
     def __init__(self, names, rightSides, beginningProof=False):
         self.beginningProof = beginningProof
@@ -664,12 +720,18 @@ class Assignments:
                 try:
                     # try to combine a composite expression if the right side is a
                     # list or dictionary that should convert to an expression.
-                    rightSide = singleOrCompositeExpression(rightSide)
+                    rightSide = singleOrCompositeExpression(
+                            rightSide, wrap_expr_range_in_tuple=False)
                 except:
                     pass
             if proveItMagic.kind in ('axioms', 'theorems', 'common'):
                 if not isinstance(rightSide, Expression) and (rightSide is not None):
-                    raise ValueError("Right hand side of end-of-cell assignment(s) is expected to be Expression(s)")
+                    # raise ValueError("Right hand side of end-of-cell "
+                    #                  "assignment(s) is expected to be "
+                    #                  "Expression(s).")
+                    raise ValueError("Right hand side of end-of-cell "
+                                     "assignment(s) is {}, but is expected to "
+                                     "be Expression(s).".format(rightSide))
             processedRightSides.append(rightSide)
         self.names = list(names)
         self.rightSides = processedRightSides
@@ -688,8 +750,18 @@ class Assignments:
                 proveItMagic.keys.remove(name)
                 continue
             if proveItMagic.kind == 'axioms' or proveItMagic.kind == 'theorems':
-                if len(rightSide.freeVars()) > 0:
-                    raise ValueError('%s should not have free variables; variables must all be bound (e.g. universally quantified).  Free variables: %s'%(proveItMagic.kind, rightSide.freeVars()))
+                # Axiom and theorem variables should all be bound
+                # though we will only check for variables that are
+                # entirely unbound because it would be challenging
+                # to consider partially bound instances and it isn't
+                # so critical -- it's just a good convention.
+                if len(free_vars(rightSide, err_inclusively=False)) > 0:
+                    raise ValueError(
+                            '%s should not have free variables; variables '
+                            'must all be bound (e.g. universally quantified). '
+                            ' Free variables: %s'
+                            %(proveItMagic.kind, 
+                              free_vars(rightSide, err_inclusively=False)))
                 if name in proveItMagic.definitions:
                     if proveItMagic.definitions[name] != rightSide:
                         print('WARNING: Redefining', name)
@@ -704,7 +776,7 @@ class Assignments:
             proveItMagic.keys.append(name)
     
     def html_line(self, name, rightSide):
-        lhs_html = name
+        lhs_html = name + ':'
         unofficialNameKindContext = None
         kind = proveItMagic.kind
         if kind in ('axioms', 'theorems', 'common'):
@@ -721,8 +793,18 @@ class Assignments:
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
             proof_notebook_relurl = proveItMagic.context.thmProofNotebook(name, expr)
-            lhs_html = '<a class="ProveItLink" href="%s">%s</a>'%(proof_notebook_relurl, lhs_html)
-        html = '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
+            status = 'conjecture without proof' # default
+            try:
+                thm = proveItMagic.context.getTheorem(name)
+                if thm.isFullyProven():
+                    status = 'established theorem'
+                elif thm.hasProof():
+                    status = 'conjecture with conjecture-based proof'
+            except:
+                pass # e.g., a new theorem.
+            lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
+                        %(proof_notebook_relurl, name, status))
+        html = '<strong id="%s">%s</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
             expr_notebook_path = proveItMagic.context.expressionNotebook(expr)
             dependencies_notebook_path = os.path.join(os.path.split(expr_notebook_path)[0], 'dependencies.ipynb')
@@ -731,7 +813,7 @@ class Assignments:
             prev = proveItMagic.expr_names[rightSide][-2]
             if kind == 'theorem':
                 html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)<br>'%(prev, prev)
-            else:
+            elif kind=='axiom':
                 print('WARNING: Duplicate of', prev)
         return html
 
@@ -744,7 +826,39 @@ class Assignments:
         
     def __repr__(self):
         return '\n'.join('%s: %s'%(name, repr(rightSide)) for name, rightSide in zip(self.names, self.rightSides))
-        
+
+def possibly_wrap_html_display_objects(orig):
+    from proveit import ExprTuple
+    try:
+        if hasattr(orig, '_repr_html_'):
+            # No need to wrap.  Already has _repr_html.
+            return orig
+        all_expr_objs = True
+        for obj in orig:
+            if not isinstance(obj, Expression):
+                all_expr_objs = False
+            if not hasattr(obj, '_repr_html_'):
+                return orig
+        if all_expr_objs:
+            # If they are all expression objects, wrap it in
+            # an ExprTuple.
+            return ExprTuple(*orig)
+        return HTML_DisplayObjects(orig)
+    except:
+        return orig
+
+class HTML_DisplayObjects:
+    def __init__(self, objects):
+        self.objects = objects
+    
+    def _repr_html_(self):
+        try:
+            return '<br>\n'.join(obj._repr_html_() for obj in self.objects)
+        except Exception as e:
+            print(e)
+    
+    
+
 
 # This class must then be registered with a manually created instance,
 # since its constructor has different arguments from the default:

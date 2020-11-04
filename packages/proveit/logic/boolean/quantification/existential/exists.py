@@ -1,27 +1,30 @@
-from proveit import OperationOverInstances, KnownTruth
-from proveit import Literal, Operation, ExprTuple, USE_DEFAULTS
-from proveit._common_ import A, B, P, R, S, xx, yy, QQ
+from proveit import Lambda, Conditional, OperationOverInstances, KnownTruth
+from proveit import defaults, Literal, Operation, ExprTuple, USE_DEFAULTS
+from proveit._common_ import n, A, B, P, Q, R, S, xx, yy, QQ
 
 class Exists(OperationOverInstances):
     # operator of the Exists operation
     _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', context=__file__)
+
+    # a dictionary to track Skolem constants chosen with the
+    # Exists.choose() method
+    skolem_consts_to_existential = dict()
     
-    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, 
-                 conditions=tuple(), _lambda_map=None):
+    def __init__(self, instanceParamOrParams, instanceExpr, *, 
+                 domain=None, domains=None, condition=None,
+                 conditions=None, _lambda_map=None):
         '''
         Create a exists (there exists) expression:
-        exists_{instanceVars | condition} instanceExpr
-        This expresses that there exists a value of the instanceVar(s) for 
-        which the optional condition(s) is/are satisfied and the instanceExpr 
-        is true.  The instanceVar(s) and condition(s) may be 
-        singular or plural (iterable).
+        exists_{instanceParamOrParams | condition} instanceExpr
+        This expresses that there exists a value of the instance parameters(s) 
+        for which the optional condition(s) is/are satisfied and the 
+        instanceExpr is true.  The instance parameter(s) and condition(s) may 
+        be singular or plural (iterable).
         '''
-        # nestMultiIvars=True will cause it to treat multiple instance 
-        # variables as nested Exists operations internally
-        # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Exists._operator_, instanceVarOrVars, 
-                                        instanceExpr, domain, domains, conditions, 
-                                        nestMultiIvars=True, _lambda_map=_lambda_map)
+        OperationOverInstances.__init__(
+                self, Exists._operator_, instanceParamOrParams, instanceExpr, 
+                domain=domain, domains=domains, condition=condition,
+                conditions=conditions, _lambda_map=_lambda_map)
 
     def sideEffects(self, knownTruth):
         '''
@@ -35,6 +38,135 @@ class Exists(OperationOverInstances):
         Side-effect derivations to attempt automatically for a negated exists operation.
         '''
         yield self.deduceNotExists # derive the NotExists form.
+
+    def choose(self, *skolem_constants, print_message=True):
+        '''
+        From the existential expression
+        self = exists_{x_1,...,x_n | Q(x_1,...,x_n)} P(x_1,...,x_n),
+        generate Skolem constants a_1,...,a_n in correspondence with
+        the instance params x_1,...,x_n. The process will:
+        (1) add Q(a_1,...,a_n) and P(a_1,...,a_n) to the default
+            assumptions;
+        (2) register the Skolem constants a_1,...,a_n in the
+            skolem_consts_to_existential dictionary so they can be
+            eliminated later using the eliminate() method;
+        (3) return the newly-generated assumptions Q(a_1,...,a_n) and
+            P(a_1,...,a_n)
+        '''
+        # Register this particular collection of Skolem constants
+        # in the dictionary as a key linking them to this Exists object
+        Exists.skolem_consts_to_existential[skolem_constants]=self
+
+        # build the Skolemized versions of the conditions Q and the
+        # instance expression P
+        repl_dict = {param:skolem_const for param, skolem_const
+                     in zip(self.instanceParams, skolem_constants)}
+        P_skolem = self.instanceExpr.replaced(repl_dict)
+        Q_skolem = self.conditions.replaced(repl_dict)
+
+        # Update the default assumptions with the Skolem versions
+        # of the conditions and instance expression
+        defaults.assumptions = (*defaults.assumptions, *Q_skolem, P_skolem)
+        if print_message:
+            print("Creating Skolem 'constant(s)': {0}.\n"
+                  "Call the KnownTruth.eliminate{0} to complete the "
+                  "Skolemization\n(when the 'constant(s)' are no longer needed).\n"
+                  "Adding to defaults.assumptions:".
+                  format(skolem_constants, (*Q_skolem)))
+
+        return ExprTuple(*Q_skolem, P_skolem)
+
+    @staticmethod
+    def eliminate(skolem_constants, judgment, assumptions=USE_DEFAULTS):
+        '''
+        For the provided judgment of the form S |– alpha and the tuple
+        of Skolem constants skolem_constants that had been specified
+        earlier using the Exists.choose(), derive and return a new
+        judgment S' |– alpha where all assumptions in S involving only
+        the given skolem_constants are now eliminated.
+        This process will only work if the provided skolem_constants
+        exactly match a set of Skolem constants used earlier in an
+        Exists.choose() method to produce the Skolem constant-based
+        subset of assumptions you wish to eliminate from S.
+        '''
+        from proveit import Lambda
+        from proveit._common_ import n, P, Q, alpha
+        from proveit.logic import And
+        from proveit.core_expr_types._common_ import (x_1_to_n, y_1_to_n)
+        from proveit.logic.boolean.quantification.existential._theorems_ import (
+                skolemElim)
+        if skolem_constants not in Exists.skolem_consts_to_existential:
+            raise KeyError("In calling Exists.eliminate(), the Skolem "
+                           "constants provided were: {}, but you can only "
+                           "eliminate Skolem constants that were chosen "
+                           "earlier when using Exists.choose() and the "
+                           "Skolem constants to be eliminated must appear "
+                           "exactly as specified in the original "
+                           "Exists.choose() method.".format(skolem_constants))
+        existential = Exists.skolem_consts_to_existential[skolem_constants]
+        skolem_assumptions = set(existential.choose(
+                *skolem_constants, print_message=False))
+        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions = [assumption for assumption in assumptions
+                       if assumption not in skolem_assumptions]
+
+        _P = Lambda(
+                existential.instanceParams, existential.instanceExpr)
+        if hasattr(existential, 'condition'):
+            _Q = Lambda(existential.instanceParams, existential.condition)
+        else:
+            # there is no condition but we still need to provide
+            # something for _Q so we provide an empty conjunction And()
+            _Q = Lambda(
+                    existential.instanceParams, And())
+        _alpha = judgment
+        _n = existential.instanceParams.length(assumptions)
+        x_1_to__n = ExprTuple(x_1_to_n.replaced({n:_n}))
+        y_1_to__n = ExprTuple(y_1_to_n.replaced({n:_n}))
+
+        # express the judgment as an implication to match details of
+        # the skolemElim theorem being instantiated further below
+        P_implies_alpha = _alpha.asImplication(
+                hypothesis=_P.apply(*skolem_constants))
+        # the generalization to further match theorem details
+        # can be handled through automation
+        # P_implies_alpha.generalize(
+        #         skolem_constants,
+        #         conditions=[_Q.apply(*skolem_constants)])
+
+        return skolemElim.instantiate(
+                {n:_n, P:_P, Q:_Q, alpha:_alpha,
+                 x_1_to__n:skolem_constants,
+                 y_1_to__n:existential.instanceParams},
+                assumptions=assumptions).deriveConsequent(assumptions)
+    
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From this existential quantifier, derive the "unfolded"
+        version according to its definition (the negation of
+        a universal quantification).
+        '''
+        from proveit.logic.boolean.quantification.existential._theorems_ \
+            import existsUnfolding
+        _n = self.instanceParams.length(assumptions)
+        _P = Lambda(self.instanceParams, self.operand.body.value)
+        _Q = Lambda(self.instanceParams, self.operand.body.condition)
+        return existsUnfolding.instantiate(
+                {n:_n, P:_P, Q:_Q}, assumptions=assumptions). \
+                deriveConsequent(assumptions)
+    
+    def definition(self, assumptions=USE_DEFAULTS):
+        '''
+        Return definition of this existential quantifier as an
+        equation with this existential quantifier on the left
+        and a negated universal quantification on the right.
+        '''
+        from proveit.logic.boolean.quantification.existential._axioms_ \
+            import existsDef
+        _n = self.instanceParams.length(assumptions)
+        _P = Lambda(self.instanceParams, self.operand.body.value)
+        _Q = Lambda(self.instanceParams, self.operand.body.condition)
+        return existsDef.instantiate({n:_n, P:_P, Q:_Q}, assumptions=assumptions)
         
     def deduceNotExists(self, assumptions=USE_DEFAULTS):
         r'''

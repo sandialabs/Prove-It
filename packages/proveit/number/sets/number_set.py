@@ -32,11 +32,11 @@ class NumberMembership(Membership):
         if not isinstance(knownTruth.expr, InSet):
             raise ValueError("Expecting the knownTruth of a NumberMembership "
                                "sideEffects call to be for an InSet expression.")
-        if knownTruth.element != self.element:
+        if knownTruth.element != element:
             raise ValueError("NumberMembership.sideEffects called with a "
                                "knownTruth that is inconsistent w.r.t. the "
                                "element.")
-        if knownTruth.domain != self.number_set:
+        if knownTruth.domain != number_set:
             raise ValueError("NumberMembership.sideEffects called with a "
                                "knownTruth that is inconsistent w.r.t. the "
                                "domain.")
@@ -78,7 +78,7 @@ class NumberMembership(Membership):
         # Try the 'deduceInNumberSet' method.
         if hasattr(element, 'deduceInNumberSet'):
             return element.deduceInNumberSet(self.number_set, 
-                                              assumptions=assumptions)
+                                             assumptions=assumptions)
         else:
             msg = str(element) + " has no 'deduceInNumberSet' method."
             raise ProofFailure(InSet(self.element, self.number_set), 

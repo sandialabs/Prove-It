@@ -7,14 +7,15 @@ are directly required, each with its Proof.  In this way, the
 Proof objects form a DAG.
 """
 
+from collections import OrderedDict
+import re
 from proveit._core_.known_truth import KnownTruth
 from proveit._core_._unique_data import meaningData, styleData
-from .defaults import defaults, USE_DEFAULTS, WILDCARD_ASSUMPTIONS
+from .defaults import defaults
 from .context import Context
-import re
 
 class Proof:
-    
+
     # Map each Proof to the first instantiation of it that was created (noting that
     # multiple Proof objects can represent the same Proof and will have the same hash value).
     # Using this, internal references (between KnownTruths and Proofs) unique .
@@ -30,22 +31,32 @@ class Proof:
         Assumption.allAssumptions.clear()
         Theorem.allTheorems.clear()
         _ShowProof.show_proof_by_id.clear()
-        
-    def __init__(self, provenTruth, requiredTruths):
-        
+
+    def __init__(self, provenTruth, requiredTruths,
+                 markedRequiredTruthIndices=None):
+
         '''
         # Uncomment to print useful debugging information when tracking side-effects.
         if not isinstance(self, Theorem) and not isinstance(self, Axiom):
             print "prove", provenTruth.expr
         '''
-        
+
         assert isinstance(provenTruth, KnownTruth)
         for requiredTruth in requiredTruths:
             assert isinstance(requiredTruth, KnownTruth)
-        # note: the contained KnownTruth and Proofs are subject to style changes on a Proof instance basis.       
-        self.provenTruth = provenTruth 
+        # note: the contained KnownTruth and Proofs are subject to style changes on a Proof instance basis.
+        self.provenTruth = provenTruth
         self.requiredTruths = tuple(requiredTruths)
-                   
+        if markedRequiredTruthIndices is None:
+            self.markedRequiredTruthIndices = set()
+        else:
+            self.markedRequiredTruthIndices = \
+                set(markedRequiredTruthIndices)
+        for idx in self.markedRequiredTruthIndices:
+            if not isinstance(idx, int) or idx < 0 or idx > len(requiredTruths):
+                raise ValueError("markedRequiredTruthIndices must be a set "
+                                 "of integers indexing requiredTruths")
+
         # The meaning data is shared among Proofs with the same structure disregarding style
         self._meaningData = meaningData(self._generate_unique_rep(lambda obj : hex(obj._meaning_id)))
         if not hasattr(self._meaningData, 'requiredProofs'):
@@ -57,30 +68,30 @@ class Proof:
             # avoid circular logic.  They can also be manually introduced via Proof.disable().
             self._meaningData._unusableProof = None # When unusable, this will point to the unusable theorem
                                            # being applied directly or indirectly.
-                            
+
         # The style data is shared among Proofs with the same structure and style.
         self._styleData = styleData(self._generate_unique_rep(lambda obj : hex(obj._style_id)))
-        
+
         # reference this unchanging data of the unique 'meaning' data
         self._meaning_id = self._meaningData._unique_id
-                
+
         # reference this data of the unique 'meaning' data, but note that these
         # are subject to change (as proofs are disabled and as new dependencies are added).
         self.requiredProofs = self._meaningData.requiredProofs
         self._dependents = self._meaningData._dependents
-        
+
         all_required_proofs = self.allRequiredProofs()
         all_required_truths = {required_proof.provenTruth for required_proof in all_required_proofs if required_proof is not self}
         original_proof = self.provenTruth not in all_required_truths
-        
-        if original_proof:        
+
+        if original_proof:
             # As long as this is not a useless self-dependent proof (a proof that depends upon
             # a different proof of the same truth which should never actually get used),
             # track the dependencies of required proofs so they can be updated appropriated if there are
             # changes due to proof disabling.
             for requiredProof in self.requiredProofs:
                 requiredProof._dependents.add(self)
-        
+
         if not hasattr(self._meaningData, 'numSteps'):
             # determine the number of unique steps required for this proof
             self._meaningData.numSteps = len(all_required_proofs)
@@ -89,19 +100,19 @@ class Proof:
         self._styleData.addChild(self, self.provenTruth)
         for requiredTruth in self.requiredTruths:
             self._styleData.addChild(self, requiredTruth)
-                                
+
         self._style_id = self._styleData._unique_id
-        
+
         if not original_proof:
             self._meaningData._unusableProof = self # not usable because it is not useful
             assert provenTruth.proof() is not None, "There should have been an 'original' proof"
             return
-                                     
+
         requiringUnusableProof = False
         for requiredProof in self.requiredProofs:
             if not requiredProof.isUsable():
-                # Mark proofs as unusable when using an "unusable" theorem 
-                # directly or indirectly.  Theorems are marked as unusable 
+                # Mark proofs as unusable when using an "unusable" theorem
+                # directly or indirectly.  Theorems are marked as unusable
                 # when a proof for some Theorem is being generated as a
                 # means to avoid circular logic.
                 self._meaningData._unusableProof = requiredProof._meaningData._unusableProof
@@ -109,7 +120,7 @@ class Proof:
                 # to indicate the proof is unusable).
                 requiringUnusableProof = True
                 break # it only take one
-             
+
         # if it is a Theorem, set its "usability", avoiding circular logic
         if self.isUsable():
             self._setUsability()
@@ -117,7 +128,7 @@ class Proof:
         #hadPreviousProof = (provenTruth.proof() is not None and provenTruth.isUsable())
         provenTruth._addProof(self)
         if requiringUnusableProof:
-            # Raise an UnusableProof exception when an attempt is made 
+            # Raise an UnusableProof exception when an attempt is made
             # to use an "unusable" theorem directly or indirectly.
             raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
         if provenTruth.proof()==self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
@@ -147,7 +158,7 @@ class Proof:
                 dependent._meaningData._unusableProof = None # it is usable again
                 dependent._meaningData.numSteps = len(dependent.allRequiredProofs())
                 dependent.provenTruth._addProof(dependent) # add it back as an option
-    
+
     def _setUsability(self):
         pass # overloaded for the Theorem type Proof
 
@@ -158,31 +169,40 @@ class Proof:
         # Internally, for self._meaning_rep and self._style_rep, we will use self.requiredTruths in the unique representation
         # and the proofs are subject to change (if anything is disabled).
         # For external storage (see _context_storage.py), we will use self.requiredProofs, locking the mapping from KnonwTruths of self.requiredTruths to Proofs.
-        requiredObjs = self.requiredProofs if hasattr(self, 'requiredProofs') else self.requiredTruths
-        return self._generate_step_info(objectRepFn) + '[' + objectRepFn(self.provenTruth) + '];[' + ','.join(objectRepFn(requiredObj) for requiredObj in requiredObjs) + ']'
-            
+        required_objs = (self.requiredProofs
+                         if hasattr(self, 'requiredProofs')
+                         else self.requiredTruths)
+        required_obj_marks = [('*' if k in self.markedRequiredTruthIndices
+                             else '') for k in range(len(required_objs))]
+        required_objs_str = ','.join(objectRepFn(obj)+mark for obj, mark
+                                     in zip(required_objs, required_obj_marks))
+        return (self._generate_step_info(objectRepFn) +
+                '[%s];[%s]'
+                %(objectRepFn(self.provenTruth), required_objs_str))
 
     def _generate_step_info(self, objectRepFn):
         '''
         Generate information about this proof step.
         Overridden by Specialization which also needs to including the mapping information
-        and uses the given function to obtain representations of sub-Object.      
+        and uses the given function to obtain representations of sub-Object.
         '''
         return self.stepType() + ':'
 
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
         '''
-        Given a unique representation string, returns the list of 
+        Given a unique representation string, returns the list of
         representations of Prove-It objects that are referenced.
         '''
         # Skip the step type (and axiom/theorem name if it is either of those types)
         # which is in the beginning and followed by a ':'
         remaining = unique_rep.split(':', 1)[-1]
-        # Everything else coming between the punctuation, 
+        # Everything else coming between the punctuation,
         # ';', ':', ',', '{', '}', '[', ']', is a represented object.
-        objIds = re.split("\{|\[|,|:|;|\]|\}",remaining) 
-        return [objId for objId in objIds if len(objId) > 0]  
+        objIds = re.split("\{|\[|,|:|;|\]|\}",remaining)
+        # Remove the '*' marks, marking the "equality replacement
+        # requirements".
+        return [objId.rstrip('*') for objId in objIds if len(objId) > 0]
 
     @staticmethod
     def _showProof(context, proof_id, unique_rep):
@@ -191,15 +211,15 @@ class Proof:
         object that mocks up a stored proof for the purposes of
         displaying it.
         '''
-        # Skip the step type (and axiom/theorem name if it is either of 
+        # Skip the step type (and axiom/theorem name if it is either of
         # those types) which is in the beginning and followed by a ':'
         if unique_rep[:6] != 'Proof:':
             raise ValueError("Invalid 'unique_rep' for Proof: %s"%unique_rep)
         step_info, remaining = unique_rep[6:].split(':', 1)
-        # extract groups each wrapped in braces, either '{..}' or '[..]' 
+        # extract groups each wrapped in braces, either '{..}' or '[..]'
         group_strs = []
         while len(remaining) > 0:
-            if remaining[0]==';': 
+            if remaining[0]==';':
                 remaining=remaining[1:]
             start_brace = remaining[0]
             if start_brace not in ('{', '['):
@@ -212,17 +232,17 @@ class Proof:
         # ';', ':', ','.
         groups = []
         for group_str in group_strs:
-            objIds = re.split(",|:|;",group_str) 
+            objIds = re.split(",|:|;",group_str)
             groups.append([objId for objId in objIds if len(objId) > 0])
         if proof_id in _ShowProof.show_proof_by_id:
             return _ShowProof.show_proof_by_id[proof_id]
         return _ShowProof(context, proof_id, step_info, groups)
-                                                    
+
     def isUsable(self):
         '''
         Returns True iff this Proof is usable.  A Proof may be unusable
         because it was manually disabled or because it is not being presumed
-        while trying to prove a Theorem (other Theorems must be explicitly 
+        while trying to prove a Theorem (other Theorems must be explicitly
         presumed in order to avoid circular logic).
         '''
         return self._meaningData._unusableProof is None
@@ -243,12 +263,12 @@ class Proof:
                 if dependent_proof.provenTruth.proof() == dependent_proof:
                     # include the sub-dependents iff this dependent is actually in use
                     to_process.extend(dependent_proof._dependents)
-        
+
         # Disable all dependents
         for dependent_proof in all_dependents:
             dependent_proof._meaningData._unusableProof = self
             dependent_proof.provenTruth._discardProof(dependent_proof)
-        
+
         # Check if alternate usable proofs are available for the proofs that we disabled.
         # Make multiple passes to ensure new possibilities and best options fully propagate.
         continue_revisions = True
@@ -259,39 +279,39 @@ class Proof:
                     # Check for an alternate to this disabled dependent proof.
                     if dependent_proof.provenTruth._reviseProof():
                         continue_revisions = True
-    
+
     def __eq__(self, other):
         if isinstance(other, Proof):
             return self._meaning_id == other._meaning_id
         else: return False # other must be an Expression to be equal to self
-    
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
         return self._meaning_id
-    
+
     def numSteps(self):
         '''
         Return the number of unique steps in the proof.
         '''
         return self._meaningData.numSteps
-    
+
     def usedAxioms(self):
         '''
-        Returns the set of names of axioms that are used directly (not via other theorems) in this proof. 
+        Returns the set of names of axioms that are used directly (not via other theorems) in this proof.
         '''
         return set().union(*[requiredProof.usedAxioms() for requiredProof in self.requiredProofs])
 
     def usedTheorems(self):
         '''
-        Returns the set of names of axioms that are used directly (not via other theorems) in this proof. 
+        Returns the set of names of axioms that are used directly (not via other theorems) in this proof.
         '''
         return set().union(*[requiredProof.usedTheorems() for requiredProof in self.requiredProofs])
-    
+
     def assumptions(self):
         return self.provenTruth.assumptions
-    
+
     def getLink(self):
         '''
         Return the link to the proof notebook.  It the Proof is a
@@ -309,7 +329,7 @@ class Proof:
         '''
         if hasattr(self, attr):
             raise Exception("Attempting to alter read-only value")
-        self.__dict__[attr] = value 
+        self.__dict__[attr] = value
 
     def enumeratedProofSteps(self):
         '''
@@ -321,7 +341,7 @@ class Proof:
         '''
         from ._dependency_graph import orderedDependencyNodes
         return orderedDependencyNodes(self, lambda proof : proof.requiredProofs)
-    
+
     def allRequiredProofs(self):
         '''
         Returns the set of directly or indirectly required proofs.
@@ -330,13 +350,15 @@ class Proof:
         return set([self]).union(*subProofSets)
 
     def _repr_html_(self):
+        if not defaults.display_latex:
+            return None # No LaTeX display at this time.
         proofSteps = self.enumeratedProofSteps()
         html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
         first_requirements = None
         # If this is a _ShowProof object, _style_id will be a str.
         proof_id = self._style_id if isinstance(self._style_id, str) \
                     else hex(self._style_id)
-                    
+
         # For convenience, we will reference all of the first (top-level)
         # requirements at the top even if it is a simple reference.
         amendedProofSteps = []
@@ -353,48 +375,75 @@ class Proof:
                         amendedProofSteps.append(_ProofReference(req))
                     except StopIteration:
                         # Done with the first requirements:
-                        first_requirements = None 
+                        first_requirements = None
             amendedProofSteps.append(proof)
         proofSteps = amendedProofSteps
-        
+
+        any_marked = False
+        def req_link(proof, req_idx, n):
+            nonlocal any_marked
+            is_marked = (req_idx in proof.markedRequiredTruthIndices)
+            if is_marked: any_marked=True
+            mark_str = r'<sup>*</sup>' if is_marked else ''
+            return ('<a href="#%s_step%d">%d</a>%s'
+                    %(proof_id, n, n, mark_str))
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
         for k, proof in enumerate(proofSteps):
             html += '<tr><td><a name="%s_step%d">%d</a></td>'%(proof_id,k,k)
-            def reqLink(n):
-                return '<a href="#%s_step%d">%d</a>'%(proof_id, n, n)
             if k==0:
                 # The first (top-level) proof has requirements at the
                 # top by design (though some of these may be references to
                 # later steps).
-                requiredProofNums = ', '.join(reqLink(k+1) for k, _ in enumerate(proof.requiredProofs))
+                requiredProofNums = \
+                    ', '.join(req_link(proof, k, k+1) for k, _
+                              in enumerate(proof.requiredProofs))
             else:
-                requiredProofNums = ', '.join(reqLink(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
+                requiredProofNums = \
+                    ', '.join(req_link(proof, k, proofNumMap[requiredProof])
+                              for k, requiredProof
+                              in enumerate(proof.requiredProofs))
             html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
             html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
-            if proof.stepType()=='specialization':
+            if proof.stepType()=='instantiation':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
-            if proof.stepType()=='axiom' or proof.stepType()=='theorem':
+            if proof.stepType() in {'axiom', 'theorem', 'conjecture'}:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
+        if any_marked:
+            html += ('<tr><td colspan=4 style="text-align:left">'
+                     r'<sup>*</sup>equality replacement requirements'
+                     '</td></tr>')
         html += '</table>'
         return html
-    
+
     def __repr__(self):
         proofSteps = self.enumeratedProofSteps()
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
+        any_marked = False
+        def req_ref(proof, req_idx):
+            global any_marked
+            req = proof.requiredProofs[req_idx]
+            is_marked = (req_idx in proof.markedRequiredTruthIndices)
+            if is_marked: any_marked=True
+            mark_str = r'*' if is_marked else ''
+            return ('%d%s'%(proofNumMap[req], mark_str))
         out_str = '\tstep type\trequirements\tstatement\n'
         for k, proof in enumerate(proofSteps):
             out_str += str(k) + '\t'
-            requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
-            out_str += proof.stepType() + '\t' + requiredProofNums + '\t'
+            required_proof_refs = \
+                ', '.join(req_ref(proof, k) for k
+                          in range(len(proof.requiredProofs)))
+            out_str += proof.stepType() + '\t' + required_proof_refs + '\t'
             out_str += proof.provenTruth.string(performUsabilityCheck=False)
             out_str += '\n'
-            if proof.stepType()=='specialization':
+            if proof.stepType()=='instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
             if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
+        if any_marked:
+            out_str += ('* equality replacement requirements\n')
         return out_str
 
 class _ProofReference:
@@ -403,33 +452,47 @@ class _ProofReference:
     to a later proof step while keeping the "first" (top-level)
     requirements at the top.
     '''
-    
+
     def __init__(self, ref):
         self.requiredProofs = [ref]
         self.provenTruth = ref.provenTruth
-    
+        self.markedRequiredTruthIndices = set() # nothing marked
+
     def stepType(self):
         # only used in the HTML version
         return '<i>reference</i>'
 
 class Assumption(Proof):
-    allAssumptions = dict() # map expression and to the assumption object
-     
+    # Map expressions to corresponding assumption objects.
+    allAssumptions = dict()
+
     def __init__(self, expr, assumptions=None):
-        assert expr not in Assumption.allAssumptions, "Do not create an Assumption object directly; use Assumption.makeAssumption instead."
+        from proveit import ExprRange
+        assert expr not in Assumption.allAssumptions, \
+            ("Do not create an Assumption object directly; "
+             "use Assumption.makeAssumption instead.")
         assumptions = defaults.checkedAssumptions(assumptions)
         if expr not in assumptions:
-            # an Assumption proof must assume itself; that's what it does.
+            # An Assumption proof must assume itself;
+            # that's what it does.
             assumptions = assumptions + (expr,)
         prev_default_assumptions = defaults.assumptions
-        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        # These assumptions will be used for deriving any side-effects
+        defaults.assumptions = assumptions
+        # The assumed truth from a ranges of assumptions
+        # must be wrapped in a conjunction (And).
+        if isinstance(expr, ExprRange):
+            from proveit.logic import And
+            assumed_truth = And(expr)
+        else:
+            assumed_truth = expr
         try:
-            Proof.__init__(self, KnownTruth(expr, {expr}), [])
+            Proof.__init__(self, KnownTruth(assumed_truth, {expr}), [])
         finally:
-            # restore the original default assumptions
+            # Restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
         Assumption.allAssumptions[expr] = self
-    
+
     @staticmethod
     def makeAssumption(expr, assumptions):
         '''
@@ -440,18 +503,18 @@ class Assumption(Proof):
         if expr in Assumption.allAssumptions:
             preexisting = Assumption.allAssumptions[expr]
             # The Assumption object exists already, but it's
-            # side-effects may not have been derived yet under the 
+            # side-effects may not have been derived yet under the
             # given assumptions.
             # This can happen when automation is temporarily disabled or
             # when assumptions change.
             preexisting.provenTruth.deriveSideEffects(assumptions)
             return preexisting
         return Assumption(expr, assumptions)
-        
+
     def stepType(self):
         return 'assumption'
 
-class Axiom(Proof): 
+class Axiom(Proof):
     def __init__(self, expr, context, name):
         if not isinstance(context, Context):
             raise ValueError("An axiom 'context' must be a Context object")
@@ -459,42 +522,42 @@ class Axiom(Proof):
             raise ValueError("An axiom 'name' must be a string")
         self.context = context
         self.name = name
-        Proof.__init__(self, KnownTruth(expr, expr.getRequirements()), [])
+        Proof.__init__(self, KnownTruth(expr, frozenset()), [])
 
     def _generate_step_info(self, objectRepFn):
         return self.stepType() + '_' + str(self) + ':'
-    
+
     def stepType(self):
         return 'axiom'
-    
+
     def _storedAxiom(self):
         from ._context_storage import StoredAxiom
         return StoredAxiom(self.context, self.name)
-    
+
     def getLink(self):
         '''
         Return the HTML link to the axiom definition.
         '''
         return self._storedAxiom().getDefLink()
-        
+
     def usedAxioms(self):
         return {self}
-    
+
     def directDependents(self):
         '''
         Returns the theorems that depend directly upon this axioms.
         '''
         return self._storedAxiom().readDependentTheorems()
-    
+
     def allDependents(self):
         return self._storedAxiom().allDependents()
 
     def __str__(self):
         return self.context.name + '.' + self.name
-        
-class Theorem(Proof): 
+
+class Theorem(Proof):
     allTheorems = []
-    
+
     def __init__(self, expr, context, name):
         if not isinstance(context, Context):
             raise ValueError("A theorem 'package' must be a Context object")
@@ -511,19 +574,21 @@ class Theorem(Proof):
 
     def _generate_step_info(self, objectRepFn):
         return self.stepType() + '_' + str(self) + ':'
-    
+
     def stepType(self):
+        if self.isConjecture():
+            return 'conjecture'
         return 'theorem'
 
     def usedTheorems(self):
         return {self}
-        
+
     def __str__(self):
         return self.context.name + '.' + self.name
-    
+
     def __repr__(self):
         return self.context.name + '.' + self.name
-        
+
     def containingPrefixes(self):
         '''
         Yields all containing context names and the full theorem name.
@@ -533,12 +598,12 @@ class Theorem(Proof):
         for k in range(1, len(hierarchy)):
             yield '.'.join(hierarchy[:k])
         yield s
-        
+
     @staticmethod
     def updateUsability():
         for theorem in Theorem.allTheorems:
-            theorem._setUsability()            
-        
+            theorem._setUsability()
+
     def _storedTheorem(self):
         from ._context_storage import StoredTheorem
         return StoredTheorem(self.context, self.name)
@@ -548,7 +613,7 @@ class Theorem(Proof):
         Return the HTML link to the theorem proof file.
         '''
         return self._storedTheorem().getProofLink()
-    
+
     def recordPresumedContexts(self, presumed_context_names):
         '''
         Record information about what other contexts are
@@ -561,37 +626,37 @@ class Theorem(Proof):
         Return the list of presumed contexts.
         '''
         return self._storedTheorem().presumedContexts()
-    
+
     def recordPresumedTheorems(self, explicitly_presumed_theorem_names):
         '''
         Record information about what othere theorems are
         presumed in the proof of this theorem.
         '''
         self._storedTheorem().recordPresumedTheorems(explicitly_presumed_theorem_names)
-    
+
     def explicitlyPresumedTheoremNames(self):
         '''
         Return the list of names of explicitly presumed theorems.
-        (indicated after 'presuming' in the proof notebook). 
+        (indicated after 'presuming' in the proof notebook).
         '''
-        return self._storedTheorem().explicitlyPresumedTheoremNames()       
-        
+        return self._storedTheorem().explicitlyPresumedTheoremNames()
+
     def getAllPresumedTheoremNames(self):
         '''
-        Return the set of full names of presumed theorems that are 
+        Return the set of full names of presumed theorems that are
         directly or indirectly presumed by the theorem of the given name
         in this context.
         '''
-        return self._storedTheorem().getAllPresumedTheoremNames()        
-                
+        return self._storedTheorem().getAllPresumedTheoremNames()
+
     def recordProof(self, proof):
         '''
         Record the given proof as the proof of this theorem.  Updates
         dependency links (usedAxioms.txt, usedTheorems.txt, and usedBy.txt files)
-        and proven dependency indicators (various provenTheorems.txt files 
+        and proven dependency indicators (various provenTheorems.txt files
         for theorems that depend upon the one being proven) appropriately.
         '''
-        self._storedTheorem().recordProof(proof)    
+        self._storedTheorem().recordProof(proof)
 
     def removeProof(self):
         '''
@@ -599,21 +664,27 @@ class Theorem(Proof):
         links.
         '''
         self._storedTheorem().removeProof()
-        
+
     def hasProof(self):
         '''
         Returns true if and only if this theorem has a recorded proof.
         '''
         return self._storedTheorem().hasProof()
-                
-    def isFullyProven(self, theorem):
+
+    def isFullyProven(self):
         '''
         Returns true if and only if this theorem is fully proven
         (it has a recorded proof and all dependent theorems are fully
         proven, all the way to axioms which don't require proofs).
         '''
         return self._storedTheorem().isComplete()
-        
+    
+    def isConjecture(self):
+        '''
+        A "Theorem" that is not fully proven is a "conjecture".
+        '''
+        return not self.isFullyProven()
+
     def allRequirements(self):
         '''
         Returns the set of axioms that are required (directly or indirectly)
@@ -635,23 +706,23 @@ class Theorem(Proof):
         Returns the theorems that depend directly upon this axioms.
         '''
         return self._storedTheorem().readDependentTheorems()
-        
+
     def allDependents(self):
         '''
         Returns the set of theorems that are known to depend upon this
         theorem directly or indirectly.
         '''
         return self._storedTheorem().allDependents()
-                
+
     def _setUsability(self):
         '''
         Sets the '_unusableProof' attribute to disable the
-        theorem if some theorem is being proven and this 
+        theorem if some theorem is being proven and this
         theorem is not presumed or is an alternate proof for the
         same theorem.  Also, if it is presumed, ensure the logic
         is not circular.  Generally, this is preventing circular
-        logic.  This applies when a proof has begun 
-        (see KnownTruth.beginProof in known_truth.py).  
+        logic.  This applies when a proof has begun
+        (see KnownTruth.beginProof in known_truth.py).
         When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
         Otherwise only Theorems named in the KnownTruth.presumingTheoremNames set
         or contained within any of the KnownTruth.presumingPrefixes
@@ -675,7 +746,7 @@ class Theorem(Proof):
             if str(self) in KnownTruth.presumingTheoremNames or presumed_via_context:
                 # This Theorem is being presumed specifically, or a context in which it is contained is presumed.
                 # Presumption via context (a.k.a. prefix) is contingent upon not having a mutual presumption
-                # (that is, some theorem T can presume everything in another context except for theorems 
+                # (that is, some theorem T can presume everything in another context except for theorems
                 # that presume T or, if proven, depend upon T).
                 # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
                 # is being proven.
@@ -713,19 +784,6 @@ def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
     assert antecedentExpr==implicationExpr.operands[0], 'The result of hypothetical reasoning must be an Implies operation with the proper antecedent'
     assert consequentExpr==implicationExpr.operands[1], 'The result of hypothetical reasoning must be an Implies operation with the proper consequent'
 
-def _appendExtraAssumptions(assumptions, knownTruth):
-    '''
-    When WILDCARD_ASSUMPTIONS ('*') is used, we may need to append 
-    extra assumptions needed by the given knownTruth.
-    '''
-    assumptionsSet = set(assumptions)
-    containsWildcard = ('*' in assumptionsSet)
-    for assumption in knownTruth.assumptions:
-        if assumption not in assumptionsSet:
-            if not containsWildcard:
-                raise Exception("Should not have missing assumptions at this point unless the wildcard, '*', is being used.")
-            assumptions.append(assumption)
-
 class ModusPonens(Proof):
     def __init__(self, implicationExpr, assumptions=None):
         from proveit.logic import Implies
@@ -737,22 +795,18 @@ class ModusPonens(Proof):
             assert isinstance(implicationExpr, Implies) and len(implicationExpr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
             try:
                 # Must prove the implication under the given assumptions.
-                # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
                 implicationTruth = implicationExpr.prove(assumptions)
-                _appendExtraAssumptions(assumptions, implicationTruth)
             except ProofFailure:
                 raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implicationExpr))
             try:
                 # Must prove the antecedent under the given assumptions.
-                # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
                 antecedentTruth = implicationExpr.operands[0].prove(assumptions)
-                _appendExtraAssumptions(assumptions, antecedentTruth)
             except ProofFailure:
                 raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Antecedent of %s is not proven'%str(implicationExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = implicationTruth.assumptionsSet | antecedentTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
-            # we have what we need; set up the ModusPonens Proof        
+            # we have what we need; set up the ModusPonens Proof
             consequentTruth = KnownTruth(implicationExpr.operands[1], assumptions)
             _checkImplication(implicationTruth.expr, antecedentTruth.expr, consequentTruth.expr)
             self.implicationTruth = implicationTruth
@@ -765,12 +819,22 @@ class ModusPonens(Proof):
     def stepType(self):
         return 'modus ponens'
 
-class HypotheticalReasoning(Proof):
-    def __init__(self, consequentTruth, antecedentExpr): 
-        from proveit.logic import Implies
-        assumptions = [assumption for assumption in consequentTruth.assumptions if assumption != antecedentExpr]
+class Deduction(Proof):
+    def __init__(self, consequentTruth, antecedentExpr):
+        from proveit import ExprRange
+        from proveit.logic import Implies, And
+        if isinstance(antecedentExpr, ExprRange):
+            # Assumption ranges must be transformed to a
+            # conjunction form on the other side.
+            elim_assumption = antecedentExpr
+            antecedentExpr = And(antecedentExpr)
+        else:
+            elim_assumption = antecedentExpr
+        assumptions = [assumption for assumption in consequentTruth.assumptions
+                       if assumption != elim_assumption]
         prev_default_assumptions = defaults.assumptions
-        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+         # These assumptions will be used for deriving any side-effects
+        defaults.assumptions = assumptions
         try:
             implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
             implicationTruth = KnownTruth(implicationExpr, assumptions)
@@ -781,217 +845,432 @@ class HypotheticalReasoning(Proof):
             defaults.assumptions = prev_default_assumptions
 
     def stepType(self):
-        return 'hypothetical reasoning'
+        return 'deduction'
 
-class Specialization(Proof):
-    def __init__(self, generalTruth, numForallEliminations, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+class Instantiation(Proof):
+    def __init__(self, orig_known_truth, num_forall_eliminations,
+                 repl_map, equiv_alt_expansions, assumptions):
         '''
-        Create the Specialization proof step that specializes the given general expression
-        using the substitution map (subMap) under the given assumptions.  
-        Eliminates the number of nested Forall operations as indicated, substituting
-        their instance variables according to subMap.  The default for any unspecified instance 
-        variable is to specialize it to itself, or, in the case of a bundled variable 
-        (Etcetera-wrapped MultiVariables), the default is to specialize it to an empty list.
-        Substitution of variables that are not instance variables of the Forall operations
-        being eliminated are to be relabeled.  Relabeling is limited to substituting
-        a Variable to another Variable or substituting a bundled variable to
-        another bundled variable or list of variables (bundled or not).
+        Create the specialization+instantiation proof step that eliminates
+        some number of nested Forall operations (specialization) and
+        simultaneously replaces Variables with Expressions (instantiation)
+        according to the replacement map (repl_map). A Variable that is
+        a parameter variable of an internal Lambda expression may only
+        be relabeled; it will not be replaced with a non-Variable expression
+        within the scop of the Lambda expression.
+
+        See Expression.substituted for details regarding the replacement rules.
         '''
-        assumptions = list(defaults.checkedAssumptions(assumptions))
-        prev_default_assumptions = defaults.assumptions
-        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
-        def raiseFailure(msg):
-            if numForallEliminations>0:
-                raise SpecializationFailure(generalTruth, specializeMap, relabelMap, assumptions, msg)
-            else:
-                raise RelabelingFailure(generalTruth, assumptions, msg)
-        try:
-            if relabelMap is None: relabelMap = dict()
-            if specializeMap is None: specializeMap = dict()
-            if not isinstance(generalTruth, KnownTruth):
-                raiseFailure('May only specialize/relabel a KnownTruth')
-            if generalTruth.proof() is None:
-                raise UnusableProof(KnownTruth.theoremBeingProven, generalTruth)
-            if not generalTruth.assumptionsSet.issubset(assumptions):
-                if '*' in assumptions:
-                    # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
-                    _appendExtraAssumptions(assumptions, generalTruth)
-                else:
-                    raiseFailure('Assumptions do not include the assumptions required by generalTruth')
-            generalExpr = generalTruth.expr
-            # perform the appropriate substitution/relabeling
-            specializedExpr, requirements, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
-            # obtain the KnownTruths for the substituted conditions
-            requirementTruths = []
-            requirementTruthSet = set() # avoid repeats of requirements
-            for requirementExpr in requirements:
+        from proveit import (Expression, Lambda, ExprRange, ExprTuple,
+                             IndexedVar)
+        from proveit._core_.expression.lambda_expr.lambda_expr import \
+            (getParamVar, LambdaApplicationError)
+
+        # Prepare the 'parameters' and 'operands' for a lambda map
+        # application (beta reduction) to perform the replacements.
+        parameters = []
+        for key, repl in repl_map.items():
+            if isinstance(repl, set):
+                # When the replacement is a set, it indicates a set
+                # of possible ways to expand a range of variables.
+                # For the current purpose, skip these instances.
+                continue
+            if not isinstance(repl, Expression):
+                raise TypeError("Replacement %s is of type %s and not "
+                                "an 'Expression' object"
+                                %(repl, repl.__class__))
+            if isinstance(key, ExprTuple):
+                # If the key is an ExprTuple, it must either be a
+                # range (or range of ranges, etc.) of an indexed variable 
+                # for a full expansion, or it is an "equivalent alternative
+                # expansion".
+                # Should already have been checked in
+                # KnownTruth.instantiate:
                 try:
-                    # each substituted condition must be proven under the assumptions
-                    # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
-                    requirementTruth = requirementExpr.prove(assumptions)
-                    if requirementTruth not in requirementTruthSet:
-                        requirementTruths.append(requirementTruth)
-                        requirementTruthSet.add(requirementTruth)
-                        _appendExtraAssumptions(assumptions, requirementTruth)
-                except ProofFailure:
-                    raiseFailure('Unmet specialization requirement: ' + str(requirementExpr))
-            # remove any unnecessary assumptions (but keep the order that was provided)
-            assumptionsSet = generalTruth.assumptionsSet
-            for requirementTruth in requirementTruths:
-                assumptionsSet |= requirementTruth.assumptionsSet
-            assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
-            # we have what we need; set up the Specialization Proof
-            self.generalTruth = generalTruth
-            self.requirementTruths = requirementTruths
-            self.mappedVarLists = mappedVarLists
-            self.mappings = mappings
-            specializedTruth = KnownTruth(specializedExpr, assumptions)
-            Proof.__init__(self, specializedTruth, [generalTruth] + requirementTruths)
+                    for param_entry in key:
+                        getParamVar(param_entry)
+                except TypeError as e:
+                    assert False, ("Should have been checked in 'instantiate' "
+                                   "method:\n%s"%str(e))
+                parameters.append(key[0])
+            else:
+                parameters.append(key)
+        prev_default_assumptions = set(defaults.assumptions)
+        try:
+            # These assumptions will be used for deriving any
+            # side-effects:
+            defaults.assumptions = set(assumptions)
+            if not isinstance(orig_known_truth, KnownTruth):
+                raise TypeError("May only 'instantiate' a KnownTruth")
+            if orig_known_truth.proof() is None:
+                raise UnusableProof(KnownTruth.theoremBeingProven,
+                                    orig_known_truth)
+
+            # The "original" KnownTruth is the first "requirement truth" for
+            # this derivation step.
+            orig_subbed_assumptions = []
+            requirements = []
+            equality_repl_requirements = set()
+
+            # Make possible substitutions in the "original" KnownTruth
+            # assumption.
+            operands = []
+            for parameter in parameters:
+                if (ExprTuple(parameter) in repl_map):
+                    # Yield the entries for the replacement of the
+                    # ExprTuple of the parameter.
+                    for entry in repl_map[ExprTuple(parameter)]:
+                        operands.append(entry)
+                else:
+                    operands.append(repl_map[parameter])
+            for assumption in orig_known_truth.assumptions:
+                subbed_assumption = Lambda._apply(
+                        parameters, assumption, *operands,
+                        allow_relabeling=False,
+                        equiv_alt_expansions=equiv_alt_expansions,
+                        assumptions=assumptions, requirements=requirements,
+                        equality_repl_requirements=equality_repl_requirements)
+                if isinstance(assumption, ExprRange):
+                    # An iteration of assumptions to expand.
+                    orig_subbed_assumptions.extend(subbed_assumption)
+                else:
+                    orig_subbed_assumptions.append(subbed_assumption)
+
+            # Automatically use the assumptions of the
+            # original_known_truth plus the assumptions that were
+            # provided.
+            assumptions = tuple(orig_subbed_assumptions) + assumptions
+            # Eliminate duplicates.
+            assumptions = tuple(OrderedDict.fromkeys(assumptions))
+            # Make this the new default (for side-effects).
+            defaults.assumptions = assumptions
+
+            instantiated_expr = \
+                Instantiation._instantiated_expr(
+                        orig_known_truth, num_forall_eliminations,
+                        parameters, repl_map, equiv_alt_expansions,
+                        assumptions, requirements,
+                        equality_repl_requirements)
+
+            # Remove duplicates in the requirements.
+            requirements = list(OrderedDict.fromkeys(requirements))
+
+            # Remove any unnecessary assumptions (but keep the order
+            # that was provided).  Note that some assumptions of
+            # requirements may not be in the 'applied_assumptions_set'
+            # if they made use of internal assumptions from a
+            # Conditional and can be eliminated.
+            applied_assumptions_set = set(assumptions)
+            assumptions = list(orig_subbed_assumptions)
+            for requirement in requirements:
+                for assumption in requirement.assumptions:
+                    if assumption in applied_assumptions_set:
+                        assumptions.append(assumption)
+            assumptions = list(OrderedDict.fromkeys(assumptions))
+
+            # Sort the replaced variables in order of their appearance
+            # in the original KnownTruth.
+            def get_key_var(key):
+                if isinstance(key, ExprTuple):
+                    assert len(key)>=1
+                    return getParamVar(key[0])
+                return getParamVar(key)
+            repl_var_keys = {get_key_var(key):key for key in repl_map.keys()}
+            repl_vars = repl_var_keys.keys()
+            repl_vars = list(orig_known_truth.orderOfAppearance(repl_vars))
+            # And remove duplicates.
+            repl_vars = list(OrderedDict.fromkeys(repl_vars))
+
+            # Map variables to sets of tuples that represent the
+            # same range of indexing for equivalent alternative
+            # expansions.  For example,
+            #   {x_1, ..., x_{n+1}, x_1, ..., x_n, x_{n+1}}.
+            var_range_forms = dict()
+            for var_range_form, expansion in equiv_alt_expansions.items():
+                var = getParamVar(var_range_form[0])
+                var_range_forms.setdefault(var, set()).add(var_range_form)
+
+            # We have what we need; set up the Instantiation Proof
+            self.orig_known_truth = orig_known_truth
+            # Exclude anything in the repl_map that does not appear in
+            # the original KnownTruth:
+            mapping = dict()
+            mapping_var_order = []
+            def var_range_form_sort(var_tuple):
+                # For sorting equivalent ExprTuples of indexed
+                # variables (e.g., {(x_1, ..., x_{n+1}),
+                #                   (x_1, ..., x_n, x_{n+1})})
+                # put ones with the fewest number of entries first
+                # but break ties arbitrarily via the "meaning id".
+                return (len(var_tuple), var_tuple._meaning_id)
+            for var in repl_vars:
+                if var in repl_map:
+                    # The variable itself is in the replacement map.
+                    mapping[var] = repl_map[var]
+                    mapping_var_order.append(var)
+                if var in var_range_forms:
+                    # There are replacements for various forms of the
+                    # variable indexed over the same range.
+                    # We'll sort these in an order going
+                    # from the fewest # of entries to the most.
+                    for var_range_form in sorted(var_range_forms[var],
+                                                 key=var_range_form_sort):
+                        mapping[var_range_form] = \
+                            equiv_alt_expansions[var_range_form]
+                        mapping_var_order.append(var_range_form)
+            self.mapping_var_order = mapping_var_order
+            self.mapping = mapping
+            instantiated_truth = KnownTruth(instantiated_expr, assumptions)
+            # Make the 'original known truth' be the 1st requirement.
+            requirements.insert(0, orig_known_truth)
+            # Mark the requirements that are "equality replacements".
+            marked_req_indices = set()
+            for k, req in enumerate(requirements):
+                if req in equality_repl_requirements:
+                    marked_req_indices.add(k)
+            Proof.__init__(self, instantiated_truth, requirements,
+                           marked_req_indices)
+        except LambdaApplicationError as e:
+            raise InstantiationFailure(orig_known_truth, repl_map,
+                                       assumptions, str(e))
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
 
     def _generate_step_info(self, objectRepFn):
         '''
-        Generate information about this proof step, including mapping information for this specialization.
+        Generate information about this proof step, including mapping
+        information for this specialization.
         '''
-        mappingInfo = ';'.join(','.join(objectRepFn(var) + ':' + objectRepFn(self.mappings[var]) for var in mappedVars) \
-                                for mappedVars in self.mappedVarLists)
-        return self.stepType() + ':{' + mappingInfo + '}'
-                                
+        mapping = self.mapping
+        mapping_info = ','.join(objectRepFn(var) + ':' + objectRepFn(mapping[var])
+                               for var in self.mapping_var_order)
+        return self.stepType() + ':{' + mapping_info + '}'
+
     def stepType(self):
-        if len(self.mappedVarLists) > 1:
-            return 'specialization'
-        return 'relabeling' # relabeling only
-    
+        return 'instantiation'
+
     def _single_mapping(self, var, replacement, formatType):
         from proveit import Function, Lambda
         formatted = lambda expr : expr._repr_html_() if formatType=='HTML' else str(expr)
         if isinstance(replacement, Lambda):
-            return formatted(Function(var, replacement.parameter_or_parameters)) + ' : ' + formatted(replacement.body)
+            return (formatted(Function(var, replacement.parameter_or_parameters))
+                    + ' : ' + formatted(replacement.body))
         return formatted(var) + ' : ' + formatted(replacement)
-    
+
     def _mapping(self, formatType='HTML'):
-        mappedVarLists = self.mappedVarLists
         if formatType=='HTML':
             out = '<span style="font-size:20px;">'
         else: out = ''
-        if len(mappedVarLists) == 1 or (len(mappedVarLists) == 2 and len(mappedVarLists[-1]) == 0):
-            # a single relabeling map, or a single specialization map with no relabeling map
-            mappedVars = mappedVarLists[0]
-            out += ', '.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars)
-        else:
-            out += ', '.join(','.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars) for mappedVars in mappedVarLists[:-1])
-            if len(mappedVarLists[-1]) > 0:
-                # the last group is the relabeling map, if there is one
-                mappedVars = mappedVarLists[-1]
-                out += ', relabeling ' + ','.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars)
+        out += ', '.join(self._single_mapping(var, self.mapping[var], formatType)
+                         for var in self.mapping_var_order)
         if formatType=='HTML':
             out += '</span>'
         return out
 
     @staticmethod
-    def _specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions):
+    def _get_nested_params(expr, num_nested_foralls):
         '''
-        Return a tuple of (specialization, conditions).  The 
-        specialization derives from the given "general" expression and its conditions
-        via a specialization inference rule (or relabeling as a special case).
-        Eliminates the specified number of Forall operations, substituting all
-        of the corresponding instance variables according to the substitution
-        map dictionary (subMap), or defaulting basic instance variables as
-        themselves. 
+        Assuming the given 'expr' has at least 'num_nested_foralls'
+        levels of directly nested universal quantifications,
+        return the list of parameters for these quantifications.
         '''
-        from proveit import Lambda, Expression, Iter
+        from proveit import Lambda, Conditional
         from proveit.logic import Forall
-        # check that the mappings are appropriate
-        for key, sub in list(relabelMap.items()):
-            Specialization._checkRelabelMapping(generalExpr, key, sub, assumptions)
-            if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
-        for assumption in assumptions:
-            if assumption == WILDCARD_ASSUMPTIONS: continue # ignore the wildcard for this purpose
-            vars_in_violation = assumption.freeVars() & set(relabelMap.keys())
-            if len(vars_in_violation) != 0:
-                raise RelabelingFailure(generalExpr, assumptions, 'Attempting to relabel variable(s) that are free in the assumptions: ' + str(vars_in_violation))
-        
-        for key, sub in specializeMap.items():
-            if not isinstance(sub, Expression):
-                raise TypeError("Expecting specialization substitutions to be 'Expression' objects")
-            if key in relabelMap:
-                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'Attempting to specialize and relabel the same variable: %s'%str(key))
-        
-        # Eliminate the desired number of Forall operations and extracted appropriately mapped conditions
-        expr = generalExpr
-        remainingForallEliminations = numForallEliminations
-        partialMap = dict()
-        subbedConditions = []
-        mappedVarLists = []
-        requirements = []
-        while remainingForallEliminations>0:
-            remainingForallEliminations -= 1
+        parameters = []
+        orig_expr = expr
+        for _ in range(num_nested_foralls):
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
-            lambdaExpr = expr.operand
-            assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
-            # When substituting an iterated instance variable, we need to make sure that the
-            # expansion is complete: that there are as many elements of the expansion as
-            # the number of elements of the substitution.  For example,
-            # x_1, ..., x_n and x -> [a, b, c, d], then x_1, ..., x_n -> a, b, c, d
-            # and not a subset.
-            for parameter, parameterVar in zip(lambdaExpr.parameters, lambdaExpr.parameterVars):
-                subbedParam = None
-                if parameterVar in specializeMap: subbedParam = specializeMap[parameterVar]
-                elif parameterVar in relabelMap: subbedParam = relabelMap[parameterVar]
-                if isinstance(parameter, Iter) and subbedParam is not None:
-                    expandedParameter = parameter.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
-                    if len(expandedParameter) != len(subbedParam):
-                        raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, "Substitution of %s incomplete: %s expanding into %s"%(parameter, subbedParam, expandedParameter))
-            mappedVarLists.append(instanceVars)
-            # include the mapping for the current instance variables in the partial map
-            try:
-                partialMap.update({iVar:specializeMap[iVar] for iVar in instanceVars})
-            except KeyError:
-                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
-            # make substitutions in the condition
-            subbedConditions += conditions.substituted(partialMap, relabelMap)
-                        
-        # sort the relabeling vars in order of their appearance in the original expression
-        relabelVars = []
-        visitedVars = set()
-        for var in generalExpr.orderOfAppearance(list(relabelMap.keys())):
-            if var not in visitedVars: # ensure no repeats
-                visitedVars.add(var)
-                relabelVars.append(var)
-        
-        mappedVarLists.append(relabelVars) # relabel vars always the last of the mapped variable lists
-        mappings = dict(specializeMap)
-        mappings.update(relabelMap) # mapping everything
-        
-        subbed_expr = expr.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
-        
-        # Return the expression and conditions with substitutions and the information to reconstruct the specialization
-        return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
+                raise ValueError(
+                        "Improper 'num_forall_eliminations': "
+                        "%s does not have %d nested Forall expressions."
+                        %(orig_expr, num_nested_foralls))
+            lambda_expr = expr.operand
+            if not isinstance(lambda_expr, Lambda):
+                raise TypeError(
+                        "Forall Operation 'operand' must be a Lambda")
+            parameters.extend(lambda_expr.parameters)
+            expr = lambda_expr.body
+            if isinstance(expr, Conditional):
+                expr = expr.value
+        return parameters
 
     @staticmethod
-    def _checkRelabelMapping(generalExpr, key, sub, assumptions):
-        from proveit import Variable
-        if isinstance(key, Variable):
-            if not isinstance(sub, Variable):
-                raise RelabelingFailure(generalExpr, assumptions, 'May only relabel a Variable to a Variable, not %s to %s'%(key, sub))
-        else:
-            raise RelabelingFailure(generalExpr, assumptions, "May only relabel a Variable, not %s"%key)                       
+    def _instantiated_expr(original_known_truth, num_forall_eliminations,
+                           instantiation_params, repl_map,
+                           equiv_alt_expansions,
+                           assumptions, requirements,
+                           equality_repl_requirements):
+        '''
+        Return the instantiated version of the right side of the
+        original_known_truth.  The assumptions on the left side of
+        the turnstile are treated in Instantiation.__init__.
+
+        Eliminates the specified number of Forall operations,
+        substituting all  of the corresponding instance variables
+        according to repl_map.
+        '''
+        from proveit import (Lambda, Conditional, ExprTuple, ExprRange)
+        from proveit._core_.expression.lambda_expr.lambda_expr import \
+            getParamVar
+        from proveit.logic import Forall, And
+
+        # Eliminate the desired number of Forall operations and extract
+        # appropriately mapped conditions.
+        expr = original_known_truth.expr
+        def raiseFailure(msg):
+            raise InstantiationFailure(original_known_truth, repl_map,
+                                       assumptions, msg)
+        instantiation_param_vars = [getParamVar(param) for param
+                                    in instantiation_params]
+        # When an implicit range of indexed variables becomes explicit,
+        # map this correspondence, e.g., 'x' to 'x_1, ..., x_n' when
+        # eliminated \forall_{x_1, ..., x_n}.
+        explicit_ranges = dict()
+
+        def instantiate(expr, exclusion=None):
+            '''
+            Instantiate the given expression by applying an
+            ad-hoc Lambda mapping with parameters from the
+            instantiation_params and operands extracted from the
+            current repl_map.  If an exclusion is provided, skip
+            parameters whose variable is the exclusion.
+            '''
+            params = []
+            operands = []
+            for param, param_var in zip(instantiation_params,
+                                        instantiation_param_vars):
+                if param_var==exclusion:
+                    continue # skip the 'exclusion'
+                if isinstance(param, ExprRange):
+                    # An ExprRange parameter should have a tuple
+                    # replacement for its tuple form.
+                    for entry in repl_map[ExprTuple(param)]:
+                        operands.append(entry)
+                elif param_var in explicit_ranges:
+                    # When an implicit range is mapped to an
+                    # explicit one, a variable instantiation
+                    # should be replaced by the corresponding range
+                    # of variables.
+                    # For example
+                    #   x : (x_1, ..., x_n)
+                    # which may be introduced after eliminating a
+                    #   \forall_{x_1, ..., x_n} ...
+                    # universal quantifier.
+                    param = explicit_ranges[param_var]
+                    for entry in repl_map[ExprTuple(param)]:
+                        operands.append(entry)
+                else:
+                    operands.append(repl_map[param])
+                params.append(param)
+            if len(params)==0:
+                return expr
+            return Lambda._apply(
+                    params, expr, *operands, allow_relabeling=True,
+                    equiv_alt_expansions=equiv_alt_expansions,
+                    assumptions=assumptions, requirements=requirements,
+                    equality_repl_requirements=equality_repl_requirements)
+
+        remaining_forall_eliminations = num_forall_eliminations
+        while remaining_forall_eliminations>0:
+            remaining_forall_eliminations -= 1
+            assert isinstance(expr, Forall)
+            lambda_expr = expr.operand
+            assert isinstance(lambda_expr, Lambda)
+            expr = lambda_expr.body
+
+            # Check for implicit variable range substitutions
+            # that need to be made explicit.  For example,
+            # if we have an instantiation for 'x' that is an ExprTuple
+            # and 'x' is universally quantified over a range here
+            # (e.g., x_1, ..., x_n), then we will record the
+            # correspondence (e.g., x : x_1, ..., x_n) in
+            # `explicit_ranges` (used when generating parameters
+            # for ad-hoc Lambda expressions) and update
+            # repl_map to record the assignments.  For example,
+            # x : {(x_1, ..., x_n)}
+            # (x_1, ..., x_n) : <the-actual-replacement>
+            for param in lambda_expr.parameters:
+                if isinstance(param, ExprRange):
+                    param_var = getParamVar(param)
+                    param_var_repl = repl_map.get(param_var, None)
+                    if isinstance(param_var_repl, ExprTuple):
+                        subbed_param = instantiate(param, exclusion=param_var)
+                        if subbed_param not in repl_map:
+                            subbed_param_tuple = ExprTuple(subbed_param)
+                            if (subbed_param_tuple in repl_map and
+                                    repl_map[subbed_param_tuple] !=
+                                        param_var_repl):
+                                raiseFailure("Inconsistent assignment of "
+                                             "%s: %s, from instantiation of "
+                                             "%s, versus %s."
+                                             %(subbed_param_tuple,
+                                               param_var_repl, param_var,
+                                               repl_map[subbed_param_tuple]))
+                            explicit_ranges[param_var] = subbed_param
+                            repl_map[subbed_param_tuple] = param_var_repl
+
+            # If there is a condition of the universal quantifier
+            # being eliminated, produce the instantiated condition,
+            # prove that this is satisfied and add it as "requirements".
+            # When there is a conjunction of multiple conditions,
+            # separate out a requirement for each individual condition
+            # (the operands of the conjunction).
+            if isinstance(expr, Conditional):
+                condition = expr.condition
+                expr = expr.value
+
+                # Instantiate the condition.
+                subbed_cond = instantiate(condition)
+                if isinstance(subbed_cond, And):
+                    # It is important to deal with a conjunction
+                    # condition in this implicit manner here or we would
+                    # have a chicken/egg infinite recursion problem.
+                    # That is, we have to split up a conjunction into
+                    # multiple requirements at some point, so we do it
+                    # here.
+                    if subbed_cond.proven(assumptions):
+                        # If the full condition conjunction is known
+                        # to be true, we'll just use that as the
+                        # requirement and be done with it.
+                        requirements.append(subbed_cond.prove(assumptions))
+                        subbed_conds = []
+                    else:
+                        subbed_conds = subbed_cond.operands
+                else:
+                    subbed_conds = [subbed_cond]
+
+                for subbed_cond in subbed_conds:
+                    if isinstance(subbed_cond, ExprRange):
+                        # If the substituted condition "entry" is
+                        # a range, we need to wrap it in a
+                        # conjunction.
+                        subbed_cond = And(subbed_cond)
+                        defaults.debug = (subbed_cond, assumptions)
+                    try:
+                        requirements.append(subbed_cond.prove(assumptions))
+                    except ProofFailure:
+                        raiseFailure('Unsatisfied condition: %s'
+                                     %str(subbed_cond))
+
+        # Make final instantiations in the inner instance expression.
+        # Add to the lambda-application parameters anything that has
+        # not yet been used
+        return instantiate(expr)
 
 class Generalization(Proof):
-    def __init__(self, instanceTruth, newForallVarLists, newConditions=tuple()):
+    def __init__(self, instanceTruth, newForallParamLists, newConditions=tuple()):
         '''
         A Generalization step wraps a KnownTruth (instanceTruth) in one or more Forall operations.
         The number of Forall operations introduced is the number of lists in newForallVarLists.
-        The conditions are introduced in the order they are given at the outermost level that is 
-        applicable.  For example, if newForallVarLists is [[x, y], z]  and the new 
+        The conditions are introduced in the order they are given at the outermost level that is
+        applicable.  For example, if newForallParamLists is [[x, y], z]  and the new
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
-        from proveit import KnownTruth, Variable
+        from proveit import KnownTruth
+        from proveit._core_.expression.lambda_expr.lambda_expr import \
+            (getParamVar, _guaranteed_to_be_independent)
         from proveit.logic import Forall
         if not isinstance(instanceTruth, KnownTruth):
             raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
@@ -1005,29 +1284,39 @@ class Generalization(Proof):
             remainingConditions = list(newConditions)
             expr = instanceTruth.expr
             introducedForallVars = set()
-            for k, newForallVars in enumerate(reversed(newForallVarLists)):
-                for forallVar in newForallVars:
-                    if not isinstance(forallVar, Variable):
-                        raise ValueError('Forall variables of a generalization must be Variable objects')
+            for k, newForallParams in enumerate(reversed(newForallParamLists)):
+                newForallVars = [getParamVar(parameter)
+                                 for parameter in newForallParams]
                 introducedForallVars |= set(newForallVars)
                 newConditions = []
-                if k == len(newForallVarLists)-1:
+                if k == len(newForallParamLists)-1:
                     # the final introduced Forall operation must use all of the remaining conditions
                     newConditions = remainingConditions
                 else:
                     # use all applicable conditions in the supplied order
-                    conditionApplicability = [not remainingCondition.freeVars().isdisjoint(newForallVars) for remainingCondition in remainingConditions]
-                    newConditions = [remainingCondition for applicable, remainingCondition in zip(conditionApplicability, remainingConditions) if applicable]
-                    remainingConditions = [remainingCondition for applicable, remainingCondition in zip(conditionApplicability, remainingConditions) if not applicable]
+                    conditionApplicability = \
+                        [not _guaranteed_to_be_independent(remaining_cond,
+                                                           newForallVars)
+                         for remaining_cond in remainingConditions]
+                    newConditions = \
+                        [remaining_cond for applicable, remaining_cond
+                         in zip(conditionApplicability, remainingConditions)
+                         if applicable]
+                    remainingConditions = \
+                        [remaining_cond for applicable, remaining_cond
+                         in zip(conditionApplicability, remainingConditions)
+                         if not applicable]
                 # new conditions can eliminate corresponding assumptions
                 assumptions -= set(newConditions)
                 # create the new generalized expression
-                generalizedExpr = Forall(instanceVarOrVars=newForallVars, instanceExpr=expr, conditions=newConditions)
+                generalizedExpr = Forall(
+                        instanceParamOrParams=newForallParams,
+                        instanceExpr=expr, conditions=newConditions)
                 # make sure this is a proper generalization that doesn't break the logic:
                 Generalization._checkGeneralization(generalizedExpr, expr)
                 expr = generalizedExpr
             for assumption in assumptions:
-                if not assumption.freeVars().isdisjoint(introducedForallVars):
+                if not _guaranteed_to_be_independent(assumption, introducedForallVars):
                     raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
             generalizedTruth = KnownTruth(generalizedExpr, assumptions)
             self.instanceTruth = instanceTruth
@@ -1037,22 +1326,29 @@ class Generalization(Proof):
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
-    
+
     def stepType(self):
         return 'generalizaton'
-    
+
     @staticmethod
     def _checkGeneralization(generalizedExpr, instanceExpr):
         '''
-        Make sure the generalizedExpr is a proper generalization of the instanceExpr.
+        Make sure the generalizedExpr is a proper generalization of the
+        instanceExpr.
         '''
-        from proveit import Lambda
+        from proveit import Lambda, Conditional
         from proveit.logic import Forall
         assert isinstance(generalizedExpr, Forall), 'The result of a generalization must be a Forall operation'
         lambdaExpr = generalizedExpr.operand
         assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
         expr = lambdaExpr.body
         while expr != instanceExpr:
+            if isinstance(expr, Conditional):
+                # Dig into the conditional.  Adding conditions only
+                # weakens the statement, so it doesn't matter what
+                # the conditions are.
+                expr = expr.value
+                if expr == instanceExpr: break
             if not isinstance(expr, Forall): break
             expr = expr.instanceExpr # take it another nested level if necessary
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
@@ -1062,17 +1358,17 @@ class _ShowProof:
     A mocked-up quasi-Proof object just for the purposes of showing a
     stored proof.
     '''
-    
+
     # Map proof_id's to _ShowProof objects that have been created.
     show_proof_by_id = dict()
-    
+
     def __init__(self, context, proof_id, stepInfo, refObjIdGroups):
         self._style_id = proof_id
         if '_' in stepInfo:
             # Must be an axiom or theorem with the format
             # axiom_context.name or theorem_context.name
             self.step_type_str, full_name = stepInfo.split('_', 1)
-            assert self.step_type_str in ('axiom', 'theorem')
+            assert self.step_type_str in ('axiom', 'theorem', 'conjecture')
             full_name_segments = full_name.split('.')
             context_name = '.'.join(full_name_segments[:-1])
             self.context =  Context.getContext(context_name)
@@ -1080,49 +1376,50 @@ class _ShowProof:
         else:
             self.context = context
             self.step_type_str = stepInfo
-        if self.step_type_str=='specialization':
+        if self.step_type_str=='instantiation':
             # Extract the mapping information.
-            self.mappedVarLists = []
-            self.mappings = dict()
-            # All but the last two groups must correspond to 
-            # mapping information.
-            for group in refObjIdGroups[:-2]:
-                var_mapping_pairs = [(context.getStoredExpr(group[i]), 
-                                      context.getStoredExpr(group[i+1])) \
-                                     for i in range(0, len(group), 2)]
-                mapping = dict(var_mapping_pairs)
-                self.mappings.update(mapping)
-                self.mappedVarLists.append(mapping.keys())
+            group = refObjIdGroups[0]
+            var_mapping_pairs = [(context.getStoredExpr(group[i]),
+                                  context.getStoredExpr(group[i+1])) \
+                                 for i in range(0, len(group), 2)]
+            self.mapping_var_order = [key for key, value in var_mapping_pairs]
+            self.mapping = dict(var_mapping_pairs)
         self.provenTruth = context.getStoredKnownTruth(refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
-            [context.getShowProof(obj_id) for obj_id in refObjIdGroups[-1]]
+            [context.getShowProof(obj_id.rstrip('*')) for obj_id
+             in refObjIdGroups[-1]]
+        self.markedRequiredTruthIndices = \
+            {k for k, obj_id in enumerate(refObjIdGroups[-1])
+             if obj_id[-1]=='*'}
         _ShowProof.show_proof_by_id[proof_id] = self
-    
+
     def _repr_html_(self):
+        if not defaults.display_latex:
+            return None # No LaTeX display at this time.
         return Proof._repr_html_(self)
-    
+
     def stepType(self):
         return self.step_type_str
-    
+
     def getLink(self):
         from ._context_storage import StoredAxiom, StoredTheorem
         if self.step_type_str=='axiom':
             return StoredAxiom(self.context, self.name).getDefLink()
-        elif self.step_type_str=='theorem':
+        elif self.step_type_str in ('theorem', 'conjecture'):
             return StoredTheorem(self.context, self.name).getProofLink()
         else:
             return self.context.proofNotebook(self)
-            
+
     def _single_mapping(self, *args):
-        return Specialization._single_mapping(self, *args)
+        return Instantiation._single_mapping(self, *args)
 
     def _mapping(self, *args):
-        return Specialization._mapping(self, *args)
-    
+        return Instantiation._mapping(self, *args)
+
     def enumeratedProofSteps(self):
         return Proof.enumeratedProofSteps(self)
-    
+
     def isUsable(self):
         return True
 
@@ -1131,33 +1428,27 @@ class ProofFailure(Exception):
         self.expr = expr
         self.message = message
         self.assumptions = assumptions
-        
+
     def __str__(self):
-        if len(self.assumptions) == 0: 
+        if len(self.assumptions) == 0:
             assumptionsStr = ""
         else:
             assumptionsStr = " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}"
         if self.expr is not None:
-            return "Unable to prove " + str(self.expr) + assumptionsStr + ": " + self.message
-        else:            
-            return "Proof step failed" + assumptionsStr + ": " + self.message
-            
+            return "Unable to prove " + str(self.expr) + assumptionsStr + ":\n" + self.message
+        else:
+            return "Proof step failed" + assumptionsStr + ":\n" + self.message
+
 class ModusPonensFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
 
-class SpecializationFailure(ProofFailure):
-    def __init__(self, general_expr, specialize_map, relabel_map, assumptions, message):
-        message = message + " when specializing %s with %s"%(general_expr, specialize_map)
-        if len(relabel_map)>0:
-            message += " and %s"%relabel_map
+class InstantiationFailure(ProofFailure):
+    def __init__(self, original_known_truth, repl_map, assumptions, message):
+        message = "Attempting to instantiate %s with %s:\n%s"%(original_known_truth,
+                                                        repl_map, message)
         ProofFailure.__init__(self, None, assumptions, message)
 
-class RelabelingFailure(ProofFailure):
-    def __init__(self, general_expr, assumptions, message):
-        message = message + " when relabeling %s"%general_expr
-        ProofFailure.__init__(self, None, assumptions, message)
-    
 class GeneralizationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
@@ -1168,7 +1459,7 @@ class UnusableProof(ProofFailure):
         self.provingTheorem = provingTheorem
         self.unusableProof = unusableProof
         self.extraMsg = '; ' + extraMsg
-    
+
     def __str__(self):
         if self.provingTheorem == self.unusableProof:
             return "Cannot use %s to prove itself"%str(self.provingTheorem)
