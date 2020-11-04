@@ -387,7 +387,9 @@ class ExprRange(Expression):
             body_exclusions = None
         body_forms_dict = \
             self.body._possibly_free_var_ranges(exclusions=body_exclusions)
-        forms_dict = dict(body_forms_dict)
+        # deep copy body_forms_dict into forms_dict
+        forms_dict = {var:set(ranges) for var, ranges 
+                      in body_forms_dict.items()}
         param = self.parameter
         # Eliminate the parameter; it is not a free variable.
         if param in forms_dict.keys():
