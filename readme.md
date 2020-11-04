@@ -143,10 +143,11 @@ Installation instructions
       <td>A few things pertaining to statistics.</td>
     </tr>
     <tr>
-      <td style="font-family:courier, courier new; vertical-align:top;">physics</td>
+      <td style="font-family:courier, courier new; vertical-align:top;"
+      valign="top">physics</td>
       <td>Currently just things related to proving the correctness of
           the Quantum Phase Estimation algorithm at an abstract level.
-          (this was implemented in an older version of Prove-It;
+          (This was implemented in an older version of Prove-It;
           redoing it more properly in the current version is in
           progress.)</td>
     </tr>
