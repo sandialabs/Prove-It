@@ -341,7 +341,6 @@ class ContextStorage:
                 # record the special expression in this context object
                 context_folder_storage = \
                     self.context._contextFolderStorage(folder)
-                context_folder_storage.take_ownership(expr)
                 # get the expression id to be stored on 'commons.pv_it'           
                 hash_id = context_folder_storage._proveItStorageId(obj)
                 if kind=='common':
@@ -719,16 +718,13 @@ class ContextStorage:
         os.rename(filename, new_filename)
 
 class ContextFolderStorage:
-    # Map expr style ids to the ContextFolderStorage where
-    # it is stored.
-    expr_style_to_folder_storage = dict()
     # The active context folder storage (e.g., corresponding to the
     # notebook being executed).
     active_context_folder_storage = None
     
-    # Map Prove-It objects (Expressions, KnownTruths, and Proofs)
-    # to a (ContextFolderStorage, hash_id) tuple where it is being 
-    # stored.
+    # Map style ids of Prove-It object (Expressions, KnownTruths, and 
+    # Proofs) to a (ContextFolderStorage, hash_id) tuple where it is
+    # being stored.
     proveit_object_to_storage = dict()
     
     def __init__(self, context_storage, folder):
@@ -745,23 +741,6 @@ class ContextFolderStorage:
         # expression hash folder names to the name of the
         # axiom, theorem, or common expression.
         self._exprhash_to_name = dict()
-        
-    def take_ownership(self, expr):
-        '''
-        Indicate that the given expr is stored in this Context
-        folder.
-        '''
-        ContextFolderStorage.expr_style_to_folder_storage[expr._style_id] \
-            = self
-    
-    @staticmethod
-    def owning_folder_storage(expr, default=None):
-        '''
-        Return the ContextFolderStorage that "owns" this expression
-        or None of nothing owns it yet.
-        '''
-        return ContextFolderStorage.expr_style_to_folder_storage.get(
-                expr._style_id, default)
     
     @staticmethod
     def getFolderStorageOfExpr(expr):
@@ -769,10 +748,12 @@ class ContextFolderStorage:
         Obtain the ContextFolderStorage that 'owns' the given
         expression, or the default ContextFolderStorage.
         '''
-        try:
-            lookup_dict = ContextFolderStorage.expr_style_to_folder_storage
-            return lookup_dict[expr._style_id]
-        except KeyError:
+        proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
+        if expr._style_id in proveit_obj_to_storage:
+            (context_folder_storage, _) =\
+                proveit_obj_to_storage[expr._style_id]
+            return context_folder_storage
+        else:
             # Return the "active context folder storage" as default.
             # This is set by the %begin Prove-It magic command.
             return ContextFolderStorage.active_context_folder_storage
@@ -980,22 +961,22 @@ class ContextFolderStorage:
         __pv_it directory) based upon a hash of the unique 
         representation.
         '''
-        from proveit import Expression
+        from proveit import Literal
         from proveit._core_.proof import Axiom, Theorem
         proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
         if proveItObject._style_id in proveit_obj_to_storage:
             return proveit_obj_to_storage[proveItObject._style_id]
-        if isinstance(proveItObject, Expression):
-            expr = proveItObject
-            context_folder_storage = \
-                ContextFolderStorage.expr_style_to_folder_storage.get(
-                        expr._style_id, self)
-        elif isinstance(proveItObject, Axiom):
+        if isinstance(proveItObject, Axiom):
             context_folder_storage = \
                 proveItObject.context._contextFolderStorage('axioms')
         elif isinstance(proveItObject, Theorem):
             context_folder_storage = \
                 proveItObject.context._contextFolderStorage('theorems')
+        elif isinstance(proveItObject, Literal):
+            # Literal's must be stored in the 'common' folder
+            # of its context.
+            context_folder_storage = \
+                proveItObject.context._contextFolderStorage('common')            
         else:
             context_folder_storage = self
         if context_folder_storage is not self:
@@ -1416,9 +1397,9 @@ class ContextFolderStorage:
                 = (operationClass, '_operator_')
             return
         
-        context_folder_storage = ContextFolderStorage.owning_folder_storage(
-                expr)
-        if context_folder_storage is not None:
+        context_folder_storage = \
+            ContextFolderStorage.getFolderStorageOfExpr(expr)
+        if context_folder_storage.folder in ('axioms', 'theorems', 'common'):
             # expr may be a special expression from a context
             try:
                 # if it is a special expression in a context, 
@@ -1616,7 +1597,7 @@ class ContextFolderStorage:
             expr_class_map[exprClassStr] = getattr(
                     module, split_expr_class[-1])
         def exprBuilderFn(exprClassStr, exprInfo, styles, subExpressions, 
-                          genericExpr, context_folder_storage):
+                          genericExpr):
             expr_class = expr_class_map[exprClassStr]
             if issubclass(expr_class, Lambda):
                 # For efficiency, make the Lambda expression with its 
@@ -1627,27 +1608,11 @@ class ContextFolderStorage:
             else:
                 expr = expr_class._checked_make(exprInfo, styles, 
                                                 subExpressions)
-            if (ContextFolderStorage.owning_folder_storage(expr) != 
-                    context_folder_storage):
-                # This is a "new" expression in this session.
-                context_folder_storage.take_ownership(expr)
-                # Set the proveit_object_to_storage mapping for the
-                # sub-expression, if it wasn't already set.
-                (folder_storage_check, hash_directory) = \
-                    context_folder_storage._retrieve(expr)
-                #assert folder_storage_check==context_folder_storage
-                # Load the "special names" of the context so we
-                # will know, for future reference, if this is a special 
-                # expression that may be addressed as such.
-                context_folder_storage.context_storage.loadSpecialNames()
             return expr
         expr = self._makeExpression(exprId, importFn, exprBuilderFn)
-        #self.take_ownership(expr)
-        #ContextFolderStorage.proveit_object_to_storage[expr._style_id] \
-        #    = (self, exprId)        
         return expr
         
-    def _makeExpression(self, exprId, importFn, exprBuilderFn):
+    def _makeExpression(self, expr_id, importFn, exprBuilderFn):
         '''
         Helper method for makeExpression
         '''
@@ -1664,28 +1629,40 @@ class ContextFolderStorage:
         generic_id_map = dict() # map expr-ids to the generic version
         # map expr-ids to list of sub-expression ids:
         sub_expr_ids_map = dict() 
-        # map expr-ids to a ContextFolderStorage object:
-        context_folder_map = dict() 
-        master_expr_id = exprId
+        # Map the expression storage id to a (context folder storage,
+        # hash) tuple.
+        exprid_to_storage = dict()
+        master_expr_id = expr_id
         try:
             local_context_name = Context().name
         except:
             local_context_name = None
+        proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
                 
-        def getDependentExprIds(exprId):
+        def getDependentExprIds(expr_id):
             '''
             Given an expression id, yield the ids of all of its 
             sub-expressions as well as the id of the generic version of 
             the expression if it is not the generic version.
             '''
-            context_name, folder, hash_directory = self._split(exprId)
+            context_name, folder, hash_directory = self._split(expr_id)
+            #if hash_directory=='ad618bf3877c30c0b90910432253dfea91e55a040':
+            #    print(context_name, folder, hash_directory)
             if context_name != '' and context_name != self.context.name: 
                 context = Context.getContext(context_name)
-                context_folder_map[exprId] = context._contextFolderStorage(folder)
+                context_folder_storage = context._contextFolderStorage(folder)
+                # Load the "special names" of the context so we
+                # will know, for future reference, if this is a special 
+                # expression that may be addressed as such.
+                context_folder_storage.context_storage.loadSpecialNames()                
             elif folder != self.folder:
-                context_folder_map[exprId] = \
+                context_folder_storage = \
                     self.context._contextFolderStorage(folder)
-            hash_path = self._storagePath(exprId)
+            else:
+                context_folder_storage = self
+            exprid_to_storage[expr_id] = (context_folder_storage,
+                                         hash_directory)
+            hash_path = self._storagePath(expr_id)
             with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
                 # Extract the unique representation from the pv_it file.
                 unique_rep = f.read()
@@ -1695,13 +1672,13 @@ class ContextFolderStorage:
                 if (local_context_name is not None 
                         and expr_class_str.find(local_context_name) == 0):
                     # import locally if necessary
-                    expr_class_rel_strs[exprId] = \
+                    expr_class_rel_strs[expr_id] = \
                         expr_class_str[len(local_context_name)+1:]                
-                expr_class_strs[exprId] = expr_class_str
+                expr_class_strs[expr_id] = expr_class_str
                 # extract the Expression "core information" from the
                 # unique representation
-                core_info_map[exprId] = core_info
-                styles_map[exprId] = style_dict
+                core_info_map[expr_id] = core_info
+                styles_map[expr_id] = style_dict
                 if generic_ref != '' and generic_ref != '.':
                     dependent_refs = [generic_ref] + sub_expr_refs
                 else:
@@ -1713,17 +1690,17 @@ class ContextFolderStorage:
                 if generic_ref == '.':
                     # '.' denotes that this is a "generic" expression 
                     # itself.
-                    generic_id_map[exprId] = '.'
-                    sub_expr_ids_map[exprId] = dependent_ids
+                    generic_id_map[expr_id] = '.'
+                    sub_expr_ids_map[expr_id] = dependent_ids
                 elif generic_ref == '':
-                    sub_expr_ids_map[exprId] = dependent_ids
+                    sub_expr_ids_map[expr_id] = dependent_ids
                 else:
-                    generic_id_map[exprId] = dependent_ids[0]
-                    sub_expr_ids_map[exprId] = dependent_ids[1:]
+                    generic_id_map[expr_id] = dependent_ids[0]
+                    sub_expr_ids_map[expr_id] = dependent_ids[1:]
                 #print('dependent_ids', dependent_ids)
                 return dependent_ids
-        
-        expr_ids = orderedDependencyNodes(exprId, getDependentExprIds)
+                
+        expr_ids = orderedDependencyNodes(expr_id, getDependentExprIds)
         for expr_id in reversed(expr_ids):
             if expr_id in expr_class_rel_strs:
                 # there exists a relative path
@@ -1758,9 +1735,6 @@ class ContextFolderStorage:
         for expr_id in reversed(expr_ids):
             sub_expressions =  [built_expr_map[sub_expr_id] for sub_expr_id 
                                 in sub_expr_ids_map[expr_id]]
-            context_folder_storage = (
-                    context_folder_map[expr_id] if expr_id 
-                    in context_folder_map else self)
             if expr_id in generic_id_map:
                 generic_id = generic_id_map[expr_id]
                 if generic_id == '.': generic_expr = '.'
@@ -1768,8 +1742,13 @@ class ContextFolderStorage:
             else: generic_expr = None
             expr = exprBuilderFn(
                     expr_class_strs[expr_id], core_info_map[expr_id], 
-                    styles_map[expr_id], sub_expressions, generic_expr, 
-                    context_folder_storage)
+                    styles_map[expr_id], sub_expressions, generic_expr)
+            expr_style_id = expr._style_id
+            if expr_style_id not in proveit_obj_to_storage:
+                # Remember the storage corresponding to the style id
+                # for future reference.
+                proveit_obj_to_storage[expr_style_id] = \
+                    exprid_to_storage[expr_id]
             built_expr_map[expr_id] = expr
         
         return built_expr_map[master_expr_id]        
