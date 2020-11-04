@@ -1,6 +1,6 @@
 # Welcome to Prove-It!
 
-
+<font size="3">
 Prove-It is a tool for proving and organizing general theorems using
 Python.
 
