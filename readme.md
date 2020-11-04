@@ -158,7 +158,7 @@ Installation instructions
 
 <table style="padding:15px; border: 1px solid black; font-size:80%;" cellpadding="5">
 <tr>
-  <td style="font-weight: bold">Version History</td>
+  <td style="font-weight: bold" colspan="2">Version History</td>
 </tr>
 <tr>
   <td style="width:auto;white-space: nowrap" valign="top">
@@ -178,6 +178,4 @@ Installation instructions
   </td>
 </tr>
 </table>
-
-***
 
