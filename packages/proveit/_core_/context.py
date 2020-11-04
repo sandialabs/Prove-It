@@ -61,8 +61,9 @@ class Context:
         Context._rootContextPaths.clear()
         Context.default = None
         Context.storages.clear()
-        CommonExpressions.referenced_contexts.clear()        
-        ContextFolderStorage.expr_style_to_folder_storage.clear()
+        CommonExpressions.referenced_contexts.clear()
+        ContextFolderStorage.active_context_folder_storage = None
+        ContextFolderStorage.proveit_object_to_storage.clear()
         
     # externals.txt at top level to track relative path to external
     # contexts.
@@ -86,6 +87,13 @@ class Context:
             num_up_levels = (len(splitpath)-pv_it_idx)
             if num_up_levels > 1:
                 active_folder = splitpath[pv_it_idx+1]
+            path = os.path.abspath(os.path.join(*([path] + ['..']*num_up_levels)))
+        # If in a _proofs_ directory, go to the containing context 
+        # directory.
+        splitpath = path.split(os.path.sep)
+        if '_proofs_' in splitpath:
+            proofs_idx = splitpath.index('_proofs_')
+            num_up_levels = (len(splitpath)-proofs_idx)
             path = os.path.abspath(os.path.join(*([path] + ['..']*num_up_levels)))
         
         # move the path up to the directory level, not script file level

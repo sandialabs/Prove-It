@@ -475,7 +475,7 @@ class ContextStorage:
         given name is stored (stored on the 'axioms' context storage
         folder).
         '''
-        self._loadSpecialNames('axiom')
+        list(self._loadSpecialNames('axiom'))
         return self._special_hash_ids['axiom'][name]
 
     def getTheoremHash(self, name):
@@ -484,7 +484,7 @@ class ContextStorage:
         name is stored (stored on the 'theorems' context storage
         folder).
         '''
-        self._loadSpecialNames('theorem')
+        list(self._loadSpecialNames('theorem'))
         return self._special_hash_ids['theorem'][name]
             
     def getCommonExpr(self, name):
