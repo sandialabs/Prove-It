@@ -42,7 +42,7 @@ Installation instructions
    
    to install a link to the source tree in your python path, so that changes you make to 
    the code are immediately updated when Prove-It is imported.  This is recommended if
-   you plan to make updates/additions to the ever-expanding proveit packages.
+   you plan to make updates/additions to the ever-expanding Prove-It packages.
    Alternatively, run:
    
    python setup.py install 
@@ -59,7 +59,7 @@ Installation instructions
    anything that may have been added to your local database before extracting
    the downloaded version.
       
-4) Take a look at the "tutorial" folder.  It has numbered Juptyer notebooks 
+4) Take a look at the "tutorial" folder.  It has numbered Jupyter notebooks 
    (and html versions for convenience) that introduce Prove-It concepts
    in an appropriate order.  There are also tutorial notebooks/html in various
    packages with specific information about that package.  A particularly
