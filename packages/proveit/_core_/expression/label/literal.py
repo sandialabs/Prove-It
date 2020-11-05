@@ -52,7 +52,6 @@ class Literal(Label):
                 context = Context.getContext(context)
         Label.__init__(self, stringFormat, latexFormat, 'Literal', (context.name,)+tuple(extraCoreInfo))
         self.context = context
-        context._contextFolderStorage('common').take_ownership(self)
         #if self._coreInfo in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same context and string/latex formats")
         Literal.instances[self._coreInfo] = self
