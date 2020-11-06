@@ -1,5 +1,5 @@
-from proveit import (defaults, ExprTuple, InnerExpr, Literal,
-                     Operation, USE_DEFAULTS)
+from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
+                     Operation, varRange, USE_DEFAULTS)
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, generic_permutation)
 
@@ -41,16 +41,46 @@ class Set(Operation):
 
     def prove_from_cases(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
-        Given forall_{x in S} P(x) for some enumerated set S =
-        {x1, x2, ..., xn}, conclude and return the forall expression
-        from [P(x1) and P(x2) and ... P(xn)].
+        For the enumerated set S = {x1, x2, ..., xn} (i.e. self),
+        and given a universal quantification over the set S of the form
+        forall_{x in S} P(x), conclude and return the forall expression
+        knowing/assuming [P(x1) and P(x2) and ... P(xn)].
         '''
+        from proveit._common_ import a, n, x, P
         from proveit.logic import Forall, And
-        from ._theorems_ import true_for_each_is_true_for_all
+        from proveit.number import one
+        from ._theorems_ import true_for_each_then_true_for_all
         # from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), (
                 "May only apply prove_from_cases method of enumerated Set "
                 "class to a forall statement.")
+
+        # forall_{x in A} P(x), assuming P(x) for each x in A
+        if(len(forallStmt.conditions)==1):
+            # basic case where condition has the form "for x in A"
+
+            # Cardinality of the domain:
+            n_sub = forallStmt.condition.domain.operands.length(assumptions)
+
+            # Domain elements to substitute
+            # Notice the n_sub is already a Numeral and not an int
+            var_range_update = varRange(a, one, n_sub)
+            var_range_sub = forallStmt.condition.domain.elements
+
+            # Predicate re-definition (using user-supplied instanceVar)
+            Px = Function(P, forallStmt.instanceVar)
+
+            # Predicate to substitute
+            Px_sub = forallStmt.instanceExpr
+
+            # Instance var to substitute
+            x_sub = forallStmt.instanceVar
+
+            return true_for_each_then_true_for_all.instantiate(
+                {n: n_sub, ExprTuple(var_range_update): var_range_sub,
+                x: x_sub, Px: Px_sub}, num_forall_eliminations=3,
+                assumptions=assumptions)
+
         # if(len(forallStmt.conditions)>1):
         #     if len(forallStmt.conditions)==2:
         #         condition = forallStmt.conditions[1]
