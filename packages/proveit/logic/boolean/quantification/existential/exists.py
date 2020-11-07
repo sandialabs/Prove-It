@@ -1,6 +1,6 @@
 from proveit import Lambda, Conditional, OperationOverInstances, KnownTruth
 from proveit import defaults, Literal, Operation, ExprTuple, USE_DEFAULTS
-from proveit._common_ import n, A, B, P, Q, R, S, xx, yy, QQ
+from proveit._common_ import n, A, B, P, Q, R, S
 
 class Exists(OperationOverInstances):
     # operator of the Exists operation

@@ -1,7 +1,7 @@
 from proveit import (asExpression, Literal, Operation, safeDummyVar,
                      USE_DEFAULTS)
 from proveit._common_ import A, B, C, x
-from proveit._common_ import f, S, QQ
+from proveit._common_ import f, S
 from .containment_relation import (
         ContainmentRelation, ContainmentSequence, makeSequenceOrRelation)
 

@@ -1,6 +1,6 @@
 from proveit import (Literal, OperationOverInstances, Operation, ExprTuple,
                      singleOrCompositeExpression, USE_DEFAULTS)
-from proveit._common_ import x, y, f, P, Q, QQ, S, yy
+from proveit._common_ import x, y, f, P, Q, S
 
 class IntersectAll(OperationOverInstances):
     # operator of the UnionOfAll operation

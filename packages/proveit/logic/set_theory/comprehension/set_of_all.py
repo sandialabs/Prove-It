@@ -1,6 +1,6 @@
 from proveit import (Literal, OperationOverInstances, Operation, ExprTuple,
                      singleOrCompositeExpression, USE_DEFAULTS)
-from proveit._common_ import x, y, f, P, Q, QQ, S, yy
+from proveit._common_ import x, y, f, P, Q, S
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation

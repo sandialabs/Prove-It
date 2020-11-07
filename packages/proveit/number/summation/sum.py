@@ -3,7 +3,7 @@ from proveit import (Literal, Operation, OperationOverInstances, free_vars,
 from proveit.logic import InSet
 from proveit.number.sets import RealInterval, Interval, Reals, Integers, Naturals, Complexes
 from proveit.number.negation import Neg
-from proveit._common_ import a, f, P, S, QQ, xx
+from proveit._common_ import a, f, P, S
 
 class Sum(OperationOverInstances):
     # operator of the Sum operation.

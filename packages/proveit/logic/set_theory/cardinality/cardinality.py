@@ -1,5 +1,5 @@
 from proveit import Function, Literal, USE_DEFAULTS
-from proveit._common_ import S, a, b, N, xx
+from proveit._common_ import S, a, b, N
 
 class Card(Function):
     # operator of the Card operation

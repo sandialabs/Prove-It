@@ -1,5 +1,5 @@
 from proveit import Literal, Function, USE_DEFAULTS
-from proveit._common_ import n, x, AA
+from proveit._common_ import n, x
         
 class PowerSet(Function):
     # operator of the Intersect operation

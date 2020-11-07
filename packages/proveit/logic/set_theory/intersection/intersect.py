@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import n, x, AA
+from proveit._common_ import n, x
 
 class Intersect(Operation):
     # operator of the Intersect operation

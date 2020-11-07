@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex, InnerExpr, USE_DEFAULTS, ProofFailure
 from proveit.logic import isIrreducibleValue
 from proveit.number.sets import Integers, Reals, Complexes
-from proveit._common_ import a, b, m, n, x, y, xx, AA, B, CC
+from proveit._common_ import a, b, m, n, x, y, B
 
 class Neg(Operation):
     # operator of the Neg operation.

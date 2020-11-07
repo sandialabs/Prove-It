@@ -1,6 +1,6 @@
 from proveit import OperationOverInstances
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import P, Q, S #, xx
+from proveit._common_ import P, Q, S 
 
 class NotExists(OperationOverInstances):
     # operator of the NotExists operation

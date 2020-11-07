@@ -26,7 +26,7 @@ class UnionMembership(Membership):
         from ._axioms_ import unionDef
         element = self.element
         operands = self.domain.operands
-        return unionDef.specialize({l:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
+        return unionDef.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''

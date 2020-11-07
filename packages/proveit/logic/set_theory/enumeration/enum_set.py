@@ -672,7 +672,7 @@ class Set(Operation):
 
         # Now ready to apply the single-elem reduction theorem
         from ._theorems_ import reduction_right, reduction_left
-        from proveit._common_ import l, m, n, x, aa, bb, cc
+        from proveit._common_ import l, m, n, x
         from proveit.number import num
         l, m, n, aa, x, bb, cc = reduction_right.allInstanceVars()
 

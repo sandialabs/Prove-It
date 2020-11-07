@@ -44,17 +44,16 @@ class Abs(Operation):
         we'll fix/update this later.
         '''
         from ._theorems_ import absFrac, absProd
-        from proveit._common_ import n, xx
+        from proveit._common_ import n, x
         from proveit.number import num, Complexes, Div, Mult
         if isinstance(self.operand, Div):
             return absFrac.specialize(
                     {a:self.operand.numerator, b:self.operand.denominator},
                     assumptions=assumptions)
         elif isinstance(self.operand, Mult):
-            from proveit._common_ import xx
             theOperands = self.operand.operands
             return absProd.specialize(
-                    {n:num(len(theOperands)), xx:theOperands},
+                    {n:num(len(theOperands)), x:theOperands},
                     assumptions=assumptions)
         else:
             raise ValueError(
