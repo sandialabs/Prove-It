@@ -21,7 +21,7 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_generic_version', 
+    protected = ('_canonical_version', 
                  'replaced', '_replaced', '_replaced_entries', 'relabeled',
                  '_make', '_checked_make', '_auto_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
@@ -47,14 +47,25 @@ class ExprType(type):
         type.__init__(cls, *args, **kwargs)
         if hasattr(cls, '_operator_'):
             from proveit._core_.expression.operation import Operation
+            from proveit._core_.expression.label.literal import Literal
             if issubclass(cls, Operation):
+                if not isinstance(cls._operator_, Literal):
+                    raise TypeError("'_operator_' class attributes must be "
+                                    "Literal expressions.")
                 Operation.operationClassOfOperator[cls._operator_] = cls
 
 class Expression(metaclass=ExprType):
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
     in_progress_to_conclude = set()
-
+    
+    # Map "labeled" meaning data to "canonical" meaning data.
+    labeled_to_canonical_meaning_data = dict()
+    
+    # Map Expression classes to their proper paths (as returned
+    # by the Expression._class_path method).
+    class_paths = dict()
+    
     @staticmethod
     def _clear_():
         '''
@@ -63,6 +74,8 @@ class Expression(metaclass=ExprType):
         state information must implement _clear_ to clear that information.
         '''
         assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
+        Expression.labeled_to_canonical_meaning_data.clear()
+        Expression.class_paths.clear()
 
     def __init__(self, coreInfo, subExpressions=tuple(), styles=None):
         '''
@@ -92,47 +105,40 @@ class Expression(metaclass=ExprType):
             for style in styles.values():
                if not {',', ':', ';'}.isdisjoint(style):
                    raise ValueError("Styles are not allowed to contain a ',', ':', or ';'.  Just use spaces.")
-
-        # Set and initialize the "meaning data".
-        # The meaning data is shared among Expressions with the same
-        # structure disregarding style or chosen lambda paramterization.
-        if hasattr(self, '_genericExpr') and self._genericExpr is not self:
-            # The _genericExpr attribute was already set
-            # -- must be a Lambda Expression.
-            self._meaningData = self._genericExpr._meaningData
-        else:
-            object_rep_fn = lambda expr : hex(expr._meaning_id)
-            self._meaningData = meaningData(self._generate_unique_rep(object_rep_fn,
-                                                                      coreInfo))
-            if not hasattr(self._meaningData, '_coreInfo'):
-                # initialize the data of self._meaningData
-                self._meaningData._coreInfo = tuple(coreInfo)
-        '''
-        if not hasattr(self, '_genericExpr'):
-            self._genericExpr = self._generic_version()
-        if self._genericExpr is self:
-            # Create the meaning data.
-            object_rep_fn = lambda expr : hex(expr._meaning_id)
-            self._meaningData = meaningData(self._generate_unique_rep(object_rep_fn,
-                                                                      coreInfo))
-            if not hasattr(self._meaningData, '_coreInfo'):
-                # initialize the data of self._meaningData
-                self._meaningData._coreInfo = tuple(coreInfo)
-        else:
-            self._meaningData = self._genericExpr._meaningData
-        '''
-
+        
+        # Create the "labeled" meaning data.  This is data common
+        # to equivalent expressions which use the same lambda labels.
+        # This isn't the "true" meaning data which is based upon using
+        # "canonical" lambda labels.
+        object_rep_fn = lambda expr : hex(expr._labeled_meaning_id)
+        self._labeled_meaning_data = meaningData(
+                self._generate_unique_rep(object_rep_fn, coreInfo))
+        if not hasattr(self._labeled_meaning_data, '_coreInfo'):
+            # initialize the data of self._labeledMeaningData
+            self._labeled_meaning_data._coreInfo = tuple(coreInfo)
+        
+        # reference this unchanging data of the unique 'labeled meaning'
+        # data.
+        self._labeled_meaning_id = self._labeled_meaning_data._unique_id
+        self._coreInfo = self._labeled_meaning_data._coreInfo
+        # The "true" meaning "data" and id (based upon the canonical
+        # version of the exrpession) will be generated on demand,
+        # when expressions are compared (__eq__) or hashed (__hash__).
+        
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
         # initialize the style options
         self._styleData.styles = dict(styles) # formatting style options that don't affect the meaning of the expression
-
-        # reference this unchanging data of the unique 'meaning' data
-        self._meaning_id = self._meaningData._unique_id
-        self._coreInfo = self._meaningData._coreInfo
-
         self._style_id = self._styleData._unique_id
 
+        if len(self._subExpressions)==0:
+            # When there are no sub-expressions, we can immediately
+            # declare that the canonical expression is simply "self"
+            # and the "true" meaning data is the "labeled" meaning data.
+            self._canonical_expr = self
+            self._meaning_data = self._labeled_meaning_data
+            self._meaning_id = self._meaning_data._unique_id            
+        
         """
         self._styles = dict(styles) # formatting style options that don't affect the meaning of the expression
         # meaning representations and unique ids are independent of style
@@ -145,42 +151,89 @@ class Expression(metaclass=ExprType):
         for subExpression in subExpressions: # update Expression.parent_expr_map
             self._styleData.addChild(self, subExpression)
 
-    def _generic_version(self):
+    def _canonical_version(self):
         '''
-        Retrieve (and create if necessary) the generic version of this
+        Retrieve (and create if necessary) the canonical version of this
         expression in which deterministic 'dummy' variables are used as
         Lambda parameters, determines the 'meaning' of the expression.
         '''
-        if hasattr(self, '_genericExpr'):
-            return self._genericExpr
-        # Get the generic versions of the sub-expressions.
-        generic_sub_expressions = tuple(sub_expr._generic_version()
-                                        for sub_expr in self._subExpressions)
+        if hasattr(self, '_canonical_expr'):
+            return self._canonical_expr
+        if hasattr(self, '_meaningData'):
+            # Set via '_meaningData':
+            self._canonical_expr = self._meaningData.canonical_expr
+            return self._canonical_expr
+        labeled_to_canonical_meaning_data = \
+            Expression.labeled_to_canonical_meaning_data
+        if self._labeled_meaning_data in labeled_to_canonical_meaning_data:
+            # Set the '_meaningData' via '_labeled_meaning_data' and 
+            # 'labeled_to_canonical_meaning_data'.
+            self._meaningData = \
+                labeled_to_canonical_meaning_data[self._labeled_meaning_data]
+            self._meaning_id = self._meaningData._unique_id
+            # Now we can set the _canonical_expr via the '_meaningData'.
+            return self._canonical_version()
+        
+        # Get the canonical versions of the sub-expressions.
+        canonical_sub_expressions = tuple(
+                sub_expr._canonical_version()
+                for sub_expr in self._subExpressions)
         # Get the styles of the sub expressions.
         sub_expression_styles = tuple(sub_expr._styleData
                                       for sub_expr in self._subExpressions)
-        # Get the styles of the generic versions of the sub-expressions.
-        generic_sub_expression_styles = \
-            tuple(generic_sub_expr._styleData
-                  for generic_sub_expr in generic_sub_expressions)
+        # Get the styles of the canonical versions of the 
+        # sub-expressions.
+        canonical_sub_expression_styles = \
+            tuple(canonical_sub_expr._styleData
+                  for canonical_sub_expr in canonical_sub_expressions)
 
-        if sub_expression_styles == generic_sub_expression_styles:
-            # This is the generic version.
-            self._genericExpr = self
+        if sub_expression_styles == canonical_sub_expression_styles:
+            # This is the canonical version.
+            self._canonical_expr = self
             return self
 
-        # The 'generic' sub-expressions are different than the sub-expressions,
-        # so that propagates to this Expression's generic version.
-        self._genericExpr = self.__class__._checked_make(
-                self._meaningData._coreInfo, dict(self._styleData.styles),
-                generic_sub_expressions)
-        return self._genericExpr
+        # The 'canonical' sub-expressions are different than the
+        # sub-expressions, so that propagates to this Expression's 
+        # canonical version.
+        self._canonical_expr = self.__class__._checked_make(
+                self._coreInfo, dict(self._styleData.styles),
+                canonical_sub_expressions)
+        return self._canonical_expr
+    
+    def _establish_and_get_meaning_id(self):
+        '''
+        The "meaning" of an expression is determined by it's
+        canonical version and is only established as needed (on demand).
+        Return the "meaning id" after it is established.
+        '''
+        if hasattr(self, '_meaning_id'):
+            return self._meaning_id
+        canonical_expr = self._canonical_version()
+        if hasattr(self, '_meaning_id'):
+            # It may have been set via the '_canonical_version' call.
+            return self._meaning_id
+        if canonical_expr is self:
+            # The "true" meaning data is the "labeled" meaning data.
+            self._meaningData = self._labeled_meaning_data
+        else:
+            canonical_expr._establish_and_get_meaning_id()
+            self._meaningData = canonical_expr._meaningData
+        if not hasattr(self._meaningData, 'canonical_expr'):
+            # store the canonical expression for future reference
+            self._meaningData.canonical_expr = canonical_expr
+        # Anything with the same "labeled meaning data" must have the
+        # same "canonical meaning data".
+        labeled_to_canonical_meaning_data = \
+            Expression.labeled_to_canonical_meaning_data
+        labeled_to_canonical_meaning_data[self._labeled_meaning_data] = \
+            self._meaningData
+        self._meaning_id = self._meaningData._unique_id
+        return self._meaning_id
     
     def _generate_unique_rep(self, objectRepFn, coreInfo=None, styles=None):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
-        from proveit._core_.expression.lambda_expr import Lambda
         if coreInfo is None: coreInfo = self._coreInfo
         if styles is None and hasattr(self, '_styleData'):
             styles = self._styleData.styles
@@ -188,30 +241,19 @@ class Expression(metaclass=ExprType):
             style_str = ','.join(style_name + ':' + styles[style_name]
                                  for style_name in sorted(styles.keys()))
         else: style_str = ''
-        sub_expr_info = ','.join(objectRepFn(expr) for expr in self._subExpressions)
-        # All Lambda expressions are embued with a "generic version" (which may
-        # be itself) which we will store with the unique representation info.
-        if isinstance(self, Lambda):
-            if self._genericExpr is self:
-                generic_ref = '.' # Denote that it is "generic" itself.
-            else:
-                generic_ref = objectRepFn(self._genericExpr)
-        else:
-            # Only retain the reference to the generic version for Lambda
-            # expressions.  Other expressions may set a _genericExpr for
-            # convenience during runtime, but since these are generated on an
-            # as-needed basis, it shouldn't be included as part of the
-            # unique representation and there is no good reason to store it.
-            generic_ref = ''
+        sub_expr_info = ','.join(objectRepFn(expr) 
+                                 for expr in self._subExpressions)
         # Note: putting the sub-expressions at the front makes it convenient
         # to just grab that piece which is used when adding or removing
         # references to stored information.
-        return '%s;%s;%s;%s;%s'%(generic_ref, sub_expr_info, self._class_path(),
+        return '%s;%s;%s;%s'%(sub_expr_info, self._class_path(),
                                  ','.join(coreInfo), style_str)
     #self._class_path() + '[' + ','.join(coreInfo) + ']' + style_str + ';[' +  + ']'
 
     def _class_path(self):
         ExprClass = self.__class__
+        if ExprClass in Expression.class_paths:
+            return Expression.class_paths[ExprClass]
         class_module = sys.modules[ExprClass.__module__]
         if hasattr(class_module, '__file__'):
             context = Context(class_module.__file__)
@@ -219,17 +261,19 @@ class Expression(metaclass=ExprType):
             context = Context() # use the current directory if using the main module
         # get the full class path relative to the root context where the class is defined
         class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
+        # Store for future reference:
+        Expression.class_paths[ExprClass] = class_path
         return class_path
 
     @staticmethod
     def _parse_unique_rep(unique_rep):
-        generic_ref, sub_expr_info, expr_class_str, core_info_str, style_str = \
+        sub_expr_info, expr_class_str, core_info_str, style_str = \
             unique_rep.split(';')
         core_info = [_ for _ in core_info_str.split(',') if _ != '']
         style_pairs = [_ for _ in style_str.split(',') if _ != '']
         style_dict = dict(style_pair.split(':') for style_pair in style_pairs)
         sub_expr_refs = [_ for _ in sub_expr_info.split(',') if _ != '']
-        return expr_class_str, core_info, style_dict, sub_expr_refs, generic_ref
+        return expr_class_str, core_info, style_dict, sub_expr_refs
 
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
@@ -239,8 +283,7 @@ class Expression(metaclass=ExprType):
         '''
         # The generic reference and sub expressions come respectfully at the
         # beginning of unique_rep.
-        generic_ref_end = unique_rep.find(';')
-        sub_expr_end = unique_rep.find(';', generic_ref_end+1)
+        sub_expr_end = unique_rep.find(';')
         ref_info = unique_rep[:sub_expr_end]
         # Split by ',' or ';' to get the individual reference ids.
         return [_ for _ in re.split(',|;', ref_info) if _ not in ('', '.')]
@@ -292,14 +335,15 @@ class Expression(metaclass=ExprType):
 
     def __eq__(self, other):
         if isinstance(other, Expression):
-            return self._meaning_id == other._meaning_id
+            return (self._establish_and_get_meaning_id() == 
+                    other._establish_and_get_meaning_id())
         else: return False # other must be an Expression to be equal to self
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return self._meaning_id
+        return self._establish_and_get_meaning_id()
 
     def __str__(self):
         '''
@@ -334,7 +378,7 @@ class Expression(metaclass=ExprType):
         if formatType == 'latex': return self.latex(**kwargs)
 
     @classmethod
-    def _make(cls, coreInfo, styles, subExpressions, genericExpr=None):
+    def _make(cls, coreInfo, styles, subExpressions, canonical_version=None):
         '''
         Should make the Expression object for the specific Expression sub-class
         based upon the coreInfo and subExpressions.  Must be implemented for
@@ -343,15 +387,17 @@ class Expression(metaclass=ExprType):
         raise MakeNotImplemented(cls)
 
     @classmethod
-    def _checked_make(cls, coreInfo, styles, subExpressions, genericExpr=None):
+    def _checked_make(cls, coreInfo, styles, subExpressions, 
+                      canonical_version=None):
         '''
         Check that '_make' is done appropriately since it is not
         entirely within the control of the core.
         '''
         coreInfo = tuple(coreInfo)
         subExpressions = tuple(subExpressions)
-        if genericExpr is not None:
-            made = cls._make(coreInfo, styles, subExpressions, genericExpr)
+        if canonical_version is not None:
+            made = cls._make(coreInfo, styles, subExpressions, 
+                             canonical_version)
         else:
             made = cls._make(coreInfo, styles, subExpressions)
         assert made._coreInfo == coreInfo, (

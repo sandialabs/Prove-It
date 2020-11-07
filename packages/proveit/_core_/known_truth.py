@@ -119,8 +119,11 @@ class KnownTruth:
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
 
-        # The meaning data is shared among KnownTruths with the same structure disregarding style
-        self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id)))
+        # The meaning data is shared among KnownTruths with the same 
+        # structure disregarding style
+        meaning_id_fn = lambda expr : hex(expr._establish_and_get_meaning_id())
+        self._meaningData = meaningData(
+                self._generate_unique_rep(meaning_id_fn))
         if not hasattr(self._meaningData, '_exprProofs'):
             # create or assign the _ExprProofs object for storing all proofs
             # for this KnownTruth's expr (under any set of assumptions).

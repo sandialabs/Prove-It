@@ -1382,10 +1382,11 @@ class ContextFolderStorage:
         Literal operator.  When there are muliple items with the same 
         name, full names must be used instead of abbreviations.
         '''
-        from proveit import (Operation, Expression, ExprTuple, NamedExprs, 
-                             ExprArray)
+        from proveit import (Expression, Operation, Literal, ExprTuple, 
+                             NamedExprs, ExprArray)
         
-        if expr in Operation.operationClassOfOperator:
+        if (isinstance(expr, Literal) and 
+                expr in Operation.operationClassOfOperator):
             # the expression is an '_operator_' of an Operation class
             operationClass = Operation.operationClassOfOperator[expr]
             exprClassesAndConstructors.add((operationClass, 
@@ -1588,7 +1589,6 @@ class ContextFolderStorage:
         the given expression id.
         '''
         import importlib
-        from proveit import Lambda
         # map expression class strings to Expression class objects
         expr_class_map = dict() 
         def importFn(exprClassStr):
@@ -1596,18 +1596,9 @@ class ContextFolderStorage:
             module = importlib.import_module('.'.join(split_expr_class[:-1]))
             expr_class_map[exprClassStr] = getattr(
                     module, split_expr_class[-1])
-        def exprBuilderFn(exprClassStr, exprInfo, styles, subExpressions, 
-                          genericExpr):
+        def exprBuilderFn(exprClassStr, exprInfo, styles, subExpressions):
             expr_class = expr_class_map[exprClassStr]
-            if issubclass(expr_class, Lambda):
-                # For efficiency, make the Lambda expression with its 
-                # generic version known to avoid needing to generate it 
-                # via relabeling.
-                expr = expr_class._checked_make(
-                        exprInfo, styles, subExpressions, genericExpr)
-            else:
-                expr = expr_class._checked_make(exprInfo, styles, 
-                                                subExpressions)
+            expr = expr_class._checked_make(exprInfo, styles, subExpressions)
             return expr
         expr = self._makeExpression(exprId, importFn, exprBuilderFn)
         return expr
@@ -1626,7 +1617,6 @@ class ContextFolderStorage:
         expr_class_rel_strs = dict() 
         core_info_map = dict() # map expr-ids to core information
         styles_map = dict() # map expr-ids to style information
-        generic_id_map = dict() # map expr-ids to the generic version
         # map expr-ids to list of sub-expression ids:
         sub_expr_ids_map = dict() 
         # Map the expression storage id to a (context folder storage,
@@ -1642,8 +1632,7 @@ class ContextFolderStorage:
         def getDependentExprIds(expr_id):
             '''
             Given an expression id, yield the ids of all of its 
-            sub-expressions as well as the id of the generic version of 
-            the expression if it is not the generic version.
+            sub-expressions.
             '''
             context_name, folder, hash_directory = self._split(expr_id)
             #if hash_directory=='ad618bf3877c30c0b90910432253dfea91e55a040':
@@ -1667,8 +1656,8 @@ class ContextFolderStorage:
                 # Extract the unique representation from the pv_it file.
                 unique_rep = f.read()
                 # Parse the unique_rep to get the expression information.
-                (expr_class_str, core_info, style_dict, sub_expr_refs, 
-                 generic_ref) = Expression._parse_unique_rep(unique_rep)
+                (expr_class_str, core_info, style_dict, sub_expr_refs) = \
+                    Expression._parse_unique_rep(unique_rep)
                 if (local_context_name is not None 
                         and expr_class_str.find(local_context_name) == 0):
                     # import locally if necessary
@@ -1679,24 +1668,12 @@ class ContextFolderStorage:
                 # unique representation
                 core_info_map[expr_id] = core_info
                 styles_map[expr_id] = style_dict
-                if generic_ref != '' and generic_ref != '.':
-                    dependent_refs = [generic_ref] + sub_expr_refs
-                else:
-                    dependent_refs = sub_expr_refs
+                dependent_refs = sub_expr_refs
                 dependent_ids = \
                     self._extractReferencedStorageIds(
                             unique_rep, context_name, folder,
                             storage_ids=dependent_refs)
-                if generic_ref == '.':
-                    # '.' denotes that this is a "generic" expression 
-                    # itself.
-                    generic_id_map[expr_id] = '.'
-                    sub_expr_ids_map[expr_id] = dependent_ids
-                elif generic_ref == '':
-                    sub_expr_ids_map[expr_id] = dependent_ids
-                else:
-                    generic_id_map[expr_id] = dependent_ids[0]
-                    sub_expr_ids_map[expr_id] = dependent_ids[1:]
+                sub_expr_ids_map[expr_id] = dependent_ids
                 #print('dependent_ids', dependent_ids)
                 return dependent_ids
                 
@@ -1735,14 +1712,9 @@ class ContextFolderStorage:
         for expr_id in reversed(expr_ids):
             sub_expressions =  [built_expr_map[sub_expr_id] for sub_expr_id 
                                 in sub_expr_ids_map[expr_id]]
-            if expr_id in generic_id_map:
-                generic_id = generic_id_map[expr_id]
-                if generic_id == '.': generic_expr = '.'
-                else: generic_expr = built_expr_map[generic_id]
-            else: generic_expr = None
             expr = exprBuilderFn(
                     expr_class_strs[expr_id], core_info_map[expr_id], 
-                    styles_map[expr_id], sub_expressions, generic_expr)
+                    styles_map[expr_id], sub_expressions)
             expr_style_id = expr._style_id
             if expr_style_id not in proveit_obj_to_storage:
                 # Remember the storage corresponding to the style id

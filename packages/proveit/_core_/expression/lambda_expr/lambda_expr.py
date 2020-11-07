@@ -81,18 +81,16 @@ class Lambda(Expression):
     such that the mapping is only defined when one of the conditions is
     satisfied.
     '''
-    def __init__(self, parameter_or_parameters, body, *, _generic_expr=None):
+    def __init__(self, parameter_or_parameters, body):
         '''
-        Initialize a Lambda function expression given parameter(s) and a body.
-        Each parameter must be a Variable or a range (ExprRange) of 
-        indexed variables (IndexedVar).
+        Initialize a Lambda function expression given parameter(s) and a
+        body. Each parameter must be a Variable or a range (ExprRange) 
+        of indexed variables (IndexedVar).
         When there is a single parameter, there will be a 'parameter'
         attribute. Either way, there will be a 'parameters' attribute
         that bundles the one or more Variables into an ExprTuple.
         The 'body' attribute will be the lambda function body
         Expression.  The body may be singular or a composite.
-        
-        _generic_expr is used internally for efficiently rebuilding a Lambda.
         '''
         from proveit._core_.expression.composite import (
                 compositeExpression, singleOrCompositeExpression)
@@ -146,29 +144,11 @@ class Lambda(Expression):
             {var for var, var_form in free_var_ranges.items()
             if var in self.parameterVarSet}
         
-        if _generic_expr is None:
-            # Create a "generic" version (if not already) of the Lambda 
-            # expression since the choice of parameter labeling is 
-            # irrelevant.
-            
-            # Temporarily disable automation while making the
-            # generic version.
-            prev_automation = defaults.automation
-            try:
-                defaults.automation = False
-                genericExpr = self._generic_version()
-            finally:
-                defaults.automation = prev_automation
-        elif _generic_expr == '.':
-            genericExpr = self
-        else:
-            genericExpr = _generic_expr
-        self._genericExpr = genericExpr
         sub_exprs = (self.parameter_or_parameters, self.body)
         Expression.__init__(self, ['Lambda'], sub_exprs)
     
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions, genericExpr=None):
+    def _make(subClass, coreInfo, styles, subExpressions):
         if len(coreInfo) != 1 or coreInfo[0] != 'Lambda':
             raise ValueError("Expecting Lambda coreInfo to contain exactly one "
                              "item: 'Lambda'")
@@ -177,8 +157,7 @@ class Lambda(Expression):
         if len(subExpressions)!=2:
             raise ValueError("Expected Lambda to have two sub-expressions")
         parameters, body = subExpressions
-        return Lambda(parameters, body, _generic_expr=genericExpr)\
-                    .withStyles(**styles)
+        return Lambda(parameters, body).withStyles(**styles)
     
     def _possibly_free_vars_of_parameter_indices(self):
         '''
@@ -200,16 +179,19 @@ class Lambda(Expression):
                         free_vars(parameter.index, err_inclusively=True))
         return free_vars_of_indices
     
-    def _generic_version(self):
+    def _canonical_version(self, stored_canonical_version=None):
         '''
-        Retrieve (and create if necessary) the generic version of this 
+        Retrieve (and create if necessary) the canonical version of this 
         Lambda expression in which its parameters are replaced with
         deterministic 'dummy' variables.
+        If 'stored_canonical_version' is provided, we'll use
+        that, instead of building it from scratch, after we
+        check that it is valid.
         '''
         from proveit._core_.expression.composite import ExprRange
         
-        if hasattr(self, '_genericExpr'):
-            return self._genericExpr
+        if hasattr(self, '_canonical_expr'):
+            return self._canonical_expr
         
         # Except for the variables in self.nonrelabelable_param_vars,
         # relabel them to something deterministic independent of the
@@ -217,7 +199,7 @@ class Lambda(Expression):
         # Note: If there are any direct indexed variable parameters
         # (as opposed to a range of indexed variables) that are 
         # relabelable, replace them with the variable being indexed 
-        # in the generic version
+        # in the canonical version
         parameterVars = self.parameterVars
         parameters = self.parameters
         bound_parameter_vars = \
@@ -228,14 +210,17 @@ class Lambda(Expression):
         # Assign canonical labels to the parameters using the first
         # available dummy variable, skipping over free variables that
         # happen to match any of these dummy variables.
-        generic_parameters = parameters._generic_version()
-        generic_body = self.body._generic_version()
-        generic_body_free_vars = free_vars(generic_body, err_inclusively=True)
-        generic_parameters_free_vars = free_vars(generic_parameters, err_inclusively=True)
-        lambda_free_vars = set(generic_body_free_vars)
-        lambda_free_vars.update(generic_parameters_free_vars)
+        canonical_parameters = parameters._canonical_version()
+        canonical_body = self.body._canonical_version()
+        canonical_body_free_vars = free_vars(canonical_body, 
+                                             err_inclusively=True)
+        canonical_parameters_free_vars = free_vars(canonical_parameters, 
+                                                   err_inclusively=True)
+        lambda_free_vars = set(canonical_body_free_vars)
+        lambda_free_vars.update(canonical_parameters_free_vars)
         lambda_free_vars.difference_update(bound_parameter_vars)
-        internally_bound_vars = used_vars(generic_body) - generic_body_free_vars
+        internally_bound_vars = (used_vars(canonical_body) - 
+                                 canonical_body_free_vars)
         start_index = len(internally_bound_vars)
         dummy_index = 0
         while dummy_index < start_index:
@@ -243,33 +228,38 @@ class Lambda(Expression):
             if dummy_var in lambda_free_vars:
                 start_index += 1
             dummy_index += 1
-        generic_param_vars = list(reversed(
+        canonical_param_vars = list(reversed(
                 safeDummyVars(len(bound_parameter_vars), *lambda_free_vars,
                               start_index=start_index)))
         
         orig_auto_reduce = defaults.auto_reduce
         try:
-            # Don't auto-reduce when making the generic version.
+            # Don't auto-reduce or use automation when making the
+            # canonical version.
             defaults.auto_reduce = False
-            if generic_param_vars != bound_parameter_vars:
-                # Create the generic version via relabeling.
+            prev_automation = defaults.automation
+            defaults.automation = False
+            if canonical_param_vars != bound_parameter_vars:
+                # Create the canonical version via relabeling.
                 relabel_map = \
-                    {param_var:generic_param_var 
-                     for param_var, generic_param_var
-                     in zip(bound_parameter_vars, generic_param_vars)}
-                generic_parameters = parameters.replaced(
-                        relabel_map, assumptions=tuple())._generic_version()
-                generic_body = generic_body.replaced(
-                        relabel_map, assumptions=tuple())._generic_version()
-                generic_body = generic_body._generic_version()
-                return Lambda(generic_parameters, generic_body)
-            elif (generic_body._style_id != self.body._style_id or
-                  generic_parameters._style_id != self.parameters._style_id):
-                return Lambda(generic_parameters, generic_body)
-            else:
-                return self
+                    {param_var:canonical_param_var 
+                     for param_var, canonical_param_var
+                     in zip(bound_parameter_vars, canonical_param_vars)}
+                canonical_parameters = parameters.replaced(
+                        relabel_map, assumptions=tuple())._canonical_version()
+                canonical_body = canonical_body.replaced(
+                        relabel_map, assumptions=tuple())._canonical_version()
+                canonical_expr = Lambda(canonical_parameters, canonical_body)
+            elif (canonical_body._style_id != self.body._style_id or
+                  canonical_parameters._style_id != self.parameters._style_id):
+                canonical_expr = Lambda(canonical_parameters, canonical_body)
+            else:                    
+                canonical_expr = self
         finally:
             defaults.auto_reduce = orig_auto_reduce
+            defaults.automation = prev_automation
+        self._canonical_expr = canonical_expr
+        return canonical_expr
     
     def extractArgument(self, mappedExpr):
         '''

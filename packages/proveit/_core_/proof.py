@@ -57,8 +57,14 @@ class Proof:
                 raise ValueError("markedRequiredTruthIndices must be a set "
                                  "of integers indexing requiredTruths")
 
-        # The meaning data is shared among Proofs with the same structure disregarding style
-        self._meaningData = meaningData(self._generate_unique_rep(lambda obj : hex(obj._meaning_id)))
+        # The meaning data is shared among Proofs with the same 
+        # structure disregarding style
+        def meaning_hexid_fn(obj):
+            if hasattr(obj, '_meaning_id'):
+                return hex(obj._meaning_id)
+            return hex(obj._establish_and_get_meaning_id())
+        self._meaningData = meaningData(self._generate_unique_rep(
+                meaning_hexid_fn))
         if not hasattr(self._meaningData, 'requiredProofs'):
             self._meaningData.requiredProofs = [requiredTruth.proof() for requiredTruth in requiredTruths]
             self._meaningData._dependents = set() # meanng data of proofs that directly require this one

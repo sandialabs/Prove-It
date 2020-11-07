@@ -28,29 +28,34 @@ class _StyleData:
     '''
     
     unique_id_map = dict() # map _unique_id's to UniqueData objects
-    parent_map = dict() # map object ids to the set of objects (with ids) 
-                        # that contain it as a direct dependent for the purpose of updating styles 
-                        # (which is why they are stored with ids because different styles 
-                        # of the same object, in meaning, will have the same hash and 
-                        # be considered equal).
+
+    # map object ids to the list of ids
+    # that contain it as a direct dependent for the purpose of updating
+    # styles (which is why they are stored with ids because different 
+    # styles of the same object, in meaning, will have the same hash and 
+    # be considered equal).
+    parent_map = dict()
 
     def __init__(self, unique_id, unique_rep):
         self._unique_id = unique_id
         self._unique_rep = unique_rep
     
+    def __hash__(self):
+        return self._unique_id
+    
     def addChild(self, obj, child):
         assert obj._styleData == self # obj style data should correspond with this data
-        _StyleData.parent_map.setdefault(id(child), set()).add((obj, id(obj)))    
+        _StyleData.parent_map.setdefault(id(child), list()).append((obj, id(obj)))    
     
     def updateStyles(self, expr, styles):
         '''
         Update _styles_rep and _styles_id and remove the png and png_path for this Expression object,
         its parent(s), their parent(s), etc (all ancestors whose overall styles will be affected).
         '''
-        set_to_update = {(expr, id(expr))}
-        while len(set_to_update) > 0:
-            obj, obj_id = set_to_update.pop()
-            set_to_update.update(_StyleData.parent_map.get(id(obj), set())) # its parents must also be updated
+        to_update = [(expr, id(expr))]
+        while len(to_update) > 0:
+            obj, obj_id = to_update.pop()
+            to_update.extend(_StyleData.parent_map.get(id(obj), list())) # its parents must also be updated
             if hasattr(obj._styleData, 'styles'):
                 if styles is None:
                     styles = dict(obj._styleData.styles)
