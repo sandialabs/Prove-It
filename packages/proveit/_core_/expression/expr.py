@@ -26,7 +26,7 @@ class ExprType(type):
                  '_make', '_checked_make', '_auto_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_coreInfo',
-                 '_subExpressions', '_genericExpr',
+                 '_subExpressions', '_canonical_expr',
                  '_meaningData', '_meaning_id',
                  '_styleData', '_style_id',
                  'is_parameter_independent', 'literal_int_extent')
@@ -281,8 +281,6 @@ class Expression(metaclass=ExprType):
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
         '''
-        # The generic reference and sub expressions come respectfully at the
-        # beginning of unique_rep.
         sub_expr_end = unique_rep.find(';')
         ref_info = unique_rep[:sub_expr_end]
         # Split by ',' or ';' to get the individual reference ids.
