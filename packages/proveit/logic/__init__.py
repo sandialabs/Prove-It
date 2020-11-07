@@ -2,7 +2,7 @@
 
 from .boolean import Booleans, TRUE, FALSE
 from .boolean import And, Or, Not, Implies, Iff, compose, concludeViaImplication
-from .boolean import inBool
+from .boolean import inBool, BooleanSet, TrueLiteral, FalseLiteral
 from .boolean import Forall, Exists, NotExists
 from .set_theory import EmptySet, Set, SetEquiv, SetNotEquiv
 from .set_theory import InSet, NotInSet, Membership, Nonmembership
