@@ -902,7 +902,7 @@ class Add(Operation):
                 temp_thm = addNatPosFromNonNeg
             else:
                 temp_thm = addRealPosFromNonNeg
-            print(temp_thm, {i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
+            #print(temp_thm, {i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
             return temp_thm.specialize({i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]}, assumptions=assumptions)
         if number_set == RealsPos:
             if len(self.operands) == 2:

@@ -81,24 +81,24 @@ class DecimalSequence(NumeralSequence):
         num1 = self
         if isinstance(num2, int):
             num2 = num(num2)
-        if num2 is one:
+        if num2 == one:
             # if the second number (num2) is one, we set it equal to the first number and then assume the
             # first number to be one and the second number to not be one.  SHOULD BE DELETED once addition works
             # for numbers greater than one.
             num2 = num1
-        elif num2 is not one:
+        elif num2 != one:
             raise NotImplementedError(
                     "Currently, numAddEval only works for the addition of Decimal "
                     "Sequences and one, not %s, %s" % (str(num1), str(num2)))
-        if all(digit is nine for digit in num2.digits):
+        if all(digit == nine for digit in num2.digits):
             # every digit is 9
             return md_only_nine_add_one.specialize({k: num(len(num2.digits))}, assumptions=assumptions)
-        elif num2.digits[-1] is nine:
+        elif num2.digits[-1] == nine:
             # the last digit is nine
             from proveit.number import Add
             count = 0
             idx = -1
-            while num2.digits[idx] is nine:
+            while num2.digits[idx] == nine:
                 count += 1
                 idx -= 1
             length = len(num2.digits)
