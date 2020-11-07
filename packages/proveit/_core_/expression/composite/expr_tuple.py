@@ -35,8 +35,6 @@ class ExprTuple(Composite, Expression):
             assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
-        self._lastEntryCoordInfo = None
-        self._lastQueriedEntryIndex = 0
         
         if styles is None: styles = dict()
         if 'wrapPositions' not in styles:
