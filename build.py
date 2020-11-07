@@ -702,47 +702,50 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
             for path in all_paths:
                 pv_it_dir = os.path.join(path, '__pv_it')
                 if os.path.isdir(pv_it_dir):
-                    for hash_directory in os.listdir(pv_it_dir):
-                        hash_path = os.path.join(pv_it_dir, hash_directory)
-                        if os.path.isdir(hash_path):
-                            if hash_path in executed_hash_paths:
-                                continue # already executed this case
-                            expr_html = os.path.join(hash_path, 'expr.html')
-                            expr_notebook = os.path.join(hash_path, 'expr.ipynb')
-                            if os.path.isfile(expr_notebook):
-                                if no_execute:
-                                    exportToHTML(expr_notebook)
-                                else:
-                                    # if expr_html doesn't exist or is older than expr_notebook, generate it
-                                    if not os.path.isfile(expr_html) or os.path.getmtime(expr_html) < os.path.getmtime(expr_notebook):
-                                        # execute the expr.ipynb notebook
+                    for folder in os.listdir(pv_it_dir):
+                        folder_dir = os.path.join(pv_it_dir, folder)
+                        if os.path.isdir(folder_dir):
+                            for hash_directory in os.listdir(folder_dir):
+                                hash_path = os.path.join(folder_dir, hash_directory)
+                                if os.path.isdir(hash_path):
+                                    if hash_path in executed_hash_paths:
+                                        continue # already executed this case
+                                    expr_html = os.path.join(hash_path, 'expr.html')
+                                    expr_notebook = os.path.join(hash_path, 'expr.ipynb')
+                                    if os.path.isfile(expr_notebook):
+                                        if no_execute:
+                                            exportToHTML(expr_notebook)
+                                        else:
+                                            # if expr_html doesn't exist or is older than expr_notebook, generate it
+                                            if not os.path.isfile(expr_html) or os.path.getmtime(expr_html) < os.path.getmtime(expr_notebook):
+                                                # execute the expr.ipynb notebook
+                                                executeAndExportNotebook(
+                                                        execute_processor, 
+                                                        expr_notebook,
+                                                        no_latex=no_latex, git_clear=False)
+                                                executed_hash_paths.add(hash_path) # done
+                                    proof_html = os.path.join(hash_path, 'proof.html')
+                                    proof_notebook = os.path.join(hash_path, 'proof.ipynb')
+                                    if os.path.isfile(proof_notebook):
+                                        if no_execute:
+                                            exportToHTML(proof_notebook)
+                                        else:
+                                            # if proof_html doesn't exist or is older than proof_notebook, generate it
+                                            if not os.path.isfile(proof_html) or os.path.getmtime(proof_html) < os.path.getmtime(proof_notebook):
+                                                # execute the proof.ipynb notebook
+                                                executeAndExportNotebook(
+                                                        execute_processor, 
+                                                        proof_notebook,
+                                                        no_latex=no_latex, git_clear=False)
+                                                executed_hash_paths.add(hash_path) # done
+                                    # always execute the dependencies notebook for now to be safes
+                                    dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
+                                    if os.path.isfile(dependencies_notebook):
+                                        # execute the dependencies.ipynb notebook
                                         executeAndExportNotebook(
-                                                execute_processor, 
-                                                expr_notebook,
-                                                no_latex=no_latex, git_clear=False)
-                                        executed_hash_paths.add(hash_path) # done
-                            proof_html = os.path.join(hash_path, 'proof.html')
-                            proof_notebook = os.path.join(hash_path, 'proof.ipynb')
-                            if os.path.isfile(proof_notebook):
-                                if no_execute:
-                                    exportToHTML(proof_notebook)
-                                else:
-                                    # if proof_html doesn't exist or is older than proof_notebook, generate it
-                                    if not os.path.isfile(proof_html) or os.path.getmtime(proof_html) < os.path.getmtime(proof_notebook):
-                                        # execute the proof.ipynb notebook
-                                        executeAndExportNotebook(
-                                                execute_processor, 
-                                                proof_notebook,
-                                                no_latex=no_latex, git_clear=False)
-                                        executed_hash_paths.add(hash_path) # done
-                            # always execute the dependencies notebook for now to be safes
-                            dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
-                            if os.path.isfile(dependencies_notebook):
-                                # execute the dependencies.ipynb notebook
-                                executeAndExportNotebook(
-                                        execute_processor, dependencies_notebook, 
-                                        no_execute=no_execute, no_latex=no_latex, 
-                                        git_clear=False)
+                                                execute_processor, dependencies_notebook, 
+                                                no_execute=no_execute, no_latex=no_latex, 
+                                                git_clear=False)
             if len(executed_hash_paths) == prev_num_executed:
                 break # no more new ones to process
 
