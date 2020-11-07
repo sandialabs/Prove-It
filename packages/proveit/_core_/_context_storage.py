@@ -961,7 +961,7 @@ class ContextFolderStorage:
         __pv_it directory) based upon a hash of the unique 
         representation.
         '''
-        from proveit import Literal
+        from proveit import Literal, Proof
         from proveit._core_.proof import Axiom, Theorem
         proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
         if proveItObject._style_id in proveit_obj_to_storage:
@@ -1113,7 +1113,9 @@ class ContextFolderStorage:
         self._exprBuildingPrerequisites(
                 expr, expr_classes_and_constructors, 
                 unnamed_subexpr_occurences, named_subexpr_addresses, 
-                named_items, isSubExpr=False)
+                named_items, 
+                can_self_import = (unofficialNameKindContext is None),
+                isSubExpr=False)
         # find sub-expression style ids that are used multiple times, 
         # these ones will be assigned to a variable
         multiuse_subexprs = [sub_expr for sub_expr, count 
@@ -1305,9 +1307,10 @@ class ContextFolderStorage:
                     # Replace an existing expr.ipynb
                     if kind is not None:
                         print("%s expression notebook is being updated"
-                              %name)
-                        # Move the original to alt_expr.ipynb.
-                        os.replace(filepath, alt_filepath)
+                              %name, template_name)
+                        if orig_alt_nb is not None:
+                            # Move the original to alt_expr.ipynb.
+                            os.replace(filepath, alt_filepath)
                     else:
                         print("Expression notebook is being updated for %s"
                               %str(expr))
@@ -1367,7 +1370,7 @@ class ContextFolderStorage:
         
     def _exprBuildingPrerequisites(
             self, expr, exprClassesAndConstructors, unnamedSubExprOccurences, 
-            namedSubExprAddresses, namedItems, isSubExpr=True):
+            namedSubExprAddresses, namedItems, can_self_import, isSubExpr=True):
         '''
         Given an Expression object (expr), visit all sub-expressions and
         obtain the set of represented Expression classes (exprClasses), 
@@ -1400,8 +1403,12 @@ class ContextFolderStorage:
         
         context_folder_storage = \
             ContextFolderStorage.getFolderStorageOfExpr(expr)
-        if context_folder_storage.folder in ('axioms', 'theorems', 'common'):
-            # expr may be a special expression from a context
+        is_active_context_folder = \
+            (context_folder_storage == 
+             ContextFolderStorage.active_context_folder_storage)
+        if (context_folder_storage.folder in ('axioms', 'theorems', 'common')
+                and (can_self_import or not is_active_context_folder)):
+            # expr may be a special expression from a context.
             try:
                 # if it is a special expression in a context, 
                 # we want to be able to address it as such.
@@ -1410,6 +1417,7 @@ class ContextFolderStorage:
                     context_folder_storage.specialExprAddress(expr_id)
             except KeyError:
                 expr_address= None
+            
             if expr_address is not None:
                 namedSubExprAddresses[(expr, expr._style_id)] = \
                     expr_address[1:]
@@ -1453,14 +1461,14 @@ class ContextFolderStorage:
                 self._exprBuildingPrerequisites(
                         subExpr, exprClassesAndConstructors, 
                         unnamedSubExprOccurences, namedSubExprAddresses, 
-                        namedItems)
+                        namedItems, can_self_import)
         
     def _moduleAbbreviatedName(self, moduleName, objName):
         '''
         Return the abbreviated module name for the given object based 
         upon the convention that packages will import objects within 
         that package that should be visible externally.  Specifically, 
-        this successively checks parent packages to see of the object is
+        this successively checks parent packages to see if the object is
         defined there with the same name.  For example, 
         proveit.logic.boolean.conjunction.and_op will be abbreviated
         to proveit.logic for the 'And' class.
@@ -1863,6 +1871,19 @@ class ContextFolderStorage:
             if hash_subfolder not in currently_referenced:
                 hash_folder = os.path.join(self.path, hash_subfolder)
                 paths_to_remove.append(hash_folder)
+        
+        thm_names = set(self.context.theoremNames())
+        if self.folder == 'theorems':
+            # When 'cleaning' the theorems folder, we will also
+            # remove any '_proof_<theorem_name>' folders that are
+            # obsolete.
+            for _folder in os.listdir(self.pv_it_dir):
+                if _folder[:7] == '_proof_':
+                    thm_name = _folder[7:]
+                    if thm_name not in thm_names:
+                        paths_to_remove.append(os.path.join(
+                                self.pv_it_dir, _folder))
+        
         for hash_folder in paths_to_remove:
             try:
                 shutil.rmtree(hash_folder)
@@ -2190,7 +2211,10 @@ class StoredTheorem(StoredSpecialStmt):
         from .context import Context
               
         # add a reference to the new proof
-        proofId = self.context_folder_storage._proveItStorageId(proof)
+        active_folder_storage = \
+            ContextFolderStorage.active_context_folder_storage
+        assert active_folder_storage.folder == '_proof_' + self.name
+        proofId = active_folder_storage._proveItStorageId(proof)
         if self.hasProof():
             # remove the old proof if one already exists
             self.removeProof()                    
