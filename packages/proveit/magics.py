@@ -433,10 +433,17 @@ class ProveItMagicCommands:
     
     def proving(self, theorem_name, presumptions, justRecordPresumingInfo=False):
         # the context should be up a directory from the _proofs_ directory
+        import proveit
         active_folder = '_proof_' + theorem_name
         self.context = Context('..', active_folder=active_folder) 
         sys.path.append('..')
-        proving_theorem = self.context.getTheorem(theorem_name)
+        try:
+            # Disable automation when we are getting this theorem
+            # to be proven.
+            proveit.defaults.automation = False
+            proving_theorem = self.context.getTheorem(theorem_name)
+        finally:
+            proveit.defaults.automation = True
         proving_theorem_truth = proving_theorem.provenTruth
         print("Beginning proof of", theorem_name)
         return proving_theorem_truth.beginProof(proving_theorem, presumptions, justRecordPresumingInfo=justRecordPresumingInfo)
