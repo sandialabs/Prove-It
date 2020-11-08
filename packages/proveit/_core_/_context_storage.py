@@ -298,18 +298,28 @@ class ContextStorage:
         from proveit._core_.proof import Axiom, Theorem
         if kind=='common':
             self._common_expr_names = None # force a reload            
-        elif kind=='axiom':
-            self._axiom_names = None # force a reload
-            # Convert definitions from expressions to KnownTruth objects
-            # corresponding to the Axioms:
-            definitions = {name:Axiom(expr, self.context, name).provenTruth 
-                           for name, expr in definitions.items()}
-        elif kind == 'theorem':
-            self._theorem_names = None # force a reload
-            # Convert definitions from expressions to KnownTruth objects
-            # corresponding to the Theorems:
-            definitions = {name:Theorem(expr, self.context, name).provenTruth 
-                           for name, expr in definitions.items()}
+        elif kind=='axiom' or kind == 'theorem':
+            if kind=='axiom':
+                self._axiom_names = None # force a reload
+                # Convert definitions from expressions to Axiom Proofs.
+                proof_defs = {name:Axiom(expr, self.context, name)
+                              for name, expr in definitions.items()}
+            elif kind == 'theorem':
+                self._theorem_names = None # force a reload
+                # Convert definitions from expressions to Theorem 
+                # Proofs.
+                proof_defs = {name:Theorem(expr, self.context, name) 
+                               for name, expr in definitions.items()}
+            # "Retrieve" the proofs to make sure they are stored
+            # for future needs.
+            context_folder_storage = self.contextFolderStorage(
+                    kind + 's')
+            for name, axiom in proof_defs.items():
+                # make links to the axiom objects
+                context_folder_storage._retrieve(axiom)
+            # Convert definitions from Proofs to KnownTruth objects.
+            definitions = {name:proof.provenTruth 
+                           for name, proof in proof_defs.items()}
         self._setSpecialObjects(names, definitions, kind)
     
     def _setSpecialObjects(self, names, definitions, kind):
@@ -1415,6 +1425,7 @@ class ContextFolderStorage:
                 = (operationClass, '_operator_')
             return
         
+        proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
         context_folder_storage = \
             ContextFolderStorage.getFolderStorageOfObj(obj)
         is_active_context_folder = \
@@ -1423,20 +1434,19 @@ class ContextFolderStorage:
         if (context_folder_storage.folder in ('axioms', 'theorems', 'common')
                 and (can_self_import or not is_active_context_folder)):
             # expr may be a special expression from a context.
-            try:
-                # if it is a special expression in a context, 
-                # we want to be able to address it as such.
+            if obj._style_id in proveit_obj_to_storage:
                 obj_id = context_folder_storage._proveItStorageId(obj)
-                expr_address = \
-                    context_folder_storage.specialExprAddress(obj_id)
-            except KeyError:
-                expr_address= None
-            
-            if expr_address is not None:
-                namedSubExprAddresses[(expr, expr._style_id)] = \
-                    expr_address[1:]
-                namedItems.setdefault(expr_address[-1], set()).add(expr)
-                return
+                try:
+                    # if it is a special expression in a context, 
+                    # we want to be able to address it as such.
+                    expr_address = \
+                        context_folder_storage.specialExprAddress(obj_id)
+                    namedSubExprAddresses[(expr, expr._style_id)] = \
+                        expr_address[1:]
+                    namedItems.setdefault(expr_address[-1], set()).add(expr)
+                    return
+                except KeyError:
+                    pass
         
         # add to the unnamed sub-expression count
         unnamedSubExprOccurences[(expr, expr._style_id)] = \
