@@ -360,7 +360,8 @@ class ContextStorage:
                 f.write(name + ' ' + hash_id + '\n')
                 special_hash_ids[name] = hash_id
                 self._kindname_to_exprhash[(kind, name)] = expr_id
-                context_folder_storage._exprhash_to_name[expr_id] = name
+                context_folder_storage._objhash_to_name[expr_id] = name
+                context_folder_storage._objhash_to_name[hash_id] = name
                 if folder != 'common':
                     kind = folder[:-1]
                     if name not in old_name_to_hash:
@@ -466,7 +467,8 @@ class ContextStorage:
                                     context_folder_storage.folder)
                         expr_id = exprids[0]
                     self._kindname_to_exprhash[(kind, name)] = expr_id
-                    context_folder_storage._exprhash_to_name[expr_id] = name
+                    context_folder_storage._objhash_to_name[expr_id] = name
+                    context_folder_storage._objhash_to_name[hash_id] = name
                     yield name
     
     def getAxiomHash(self, name):
@@ -738,27 +740,27 @@ class ContextFolderStorage:
             os.makedirs(self.path)
         
         # For 'common', 'axioms', 'theorems' folders, we map
-        # expression hash folder names to the name of the
+        # the object hash folder names to the name of the
         # axiom, theorem, or common expression.
-        self._exprhash_to_name = dict()
+        self._objhash_to_name = dict()
     
     @staticmethod
-    def getFolderStorageOfExpr(expr):
+    def getFolderStorageOfObj(obj):
         '''
         Obtain the ContextFolderStorage that 'owns' the given
         expression, or the default ContextFolderStorage.
         '''
         proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
-        if expr._style_id in proveit_obj_to_storage:
+        if obj._style_id in proveit_obj_to_storage:
             (context_folder_storage, _) =\
-                proveit_obj_to_storage[expr._style_id]
+                proveit_obj_to_storage[obj._style_id]
             return context_folder_storage
         else:
             # Return the "active context folder storage" as default.
             # This is set by the %begin Prove-It magic command.
             return ContextFolderStorage.active_context_folder_storage
     
-    def specialExprAddress(self, expr_hash_id):
+    def specialExprAddress(self, obj_hash_id):
         '''
         A special expression "address" consists of a kind ('common', 
         'axiom', or 'theorem'), module and the name of the expression.
@@ -766,7 +768,7 @@ class ContextFolderStorage:
         expressions of this context, return the address as a tuple.
         '''
         kind = ContextStorage._folder_to_kind(self.folder)
-        name = self._exprhash_to_name[expr_hash_id]
+        name = self._objhash_to_name[obj_hash_id]
         if kind == 'axiom' or kind=='theorem':
             name = name + '.expr'
         return kind, self.context_storage._specialExprModules[kind], name
@@ -780,7 +782,11 @@ class ContextFolderStorage:
         a tuple.
         '''
         context_folder_storage = \
-            ContextFolderStorage.getFolderStorageOfExpr(expr)
+            ContextFolderStorage.getFolderStorageOfObj(expr)
+        if context_folder_storage is None:
+            raise Exception("You must run the %begin or %proving magic "
+                            "command before displaying LaTeX Prove-It "
+                            "expressions")
         return context_folder_storage._retrieve_png(
                 expr, latex, configLatexToolFn)
     
@@ -961,7 +967,7 @@ class ContextFolderStorage:
         __pv_it directory) based upon a hash of the unique 
         representation.
         '''
-        from proveit import Literal, Proof
+        from proveit import Literal
         from proveit._core_.proof import Axiom, Theorem
         proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
         if proveItObject._style_id in proveit_obj_to_storage:
@@ -1050,7 +1056,7 @@ class ContextFolderStorage:
                         ContextStorage._kind_to_folder(kind))
             else:
                 context_folder_storage = \
-                    ContextFolderStorage.getFolderStorageOfExpr(expr)
+                    ContextFolderStorage.getFolderStorageOfObj(expr)
         
         return context_folder_storage._expressionNotebook(
                 expr, unofficialNameKindContext)
@@ -1076,7 +1082,7 @@ class ContextFolderStorage:
             # Is this a "special" expression?
             try:
                 expr_id = self._proveItStorageId(expr)
-                name = self._exprhash_to_name[expr_id]
+                name = self._objhash_to_name[expr_id]
                 kind = ContextStorage._folder_to_kind(self.folder)
             except KeyError:
                 kind = None
@@ -1111,7 +1117,7 @@ class ContextFolderStorage:
         # can use the abbreviated name or full address.
         named_items = dict() 
         self._exprBuildingPrerequisites(
-                expr, expr_classes_and_constructors, 
+                obj, expr_classes_and_constructors, 
                 unnamed_subexpr_occurences, named_subexpr_addresses, 
                 named_items, 
                 can_self_import = (unofficialNameKindContext is None),
@@ -1306,8 +1312,7 @@ class ContextFolderStorage:
                 else:
                     # Replace an existing expr.ipynb
                     if kind is not None:
-                        print("%s expression notebook is being updated"
-                              %name, template_name)
+                        print("%s expression notebook is being updated"%name)
                         if orig_alt_nb is not None:
                             # Move the original to alt_expr.ipynb.
                             os.replace(filepath, alt_filepath)
@@ -1369,7 +1374,7 @@ class ContextFolderStorage:
         return relurl(filepath)
         
     def _exprBuildingPrerequisites(
-            self, expr, exprClassesAndConstructors, unnamedSubExprOccurences, 
+            self, obj, exprClassesAndConstructors, unnamedSubExprOccurences, 
             namedSubExprAddresses, namedItems, can_self_import, isSubExpr=True):
         '''
         Given an Expression object (expr), visit all sub-expressions and
@@ -1387,6 +1392,15 @@ class ContextFolderStorage:
         '''
         from proveit import (Expression, Operation, Literal, ExprTuple, 
                              NamedExprs, ExprArray)
+        from proveit._core_ import KnownTruth
+        
+        if isinstance(obj, KnownTruth):
+            assert len(obj.assumptions)==0, (
+                    "Expecting only an Axiom or Theorem KnownTruth with "
+                    "no assumptions.")
+            expr = obj.expr
+        else:
+            expr = obj
         
         if (isinstance(expr, Literal) and 
                 expr in Operation.operationClassOfOperator):
@@ -1402,7 +1416,7 @@ class ContextFolderStorage:
             return
         
         context_folder_storage = \
-            ContextFolderStorage.getFolderStorageOfExpr(expr)
+            ContextFolderStorage.getFolderStorageOfObj(obj)
         is_active_context_folder = \
             (context_folder_storage == 
              ContextFolderStorage.active_context_folder_storage)
@@ -1412,9 +1426,9 @@ class ContextFolderStorage:
             try:
                 # if it is a special expression in a context, 
                 # we want to be able to address it as such.
-                expr_id = context_folder_storage._proveItStorageId(expr)
+                obj_id = context_folder_storage._proveItStorageId(obj)
                 expr_address = \
-                    context_folder_storage.specialExprAddress(expr_id)
+                    context_folder_storage.specialExprAddress(obj_id)
             except KeyError:
                 expr_address= None
             
