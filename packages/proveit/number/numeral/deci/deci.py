@@ -1,5 +1,6 @@
-from proveit import Literal, USE_DEFAULTS, Operation
-from proveit.number.sets.number_set import NumberSet
+from proveit import Literal, USE_DEFAULTS, Operation, ExprRange
+from proveit._common_ import a, b, c, d, k, m, n, x
+from proveit.number.sets.number_set import NumberSet, NumberMembership
 from proveit.number.numeral.numeral import NumeralSequence, Numeral
 from proveit.number.numeral._common_ import zero, one, two, three, four, five, six, seven, eight, nine
 DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
@@ -60,9 +61,8 @@ class DecimalSequence(NumeralSequence):
 
     def deduceInNaturals(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import deci_sequence_in_naturals
-        from proveit._common_ import a, n
-        from proveit.core_expr_types import Len
-        return deci_sequence_in_naturals.instantiate({n: Len(self), a: self.digits}, assumptions=assumptions)
+        return deci_sequence_in_naturals.instantiate({n: self.operands.length(assumptions),
+                                                      a: self.digits}, assumptions=assumptions)
         # if Numeral._inNaturalsStmts is None:
         #     from proveit.number.sets.integer._theorems_ import zeroInNats
         #     from proveit.number.numeral.deci._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
@@ -72,9 +72,8 @@ class DecimalSequence(NumeralSequence):
 
     def deduceInNaturalsPos(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import deci_sequence_in_naturalsPos
-        from proveit._common_ import a, n
-        from proveit.core_expr_types import Len
-        return deci_sequence_in_naturalsPos.instantiate({n: Len(self), a: self.digits}, assumptions=assumptions)
+        return deci_sequence_in_naturalsPos.instantiate({n: self.operands.length(assumptions),
+                                                         a: self.digits}, assumptions=assumptions)
         # from proveit import ProofFailure
         # if Numeral._inNaturalsPosStmts is None:
         #     from proveit.number.numeral.deci._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
@@ -91,9 +90,7 @@ class DecimalSequence(NumeralSequence):
         Tries to reduce a decimal sequence containing an ExprRange.
         For example, reduce #(3 4 2 .. 4 repeats .. 2 3) to 3422223
         '''
-        from proveit import ExprRange, TransRelUpdater
-        from proveit._common_ import a, b, c, d, k, m, n, x
-        from proveit.core_expr_types import Len
+        from proveit import TransRelUpdater
         from proveit.core_expr_types.tuples._theorems_ import n_repeats_reduction
         from proveit.number.numeral.deci._theorems_ import deci_sequence_reduction_ER
 
@@ -106,9 +103,9 @@ class DecimalSequence(NumeralSequence):
             if isinstance(digit, ExprRange) and isinstance(digit.body, Numeral):
                 import proveit.number.numeral.deci
 
-                _m = Len(expr.digits[:i]).computation(assumptions=assumptions).rhs
+                _m = expr.digits[:i].length(assumptions)
                 _n = digit.end_index
-                _k = Len(expr.digits[i + 1:]).computation(assumptions=assumptions).rhs
+                _k = expr.digits[i + 1:].length(assumptions)
                 _a = expr.digits[:i]
                 _b = digit.body
                 _d = expr.digits[i + 1:]
@@ -144,32 +141,35 @@ class DecimalSequence(NumeralSequence):
         '''
         evaluates the addition of two integers
         '''
-        from proveit._common_ import a, b, k, m
         from ._theorems_ import md_only_nine_add_one, md_nine_add_one
         num1 = self
         if isinstance(num2, int):
             num2 = num(num2)
-        if num2 is one:
+        if num2 == one:
             # if the second number (num2) is one, we set it equal to the first number and then assume the
             # first number to be one and the second number to not be one.  SHOULD BE DELETED once addition works
             # for numbers greater than one.
             num2 = num1
-        elif num2 is not one:
+        elif num2 != one:
             raise NotImplementedError(
                     "Currently, numAddEval only works for the addition of Decimal "
                     "Sequences and one, not %s, %s" % (str(num1), str(num2)))
-        if all(digit is nine for digit in num2.digits):
+        if all(digit == nine for digit in num2.digits):
             # every digit is 9
-            return md_only_nine_add_one.specialize({k: num(len(num2.digits))}, assumptions=assumptions)
-        elif num2.digits[-1] is nine:
+            return md_only_nine_add_one.specialize({k: num2.digits.length(assumptions)}, assumptions=assumptions)
+        elif num2.digits[-1] == nine:
             # the last digit is nine
             from proveit.number import Add
             count = 0
             idx = -1
-            while num2.digits[idx] is nine:
-                count += 1
+            while num2.digits[idx] == nine or \
+                    (isinstance(num2.digits[idx], ExprRange) and num2.digits[idx].body == nine):
+                if isinstance(num2.digits[idx], ExprRange):
+                    count += num2.digits[idx].end_index
+                else:
+                    count += 1
                 idx -= 1
-            length = len(num2.digits)
+            length = num2.digits.length(assumptions)
             _m = num(length - count - 1)
             _k = num(count)
             _a = num2.digits[:-(count + 1)]
@@ -177,7 +177,7 @@ class DecimalSequence(NumeralSequence):
             return md_nine_add_one.specialize({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
         else:
             # the last digit is not nine
-            _m = num(len(num2.digits) - 1)
+            _m = num2.digits.length(assumptions)
             _k = num(0)
             _a = num2.digits[:-1]
             _b = num2.digits[-1]
@@ -190,9 +190,7 @@ class DecimalSequence(NumeralSequence):
         """
         from proveit import TransRelUpdater
         from proveit.number import Add
-        from proveit._common_ import a, b, c, d, k, m, n
         from ._theorems_ import deci_sequence_reduction
-        from proveit.core_expr_types import Len
 
         expr = self
         # A convenience to allow successive update to the equation via transitivities.
@@ -203,9 +201,9 @@ class DecimalSequence(NumeralSequence):
             if isinstance(digit, Add):
                 # only implemented for addition.
 
-                _m = Len(expr.digits[:i]).computation(assumptions=assumptions).rhs
-                _n = Len(digit.operands).computation(assumptions=assumptions).rhs
-                _k = Len(expr.digits[i + 1:]).computation(assumptions=assumptions).rhs
+                _m = expr.digits[:i].length(assumptions=assumptions)
+                _n = digit.operands.length(assumptions=assumptions)
+                _k = expr.digits[i + 1:].length(assumptions=assumptions)
                 # _a = expr.innerExpr().operands[:i]
                 _b = digit.operands
                 _c = digit.evaluation(assumptions=assumptions).rhs
@@ -243,26 +241,56 @@ class DecimalSequence(NumeralSequence):
         return outstr
 
 
-class DecimalSet(NumberSet):
+class DigitSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Digits', r'\mathbb{N}^{\leq 9}', context=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import naturalsLowerBound
-        return naturalsLowerBound.specialize({n:member}, assumptions=assumptions)
+        from ._theorems_ import digitsLowerBound
+        return digitsLowerBound.specialize({n: member}, assumptions=assumptions)
+
+    def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import digitsUpperBound
+        return digitsUpperBound.specialize({n: member}, assumptions=assumptions)
 
     def membershipSideEffects(self, knownTruth):
         '''
         Yield side-effects when proving 'n in Naturals' for a given n.
         '''
         member = knownTruth.element
-        yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
+        yield lambda assumptions: self.deduceMemberLowerBound(member, assumptions)
+        yield lambda assumptions: self.deduceMemberUpperBound(member, assumptions)
 
-    def deduceMembership(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import deci_sequence_in_naturals
-        from proveit._common_ import a, n
-        from proveit.core_expr_types import Len
-        return deci_sequence_in_naturals.instantiate({n: Len(member), a: member}, assumptions=assumptions)
+    def membershipObject(self, element):
+        return DeciMembership(element, self)
+
+
+class DeciMembership(NumberMembership):
+    '''
+        Defines methods that apply to membership of a decimal sequence.
+    '''
+    def __init__(self, element, number_set):
+        NumberMembership.__init__(self, element, number_set)
+
+    def conclude(self, assumptions=USE_DEFAULTS):
+        from proveit import ProofFailure
+        from ._theorems_ import nInDigits
+        # if we know the element is 0-9, then we can show it is a digit
+        try:
+            return NumberMembership.conclude(self, assumptions=assumptions)
+        except ProofFailure:
+            return nInDigits.instantiate({n: self.element}, assumptions=assumptions)
+
+        # if isinstance(self.element, numeral) and 0 <= self.element.asInt() <= 9:
+        #     _n = self.element.asInt()
+        #     thm = proveit.number.numeral.deci._theorems_ \
+        #         .__getattr__('digit%s' % _n)
+        #     return thm
+        # else:
+        #     return nInDigits.instantiate({n: self.element}, assumptions=assumptions)
+
+
+
 
 def num(x):
     from proveit.number import Neg
