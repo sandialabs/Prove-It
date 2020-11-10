@@ -120,7 +120,7 @@ class ExprTuple(Composite, Expression):
         via ranges (ExprRange).
         '''
         if isinstance(idx, slice):
-            return ExprTuple(self.entries[idx])
+            return ExprTuple(*self.entries[idx])
         return self.entries[idx]
     
     def __add__(self, other):

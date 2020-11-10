@@ -170,14 +170,14 @@ class DecimalSequence(NumeralSequence):
                     count += 1
                 idx -= 1
             length = num2.digits.length(assumptions)
-            _m = num(length - count - 1)
+            _m = num(length.asInt() - count - 1)
             _k = num(count)
             _a = num2.digits[:-(count + 1)]
             _b = num2.digits[-(count + 1)]
             return md_nine_add_one.specialize({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
         else:
             # the last digit is not nine
-            _m = num2.digits.length(assumptions)
+            _m = num(num2.digits.length(assumptions).asInt() - 1)
             _k = num(0)
             _a = num2.digits[:-1]
             _b = num2.digits[-1]
@@ -188,7 +188,7 @@ class DecimalSequence(NumeralSequence):
         """
         Evaluates each addition within the DecimalSequence
         """
-        from proveit import TransRelUpdater
+        from proveit import TransRelUpdater, ExprTuple
         from proveit.number import Add
         from ._theorems_ import deci_sequence_reduction
 
