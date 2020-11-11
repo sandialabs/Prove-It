@@ -82,9 +82,11 @@ class Numeral(Literal, IrreducibleValue):
         
     def deduceInNaturals(self, assumptions=USE_DEFAULTS):
         if Numeral._inNaturalsStmts is None:
-            from proveit.number.sets.integer._theorems_ import zeroInNats
+            from proveit.number.sets.natural._axioms_ import zero_in_nats
             from .deci._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
-            Numeral._inNaturalsStmts = {0:zeroInNats, 1:nat1, 2:nat2, 3:nat3, 4:nat4, 5:nat5, 6:nat6, 7:nat7, 8:nat8, 9:nat9}
+            Numeral._inNaturalsStmts = {0:zero_in_nats, 1:nat1, 2:nat2, 
+                                        3:nat3, 4:nat4, 5:nat5, 6:nat6, 
+                                        7:nat7, 8:nat8, 9:nat9}
         return Numeral._inNaturalsStmts[self.n]
     
     '''
@@ -120,9 +122,9 @@ class NumeralSequence(Operation, IrreducibleValue):
     def __init__(self, operator, *digits):
         from proveit import ExprRange
         Operation.__init__(self, operator, digits)
-        if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
-            raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
-        self.digits = digits
+        # if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
+        #     raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
+        self.digits = self.operands
 
     def evalEquality(self, other, assumptions=USE_DEFAULTS):
         if other==self:

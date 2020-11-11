@@ -5,7 +5,7 @@ class ImaginaryLiteral(IrreducibleValue, Literal):
     _inComplexesStmts = None # initializes when needed
 
     def __init__(self):
-        Literal.__init__(self, 'i', context=__file__)
+        Literal.__init__(self, 'i', r'\mathsf{i}', context=__file__)
 
     def evalEquality(self, other, assumptions=USE_DEFAULTS):
         if other==self:

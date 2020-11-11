@@ -407,7 +407,7 @@ class Proof:
             html += '</tr>\n'
             if proof.stepType()=='instantiation':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
-            if proof.stepType()=='axiom' or proof.stepType()=='theorem':
+            if proof.stepType() in {'axiom', 'theorem', 'conjecture'}:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
@@ -576,6 +576,8 @@ class Theorem(Proof):
         return self.stepType() + '_' + str(self) + ':'
 
     def stepType(self):
+        if self.isConjecture():
+            return 'conjecture'
         return 'theorem'
 
     def usedTheorems(self):
@@ -669,13 +671,19 @@ class Theorem(Proof):
         '''
         return self._storedTheorem().hasProof()
 
-    def isFullyProven(self, theorem):
+    def isFullyProven(self):
         '''
         Returns true if and only if this theorem is fully proven
         (it has a recorded proof and all dependent theorems are fully
         proven, all the way to axioms which don't require proofs).
         '''
         return self._storedTheorem().isComplete()
+    
+    def isConjecture(self):
+        '''
+        A "Theorem" that is not fully proven is a "conjecture".
+        '''
+        return not self.isFullyProven()
 
     def allRequirements(self):
         '''
@@ -811,7 +819,7 @@ class ModusPonens(Proof):
     def stepType(self):
         return 'modus ponens'
 
-class HypotheticalReasoning(Proof):
+class Deduction(Proof):
     def __init__(self, consequentTruth, antecedentExpr):
         from proveit import ExprRange
         from proveit.logic import Implies, And
@@ -837,7 +845,7 @@ class HypotheticalReasoning(Proof):
             defaults.assumptions = prev_default_assumptions
 
     def stepType(self):
-        return 'hypothetical reasoning'
+        return 'deduction'
 
 class Instantiation(Proof):
     def __init__(self, orig_known_truth, num_forall_eliminations,
@@ -1360,7 +1368,7 @@ class _ShowProof:
             # Must be an axiom or theorem with the format
             # axiom_context.name or theorem_context.name
             self.step_type_str, full_name = stepInfo.split('_', 1)
-            assert self.step_type_str in ('axiom', 'theorem')
+            assert self.step_type_str in ('axiom', 'theorem', 'conjecture')
             full_name_segments = full_name.split('.')
             context_name = '.'.join(full_name_segments[:-1])
             self.context =  Context.getContext(context_name)
@@ -1398,7 +1406,7 @@ class _ShowProof:
         from ._context_storage import StoredAxiom, StoredTheorem
         if self.step_type_str=='axiom':
             return StoredAxiom(self.context, self.name).getDefLink()
-        elif self.step_type_str=='theorem':
+        elif self.step_type_str in ('theorem', 'conjecture'):
             return StoredTheorem(self.context, self.name).getProofLink()
         else:
             return self.context.proofNotebook(self)

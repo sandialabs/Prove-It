@@ -10,7 +10,7 @@ from ._core_ import (
         InnerExpr, expressionDepth,
         Operation, IndexedVar, Function, OperationSequence, 
         OperationOverInstances, bundle, unbundle, OperationError,
-        Conditional, 
+        Conditional, ConditionalSet,
         Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError, 
         Label, Variable, Literal, DuplicateLiteralError,
@@ -23,7 +23,7 @@ from ._core_ import (
         varRange, RangeInstanceError,
         KnownTruth, asExpression, asExpressions,
         Proof, Assumption, Axiom, Theorem, ModusPonens, 
-        HypotheticalReasoning, Instantiation, Generalization,
+        Deduction, Instantiation, Generalization,
         ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
         StyleOptions, maybeFencedString, maybeFencedLatex, maybeFenced)
 from .relation import (TransitiveRelation, TransitiveSequence, TransitivityException, 
