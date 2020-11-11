@@ -5,6 +5,7 @@ from proveit._common_ import a, b
 class Numeral(Literal, IrreducibleValue):
     _inNaturalsStmts = None # initializes when needed
     _inNaturalsPosStmts = None # initializes when needed
+    _inDigitsStmts = None  # initializes when needed
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
     
@@ -55,12 +56,14 @@ class Numeral(Literal, IrreducibleValue):
         return Numeral(n, string_format, latex_format)
      
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
-        from proveit.number import Naturals, NaturalsPos
+        from proveit.number import Naturals, NaturalsPos, Digits
         from proveit.logic import InSet
         if number_set==Naturals:
             return self.deduceInNaturals(assumptions)
         elif number_set==NaturalsPos:
             return self.deduceInNaturalsPos(assumptions)
+        elif number_set==Digits:
+            return self.deduceInDigits(assumptions)
         else:
             try:
                 # Do this to avoid infinite recursion -- if
@@ -106,7 +109,17 @@ class Numeral(Literal, IrreducibleValue):
         if self.n <= 0:
             raise ProofFailure(self, [], 
                                "Cannot prove %d in NaturalsPos"%self.n)
-        return Numeral._inNaturalsPosStmts[self.n]    
+        return Numeral._inNaturalsPosStmts[self.n]
+
+    def deduceInDigits(self, assumptions=USE_DEFAULTS):
+        if Numeral._inDigitsStmts is None:
+            from .deci._theorems_ import digit0, digit1, digit2, digit3, digit4, digit5
+            from .deci._theorems_ import digit6, digit7, digit8, digit9
+            Numeral._inDigitsStmts = {0:digit0, 1:digit1, 2:digit2, 3:digit3, 4:digit4, 5:digit5, 6:digit6, 7:digit7, 8:digit8, 9:digit9}
+        if self.n < 0 or self.n > 9:
+            raise ProofFailure(self, [],
+                               "Cannot prove %d in Digits"%self.n)
+        return Numeral._inDigitsStmts[self.n]
 
     def deducePositive(self, assumptions=USE_DEFAULTS):
         if Numeral._positiveStmts is None:
