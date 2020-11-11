@@ -1055,15 +1055,14 @@ class KnownTruth:
         if previously generated) with a links to
         expr.ipynb notebooks for displaying the expression information.
         '''
-        from proveit.logic import Set
         if not defaults.display_latex:
             return None # No LaTeX display at this time.
         if not self.isUsable(): self.raiseUnusableProof()
         html = ''
         proof = self.proof()
         html += '<span style="font-size:20px;">'
-        if len(self.assumptions) > 0:
-            html += Set(*self.assumptions)._repr_html_()
+        html += ', '.join(assumption._repr_html_() for assumption 
+                          in self.assumptions)
         html += ' '
         if proof is not None:
             # link to the proof
