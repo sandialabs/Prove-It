@@ -28,12 +28,14 @@ side-effects when something is proven).  Theorem proofs and their axiom/
 theorem dependencies are stored in a kind of database (filesystem based).
 This database is used to prevent circular logic. It also allows users to
 track axioms and unproven theorems required by any particular proof.
-Convenience methods and automation tools may be added which utilize new
-theorems and aid future proofs.  Mathematical objects and operations,
-axioms, and theorems are organized into built-in and user-defined packages. 
+Convenience methods and automation tools to aid future proofs may be 
+added and may utilize new axioms/theorems.  Mathematical objects and operations,
+axioms, and theorems are organized into built-in and user-defined 
+theory packages. 
 
 Visit [http://pyproveit.org](http://pyproveit.org) to view the
-Prove-It-generated web pages.
+Prove-It-generated web pages.  
+You can also read our [introductory paper](https://github.com/PyProveIt/Prove-It/blob/master/ProveIt_Introduction.pdf).
 
 <br/>
 
@@ -50,17 +52,13 @@ Installation instructions
 
        python setup.py develop
    
-   to install a link to the source tree in your python path, so that
-   changes you make to the code are immediately updated when Prove-It
-   is imported. This is recommended if you plan to make updates/additions
-   to the ever-expanding proveit packages.
-
-   Alternatively, run:
-   
-       python setup.py install
-
-   if you wish to install Prove-It into your main python distribution without
-   doing any development on the proveit packages.
+   to install a link to the source tree in your python path.  We only
+   support this "develop" installation at this time because of the way 
+   that the Prove-It database works in the filesystem.  In any case, if 
+   you might want to make any [contributions](https://github.com/PyProveIt/Prove-It/blob/master/CONTRIBUTING.md)
+   to the ever-expanding proveit packages, this "develop" installation will
+   allow you to do that development (altering source code of the
+   installed package).
    
 3) Run:
 
@@ -70,26 +68,12 @@ Installation instructions
    `__pv_it` folders throughout the Prove-It sub-folders.  The `--clean`
    option will erase anything that may have been added to your local
    database before extracting the downloaded version.
-      
-4) Take a look at the `tutorial` folder.  It has numbered Jupyter notebooks 
-   (and html versions for convenience) that introduce Prove-It concepts
-   in an appropriate order.  There are also tutorial notebooks/html in various
-   packages with specific information about that package.  A particularly
-   useful one is
 
-   `proveit/logic/equality/equality_tutorial.ipynb`
-
-   in the `packages` folder.  Furthermore, there are `_proofs_` folders
-   in various packages with Jupyter notebooks that prove theorems of the
-   package.  You can peek at these for examples of how Prove-It works in
-   practice.  Note that `proofs` folders, without the underscores, are
-   outdated proofs that will likely fail to execute.
-
-5) It is intended that packages continue to be added and updated to cover
-   an ever-expanding range of mathematical knowledge.  Packages may have
-   cross dependencies (as long as there is no circular reasoning in any
-   particular proof).  Classes/objects that should be accessible externally
-   should be imported in the `__init__.py` file
+4) It is intended that theory packages continue to be added and updated 
+   to cover an ever-expanding range of mathematical knowledge.  Theory 
+   packages may have cross dependencies (as long as there is no circular
+   reasoning in any particular proof).  Classes/objects that should be 
+   accessible externally should be imported in the `__init__.py` file
    of the top-level package, and they should be accessed, externally,
    at this top level.  For example, the `Or` class is contained in the
    python file
@@ -122,10 +106,6 @@ Installation instructions
       <td>Arithmetic and number theory concepts.</td>
     </tr>
     <tr>
-      <td style="font-family:courier, courier new;">logic</td>
-      <td>Boolean arithmetic, equality, and set theory.</td>
-    </tr>
-    <tr>
       <td style="font-family:courier, courier new; vertical-align:top;">relations</td>
       <td>Some generic routines for search/sorting among transitive 
                relationships.</td>
@@ -152,6 +132,21 @@ Installation instructions
           progress.)</td>
     </tr>
    </table>
+
+5) Take a look at the `tutorial` folder.  It has numbered Jupyter notebooks 
+   (and html versions for convenience) that introduce Prove-It concepts
+   in an appropriate order.  There are also "demonstration" notebooks/html
+   in the various theory packages with specific information about that
+   package.  A particularly useful one is
+
+   `proveit/logic/equality/_demonstrations_.ipynb`
+   
+   You can also look at existing proofs for examples.  Each theory
+   package has a `_theorems_.ipynb` notebook.  The theory name hyperlinks
+   to a proof notebook for that theorem which may or may not be complete.
+   Note that Prove-It allows "unproven theorems" to be used as "conjectures",
+   so some useful theorems exist without being proven as the system continues
+   to develop.
 
 <br/>
 
