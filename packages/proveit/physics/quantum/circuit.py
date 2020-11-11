@@ -315,7 +315,7 @@ class MultiQubitGate(Operation):
         '''
         from proveit.number import isLiteralInt
 
-        if isinstance(self.gate_set, Set) and self.gate_set.operands.singular() and \
+        if isinstance(self.gate_set, Set) and len(self.gate_set.operands) == 1 and \
                 isLiteralInt(self.gate_set.operands[0]):
             try:
                 return self.unaryReduction(assumptions)
