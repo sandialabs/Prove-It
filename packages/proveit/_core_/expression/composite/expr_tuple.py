@@ -117,6 +117,8 @@ class ExprTuple(Composite, Expression):
         entries may represent multiple elements
         via ranges (ExprRange).
         '''
+        if isinstance(idx, slice):
+            return ExprTuple(*self.entries[idx])
         return self.entries[idx]
     
     def __add__(self, other):

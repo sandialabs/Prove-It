@@ -1,7 +1,7 @@
-from proveit import defaults, USE_DEFAULTS
+from proveit import defaults, USE_DEFAULTS, ExprTuple
 from proveit.logic import Membership, Nonmembership
 from proveit.number import num
-from proveit._common_ import n, x, y
+from proveit._common_ import a, b, c, m, n, x, y
 
 class EnumMembership(Membership):
     '''
@@ -17,6 +17,7 @@ class EnumMembership(Membership):
         Unfold the enumerated set membership, and in boolean as
         a side-effect.
         '''
+        return
         yield self.unfold
 
 
@@ -25,13 +26,23 @@ class EnumMembership(Membership):
         From [(element=x) or (element=y) or ..], derive and return
         [element in {x, y, ..}].
         '''
-        from ._theorems_ import foldSingleton, fold
+        from proveit import ProofFailure
+        from ._theorems_ import foldSingleton, inEnumeratedSet, fold
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
             return foldSingleton.instantiate(
                 {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return fold.instantiate({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
+            try:
+                idx = self.domain.operands.index(self.element)
+                _a = self.domain.operands[:idx]
+                _b = self.element
+                _c = self.domain.operands[idx + 1:]
+                _m = ExprTuple(*_a).length(assumptions=assumptions)
+                _n = ExprTuple(*_c).length(assumptions=assumptions)
+                return inEnumeratedSet.instantiate({m:_m, n:_n, a:_a, b:_b, c:_c}, assumptions=assumptions)
+            except (ProofFailure, ValueError) as e:
+                return fold.instantiate({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
 
     def equivalence(self, assumptions=USE_DEFAULTS):
         '''
