@@ -875,6 +875,7 @@ class ContextFolderStorage:
             elif context_folder_storage.folder != self.folder:
                 return context_folder_storage.folder + '.' + hash_directory                
             else:
+                #assert os.path.isdir(os.path.join(self.path, hash_directory))
                 return hash_directory
     
     def _split(self, proveItStorageId):
@@ -1086,8 +1087,11 @@ class ContextFolderStorage:
         # Determine the kind and name (if it is a "special" expression),
         # and appropriate template to be used.
         if unofficialNameKindContext is not None:
-            template_name = '_unofficial_special_expr_template_.ipynb'
             name, kind, context = unofficialNameKindContext
+            if kind=='common':
+                template_name = '_unofficial_common_expr_template_.ipynb'
+            else:
+                template_name = '_unofficial_special_expr_template_.ipynb'
         else:
             # Is this a "special" expression?
             try:
@@ -1282,7 +1286,6 @@ class ContextFolderStorage:
             if (unofficialNameKindContext is not None 
                     or kind is not None):
                 kind_str = kind[0].upper() + kind[1:]
-                if kind == 'common': kind_str = 'Common Expression'
                 nb = nb.replace('#KIND#', kind_str)
                 nb = nb.replace('#kind#', kind_str.lower())
                 nb = nb.replace('#SPECIAL_EXPR_NAME#', name)
@@ -2238,7 +2241,8 @@ class StoredTheorem(StoredSpecialStmt):
         active_folder_storage = \
             ContextFolderStorage.active_context_folder_storage
         assert active_folder_storage.folder == '_proof_' + self.name
-        proofId = active_folder_storage._proveItStorageId(proof)
+        active_folder_storage._retrieve(proof)
+        proofId = self.context_folder_storage._proveItStorageId(proof)
         if self.hasProof():
             # remove the old proof if one already exists
             self.removeProof()                    
