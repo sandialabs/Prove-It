@@ -390,15 +390,7 @@ class ProveItMagicCommands:
         self.context.clean_active_folder(clear=True)
         self.kind = None
                 
-    def check_expr(self, expr_name, kind=None):
-        if expr_name == '': 
-            expr_name = 'expr'
-            expr = self.shell.user_ns[expr_name]
-        else:
-            expr = self.shell.user_ns[expr_name]
-            if isinstance(expr, KnownTruth):
-                # actually a KnownTruth; convert to an Expression
-                expr = expr.expr
+    def load_expr(self, kind=None):
         context_and_folder, hash_id = os.path.split(os.path.abspath('.'))
         _, folder = os.path.split(context_and_folder)
         context = Context(active_folder=folder)
@@ -409,22 +401,8 @@ class ProveItMagicCommands:
             stored_expr = context.getStoredKnownTruth(hash_id).expr
         else:
             stored_expr = context.getStoredExpr(hash_id)
-        if expr != stored_expr:
-            raise ProveItMagicFailure("The built '%s' does not match the stored Expression"%expr_name)
-        if expr._style_id != stored_expr._style_id:
-            raise ProveItMagicFailure("The built '%s' style does not match that of the stored Expression"%expr_name)
-        print("Passed sanity check: built '%s' is the same as the stored Expression."%expr_name)
-
-    def show_expr(self):
-        '''
-        Convenient for debugging when %check_expr fails.
-        '''
-        context_and_folder, hash_id = os.path.split(os.path.abspath('.'))
-        _, folder = os.path.split(context_and_folder)
-        context = Context(active_folder=folder)
-        stored_expr = context.getStoredExpr(hash_id)
-        return stored_expr
-    
+        self.shell.user_ns['stored_expr'] = stored_expr
+        
     def show_proof(self):
         context_and_folder, hash_id = os.path.split(os.path.abspath('.'))
         _, folder = os.path.split(context_and_folder)        
@@ -677,19 +655,20 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         ProveItMagicCommands.clear(kind)
     
     @line_magic
-    def check_expr(self, line):
-        expr_name = line.strip()
-        ProveItMagicCommands.check_expr(self, expr_name)
+    def load_expr(self, line):
+        ProveItMagicCommands.load_expr(self)
 
     @line_magic
-    def check_axiom(self, line):
-        expr_name = line.strip()
-        ProveItMagicCommands.check_expr(self, expr_name, 'axiom')
+    def load_common_expr(self, line):
+        ProveItMagicCommands.load_expr(self)
 
     @line_magic
-    def check_theorem(self, line):
-        expr_name = line.strip()
-        ProveItMagicCommands.check_expr(self, expr_name, 'theorem')
+    def load_axiom_expr(self, line):
+        ProveItMagicCommands.load_expr(self, 'axiom')
+
+    @line_magic
+    def load_theorem_expr(self, line):
+        ProveItMagicCommands.load_expr(self, 'theorem')
     
     @line_magic
     def show_expr(self, line):
