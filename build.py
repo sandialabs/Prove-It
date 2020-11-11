@@ -306,7 +306,7 @@ len(gc.get_objects()) # used to check for memory leaks
         #print('num gc objects', cell['outputs'][0]['data']['text/plain'])    
         return nb, resources
 
-    def executeNotebook(self, notebook_path, display_latex=False, git_clear=True):
+    def executeNotebook(self, notebook_path, no_latex=False, git_clear=True):
         '''
         Read, execute, and write out the notebook at the given path.
         Return the notebook object.
@@ -324,7 +324,7 @@ len(gc.get_objects()) # used to check for memory leaks
         while True:
             try:
                 #executenb(nb, cwd=notebook_dir)
-                self.preprocess(nb, resources, notebook_dir, display_latex)
+                self.preprocess(nb, resources, notebook_dir, not no_latex)
                 break
             except zmq.ZMQError:
                 print("ZMQError encountered")
@@ -408,7 +408,7 @@ def executeAndExportNotebook(execute_processor, notebook_path,
         exportToHTML(notebook_path)
     else:
         nb = execute_processor.executeNotebook(notebook_path, 
-                                               display_latex=not no_latex, 
+                                               no_latex=no_latex, 
                                                git_clear=git_clear)
         exportToHTML(notebook_path, nb)
 
@@ -587,7 +587,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
             for _ in range(2):
                 for context_path in context_paths:
                     #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-                    execute_processor.executeNotebook(os.path.join(context_path, '_common_.ipynb'))
+                    execute_processor.executeNotebook(os.path.join(context_path, '_common_.ipynb'), no_latex=no_latex)
             # Unless 'no_latex' is True, execute one last time to 
             # eliminate "expression notebook ... updated" messages 
             # and we'll export to html.
@@ -609,8 +609,8 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
             for context_path in context_paths:
                 #revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
                 #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
-                execute_processor.executeNotebook(os.path.join(context_path, '_axioms_.ipynb'))
-                execute_processor.executeNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
+                execute_processor.executeNotebook(os.path.join(context_path, '_axioms_.ipynb'), no_latex=no_latex)
+                execute_processor.executeNotebook(os.path.join(context_path, '_theorems_.ipynb'), no_latex=no_latex)    
             # The second time we'll export to html.  Unless 'no_latex'
             # is True, we will execute again to clear extra information.
             for context_path in context_paths:
@@ -674,7 +674,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                 # Next, execute all of the proof notebooks twice
                 # to ensure there are no circular logic violations.
                 for proof_notebook in theorem_proof_notebooks:
-                    execute_processor.executeNotebook(proof_notebook)
+                    execute_processor.executeNotebook(proof_notebook, no_latex=no_latex)
                 for proof_notebook in theorem_proof_notebooks:
                     executeAndExportNotebook(execute_processor, proof_notebook,
                                              no_latex=no_latex)
