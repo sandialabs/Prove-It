@@ -416,6 +416,21 @@ def executeAndExportNotebook(execute_processor, notebook_path,
                                                git_clear=git_clear)
         exportToHTML(notebook_path, nb)
 
+def executeAndMaybeExportNotebook(
+        execute_processor, notebook_path, no_execute=False, no_latex=False, 
+        git_clear=True, export_to_html=True):
+    '''
+    Read, execute, and rewrite a notebook and also export it
+    to HTML. 
+    '''
+    if export_to_html:
+        executeAndExportNotebook(execute_processor, notebook_path, 
+                                 no_latex=no_latex, no_execute=no_execute, 
+                                 git_clear=git_clear)
+    elif not no_execute:
+        execute_processor.executeNotebook(
+                notebook_path, no_latex=no_latex, git_clear=git_clear)
+
 """
 def revise_proof_notebook(notebook_path):
     print notebook_path
@@ -847,3 +862,58 @@ if __name__ == '__main__':
         path = os.path.dirname(os.path.realpath(__file__))
         print("Extracting tarball into %s"%path)
         tar.extractall(path)
+
+
+def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, export_to_html=True):
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    nranks = comm.Get_size()
+    
+    assert export_to_html or not no_execute, "Nothing to do, in that case??"
+    
+    if nranks == 0:
+        # The boring single rank case.
+        with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor: 
+            for notebook_path in notebook_paths:
+                executeAndMaybeExportNotebook(
+                        execute_processor, notebook_path, no_latex=no_latex, 
+                        no_execute=no_execute, git_clear=git_clear,
+                        export_to_html=export_to_html)
+    elif rank > 0:
+        # These ranks will request assignments from rank 0
+        with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor: 
+            while True:
+                comm.send(rank, dest=0)
+                notebook_path = comm.recv(source=0)
+                try:
+                    executeAndMaybeExportNotebook(
+                            execute_processor, notebook_path, no_latex=no_latex, 
+                            no_execute=no_execute, git_clear=git_clear,
+                            export_to_html=export_to_html)
+                except Exception as e:
+                    comm.send(str(e), dest=0)
+    else:
+        # Send out assignments as they are requested.
+        for notebook_path in notebook_paths:
+            msg = comm.recv(source=MPI.ANY_SOURCE)
+            try:
+                ready_rank = int(msg)
+            except ValueError:
+                # If we get anything other than an integer,
+                # it must be an exception message.
+                print(msg)
+                comm.Abort()
+            comm.send(notebook_path, ready_rank)
+        # Now wait for everyboy to finish.
+        finished = set()
+        while len(finished) < nranks:
+            ready_rank = comm.recv(source=MPI.ANY_SOURCE)
+            finished.add(ready_rank)
+    
+    # And now we are done
+        
+def notebook_path_generator(top_level_paths, notebook_filename):
+    for path in paths:
+        for context_path in findContextPaths(path):
+            yield os.path.join(context_path, notebook_filename)

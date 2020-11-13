@@ -38,7 +38,11 @@ class ContextStorage:
         self.pv_it_dir = os.path.join(self.directory, '__pv_it')
         if not os.path.isdir(self.pv_it_dir):
             # make the __pv_it directory
-            os.makedirs(self.pv_it_dir)
+            try:
+                os.makedirs(self.pv_it_dir)
+            except OSError:
+                # maybe another processor beat us to it.
+                pass
         
         if self.isRoot():
             # If this is a root context, let's add the directory above 
