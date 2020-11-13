@@ -508,7 +508,7 @@ class ProveItMagicCommands:
                 required_axioms, required_unproven_theorems = tuple(), tuple()
                 
             if len(required_unproven_theorems) > 0:
-                display(HTML('<h3>Unproven theorems required (directly or indirectly) to prove %s</h3>'%name))
+                display(HTML('<h3>Unproven conjectures required (directly or indirectly) to prove %s</h3>'%name))
                 display(HTML('<dl>'))
                 for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
                     displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
@@ -522,13 +522,58 @@ class ProveItMagicCommands:
         
         dependents = proof.directDependents()
         if len(dependents) == 0:
-            display(HTML('<h3>No theorems depend upon %s</h3>'%name))
+            display(HTML('<h3>No theorems/conjectures depend upon %s</h3>'%name))
         else:
-            display(HTML('<h3>Theorems that depend directly on %s</h3>'%name))
+            display(HTML('<h3>Theorems/conjectures that depend directly on %s</h3>'%name))
             display(HTML('<dl>'))
             for dependent in sorted(proof.directDependents(), key=stmt_sort):
                 displaySpecialStmt(Context.findTheorem(dependent))
             display(HTML('</dl>'))
+
+    def display_dependencies_latex(self, name, known_truth):
+        '''
+        Show the dependencies of an axiom or theorem.
+        '''
+        proof = known_truth.proof() # Axiom or Theorem
+        
+        def displaySpecialStmt(stmt):
+            '''
+            Given an Axiom or Theorem, display HTML with a link
+            to the definition.
+            '''
+            expr = stmt.provenTruth.expr
+            print('\item $' + expr.latex() + '$')
+        
+        def stmt_sort(stmt):
+            return str(stmt)
+        
+        if isinstance(proof, Theorem):
+            try:
+                required_axioms, required_unproven_theorems = proof.allRequirements()
+            except:
+                print('This theorem has not been proven yet.')
+                required_axioms, required_unproven_theorems = tuple(), tuple()
+                
+            if len(required_unproven_theorems) > 0:
+                print('Unproven conjectures required (directly or indirectly) to prove %s'%name)
+                print(r'\begin{itemize}')
+                for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
+                    displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
+                print(r'\end{itemize}')
+            if len(required_axioms) > 0:
+                print('Axioms required (directly or indirectly) to prove %s'%name)
+                print(r'\begin{itemize}')
+                for required_axiom in sorted(required_axioms, key=stmt_sort):       
+                    displaySpecialStmt(Context.findAxiom(required_axiom))
+                print(r'\end{itemize}')
+        
+        dependents = proof.directDependents()
+        if len(dependents) == 0:
+            print('No theorems/conjectures depend upon %s'%name)
+        else:
+            print('Theorems/conjectures that depend directly on %s'%name)
+            for dependent in sorted(proof.directDependents(), key=stmt_sort):
+                displaySpecialStmt(Context.findTheorem(dependent))
     
 
 @magics_class
@@ -656,6 +701,15 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         known_truth = self.shell.user_ns[line.strip()]
         ProveItMagicCommands.display_dependencies(self, name, known_truth)
         
+    @line_magic
+    def dependencies_latex(self, line):
+        '''
+        Show the dependencies of an axiom or theorem.
+        '''
+        name = line.strip()
+        known_truth = self.shell.user_ns[line.strip()]
+        ProveItMagicCommands.display_dependencies_latex(self, name, known_truth)
+        
 class Assignments:    
     def __init__(self, names, rightSides, beginningProof=False):
         self.beginningProof = beginningProof
@@ -722,7 +776,7 @@ class Assignments:
             proveItMagic.keys.append(name)
     
     def html_line(self, name, rightSide):
-        lhs_html = name
+        lhs_html = name + ':'
         unofficialNameKindContext = None
         kind = proveItMagic.kind
         if kind in ('axioms', 'theorems', 'common'):
@@ -739,8 +793,18 @@ class Assignments:
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
             proof_notebook_relurl = proveItMagic.context.thmProofNotebook(name, expr)
-            lhs_html = '<a class="ProveItLink" href="%s">%s</a>'%(proof_notebook_relurl, lhs_html)
-        html = '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
+            status = 'conjecture without proof' # default
+            try:
+                thm = proveItMagic.context.getTheorem(name)
+                if thm.isFullyProven():
+                    status = 'established theorem'
+                elif thm.hasProof():
+                    status = 'conjecture with conjecture-based proof'
+            except:
+                pass # e.g., a new theorem.
+            lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
+                        %(proof_notebook_relurl, name, status))
+        html = '<strong id="%s">%s</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
             expr_notebook_path = proveItMagic.context.expressionNotebook(expr)
             dependencies_notebook_path = os.path.join(os.path.split(expr_notebook_path)[0], 'dependencies.ipynb')

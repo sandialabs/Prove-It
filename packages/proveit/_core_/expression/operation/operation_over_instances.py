@@ -18,10 +18,26 @@ def _extract_domain_from_condition(ivar, condition):
     '''
     from proveit.logic import InSet
     if isinstance(ivar, ExprRange):
-        if (isinstance(condition, ExprRange) and isinstance(condition.body, InSet)
-                and condition.body.element==ivar.body
+        # See if the condition is a range of domain conditions
+        # matching the instance variable range.
+        # For example, x_1, ..., x_n as the instance variable
+        # range matching x_1 in S_1, ..., x_n in S_n.
+        if (isinstance(condition, ExprRange) 
+                and isinstance(condition.body, InSet)
                 and condition.start_index==ivar.start_index
                 and condition.end_index==ivar.end_index):
+            # Replace the condition parameter with the ivar parameter
+            # and see if the InSet element matches ivar.body.
+            cond_body_elem_with_repl_param = condition.body.element.replaced(
+                    {condition.parameter:ivar.parameter})
+            if cond_body_elem_with_repl_param==ivar.body:
+                if condition.parameter in free_vars(condition.body.domain,
+                                                    err_inclusively=True):
+                    # There is a range of domains matching a range of
+                    # parameters.
+                    return ExprRange(
+                            condition.parameter, condition.body.domain,
+                            condition.start_index, condition.end_index)
             return condition.body.domain
     elif isinstance(condition, InSet) and condition.element==ivar:
         return condition.domain
@@ -102,7 +118,7 @@ class OperationOverInstances(Operation):
                 # Has conditions.
                 instanceExpr = lambda_map.body.value
                 if (isinstance(lambda_map.body.condition, And) and
-                        not lambda_map.body.condition.operands.singular()):
+                        not lambda_map.body.condition.operands.is_singular()):
                     conditions = compositeExpression(lambda_map.body.condition.operands)
                 else:
                     conditions = compositeExpression(lambda_map.body.condition)
@@ -145,18 +161,38 @@ class OperationOverInstances(Operation):
                 domain_conditions = []
                 for iparam, domain in zip(instance_params, domains):
                     if isinstance(iparam, ExprRange):
-                        condition = ExprRange(
-                                iparam.parameter, InSet(iparam.body, domain),
-                                iparam.start_index, iparam.end_index)
+                        if isinstance(domain, ExprRange):
+                            if ((iparam.start_index != domain.start_index) or 
+                                    (iparam.end_index != domain.end_index)):
+                                raise ValueError(
+                                        "A range of parameters must match "
+                                        "in start and end indices with the "
+                                        "corresponding range of domains: "
+                                        "%s vs %s and %s vs %s"%
+                                        (iparam.start_index, 
+                                         domain.start_index,
+                                         iparam.end_index, domain.end_index))
+                            # Use the same parameter for the domain
+                            # as the instance parameter.
+                            domain_body_with_new_param = \
+                                domain.body.replaced({domain.parameter: 
+                                                      iparam.parameter})
+                            condition = ExprRange(
+                                    iparam.parameter, 
+                                    InSet(iparam.body, domain_body_with_new_param),
+                                    iparam.start_index, iparam.end_index)
+                        else:
+                            condition = ExprRange(
+                                    iparam.parameter, InSet(iparam.body, domain),
+                                    iparam.start_index, iparam.end_index)
                     else:
                         condition = InSet(iparam, domain)
                     domain_conditions.append(condition)
                 conditions = domain_conditions + list(conditions)
-                domain = domains[0] # domain of the outermost instance variable
-            conditions = compositeExpression(conditions)
-
-        # domain(s) may be implied via the conditions.  If domain(s) were
-        # supplied, this should simply reproduce them from the conditions that
+            conditions = compositeExpression(conditions)        
+                                   
+        # domain(s) may be implied via the conditions.  If domain(s) were 
+        # supplied, this should simply reproduce them from the conditions that 
         # were prepended.
         domain = domains = None # These may be reset below if there are ...
         if (len(conditions)>=len(instance_params)):
@@ -180,7 +216,8 @@ class OperationOverInstances(Operation):
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
 
         self.instanceParams = instance_params
-        if len(instance_params) > 1:
+        if (len(instance_params) > 1 or
+                isinstance(instance_params[0], ExprRange)):
             '''Instance parameters of the OperationOverInstance.'''
             self.instanceVars = [getParamVar(parameter) for
                                  parameter in instance_params]
@@ -188,8 +225,14 @@ class OperationOverInstances(Operation):
             self.instanceVarOrVars = self.instanceVars
             '''Instance parameter variables of the OperationOverInstance.'''
             if domains is not None:
-                self.domains = domains # Domain for each instance variable
+                self.domains = tuple(domains) # Domain for each instance variable
                 '''Domains of the instance parameters (may be None)'''
+                n_domains = len(self.domains)
+                if (not any (isinstance(entry, ExprRange) for entry
+                             in self.domains)
+                        and self.domains == tuple([self.domains[0]]*n_domains)):
+                    # Multiple domains that are all the same.
+                    self.domain = self.domains[0]
             else:
                 self.domain = None
         else:
@@ -262,7 +305,10 @@ class OperationOverInstances(Operation):
             # return the proper single domain or list of domains
             domains = OperationOverInstances.explicitDomains(self)
             if not hasattr(self, 'domain') or domains != [self.domain]*len(domains):
-                return ExprTuple(*domains) if argName=='domains' else None
+                if argName=='domains' and len(domains)>0:
+                    return ExprTuple(*domains)
+                else:
+                    return None
             if self.domain is None: return None
             return self.domain if argName=='domain' else None
         elif argName=='condition' or argName=='conditions':
@@ -435,18 +481,25 @@ class OperationOverInstances(Operation):
 
     def explicitDomains(self):
         '''
-        Return the domains of the instance variables that
-        are joined together at this level according to the style.
-        If there is no domain, return None.
+        Return the domains of the instance variables as a tuple.
         '''
         if not self.hasDomain():
-            return []
+            return tuple()
         if hasattr(self, 'domains'):
             return self.domains
         elif self.domain is not None:
-            return [self.domain]
-        return [] # No explicitly displayed domains
-
+            return (self.domain,)
+        return tuple() # No explicitly displayed domains
+    
+    def hasOneDomain(self):
+        '''
+        Return True if and only if each instance parameter has
+        the some explicit domain.
+        '''
+        if hasattr(self, 'domain'):
+            return True
+        return False
+    
     def domainConditions(self):
         '''
         Return the domain conditions of all instance variables that
@@ -580,9 +633,8 @@ class OperationOverInstances(Operation):
         instanceExpr = self.instanceExpr
         hasExplicitIparams = (len(explicitIparams) > 0)
         hasExplicitConditions = (len(explicitConditions) > 0)
-        hasMultiDomain = (len(explicitDomains)>1 and (not hasattr(self, 'domain')
-                          or explicitDomains != ExprTuple(*[self.domain]*len(explicitDomains))))
-        domain_conditions = ExprTuple(*self.domainConditions())
+        hasMultiDomain = not self.hasOneDomain()
+        domain_conditions = ExprTuple(*self.domainConditions())        
         outStr = ''
         formattedParams = ', '.join([param.formatted(formatType, abbrev=True)
                                      for param in explicitIparams])

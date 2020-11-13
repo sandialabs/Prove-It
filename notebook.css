@@ -11728,15 +11728,34 @@ div#notebook {
 @media print {
   div.cell {
     display: block;
-    page-break-inside: avoid;
+    page-break-inside: auto;
   } 
   div.output_wrapper { 
     display: block;
-    page-break-inside: avoid; 
+    page-break-inside: auto; 
   }
   div.output { 
     display: block;
-    page-break-inside: avoid; 
+    page-break-inside: auto; 
   }
+  div.output_area {
+    page-break-inside: auto; 
+  }
+  div.output_execute_result {
+    page-break-inside: auto; 
+  }
+  a:after {
+      display: none
+  }
+  table { 
+    page-break-before:never; 
+    page-break-inside:auto 
+  }
+  tr { 
+    page-break-inside:avoid; page-break-after:auto 
+  }  
+  td { 
+    page-break-inside:avoid; page-break-after:auto 
+  }  
 }
 </style>

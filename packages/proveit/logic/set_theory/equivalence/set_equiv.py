@@ -102,10 +102,21 @@ class SetEquiv(TransitiveRelation):
         is an irreducible), or via transitivity.
         IN PROGRESS. NOT YET CLEAR how this applies to the SetEquiv
         '''
-        from proveit.logic import TRUE, FALSE, Implies, Iff
         if self.lhs==self.rhs:
-            # Trivial A = A
-            return self.concludeViaReflexivity(assumptions=assumptions)
+            try:
+                # Trivial A = A
+                return self.concludeViaReflexivity(assumptions=assumptions)
+            except:
+                pass # e.g., reflexivity theorem may not be usable
+        try:
+            return self.concludeAsFolded(assumptions=assumptions)
+        except ProofFailure:
+            raise ProofFailure(self, assumptions,
+                               "Unable to automatically conclude by "
+                               "standard means.  To try to prove this via "
+                               "transitive implication relations, try "
+                               "'concludeViaTransitivity'.")        
+        
     #     if self.lhs or self.rhs in (TRUE, FALSE):
     #         try:
     #             # Try to conclude as TRUE or FALSE.
@@ -183,6 +194,24 @@ class SetEquiv(TransitiveRelation):
         return setEquivReflexivity.specialize(
                 {A:self.lhs}, assumptions=assumptions)
 
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
+        '''
+        From forall_{x} (x in A) = (x in B),
+        conclude A set_equiv B.
+        '''
+        from ._theorems_ import setEquivFold
+        return setEquivFold.instantiate({A:self.lhs, B:self.rhs},
+                                        assumptions=assumptions)
+    
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From A set_equiv B derive
+        forall_{x} (x in A) = (x in B) 
+        '''
+        from ._theorems_ import setEquivUnfold
+        return setEquivUnfold.instantiate({A:self.lhs, B:self.rhs}, 
+                                          assumptions=assumptions)
+    
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From A set_equiv B derive B set_equiv A.

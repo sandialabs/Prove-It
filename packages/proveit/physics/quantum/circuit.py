@@ -1,5 +1,5 @@
 import sys
-from proveit import Lambda, Literal, Operation, TransitiveRelation, USE_DEFAULTS
+from proveit import Lambda, Literal, Operation, TransitiveRelation, USE_DEFAULTS, defaults
 from proveit._common_ import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
@@ -81,9 +81,13 @@ class Input(Operation):
     def formatted(self, formatType, fence=False):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
-            return r'\lstick{' + formattedState + r'}' 
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str += r'\lstick{' + formattedState + r'}'
+            out_str += ' \n' + r'} \hspace{2em}'
+            return out_str
         else:
-            return Operation._formatted(self, formatType, fence=fence)
+            return 'Input(' + formattedState + ')'
 
     def _config_latex_tool(self, lt):
         Operation._config_latex_tool(self, lt)
@@ -113,9 +117,13 @@ class Output(Operation):
     def formatted(self, formatType, fence=False):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
-            return r'\rstick{' + formattedState + r'} \qw' 
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str += r'\rstick{' + formattedState + r'} \qw'
+            out_str += ' \n' + r'} \hspace{2em}'
+            return out_str
         else:
-            return Operation._formatted(self, formatType)
+            return 'Output(' + formattedState + ')'
 
     def _config_latex_tool(self, lt):
         Operation._config_latex_tool(self, lt)
@@ -166,15 +174,24 @@ class IdentityOp(Literal):
         if gate is None:
             gate = self.getStyle('gate', 'wire')
         if formatType == 'latex':
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
             if gate == 'wire':
-                return r'\qw'
+                out_str += r'\qw'
             else:
-                return r'I'
+                out_str += r'\gate{I}'
+            out_str += ' \n' + r'} \hspace{2em}'
+            return out_str
         else:
             if gate == 'wire':
                 return '--'
             else:
                 return '[I]'
+
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
 
 # OUTPUT = Literal(pkg, 'OUTPUT')  # , operationMaker=lambda operands: Output(*operands))
 # An output state (exiting the right of the circuit)
@@ -207,7 +224,22 @@ class Gate(Operation):
         '''
         if len(self.operands) == 0:
             from proveit.physics.quantum._axioms_ import emptyGate
-            return emptyGate
+            with defaults.disabled_auto_reduction_types as disable_reduction_types:
+                disable_reduction_types.add(Gate)
+                return emptyGate
+
+        if isinstance(self.gate_operation, Input):
+            from proveit.physics.quantum._theorems_ import input_gate_to_ket
+            # with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            #   disable_reduction_types.add(Gate)
+
+            return input_gate_to_ket.instantiate({U: self.gate_operation.state}, assumptions=assumptions)
+        elif isinstance(self.gate_operation, Output):
+            from proveit.physics.quantum._theorems_ import output_gate_to_ket
+            #with defaults.disabled_auto_reduction_types as disable_reduction_types:
+             #   disable_reduction_types.add(Gate)
+
+            return output_gate_to_ket.instantiate({U:self.gate_operation.state}, assumptions=assumptions)
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -221,18 +253,24 @@ class Gate(Operation):
         else:
             formattedGateOperation = self.gate_operation.formatted(formatType, fence=False)
         if isinstance(self.gate_operation, IdentityOp):
-            return self.gate_operation.formatted(formatType)
+            formattedGateOperation = 'I'
         if formatType == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
             if formattedGateOperation == 'MES':
                 out_str += r'\meter'
+            elif formattedGateOperation == 'SPACE':
+                out_str += formattedGateOperation
+            elif isinstance(self.gate_operation, Input):
+                out_str += r'\gate{ Input(' + self.gate_operation.state.formatted(formatType='latex') + ')}'
+            elif isinstance(self.gate_operation, Output):
+                out_str += r'\gate{ Output(' + self.gate_operation.state.formatted(formatType='latex') + ')}'
             else:
                 out_str += r'\gate{' + formattedGateOperation + r'}'
-            out_str += ' \n' + '}'
+            out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
-            return Operation._formatted(self, formatType)
+            return 'Gate(' + formattedGateOperation + ')'
 
     def _config_latex_tool(self, lt):
         Operation._config_latex_tool(self, lt)
@@ -260,7 +298,10 @@ class MultiQubitGate(Operation):
         '''
         if isinstance(gate_set, Set):
             self.indices = gate_set.operands
+        else:
+            self.indices = None
         self.gate_set = gate_set
+
         self.gate = gate
 
         if styles is None: styles = dict()
@@ -270,20 +311,24 @@ class MultiQubitGate(Operation):
 
     def auto_reduction(self, assumptions=USE_DEFAULTS):
         '''
-        Automatically reduce "MultiQubitGate() = IdentityOp()" and "MultiQubitGate(Gate(a), Set(n)) = Gate(a)".
+        Automatically reduce "MultiQubitGate(a, Set()) = IdentityOp()" and "MultiQubitGate(a, Set(n)) = Gate(a)".
         '''
-        from proveit.number import Numeral
-        if len(self.operands) == 0:
-            # from proveit.physics.quantum._axioms_ import emptyMultiQubitGate
-            # return emptyMultiQuibitGate
-            pass
-        elif self.gate_set.operands.singular() and isinstance(self.gate_set.operands, Numeral):
+        from proveit.number import isLiteralInt
+
+        if isinstance(self.gate_set, Set) and len(self.gate_set.operands) == 1 and \
+                isLiteralInt(self.gate_set.operands[0]):
             try:
                 return self.unaryReduction(assumptions)
             except:
                 # Cannot do the reduction if the operand is not known
                 # to be in NaturalsPos.
                 pass
+
+        if isinstance(self.gate_set, Set) and len(self.gate_set.operands) == 0:
+            return self.emptySetReduction(assumptions)
+            # need to implement an empty set reduction theorem
+
+
 
     def styleOptions(self):
         from proveit._core_.expression.style_options import StyleOptions
@@ -302,11 +347,24 @@ class MultiQubitGate(Operation):
 
     def unaryReduction(self, assumptions=USE_DEFAULTS):
         from proveit.physics.quantum._theorems_ import unary_multiQubitGate_reduction
+
         if not self.gate_set.operands.singular():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unaryReduction")
         operand = self.gate_set.operands[0]
-        return unary_multiQubitGate_reduction.specialize({U: self.gate, A: operand}, assumptions=assumptions)
+        with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            disable_reduction_types.add(MultiQubitGate)
+            return unary_multiQubitGate_reduction.specialize({U: self.gate, A: operand}, assumptions=assumptions)
+
+    def emptySetReduction(self, assumptions=USE_DEFAULTS):
+        from proveit.physics.quantum._theorems_ import empty_multiQubitGate_reduction
+        if not len(self.gate_set.operands) == 0:
+            raise ValueError("Expression must have an empty Set() in "
+                             "order to invoke emptySetReduction")
+        #operand = self.gate_set
+        with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            disable_reduction_types.add(MultiQubitGate)
+            return empty_multiQubitGate_reduction.specialize({U: self.gate}, assumptions=assumptions)
 
     def formatted(self, formatType, representation=None, **kwargs):
         if representation is None:
@@ -314,49 +372,55 @@ class MultiQubitGate(Operation):
 
         formattedGateOperation = (
             self.gate.formatted(formatType, fence=False))
-
+        if isinstance(self.gate, IdentityOp):
+            formattedGateOperation = 'I'
+        if isinstance(self.gate, Input):
+            formattedGateOperation = 'Input(' + self.gate.state.formatted(formatType, fence=False) + ')'
+        if isinstance(self.gate, Output):
+            formattedGateOperation = 'Output(' + self.gate.state.formatted(formatType, fence=False) + ')'
         if formatType == 'latex':
+            if r'\Qcircuit' in formattedGateOperation:
+                idx = formattedGateOperation.index('\n')
+                formattedGateOperation = formattedGateOperation[idx + 3:len(formattedGateOperation) - 16]
+                #add = '& '
+                # we add three  to include the n and the & and the space after then &
+                # we subtract 16 to get rid of the ending bracket, the \hspace, and \n
             spacing = '@C=1em @R=.7em'
-            out_str = r'\Qcircuit' + spacing + '{' + '\n' + '& '
-            if formattedGateOperation == 'X':
-                if representation != 'implicit':
-                    # we want to explicitly see the type of gate as a 'letter' representation
-                    out_str += formattedGateOperation
-                else:
-                    # this is formatted as a target.
-                    out_str += r'\targ'
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            if formattedGateOperation == 'X' and representation == 'implicit':
+               # this is formatted as a target.
+                out_str += r'\targ'
             elif formattedGateOperation == 'CONTROL':
                 # this is formatted as a solid dot using \control
                 out_str += r'\control \qw'
+            elif formattedGateOperation == 'MES':
+                # this is formatted as a solid dot using \control
+                out_str += r'\meter'
             elif formattedGateOperation == r'CLASSICAL\_CONTROL':
                 # this is formatted as a solid dot, but with classical wires.
                 out_str += r'\control \cw'
             elif formattedGateOperation == 'SWAP':
                 out_str += r'\qswap'
-            else:
-                if isinstance(self.gate_set, Set):
-                    count = 0
-                    for entry in self.gate_set.operands:
-                        if isinstance(entry, Literal):
-                            count += 1
+            elif formattedGateOperation == 'SPACE':
+                out_str += formattedGateOperation
 
-                    if count == len(self.gate_set.operands):
-                        if len(self.gate_set.operands) == 1:
-                            out_str += r'\gate{' + formattedGateOperation + r'}'
-                        else:
-                            out_str += formattedGateOperation
+            else:
+                from proveit.number import isLiteralInt
+                if isinstance(self.gate_set, Set) and all(isLiteralInt(entry) for entry in self.gate_set.operands):
+                    # everything is a literal
+                    if len(self.gate_set.operands) <= 1:
+                        out_str += r'\gate{' + formattedGateOperation + r'{\Big \{} ' + self.gate_set.formatted(
+                            formatType) + r'}'
                     else:
-                        if len(self.gate_set.operands) == 1:
-                            out_str += r'\gate{' + formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(
-                                formatType) + r'}'
-                        else:
-                            out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
+                        out_str += formattedGateOperation
                 else:
-                    out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
-            out_str += ' \n' + '}'
+                    out_str += r'\gate{' + formattedGateOperation + r'{\Big \{} ' + self.gate_set.formatted(
+                        formatType) + r'}'
+                    #out_str += formattedGateOperation + r'{\Big \{}' + self.gate_set.formatted(formatType)
+            out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
-            return Operation._formatted(self, formatType)
+            return "MultiQubitGate(" + formattedGateOperation + ", " + self.gate_set.formatted(formatType) + ')'
 
     def _config_latex_tool(self, lt):
         Operation._config_latex_tool(self, lt)
@@ -641,9 +705,12 @@ class Circuit(Operation):
         if 'orientation' not in styles:
             styles['orientation'] = 'horizontal'
 
+        if 'spacing' not in styles:
+            styles['spacing'] = '@C=1em @R=.7em'
+
         Operation.__init__(self, Circuit._operator_, [array], styles=styles)
 
-        self.array = self.operand
+        self.array = array
 
         if not isinstance(self.array, ExprArray): #or len(self.operands) != 1:
             raise ValueError("Expected contents of a Circuit expression to be an ExprArray object not %s"
@@ -657,6 +724,14 @@ class Circuit(Operation):
         self.checkRange()
         self.check_indices()
 
+    def styleOptions(self):
+        from proveit._core_.expression.style_options import StyleOptions
+
+        options = StyleOptions(self)
+        options.addOption('spacing',
+                          ("change the spacing of a circuit using the format '@C=1em @R=.7em' where C is the column"
+                           " spacing and R is the row spacing"))
+
     def replace_equiv_circ(self, current, new, assumptions=USE_DEFAULTS):
         '''
         Given the piece that is to be replaced, and the piece it is being replaced with,
@@ -669,9 +744,10 @@ class Circuit(Operation):
             raise ValueError('The replacement piece must be a circuit element.')
         if current.getColHeight() != new.getColHeight() or current.getRowLength() != new.getRowLength():
             raise ValueError('The current circuit element and the replacement circuit element must be the same size.')
-        #if current.getRowLength() == 1 and current.getColHeight() == self.getColHeight():
+        if current.getRowLength() == 1 and current.getColHeight() == self.getColHeight():
             #return sing_time_equiv.specialize({h:l, k:l, m: self.getColHeight, n:l, A:l, B: current, C:l, D: new, R:l, S: , Q:l},
              #           assumptions=assumptions)
+            pass
 
     def checkRange(self):
         '''
@@ -692,6 +768,7 @@ class Circuit(Operation):
                     if isinstance(entry, ExprRange):
                         if m == 0:
                             # if this is the first row
+                            #print(entry.first(), entry.last())
                             placeholder = []
                             placeholder.append(i)
                             # adding the column number
@@ -705,8 +782,8 @@ class Circuit(Operation):
                             # accessing j is different for a MultiQubitGate.
                             if isinstance(entry.last(), MultiQubitGate):
                                 placeholder.append(entry.last().gate.indices[0])
-                            elif isinstance(entry.first(), Gate):
-                                placeholder.append(entry.first().gate_operation.indices[0])
+                            elif isinstance(entry.last(), Gate):
+                                placeholder.append(entry.last().gate_operation.indices[0])
                             else:
                                 placeholder.append(entry.last().end_index)
                             pos.append(placeholder)
@@ -715,6 +792,7 @@ class Circuit(Operation):
                                 raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
                             for item in pos:
                                 if item[0] == i:
+                                    #print(entry.first(), entry.last())
                                     # if we are in the current column
                                     if isinstance(entry.first(), MultiQubitGate):
                                         current = entry.first().gate.indices[0]
@@ -725,8 +803,8 @@ class Circuit(Operation):
                                     # check the current j value against the first row j value
                                     if current != item[1]:
                                         raise ValueError('Columns containing ExprRanges '
-                                                         'must agree for every row. %s is '
-                                                         'not equal to %s.' % (current, item[1]))
+                                                         'must agree for every row. %s from %s is '
+                                                         'not equal to %s.' % (current, entry.first(), item[1]))
                                     if isinstance(entry.last(), MultiQubitGate):
                                         current = entry.last().gate.indices[0]
                                     elif isinstance(entry.last(), Gate):
@@ -735,8 +813,8 @@ class Circuit(Operation):
                                         current = entry.last().end_index
                                     if current != item[2]:
                                         raise ValueError('Columns containing ExprRanges '
-                                                         'must agree for every row. %s is '
-                                                         'not equal to %s.' % (current, item[2]))
+                                                         'must agree for every row. %s from is '
+                                                         'not equal to %s.' % (current, entry.last(), item[2]))
                                     k += 1
                         count += 3
                     else:
@@ -757,16 +835,21 @@ class Circuit(Operation):
                             if m == 0:
                                 # placeholder/pos is only used if the row is an ExprTuple, however, if the first
                                 # row is an ExprRange, it needs to be defined here.
+                                #print(entry.first(), entry.last())
                                 placeholder = []
                                 # add which column we are in
                                 placeholder.append(i)
                                 # add the first and last values for Aij (j)
                                 if isinstance(entry.first(), MultiQubitGate):
-                                    placeholder.append(entry.first().gate.indices[0])
+                                    placeholder.append(entry.first().gate.indices[1])
+                                elif isinstance(entry.first(), Gate):
+                                    placeholder.append(entry.first().gate_operation.indices[1])
                                 else:
                                     placeholder.append(entry.first().start_index)
                                 if isinstance(entry.last(), MultiQubitGate):
                                     placeholder.append(entry.last().gate.indices[1])
+                                elif isinstance(entry.last(), Gate):
+                                    placeholder.append(entry.last().gate_operation.indices[1])
                                 else:
                                     placeholder.append(entry.last().end_index)
                                 pos.append(placeholder)
@@ -774,31 +857,39 @@ class Circuit(Operation):
                                 # first and last are only used by ExprRange
                                 if isinstance(entry.first(), MultiQubitGate):
                                     first = entry.first().gate.indices[0]
+                                elif isinstance(entry.first(), Gate):
+                                    first = entry.first().gate_operation.indices[0]
                                 else:
                                     first = entry.first().start_index
                             if isinstance(entry.first(), MultiQubitGate):
-                                current = entry.first().gate.indices[1]
+                                current = entry.first().gate.indices[0]
+                            elif isinstance(entry.first(), Gate):
+                                current = entry.first().gate_operation.indices[0]
                             else:
                                 current = entry.first().start_index
                             if first != current:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, current))
-                            if first != current:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, current))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry.first(), current))
                             k += 1
                         elif isinstance(entry, MultiQubitGate):
                             if first is None:
                                 first = entry.gate.indices[0]
                             if first != entry.gate.indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.gate.indices[0]))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry.gate, entry.gate.indices[0]))
+                        elif isinstance(entry, Gate):
+                            if first is None:
+                                first = entry.gate_operation.indices[0]
+                            if first != entry.gate_operation.indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry.gate_operation,
+                                                                          entry.gate_operation.indices[0]))
                         else:
                             if first is None:
                                 first = entry.start_index
                             if first != entry.start_index:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.start_index))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (first, entry, entry.start_index))
                     for entry in expr.last():
                         # loop through the ExprTuple (last)
                         if isinstance(entry, ExprTuple):
@@ -810,30 +901,37 @@ class Circuit(Operation):
                             if last is None:
                                 if isinstance(entry.last(), MultiQubitGate):
                                     last = entry.last().gate.indices[0]
+                                elif isinstance(entry.last(), Gate):
+                                    last = entry.last().gate_operation.indices[0]
                                 else:
                                     last = entry.last().end_index
                             if isinstance(entry.last(), MultiQubitGate):
                                 current = entry.last().gate.indices[0]
+                            elif isinstance(entry.last(), Gate):
+                                current = entry.last().gate_operation.indices[0]
                             else:
                                 current = entry.last().end_index
                             if last != current:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, current))
-                            if last != current:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, current))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry.last(), current))
                         elif isinstance(entry, MultiQubitGate):
                             if last is None:
                                 last = entry.gate.indices[0]
                             if last != entry.gate.indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, entry.gate.indices[0]))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry.gate, entry.gate.indices[0]))
+                        elif isinstance(entry, Gate):
+                            if last is None:
+                                last = entry.gate_operation.indices[0]
+                            if last != entry.gate_operation.indices[0]:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry.gate_operation, entry.indices[0]))
                         else:
                             if last is None:
                                 last = entry.end_index
                             if last != entry.end_index:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (last, entry.end_index))
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
+                                                 'is not equal to %s.' % (last, entry, entry.end_index))
             n = m
 
             if k != len(pos):
@@ -856,15 +954,16 @@ class Circuit(Operation):
                     if isinstance(value, MultiQubitGate):
                         inset = False
                         # a check to see if the current row index is in the set of MultiQubitGate indices
-                        for n, number in enumerate(value.indices, 0):
-                            # cycle through each row location of each QubitGate; n keeps track of which gate we are on.
-                            if self.array.entries[number.asInt() - 1].entries[i].indices != value.indices:
-                                # each list of indices for each MultiQubitGate must match the current one (starting
-                                # at 0).
-                                raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
-                                                 'linked MultiQubitGate')
-                            if number.asInt() == k:
-                                inset = True
+                        if value.indices is not None:
+                            for n, number in enumerate(value.indices, 0):
+                                # cycle through each row location of each QubitGate; n keeps track of which gate we are on.
+                                if self.array.entries[number.asInt() - 1].entries[i].indices != value.indices:
+                                    # each list of indices for each MultiQubitGate must match the current one (starting
+                                    # at 0).
+                                    raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
+                                                     'linked MultiQubitGate')
+                                if number.asInt() == k:
+                                    inset = True
                         #if not inset:
                          #   print(self)
                           #  raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
@@ -978,7 +1077,8 @@ class Circuit(Operation):
                     else:
                         connect = False
                     '''
-                    if isinstance(value, MultiQubitGate):
+                    if isinstance(value, MultiQubitGate) and value.indices is not None:
+                        # we only want MQGs that have a valid Set().
                         index = value.indices.index(num(k))
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
                         # across all gates in the MultiQubitGate
@@ -1268,7 +1368,7 @@ class Circuit(Operation):
         return self.formatted('latex', **kwargs)
 
     def formatted(self, formatType, fence=False, subFence=False, operatorOrOperators=None, implicitFirstOperator=False,
-                  wrapPositions=None, orientation=None, **kwargs):
+                  wrapPositions=None, orientation=None, spacing=None, **kwargs):
         from proveit._core_.expression.expr import Expression
         default_style = ("explicit" if formatType == 'string' else 'implicit')
         outStr = ''
@@ -1279,10 +1379,11 @@ class Circuit(Operation):
         if orientation is None:
             orientation = self.getStyle('orientation', 'horizontal')
 
-        spacing = '@C=1em @R=.7em'
+        if spacing is None:
+            spacing = self.getStyle('spacing', '@C=1em @R=.7em')
 
         if formatType == 'latex':
-            outStr += r'\Qcircuit' + spacing + '{' + '\n'
+            outStr += r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n'
 
         wires = self._find_wires()
         formatted_sub_expressions = []
@@ -1296,19 +1397,8 @@ class Circuit(Operation):
                 # we add one to compensate for the added wrapping slash
                 row += 1
                 column = 0
-            if entry == '& SPACE':
-                # we have to include the '& ' because it has already been formatted according to an ExprArray
-                # SPACE is formatted as an empty space in the circuit, denoted by '&' for latex and SPACE for string
-                if formatType == 'latex':
-                    formatted_sub_expressions.append('&')
-                else:
-                    formatted_sub_expressions.append(entry)
-            elif entry == '& WIRE':
-                if formatType == 'latex':
-                    formatted_sub_expressions.append(r'& \cw')
-                else:
-                    formatted_sub_expressions.append(entry)
-            elif formatType == 'latex':
+
+            if formatType == 'latex':
                 if entry[0] == '&':
                     entry = entry[2:]
                     add = '& '
@@ -1318,12 +1408,20 @@ class Circuit(Operation):
                     add = ' '
                 if r'\Qcircuit' in entry:
                     idx = entry.index('\n')
-                    entry = entry[idx + 3:len(entry) - 3]
+                    entry = entry[idx + 3:len(entry) - 16]
                     add = '& '
                     # we add three  to include the n and the & and the space after then &
-                    # we subtract 3 to get rid of the ending bracket and \n
+                    # we subtract 16 to get rid of the ending bracket, the \hspace, and \n
                 out_str = ''
-                if wires is not None and wires[row] is not None and len(wires[row]) != 0 and column in wires[row]:
+
+                if entry == 'SPACE':
+                    # we have to include the '& ' because it has already been formatted according to an ExprArray
+                    # SPACE is formatted as an empty space in the circuit, denoted by '&' for latex and SPACE for string
+                    out_str += add + ' & '
+                elif entry == ' WIRE':
+                    out_str += add + r' \cw'
+
+                elif wires is not None and wires[row] is not None and len(wires[row]) != 0 and column in wires[row]:
                     if column == 0:
                         add = '& '
                     if isinstance(wires[row][column], list):
@@ -1335,10 +1433,17 @@ class Circuit(Operation):
                             out_str += add + r'\ghost{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
                         elif wires[row][column][0] == 'gate':
                             if len(wires[row][column]) == 3:
-                                out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r'] ' \
+                                if r'\gate' in entry:
+                                    out_str += add + entry + r' \qwx[' + str(wires[row][column][1]) + r'] ' \
                                                                        r'\qwx[' + str(wires[row][column][2]) + r']'
+                                else:
+                                    out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + \
+                                               r'] \qwx[' + str(wires[row][column][2]) + r']'
                             else:
-                                out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
+                                if r'\gate' in entry:
+                                    out_str += add + entry + r' \qwx[' + str(wires[row][column][1]) + r']'
+                                else:
+                                    out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
                     elif wires[row][column] == 'ghost':
                         # this is a member of a block multiqubit gate
                         out_str += add + r'\ghost{' + entry + '}'
@@ -1352,6 +1457,11 @@ class Circuit(Operation):
                         elif entry == r'\control \cw':
                             # this is formatted as a solid dot, but with classical wires.
                             out_str += add + r'\control \cw'
+                        elif entry == r'\targ':
+                            # this is a target X gate (representation=implicit)
+                            out_str += add + entry
+                        elif entry == r'\meter':
+                            out_str += add + entry
                         else:
                             if r'\gate' in entry:
                                 out_str += add + entry
@@ -1360,7 +1470,11 @@ class Circuit(Operation):
                     # if we are adding wires, we add the length according to self.wires
                     elif wires[row][column] == 'gate':
                         # a gate with no wires
-                        if r'\gate' in entry:
+                        if entry == r'\targ':
+                            out_str += add + entry
+                        elif entry == r'\meter':
+                            out_str += add + entry
+                        elif r'\gate' in entry:
                             out_str += add + entry
                         else:
                             out_str += add + r'\gate{' + entry + r'}'
@@ -1372,7 +1486,9 @@ class Circuit(Operation):
                         elif entry == r'\control \cw':
                             # this is formatted as a solid dot, but with classical wires.
                             out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
-                        elif r'\gate' in entry:
+                        elif entry == r'\targ':
+                            out_str += add + r'\targ \qwx[' + str(wires[row][column]) + r']'
+                        elif r'\gate' in entry or entry == r'\meter':
                             out_str += add + entry + r' \qwx[' + str(wires[row][column]) + r']'
                         else:
                             out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
@@ -1391,14 +1507,20 @@ class Circuit(Operation):
                     elif entry == r'\control \cw':
                         # this is formatted as a solid dot using \ctrl and \cw since there is a classical wire
                         out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
+                    elif entry == r'\meter':
+                        out_str += add + entry
+                    elif r'\gate' in entry:
+                        out_str += add + entry + r' \qwx[' + str(wires[row][column]) + r']'
                     else:
                         # gate with wire
+
                         out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
 
                     formatted_sub_expressions.append(out_str)
                 else:
                     formatted_sub_expressions.append(add + entry)
             else:
+
                 formatted_sub_expressions.append(add + entry)
             column += 1
 
@@ -1480,7 +1602,7 @@ class Circuit(Operation):
                     "also, operator ranges must be in correspondence with operand ranges.")
 
         if formatType == 'latex':
-            outStr += ' \n' + '}'
+            outStr += ' \n' + r'} \hspace{2em}'
         #print(outStr)
         return outStr
 

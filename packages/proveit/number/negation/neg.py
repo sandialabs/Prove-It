@@ -29,7 +29,7 @@ class Neg(Operation):
             return complexClosure.specialize({a:self.operand})
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
-    
+
     def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this negation expression equated with a simpler form.
@@ -39,15 +39,15 @@ class Neg(Operation):
 
         expr = self
         # For convenience updating our equation:
-        eq = TransRelUpdater(expr, assumptions)        
+        eq = TransRelUpdater(expr, assumptions)
         # Handle double negation:
-        if isinstance(self.operand, Neg):            
+        if isinstance(self.operand, Neg):
             # simplify double negation
             expr = eq.update(self.doubleNegSimplification(assumptions))
             # simplify what is inside the double-negation.
             expr = eq.update(expr.simplification(assumptions))
         return eq.relation
-    
+
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Only handles -0 = 0 or double negation.
@@ -60,13 +60,13 @@ class Neg(Operation):
         if isinstance(self.operand, Neg) and isIrreducibleValue(self.operand.operand):
             return self.doubleNegSimplification(assumptions)
         raise EvaluationError(self, assumptions)
-        
+
     def doubleNegSimplification(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import doubleNegation
         assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)
-        return doubleNegation.specialize({x:self.operand.operand}, 
+        return doubleNegation.specialize({x:self.operand.operand},
                                          assumptions=assumptions)
-    
+
 
     """
     def _closureTheorem(self, numberSet):
@@ -97,7 +97,7 @@ class Neg(Operation):
         only works if the operand is a literal int.
         '''
         return -self.operand.asInt()
-    
+
     def string(self, **kwargs):
         return maybeFencedString('-'+self.operand.string(fence=True), **kwargs)
 

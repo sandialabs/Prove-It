@@ -5,6 +5,7 @@ from proveit._common_ import a, b
 class Numeral(Literal, IrreducibleValue):
     _inNaturalsStmts = None # initializes when needed
     _inNaturalsPosStmts = None # initializes when needed
+    _inDigitsStmts = None  # initializes when needed
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
     
@@ -55,12 +56,14 @@ class Numeral(Literal, IrreducibleValue):
         return Numeral(n, string_format, latex_format)
      
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
-        from proveit.number import Naturals, NaturalsPos
+        from proveit.number import Naturals, NaturalsPos, Digits
         from proveit.logic import InSet
         if number_set==Naturals:
             return self.deduceInNaturals(assumptions)
         elif number_set==NaturalsPos:
             return self.deduceInNaturalsPos(assumptions)
+        elif number_set==Digits:
+            return self.deduceInDigits(assumptions)
         else:
             try:
                 # Do this to avoid infinite recursion -- if
@@ -82,9 +85,11 @@ class Numeral(Literal, IrreducibleValue):
         
     def deduceInNaturals(self, assumptions=USE_DEFAULTS):
         if Numeral._inNaturalsStmts is None:
-            from proveit.number.sets.integer._theorems_ import zeroInNats
+            from proveit.number.sets.natural._axioms_ import zero_in_nats
             from .deci._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
-            Numeral._inNaturalsStmts = {0:zeroInNats, 1:nat1, 2:nat2, 3:nat3, 4:nat4, 5:nat5, 6:nat6, 7:nat7, 8:nat8, 9:nat9}
+            Numeral._inNaturalsStmts = {0:zero_in_nats, 1:nat1, 2:nat2, 
+                                        3:nat3, 4:nat4, 5:nat5, 6:nat6, 
+                                        7:nat7, 8:nat8, 9:nat9}
         return Numeral._inNaturalsStmts[self.n]
     
     '''
@@ -104,7 +109,17 @@ class Numeral(Literal, IrreducibleValue):
         if self.n <= 0:
             raise ProofFailure(self, [], 
                                "Cannot prove %d in NaturalsPos"%self.n)
-        return Numeral._inNaturalsPosStmts[self.n]    
+        return Numeral._inNaturalsPosStmts[self.n]
+
+    def deduceInDigits(self, assumptions=USE_DEFAULTS):
+        if Numeral._inDigitsStmts is None:
+            from .deci._theorems_ import digit0, digit1, digit2, digit3, digit4, digit5
+            from .deci._theorems_ import digit6, digit7, digit8, digit9
+            Numeral._inDigitsStmts = {0:digit0, 1:digit1, 2:digit2, 3:digit3, 4:digit4, 5:digit5, 6:digit6, 7:digit7, 8:digit8, 9:digit9}
+        if self.n < 0 or self.n > 9:
+            raise ProofFailure(self, [],
+                               "Cannot prove %d in Digits"%self.n)
+        return Numeral._inDigitsStmts[self.n]
 
     def deducePositive(self, assumptions=USE_DEFAULTS):
         if Numeral._positiveStmts is None:
@@ -120,9 +135,9 @@ class NumeralSequence(Operation, IrreducibleValue):
     def __init__(self, operator, *digits):
         from proveit import ExprRange
         Operation.__init__(self, operator, digits)
-        if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
-            raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
-        self.digits = digits
+        # if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
+        #     raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
+        self.digits = self.operands
 
     def evalEquality(self, other, assumptions=USE_DEFAULTS):
         if other==self:

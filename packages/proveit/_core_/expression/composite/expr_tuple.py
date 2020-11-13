@@ -119,6 +119,8 @@ class ExprTuple(Composite, Expression):
         entries may represent multiple elements
         via ranges (ExprRange).
         '''
+        if isinstance(idx, slice):
+            return ExprTuple(*self.entries[idx])
         return self.entries[idx]
     
     def __add__(self, other):
@@ -129,13 +131,26 @@ class ExprTuple(Composite, Expression):
         '''
         return ExprTuple(*(self.entries + tuple(other)))
     
-    def singular(self):
+    def is_singular(self): 
         '''
         Return True if this has a single element that is not an
         ExprRange.
         '''
         from .expr_range import ExprRange
         return len(self)==1 and not isinstance(self[0], ExprRange)
+    
+    def is_binary(self):
+        '''
+        Returns True if this has two elements that are not ExprRanges.
+        '''
+        return len(self)==2 and not self.contains_range()
+    
+    def contains_range(self):
+        '''
+        Returns true if the entry contains an ExprRange.
+        '''
+        from .expr_range import ExprRange
+        return any(isinstance(entry, ExprRange) for entry in self.entries)
     
     def index(self, entry, start=0, stop=None):
         if stop is None:

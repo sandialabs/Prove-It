@@ -1,0 +1,1 @@
+Define a set as the power set of another set.

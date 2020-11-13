@@ -52,7 +52,7 @@ class Operation(Expression):
         
         def raiseBadOperatorType(operator):
             raise TypeError('operator(s) must be a Label, an indexed variable '
-                            '(IndexedVar), or iteration (Iter) over indexed'
+                            '(IndexedVar), or ranges of indexed'
                             'variables (IndexedVar). %s is none of those.'
                             %str(operator))            
         if isinstance(self.operator_or_operators, Composite):

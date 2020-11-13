@@ -1,21 +1,33 @@
 import proveit
+from proveit.logic import Equals, NotEquals
 from proveit import USE_DEFAULTS, maybeFencedString
-from proveit._common_ import a
+from proveit._common_ import a, x, y
 from proveit.number.sets.number_set import NumberSet
 
 class RealSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
 
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'n in RealsPos' for a given n.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInComplexes(member, 
+                                                                assumptions)
+    
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsInBool
-        from proveit._common_ import x
         return xInRealsInBool.specialize({x:member}, assumptions=assumptions)
+
+    def deduceMemberInComplexes(self, member, assumptions=USE_DEFAULTS):
+        from proveit.number.sets.complex._theorems_ import realsInComplexes
+        return realsInComplexes.deriveSupersetMembership(member, assumptions)
 
 class RealPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
-    
+
     def membershipSideEffects(self, knownTruth):
         '''
         Yield side-effects when proving 'n in RealsPos' for a given n.
@@ -49,10 +61,10 @@ class RealPosSet(NumberSet):
         from ._theorems_ import xInRealsPosInBool
         from proveit._common_ import x
         return xInRealsPosInBool.specialize({x:member}, assumptions=assumptions)
-    
+
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import realsPosInReals
-        return realsPosInReals.deriveSupsersetMembership(member, assumptions)
+        return realsPosInReals.deriveSupersetMembership(member, assumptions)
 
 class RealNegSet(NumberSet):
     def __init__(self):
@@ -91,23 +103,23 @@ class RealNegSet(NumberSet):
         from ._theorems_ import xInRealsNegInBool
         from proveit._common_ import x
         return xInRealsNegInBool.specialize({x:member}, assumptions=assumptions)
-    
+
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import realsNegInReals
-        return realsNegInReals.deriveSupsersetMembership(member, assumptions)
+        return realsNegInReals.deriveSupersetMembership(member, assumptions)
 
 class RealNonNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{\ge 0}',
                            context=__file__)
-    
+
     def membershipSideEffects(self, knownTruth):
         '''
         Yield side-effects when proving 'n in RealsNonNeg' for a given n.
         '''
         member = knownTruth.element
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
-    
+
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import inRealsNonNeg_iff_non_negative
         return inRealsNonNeg_iff_non_negative.specialize(
@@ -138,7 +150,7 @@ class RealNonNegSet(NumberSet):
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import realsNonNegInReals
-        return realsNonNegInReals.deriveSupsersetMembership(member, assumptions)
+        return realsNonNegInReals.deriveSupersetMembership(member, assumptions)
 
 # if proveit.defaults.automation:
 #     # Import some fundamental theorems without quantifiers that are
@@ -155,9 +167,9 @@ if proveit.defaults.automation:
         # notebooks for the first time, but fine after that.
         from ._theorems_ import (
             realsPosInReals, realsNegInReals, realsNonNegInReals,
+            rationalsInReals,
             intsInReals, natsInReals, natsPosInReals, natPosInRealsPos,
             natsInRealsNonNeg, natsPosInRealsNonNeg,
             realsPosInRealsNonNeg)
     except:
         pass
-
