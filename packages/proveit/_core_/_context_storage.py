@@ -2018,6 +2018,7 @@ class StoredSpecialStmt:
         '''
         readDependentTheorems helper.
         '''
+        from .context import Context, ContextException
         theorems = []
         usedByFilename = os.path.join(path, 'used_by.txt')
         if not os.path.isfile(usedByFilename):
@@ -2025,7 +2026,22 @@ class StoredSpecialStmt:
         with open(usedByFilename, 'r') as usedByFile:
             for line in usedByFile:
                 theorems.append(line.strip())
-        return theorems
+        verified_theorems = []
+        for theorem in theorems:
+            try:
+                Context.getStoredTheorem(theorem)
+                verified_theorems.append(theorem)
+            except (KeyError, ContextException):
+                # This theorem no longer exists in the database, 
+                # apparently.  So we'll remove it from the dependents.
+                pass
+        if len(verified_theorems) < len(theorems):
+            # Re-write the dependents file to exclude the theorems
+            # that no longer exist in the database. 
+            with open(usedByFilename, 'w') as usedByFile:
+                for theorem in verified_theorems:
+                    usedByFile.write(theorem + '\n')
+        return verified_theorems
     
     def allDependents(self):
         '''
