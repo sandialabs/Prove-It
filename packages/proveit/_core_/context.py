@@ -463,7 +463,9 @@ class Context:
         Clean the corresponding __pv_it directory of any stored expressions
         or proofs that have a reference count of zero.
         '''
-        return self._contextFolderStorage(self.active_folder).clean(clear)
+        context_folder_storage = self._contextFolderStorage(self.active_folder)
+        if context_folder_storage is not None:
+            return context_folder_storage.clean(clear)
     
     """
     def clear(self):

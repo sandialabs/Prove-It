@@ -291,6 +291,10 @@ for m in list(sys.modules.keys()):
 %reset in
 %reset out
 """
+        if display_latex:
+            # for notebooks with no %end or %qed
+            reset_source = "%clean_active_folder\n" + reset_source
+
         reset_cell = nbformat.NotebookNode(cell_type='code', source=reset_source, metadata=dict())
         cell, _ = self.preprocess_cell(reset_cell, resources, 0)
         
