@@ -1067,7 +1067,7 @@ class KnownTruth:
         if proof is not None:
             # link to the proof
             html += '<a class="ProveItLink" href="%s" style="text-decoration: none">'%proof.getLink()
-        html += '&#x22A2;&nbsp;' # turnstile symbol
+        html += '&nbsp;&#x22A2;&nbsp;&nbsp;' # turnstile symbol
         if proof is not None:
             html += '</a>'
         html += self.expr._repr_html_()
