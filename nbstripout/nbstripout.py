@@ -39,6 +39,10 @@ def clean_nb(input_stream):
     s['metadata'] = { k:s['metadata'][k] for k in s['metadata'].keys() if k in nb_metadata_keep }
     # Hopefully the minor format won't matter and we can use the lowest common denominator for now:
     s['nbformat_minor'] = 0
+    if 'language_info' in s:
+        # Just remove the 'language_info' to keep the notebooks
+        # consistent.
+        s.pop('language_info')
     return json.dumps(s, sort_keys=True, indent=1, ensure_ascii=False)
 
 if __name__ == '__main__':
