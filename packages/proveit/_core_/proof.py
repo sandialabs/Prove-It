@@ -1,7 +1,7 @@
 """
 A Proof is a directed, acyclic graph (DAG) that represents the Prove-It
 proof for a KnownTruth.  Each object represents a derivation step
-(Assumption, ModusPonens, HypotheticalReasoning, Specialization,
+(Assumption, ModusPonens, Deduction, Specialization,
 or Generalization) and has references to other KnownTruths that
 are directly required, each with its Proof.  In this way, the
 Proof objects form a DAG.
@@ -787,10 +787,10 @@ def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
     antecedentExpr as the antecedent and consequentExpr as the consequent.
     '''
     from proveit.logic import Implies
-    assert isinstance(implicationExpr, Implies),  'The result of hypothetical reasoning must be an Implies operation'
+    assert isinstance(implicationExpr, Implies),  'The result of deduction must be an Implies operation'
     assert len(implicationExpr.operands)==2, 'Implications are expected to have two operands'
-    assert antecedentExpr==implicationExpr.operands[0], 'The result of hypothetical reasoning must be an Implies operation with the proper antecedent'
-    assert consequentExpr==implicationExpr.operands[1], 'The result of hypothetical reasoning must be an Implies operation with the proper consequent'
+    assert antecedentExpr==implicationExpr.operands[0], 'The result of deduction must be an Implies operation with the proper antecedent'
+    assert consequentExpr==implicationExpr.operands[1], 'The result of deduction must be an Implies operation with the proper consequent'
 
 class ModusPonens(Proof):
     def __init__(self, implicationExpr, assumptions=None):
