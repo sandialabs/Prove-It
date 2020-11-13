@@ -434,6 +434,7 @@ class ProveItMagicCommands:
         # is enabled (otherwise, references won't be complete).
         if proveit.defaults.display_latex:
             self.context.clean_active_folder()
+        self.context = None
         return proof
 
     def end(self, kind):
@@ -487,6 +488,7 @@ class ProveItMagicCommands:
             # stash proof notebooks that are not active theorems.
             self.context.stashExtraneousThmProofNotebooks()            
         self.kind = None
+        self.context = None
             
     def display_dependencies(self, name, known_truth):
         '''
@@ -648,11 +650,17 @@ class ProveItMagic(Magics, ProveItMagicCommands):
     def end(self, line):
         kind = self._extract_kind(line)
         ProveItMagicCommands.end(self, kind)
+        self.context = None
 
     @line_magic
     def clear(self, line):
         kind = line.strip()
         ProveItMagicCommands.clear(kind)
+    
+    @line_magic
+    def clean_active_folder(self, line):
+        if self.context is not None:
+            self.context.clean_active_folder()
     
     @line_magic
     def load_expr(self, line):
