@@ -590,6 +590,7 @@ class ContextStorage:
         from IPython.lib.latextools import latex_to_png, LaTeXTool
         LaTeXTool.clear_instance()
         lt = LaTeXTool.instance()
+        configLatexToolFn(lt)
         lt.use_breqn = False
         png = latex_to_png(latex, backend='dvipng', wrap=True) # the 'matplotlib' backend can do some BAD rendering in my experience (like \lnot rendering as lnot in some contexts)
         if png is None:
