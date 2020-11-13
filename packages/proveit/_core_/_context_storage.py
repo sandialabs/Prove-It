@@ -339,8 +339,8 @@ class ContextStorage:
                     hash_to_old_name[hash_id] = name
                     old_name_to_hash[name] = hash_id
         
-        # write new common expression ids
-        new_hash_ids = set()
+        # determine hash ids
+        obsolete_hash_ids = set() # for modified statements
         with open(names_file, 'w') as f:
             for name in names:
                 obj = definitions[name]
@@ -363,11 +363,6 @@ class ContextStorage:
                                                    name))
                     # same expression as before
                     hash_to_old_name.pop(hash_id)
-                else:
-                    # new expression not previously in the common expressions liest:
-                    new_hash_ids.add(hash_id) 
-                # Store the name and the expression id.
-                f.write(name + ' ' + hash_id + '\n')
                 special_hash_ids[name] = hash_id
                 self._kindname_to_exprhash[(kind, name)] = expr_id
                 context_folder_storage._objhash_to_name[expr_id] = name
@@ -382,18 +377,11 @@ class ContextStorage:
                         # modified special statement. remove the old one first.
                         print('Modifying %s %s in %s context'%
                               (kind, name, context_name))
-                        StoredSpecialStmt.remove_dependency_proofs(
-                                self.context, kind, old_name_to_hash[name])
-                    # record the axiom/theorem id (creating the directory
-                    # if necessary)
-                    special_statement_dir = os.path.join(
-                            context_folder_storage.path, name)
-                    if not os.path.isdir(special_statement_dir):
-                        os.mkdir(special_statement_dir)
-                    with open(os.path.join(special_statement_dir, 
-                                           'used_by.txt'), 'w') as _:
-                        # used_by.txt must be created but 
-                        pass # initially empty
+                        obsolete_hash_ids.add(old_name_to_hash[name])
+        # Remove proof dependencies of modified statements.
+        for hash_id in obsolete_hash_ids:
+            StoredSpecialStmt.remove_dependency_proofs(
+                    self.context, kind, hash_id)
         # Indicate special expression removals.
         for hash_id, name in hash_to_old_name.items():
             if folder == 'common':
@@ -405,6 +393,11 @@ class ContextStorage:
                 StoredSpecialStmt.remove_dependency_proofs(
                         self.context, kind, hash_id)
         
+        # Now we'll write the new names.
+        with open(names_file, 'w') as f:
+            for name in names:
+                f.write(name + ' ' + special_hash_ids[name] + '\n')
+                
         if kind=='theorem':
             # update the theorem dependency order when setting the
             # theorems
@@ -488,8 +481,11 @@ class ContextStorage:
         folder).
         '''
         list(self._loadSpecialNames('axiom'))
-        return self._special_hash_ids['axiom'][name]
-
+        try:
+            return self._special_hash_ids['axiom'][name]
+        except KeyError:
+            raise KeyError("%s not found as an axiom in %s"
+                           %(name, self.context.name))
     def getTheoremHash(self, name):
         '''
         Return the path where information about the theorem of the given 
@@ -497,7 +493,11 @@ class ContextStorage:
         folder).
         '''
         list(self._loadSpecialNames('theorem'))
-        return self._special_hash_ids['theorem'][name]
+        try:
+            return self._special_hash_ids['theorem'][name]
+        except KeyError:
+            raise KeyError("%s not found as a theorem in %s"
+                           %(name, self.context.name))
             
     def getCommonExpr(self, name):
         '''
@@ -1326,9 +1326,8 @@ class ContextFolderStorage:
                     # Replace an existing expr.ipynb
                     if kind is not None:
                         print("%s expression notebook is being updated"%name)
-                        if orig_alt_nb is not None:
-                            # Move the original to alt_expr.ipynb.
-                            os.replace(filepath, alt_filepath)
+                        # Move the original to alt_expr.ipynb.
+                        os.replace(filepath, alt_filepath)
                     else:
                         print("Expression notebook is being updated for %s"
                               %str(expr))
@@ -1635,6 +1634,10 @@ class ContextFolderStorage:
             expr_class = expr_class_map[exprClassStr]
             expr = expr_class._checked_make(exprInfo, styles, subExpressions)
             return expr
+        # Load the "special names" of the context so we
+        # will know, for future reference, if this is a special 
+        # expression that may be addressed as such.
+        self.context_storage.loadSpecialNames()                
         expr = self._makeExpression(exprId, importFn, exprBuilderFn)
         return expr
         
@@ -1895,9 +1898,9 @@ class ContextFolderStorage:
         paths_to_remove = list()
         for hash_subfolder in os.listdir(self.path):
             if hash_subfolder == 'name_to_hash.txt': continue
+            hashpath = os.path.join(self.path, hash_subfolder)
             if hash_subfolder not in currently_referenced:
-                hash_folder = os.path.join(self.path, hash_subfolder)
-                paths_to_remove.append(hash_folder)
+                paths_to_remove.append(hashpath)
         
         thm_names = set(self.context.theoremNames())
         if self.folder == 'theorems':
@@ -1990,7 +1993,18 @@ class StoredSpecialStmt:
         # remove invalidated proofs that use this axiom/theorem
         dependentTheorems = StoredSpecialStmt._readDependentTheorems(path)
         for dependent in dependentTheorems:
-            Context.getStoredTheorem(dependent).removeProof()
+            try:
+                Context.getStoredTheorem(dependent).removeProof()
+            except KeyError:
+                # If the dependent is no longer there, we don't need to
+                # worry about it (assuming it was removed
+                # responsibly with its dependents removed already).
+                pass
+        removeIfExists(os.path.join(path, 'proof.pv_it'))
+        removeIfExists(os.path.join(path, 'used_by.txt'))
+        removeIfExists(os.path.join(path, 'used_axioms.txt'))
+        removeIfExists(os.path.join(path, 'used_theorems.txt'))
+        removeIfExists(os.path.join(path, 'complete_used_theorems.txt'))
             
     def readDependentTheorems(self):
         '''
@@ -2036,25 +2050,33 @@ class StoredSpecialStmt:
         '''
         # obtain all lines that are NOT the specified link to be removed
         remaining = []
-        with open(os.path.join(self.path, filename), 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line != entryToRemove:
-                    remaining.append(line)
-        # re-write usedBy.txt with all of the remaining lines
-        with open(os.path.join(self.path, filename), 'w') as f:
+        filepath = os.path.join(self.path, filename)
+        if os.path.isfile(filepath):
+            with open(filepath, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line != entryToRemove:
+                        remaining.append(line)
+        # re-write file with all of the remaining lines
+        with open(filepath, 'w') as f:
             for line in remaining:
                 f.write(line + '\n')
     
-    def _countEntries(self, filename):
+    def _getEntries(self, filename):
         '''
-        Returns the number of entries in a particular file.
+        Returns the entries in a particular file.
         '''
-        count = 0
+        lines = set()
         with open(os.path.join(self.path, filename), 'r') as f:
             for line in f:
-                count += 1
-        return count
+                lines.add(line)
+        return lines
+
+    def _countEntries(self, filename):
+        '''
+        Returns the number of unique entries in a particular file.
+        '''
+        return len(self._getEntries(filename))
 
     def _removeUsedByEntry(self, usedByTheorem):
         '''
@@ -2078,6 +2100,9 @@ class StoredAxiom(StoredSpecialStmt):
         axioms_notebook_link = relurl(os.path.join(self.context.getPath(), 
                                                    '_axioms_.ipynb'))
         return axioms_notebook_link + '#' + self.name
+
+def removeIfExists(path):
+    if os.path.isfile(path): os.remove(path)
 
 class StoredTheorem(StoredSpecialStmt):
     def __init__(self, context, name):
@@ -2261,12 +2286,18 @@ class StoredTheorem(StoredSpecialStmt):
         prevUsedAxiomNames, prevUsedTheoremNames = self.readDependencies()
         for prevUsedAxiom in prevUsedAxiomNames:
             if prevUsedAxiom not in usedAxiomNames:
-                Context.getStoredAxiom(prevUsedAxiom)._removeUsedByEntry(
-                        str(self))
+                try:
+                    Context.getStoredAxiom(prevUsedAxiom)._removeUsedByEntry(
+                            str(self))
+                except KeyError:
+                    pass # don't worry if it has alread been removed
         for prevUsedTheorem in prevUsedTheoremNames:
             if prevUsedTheorem not in usedTheoremNames:
-                Context.getStoredTheorem(prevUsedTheorem)._removeUsedByEntry(
-                        str(self))
+                try:
+                    Context.getStoredTheorem(prevUsedTheorem)._removeUsedByEntry(
+                            str(self))
+                except KeyError:
+                    pass # don't worry if it has alread been removed
 
         storedUsedAxiomNames = [Context.getStoredAxiom(usedAxiomName) for 
                                 usedAxiomName in usedAxiomNames]
@@ -2351,11 +2382,17 @@ class StoredTheorem(StoredSpecialStmt):
             # Let the dependents know.
             dependentTheorems = self.readDependentTheorems()
             for dependent in dependentTheorems:
-                storedDependent = Context.getStoredTheorem(dependent)
+                try:
+                    storedDependent = Context.getStoredTheorem(dependent)
+                except KeyError:
+                    # Dependent was removed; skip it.
+                    continue
                 _path = os.path.join(storedDependent.path, 
                                     'complete_used_theorems.txt')
-                with open(_path, 'a') as f:
-                    f.write(str(self) + '\n')
+                if str(self) not in storedDependent._getEntries(
+                        'complete_used_theorems.txt'):
+                    with open(_path, 'a') as f:
+                        f.write(str(self) + '\n')
                 # propagate this recursively in case self's theorem was 
                 # the final  theorem to complete the dependent
                 storedDependent._propagateCompletion()
@@ -2372,20 +2409,30 @@ class StoredTheorem(StoredSpecialStmt):
         # its old proof
         prevUsedAxiomNames, prevUsedTheoremNames = self.readDependencies()
         for usedAxiom in prevUsedAxiomNames:
-            Context.getStoredAxiom(usedAxiom)._removeUsedByEntry(str(self))
+            try:
+                Context.getStoredAxiom(usedAxiom)._removeUsedByEntry(str(self))
+            except KeyError:
+                pass # If it doesn't exist, never mind.
         for usedTheorem in prevUsedTheoremNames:
-            Context.getStoredTheorem(usedTheorem)._removeUsedByEntry(str(self))
+            try:
+                Context.getStoredTheorem(usedTheorem)._removeUsedByEntry(str(self))
+            except KeyError:
+                pass # If it doesn't exist, never mind.
         # If it was previously complete before, we need to inform 
         # dependents that it is not longer complete.
         if wasComplete:
             dependentTheorems = self.readDependentTheorems()
             for dependent in dependentTheorems:
-                stored_thm = Context.getStoredTheorem(dependent)
-                stored_thm._undoDependentCompletion(str(self))
+                try:
+                    stored_thm = Context.getStoredTheorem(dependent)
+                    stored_thm._undoDependentCompletion(str(self))
+                except KeyError:
+                    # If the dependent is no longer there, we don't need
+                    # to worry about it (assuming it was removed
+                    # responsibly with its dependents removed already).
+                    pass
         # remove 'proof.pv_it', 'used_axioms.txt', 'used_theorems.txt', 
         # and 'complete_used_theorems.txt' for the theorem
-        def removeIfExists(path):
-            if os.path.isfile(path): os.remove(path)
         removeIfExists(os.path.join(self.path, 'proof.pv_it'))
         removeIfExists(os.path.join(self.path, 'used_axioms.txt'))
         removeIfExists(os.path.join(self.path, 'used_theorems.txt'))
