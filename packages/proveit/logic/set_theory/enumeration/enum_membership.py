@@ -17,7 +17,6 @@ class EnumMembership(Membership):
         Unfold the enumerated set membership, and in boolean as
         a side-effect.
         '''
-        return
         yield self.unfold
 
 
