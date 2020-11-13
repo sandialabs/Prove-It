@@ -1,5 +1,5 @@
 from proveit import Literal
-from .naturals import NaturalsSet, NaturalsPosSet
+from proveit.number.sets.natural.naturals import NaturalsSet, NaturalsPosSet
 from .integers import IntegerSet
 from digit import DigitLiteral
 
