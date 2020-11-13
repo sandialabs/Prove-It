@@ -39,28 +39,81 @@ class Set(Operation):
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
 
-    def prove_from_cases(self, forallStmt, assumptions=USE_DEFAULTS):
+    def prove_by_cases(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
         For the enumerated set S = {x1, x2, ..., xn} (i.e. self),
         and given a universal quantification over the set S of the form
-        forall_{x in S} P(x), conclude and return the forall expression
-        knowing/assuming [P(x1) and P(x2) and ... P(xn)].
+        Forall_{x in S} P(x), conclude and return the Forall expression
+        knowing/assuming [P(x1) and P(x2) and ... P(xn)]. This also
+        addresses the case where we have
+        Forall_{x in S | Q(x) ^ Q(x) => P(x)} P(x).
         '''
-        from proveit._common_ import a, n, x, P
-        from proveit.logic import Forall, And
+        from proveit._common_ import a, n, x, P, Q
+        from proveit.logic import And, Forall, InSet
         from proveit.number import one
         from ._theorems_ import true_for_each_then_true_for_all
-        # from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), (
-                "May only apply prove_from_cases method of enumerated Set "
-                "class to a forall statement.")
+                "May only call the prove_by_cases method of the enumerated "
+                "Set class using a Forall (universally quantified) expression "
+                "as the first argument.")
+        assert(len(forallStmt.conditions) >= 1), (
+                "When calling the prove_by_cases method of the enumerated "
+                "Set class, the Forall argument should have (at least) "
+                "a domain condition matching the enumerated Set.")
+        assert(isinstance(forallStmt.conditions[0], InSet)), (
+                "When calling the prove_by_cases method of the enumerated "
+                "Set class, the domain condition for the Forall argument "
+                "should appear as the first element in the Forall.conditions. "
+                "Consider using the 'domain=' kwarg when specifying the "
+                "domain when constructing your Forall expression, or "
+                "specify the domain using an InSet expression as the first "
+                "of the conditions you specify.")
 
-        # forall_{x in A} P(x), assuming P(x) for each x in A
-        if(len(forallStmt.conditions)==1):
-            # basic case where condition has the form "for x in A"
+        if (len(forallStmt.conditions) > 1):
+            from ._theorems_ import true_for_each_then_true_for_all_conditioned
+            if len(forallStmt.conditions) == 2:
+                # Note that when a Forall expression is created, if the
+                # domain was defined separately using the domain=
+                # notation, the InSet() domain expression then appears
+                # at index 0 in Forall.conditions. So, we assume
+                # condition[0] is a domain condition and any remaining
+                # condition(s) are something else.
+                condition = forallStmt.conditions[1]
+            else:
+                condition = And(*forallStmt.conditions[1:])
 
             # Cardinality of the domain:
-            n_sub = forallStmt.condition.domain.operands.length(assumptions)
+            n_sub = forallStmt.domain.operands.length(assumptions)
+
+            # Domain elements to substitute
+            # Notice the n_sub is already a Numeral and not an int
+            var_range_update = varRange(a, one, n_sub)
+            var_range_sub = forallStmt.domain.elements
+
+            # Predicate re-definition (using user-supplied instanceVar)
+            Qx = Function(Q, forallStmt.instanceVar)
+            # Predicate to substitute
+            Qx_sub = condition
+            # Predicate re-definition (using user-supplied instanceVar)
+            Px = Function(P, forallStmt.instanceVar)
+            # Predicate to substitute
+            Px_sub = forallStmt.instanceExpr
+
+            # Instance var to substitute (user-supplied instanceVar)
+            x_sub = forallStmt.instanceVar
+
+            return true_for_each_then_true_for_all_conditioned.instantiate(
+                    {n: n_sub, ExprTuple(var_range_update): var_range_sub,
+                     x: x_sub, Px: Px_sub, Qx: Qx_sub},
+                    num_forall_eliminations=3, assumptions=assumptions)
+
+        else:
+            # forall_{x in A} P(x), assuming/knowing P(x) for each x
+            # in A. This is the basic case where the only condition
+            # is the domain specification
+
+            # Cardinality of the domain:
+            n_sub = forallStmt.domain.operands.length(assumptions)
 
             # Domain elements to substitute
             # Notice the n_sub is already a Numeral and not an int
@@ -77,31 +130,9 @@ class Set(Operation):
             x_sub = forallStmt.instanceVar
 
             return true_for_each_then_true_for_all.instantiate(
-                {n: n_sub, ExprTuple(var_range_update): var_range_sub,
-                x: x_sub, Px: Px_sub}, num_forall_eliminations=3,
-                assumptions=assumptions)
-
-        # if(len(forallStmt.conditions)>1):
-        #     if len(forallStmt.conditions)==2:
-        #         condition = forallStmt.conditions[1]
-        #     else:
-        #         condition = And(*forallStmt.conditions[1:])
-        #     Qx = Operation(Q, forallStmt.instanceVar)
-        #     _Qx = condition
-        #     Px = Operation(P, forallStmt.instanceVar)
-        #     _Px = forallStmt.instanceExpr
-        #     _A = forallStmt.instanceVar
-        #     return foldConditionedForallOverBool.instantiate(
-        #             {Qx:_Qx, Px:_Px, A:_A}, num_forall_eliminations=1,
-        #             assumptions=assumptions)
-        # else:
-        #     # forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)
-        #     Px = Operation(P, forallStmt.instanceVar)
-        #     _Px = forallStmt.instanceExpr
-        #     _A = forallStmt.instanceVar
-        #     return foldForallOverBool.instantiate(
-        #             {Px:_Px, A:_A}, num_forall_eliminations=1,
-        #             assumptions=assumptions)
+                    {n: n_sub, ExprTuple(var_range_update): var_range_sub,
+                     x: x_sub, Px: Px_sub}, num_forall_eliminations=3,
+                    assumptions=assumptions)
 
     def permutation_move(self, initIdx=None, finalIdx=None,
                          assumptions=USE_DEFAULTS):
