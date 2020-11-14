@@ -435,7 +435,7 @@ class ContextStorage:
                 list(self._loadSpecialNames(kind))
     
     def _loadCommonExpressionNames(self):
-        return self._loadSpecialExpressionNames('common')
+        return self._loadSpecialNames('common')
     
     def _loadSpecialStatementNames(self, kind):
         return self._loadSpecialNames(kind)
