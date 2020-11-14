@@ -157,7 +157,6 @@ class Forall(OperationOverInstances):
             unbundled = self.unbundle_equality(assumptions=assumptions).rhs
             unbundled = unbundled.conclude_by_cases(assumptions)
             return unbundled.bundle(assumptions=assumptions)
-        print("Inside the conclude_by_cases() method!")
         return self.domain.prove_by_cases(self, assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
