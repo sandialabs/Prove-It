@@ -597,9 +597,9 @@ class Theorem(Proof):
     def __repr__(self):
         return self.context.name + '.' + self.name
 
-    def containingPrefixes(self):
+    def theoremNameAndContainingTheories(self):
         '''
-        Yields all containing context names and the full theorem name.
+        Yields all containing theory names and the full theorem name.
         '''
         s = str(self)
         hierarchy = s.split('.')
@@ -621,7 +621,8 @@ class Theorem(Proof):
         Return the HTML link to the theorem proof file.
         '''
         return self._storedTheorem().getProofLink()
-
+    
+    """
     def recordPresumedContexts(self, presumed_context_names):
         '''
         Record information about what other contexts are
@@ -656,8 +657,18 @@ class Theorem(Proof):
         in this context.
         '''
         return self._storedTheorem().getAllPresumedTheoremNames()
-
-    def recordProof(self, proof):
+    """
+    
+    def getPresumptionsAndExclusions(self):
+        '''
+        Return the set of theorems and theories that are explicitly
+        presumed by this theorem, and a set of exclusions (e.g.,
+        you could presume the proveit.logic theory but exclude
+        proveit.logic.equality).
+        '''
+        return self._storedTheorem().getPresumptionsAndExclusions()
+    
+    def _recordProof(self, proof):
         '''
         Record the given proof as the proof of this theorem.  Updates
         dependency links (usedAxioms.txt, usedTheorems.txt, and usedBy.txt files)
@@ -733,7 +744,7 @@ class Theorem(Proof):
         (see KnownTruth.beginProof in known_truth.py).
         When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
         Otherwise only Theorems named in the KnownTruth.presumingTheoremNames set
-        or contained within any of the KnownTruth.presumingPrefixes
+        or contained within any of the KnownTruth.presumingTheories
         (i.e., context) are allowed.
         '''
         #from proveit.certify import isFullyProven
@@ -750,8 +761,15 @@ class Theorem(Proof):
             self.disable()
             return
         else:
-            presumed_via_context = not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes())
-            if str(self) in KnownTruth.presumingTheoremNames or presumed_via_context:
+            name_and_containing_theories = list(
+                    self.theoremNameAndContainingTheories())
+            exclusions = KnownTruth.presumingTheoremAndTheoryExclusions
+            if exclusions.isdisjoint(name_and_containing_theories):
+                presumptions = KnownTruth.presumedTheoremsAndTheories
+                presumed = not presumptions.isdisjoint(name_and_containing_theories)
+            else:
+                presumed = False
+            if presumed:
                 # This Theorem is being presumed specifically, or a context in which it is contained is presumed.
                 # Presumption via context (a.k.a. prefix) is contingent upon not having a mutual presumption
                 # (that is, some theorem T can presume everything in another context except for theorems
@@ -759,23 +777,24 @@ class Theorem(Proof):
                 # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
                 # is being proven.
                 # check the "presuming information, recursively, for circular logic.
-                presumed_theorem_names = stored_theorem.getAllPresumedTheoremNames()
+                my_possible_dependents, _ = stored_theorem.getPresumptionsAndExclusions()
                 # If this theorem has a proof, include all dependent theorems as
                 # presumed (this may have been presumed via context, so this can contain
                 # more information than the specifically presumed theorems).
                 if stored_theorem.hasProof():
-                    presumed_theorem_names.update(stored_theorem.allUsedTheoremNames())
-                if presumed_via_context:
-                    if theorem_being_proven_str not in presumed_theorem_names:
-                        # Presumed via context without any mutual specific presumption or existing co-dependence.
-                        legitimately_presumed=True # It's legit; don't disable.
-                    # If there is a conflict, don't presume something via context.
-                else:
-                    # This Theorem is being presumed specifically
-                    if (theorem_being_proven_str in presumed_theorem_names):
-                        # Theorem-specific presumptions are mutual.  Raise a CircularLogic error.
+                    my_possible_dependents.update(stored_theorem.allUsedTheoremNames())
+                if theorem_being_proven_str in my_possible_dependents:
+                    if str(self) in KnownTruth.presumedTheoremsAndTheories:
+                        # Theorem-specific presumption or dependency is
+                        # mutual.  Raise a CircularLogic error.
                         raise CircularLogic(KnownTruth.theoremBeingProven, self)
-                    legitimately_presumed=True # This theorem is specifically and legitimately being presumed.
+                    # We must exclude this theorem implicitly to 
+                    # avoid a circular dependency.
+                    print("%s is being implicitly excluded as a "
+                          "presumption to avoid a Circular dependency."
+                          %str(self))
+                else:
+                    legitimately_presumed = True
         if not legitimately_presumed:
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all dependents.

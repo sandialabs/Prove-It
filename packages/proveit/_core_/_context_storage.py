@@ -126,7 +126,7 @@ class ContextStorage:
         # which lists the theorems of the context in order with other
         # theorems inserted as they are explicitly presumed.
         # Set to None to indicate it must be updated.
-        self._theorem_dependency_order = self._loadTheoremDependencyOrder()
+        #self._theorem_dependency_order = self._loadTheoremDependencyOrder()
         
         # Map folder names to corresponding ContextFolderStorage
         # objects.
@@ -220,6 +220,7 @@ class ContextStorage:
                                     + referenced_root.directory + '\n')
                 self.referencedContextRoots.add(referenced_root_name)
     
+    """
     def _loadTheoremDependencyOrder(self):
         '''
         Load the theorem dependency order that is stored in 
@@ -269,6 +270,7 @@ class ContextStorage:
         filename = os.path.join(self.pv_it_dir, 'theorem_dependency_order.txt')
         if os.path.isfile(filename):
             os.remove(filename)
+    """
             
     @staticmethod
     def _kind_to_folder(kind):
@@ -410,11 +412,13 @@ class ContextStorage:
         with open(names_file, 'w') as f:
             for name in names:
                 f.write(name + ' ' + special_hash_ids[name] + '\n')
-                
+        
+        """
         if kind=='theorem':
             # update the theorem dependency order when setting the
             # theorems
-            self._updateTheoremDependencyOrder(names)            
+            self._updateTheoremDependencyOrder(names)  
+        """
 
     def axiomNames(self):
         if self._axiom_names is None:
@@ -570,6 +574,7 @@ class ContextStorage:
             Context.default = prev_context_default # reset the default Context 
         return expr
     
+    """
     def getAllPresumedTheoremNames(self, theorem_name):
         '''
         Return the set of full names of presumed theorems that are 
@@ -617,6 +622,7 @@ class ContextStorage:
             if presumption_name not in presumed_theorem_names:
                 presumed_theorem_names.add(presumption_name)
                 context._storage._allPresumedTheoremNames(theorem_name, presumed_theorem_names, presumption_chain+[presumption_name])
+    """
 
     def thmProofNotebook(self, theorem_name, expr):
         '''
@@ -684,7 +690,8 @@ class ContextStorage:
             match =  re.search(r'_theorems_\.ipynb\#([_a-zA-Z]\w*)', nb)
             if match is None: return None
             return match.groups()[0]
-            
+    
+    # TODO: UPDATE STASHING AFTER PROOF NOTEBOOKS MOVE INTO FOLDERS.
     def stashExtraneousThmProofNotebooks(self, theorem_names):
         '''
         For any proof notebooks for theorem names not included in the 
@@ -2160,6 +2167,9 @@ def removeIfExists(path):
         os.remove(path)
 
 class StoredTheorem(StoredSpecialStmt):
+    PRESUMPTIONS_HEADER = '# THEOREMS AND THEORIES THAT MAY BE PRESUMED:'
+    PRESUMPTION_EXCLUSION_HEADER = '# THEOREMS AND THEORIES TO EXCLUDE:'
+    
     def __init__(self, context, name):
         '''
         Creates a StoredTheorem object for managing a theorem's
@@ -2173,6 +2183,8 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         return relurl(os.path.join(self.context.getPath(), '_proofs_', 
                                    self.name + '.ipynb'))
+                                   #self.name, 'thm_proof.ipynb'))
+        
 
     def remove(self, keepPath=False):
         if self.hasProof():
@@ -2206,7 +2218,8 @@ class StoredTheorem(StoredSpecialStmt):
                     yield line
         except IOError:
             pass # no contribution if the file doesn't exist
-
+    
+    """
     def recordPresumedContexts(self, presumed_context_names):
         '''
         Record information about what other contexts are
@@ -2271,7 +2284,8 @@ class StoredTheorem(StoredSpecialStmt):
                     presumption = presumption.strip()
                     if presumption == '': continue
                     presumptions.append(presumption)
-        return presumptions        
+        return presumptions   
+    """
     
     """
     def getRecursivelyPresumedTheorems(self, presumed_theorems, presumption_chain=None):
@@ -2305,19 +2319,71 @@ class StoredTheorem(StoredSpecialStmt):
                 presumed_theorems.add(thm)
                 thm._storedTheorem().getRecursivelyPresumedTheorems(presumed_theorems, list(presumption_chain))
     """
+    """
     def getAllPresumedTheoremNames(self):
         '''
         Return the set of full names of theorems that are presumed 
         directly or indirectly by this one.
         '''
         return self.context._storage.getAllPresumedTheoremNames(self.name)
+    """
+    
+    def getPresumptionsAndExclusions(self):
+        '''
+        Return the set of theorems and theories that are explicitly
+        presumed by this theorem, and a set of exclusions (e.g.,
+        you could presume the proveit.logic theory but exclude
+        proveit.logic.equality).
+        '''
+        proof_path = os.path.join(self.context.getPath(), 
+                                  '_proofs_', self.name)
+
+        presumptions = set()
+        exclusions = set()
+        presumptions_filename = os.path.join(proof_path, 'presumptions_all.txt')
+        
+        # Let's create the generic version.
+        # TODO: remove
+        if not os.path.isdir(proof_path):
+            os.mkdir(proof_path)
+        if not os.path.isfile(presumptions_filename):            
+            with open(presumptions_filename, 'w') as f:
+                f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
+                f.write('proveit\n')
+                f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
+        # also temporary
+        filename = os.path.join(proof_path, 'presumptions.txt')
+        if not os.path.isfile(filename):            
+            with open(filename, 'w') as f:
+                f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
+                f.write('proveit\n')
+                f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
+        
+        active = presumptions
+        top_header = StoredTheorem.PRESUMPTIONS_HEADER
+        exclusions_header = StoredTheorem.PRESUMPTION_EXCLUSION_HEADER
+        with open(presumptions_filename, 'r') as f:
+            for line in f.readlines():
+                line = line.strip()
+                if line[0] == '#':
+                    if line == exclusions_header:
+                        active = exclusions
+                    elif line != top_header:
+                        raise Exception("%s file is not in a valid format. "
+                                        "%s does not match %s or %s."
+                                        %(presumptions_filename, line,
+                                          top_header, exclusions_header))
+                elif line[0] != '#':
+                    active.add(line)
+        return presumptions, exclusions
     
     def _recordProof(self, proof):
         '''
         Record the given proof as the proof of this stored theorem.  
         Updates dependency links (used_axioms.txt, used_theorems.txt
         files and used_by folder) and completion markers appropriately
-        (empty 'complete' files).
+        (empty 'complete' files).  Also, record the presumptions
+        that were actually used in a presumptions.txt file.
         '''
         from proveit._core_ import Proof
         from .context import Context
@@ -2392,6 +2458,37 @@ class StoredTheorem(StoredSpecialStmt):
         # are complete) then  propagate this information to the theorems
         # that depend upon this one.
         self._propagateCompletion()
+    
+        # Record any imported theorem that is usable as a "presumptions"
+        # stored in a presumptions.txt file that should be allowable 
+        # theorems whenever the proof is regenerated.
+        proof_path = os.path.join(self.context.getPath(), 
+                                  '_proofs_', self.name)
+        
+        # For temporary backward compatibility, created the directory
+        # if necessary.  TODO: remove
+        if not os.path.isdir(proof_path):
+            os.mkdir(proof_path)
+        
+        '''
+        # This is too specific and results in error during automation.
+        # With future work, maybe we can use this approach, but it's
+        # too much work right now and it isn't clear if it is very
+        # doable.
+        with open(os.path.join(proof_path, 'presumptions.txt'), 'w') as f:
+            for theorem in proof.usedTheorems():
+            #for theorem in Theorem.allTheorems:
+                #if theorem.isUsable():
+                f.write(str(theorem) + '\n')
+        '''
+        
+        from proveit._core_.proof import Theorem
+        with open(os.path.join(proof_path, 'presumptions.txt'), 'w') as f:
+            f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
+            for theorem in Theorem.allTheorems:
+                if theorem.isUsable():
+                    f.write(str(theorem) + '\n')
+            f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
     
     def hasProof(self):
         '''

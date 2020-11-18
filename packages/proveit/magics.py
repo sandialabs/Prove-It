@@ -424,7 +424,7 @@ class ProveItMagicCommands:
             proveit.defaults.automation = True
         proving_theorem_truth = proving_theorem.provenTruth
         print("Beginning proof of", theorem_name)
-        return proving_theorem_truth.beginProof(proving_theorem, presumptions, justRecordPresumingInfo=justRecordPresumingInfo)
+        return proving_theorem_truth.beginProof(proving_theorem) #, presumptions, justRecordPresumingInfo=justRecordPresumingInfo)
         
     def qed(self):
         import proveit

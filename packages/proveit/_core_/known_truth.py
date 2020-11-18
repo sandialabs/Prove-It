@@ -74,9 +74,13 @@ class KnownTruth:
     hasBeenProven = None # Has the theoremBeingProven been proven yet in this session?  
                          # Goes from None to False (after beginning a proof and disabling Theorems that cannot be used)
                          # to True (when there is a legitimate proof).
-    # Set of theorems/packages that are presumed to be True for the purposes of the proof being proven:
-    presumingTheoremNamess = None # set of full names of presumed theorems when in use
-    presumingPrefixes = None # set of context names or full theorem names when in use.
+    
+    # Set of theorems/packages that are presumed to be True for the 
+    # purposes of the proof being proven and exclusions thereof:
+    presumedTheoremsAndTheories = None 
+    presumingTheoremAndTheoryExclusions = None 
+    
+    presumingExclusions = None # set if theorems and theories excluded from presumptions
     qedInProgress = False # set to true when "%qed" is in progress
         
     # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
@@ -223,7 +227,7 @@ class KnownTruth:
     def __hash__(self):
         return self._meaning_id
         
-    def beginProof(self, theorem, presuming=tuple(), justRecordPresumingInfo=False):
+    def beginProof(self, theorem): #, presuming=tuple(), justRecordPresumingInfo=False):
         '''
         Begin a proof for a theorem.  Only use other theorems that are in 
         the presuming list of theorems/packages or theorems that are required,
@@ -240,7 +244,8 @@ class KnownTruth:
             raise TypeError('Only begin a proof for a Theorem')
         if theorem.provenTruth != self:
             raise ValueError('Inconsistent theorem for the KnownTruth in beginProof call')
-                
+        
+        """
         # Note: all previous theorems of the context are presumed automatically.
         context = theorem.context
         num_prev_thms = 0 # number of previous theorems within the context
@@ -278,20 +283,21 @@ class KnownTruth:
         theorem.recordPresumedTheorems(sorted(explicitly_presumed_thm_names))
         if justRecordPresumingInfo: return self.expr
         print("Recorded 'presuming' information")
+        """
         
         # The full list of presumed theorems includes all previous theorems
         # of the context and all indirectly presumed theorems via transitivity
         # (a presumption of a presumption is a presumption).
-        presumed_theorem_names = theorem.getAllPresumedTheoremNames()
+        presumptions, exclusions = theorem.getPresumptionsAndExclusions()
 
-        if str(self) in presumed_theorem_names:
+        if str(self) in presumptions:
             from .proof import CircularLogic
             # extra sanity check (should be caught within getAllPresumedTheoremNames)
             raise CircularLogic(theorem, theorem)
         
         KnownTruth.theoremBeingProven = theorem
-        KnownTruth.presumingTheoremNames = set(presumed_theorem_names)
-        KnownTruth.presumingPrefixes = set(presumed_context_names)
+        KnownTruth.presumedTheoremsAndTheories = presumptions
+        KnownTruth.presumingTheoremAndTheoryExclusions = exclusions
         Theorem.updateUsability()
         
         # change KnownTruth.hasBeenProven
@@ -308,6 +314,7 @@ class KnownTruth:
         """
         if self._checkIfReadyForQED(self.proof()):
             return self.expr # already proven
+        """
         if len(presumed_context_names) > 0:
             print("Presuming theorems in %s (except any that presume this theorem)."%', '.join(sorted(presumed_context_names)))
         if len(explicitly_presumed_thm_names) > 0:
@@ -316,6 +323,7 @@ class KnownTruth:
         if num_prev_thms > 0:
             theorem_or_theorems = 'theorem' if num_prev_thms==1 else 'theorems'
             print("Presuming previous %s (applied transitively)."%theorem_or_theorems)
+        """
         theorem._meaningData._unusableProof = theorem # can't use itself to prove itself
         return self.expr
     
@@ -335,7 +343,7 @@ class KnownTruth:
             proof = self.expr.prove(assumptions=[]).proof()
             if not proof.isUsable():
                 proof.provenTruth.raiseUnusableProof()
-            KnownTruth.theoremBeingProven.recordProof(proof)
+            KnownTruth.theoremBeingProven._recordProof(proof)
         finally:
             KnownTruth.qedInProgress = False
         return proof
