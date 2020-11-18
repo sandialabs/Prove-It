@@ -664,7 +664,7 @@ class Theorem(Proof):
         and proven dependency indicators (various provenTheorems.txt files
         for theorems that depend upon the one being proven) appropriately.
         '''
-        self._storedTheorem().recordProof(proof)
+        self._storedTheorem()._recordProof(proof)
 
     def removeProof(self):
         '''

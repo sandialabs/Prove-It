@@ -94,6 +94,13 @@ class OperationOverInstances(Operation):
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
 
         if styles is None: styles=dict()
+        if 'withWrapping' not in styles:
+            styles['withWrapping'] = 'False'
+        if 'wrapParams' not in styles:
+            styles['wrapParams'] = 'False'
+        if 'justification' not in styles:
+            styles['justification'] = 'center'
+
         if condition is not None:
             if conditions is not None:
                 raise ValueError("Cannot specify both 'conditions' and "
@@ -564,17 +571,61 @@ class OperationOverInstances(Operation):
         '''
         return list(self._instanceParamLists())
 
+    def styleOptions(self):
+        from proveit._core_.expression.style_options import StyleOptions
+        options = StyleOptions(self)
+        options.addOption('withWrapping', 'Whether or not to wrap the Expression after the parameters, default is True')
+        options.addOption('wrapParams', 'Wraps every two parameters AND wraps the Expression after the parameters, '
+                                        'default is True')
+        options.addOption('justification', "justify to the 'left', 'center', or 'right' in the array cells")
+        return options
+
+    def withJustification(self, justification):
+        return self.withStyles(justification=justification)
+
+    def withWrapping(self, wrap=True):
+        '''
+        Wraps the 'instanceExpr' onto the next line. For example
+        \forall_{a, b, c, d, e, f, g}
+        P(a, b, c, d, e, f, g)
+
+        rather than
+        \forall_{a, b, c, d, e, f, g} P(a, b, c, d, e, f, g)
+        '''
+        return self.withStyles(withWrapping=str(wrap))
+
+    def wrapParams(self, wrap=True):
+        '''
+        Wraps the parameters onto the multiple lines depending on
+        how many parameters there are.   For example:
+        \forall_{a, b, c,
+                d, e, f, g} P(a, b, c, d, e, f, g)
+
+        rather than
+        \forall_{a, b, c, d, e, f, g} P(a, b, c, d, e, f, g)
+        '''
+        return self.withStyles(wrapParams=str(wrap))
+
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self._formatted('latex', **kwargs)
 
-    def _formatted(self, formatType, fence=False):
+    def _formatted(self, formatType, withWrapping=None, wrapParams=None, justification=None, fence=False):
         '''
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
         '''
+
+        if withWrapping is None:
+            # style call to wrap the expression after the parameters
+            withWrapping = self.getStyle('withWrapping', 'False')
+        if wrapParams is None:
+            # style call to wrap the expression after the parameters
+            wrapParams = self.getStyle('wrapParams', 'False')
+        if justification is None:
+            justification = self.getStyle('justification', 'center')
         # override this default as desired
         explicitIparams = list(self.explicitInstanceParams())
         explicitConditions = ExprTuple(*self.explicitConditions())
@@ -590,9 +641,11 @@ class OperationOverInstances(Operation):
         if formatType == 'string':
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
-            if hasExplicitIparams:
-                if hasMultiDomain: outStr += domain_conditions.formatted(formatType, operatorOrOperators=',', fence=False)
-                else: outStr += formattedParams
+            if hasExplicitIparams: 
+                if hasMultiDomain:
+                    outStr += domain_conditions.formatted(formatType, operatorOrOperators=',', fence=False)
+                else:
+                    outStr += formattedParams
             if not hasMultiDomain and self.domain is not None:
                 outStr += ' in '
                 if hasMultiDomain:
@@ -600,27 +653,89 @@ class OperationOverInstances(Operation):
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)
             if hasExplicitConditions:
-                if hasExplicitIparams: outStr += " | "
-                outStr += explicitConditions.formatted(formatType, fence=False)
-                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions)
+                if hasExplicitIparams:
+                    outStr += " | "
+                outStr += explicitConditions.formatted(formatType, fence=False)                
+                # outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions
+                # if condition not in implicitConditions)
             outStr += '} ' + instanceExpr.formatted(formatType,fence=True)
-            if fence: outStr += ']'
+            if fence:
+                outStr += ']'
         if formatType == 'latex':
-            if fence: outStr += r'\left['
-            outStr += self.operator.formatted(formatType) + '_{'
-            if hasExplicitIparams:
-                if hasMultiDomain: outStr += domain_conditions.formatted(formatType, operatorOrOperators=',', fence=False)
-                else: outStr += formattedParams
-            if not hasMultiDomain and self.domain is not None:
-                outStr += r' \in '
-                outStr += self.domain.formatted(formatType, fence=False)
-            if hasExplicitConditions:
-                if hasExplicitIparams: outStr += "~|~"
-                outStr += explicitConditions.formatted(formatType, fence=False)
-                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions)
-            outStr += '}~' + instanceExpr.formatted(formatType,fence=True)
+            if fence:
+                outStr += r'\left['
+            if wrapParams == 'True':
+                outStr += self.operator.formatted(formatType) + r'_{ \scriptsize \begin{array}{' + justification[0] + \
+                          '}' + '\n'
+                if hasExplicitIparams:
+                    if hasMultiDomain:
+                        outStr += self._wrap_params_formatted(formatType=formatType, params=domain_conditions,
+                                                              operatorOrOperators=',', fence=False)
+                    else:
+                        outStr += self._wrap_params_formatted(formatType=formatType, params=explicitIparams,
+                                                              fence=False)
+                if not hasMultiDomain and self.domain is not None:
+                    outStr += r' \in '
+                    outStr += self.domain.formatted(formatType, fence=False)
+                if hasExplicitConditions:
+                    if hasExplicitIparams:
+                        outStr += "~|~"
+                    outStr += self._wrap_params_formatted(formatType=formatType, params=explicitConditions, fence=False)
+                outStr += r'\end{array}' + '\n' + r'}~  \\' + '\n' + instanceExpr.formatted(formatType, fence=True)
+            else:
+                outStr += self.operator.formatted(formatType) + r'_{'
+                if hasExplicitIparams:
+                    if hasMultiDomain:
+                        outStr += domain_conditions.formatted(formatType, operatorOrOperators=',', fence=False)
+                    else:
+                        outStr += formattedParams
+                if not hasMultiDomain and self.domain is not None:
+                    outStr += r' \in '
+                    outStr += self.domain.formatted(formatType, fence=False)
+                if hasExplicitConditions:
+                    if hasExplicitIparams:
+                        outStr += "~|~"
+                    outStr += explicitConditions.formatted(formatType, fence=False)
+                # outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions
+                # if condition not in implicitConditions)
+                if withWrapping == 'True':
+                    print(instanceExpr.formatted(formatType, fence=True))
+                    outStr += r'}~ ' + instanceExpr.formatted(formatType, fence=True)
+                else:
+                    outStr += '}~' + instanceExpr.formatted(formatType, fence=True)
             if fence: outStr += r'\right]'
+        #print(outStr)
+        return outStr
 
+    def _wrap_params_formatted(self, formatType, params, fence, operatorOrOperators=None):
+        '''
+        Wraps the list of parameters depending on the type.
+        '''
+        outStr = ''
+        cap = 70
+        # the average length of a range of ranges and a range
+        count = 0
+        if isinstance(params, list):
+            for i, entry in enumerate(params):
+                if count > cap:
+                    count = 0
+                    outStr += r'\\' + '\n'
+                if i == len(params) - 1:
+                    outStr += entry.formatted(formatType, fence=fence)
+                else:
+                    outStr += entry.formatted(formatType, fence=fence) + ', '
+                count += len(entry.formatted(formatType, fence=fence))
+        elif isinstance(params, ExprTuple):
+            for entry in params.entries:
+                if count > cap:
+                    count = 0
+                    outStr += r'\\' + '\n'
+                if operatorOrOperators is not None:
+                    outStr += entry.formatted(formatType, operatorOrOperators=operatorOrOperators,fence=fence)
+                    count += len(entry.formatted(formatType, operatorOrOperators=operatorOrOperators, fence=fence))
+                else:
+                    outStr += entry.formatted(formatType, fence=fence)
+                    count += len(entry.formatted(formatType, fence=fence))
         return outStr
 
     """

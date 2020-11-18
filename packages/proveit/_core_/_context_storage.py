@@ -382,6 +382,15 @@ class ContextStorage:
                         print('Modifying %s %s in %s context'%
                               (kind, name, context_name))
                         obsolete_hash_ids.add(old_name_to_hash[name])
+                    # Let's also make sure there is a "used_by"
+                    # sub-folder.
+                    used_by_folder = os.path.join(self.pv_it_dir, folder,
+                                                  hash_id, 'used_by')
+                    if not os.path.isdir(used_by_folder):
+                        try:
+                            os.mkdir(used_by_folder)
+                        except OSError:
+                            pass # no worries
         # Remove proof dependencies of modified statements.
         for hash_id in obsolete_hash_ids:
             StoredSpecialStmt.remove_dependency_proofs(
@@ -845,6 +854,7 @@ class ContextFolderStorage:
         from IPython.lib.latextools import latex_to_png, LaTeXTool
         LaTeXTool.clear_instance()
         lt = LaTeXTool.instance()
+        configLatexToolFn(lt)
         lt.use_breqn = False
         # the 'matplotlib' backend can do some BAD rendering in my 
         # experience (like \lnot rendering as lnot in some contexts)
@@ -1917,13 +1927,35 @@ class ContextFolderStorage:
                     if thm_name not in thm_names:
                         paths_to_remove.append(os.path.join(
                                 self.pv_it_dir, _folder))
+        def unable_to_remove_warning(name):
+            print("Unable to remove %s.\n  Skipping clean step "
+                  "(don't worry, it's not critical)"%name)
+        if self.folder in ('axioms', 'theorems'):
+            # When 'cleaning' the theorems folder, we will also
+            # remove any obsolete 'used_by' folders or 'complete'
+            # files.
+            for hash_subfolder in os.listdir(self.path):
+                if not hash_subfolder in self._objhash_to_name:
+                    used_by_path = os.path.join(self.path, hash_subfolder,
+                                                'used_by')
+                    if os.path.isdir(used_by_path):
+                        try:
+                            shutil.rmtree(used_by_path)
+                        except OSError:
+                            unable_to_remove_warning(used_by_path)
+                    complete_path = os.path.join(self.path, hash_subfolder,
+                                                'complete')
+                    if os.path.isfile(complete_path):
+                        try:
+                            os.remove(complete_path)
+                        except OSError:
+                            unable_to_remove_warning(complete_path)                            
         
         for hash_folder in paths_to_remove:
             try:
                 shutil.rmtree(hash_folder)
             except OSError:
-                print("Unable to remove '%s'.\n  Skipping clean step "
-                      "(don't worry, it's not critical)."%hash_folder)
+                unable_to_remove_warning(hash_folder)
     
     def containsAnyExpression(self):
         '''
@@ -2004,11 +2036,10 @@ class StoredSpecialStmt:
                 # worry about it (assuming it was removed
                 # responsibly with its dependents removed already).
                 pass
+        removeIfExists(os.path.join(path, 'complete'))
         removeIfExists(os.path.join(path, 'proof.pv_it'))
-        removeIfExists(os.path.join(path, 'used_by.txt'))
         removeIfExists(os.path.join(path, 'used_axioms.txt'))
         removeIfExists(os.path.join(path, 'used_theorems.txt'))
-        removeIfExists(os.path.join(path, 'complete_used_theorems.txt'))
             
     def readDependentTheorems(self):
         '''
@@ -2024,12 +2055,11 @@ class StoredSpecialStmt:
         '''
         from .context import Context, ContextException
         theorems = []
-        usedByFilename = os.path.join(path, 'used_by.txt')
-        if not os.path.isfile(usedByFilename):
+        usedByDir = os.path.join(path, 'used_by')
+        if not os.path.isdir(usedByDir):
             return theorems # return the empty list
-        with open(usedByFilename, 'r') as usedByFile:
-            for line in usedByFile:
-                theorems.append(line.strip())
+        for filename in os.listdir(usedByDir):
+            theorems.append(filename)
         verified_theorems = []
         for theorem in theorems:
             try:
@@ -2039,12 +2069,12 @@ class StoredSpecialStmt:
                 # This theorem no longer exists in the database, 
                 # apparently.  So we'll remove it from the dependents.
                 pass
-        if len(verified_theorems) < len(theorems):
-            # Re-write the dependents file to exclude the theorems
-            # that no longer exist in the database. 
-            with open(usedByFilename, 'w') as usedByFile:
-                for theorem in verified_theorems:
-                    usedByFile.write(theorem + '\n')
+        to_remove = set(theorems) - set(verified_theorems)
+        for obsolete_thm in to_remove:
+            try:
+                os.remove(os.path.join(usedByDir, filename))
+            except OSError:
+                pass # no worries
         return verified_theorems
     
     def allDependents(self):
@@ -2100,10 +2130,14 @@ class StoredSpecialStmt:
 
     def _removeUsedByEntry(self, usedByTheorem):
         '''
-        Remove a particular usedByTheorem entry in the used_by.txt for 
+        Remove a particular usedByTheorem entry in the used_by folder of 
         this stored axiom or theorem.
         '''
-        self._removeEntryFromFile('used_by.txt', str(usedByTheorem))
+        usedByDir = os.path.join(self.path, 'used_by')
+        try:
+            os.remove(os.path.join(usedByDir, usedByTheorem))
+        except OSError:
+            pass # no worries        
     
 class StoredAxiom(StoredSpecialStmt):
     def __init__(self, context, name):
@@ -2122,7 +2156,8 @@ class StoredAxiom(StoredSpecialStmt):
         return axioms_notebook_link + '#' + self.name
 
 def removeIfExists(path):
-    if os.path.isfile(path): os.remove(path)
+    if os.path.isfile(path): 
+        os.remove(path)
 
 class StoredTheorem(StoredSpecialStmt):
     def __init__(self, context, name):
@@ -2145,26 +2180,32 @@ class StoredTheorem(StoredSpecialStmt):
             self.removeProof()
         StoredSpecialStmt.remove(self, keepPath)
 
-    def readDependencies(self):
+    def readUsedAxioms(self):
+        '''
+        Return the recorded list of axioms.
+        '''
+        return list(self._readUsedStmts('axioms'))
+        
+    def readUsedTheorems(self):
+        '''
+        Return the recorded list of theorems.
+        '''
+        return list(self._readUsedStmts('theorems'))
+
+    def _readUsedStmts(self, kind):
         '''
         Returns the used set of axioms and theorems (as a tuple of sets
         of strings) that are used by the given theorem as recorded in 
         the database.
         '''
-        usedAxiomNames = set()
-        usedTheoremNames = set()
-        for usedStmts, usedStmtsFilename in (
-                (usedAxiomNames, 'used_axioms.txt'), 
-                (usedTheoremNames, 'used_theorems.txt')):
-            try:
-                with open(os.path.join(self.path, usedStmtsFilename), 
-                          'r') as usedStmtsFile:
-                    for line in usedStmtsFile:
-                        line = line.strip()
-                        usedStmts.add(line)
-            except IOError:
-                pass # no contribution if the file doesn't exist
-        return (usedAxiomNames, usedTheoremNames)
+        try:
+            with open(os.path.join(self.path, 'used_%s.txt'%kind), 
+                      'r') as usedStmtsFile:
+                for line in usedStmtsFile:
+                    line = line.strip()
+                    yield line
+        except IOError:
+            pass # no contribution if the file doesn't exist
 
     def recordPresumedContexts(self, presumed_context_names):
         '''
@@ -2271,13 +2312,12 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         return self.context._storage.getAllPresumedTheoremNames(self.name)
     
-    def recordProof(self, proof):
+    def _recordProof(self, proof):
         '''
         Record the given proof as the proof of this stored theorem.  
-        Updates dependency links (used_axioms.txt, used_theorems.txt,
-        and used_by.txt files) and proven dependency indicators (various
-        provenTheorems.txt files  for theorems that depend upon this 
-        one) appropriately.
+        Updates dependency links (used_axioms.txt, used_theorems.txt
+        files and used_by folder) and completion markers appropriately
+        (empty 'complete' files).
         '''
         from proveit._core_ import Proof
         from .context import Context
@@ -2303,7 +2343,8 @@ class StoredTheorem(StoredSpecialStmt):
         
         # Remove usedBy links that are obsolete because the proof has
         # changed
-        prevUsedAxiomNames, prevUsedTheoremNames = self.readDependencies()
+        prevUsedAxiomNames, prevUsedTheoremNames = (
+                self.readUsedAxioms(), self.readUsedTheorems())
         for prevUsedAxiom in prevUsedAxiomNames:
             if prevUsedAxiom not in usedAxiomNames:
                 try:
@@ -2336,13 +2377,6 @@ class StoredTheorem(StoredSpecialStmt):
                             storedUsedStmt.context)
                     usedStmtsFile.write(str(storedUsedStmt) + '\n')
         
-        # record any used theorems that are already completely proven
-        with open(os.path.join(self.path, 'complete_used_theorems.txt'), 
-                  'w') as completedTheoremsFile:
-            for usedTheorem in usedTheoremNames:
-                if Context.getStoredTheorem(usedTheorem).isComplete():
-                    completedTheoremsFile.write(usedTheorem + '\n')
-        
         # for each used axiom/theorem, record that it is used by the 
         # newly proven theorem
         for storedUsedStmts, prevUsedStmts in (
@@ -2351,11 +2385,10 @@ class StoredTheorem(StoredSpecialStmt):
             for storedUsedStmt in storedUsedStmts:
                 if str(storedUsedStmt) not in prevUsedStmts: 
                     # (otherwise the link should already exist)
-                    with open(os.path.join(storedUsedStmt.path, 'used_by.txt'), 
-                              'a') as usedByFile:
-                        usedByFile.write(str(self) + '\n')
+                    open(os.path.join(storedUsedStmt.path, 'used_by',
+                                      str(self)), 'w')
         
-        # if this proof is complete (all of the theorems that it uses 
+        # If this proof is complete (all of the theorems that it uses 
         # are complete) then  propagate this information to the theorems
         # that depend upon this one.
         self._propagateCompletion()
@@ -2365,30 +2398,15 @@ class StoredTheorem(StoredSpecialStmt):
         Returns True iff a proof was recorded for this theorem.
         '''
         return os.path.isfile(os.path.join(self.path, 'proof.pv_it'))
-    
-    def numUsedTheorems(self):
-        try:
-            return self._countEntries('used_theorems.txt')
-        except IOError:
-            return 0 # if the file is not there for some reason
-
-    def numCompleteUsedTheorems(self):
-        try:
-            return self._countEntries('complete_used_theorems.txt')
-        except IOError:
-            return 0 # if the file is not there for some reason
-    
+        
     def isComplete(self):
         '''
         Return True iff this theorem has a proof and all theorems that
         that it uses are also complete.
         '''
-        if not self.hasProof():
-            # Cannot be complete if there is no proof for this theorem
-            return False 
-        # If all used theorems have are complete 
-        # (and this theorem has a proof), then this theorem is complete.
-        return self.numUsedTheorems() == self.numCompleteUsedTheorems()
+        # An empty file named "complete" is used to indicate that
+        # a proof is complete.
+        return os.path.isfile(os.path.join(self.path, 'complete'))
     
     def _propagateCompletion(self):
         '''
@@ -2397,6 +2415,7 @@ class StoredTheorem(StoredSpecialStmt):
         news onward.
         '''
         from .context import Context
+        self._markIfComplete()
         if self.isComplete():
             # This theorem has been completely proven.
             # Let the dependents know.
@@ -2407,27 +2426,30 @@ class StoredTheorem(StoredSpecialStmt):
                 except KeyError:
                     # Dependent was removed; skip it.
                     continue
-                _path = os.path.join(storedDependent.path, 
-                                    'complete_used_theorems.txt')
-                if str(self) not in storedDependent._getEntries(
-                        'complete_used_theorems.txt'):
-                    with open(_path, 'a') as f:
-                        f.write(str(self) + '\n')
                 # propagate this recursively in case self's theorem was 
                 # the final  theorem to complete the dependent
                 storedDependent._propagateCompletion()
-                        
+    
+    def _markIfComplete(self):
+        '''
+        If all of the used theorems are complete, this is now complete.
+        '''
+        from .context import Context
+        if all(Context.getStoredTheorem(used_theorem).isComplete() for 
+               used_theorem in self.readUsedTheorems()):
+            # An empty 'complete' file marks the completion.
+            open(os.path.join(self.path, 'complete'), 'w')
+    
     def removeProof(self):
         '''
         Erase the proof of this theorem from the database and all 
         obsolete links/references.
         '''     
         from .context import Context 
-        # was it complete before the proof was removed?
-        wasComplete = self.isComplete() 
         # Remove obsolete usedBy links that refer to this theorem by
-        # its old proof
-        prevUsedAxiomNames, prevUsedTheoremNames = self.readDependencies()
+        # its old proof.
+        prevUsedAxiomNames, prevUsedTheoremNames = (
+                self.readUsedAxioms(), self.readUsedTheorems())
         for usedAxiom in prevUsedAxiomNames:
             try:
                 Context.getStoredAxiom(usedAxiom)._removeUsedByEntry(str(self))
@@ -2438,25 +2460,14 @@ class StoredTheorem(StoredSpecialStmt):
                 Context.getStoredTheorem(usedTheorem)._removeUsedByEntry(str(self))
             except KeyError:
                 pass # If it doesn't exist, never mind.
-        # If it was previously complete before, we need to inform 
-        # dependents that it is not longer complete.
-        if wasComplete:
-            dependentTheorems = self.readDependentTheorems()
-            for dependent in dependentTheorems:
-                try:
-                    stored_thm = Context.getStoredTheorem(dependent)
-                    stored_thm._undoDependentCompletion(str(self))
-                except KeyError:
-                    # If the dependent is no longer there, we don't need
-                    # to worry about it (assuming it was removed
-                    # responsibly with its dependents removed already).
-                    pass
+        # If it was previously complete before, we need to erase the
+        # completion marker and inform dependents that it is not longer 
+        # complete.
+        self._undoDependentCompletion()
         # remove 'proof.pv_it', 'used_axioms.txt', 'used_theorems.txt', 
-        # and 'complete_used_theorems.txt' for the theorem
         removeIfExists(os.path.join(self.path, 'proof.pv_it'))
         removeIfExists(os.path.join(self.path, 'used_axioms.txt'))
         removeIfExists(os.path.join(self.path, 'used_theorems.txt'))
-        removeIfExists(os.path.join(self.path, 'complete_used_theorems.txt'))
 
     def allRequirements(self):
         '''
@@ -2470,7 +2481,8 @@ class StoredTheorem(StoredSpecialStmt):
         if not self.hasProof():
             raise Exception('The theorem must be proven in order to '
                             'obtain its requirements')
-        usedAxiomNames, usedTheoremNames = self.readDependencies()
+        usedAxiomNames, usedTheoremNames = (
+                self.readUsedAxioms(), self.readUsedTheorems())
         requiredAxioms = usedAxiomNames # just a start
         requiredTheorems = set()
         processed = set()
@@ -2482,7 +2494,9 @@ class StoredTheorem(StoredSpecialStmt):
                 requiredTheorems.add(nextTheorem)
                 processed.add(nextTheorem)
                 continue
-            usedAxiomNames, usedTheoremNames = storedTheorem.readDependencies()
+            usedAxiomNames, usedTheoremNames = (
+                    storedTheorem.readUsedAxioms(), 
+                    storedTheorem.readUsedTheorems())
             requiredAxioms.update(usedAxiomNames)
             for usedTheorem in usedTheoremNames:
                 if usedTheorem not in processed:
@@ -2499,10 +2513,10 @@ class StoredTheorem(StoredSpecialStmt):
         if not self.hasProof():
             raise Exception('The theorem must be proven in order to '
                             'obtain its requirements')
-        _, usedTheoremNames = self.readDependencies()
+        usedTheoremNames = self.readUsedTheorems()
         allUsedTheoremNames = set()
         processed = set()
-        toProcess = usedTheoremNames
+        toProcess = set(usedTheoremNames)
         while len(toProcess) > 0:
             nextTheoremName = toProcess.pop()
             allUsedTheoremNames.add(nextTheoremName)
@@ -2510,31 +2524,29 @@ class StoredTheorem(StoredSpecialStmt):
             if not storedTheorem.hasProof():
                 processed.add(nextTheoremName)
                 continue
-            _, usedTheoremNames = storedTheorem.readDependencies()
+            usedTheoremNames = storedTheorem.readUsedTheorems()
             for usedTheoremName in usedTheoremNames:
                 if usedTheoremName not in processed:
                     toProcess.add(usedTheoremName)
             processed.add(nextTheoremName)
         return allUsedTheoremNames 
 
-    def _undoDependentCompletion(self, usedTheoremName):
+    def _undoDependentCompletion(self):
         '''
         Due to the proof being removed, a dependent theorem is no longer
         complete. This new status must be updated and propagated.
         '''
         from .context import Context
         wasComplete = self.isComplete() # was it complete before?
-        # remove the entry from complete_used_theorems.txt
-        self._removeEntryFromFile('complete_used_theorems.txt', 
-                                  usedTheoremName)
-        if self.isComplete():
-            raise Exception('Corrupt _certified_ database')
+        # Remove the 'complete' file indicating that it was no longer
+        # complete.
+        removeIfExists(os.path.join(self.path, 'complete'))
         # If this theorem was previously complete before, we need to
         # inform dependents that it is not longer complete.
         if wasComplete:
             dependentTheorems = self.readDependentTheorems()
             for dependent in dependentTheorems:
                 stored_thm = Context.getStoredTheorem(dependent)
-                stored_thm._undoDependentCompletion(str(self))
+                stored_thm._undoDependentCompletion()
 
 
