@@ -901,11 +901,12 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
         # Send out assignments as they are requested.
         assignments = [None]*nranks # remember the assigments of the ranks.
         count = 0
-        for notebook_path in notebook_paths:
-            msg = comm.recv(source=MPI.ANY_SOURCE)
+        def process_response(msg):
+            # Checks for an error message in the response from the
+            # worker ranks; otherwise, it will be the rank itself.
             try:
-                ready_rank = int(msg)
-            except ValueError:
+                return int(msg)
+            except TypeError:
                 # If we get anything other than an integer,
                 # it must be an exception message.
                 err_rank = int(msg[0])
@@ -913,6 +914,8 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
                 print("Error while excecuting %s:"%failed_notebook)
                 print(msg[1])
                 comm.Abort()
+        for notebook_path in notebook_paths:
+            ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
             finished_notebook = assignments[ready_rank]
             comm.send(notebook_path, ready_rank)
             assignments[ready_rank] = notebook_path
@@ -922,9 +925,11 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
         # Now wait for everyboy to finish.
         finished = set()
         while len(finished) < nranks-1:
-            ready_rank = comm.recv(source=MPI.ANY_SOURCE)
+            ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
             finished.add(ready_rank)
             count += 1
+            if git_clear:
+                git_clear_notebook(finished_notebook)
         # And now we are done
         for dest in finished:
             comm.send("", dest)
