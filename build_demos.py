@@ -1,5 +1,5 @@
 '''
-Build the Prove-It common expression notebooks for the given contexts, 
+Build the Prove-It demonstration notebooks for the given contexts, 
 including sub-contexts.
 '''
 
@@ -34,6 +34,6 @@ if __name__ == '__main__':
     args = parser.parse_args()    
     paths = args.path
     
-    mpi_build(notebook_path_generator(paths, '_common_.ipynb'), 
+    mpi_build(notebook_path_generator(paths, '_demonstrations_.ipynb'), 
               no_latex=args.nolatex, git_clear=not args.nogitclear, 
               no_execute=args.noexecute, export_to_html=True)

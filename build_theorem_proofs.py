@@ -1,9 +1,9 @@
 '''
-Build the Prove-It common expression notebooks for the given contexts, 
+Build the Prove-It proof notebooks for the given contexts, 
 including sub-contexts.
 '''
 
-from build import default_paths, notebook_path_generator, mpi_build
+from build import default_paths, theoremproof_path_generator, mpi_build
 import os
 import argparse
 
@@ -34,6 +34,6 @@ if __name__ == '__main__':
     args = parser.parse_args()    
     paths = args.path
     
-    mpi_build(notebook_path_generator(paths, '_common_.ipynb'), 
+    mpi_build(theoremproof_path_generator(paths), 
               no_latex=args.nolatex, git_clear=not args.nogitclear, 
               no_execute=args.noexecute, export_to_html=True)
