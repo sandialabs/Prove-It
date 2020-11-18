@@ -215,13 +215,33 @@ class ProveItHTMLPreprocessor(Preprocessor):
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
 html_exporter.template_file = 'proveit_html'
 
+def git_clear_notebook(notebook_path):
+    try:
+        # If the file is in a git repository which is filtering
+        # the notebook output, see if the only change is in
+        # the output.  In that case, 'git add' the file so it
+        # doesn't show up as modified.
+        process = subprocess.Popen(["git", "diff", notebook_path],
+                                   stdout=subprocess.PIPE)
+        output = process.communicate()[0]
+        output = re.sub('^diff --git .*$', '', output.decode('utf-8'))
+        if output=="":
+            # No change except perhaps filtered output.
+            # Do "git add" so it won't show up as different.
+            subprocess.Popen(['git', 'add', notebook_path])
+            print("Clearing filtered notebook-output modifications in git:"
+                  "\n\tgit add %s"%notebook_path)
+    except:
+        # Our git check may fail because maybe it isn't in a git
+        # repository.  In that case, don't worry about it.
+        pass
+
 class RecyclingExecutePreprocessor(ExecutePreprocessor):
     def __init__(self, **kwargs):
         ExecutePreprocessor.__init__(self, **kwargs)
     
     def __enter__(self):
         self.km, self.kc = self.start_new_kernel()
-        
         return self
     
     def __exit__(self, exception_type, exception_value, traceback):
@@ -343,25 +363,7 @@ len(gc.get_objects()) # used to check for memory leaks
         print("; finished in %0.2f seconds"%(time.time()-start_time))
         
         if git_clear:
-            try:
-                # If the file is in a git repository which is filtering
-                # the notebook output, see if the only change is in
-                # the output.  In that case, 'git add' the file so it
-                # doesn't show up as modified.
-                process = subprocess.Popen(["git", "diff", notebook_path],
-                                           stdout=subprocess.PIPE)
-                output = process.communicate()[0]
-                output = re.sub('^diff --git .*$', '', output.decode('utf-8'))
-                if output=="":
-                    # No change except perhaps filtered output.
-                    # Do "git add" so it won't show up as different.
-                    subprocess.Popen(['git', 'add', notebook_path])
-                    print("Clearing filtered notebook-output modifications in git:"
-                          "\n\tgit add %s"%notebook_path)
-            except:
-                # Our git check may fail because maybe it isn't in a git
-                # repository.  In that case, don't worry about it.
-                pass
+            git_clear_notebook(notebook_path)
         
         return nb
 
@@ -878,7 +880,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             for notebook_path in notebook_paths:
                 executeAndMaybeExportNotebook(
                         execute_processor, notebook_path, no_latex=no_latex, 
-                        no_execute=no_execute, git_clear=git_clear,
+                        no_execute=no_execute, git_clear=False,
                         export_to_html=export_to_html)
     elif rank > 0:
         # These ranks will request assignments from rank 0
@@ -886,15 +888,19 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             while True:
                 comm.send(rank, dest=0)
                 notebook_path = comm.recv(source=0)
+                if len(notebook_path)==0:
+                    break # empty path is "done" signal
                 try:
                     executeAndMaybeExportNotebook(
                             execute_processor, notebook_path, no_latex=no_latex, 
-                            no_execute=no_execute, git_clear=git_clear,
+                            no_execute=no_execute, git_clear=False,
                             export_to_html=export_to_html)
                 except Exception as e:
-                    comm.send(str(e), dest=0)
+                    comm.send((rank, str(e)), dest=0)
     else:
         # Send out assignments as they are requested.
+        assignments = [None]*nranks # remember the assigments of the ranks.
+        count = 0
         for notebook_path in notebook_paths:
             msg = comm.recv(source=MPI.ANY_SOURCE)
             try:
@@ -902,18 +908,37 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             except ValueError:
                 # If we get anything other than an integer,
                 # it must be an exception message.
-                print(msg)
+                err_rank = int(msg[0])
+                failed_notebook = assignments[err_rank]
+                print("Error while excecuting %s:"%failed_notebook)
+                print(msg[1])
                 comm.Abort()
+            finished_notebook = assignments[ready_rank]
             comm.send(notebook_path, ready_rank)
+            assignments[ready_rank] = notebook_path
+            count += 1
+            if git_clear:
+                git_clear_notebook(finished_notebook)
         # Now wait for everyboy to finish.
         finished = set()
-        while len(finished) < nranks:
+        while len(finished) < nranks-1:
             ready_rank = comm.recv(source=MPI.ANY_SOURCE)
             finished.add(ready_rank)
-    
-    # And now we are done
+            count += 1
+        # And now we are done
+        for dest in finished:
+            comm.send("", dest)
+        print("Finished executing %d notebooks"%count) 
         
 def notebook_path_generator(top_level_paths, notebook_filename):
-    for path in paths:
+    for path in top_level_paths:
         for context_path in findContextPaths(path):
             yield os.path.join(context_path, notebook_filename)
+
+def theoremproof_path_generator(top_level_paths):
+    for path in top_level_paths:
+        for context_path in findContextPaths(path):
+            context = Context(context_path)
+            for theorem_name in context.theoremNames():
+                yield os.path.join(context._storage.directory, '_proofs_', '%s.ipynb'%theorem_name)
+
