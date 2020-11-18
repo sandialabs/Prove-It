@@ -1,0 +1,4 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.boolean.implication.iffImpliesLeft
+proveit.logic.boolean.implication.iffImpliesRight
+# THEOREMS AND THEORIES TO EXCLUDE:

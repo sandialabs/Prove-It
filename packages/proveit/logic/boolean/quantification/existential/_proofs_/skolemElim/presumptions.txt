@@ -1,0 +1,10 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.boolean.negation.negationIntro
+proveit.logic.equality.subLeftSideInto
+proveit.logic.boolean.negation.notFalse
+proveit.logic.boolean.quantification.existential.skolemElimLemma
+proveit.logic.boolean.conjunction.leftFromAnd
+proveit.logic.boolean.conjunction.rightFromAnd
+proveit.logic.boolean.conjunction.trueAndTrue
+proveit.logic.boolean.conjunction.andIfBoth
+# THEOREMS AND THEORIES TO EXCLUDE:

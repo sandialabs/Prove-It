@@ -1,0 +1,17 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.equality.equalsReversal
+proveit.logic.equality.notEqualsSymmetry
+proveit.logic.boolean.foldInBool
+proveit.logic.equality.unfoldNotEquals
+proveit.logic.equality.subLeftSideInto
+proveit.logic.equality.substituteTruth
+proveit.logic.equality.substituteInTrue
+proveit.logic.equality.substituteFalsehood
+proveit.logic.equality.substituteInFalse
+proveit.logic.equality.foldNotEquals
+proveit.logic.boolean.trueEqTrue
+proveit.logic.boolean.falseEqFalse
+proveit.logic.boolean.trueNotFalse
+proveit.logic.boolean.trueInBool
+proveit.logic.boolean.falseInBool
+# THEOREMS AND THEORIES TO EXCLUDE:

@@ -1,0 +1,7 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.equality.equalsReversal
+proveit.logic.boolean.negation.negationIntro
+proveit.logic.equality.subLeftSideInto
+proveit.logic.boolean.negation.notFalse
+proveit.logic.boolean.disjunction.binaryOrContradiction
+# THEOREMS AND THEORIES TO EXCLUDE:

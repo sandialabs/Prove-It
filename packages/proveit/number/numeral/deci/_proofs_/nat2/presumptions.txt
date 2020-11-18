@@ -1,0 +1,4 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.equality.subLeftSideInto
+proveit.number.numeral.deci.nat1
+# THEOREMS AND THEORIES TO EXCLUDE:
