@@ -758,6 +758,8 @@ class ContextFolderStorage:
     # Proofs) to a (ContextFolderStorage, hash_id) tuple where it is
     # being stored.
     proveit_object_to_storage = dict()
+
+    clean_nb_method = None
     
     def __init__(self, context_storage, folder):
         self.context_storage = context_storage
@@ -1099,8 +1101,23 @@ class ContextFolderStorage:
         '''
         import proveit
         proveit_path = os.path.split(proveit.__file__)[0]
-        sys.path.append(os.path.join(proveit_path, '..', '..'))
-        from nbstripout.nbstripout import clean_nb
+        if ContextFolderStorage.clean_nb_method is None:
+            # import clean_nb from out nbstripout module (making
+            # sure we don't try importing it from an installed 
+            # nbstripout if there happens to be one).
+            import importlib.util
+            import sys
+            nbstripout_path = os.path.join(proveit_path, '..', '..', 
+                                           'nbstripout', 'nbstripout.py')
+            spec = importlib.util.spec_from_file_location('nbstripout', 
+                                                         nbstripout_path)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules['nbstripout'] = module
+            spec.loader.exec_module(module)
+            from nbstripout import clean_nb
+            ContextFolderStorage.clean_nb_method = clean_nb
+        else:
+            clean_nb = ContextFolderStorage.clean_nb_method
         from proveit import expressionDepth
         from proveit._core_.proof import Axiom, Theorem
         from .context import Context
@@ -2340,7 +2357,7 @@ class StoredTheorem(StoredSpecialStmt):
 
         presumptions = set()
         exclusions = set()
-        presumptions_filename = os.path.join(proof_path, 'presumptions_all.txt')
+        presumptions_filename = os.path.join(proof_path, 'presumptions.txt')
         
         # Let's create the generic version.
         # TODO: remove
@@ -2348,13 +2365,6 @@ class StoredTheorem(StoredSpecialStmt):
             os.mkdir(proof_path)
         if not os.path.isfile(presumptions_filename):            
             with open(presumptions_filename, 'w') as f:
-                f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
-                f.write('proveit\n')
-                f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
-        # also temporary
-        filename = os.path.join(proof_path, 'presumptions.txt')
-        if not os.path.isfile(filename):            
-            with open(filename, 'w') as f:
                 f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
                 f.write('proveit\n')
                 f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
@@ -2485,9 +2495,11 @@ class StoredTheorem(StoredSpecialStmt):
         from proveit._core_.proof import Theorem
         with open(os.path.join(proof_path, 'presumptions.txt'), 'w') as f:
             f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
-            for theorem in Theorem.allTheorems:
-                if theorem.isUsable():
-                    f.write(str(theorem) + '\n')
+            usable_theorem_names = [str(theorem) for theorem 
+                                    in Theorem.allTheorems 
+                                    if theorem.isUsable()]
+            for theorem in sorted(usable_theorem_names):
+                f.write(str(theorem) + '\n')
             f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
     
     def hasProof(self):
