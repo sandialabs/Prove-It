@@ -330,7 +330,8 @@ class ContextStorage:
     
     def _setSpecialObjects(self, names, definitions, kind):
         folder = ContextStorage._kind_to_folder(kind)
-        names_file = os.path.join(self.pv_it_dir, folder, 'name_to_hash.txt')
+        name_to_hash_file = os.path.join(self.pv_it_dir, folder, 
+                                         'name_to_hash.txt')
         context_name = self.name
         special_hash_ids = self._special_hash_ids[kind] = dict()
         
@@ -338,61 +339,62 @@ class ContextStorage:
         # reference count needs to be decremented.
         hash_to_old_name = dict() 
         old_name_to_hash = dict()
-        if os.path.isfile(names_file):
-            with open(names_file, 'r') as f:
+        orig_lines = []
+        if os.path.isfile(name_to_hash_file):
+            with open(name_to_hash_file, 'r') as f:
                 for line in f.readlines():
+                    orig_lines.append(line)
                     name, hash_id = line.split()
                     hash_to_old_name[hash_id] = name
                     old_name_to_hash[name] = hash_id
         
         # determine hash ids
         obsolete_hash_ids = set() # for modified statements
-        with open(names_file, 'w') as f:
-            for name in names:
-                obj = definitions[name]
-                if kind=='common':
-                    expr = obj
-                else:
-                    expr = obj.expr
-                # record the special expression in this context object
-                context_folder_storage = \
-                    self.context._contextFolderStorage(folder)
-                # get the expression id to be stored on 'commons.pv_it'           
-                hash_id = context_folder_storage._proveItStorageId(obj)
-                if kind=='common':
-                    expr_id = hash_id
-                else:
-                    expr_id = context_folder_storage._proveItStorageId(expr)
-                if hash_id in hash_to_old_name:
-                    if hash_to_old_name[hash_id] != name:
-                        print("Renaming %s to %s"%(hash_to_old_name[hash_id],
-                                                   name))
-                    # same expression as before
-                    hash_to_old_name.pop(hash_id)
-                special_hash_ids[name] = hash_id
-                self._kindname_to_exprhash[(kind, name)] = expr_id
-                context_folder_storage._objhash_to_name[expr_id] = name
-                context_folder_storage._objhash_to_name[hash_id] = name
-                if folder != 'common':
-                    kind = folder[:-1]
-                    if name not in old_name_to_hash:
-                        # added special statement
-                        print('Adding %s %s to %s context'%
-                              (kind, name, context_name))
-                    elif old_name_to_hash[name] != hash_id:
-                        # modified special statement. remove the old one first.
-                        print('Modifying %s %s in %s context'%
-                              (kind, name, context_name))
-                        obsolete_hash_ids.add(old_name_to_hash[name])
-                    # Let's also make sure there is a "used_by"
-                    # sub-folder.
-                    used_by_folder = os.path.join(self.pv_it_dir, folder,
-                                                  hash_id, 'used_by')
-                    if not os.path.isdir(used_by_folder):
-                        try:
-                            os.mkdir(used_by_folder)
-                        except OSError:
-                            pass # no worries
+        for name in names:
+            obj = definitions[name]
+            if kind=='common':
+                expr = obj
+            else:
+                expr = obj.expr
+            # record the special expression in this context object
+            context_folder_storage = \
+                self.context._contextFolderStorage(folder)
+            # get the expression id to be stored on 'commons.pv_it'           
+            hash_id = context_folder_storage._proveItStorageId(obj)
+            if kind=='common':
+                expr_id = hash_id
+            else:
+                expr_id = context_folder_storage._proveItStorageId(expr)
+            if hash_id in hash_to_old_name:
+                if hash_to_old_name[hash_id] != name:
+                    print("Renaming %s to %s"%(hash_to_old_name[hash_id],
+                                               name))
+                # same expression as before
+                hash_to_old_name.pop(hash_id)
+            special_hash_ids[name] = hash_id
+            self._kindname_to_exprhash[(kind, name)] = expr_id
+            context_folder_storage._objhash_to_name[expr_id] = name
+            context_folder_storage._objhash_to_name[hash_id] = name
+            if folder != 'common':
+                kind = folder[:-1]
+                if name not in old_name_to_hash:
+                    # added special statement
+                    print('Adding %s %s to %s context'%
+                          (kind, name, context_name))
+                elif old_name_to_hash[name] != hash_id:
+                    # modified special statement. remove the old one first.
+                    print('Modifying %s %s in %s context'%
+                          (kind, name, context_name))
+                    obsolete_hash_ids.add(old_name_to_hash[name])
+                # Let's also make sure there is a "used_by"
+                # sub-folder.
+                used_by_folder = os.path.join(self.pv_it_dir, folder,
+                                              hash_id, 'used_by')
+                if not os.path.isdir(used_by_folder):
+                    try:
+                        os.mkdir(used_by_folder)
+                    except OSError:
+                        pass # no worries
         # Remove proof dependencies of modified statements.
         for hash_id in obsolete_hash_ids:
             StoredSpecialStmt.remove_dependency_proofs(
@@ -408,10 +410,14 @@ class ContextStorage:
                 StoredSpecialStmt.remove_dependency_proofs(
                         self.context, kind, hash_id)
         
-        # Now we'll write the new names.
-        with open(names_file, 'w') as f:
-            for name in names:
-                f.write(name + ' ' + special_hash_ids[name] + '\n')
+        # Now we'll write the new name to hash information.
+        new_lines = []
+        for name in sorted(names):
+            new_lines.append(name + ' ' + special_hash_ids[name])
+        if new_lines != orig_lines:
+            with open(name_to_hash_file, 'w') as f:
+                for line in new_lines:
+                    f.write(line + '\n')
         
         """
         if kind=='theorem':
@@ -503,6 +509,7 @@ class ContextStorage:
         except KeyError:
             raise KeyError("%s not found as an axiom in %s"
                            %(name, self.context.name))
+    
     def getTheoremHash(self, name):
         '''
         Return the path where information about the theorem of the given 
@@ -565,6 +572,13 @@ class ContextStorage:
         prev_context_default = Context.default
         Context.default = self.context 
         context_folder_storage = self.contextFolderStorage(folder)
+        if (ContextFolderStorage.owns_active_storage and 
+                context_folder_storage == ContextFolderStorage.active_context_folder_storage):
+            # Don't allow anything to be imported from the folder
+            # that is currently being generated.
+            if kind=='common':
+                raise UnsetCommonExpressions(self.name)
+            raise KeyError("Self importing is not allowed")
         
         # make and return expression
         expr_id = self._kindname_to_exprhash[(kind, name)]
@@ -753,6 +767,10 @@ class ContextFolderStorage:
     # The active context folder storage (e.g., corresponding to the
     # notebook being executed).
     active_context_folder_storage = None
+    # We may only write expression notebooks to the active storage
+    # when it is "owned" and we may not retrieve special expressions
+    # from a folder that is "owned" (that would be a self-reference).
+    owns_active_storage = False
     
     # Map style ids of Prove-It object (Expressions, KnownTruths, and 
     # Proofs) to a (ContextFolderStorage, hash_id) tuple where it is
@@ -804,7 +822,40 @@ class ContextFolderStorage:
         if kind == 'axiom' or kind=='theorem':
             name = name + '.expr'
         return kind, self.context_storage._specialExprModules[kind], name
-        
+    
+    def unload(self):
+        '''
+        "Forget" the special objects stored in this folder and
+        their sub-expressions to force them to be re-retrieved.
+        This is important to do when re-running the notebook
+        that generates these objects to be sure the expression
+        notebooks all get regenerated (at least checked to see
+        if they should change).
+        '''
+        proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
+        to_remove = set()
+        for obj_id, (context_folder_storage, hash_id) \
+                in proveit_obj_to_storage.items():
+            if context_folder_storage == self:
+                to_remove.add(obj_id)
+        for obj_id in to_remove:
+            proveit_obj_to_storage.pop(obj_id)
+        folder = self.folder
+        kind = ContextStorage._folder_to_kind(folder)
+        for name in self._objhash_to_name.values():
+            self.context_storage._kindname_to_exprhash.pop((kind, name), None)
+        self._objhash_to_name.clear()
+        if folder=='axioms':
+            self.context_storage._axiom_names = None
+            self.context_storage._loadedAxioms = dict()
+        if folder=='theorems':
+            self.context_storage._theorem_names = None
+            self.context_storage._loadedTheorems = dict()
+        if folder=='common':
+            self.context_storage._common_exp_names = None
+            self.context_storage._loadedCommonExprs = dict()
+        self.context_storage._special_hash_ids[kind] = None
+    
     @staticmethod
     def retrieve_png(expr, latex, configLatexToolFn):
         '''
@@ -1001,8 +1052,8 @@ class ContextFolderStorage:
         __pv_it directory) based upon a hash of the unique 
         representation.
         '''
-        from proveit import Literal
-        from proveit._core_.proof import Axiom, Theorem
+        from proveit import Expression, Literal
+        from proveit._core_.proof import Proof, Axiom, Theorem
         proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
         if proveItObject._style_id in proveit_obj_to_storage:
             return proveit_obj_to_storage[proveItObject._style_id]
@@ -1051,6 +1102,7 @@ class ContextFolderStorage:
             # remember this for next time
             result = (self, rep_hash + str(index))
             proveit_obj_to_storage[proveItObject._style_id] = result
+            self._generateObjectNotebook(proveItObject)
             return result
         indexed_hash_path = hash_path + str(index)
         # store the unique representation in the appropriate file
@@ -1062,8 +1114,40 @@ class ContextFolderStorage:
         # remember this for next time
         result = (self, rep_hash + str(index))
         proveit_obj_to_storage[proveItObject._style_id] = result
+        self._generateObjectNotebook(proveItObject)
         return result
-    
+
+    def _owningNotebook(self):
+        '''
+        Return the notebook that generates the information in this
+        folder.
+        '''
+        directory = self.context._storage.directory
+        if self.folder in ('common', 'axioms', 'theorems', 'demonstrations'):
+            return os.path.join(directory, '_' + self.folder + '_.ipynb')
+        thm_proof_prefix = '_proof_'
+        if self.folder[:len(thm_proof_prefix)] == '_proof_':
+            name = self.folder[len(thm_proof_prefix):]
+            return os.path.join(directory, '_proofs_', name, 'thm_proof.ipynb')
+        return "the %s notebook in %s"%(self.folder, directory)
+
+    def _raiseNotebookNotFound(self, filepath):
+        raise Exception("%s not found.  Rerun %s"%(filepath, self._owningNotebook()))
+
+    def _generateObjectNotebook(self, proveItObject):
+        '''
+        If this is the active folder storage and the proveItObject
+        is an Expression or Proof, generate its notebook.
+        '''
+        from proveit import Expression, Proof
+        # generate the expression or proof notebook as appropriate
+        if (ContextFolderStorage.owns_active_storage and
+                self == ContextFolderStorage.active_context_folder_storage):
+            if isinstance(proveItObject, Expression):
+                ContextFolderStorage.expressionNotebook(proveItObject)
+            elif isinstance(proveItObject, Proof):
+                self.proofNotebook(proveItObject)
+
     @staticmethod
     def expressionNotebook(expr, unofficialNameKindContext=None,
                            useActiveFolder=False):
@@ -1075,7 +1159,12 @@ class ContextFolderStorage:
         (%end_[common/axioms/theorems] has not been
         called yet in the special expressions notebook).
         '''
+        import proveit
         from proveit import Expression
+        from proveit._core_.proof import Axiom, Theorem
+        from .context import UnsetCommonExpressions
+        from json import JSONDecodeError
+        proveit_path = os.path.split(proveit.__file__)[0]
         
         if not isinstance(expr, Expression):
             raise ValueError("'expr' should be an Expression object")
@@ -1092,13 +1181,132 @@ class ContextFolderStorage:
                 context_folder_storage = \
                     ContextFolderStorage.getFolderStorageOfObj(expr)
         
-        return context_folder_storage._expressionNotebook(
-                expr, unofficialNameKindContext)
+        # Determine the kind and name (if it is a "special" expression),
+        # and appropriate template to be used.
+        if unofficialNameKindContext is not None:
+            name, kind, context = unofficialNameKindContext
+            if kind=='common':
+                template_name = '_unofficial_common_expr_template_.ipynb'
+            else:
+                template_name = '_unofficial_special_expr_template_.ipynb'
+        else:
+            # Is this a "special" expression?
+            try:
+                expr_id = context_folder_storage._proveItStorageId(expr)
+                name = context_folder_storage._objhash_to_name[expr_id]
+                kind = ContextStorage._folder_to_kind(
+                    context_folder_storage.folder)
+            except KeyError:
+                name = kind = None
+            if kind is not None:
+                if kind=='common':
+                    template_name = '_common_expr_template_.ipynb'
+                else:
+                    template_name = '_special_expr_template_.ipynb'
+            else:
+                template_name = '_expr_template_.ipynb'    
+        # Determine the appropriate hash folder to store the
+        # expression notebook in.
+        obj = expr
+        if kind=='axiom':
+            # Store this "special" notebook if the hash for the
+            # KnownTruth object associated with the Axiom.
+            obj = Axiom(expr, context_folder_storage.context, name)
+            obj = obj.provenTruth
+        elif kind=='theorem':
+            # Store this "special" notebook if the hash for the
+            # KnownTruth object associated with the Theorem.
+            obj = Theorem(expr, context_folder_storage.context, name)
+            obj = obj.provenTruth
+        obj_context_folder_storage, hash_directory = \
+            context_folder_storage._retrieve(obj)
+        assert obj_context_folder_storage==context_folder_storage
+        full_hash_dir = os.path.join(context_folder_storage.path, 
+                                     hash_directory)
 
-    def _expressionNotebook(self, expr, unofficialNameKindContext=None):
-        '''
-        Helper method of expressionNotebook.
-        '''
+        if (ContextFolderStorage.owns_active_storage and
+                context_folder_storage == 
+                ContextFolderStorage.active_context_folder_storage):
+            # Only build the notebook in the active folder storage
+            nb = context_folder_storage._buildExpressionNotebook(
+                obj, expr, kind, name, full_hash_dir, template_name, 
+                unofficialNameKindContext)
+        else:
+            nb = None
+
+        # Write the expression notebook unless it is unchanged.
+        # expr.ipynb is the default but may change to
+        # axiom_expr.ipynb or theorem_expr.ipynb in certain
+        # instances.
+        filename = 'expr.ipynb'    
+        if kind == 'axiom':
+            filename = 'axiom_expr.ipynb'
+        elif kind == 'theorem':
+            filename = 'theorem_expr.ipynb'
+        elif kind == 'common':
+            filename = 'common_expr.ipynb'
+        alt_filename = 'alt_' + filename
+        tmp_filename = 'tmp_' + filename
+        filepath = os.path.join(full_hash_dir, filename)
+        alt_filepath = os.path.join(full_hash_dir, alt_filename)
+        tmp_filepath = os.path.join(full_hash_dir, tmp_filename)
+
+        if nb is None:
+            # If this isn't the active folder storage,
+            # just make sure the file is there and
+            # return the link.
+            if not os.path.isfile(filepath):
+                # disable for now
+                #context_folder_storage._raiseNotebookNotFound(filepath)
+                pass
+            return relurl(filepath)
+        
+        #assert False,  '%s'%ContextFolderStorage.active_context_folder_storage
+        
+        # Possibly toggle expr.ipynb and alt_expr.ipynb.
+        clean_nb = ContextFolderStorage._get_clean_nb_method()
+        nb = nb.strip()
+        if os.path.isfile(filepath):
+            with open(filepath, 'r') as f:
+                try:
+                    orig_nb = clean_nb(f)
+                except JSONDecodeError as e:
+                    orig_nb = ""
+            if orig_nb != nb:
+                if os.path.isfile(alt_filepath):
+                    with open(alt_filepath, 'r') as f:
+                        try:
+                            orig_alt_nb = clean_nb(f)
+                        except JSONDecodeError as e:
+                            orig_alt_nb = ""
+                else:
+                    orig_alt_nb = None
+                #print(len(orig_alt_nb), 'vs', len(nb))
+                #print(orig_alt_nb==nb[:len(orig_alt_nb)], print(nb[-1]))
+                if orig_alt_nb == nb:
+                    # Just switch expr.ipynb and alt_expr.ipynb.
+                    os.replace(filepath, tmp_filepath)
+                    os.replace(alt_filepath, filepath)
+                    os.rename(tmp_filepath, alt_filepath)
+                else:
+                    # Replace an existing expr.ipynb
+                    if kind is not None:
+                        print("%s expression notebook is being updated"%name)
+                        # Move the original to alt_expr.ipynb.
+                        os.replace(filepath, alt_filepath)
+                    else:
+                        print("Expression notebook is being updated for %s"
+                              %str(expr))
+                    with open(filepath, 'w') as expr_file:
+                        expr_file.write(nb)
+        else:
+            with open(filepath, 'w') as expr_file:
+                expr_file.write(nb)
+        # return the relative url to the new proof file
+        return relurl(filepath)
+
+    @staticmethod
+    def _get_clean_nb_method():
         import proveit
         proveit_path = os.path.split(proveit.__file__)[0]
         if ContextFolderStorage.clean_nb_method is None:
@@ -1116,51 +1324,21 @@ class ContextFolderStorage:
             spec.loader.exec_module(module)
             from nbstripout import clean_nb
             ContextFolderStorage.clean_nb_method = clean_nb
-        else:
-            clean_nb = ContextFolderStorage.clean_nb_method
+        return ContextFolderStorage.clean_nb_method
+
+
+    def _buildExpressionNotebook(self, obj, expr, kind, name, full_hash_dir,
+                                 template_name,
+                                 unofficialNameKindContext=None):
+        '''
+        Helper method of expressionNotebook.
+        '''
+        import proveit
+        proveit_path = os.path.split(proveit.__file__)[0]
         from proveit import expressionDepth
-        from proveit._core_.proof import Axiom, Theorem
         from .context import Context
-        
-        # Determine the kind and name (if it is a "special" expression),
-        # and appropriate template to be used.
-        if unofficialNameKindContext is not None:
-            name, kind, context = unofficialNameKindContext
-            if kind=='common':
-                template_name = '_unofficial_common_expr_template_.ipynb'
-            else:
-                template_name = '_unofficial_special_expr_template_.ipynb'
-        else:
-            # Is this a "special" expression?
-            try:
-                expr_id = self._proveItStorageId(expr)
-                name = self._objhash_to_name[expr_id]
-                kind = ContextStorage._folder_to_kind(self.folder)
-            except KeyError:
-                kind = None
-            if kind is not None:
-                if kind=='common':
-                    template_name = '_common_expr_template_.ipynb'
-                else:
-                    template_name = '_special_expr_template_.ipynb'
-            else:
-                template_name = '_expr_template_.ipynb'    
-        
-        # Determine the appropriate hash folder to store the
-        # expression notebook in.
-        obj = expr
-        if kind=='axiom':
-            # Store this "special" notebook if the hash for the
-            # KnownTruth object associated with the Axiom.
-            obj = Axiom(expr, self.context, name).provenTruth
-        elif kind=='theorem':
-            # Store this "special" notebook if the hash for the
-            # KnownTruth object associated with the Theorem.
-            obj = Theorem(expr, self.context, name).provenTruth
-        context_folder_storage, hash_directory = self._retrieve(obj)
-        assert context_folder_storage == self
-        full_hash_dir = os.path.join(self.path, hash_directory)
-        
+        clean_nb = ContextFolderStorage._get_clean_nb_method()
+                
         expr_classes_and_constructors = set()
         unnamed_subexpr_occurences = dict()
         named_subexpr_addresses = dict()
@@ -1306,11 +1484,6 @@ class ContextFolderStorage:
         type_link = relurl(os.path.join(doc_root,doc_file), 
                            start=full_hash_dir)
         
-        # expr.ipynb is the default but may change to
-        # axiom_expr.ipynb or theorem_expr.ipynb in certain
-        # instances.
-        filename = 'expr.ipynb'
-    
         with open(os.path.join(proveit_path, '..', template_name), 
                   'r') as template:
             nb = template.read()
@@ -1334,47 +1507,6 @@ class ContextFolderStorage:
                         '#SPECIAL_EXPR_LINK#', 
                         json.dumps(special_expr_link + '#' + name).strip('"'))
             nb = clean_nb(StringIO(nb))
-        
-        # Write the expression notebook unless it is unchanged.
-        if kind == 'axiom':
-            filename = 'axiom_expr.ipynb'
-        elif kind == 'theorem':
-            filename = 'theorem_expr.ipynb'
-        alt_filename = 'alt_' + filename
-        tmp_filename = 'tmp_' + filename
-        filepath = os.path.join(full_hash_dir, filename)
-        alt_filepath = os.path.join(full_hash_dir, alt_filename)
-        tmp_filepath = os.path.join(full_hash_dir, tmp_filename)
-        # Possibly toggle expr.ipynb and alt_expr.ipynb.
-        if os.path.isfile(filepath):
-            with open(filepath, 'r') as f:
-                orig_nb = clean_nb(f)
-            if orig_nb != nb:
-                if os.path.isfile(alt_filepath):
-                    with open(alt_filepath, 'r') as f:
-                        orig_alt_nb = clean_nb(f)
-                else:
-                    orig_alt_nb = None
-                if orig_alt_nb == nb:
-                    # Just switch expr.ipynb and alt_expr.ipynb.
-                    os.replace(filepath, tmp_filepath)
-                    os.replace(alt_filepath, filepath)
-                    os.rename(tmp_filepath, alt_filepath)
-                else:
-                    # Replace an existing expr.ipynb
-                    if kind is not None:
-                        print("%s expression notebook is being updated"%name)
-                        # Move the original to alt_expr.ipynb.
-                        os.replace(filepath, alt_filepath)
-                    else:
-                        print("Expression notebook is being updated for %s"
-                              %str(expr))
-                    with open(filepath, 'w') as expr_file:
-                        expr_file.write(nb)
-        else:
-            with open(filepath, 'w') as expr_file:
-                expr_file.write(nb)
-        
         # if this is a special expression also generate the dependencies 
         # notebook if it does not yet exist
         if template_name == '_special_expr_template_.ipynb':
@@ -1411,17 +1543,18 @@ class ContextFolderStorage:
             # Save the dependencies notebook unless it is unchanged.
             if os.path.isfile(dependencies_filename):
                 with open(dependencies_filename, 'r') as f:
-                    orig_nb = clean_nb(f)
+                    try:
+                        orig_nb = clean_nb(f)
+                    except JSONDecodeError as e:
+                        orig_nb = ""
                 if orig_nb != nb:                       
                     with open(dependencies_filename, 'w') as dependencies_file:
                         dependencies_file.write(nb)
             else:
                 with open(dependencies_filename, 'w') as dependencies_file:
                     dependencies_file.write(nb)
-                
-            
-        # return the relative url to the new proof file
-        return relurl(filepath)
+        
+        return nb
         
     def _exprBuildingPrerequisites(
             self, obj, exprClassesAndConstructors, unnamedSubExprOccurences, 
@@ -1494,8 +1627,7 @@ class ContextFolderStorage:
         if unnamedSubExprOccurences[(expr, expr._style_id)] > 1:
             return # already visited this -- no need to reprocess it
         
-        if not isSubExpr or expr.__class__ not in (ExprTuple, NamedExprs, 
-                                                   ExprArray): 
+        if not isSubExpr or expr.__class__ not in (ExprTuple, NamedExprs): 
             # add expr's class to exprClass and named items (unless it
             # is a basic Composite sub-Expression in which case we'll 
             # use a python list or dictionary to represent the composite
@@ -1613,11 +1745,9 @@ class ContextFolderStorage:
         withStyleCalls = '.'.join(expr.remakeWithStyleCalls())
         if len(withStyleCalls)>0: withStyleCalls = '.' + withStyleCalls
 
-        if isinstance(expr, Composite):
+        if expr.__class__==ExprTuple or expr.__class__==NamedExprs:
             if isinstance(expr, ExprTuple):
                 compositeStr = argStr
-            elif isinstance(expr, ExprArray):
-                compositeStr = '{' + argStr.replace(' = ', ':') + '}'                
             else:
                 assert isinstance(expr, NamedExprs)
                 # list of (name, value) tuples   
@@ -1625,8 +1755,7 @@ class ContextFolderStorage:
             if isSubExpr and expr.__class__ in (ExprTuple, 
                                                 NamedExprs, ExprArray): 
                 # It is a sub-Expression and a standard composite class.
-                # Just pass it in as an implicit composite expression 
-                # (a list or dictionary).
+                # Just pass it in as an implicit composite expression.
                 # The constructor should be equipped to handle it
                 # appropriately.
                 return ('[' + compositeStr + ']' 
@@ -1648,7 +1777,14 @@ class ContextFolderStorage:
         (context_folder_storage, hash_directory) = self._retrieve(proof)
         filename = os.path.join(context_folder_storage.path, hash_directory, 
                                 'proof.ipynb')
+        is_owned_storage = (
+            ContextFolderStorage.owns_active_storage and 
+            self == ContextFolderStorage.active_context_folder_storage)
         if not os.path.isfile(filename):
+            if not is_owned_storage:
+                # We can only create the notebook if it is the folder
+                # is "owned".
+                self._raiseNotebookNotFound(filename)
             # Copy the template.  Nothing needs to be edited for these.
             template_filename = os.path.join(proveit_path, '..', 
                                              '_proof_template_.ipynb')

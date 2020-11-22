@@ -888,8 +888,8 @@ class Instantiation(Proof):
 
         See Expression.substituted for details regarding the replacement rules.
         '''
-        from proveit import (Expression, Lambda, ExprRange, ExprTuple,
-                             IndexedVar)
+        from proveit import (Expression, Function, Lambda, ExprRange, 
+                             ExprTuple, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (getParamVar, LambdaApplicationError)
 
@@ -1022,7 +1022,7 @@ class Instantiation(Proof):
             # Exclude anything in the repl_map that does not appear in
             # the original KnownTruth:
             mapping = dict()
-            mapping_var_order = []
+            mapping_key_order = []
             def var_range_form_sort(var_tuple):
                 # For sorting equivalent ExprTuples of indexed
                 # variables (e.g., {(x_1, ..., x_{n+1}),
@@ -1033,8 +1033,16 @@ class Instantiation(Proof):
             for var in repl_vars:
                 if var in repl_map:
                     # The variable itself is in the replacement map.
-                    mapping[var] = repl_map[var]
-                    mapping_var_order.append(var)
+                    replacement = repl_map[var]
+                    if isinstance(replacement, Lambda):
+                        # If the replacement is a Lambda, convert it
+                        # to a Function mapping form.
+                        key = Function(var, replacement.parameter_or_parameters)
+                        replacement = replacement.body
+                    else:
+                        key = var
+                    mapping[key] = replacement
+                    mapping_key_order.append(key)
                 if var in var_range_forms:
                     # There are replacements for various forms of the
                     # variable indexed over the same range.
@@ -1044,8 +1052,8 @@ class Instantiation(Proof):
                                                  key=var_range_form_sort):
                         mapping[var_range_form] = \
                             equiv_alt_expansions[var_range_form]
-                        mapping_var_order.append(var_range_form)
-            self.mapping_var_order = mapping_var_order
+                        mapping_key_order.append(var_range_form)
+            self.mapping_key_order = mapping_key_order
             self.mapping = mapping
             instantiated_truth = KnownTruth(instantiated_expr, assumptions)
             # Make the 'original known truth' be the 1st requirement.
@@ -1070,27 +1078,23 @@ class Instantiation(Proof):
         information for this specialization.
         '''
         mapping = self.mapping
-        mapping_info = ','.join(objectRepFn(var) + ':' + objectRepFn(mapping[var])
-                               for var in self.mapping_var_order)
+        mapping_info = ','.join(objectRepFn(key) + ':' + objectRepFn(mapping[key])
+                               for key in self.mapping_key_order)
         return self.stepType() + ':{' + mapping_info + '}'
 
     def stepType(self):
         return 'instantiation'
 
-    def _single_mapping(self, var, replacement, formatType):
-        from proveit import Function, Lambda
+    def _single_mapping(self, key, replacement, formatType):
         formatted = lambda expr : expr._repr_html_() if formatType=='HTML' else str(expr)
-        if isinstance(replacement, Lambda):
-            return (formatted(Function(var, replacement.parameter_or_parameters))
-                    + ' : ' + formatted(replacement.body))
-        return formatted(var) + ' : ' + formatted(replacement)
+        return formatted(key) + ' : ' + formatted(replacement)
 
     def _mapping(self, formatType='HTML'):
         if formatType=='HTML':
             out = '<span style="font-size:20px;">'
         else: out = ''
-        out += ', '.join(self._single_mapping(var, self.mapping[var], formatType)
-                         for var in self.mapping_var_order)
+        out += ', '.join(self._single_mapping(key, self.mapping[key], formatType)
+                         for key in self.mapping_key_order)
         if formatType=='HTML':
             out += '</span>'
         return out
@@ -1409,12 +1413,12 @@ class _ShowProof:
         if self.step_type_str=='instantiation':
             # Extract the mapping information.
             group = refObjIdGroups[0]
-            var_mapping_pairs = \
+            key_mapping_pairs = \
                 [(context_folder_storage.makeExpression(group[i]),
                   context_folder_storage.makeExpression(group[i+1])) 
                     for i in range(0, len(group), 2)]
-            self.mapping_var_order = [key for key, value in var_mapping_pairs]
-            self.mapping = dict(var_mapping_pairs)
+            self.mapping_key_order = [key for key, value in key_mapping_pairs]
+            self.mapping = dict(key_mapping_pairs)
         self.provenTruth = \
             context_folder_storage.makeKnownTruth(refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self

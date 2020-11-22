@@ -55,7 +55,7 @@ def compositeExpression(expressions):
     if isinstance(expressions, KnownTruth):
         expressions = expressions.expr
     
-    if isinstance(expressions, ExprTuple) or isinstance(expressions, NamedExprs) or isinstance(expressions, ExprArray):
+    if isinstance(expressions, ExprTuple) or isinstance(expressions, NamedExprs):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
         # A single expression that we will wrap in an ExprTuple:

@@ -21,7 +21,7 @@ class Literal(Label):
         '''
         Literal.instances.clear()
         
-    def __init__(self, stringFormat, latexFormat=None, extraCoreInfo=tuple(), context=None):
+    def __init__(self, stringFormat, latexFormat=None, extraCoreInfo=tuple(), context=None, styles=None):
         '''
         Create a Literal.  If latexFormat is not supplied, the 
         stringFormat is used for both.  The Literal will be stored
@@ -50,7 +50,8 @@ class Literal(Label):
                 # to context roots referenced by this context.
                 Context() 
                 context = Context.getContext(context)
-        Label.__init__(self, stringFormat, latexFormat, 'Literal', (context.name,)+tuple(extraCoreInfo))
+        Label.__init__(self, stringFormat, latexFormat, 'Literal', (context.name,)+tuple(extraCoreInfo),
+                       styles=styles)
         self.context = context
         #if self._coreInfo in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same context and string/latex formats")
@@ -95,23 +96,27 @@ class Literal(Label):
             try:
                 extra_core_info = coreInfo[4:]
                 init_args = inspect.getargspec(literalClass.__init__)[0]
-                if literalClass==Literal:
+                kwargs = dict()
+                if 'context' in init_args: kwargs['context'] = context
+                if 'styles' in init_args: kwargs['styles'] = styles
+                if len(extra_core_info) > 0:
+                    # If there is extra core information, we need to call
+                    # a makeLiteral method.
+                    if hasattr(literalClass, 'makeLiteral'):
+                        made_obj = literalClass.makeLiteral(string_format, latex_format, 
+                                                            extra_core_info, context)
+                    else:
+                        raise NotImplementedError("Must implement the 'makeLiteral(string_format, latex_format, extra_core_info, context)' static method for class %s which uses 'extra_core_info'"%str(literalClass))
+                elif literalClass==Literal:
                     made_obj = Literal(string_format, latex_format, extra_core_info, context)
                 elif len(init_args)==1:
                     made_obj = literalClass() # no arguments (except self) are taken
                 elif len(init_args)==2 and init_args[1]=='stringFormat' and coreInfo[1]==coreInfo[2]:
                     made_obj = literalClass(string_format, context)
-                elif len(init_args)==3 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat':
-                    made_obj = literalClass(string_format, latex_format)
-                elif len(init_args)==4 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat' and init_args[3]=='context':
-                    made_obj = literalClass(string_format, latex_format, context)
-                elif hasattr(literalClass, 'makeLiteral'):
-                    if len(extra_core_info)==0:
-                        made_obj = literalClass.makeLiteral(string_format, latex_format, context)
-                    else:
-                        made_obj = literalClass.makeLiteral(string_format, latex_format, extra_core_info, context)
+                elif len(init_args)>=3 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat':
+                    made_obj = literalClass(string_format, latex_format, **kwargs)
                 else:
-                    raise NotImplementedError("Must implement the 'makeLiteral(string_format, latex_format, context)' static method for class %s"%str(literalClass)) 
+                    made_obj = literalClass(**kwargs)
             finally:
                 Context.default = prev_context_default # restore the default
             
@@ -131,8 +136,8 @@ class Literal(Label):
             yield arg
         if len(init_args)==3:
             return # nothing more
-        if (len(init_args)==5 and init_args[3]=='extraCoreInfo' \
-                and init_args[4]=='context'):
+        if (len(init_args)==6 and init_args[3]=='extraCoreInfo' \
+                and init_args[4]=='context' and init_args[5]=='styles'):
             core_info = self.coreInfo()
             context_name = core_info[3]
             extra_core_info = core_info[4:]

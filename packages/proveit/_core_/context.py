@@ -67,26 +67,24 @@ class Context:
         
     # externals.txt at top level to track relative path to external
     # contexts.
-    def __init__(self, path='.', active_folder=None):
+    def __init__(self, path='.', active_folder=None, owns_active_folder=False):
         '''
         Create a Context for the given path.  If given a file name instead,
         use the path of the containing directory.  If no path
         is provided, base the context on the current working directory.
-        '''        
+        '''     
         if not os.path.exists(path):
             raise ContextException("%s is not a valid path; unable to create Context."%path)
         
         path = os.path.abspath(path)
         # If in a __pv_it_ directory, go to the containing context 
-        # directory.  If in a sub-folder of the __pv_it directory,
-        # take that as the 'active_folder' if nothing else was
-        # specified.
+        # directory.
         splitpath = path.split(os.path.sep)
         if '__pv_it' in splitpath:
             pv_it_idx = splitpath.index('__pv_it')
             num_up_levels = (len(splitpath)-pv_it_idx)
-            if num_up_levels > 1:
-                active_folder = splitpath[pv_it_idx+1]
+            #if num_up_levels > 1:
+            #    active_folder = splitpath[pv_it_idx+1]
             path = os.path.abspath(os.path.join(*([path] + ['..']*num_up_levels)))
         # If in a _proofs_ directory, go to the containing context 
         # directory.
@@ -107,7 +105,8 @@ class Context:
         if normpath in Context.storages:
             self._storage = Context.storages[normpath] # got the storage - we're good
             self.name = self._storage.name
-            self.set_active_folder(active_folder)
+            if active_folder is not None:
+                self.set_active_folder(active_folder, owns_active_folder)
             return
         
         if os.path.isfile(path): # just in case checking for '.py' or '.pyc' wasn't sufficient
@@ -117,7 +116,8 @@ class Context:
         if normpath in Context.storages:
             self._storage = Context.storages[normpath] # got the storage - we're good
             self.name = self._storage.name
-            self.set_active_folder(active_folder)
+            if active_folder is not None:
+                self.set_active_folder(active_folder, owns_active_folder)
             return
         
         # the name of the context is based upon the directory, going
@@ -142,7 +142,8 @@ class Context:
             if not os.path.isfile(sub_contexts_path):
                 open(sub_contexts_path, 'wt').close()
         self._storage = Context.storages[normpath]
-        self.set_active_folder(active_folder)
+        if active_folder is not None:
+            self.set_active_folder(active_folder, owns_active_folder)
         self.name = self._storage.name
     
     def __eq__(self, other):
@@ -154,11 +155,15 @@ class Context:
     def __str__(self):
         return self._storage.name
     
-    def set_active_folder(self, active_folder):
+    def set_active_folder(self, active_folder, owns_active_folder=False):
         self.active_folder = active_folder
         if active_folder is not None:
             ContextFolderStorage.active_context_folder_storage = \
                 self._contextFolderStorage(active_folder)
+        else:
+            ContextFolderStorage.active_context_folder_storage = None
+            assert owns_active_folder==False
+        ContextFolderStorage.owns_active_storage = owns_active_folder
     
     def links(self, from_directory='.'):
         context_name_segments = self._storage.name.split('.')
