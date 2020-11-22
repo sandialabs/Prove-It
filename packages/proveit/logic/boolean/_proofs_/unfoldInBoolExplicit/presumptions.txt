@@ -1,6 +1,6 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.logic.equality.subRightSideInto
-proveit.number.numeral.deci.nat2
 proveit.logic.set_theory.enumeration.unfold
+proveit.number.numeral.deci.nat2
 proveit.number.numeral.deci.tuple_len_2_typical_equiv
 # THEOREMS AND THEORIES TO EXCLUDE:

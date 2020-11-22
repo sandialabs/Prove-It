@@ -1,16 +1,18 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.boolean.falseEqFalse
+proveit.logic.boolean.trueEqTrue
+proveit.logic.boolean.trueNotFalse
 proveit.logic.equality.equalsReversal
+proveit.logic.equality.foldNotEquals
 proveit.logic.equality.notEqualsSymmetry
-proveit.logic.equality.unfoldNotEquals
 proveit.logic.equality.subLeftSideInto
-proveit.logic.equality.substituteTruth
-proveit.logic.equality.substituteInTrue
 proveit.logic.equality.substituteFalsehood
 proveit.logic.equality.substituteInFalse
-proveit.logic.equality.foldNotEquals
-proveit.logic.boolean.trueEqTrue
-proveit.logic.boolean.falseEqFalse
-proveit.logic.boolean.trueNotFalse
+proveit.logic.equality.substituteInTrue
+proveit.logic.equality.substituteTruth
+proveit.logic.equality.unfoldNotEquals
+proveit.logic.set_theory.enumeration.fold
+proveit.logic.set_theory.enumeration.unfold
 proveit.number.numeral.deci.less_0_1
 proveit.number.numeral.deci.less_1_2
 proveit.number.numeral.deci.less_2_3
@@ -38,7 +40,5 @@ proveit.number.numeral.deci.posnat6
 proveit.number.numeral.deci.posnat7
 proveit.number.numeral.deci.posnat8
 proveit.number.numeral.deci.posnat9
-proveit.logic.set_theory.enumeration.fold
 proveit.number.numeral.deci.tuple_len_2_typical_equiv
-proveit.logic.set_theory.enumeration.unfold
 # THEOREMS AND THEORIES TO EXCLUDE:

@@ -1,5 +1,6 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.logic.equality.subLeftSideInto
+proveit.number.numeral.deci.add_1_1
 proveit.number.numeral.deci.less_0_1
 proveit.number.numeral.deci.less_1_2
 proveit.number.numeral.deci.less_2_3
@@ -28,6 +29,5 @@ proveit.number.numeral.deci.posnat7
 proveit.number.numeral.deci.posnat8
 proveit.number.numeral.deci.posnat9
 proveit.number.numeral.deci.tuple_len_1
-proveit.number.numeral.deci.add_1_1
 proveit.number.numeral.deci.tuple_len_1_typical_equiv
 # THEOREMS AND THEORIES TO EXCLUDE:
