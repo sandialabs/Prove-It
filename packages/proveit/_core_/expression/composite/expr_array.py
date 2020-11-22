@@ -23,9 +23,14 @@ class ExprArray(ExprTuple):
 
         ExprTuple.__init__(self, *expressions, styles=styles)
 
-        for entry in self:
-            if not isinstance(entry, ExprTuple) and not isinstance(entry, ExprRange):
-                raise ValueError("Contents of an ExprArray must be wrapped in either an ExprRange or ExprTuple.")
+        for entry in self.entries:
+            entry_or_body = entry
+            while isinstance(entry_or_body, ExprRange):
+                # May be a range of ranges of ExprTuples, etc.
+                entry_or_body = entry_or_body.body
+            if not isinstance(entry_or_body, ExprTuple):
+                raise ValueError("Each element of an ExprRange must represent a tuple, "
+                                 "entries being tuples or ranges of tuples.")
 
         # check each column for same expression throughout
         self.checkRange()
