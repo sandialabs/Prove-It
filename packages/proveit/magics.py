@@ -377,7 +377,7 @@ class ProveItMagicCommands:
 
     def clear(self, kind):
         # context based upon current working directory
-        self.context = Context(active_folder=kind)        
+        self.context = Context(active_folder=kind)
         if kind == 'axioms':
             self.context._clearAxioms()
         elif kind == 'theorems':
@@ -401,19 +401,22 @@ class ProveItMagicCommands:
             stored_expr = context.getStoredKnownTruth(hash_id).expr
         else:
             stored_expr = context.getStoredExpr(hash_id)
+        context.set_active_folder(None)
         self.shell.user_ns['stored_expr'] = stored_expr
         
     def show_proof(self):
         context_and_folder, hash_id = os.path.split(os.path.abspath('.'))
         _, folder = os.path.split(context_and_folder)        
         context = Context(active_folder=folder)
-        return context.getShowProof(hash_id)
+        show_proof = context.getShowProof(hash_id)
+        context.set_active_folder(None)
+        return show_proof
     
     def proving(self, theorem_name, presumptions, justRecordPresumingInfo=False):
         # the context should be up a directory from the _proofs_ directory
         import proveit
         active_folder = '_proof_' + theorem_name
-        self.context = Context('..', active_folder=active_folder) 
+        self.context = Context('..', active_folder=active_folder, owns_active_folder=True) 
         sys.path.append('..')
         try:
             # Disable automation when we are getting this theorem
@@ -461,6 +464,8 @@ class ProveItMagicCommands:
                 raise ProveItMagicFailure("Not allowed to have cyclically dependent 'common expression' notebooks: %s._common_"%cyclically_referenced_common_expr_context)
             context._setCommonExpressions(self.keys, self.definitions)
         
+        # Turn off the ownership while remaking expression notebooks.
+        context.set_active_folder(active_folder=kind, owns_active_folder=False)
         if kind in ('axioms', 'theorems', 'common'):
             # Make a _common_.py, _axioms_.py or _theorems_.py for importing
             # expressions from the certified database.
@@ -495,6 +500,8 @@ class ProveItMagicCommands:
         Show the dependencies of an axiom or theorem.
         '''
         proof = known_truth.proof() # Axiom or Theorem
+
+        from proveit._core_._context_storage import ContextFolderStorage
         
         def displaySpecialStmt(stmt):
             '''
@@ -630,9 +637,13 @@ class ProveItMagic(Magics, ProveItMagicCommands):
     def begin(self, line):
         kind = self._extract_kind(line)
         # context based upon current working directory
-        self.context = Context(active_folder=kind)
+        self.context = Context(active_folder=kind, owns_active_folder=True)
         if kind in ('axioms', 'theorems', 'common'):
             from proveit import defaults
+            # Unload anything previously loaded from this folder
+            # to force it to regenerate expression notebooks,
+            # etc.
+            self.context._contextFolderStorage(kind).unload()
             if defaults.automation:
                 raise Exception("The proveit.defaults.automation flag should "
                                 "be disabled at the beginning of a "
