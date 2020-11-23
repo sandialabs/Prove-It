@@ -253,6 +253,26 @@ class OperationOverInstances(Operation):
 
         Operation.__init__(self, operator, lambda_map, styles=styles)
 
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        OperationOverInstances class is to include appropriate 
+        'withWrapping', 'wrapParams', and 'withJustification' calls.
+        '''
+        withWrapping = (self.getStyle('withWrapping', 'False')=='True')
+        wrapParams = (self.getStyle('wrapParams', 'False')=='True')
+        justification = self.getStyle('justification')
+        call_strs = []
+        if withWrapping:
+            call_strs.append('withWrapping()')
+        if wrapParams:
+            call_strs.append('wrapParams()')
+        if justification != 'center':
+            call_strs.append('withJustification("' + justification + '")')
+        return call_strs
+    
     def effectiveCondition(self):
         '''
         Return the effective 'condition' of the OperationOverInstances.
