@@ -348,7 +348,7 @@ len(gc.get_objects()) # used to check for memory leaks
         
         # Read in the notebook.
         with open(notebook_path, encoding='utf8') as f:
-            nb_str = f.read()
+            nb_str = f.read().rstrip()
         nb = nbformat.reads(nb_str, as_version=4)
 
         # execute using a KernelManager with the appropriate cwd (current working directory)
@@ -371,7 +371,7 @@ len(gc.get_objects()) # used to check for memory leaks
         if new_nb_str != nb_str:
             # Write it out if it has changed.
             with open(notebook_path, 'wt', encoding='utf8') as f:
-                nbformat.write(nb, f)
+                nbformat.write(new_nb_str, f)
         print("\tFinished %s in %0.2f seconds"%(notebook_path, time.time()-start_time))
         
         if git_clear:
