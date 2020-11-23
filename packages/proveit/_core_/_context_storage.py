@@ -1052,7 +1052,7 @@ class ContextFolderStorage:
         __pv_it directory) based upon a hash of the unique 
         representation.
         '''
-        from proveit import Expression, Literal
+        from proveit import Expression, Literal, Operation
         from proveit._core_.proof import Proof, Axiom, Theorem
         proveit_obj_to_storage = ContextFolderStorage.proveit_object_to_storage
         if proveItObject._style_id in proveit_obj_to_storage:
@@ -1063,11 +1063,11 @@ class ContextFolderStorage:
         elif isinstance(proveItObject, Theorem):
             context_folder_storage = \
                 proveItObject.context._contextFolderStorage('theorems')
-        elif isinstance(proveItObject, Literal):
-            # Literal's must be stored in the 'common' folder
-            # of its context.
+        elif (isinstance(proveItObject, Literal) and 
+                proveItObject in Operation.operationClassOfOperator):
+            # _operator_'s of Operations are to be stored in 'common'.
             context_folder_storage = \
-                proveItObject.context._contextFolderStorage('common')            
+                proveItObject.context._contextFolderStorage('common')
         else:
             context_folder_storage = self
         if context_folder_storage is not self:
