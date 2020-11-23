@@ -61,6 +61,20 @@ def _defineTheorems():
     return _firstTheorem, locals()
 """
 
+class CircuitOperator(Literal):
+    def __init__(self, stringFormat, latexFormat=None, context=None):
+        Literal.__init__(self, stringFormat, latexFormat, context)
+    
+    def formatted(self, formatType, fence=False):
+        lit_formatted = Literal.formatted(self, formatType, fence=False)
+        if formatType == 'latex':
+            spacing = '@C=1em @R=.7em'
+            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str += r'\lstick{' + lit_formatted + r'}'
+            out_str += ' \n' + r'} \hspace{2em}'
+            return out_str
+        else:
+            return lit_formatted
 
 class Input(Operation):
     '''
@@ -136,17 +150,16 @@ class IdentityOp(Literal):
     The quantum identity operator 'I'
     '''
 
-    def __init__(self, styles=None):
+    def __init__(self, explicit=False):
         '''
-        Create the Literal 'I'
+        Create the Literal 'I'.
+        If not 'explicit', just use a wire.
         '''
-
-        if styles is None:
-            styles = dict()
-        if 'gate' not in styles:
-            styles['gate'] = 'wire'
-
-        Literal.__init__(self, 'I')
+        if explicit:
+            styles = {'gate':'explicit'}
+        else:
+            styles = {'gate':'wire'}
+        Literal.__init__(self, 'I', styles=styles)
 
     def styleOptions(self):
         from proveit._core_.expression.style_options import StyleOptions
@@ -156,13 +169,10 @@ class IdentityOp(Literal):
                           ("The 'wire' option formats the identity operation as a quantum wire and the 'explicit'"
                            "option formats it as a box containing the I literal"))
         return options
-
+    
     def remakeArguments(self):
-        '''
-        Yield the argument values or (name, value) pairs
-        that could be used to recreate the ExprTuple.
-        '''
-        yield 'I'
+        if self.getStyle('gate', 'wire')=='explicit':
+            yield('explicit', True)
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -308,6 +318,17 @@ class MultiQubitGate(Operation):
         if 'representation' not in styles:
             styles['representation'] = 'explicit'
         Operation.__init__(self, MultiQubitGate._operator_, (gate, gate_set), styles=styles)
+    
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?
+        '''
+        representation = self.getStyle('representation')
+        call_strs = []
+        if representation == 'implicit':
+            call_strs.append("withStyles(representation='implicit')")
+        return call_strs
 
     def auto_reduction(self, assumptions=USE_DEFAULTS):
         '''
@@ -442,7 +463,7 @@ class Target(Operation):
     Updated 1/26/2020 by wdc.
     '''
     # the literal operator of the Target operation class
-    _operator_ = Literal('TARGET', latexFormat=r'\targ',  context=__file__)
+    _operator_ = CircuitOperator('TARGET', latexFormat=r'\targ',  context=__file__)
     
     def __init__(self, target_gate):
         '''
@@ -695,6 +716,7 @@ class Circuit(Operation):
     '''
     # literal operator for the Circuit Class
     _operator_ = Literal('CIRCUIT', context=__file__)
+    DEFAULT_SPACING = '@C=1em @R=.7em'
 
     def __init__(self, array, styles=None):
         '''
@@ -706,7 +728,7 @@ class Circuit(Operation):
             styles['orientation'] = 'horizontal'
 
         if 'spacing' not in styles:
-            styles['spacing'] = '@C=1em @R=.7em'
+            styles['spacing'] = Circuit.DEFAULT_SPACING
 
         Operation.__init__(self, Circuit._operator_, [array], styles=styles)
 
@@ -724,6 +746,21 @@ class Circuit(Operation):
         self.checkRange()
         self.check_indices()
 
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?
+        '''
+        orientation = self.getStyle('orientation')
+        spacing = self.getStyle('spacing')
+        styles = [('orientation', orientation), ('spacing', spacing)]
+        defaults = {'orientation':'horizontal', 'spacing':Circuit.DEFAULT_SPACING}
+        styles = [(name,value) for name, value in styles if value != defaults[name]]
+        call_strs = []
+        if len(styles) > 0:
+            call_strs.append("withStyles(" + ", ".join("%s = '%s'"%(name, value) for name, value in styles) + ")")
+        return call_strs
+    
     def styleOptions(self):
         from proveit._core_.expression.style_options import StyleOptions
 
