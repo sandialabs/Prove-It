@@ -10,7 +10,7 @@ class QPE(Operation):
     algorithm. 
     '''
     # the literal operator of the QPE operation
-    _operator_ = Literal(stringFormat='QPE', latexFormat = r'{\rm QPE\;}',
+    _operator_ = Literal(stringFormat='QPE', latexFormat = r'{\rm QPE}',
                          context=__file__)
 
     def __init__(self, U, t):
@@ -28,7 +28,7 @@ class PhaseEst(Operation):
     '''
     # the literal operator of the PhaseEst operation
     _operator_ = Literal(stringFormat='PHASE_EST',
-                         latexFormat = r'{\rm PHASE\_EST\;}', context=__file__)
+                         latexFormat = r'{\rm PHASE\_EST}', context=__file__)
 
     def __init__(self, U, t):
         '''
