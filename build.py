@@ -371,7 +371,7 @@ len(gc.get_objects()) # used to check for memory leaks
         if new_nb_str != nb_str:
             # Write it out if it has changed.
             with open(notebook_path, 'wt', encoding='utf8') as f:
-                nbformat.write(new_nb_str, f)
+                f.write(new_nb_str)
         print("\tFinished %s in %0.2f seconds"%(notebook_path, time.time()-start_time))
         
         if git_clear:
