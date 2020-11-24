@@ -343,7 +343,7 @@ class ContextStorage:
         if os.path.isfile(name_to_hash_file):
             with open(name_to_hash_file, 'r') as f:
                 for line in f.readlines():
-                    orig_lines.append(line)
+                    orig_lines.append(line.rstrip())
                     name, hash_id = line.split()
                     hash_to_old_name[hash_id] = name
                     old_name_to_hash[name] = hash_id
