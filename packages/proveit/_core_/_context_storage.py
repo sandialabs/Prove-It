@@ -1525,23 +1525,23 @@ class ContextFolderStorage:
                 os.path.join(proveit_path, '..', 
                              '_dependencies_template_.ipynb')
             with open(dependencies_template_filename, 'r') as template:
-                nb = template.read()
-                nb = nb.replace('#IMPORTS#', import_code)
-                nb = nb.replace('#CONTEXT#', self.context.name)
-                nb = nb.replace('#TYPE#', class_name)
-                nb = nb.replace('#TYPE_LINK#', 
+                dep_nb = template.read()
+                dep_nb = dep_nb.replace('#IMPORTS#', import_code)
+                dep_nb = dep_nb.replace('#CONTEXT#', self.context.name)
+                dep_nb = dep_nb.replace('#TYPE#', class_name)
+                dep_nb = dep_nb.replace('#TYPE_LINK#', 
                                 type_link.replace('\\', '\\\\'))
-                nb = nb.replace('#KIND#', kind_str)
-                nb = nb.replace('#SPECIAL_EXPR_NAME#', name)
+                dep_nb = dep_nb.replace('#KIND#', kind_str)
+                dep_nb = dep_nb.replace('#SPECIAL_EXPR_NAME#', name)
                 special_expr_link = special_expr_link + '#' + name
-                nb = nb.replace('#SPECIAL_EXPR_LINK#', 
+                dep_nb = dep_nb.replace('#SPECIAL_EXPR_LINK#', 
                                 json.dumps(special_expr_link).strip('"'))  
                 if kind_str == 'Theorem':
                     see_proof_str = ('***see <a class=\\"ProveItLink\\" '
                                      'href=\\"../../_proofs_/%s.ipynb\\">'
                                      'proof</a>***'%name)
                 else: see_proof_str = ''
-                nb = nb.replace('#SEE_PROOF#', see_proof_str)
+                dep_nb = dep_nb.replace('#SEE_PROOF#', see_proof_str)
                                 
             # Save the dependencies notebook unless it is unchanged.
             if os.path.isfile(dependencies_filename):
@@ -1550,12 +1550,12 @@ class ContextFolderStorage:
                         orig_nb = clean_nb(f)
                     except JSONDecodeError as e:
                         orig_nb = ""
-                if orig_nb != nb:                       
+                if orig_nb != dep_nb:                       
                     with open(dependencies_filename, 'w') as dependencies_file:
-                        dependencies_file.write(nb)
+                        dependencies_file.write(dep_nb)
             else:
                 with open(dependencies_filename, 'w') as dependencies_file:
-                    dependencies_file.write(nb)
+                    dependencies_file.write(dep_nb)
         
         return nb
         
