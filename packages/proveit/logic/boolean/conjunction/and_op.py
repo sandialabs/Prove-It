@@ -97,7 +97,7 @@ class And(Operation):
                            "we could not disprove any of the conjunction "
                            "operands.")
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -113,7 +113,7 @@ class And(Operation):
         yield self.deriveParts
         #yield self.deriveCommutation
 
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
         '''
@@ -125,7 +125,7 @@ class And(Operation):
             demorganOr = Or(*[operand.operand for operand in self.operands])
             yield demorganOr.concludeViaDemorgans
         
-    def inBoolSideEffects(self, knownTruth):
+    def inBoolSideEffects(self, judgment):
         '''
         From (A and B and .. and Z) in Booleans deduce (A in Booleans), (B in Booleans), ...
         (Z in Booleans).

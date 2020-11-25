@@ -1,4 +1,4 @@
-from proveit import Lambda, Conditional, OperationOverInstances, KnownTruth
+from proveit import Lambda, Conditional, OperationOverInstances, Judgment
 from proveit import defaults, Literal, Operation, ExprTuple, USE_DEFAULTS
 from proveit._common_ import n, A, B, P, Q, R, S
 
@@ -26,14 +26,14 @@ class Exists(OperationOverInstances):
                 domain=domain, domains=domains, condition=condition,
                 conditions=conditions, _lambda_map=_lambda_map)
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for an exists operations.
         '''
         return
         yield self.deriveNegatedForall # derive the negated forall form
 
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a negated exists operation.
         '''
@@ -69,7 +69,7 @@ class Exists(OperationOverInstances):
         defaults.assumptions = (*defaults.assumptions, *Q_skolem, P_skolem)
         if print_message:
             print("Creating Skolem 'constant(s)': {0}.\n"
-                  "Call the KnownTruth.eliminate{0} to complete the "
+                  "Call the Judgment.eliminate{0} to complete the "
                   "Skolemization\n(when the 'constant(s)' are no longer needed).\n"
                   "Adding to defaults.assumptions:".
                   format(skolem_constants, (*Q_skolem)))
@@ -274,7 +274,7 @@ class Exists(OperationOverInstances):
         from proveit.logic import Forall
         from proveit._generic_ import InstanceSubstitutionException
         from proveit._common_ import n, Qmulti, xMulti, yMulti, zMulti, S
-        if isinstance(universality, KnownTruth):
+        if isinstance(universality, Judgment):
             universality = universality.expr
         if not isinstance(universality, Forall):
             raise InstanceSubstitutionException("'universality' must be a forall expression", self, universality)

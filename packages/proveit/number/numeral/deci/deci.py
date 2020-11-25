@@ -253,11 +253,11 @@ class DigitSet(NumberSet):
         from ._theorems_ import digitsUpperBound
         return digitsUpperBound.specialize({n: member}, assumptions=assumptions)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in Naturals' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions: self.deduceMemberLowerBound(member, assumptions)
         yield lambda assumptions: self.deduceMemberUpperBound(member, assumptions)
 

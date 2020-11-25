@@ -7,8 +7,8 @@ class NotInSet(Operation):
                          latexFormat=r'\notin',
                          context=__file__)
 
-    # maps elements to NotInSet KnownTruths.
-    # For example, map x to (x \nin S) if (x \nin S) is a KnownTruth.
+    # maps elements to NotInSet Judgments.
+    # For example, map x to (x \nin S) if (x \nin S) is a Judgment.
     knownNonmemberships = dict()
 
     def __init__(self, element, domain):
@@ -47,17 +47,17 @@ class NotInSet(Operation):
             return self.unfoldNotIn # the default 'unfold' method
         raise AttributeError
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Store the proven non-membership in knownNonmemberships.
         Unfold x not-in S as Not(x in S) as an automatic side-effect.
         If the domain has a 'nonmembershipObject' method, side effects
         will also be generated from the 'sideEffects' object that it generates.
         '''
-        NotInSet.knownNonmemberships.setdefault(self.element, set()).add(knownTruth)
+        NotInSet.knownNonmemberships.setdefault(self.element, set()).add(judgment)
         yield self.unfoldNotIn
         if hasattr(self, 'nonmembershipObject'):
-            for sideEffect in self.nonmembershipObject.sideEffects(knownTruth):
+            for sideEffect in self.nonmembershipObject.sideEffects(judgment):
                 yield sideEffect
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
@@ -98,7 +98,7 @@ class NotInSet(Operation):
         if self.element in NotInSet.knownNonmemberships:
             for knownNonmembership in NotInSet.knownNonmemberships[self.element]:
                 if knownNonmembership.isSufficient(assumptions):
-                    # x not in R is a known truth; if we know that
+                    # x not in R is a judgment; if we know that
                     # R supseteq S, we are done.
                     supRel = SupersetEq(knownNonmembership.domain,
                                         self.domain)
@@ -172,7 +172,7 @@ class Nonmembership:
     def __init__(self, element):
         self.element = element
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         raise NotImplementedError("Nonmembership object has no 'sideEffects' method implemented")
 
     def conclude(self, assumptions):

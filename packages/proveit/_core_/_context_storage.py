@@ -323,7 +323,7 @@ class ContextStorage:
             for name, axiom in proof_defs.items():
                 # make links to the axiom objects
                 context_folder_storage._retrieve(axiom)
-            # Convert definitions from Proofs to KnownTruth objects.
+            # Convert definitions from Proofs to Judgment objects.
             definitions = {name:proof.provenTruth 
                            for name, proof in proof_defs.items()}
         self._setSpecialObjects(names, definitions, kind)
@@ -772,7 +772,7 @@ class ContextFolderStorage:
     # from a folder that is "owned" (that would be a self-reference).
     owns_active_storage = False
     
-    # Map style ids of Prove-It object (Expressions, KnownTruths, and 
+    # Map style ids of Prove-It object (Expressions, Judgments, and 
     # Proofs) to a (ContextFolderStorage, hash_id) tuple where it is
     # being stored.
     proveit_object_to_storage = dict()
@@ -990,13 +990,13 @@ class ContextFolderStorage:
         Generate a unique representation string for the given Prove-It
         object that is dependent upon the style.
         '''
-        from proveit import Expression, KnownTruth, Proof
+        from proveit import Expression, Judgment, Proof
         prefix = None
         if isinstance(proveItObject, Expression):
             prefix = '' # No prefix for Expressions
-        elif isinstance(proveItObject, KnownTruth):
-             # prefix to indicate that it is a KnownTruth
-            prefix = 'KnownTruth:'
+        elif isinstance(proveItObject, Judgment):
+             # prefix to indicate that it is a Judgment
+            prefix = 'Judgment:'
         elif isinstance(proveItObject, Proof):
             prefix = 'Proof:' # prefix to indicate that it is a Proof
         else:
@@ -1016,12 +1016,12 @@ class ContextFolderStorage:
         context_name may be given; if the Context is the one associated 
         with this Storage object then the default may be used.
         '''
-        from proveit import Expression, KnownTruth, Proof
+        from proveit import Expression, Judgment, Proof
         if storage_ids is None:
             if unique_rep[:6] == 'Proof:':
                 storage_ids = Proof._extractReferencedObjIds(unique_rep[6:])
-            elif unique_rep[:11] == 'KnownTruth:':
-                storage_ids = KnownTruth._extractReferencedObjIds(
+            elif unique_rep[:11] == 'Judgment:':
+                storage_ids = Judgment._extractReferencedObjIds(
                         unique_rep[11:])
             else:
                 # Assumed to be an expression then
@@ -1045,7 +1045,7 @@ class ContextFolderStorage:
     
     def _retrieve(self, proveItObject):
         '''
-        Find the directory for the stored Expression, KnownTruth, or 
+        Find the directory for the stored Expression, Judgment, or 
         Proof.  Create it if it did not previously exist.  Return the 
         (context_folder_storage, hash_directory) pair where the 
         hash_directory is the directory name (within the context's
@@ -1210,12 +1210,12 @@ class ContextFolderStorage:
         obj = expr
         if kind=='axiom':
             # Store this "special" notebook if the hash for the
-            # KnownTruth object associated with the Axiom.
+            # Judgment object associated with the Axiom.
             obj = Axiom(expr, context_folder_storage.context, name)
             obj = obj.provenTruth
         elif kind=='theorem':
             # Store this "special" notebook if the hash for the
-            # KnownTruth object associated with the Theorem.
+            # Judgment object associated with the Theorem.
             obj = Theorem(expr, context_folder_storage.context, name)
             obj = obj.provenTruth
         obj_context_folder_storage, hash_directory = \
@@ -1391,7 +1391,7 @@ class ContextFolderStorage:
                 item_names[namedExprAndStyleId] = itemName \
                     = namedExprAddress[-1]
                  # Split off '.expr' part if it is a Theorem or Axiom 
-                 # KnownTruth
+                 # Judgment
                 objName = itemName.split('.')[0]
                 module_name = self._moduleAbbreviatedName(module_name, 
                                                           objName)
@@ -1575,11 +1575,11 @@ class ContextFolderStorage:
         '''
         from proveit import (Expression, Operation, Literal, ExprTuple, 
                              NamedExprs, ExprArray)
-        from proveit._core_ import KnownTruth
+        from proveit._core_ import Judgment
         
-        if isinstance(obj, KnownTruth):
+        if isinstance(obj, Judgment):
             assert len(obj.assumptions)==0, (
-                    "Expecting only an Axiom or Theorem KnownTruth with "
+                    "Expecting only an Axiom or Theorem Judgment with "
                     "no assumptions.")
             expr = obj.expr
         else:
@@ -1937,12 +1937,12 @@ class ContextFolderStorage:
         
         return built_expr_map[master_expr_id]        
     
-    def makeKnownTruth(self, truth_id):
+    def makeJudgment(self, truth_id):
         '''
-        Return the KnownTruth object that is represented in storage by
-        the given KnownTruth id.
+        Return the Judgment object that is represented in storage by
+        the given Judgment id.
         '''
-        from proveit._core_.known_truth import KnownTruth
+        from proveit._core_.judgment import Judgment
         context_name, folder, _ = self._split(truth_id)
         hash_path = self._storagePath(truth_id)
         with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
@@ -1953,7 +1953,7 @@ class ContextFolderStorage:
                                               folder)
         truth_expr_id = self.makeExpression(exprids[0])
         assumptions = [self.makeExpression(exprid) for exprid in exprids[1:]]
-        return KnownTruth(truth_expr_id, assumptions)
+        return Judgment(truth_expr_id, assumptions)
         
     def makeShowProof(self, proof_id):
         '''

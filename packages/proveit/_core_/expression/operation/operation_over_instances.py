@@ -770,9 +770,9 @@ class OperationOverInstances(Operation):
         '''
         from proveit.logic.equality._axioms_ import instanceSubstitution, noDomainInstanceSubstitution
         from proveit.logic import Forall, Equals
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit._common_ import n, Qmulti, xMulti, yMulti, zMulti, f, g, Upsilon, S
-        if isinstance(universality, KnownTruth):
+        if isinstance(universality, Judgment):
             universality = universality.expr
         if not isinstance(universality, Forall):
             raise InstanceSubstitutionException("'universality' must be a forall expression", self, universality)

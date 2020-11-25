@@ -9,10 +9,10 @@ class Iff(TransitiveRelation):
     # The operator of the Iff operation
     _operator_ = Literal(stringFormat='<=>', latexFormat=r'\Leftrightarrow', context=__file__)
 
-    # map left-hand-sides to Subset KnownTruths
+    # map left-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownLeftSides = dict()    
-    # map right-hand-sides to Subset KnownTruths
+    # map right-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()        
         
@@ -22,13 +22,13 @@ class Iff(TransitiveRelation):
         self.B = B
 
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Yield the TransitiveRelation side-effects (which also records knownLeftSides
         and knownRightSides).  Also derive the left and right implications,
         derive the reversed version and attempt to derive equality.
         '''
-        for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
+        for sideEffect in TransitiveRelation.sideEffects(self, judgment):
             yield sideEffect
         yield self.deriveLeftImplication # B=>A given A<=>B
         yield self.deriveRightImplication # A=>B given A<=>B

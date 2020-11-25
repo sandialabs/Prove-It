@@ -27,7 +27,7 @@ class Forall(OperationOverInstances):
                 condition=condition, conditions=conditions,
                 _lambda_map=_lambda_map)
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for this
         forall operation.
@@ -255,7 +255,7 @@ class Forall(OperationOverInstances):
     def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
         '''
         First attempt to prove that this Forall statement is true under
-        the assumptions, and then call specialize on the KnownTruth.
+        the assumptions, and then call specialize on the Judgment.
         '''
         return self.prove(assumptions).instantiate(
                 repl_map, assumptions=assumptions)

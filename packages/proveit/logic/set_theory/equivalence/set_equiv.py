@@ -16,7 +16,7 @@ class SetEquiv(TransitiveRelation):
     _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong',
                          context=__file__)        
     
-    # map Expressions to sets of KnownTruths of set equivalences that
+    # map Expressions to sets of Judgments of set equivalences that
     # involve the Expression on the left hand or right hand side.
     # knownEqualities = dict()
     knownEquivalences = dict()
@@ -52,9 +52,9 @@ class SetEquiv(TransitiveRelation):
                 pass # and that's okay            
             SetEquiv.initializing.remove(self)
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
-        Record the knownTruth in SetEquiv.knownEquivalences, associated
+        Record the judgment in SetEquiv.knownEquivalences, associated
         from the left hand side and the right hand side.  This
         information may be useful for concluding new equivalences via
         transitivity. If the right hand side is an "irreducible value"
@@ -64,12 +64,12 @@ class SetEquiv(TransitiveRelation):
         this equivalence.
         '''
         from proveit.logic.boolean._common_ import TRUE, FALSE
-        SetEquiv.knownEquivalences.setdefault(self.lhs, set()).add(knownTruth)
-        SetEquiv.knownEquivalences.setdefault(self.rhs, set()).add(knownTruth)
+        SetEquiv.knownEquivalences.setdefault(self.lhs, set()).add(judgment)
+        SetEquiv.knownEquivalences.setdefault(self.rhs, set()).add(judgment)
         # not yet clear if the irreducible value check is relevant for sets
         # if isIrreducibleValue(self.rhs):
-        #     SetEquiv.simplifications.setdefault(self.lhs, set()).add(knownTruth)
-        #     SetEquiv.evaluations.setdefault(self.lhs, set()).add(knownTruth)
+        #     SetEquiv.simplifications.setdefault(self.lhs, set()).add(judgment)
+        #     SetEquiv.evaluations.setdefault(self.lhs, set()).add(judgment)
         if (self.lhs != self.rhs): # e.g. if we don't have SetEquiv(A, A)
             # automatically derive the reversed form which is equivalent
             yield self.deriveReversed
@@ -84,10 +84,10 @@ class SetEquiv(TransitiveRelation):
         #     yield self.deriveViaBooleanEquality
         # STILL CHECKING IN THE RELEVANCE OF THE FOLLOWING
         # if hasattr(self.lhs, 'equalitySideEffects'):
-        #     for sideEffect in self.lhs.equalitySideEffects(knownTruth):
+        #     for sideEffect in self.lhs.equalitySideEffects(judgment):
         #         yield sideEffect
 
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a
         negated equivalence. IN PROGRESS     
@@ -166,24 +166,24 @@ class SetEquiv(TransitiveRelation):
     # @staticmethod
     # def knownRelationsFromLeft(expr, assumptionsSet):
     #     '''
-    #     For each KnownTruth that is an Equals involving the given expression on
-    #     the left hand side, yield the KnownTruth and the right hand side.
+    #     For each Judgment that is an Equals involving the given expression on
+    #     the left hand side, yield the Judgment and the right hand side.
     #     '''
-    #     for knownTruth in Equals.knownEqualities.get(expr, frozenset()):
-    #         if knownTruth.lhs == expr:
-    #             if knownTruth.isSufficient(assumptionsSet):
-    #                 yield (knownTruth, knownTruth.rhs)
+    #     for judgment in Equals.knownEqualities.get(expr, frozenset()):
+    #         if judgment.lhs == expr:
+    #             if judgment.isSufficient(assumptionsSet):
+    #                 yield (judgment, judgment.rhs)
     
     # @staticmethod
     # def knownRelationsFromRight(expr, assumptionsSet):
     #     '''
-    #     For each KnownTruth that is an Equals involving the given expression on
-    #     the right hand side, yield the KnownTruth and the left hand side.
+    #     For each Judgment that is an Equals involving the given expression on
+    #     the right hand side, yield the Judgment and the left hand side.
     #     '''
-    #     for knownTruth in Equals.knownEqualities.get(expr, frozenset()):
-    #         if knownTruth.rhs == expr:
-    #             if knownTruth.isSufficient(assumptionsSet):
-    #                 yield (knownTruth, knownTruth.lhs)
+    #     for judgment in Equals.knownEqualities.get(expr, frozenset()):
+    #         if judgment.rhs == expr:
+    #             if judgment.isSufficient(assumptionsSet):
+    #                 yield (judgment, judgment.lhs)
 
     def concludeViaReflexivity(self, assumptions=USE_DEFAULTS):
         '''
@@ -245,8 +245,8 @@ class SetEquiv(TransitiveRelation):
             # call from the "other" side.
             return other.applyTransitivity(self, assumptions)
         otherSetEquiv = other
-        # We can assume that B set_equiv A will be a KnownTruth if
-        # A set_equiv B is a KnownTruth because it is derived as a
+        # We can assume that B set_equiv A will be a Judgment if
+        # A set_equiv B is a Judgment because it is derived as a
         # side-effect.
         if self.rhs == otherSetEquiv.lhs:
             return setEquivTransitivity.specialize(

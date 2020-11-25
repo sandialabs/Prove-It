@@ -9,11 +9,11 @@ class RationalsSet(NumberSet):
         NumberSet.__init__(self, 'Rationals', r'\mathbb{Q}',
                            context=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'q in Rationals' for a given q.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
     
     def membershipObject(self, element):
@@ -35,12 +35,12 @@ class RationalsPosSet(NumberSet):
         NumberSet.__init__(self, 'RationalsPos', r'\mathbb{Q}^+',
                            context=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalsPos'
         for a given q.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInRationals(member, 
                                                                 assumptions)
     
@@ -76,12 +76,12 @@ class RationalsNegSet(NumberSet):
         NumberSet.__init__(self, 'RationalsNeg', r'\mathbb{Q}^-',
                            context=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalsNeg' 
         for a given q.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInRationals(member, 
                                                                 assumptions)
     
@@ -118,12 +118,12 @@ class RationalsNonNegSet(NumberSet):
         NumberSet.__init__(self, 'RationalsNonNeg', r'\mathbb{Q}^{\geq 0}',
                            context=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalsNonNeg' 
         for a given q.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInRationals(member, 
                                                                 assumptions)
     

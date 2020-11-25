@@ -498,10 +498,10 @@ class CircuitEquiv(TransitiveRelation):
     # operator for the CircuitEquiv relation
     _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong',
                          context=__file__)
-    # map left-hand-sides to Subset KnownTruths
+    # map left-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownLeftSides = dict()
-    # map right-hand-sides to Subset KnownTruths
+    # map right-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()
 

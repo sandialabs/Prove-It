@@ -12,12 +12,12 @@ class ContainmentRelation(TransitiveRelation):
     def __init__(self, operator, lhs, rhs):
         TransitiveRelation.__init__(self, operator, lhs, rhs)
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         In addition to the TransitiveRelation side-effects, also
         attempt deriveRelaxed (if applicable) and deriveReversed.
         '''
-        for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
+        for sideEffect in TransitiveRelation.sideEffects(self, judgment):
             yield sideEffect
         if hasattr(self, 'deriveRelaxed'):
             yield self.deriveRelaxed

@@ -1,6 +1,6 @@
 """
-A KnownTruth represents an expression that has been proven to be a true
-statement.  A KnownTruth wraps an Expression (acting like the Expression
+A Judgment represents an expression that has been proven to be a true
+statement.  A Judgment wraps an Expression (acting like the Expression
 in many ways via overloading __getattr__) but also has a list of assumptions
 and its proof (as a Proof object, which may be updated if a newer proof,
 with possibly fewer assumptions, suffices).
@@ -15,7 +15,7 @@ class _ExprProofs:
     '''
     Stores a set of proofs for a particular expression under any set
     of assumptions.  We maintain such sets so that we can update
-    KnownTruth proofs appropriately when a particular proof has been
+    Judgment proofs appropriately when a particular proof has been
     disabled.
     '''
     all_expr_proofs = dict() # map expressions to expression proofs
@@ -42,16 +42,16 @@ class _ExprProofs:
         assert not oldproof.isUsable(), "Should only remove unusable proofs"
         self._proofs.discard(oldproof)
     
-    def bestProof(self, knowntruth):
+    def bestProof(self, judgment):
         '''
-        Return the best proof applicable to the knowntruth that is usable
+        Return the best proof applicable to the judgment that is usable
         (or None if there aren't any that are usable).
         '''
-        assert isinstance(knowntruth, KnownTruth)
+        assert isinstance(judgment, Judgment)
         best_unusable_proof = None
         fewestSteps = float('inf')
         for proof in self._proofs:
-            if proof.provenTruth.assumptionsSet.issubset(knowntruth.assumptionsSet):
+            if proof.provenTruth.assumptionsSet.issubset(judgment.assumptionsSet):
                 assert proof.isUsable(), 'unusable proofs should have been removed'
                 
                 if proof.numSteps() < fewestSteps:
@@ -60,12 +60,12 @@ class _ExprProofs:
         return best_unusable_proof # the proof with the fewest steps that is applicable
 
             
-class KnownTruth:
-    # lookup_dict maps each Expression to a set of KnownTruths for proving the 
+class Judgment:
+    # lookup_dict maps each Expression to a set of Judgments for proving the 
     # Expression under various assumptions.
     lookup_dict = dict()
     
-    # (KnownTruth, default assumptions) pairs for which deriveSideEffects has been called.  
+    # (Judgment, default assumptions) pairs for which deriveSideEffects has been called.  
     # We track this to make sure we didn't miss anything while automation was disabled and then re-enabled.
     sideeffect_processed = set()
     
@@ -83,7 +83,7 @@ class KnownTruth:
     presumingExclusions = None # set if theorems and theories excluded from presumptions
     qedInProgress = False # set to true when "%qed" is in progress
         
-    # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
+    # Judgments for which deriveSideEffects is in progress, tracked to prevent infinite
     # recursion when deducing side effects after something is proven.
     in_progress_to_derive_sideeffects = set() 
 
@@ -91,46 +91,46 @@ class KnownTruth:
     def _clear_():
         '''
         Clear all references to Prove-It information in
-        the KnownTruth jurisdiction.
+        the Judgment jurisdiction.
         '''
-        KnownTruth.lookup_dict.clear()
-        KnownTruth.sideeffect_processed.clear()
-        KnownTruth.theoremBeingProven = None
-        KnownTruth.hasBeenProven = None
-        KnownTruth.presumingTheorems = None
-        KnownTruth.presumingPrefixes = None
-        KnownTruth.qedInProgress = False
+        Judgment.lookup_dict.clear()
+        Judgment.sideeffect_processed.clear()
+        Judgment.theoremBeingProven = None
+        Judgment.hasBeenProven = None
+        Judgment.presumingTheorems = None
+        Judgment.presumingPrefixes = None
+        Judgment.qedInProgress = False
         _ExprProofs.all_expr_proofs.clear()
-        assert len(KnownTruth.in_progress_to_derive_sideeffects)==0, "Unexpected remnant 'in_progress_to_derive_sideeffects' items (should have been temporary)"
+        assert len(Judgment.in_progress_to_derive_sideeffects)==0, "Unexpected remnant 'in_progress_to_derive_sideeffects' items (should have been temporary)"
 
     def __init__(self, expression, assumptions):
         '''
-        Create a KnownTruth with the given Expression, set of assumptions.  These
+        Create a Judgment with the given Expression, set of assumptions.  These
         should not be created manually but rather through the creation of Proofs which should
-        be done indirectly via Expression/KnownTruth derivation-step methods.
+        be done indirectly via Expression/Judgment derivation-step methods.
         '''
         # do some type checking
         if not isinstance(expression, Expression):
-            raise ValueError('The expression (expr) of a KnownTruth should be an Expression')
+            raise ValueError('The expression (expr) of a Judgment should be an Expression')
         for assumption in assumptions:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
                 
-        # note: these contained expressions are subject to style changes on a KnownTruth instance basis
+        # note: these contained expressions are subject to style changes on a Judgment instance basis
         self.expr = expression
         # store the assumptions as an ordered list (with the desired order for display)
         # and an unordered set (for convenience when checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
 
-        # The meaning data is shared among KnownTruths with the same 
+        # The meaning data is shared among Judgments with the same 
         # structure disregarding style
         meaning_id_fn = lambda expr : hex(expr._establish_and_get_meaning_id())
         self._meaningData = meaningData(
                 self._generate_unique_rep(meaning_id_fn))
         if not hasattr(self._meaningData, '_exprProofs'):
             # create or assign the _ExprProofs object for storing all proofs
-            # for this KnownTruth's expr (under any set of assumptions).
+            # for this Judgment's expr (under any set of assumptions).
             if self.expr in _ExprProofs.all_expr_proofs:
                 exprProofs = _ExprProofs.all_expr_proofs[self.expr]
             else:
@@ -139,7 +139,7 @@ class KnownTruth:
             # Initially, _proof is None but will be assigned and updated via _addProof()
             self._meaningData._proof = None
         
-        # The style data is shared among KnownTruths with the same structure and style.
+        # The style data is shared among Judgments with the same structure and style.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id)))
         
         # establish some parent-child relationships (important in case styles are updated)
@@ -183,11 +183,11 @@ class KnownTruth:
         # Sort the assumptions according to hash key so that sets of assumptions
         # are unique for determining which side-effects have been processed already.
         sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
-        if (self.expr, sorted_assumptions) in KnownTruth.sideeffect_processed:
+        if (self.expr, sorted_assumptions) in Judgment.sideeffect_processed:
             return # has already been processed
-        if self not in KnownTruth.in_progress_to_derive_sideeffects:
+        if self not in Judgment.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
-            KnownTruth.in_progress_to_derive_sideeffects.add(self)
+            Judgment.in_progress_to_derive_sideeffects.add(self)
             try:
                 for sideEffect in self.expr.sideEffects(self):
                     #print(self, "side-effect", sideEffect)
@@ -202,13 +202,13 @@ class KnownTruth:
                     except Exception as e:
                         raise Exception("Side effect failure for %s, while running %s: "%(str(self.expr), str(sideEffect)) + str(e))
             finally:
-                KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
-            KnownTruth.sideeffect_processed.add((self.expr, sorted_assumptions))
+                Judgment.in_progress_to_derive_sideeffects.remove(self)        
+            Judgment.sideeffect_processed.add((self.expr, sorted_assumptions))
     
     def orderOfAppearance(self, subExpressions):
         '''
         Yields the given sub-Expressions in the order in which they
-        appear in this KnownTruth.  There may be repeats.
+        appear in this Judgment.  There may be repeats.
         '''
         for assumption in self.assumptions:
             for expr in assumption.orderOfAppearance(subExpressions):
@@ -217,7 +217,7 @@ class KnownTruth:
             yield expr
     
     def __eq__(self, other):
-        if isinstance(other, KnownTruth):
+        if isinstance(other, Judgment):
             return self._meaning_id == other._meaning_id
         else: return False # other must be an Expression to be equal to self
     
@@ -238,12 +238,12 @@ class KnownTruth:
         '''
         from .context import Context, ContextException
         from .proof import Theorem
-        if KnownTruth.theoremBeingProven is not None:
+        if Judgment.theoremBeingProven is not None:
             raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.")
         if not isinstance(theorem, Theorem):
             raise TypeError('Only begin a proof for a Theorem')
         if theorem.provenTruth != self:
-            raise ValueError('Inconsistent theorem for the KnownTruth in beginProof call')
+            raise ValueError('Inconsistent theorem for the Judgment in beginProof call')
         
         """
         # Note: all previous theorems of the context are presumed automatically.
@@ -295,15 +295,15 @@ class KnownTruth:
             # extra sanity check (should be caught within getAllPresumedTheoremNames)
             raise CircularLogic(theorem, theorem)
         
-        KnownTruth.theoremBeingProven = theorem
-        KnownTruth.presumedTheoremsAndTheories = presumptions
-        KnownTruth.presumingTheoremAndTheoryExclusions = exclusions
+        Judgment.theoremBeingProven = theorem
+        Judgment.presumedTheoremsAndTheories = presumptions
+        Judgment.presumingTheoremAndTheoryExclusions = exclusions
         Theorem.updateUsability()
         
-        # change KnownTruth.hasBeenProven
+        # change Judgment.hasBeenProven
         # from None to False -- we can now test to see if 
-        # we have a proof for KnownTruth.theoremBeingProven
-        KnownTruth.hasBeenProven = False        
+        # we have a proof for Judgment.theoremBeingProven
+        Judgment.hasBeenProven = False        
         
         """
         # check to see if the theorem was already proven before we started
@@ -332,31 +332,31 @@ class KnownTruth:
         Complete a proof that began via `beginProof`, entering it into
         the certification database.
         '''
-        if KnownTruth.theoremBeingProven is None:
+        if Judgment.theoremBeingProven is None:
             raise Exception('No theorem being proven; cannot call qed method')
-        if self.expr != KnownTruth.theoremBeingProven.provenTruth.expr:
+        if self.expr != Judgment.theoremBeingProven.provenTruth.expr:
             raise Exception('qed does not match the theorem being proven')
         if len(self.assumptions) > 0:
             raise Exception('qed proof should not have any remaining assumptions')
-        KnownTruth.qedInProgress = True
+        Judgment.qedInProgress = True
         try:
             proof = self.expr.prove(assumptions=[]).proof()
             if not proof.isUsable():
                 proof.provenTruth.raiseUnusableProof()
-            KnownTruth.theoremBeingProven._recordProof(proof)
+            Judgment.theoremBeingProven._recordProof(proof)
         finally:
-            KnownTruth.qedInProgress = False
+            Judgment.qedInProgress = False
         return proof
 
     def proof(self):
         '''
-        Returns the most up-to-date proof of this KnownTruth.
+        Returns the most up-to-date proof of this Judgment.
         '''
         return self._meaningData._proof
     
     def isUsable(self):
         '''
-        Returns True iff this KnownTruth has a "usable" proof.  Proofs
+        Returns True iff this Judgment has a "usable" proof.  Proofs
         may be unusable when proving a theorem that is restricted with
         respect to which theorems may be used (to avoid circular logic).
         '''
@@ -365,30 +365,30 @@ class KnownTruth:
     
     def isSufficient(self, assumptions):
         '''
-        Return True iff the given assumptions satisfy the KnownTruth; 
-        the KnownTruth is usable and requires a subset of the given assumptions.
+        Return True iff the given assumptions satisfy the Judgment; 
+        the Judgment is usable and requires a subset of the given assumptions.
         '''
         return self.isUsable() and self.assumptionsSet.issubset(assumptions)
     
     def asTheoremOrAxiom(self):
         '''
-        Assuming this KnownTruth represents a Theorem or Axiom, return 
+        Assuming this Judgment represents a Theorem or Axiom, return 
         the Theorem or Axiom object.
         '''
         from .proof import Theorem, Axiom
-        # Get the theorem associated with the KnownTruth (or raise an exception if there is none)
-        if KnownTruth.theoremBeingProven is not None:
-            if self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
-                return KnownTruth.theoremBeingProven
+        # Get the theorem associated with the Judgment (or raise an exception if there is none)
+        if Judgment.theoremBeingProven is not None:
+            if self.expr == Judgment.theoremBeingProven.provenTruth.expr:
+                return Judgment.theoremBeingProven
         proof = self.proof()
         if isinstance(proof, Theorem) or isinstance(proof, Axiom):
             return proof
         else:
-            raise ValueError("KnownTruth does not represent a theorem or axiom.")
+            raise ValueError("Judgment does not represent a theorem or axiom.")
     
     def printRequirements(self):
         '''
-        Provided that this KnownTruth is known to represent a proven theorem,
+        Provided that this Judgment is known to represent a proven theorem,
         print the set of axioms that are required directly or indirectly in
         its proof as well as any required theorems that are unproven (if it
         has not yet been proven completely).
@@ -409,7 +409,7 @@ class KnownTruth:
 
     def printDependents(self):
         '''
-        Provided that this KnownTruth is known to represent a theorem or axiom,
+        Provided that this Judgment is known to represent a theorem or axiom,
         print all theorems that are known to depend on it directly or indirectly.
         '''
         from proveit.certify import allDependents
@@ -429,12 +429,12 @@ class KnownTruth:
     def _addProof(self, newproof=None):
         '''
         After a Proof is finished being constructed, record the best
-        proof for the KnownTruth which may be the new proof, 'proof',
-        or a pre-existing one.  Update all KnownTruths
+        proof for the Judgment which may be the new proof, 'proof',
+        or a pre-existing one.  Update all Judgments
         with the same 'truth' expression that should be updated.
         '''
         #print 'record best', self.expr, 'under', self.assumptions
-        # update KnownTruth.lookup_dict and use find all of the KnownTruths
+        # update Judgment.lookup_dict and use find all of the Judgments
         # with this expr to see if the proof should be updated with the new proof.
 
         if not newproof.isUsable():
@@ -446,17 +446,17 @@ class KnownTruth:
             return 
         self._exprProofs.insert(newproof)
     
-        # Check to see if the new proof is applicable to any other KnownTruth.
+        # Check to see if the new proof is applicable to any other Judgment.
         # It can replace an old proof if it became unusable or if the newer one uses fewer steps.
-        expr_known_truths = KnownTruth.lookup_dict.setdefault(self.expr, set())
-        expr_known_truths.add(self)
-        for expr_known_truth in expr_known_truths:
-            # Is 'proof' applicable to 'expr_known_truth'?
-            if newproof.provenTruth.assumptionsSet.issubset(expr_known_truth.assumptionsSet):
+        expr_judgments = Judgment.lookup_dict.setdefault(self.expr, set())
+        expr_judgments.add(self)
+        for expr_judgment in expr_judgments:
+            # Is 'proof' applicable to 'expr_judgment'?
+            if newproof.provenTruth.assumptionsSet.issubset(expr_judgment.assumptionsSet):
                 # replace if there was no pre-existing usable proof or the new proof has fewer steps
-                preexisting_proof = expr_known_truth.proof()
+                preexisting_proof = expr_judgment.proof()
                 if preexisting_proof is None or not preexisting_proof.isUsable() or newproof.numSteps()<preexisting_proof.numSteps():
-                    expr_known_truth._updateProof(newproof) # replace an old proof
+                    expr_judgment._updateProof(newproof) # replace an old proof
     
     def _reviseProof(self):
         '''
@@ -471,24 +471,24 @@ class KnownTruth:
     def _recordBestProof(self, newProof):
         '''
         After a Proof is finished being constructed, check to see if
-        any proofs for this KnownTruth are obsolete; the new proof
+        any proofs for this Judgment are obsolete; the new proof
         might make a previous one obsolete, or it may be born
-        obsolete itself.  A proof is obsolete if there exists a KnownTruth
+        obsolete itself.  A proof is obsolete if there exists a Judgment
         with a subset of the assumptions required for that proof, or with
         the same set of assumptions but fewer steps.  A tie goes to the
         new proof, but note that the step number comparison will prevent
-        anything cyclic (since a proof for a KnownTruth that requires that
-        same KnownTruth as a dependent will necessarily include the
+        anything cyclic (since a proof for a Judgment that requires that
+        same Judgment as a dependent will necessarily include the
         number of steps of the original proof plus more).
         '''
         self._updateProof(self._exprProofs.bestProof(self))
         
         
         from proof import Theorem
-        if not self.expr in KnownTruth.lookup_dict:
-            # the first KnownTruth for this Expression
+        if not self.expr in Judgment.lookup_dict:
+            # the first Judgment for this Expression
             self._proof = newProof
-            KnownTruth.lookup_dict[self.expr] = [self]
+            Judgment.lookup_dict[self.expr] = [self]
             return
         if not newProof.isUsable():
             # if it is not usable, we're done.
@@ -499,7 +499,7 @@ class KnownTruth:
             return
         keptTruths = []
         bornObsolete = False
-        for other in KnownTruth.lookup_dict[self.expr]:
+        for other in Judgment.lookup_dict[self.expr]:
             if self.assumptionsSet == other.assumptionsSet:
                 if not other._proof.isUsable():
                     # use the new proof since the old one is unusable.
@@ -532,20 +532,20 @@ class KnownTruth:
                 # uses a subset of the assumptions but is unusable
                 keptTruths.append(other)
         if not bornObsolete:
-            if KnownTruth.theoremBeingProven is not None:
-                if not KnownTruth.qedInProgress and len(self.assumptions)==0 and self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
-                    if not KnownTruth.hasBeenProven:
-                        KnownTruth.hasBeenProven = True
+            if Judgment.theoremBeingProven is not None:
+                if not Judgment.qedInProgress and len(self.assumptions)==0 and self.expr == Judgment.theoremBeingProven.provenTruth.expr:
+                    if not Judgment.hasBeenProven:
+                        Judgment.hasBeenProven = True
                         print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".'
             self._proof = newProof
             keptTruths.append(self)
-        # Remove the obsolete KnownTruths from the lookup_dict -- SHOULD ACTUALLY KEEP OLD PROOFS IN CASE ONE IS DISABLED -- TODO
-        KnownTruth.lookup_dict[self.expr] = keptTruths
+        # Remove the obsolete Judgments from the lookup_dict -- SHOULD ACTUALLY KEEP OLD PROOFS IN CASE ONE IS DISABLED -- TODO
+        Judgment.lookup_dict[self.expr] = keptTruths
     """
 
     def _updateProof(self, newProof):
         '''
-        Update the proof of this KnownTruth.  Return True iff the proof actually changed to something usable.
+        Update the proof of this Judgment.  Return True iff the proof actually changed to something usable.
         '''
         meaningData = self._meaningData
         
@@ -574,18 +574,18 @@ class KnownTruth:
     
     def _checkIfReadyForQED(self, proof):
         if proof.isUsable() and proof.provenTruth==self:
-            if KnownTruth.hasBeenProven is not None:
+            if Judgment.hasBeenProven is not None:
                 # check if we have a usable proof for the theorem being proven
-                if not KnownTruth.qedInProgress and len(self.assumptions)==0 and self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
-                    if not KnownTruth.hasBeenProven:
-                        KnownTruth.hasBeenProven = True
+                if not Judgment.qedInProgress and len(self.assumptions)==0 and self.expr == Judgment.theoremBeingProven.provenTruth.expr:
+                    if not Judgment.hasBeenProven:
+                        Judgment.hasBeenProven = True
                         print('%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".')
                         return True
         return False
     
     def __setattr__(self, attr, value):
         '''
-        KnownTruths should be read-only objects.  Attributes may be added, however; for example,
+        Judgments should be read-only objects.  Attributes may be added, however; for example,
         the 'png' attribute which will be added whenever it is generated).   Also,
         _proof is an exception which can be updated internally.
         '''
@@ -595,16 +595,16 @@ class KnownTruth:
 
     def __getattr__(self, name):
         '''
-        The KnownTruth aquires the attributes of its Expression, so it will act
+        The Judgment aquires the attributes of its Expression, so it will act
         like the Expression except it has additional (or possibly overridden) 
         attributes.  When accessing functions of the Expression, if that 
         function has 'assumptions' as a keyword argument, the assumptions of 
-        the KnownTruth are automatically included.
+        the Judgment are automatically included.
         '''
         from proveit import defaults, USE_DEFAULTS
         import inspect
         
-        # called only if the attribute does not exist in KnownTruth directly
+        # called only if the attribute does not exist in Judgment directly
         if name == 'png':
             raise AttributeError("Do not use the Expression version of the 'png' "
                                  "attribute.") 
@@ -616,7 +616,7 @@ class KnownTruth:
                     or 'assumptions' in argspec.kwonlyargs):
                 # The attribute is a callable function with 
                 # 'assumptions' as an argument.
-                # Automatically include the KnownTruth assumptions.
+                # Automatically include the Judgment assumptions.
     
                 # note, index zero is self.
                 if 'assumptions' in argspec.args:
@@ -624,7 +624,7 @@ class KnownTruth:
                 else:
                     assumptions_idx = None # 'assumptions' is kwonly
                 
-                def call_method_with_known_truth_assumptions(*args, **kwargs):
+                def call_method_with_judgment_assumptions(*args, **kwargs):
                     if (assumptions_idx is not None and 
                             len(args) > assumptions_idx):
                         args = list(args)
@@ -640,21 +640,21 @@ class KnownTruth:
                         kwargs['assumptions'] = \
                             defaults.checkedAssumptions(assumptions)
                     return attr.__call__(*args, **kwargs)
-                return call_method_with_known_truth_assumptions
+                return call_method_with_judgment_assumptions
         
         return attr
             
     
     def __dir__(self):
         '''
-        The KnownTruth aquires the attributes of its Expression as well as its
+        The Judgment aquires the attributes of its Expression as well as its
         own attributes.
         '''
         return sorted(set(dir(self.__class__) + list(self.__dict__.keys()) + dir(self.expr)))
 
     def withMatchingStyles(self, expr, assumptions):
         '''
-        Alter the styles of the KnownTruth expression and any of its assumptions
+        Alter the styles of the Judgment expression and any of its assumptions
         to match the given styles.
         '''
         self.expr.withMatchingStyle(expr)
@@ -670,15 +670,15 @@ class KnownTruth:
         return self
     
     @staticmethod
-    def findKnownTruth(expression, assumptions_set):
+    def findJudgment(expression, assumptions_set):
         '''
-        Try to find a KnownTruth for this expression that applies to
+        Try to find a Judgment for this expression that applies to
         the given set of assumptions (its assumptions are a subset
         of the given assumptions).  Return None if there is no match.
         '''
-        if expression not in KnownTruth.lookup_dict:
+        if expression not in Judgment.lookup_dict:
             return None
-        truths = KnownTruth.lookup_dict[expression]
+        truths = Judgment.lookup_dict[expression]
         suitableTruths = []
         for truth in truths:
             proof = truth.proof()
@@ -687,7 +687,7 @@ class KnownTruth:
                 suitableTruths.append(truth)
         if len(suitableTruths)==0: return None # no suitable truth
         # return one wih the shortest proof, and among those the fewest assumptions
-        best_known_truth = min(suitableTruths, 
+        best_judgment = min(suitableTruths, 
                                key=lambda truth : (truth.proof().numSteps(), 
                                                    len(truth.assumptions)))
         # Make sure we get the desired style (and labels) for the
@@ -696,23 +696,23 @@ class KnownTruth:
         # any style to the assumption of the desired style.
         assumptions_with_style = {assumption:assumption for 
                                   assumption in assumptions_set}
-        if (best_known_truth.expr._style_id != expression._style_id or
+        if (best_judgment.expr._style_id != expression._style_id or
                 any(assumption._style_id != assumptions_with_style[assumption]
-                    for assumption in best_known_truth.assumptions)):
+                    for assumption in best_judgment.assumptions)):
             assumptions = [assumptions_with_style[assumption] for assumption in
-                           best_known_truth.assumptions]
-            return best_known_truth.withMatchingStyles(expression,
+                           best_judgment.assumptions]
+            return best_judgment.withMatchingStyles(expression,
                                                        assumptions)
-        return best_known_truth
+        return best_judgment
     
     @staticmethod
-    def forgetKnownTruths():
+    def forgetJudgments():
         '''
-        Forget all KnownTruth's and all Assumption proof objects.  This is used
+        Forget all Judgment's and all Assumption proof objects.  This is used
         for demonstration purposes in the tutorial, but should not generally be needed.
         '''
         from proof import Assumption
-        KnownTruth.lookup_dict.clear()
+        Judgment.lookup_dict.clear()
         Assumption.allAssumptions.clear()
     
     def _checkedTruth(self, proof):
@@ -724,10 +724,10 @@ class KnownTruth:
     """
     def relabel(self, relabelMap):
         '''
-        Performs a relabeling derivation step, deriving another KnownTruth
-        from this KnownTruth, under the same assumptions, with relabeled
+        Performs a relabeling derivation step, deriving another Judgment
+        from this Judgment, under the same assumptions, with relabeled
         Variables.  A Variable may only be relabeled to a Variable.
-        Returns the proven relabeled KnownTruth, or throws an exception if the proof fails.
+        Returns the proven relabeled Judgment, or throws an exception if the proof fails.
         '''
         from proveit._core_.proof import Specialization
         return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
@@ -751,9 +751,9 @@ class KnownTruth:
         '''
         Performs an instantiation derivation step to be proven under the given
         assumptions, in addition to the (possibly revised) assumptions of the 
-        KnownTruth.  This may instantiate Variables, according to the 
+        Judgment.  This may instantiate Variables, according to the 
         "replacement" map (repl_map), on either side of the turnstile of the 
-        KnownTruth, the assumptions side and the "truth" side.  It may also 
+        Judgment, the assumptions side and the "truth" side.  It may also 
         eliminate any number of nested Forall operations, instantiating the 
         instance Variables according to repl_map, going to the depth
         for which the instance variables occur as keys in repl_map.  
@@ -766,7 +766,7 @@ class KnownTruth:
         the {x:y, y:x} mapping will swap x and y variables, but mapping {x:y} 
         then {y:x} in series would set both variables to x.
         
-        Returns the proven instantiated KnownTruth, or throws an exception if 
+        Returns the proven instantiated Judgment, or throws an exception if 
         the proof fails.  For the proof to succeed, all conditions of
         eliminated Forall operations, after replacements are made, must
         be proven.  Furthermore, there may be additional requirements when
@@ -782,7 +782,7 @@ class KnownTruth:
         from .proof import Instantiation, ProofFailure
         
         if not self.isUsable():
-            # If this KnownTruth is not usable, see if there is an alternate 
+            # If this Judgment is not usable, see if there is an alternate 
             # under the set of assumptions that is usable.
             try:
                 alternate = self.expr.prove(assumptions, automation=False)
@@ -796,7 +796,7 @@ class KnownTruth:
         if repl_map is None: 
             repl_map = {ivar:ivar for ivar in self.explicitInstanceVars()}
                         
-        # Include the KnownTruth assumptions along with any provided assumptions
+        # Include the Judgment assumptions along with any provided assumptions
         assumptions = defaults.checkedAssumptions(assumptions)
 
         # For any entrys in repl_map with Operation keys, convert
@@ -907,7 +907,7 @@ class KnownTruth:
                    domain_lists=None, domain=None, conditions=tuple()):
         '''
         Performs a generalization derivation step.  Returns the
-        proven generalized KnownTruth.  Can introduce any number of
+        proven generalized Judgment.  Can introduce any number of
         nested Forall operations to wrap the original statement,
         corresponding to the number of given forallVarLists and domains.
         A single variable list or single variable and a single domain may 
@@ -978,14 +978,14 @@ class KnownTruth:
         statement's assumptions.
         '''
         from proveit._core_.proof import Deduction
-        if isinstance(hypothesis, KnownTruth):
+        if isinstance(hypothesis, Judgment):
             hypothesis = hypothesis.expr # we want the expression for this purpose
         return self._checkedTruth(Deduction(self, hypothesis))
 
     def eliminate(self, *skolem_constants, assumptions=USE_DEFAULTS):
         '''
         Performs a Skolem constant elimination derivation step on this
-        KnownTruth (KT), where this KT has the form S |– alpha and the
+        Judgment (KT), where this KT has the form S |– alpha and the
         set S of assumptions includes one or more assumptions involving
         one or more Skolem constants sk1, …, skn specified by
         skolem_constants, where the Skolem constant-related assumptions
@@ -997,8 +997,8 @@ class KnownTruth:
 
     def evaluation(self, assumptions=USE_DEFAULTS):
         '''
-        Calling evaluation on a KnownTruth results in deriving that its
-        expression is equal to TRUE, under the assumptions of the KnownTruth.
+        Calling evaluation on a Judgment results in deriving that its
+        expression is equal to TRUE, under the assumptions of the Judgment.
         '''
         from proveit.logic import evaluateTruth
         return evaluateTruth(self.expr, self.assumptions)
@@ -1014,13 +1014,13 @@ class KnownTruth:
         proof = self.proof()
         unusuable_proof = proof._meaningData._unusableProof
         if proof == unusuable_proof:
-            raise UnusableProof(KnownTruth.theoremBeingProven, unusuable_proof)        
+            raise UnusableProof(Judgment.theoremBeingProven, unusuable_proof)        
         else:
-            raise UnusableProof(KnownTruth.theoremBeingProven, unusuable_proof, 'required to prove' + self.string(performUsabilityCheck=False)) 
+            raise UnusableProof(Judgment.theoremBeingProven, unusuable_proof, 'required to prove' + self.string(performUsabilityCheck=False)) 
 
     def string(self, performUsabilityCheck=True):
         '''
-        Display the turnstile notation to show that the known truth
+        Display the turnstile notation to show that the judgment
         on the right derives from the set of assumptions on the left.
         '''
         from proveit import ExprTuple
@@ -1032,7 +1032,7 @@ class KnownTruth:
 
     def latex(self, performUsabilityCheck=True):
         '''
-        Display the turnstile notation to show that the known truth
+        Display the turnstile notation to show that the judgment
         on the right derives from the set of assumptions on the left.
         '''
         from proveit import ExprTuple
@@ -1044,20 +1044,20 @@ class KnownTruth:
 
     def __str__(self):
         '''
-        Return a string representation of the KnownTruth.
+        Return a string representation of the Judgment.
         '''
         return self.string()
         
     def __repr__(self):
         '''
-        Return a string representation of the KnownTruth.
+        Return a string representation of the Judgment.
         '''
         if not self.isUsable(): self.raiseUnusableProof()
         return self.string()
     
     def _repr_html_(self):
         '''
-        Generate html to show the KnownTruth as a set of assumptions,
+        Generate html to show the Judgment as a set of assumptions,
         turnstile, then the statement expression.  Expressions are png's
         compiled from the latex (that may be recalled from memory or storage 
         if previously generated) with a links to
@@ -1084,7 +1084,7 @@ class KnownTruth:
     
     def innerExpr(self):
         '''
-        Return an InnerExpr object to wrap the KnownTruth and
+        Return an InnerExpr object to wrap the Judgment and
         access any inner sub-expression (including assumptions or
         inner expressions of assumptions) for the purpose of 
         replacing the inner expression, changing its style,
@@ -1096,15 +1096,15 @@ class KnownTruth:
 def asExpression(truthOrExpression):
     '''
     Return the argument as Expressions.  That is, if the argument is the
-    KnownTruth, yield its associated Expression.  If it is an Expression,
+    Judgment, yield its associated Expression.  If it is an Expression,
     yield just that.  Otherwise, raise a TypeError.
     '''
-    if isinstance(truthOrExpression, KnownTruth):
+    if isinstance(truthOrExpression, Judgment):
         return truthOrExpression.expr
     elif isinstance(truthOrExpression, Expression):
         return truthOrExpression
     else:
-        raise TypeError('Expected to be a KnownTruth or an Expression')
+        raise TypeError('Expected to be a Judgment or an Expression')
     
 def asExpressions(*truthOrExpressions):
     '''

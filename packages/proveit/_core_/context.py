@@ -16,7 +16,7 @@ A __pv_it sub-directory is generated to store a distributed
 "database" of information pertaining to the context.  It stores Expression
 entries along with latex and png representations for convenience.  It
 enumerates the Axioms and the Theorems, pointing to these Expression entries.
-It also stores KnownTruth and Proof entries for the purpose of storing
+It also stores Judgment and Proof entries for the purpose of storing
 the theorem proofs, and it stores theorem proof dependencies.
 '''
 
@@ -421,13 +421,13 @@ class Context:
         context_folder_storage = self._contextFolderStorage(folder)
         return context_folder_storage.makeExpression(expr_id)
     
-    def getStoredKnownTruth(self, truth_id, folder=None):
+    def getStoredJudgment(self, truth_id, folder=None):
         '''
-        Return the stored KnownTruth with the given id (hash string).
+        Return the stored Judgment with the given id (hash string).
         Use the "active folder" as the default folder.
         '''
         context_folder_storage = self._contextFolderStorage(folder)
-        return context_folder_storage.makeKnownTruth(truth_id)
+        return context_folder_storage.makeJudgment(truth_id)
     
     def getShowProof(self, proof_id, folder=None):
         '''
@@ -511,7 +511,7 @@ class Context:
 class Axioms(ModuleType):
     '''
     Used in _axioms_.py modules for accessing Axioms from
-    the _certified_ database (returning the associated KnownTruth object).
+    the _certified_ database (returning the associated Judgment object).
     '''
     def __init__(self, name, filename):
         ModuleType.__init__(self, name)
@@ -541,7 +541,7 @@ class Axioms(ModuleType):
 class Theorems(ModuleType):
     '''
     Used in _theorems_.py modules for accessing Theorems from
-    the _certified_ database (returning the associated KnownTruth object).
+    the _certified_ database (returning the associated Judgment object).
     '''
     def __init__(self, name, filename):
         ModuleType.__init__(self, name)

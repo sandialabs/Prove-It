@@ -408,13 +408,13 @@ class Expression(metaclass=ExprType):
     def _auto_reduced(self, assumptions, requirements,
                       equality_repl_requirements):
         if defaults.auto_reduce and hasattr(self, 'auto_reduction'):
-            from proveit import KnownTruth
+            from proveit import Judgment
             from proveit.logic import Equals
             reduction = self.auto_reduction(assumptions=assumptions)
             if reduction is not None:
-                if not isinstance(reduction, KnownTruth):
+                if not isinstance(reduction, Judgment):
                     raise TypeError("'auto_reduction' must return a "
-                                    "proven equality as a KnownTruth: "
+                                    "proven equality as a Judgment: "
                                     "got %s for %s"%(reduction, self))
                 if not isinstance(reduction.expr, Equals):
                     raise TypeError("'auto_reduction' must return a "
@@ -567,25 +567,25 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to prove this expression automatically under the
         given assumptions (if None, uses defaults.assumptions).  First
-        it tries to find an existing KnownTruth, then it tries a simple
+        it tries to find an existing Judgment, then it tries a simple
         proof by assumption (if self is contained in the assumptions),
         then it attempts to call the 'conclude' method.  If successful,
-        the KnownTruth is returned, otherwise an exception is raised.
+        the Judgment is returned, otherwise an exception is raised.
         Cyclic attempts to `conclude` the same expression under the
         same set of assumptions will be blocked, so `conclude` methods are
         free make attempts that may be cyclic.
         '''
-        from proveit import KnownTruth, ProofFailure
+        from proveit import Judgment, ProofFailure
         from proveit.logic import Not
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptionsSet = set(assumptions)
         if automation is USE_DEFAULTS:
             automation = defaults.automation
 
-        foundTruth = KnownTruth.findKnownTruth(self, assumptionsSet)
+        foundTruth = Judgment.findJudgment(self, assumptionsSet)
         if foundTruth is not None:
             foundTruth.withMatchingStyles(self, assumptions) # give it the appropriate style
-            return foundTruth # found an existing KnownTruth that does the job!
+            return foundTruth # found an existing Judgment that does the job!
 
         if self in assumptionsSet:
             # prove by assumption if self is in the list of assumptions.
@@ -618,12 +618,12 @@ class Expression(metaclass=ExprType):
                     concludedTruth = self.conclude(assumptions)
             if concludedTruth is None:
                 raise ProofFailure(self, assumptions, "Failure to automatically 'conclude'")
-            if not isinstance(concludedTruth, KnownTruth):
-                raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
+            if not isinstance(concludedTruth, Judgment):
+                raise ValueError("'conclude' method should return a Judgment (or raise an exception)")
             if concludedTruth.expr != self:
-                raise ValueError("'conclude' method should return a KnownTruth for this Expression object: " + str(concludedTruth.expr) + " does not match " + str(self))
+                raise ValueError("'conclude' method should return a Judgment for this Expression object: " + str(concludedTruth.expr) + " does not match " + str(self))
             if not concludedTruth.assumptionsSet.issubset(assumptionsSet):
-                raise ValueError("While proving " + str(self) + ", 'conclude' method returned a KnownTruth with extra assumptions: " + str(set(concludedTruth.assumptions) - assumptionsSet))
+                raise ValueError("While proving " + str(self) + ", 'conclude' method returned a Judgment with extra assumptions: " + str(set(concludedTruth.assumptions) - assumptionsSet))
             if concludedTruth.expr._style_id == self._style_id:
                 return concludedTruth # concludedTruth with the same style as self.
             return concludedTruth.withMatchingStyles(self, assumptions) # give it the appropriate style
@@ -646,7 +646,7 @@ class Expression(metaclass=ExprType):
     def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Attempt to prove the logical negation (Not) of this expression.
-        If successful, the KnownTruth is returned, otherwise an exception
+        If successful, the Judgment is returned, otherwise an exception
         is raised.  By default, this simply calls prove on the negated
         expression. Override `concludeNegation` for automation specific to
         the type of expression being negated.
@@ -669,7 +669,7 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to conclude this expression under the given assumptions,
         using automation specific to this type of expression.
-        Return the KnownTruth if successful, or raise an exception.
+        Return the Judgment if successful, or raise an exception.
         This is called by the `prove` method when no existing proof was found
         and it cannot be proven trivially via assumption or defaultConclude.
         The `prove` method has a mechanism to prevent infinite recursion,
@@ -695,7 +695,7 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to conclude the negation of this expression under the given
         assumptions, using automation specific to the type of expression being negated.
-        Return the KnownTruth if successful, or raise an exception.
+        Return the Judgment if successful, or raise an exception.
         This is called by the `prove` method of the negated expression
         when no existing proof for the negation was found.
         The `prove` method has a mechanism to prevent infinite recursion,
@@ -703,15 +703,15 @@ class Expression(metaclass=ExprType):
         '''
         raise NotImplementedError("'concludeNegation' not implemented for " + str(self.__class__))
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Yield methods to attempt as side-effects when this expression
-        is proven as a known truth.  These should each accept an
+        is proven as a judgment.  These should each accept an
         'assumptions' parameter.
         These should be obvious and useful consequences, trivial and limited.
         There is no need to call this manually; it is called automatically when
-        the corresponding KnownTruth is created.
-        It also may be desirable to store the knownTruth for future automation.
+        the corresponding Judgment is created.
+        It also may be desirable to store the judgment for future automation.
         '''
         return iter(())
 
@@ -852,7 +852,7 @@ class Expression(metaclass=ExprType):
     def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
                    **kwargs):
         '''
-        If possible, return a KnownTruth of this expression equal to its
+        If possible, return a Judgment of this expression equal to its
         irreducible value.  Checks for an existing evaluation.  If it
         doesn't exist, try some default strategies including a reduction.
         Attempt the Expression-class-specific "doReducedEvaluation"
@@ -865,7 +865,7 @@ class Expression(metaclass=ExprType):
         '''
         from proveit.logic import (Equals, defaultSimplification,
                                    SimplificationError, EvaluationError)
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit.logic.irreducible_value import isIrreducibleValue
 
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -892,19 +892,19 @@ class Expression(metaclass=ExprType):
                 # and that failed.
                 raise EvaluationError(self, assumptions)
 
-        if not isinstance(evaluation, KnownTruth) or not isinstance(evaluation.expr, Equals):
-            msg = ("%s must return an KnownTruth, "
+        if not isinstance(evaluation, Judgment) or not isinstance(evaluation.expr, Equals):
+            msg = ("%s must return an Judgment, "
                    "not %s for %s assuming %s"
                    %(method_called, evaluation, self, assumptions))
             raise ValueError(msg)
         if evaluation.lhs != self:
-            msg = ("%s must return an KnownTruth "
+            msg = ("%s must return an Judgment "
                    "equality with self on the left side, "
                    "not %s for %s assuming %s"
                    %(method_called, evaluation, self, assumptions))
             raise ValueError(msg)
         if not isIrreducibleValue(evaluation.rhs):
-            msg = ("%s must return an KnownTruth "
+            msg = ("%s must return an Judgment "
                    "equality with an irreducible value on the right side, "
                    "not %s for %s assuming %s"
                    %(method_called, evaluation, self, assumptions))
@@ -920,7 +920,7 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to evaluate 'self', which should be a reduced
         expression with operands already evaluated.
-        Return the evaluation as a KnownTruth equality
+        Return the evaluation as a Judgment equality
         with 'self' on the left side.
         Must be overridden for class-specific evaluation.
         Raise a SimplificationError if the evaluation
@@ -943,7 +943,7 @@ class Expression(metaclass=ExprType):
     def simplification(self, assumptions=USE_DEFAULTS, *, automation=True,
                        **kwargs):
         '''
-        If possible, return a KnownTruth of this expression equal to a
+        If possible, return a Judgment of this expression equal to a
         canonically simplified form. Checks for an existing simplifcation.
         If it doesn't exist and automation is True, try some default strategies
         including a reduction.  Attempt the Expression-class-specific
@@ -954,7 +954,7 @@ class Expression(metaclass=ExprType):
         be passed along to doReducedEvaluation to instruct it on how it
         should behave (e.g., 'minimal_automation').
         '''
-        from proveit import KnownTruth, ProofFailure
+        from proveit import Judgment, ProofFailure
         from proveit.logic import (Equals, defaultSimplification,
                                    SimplificationError, EvaluationError)
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -995,13 +995,13 @@ class Expression(metaclass=ExprType):
                     simplification = self_eq.prove()
                     method_called = self_eq.prove
 
-        if not isinstance(simplification, KnownTruth) or not isinstance(simplification.expr, Equals):
-            msg = ("%s must return a KnownTruth "
+        if not isinstance(simplification, Judgment) or not isinstance(simplification.expr, Equals):
+            msg = ("%s must return a Judgment "
                    "equality, not %s for %s assuming %s"
                    %(method_called, simplification, self, assumptions))
             raise ValueError(msg)
         if simplification.lhs != self:
-            msg = ("%s must return a KnownTruth "
+            msg = ("%s must return a Judgment "
                    "equality with 'self' on the left side, not %s for %s "
                    "assuming %s"%(method_called, simplification, self, assumptions))
             raise ValueError(msg)
@@ -1017,7 +1017,7 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to simplify 'self', which should be a reduced
         expression with operands already simplified.
-        Return the evaluation as a KnownTruth equality
+        Return the evaluation as a Judgment equality
         with 'self' on the left side.
         Must be overridden for class-specific simplification.
         Raise a SimplificationError if the simplification
@@ -1208,8 +1208,8 @@ def traverse_inner_expressions(expr):
     including the expression itself.  These will be reported in a depth-
     first order.
     '''
-    from proveit import KnownTruth
-    if isinstance(expr, KnownTruth):
+    from proveit import Judgment
+    if isinstance(expr, Judgment):
         expr = expr.expr
     yield expr
     for sub_expr in expr.subExprIter():

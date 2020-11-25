@@ -44,10 +44,10 @@ class SubsetEq(SubsetRelation):
     _operator_ = Literal(stringFormat='subseteq', latexFormat=r'\subseteq',
                          context=__file__)
 
-    # map left-hand-sides to SubsetEq KnownTruths
+    # map left-hand-sides to SubsetEq Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownLeftSides = dict()
-    # map right-hand-sides to SubsetEq KnownTruths
+    # map right-hand-sides to SubsetEq Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()
 
@@ -196,9 +196,9 @@ class NotSubsetEq(Operation):
     def __init__(self, subset, superset):
         Operation.__init__(self, NotSubsetEq._operator_, (subset, superset))
 
-    def deriveSideEffects(self, knownTruth):
+    def deriveSideEffects(self, judgment):
         # unfold as an automatic side-effect
-        self.unfold(knownTruth.assumptions)
+        self.unfold(judgment.assumptions)
 
     def conclude(self, assumptions):
         return self.concludeAsFolded(assumptions)
@@ -244,10 +244,10 @@ class ProperSubset(SubsetRelation):
     _operator_ = Literal(stringFormat='proper_subset', latexFormat=r'\subset',
                          context=__file__)
 
-    # map left-hand-sides to ProperSubset KnownTruths
+    # map left-hand-sides to ProperSubset Judgments
     #   (populated in TransitivityRelation.sideEffects)
     knownLeftSides = dict()
-    # map right-hand-sides to ProperSubset KnownTruths
+    # map right-hand-sides to ProperSubset Judgments
     #   (populated in TransitivityRelation.sideEffects)
     knownRightSides = dict()
 
@@ -349,9 +349,9 @@ class NotProperSubset(Operation):
     def __init__(self, subset, superset):
         Operation.__init__(self, NotProperSubset._operator_, (subset, superset))
 
-    def deriveSideEffects(self, knownTruth):
+    def deriveSideEffects(self, judgment):
         # unfold as an automatic side-effect
-        self.unfold(knownTruth.assumptions)
+        self.unfold(judgment.assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         return self.concludeAsFolded(assumptions)

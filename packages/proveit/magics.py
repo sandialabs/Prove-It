@@ -6,7 +6,7 @@ from IPython.core.magic import Magics, magics_class, line_magic
 from IPython import get_ipython
 from IPython.display import display, HTML
 from proveit._core_.expression import Expression, free_vars
-from proveit._core_ import KnownTruth, Theorem
+from proveit._core_ import Judgment, Theorem
 from proveit._core_.context import Context
 import ipywidgets as widgets
 #import new#Comment out for python 3
@@ -384,8 +384,8 @@ class ProveItMagicCommands:
             self.context._clearTheorems()
         elif kind == 'common':
             self.context._clearCommonExressions()
-        elif KnownTruth.theoremBeingProven is not None:
-            kind = '_proof_' + KnownTruth.theoremBeingProven.name
+        elif Judgment.theoremBeingProven is not None:
+            kind = '_proof_' + Judgment.theoremBeingProven.name
         # clean unreferenced expressions:
         self.context.clean_active_folder(clear=True)
         self.kind = None
@@ -396,9 +396,9 @@ class ProveItMagicCommands:
         context = Context(active_folder=folder)
         if kind=='axiom' or kind=='theorem':
             # When checking an axiom or theorem expression, we
-            # are doing so within the corresponding KnownTruth hash 
+            # are doing so within the corresponding Judgment hash 
             # folder.
-            stored_expr = context.getStoredKnownTruth(hash_id).expr
+            stored_expr = context.getStoredJudgment(hash_id).expr
         else:
             stored_expr = context.getStoredExpr(hash_id)
         context.set_active_folder(None)
@@ -431,7 +431,7 @@ class ProveItMagicCommands:
         
     def qed(self):
         import proveit
-        proof = KnownTruth.theoremBeingProven.provenTruth._qed()
+        proof = Judgment.theoremBeingProven.provenTruth._qed()
         proof._repr_html_() # generate expressions that should be referenced
         # clean unreferenced expressions, but only when "display latex"
         # is enabled (otherwise, references won't be complete).
@@ -495,11 +495,11 @@ class ProveItMagicCommands:
         self.kind = None
         self.context = None
             
-    def display_dependencies(self, name, known_truth):
+    def display_dependencies(self, name, judgment):
         '''
         Show the dependencies of an axiom or theorem.
         '''
-        proof = known_truth.proof() # Axiom or Theorem
+        proof = judgment.proof() # Axiom or Theorem
 
         from proveit._core_._context_storage import ContextFolderStorage
         
@@ -544,11 +544,11 @@ class ProveItMagicCommands:
                 displaySpecialStmt(Context.findTheorem(dependent))
             display(HTML('</dl>'))
 
-    def display_dependencies_latex(self, name, known_truth):
+    def display_dependencies_latex(self, name, judgment):
         '''
         Show the dependencies of an axiom or theorem.
         '''
-        proof = known_truth.proof() # Axiom or Theorem
+        proof = judgment.proof() # Axiom or Theorem
         
         def displaySpecialStmt(stmt):
             '''
@@ -710,10 +710,10 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         # instances will be converted to strings.
         for k, arg in enumerate(list(presumptions)):
             if '.' not in arg:
-                knownTruth = self.shell.user_ns[arg]
-                if not isinstance(knownTruth, KnownTruth) or not isinstance(knownTruth.proof(), Theorem):
-                    raise ValueError("Presuming list must be composed of full-path theorem/context-name containing '.'s or be KnownTruth variable representing a Theorem")
-                thm = knownTruth.proof()
+                judgment = self.shell.user_ns[arg]
+                if not isinstance(judgment, Judgment) or not isinstance(judgment.proof(), Theorem):
+                    raise ValueError("Presuming list must be composed of full-path theorem/context-name containing '.'s or be Judgment variable representing a Theorem")
+                thm = judgment.proof()
                 presumptions[k] = str(thm) # full path of theorem 
         begin_proof_result = ProveItMagicCommands.proving(self, theorem_name, presumptions)
         assert isinstance(begin_proof_result, Expression), "Expecting result of 'proving' to be an expression"
@@ -732,8 +732,8 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         Show the dependencies of an axiom or theorem.
         '''
         name = line.strip()
-        known_truth = self.shell.user_ns[line.strip()]
-        ProveItMagicCommands.display_dependencies(self, name, known_truth)
+        judgment = self.shell.user_ns[line.strip()]
+        ProveItMagicCommands.display_dependencies(self, name, judgment)
         
     @line_magic
     def dependencies_latex(self, line):
@@ -741,8 +741,8 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         Show the dependencies of an axiom or theorem.
         '''
         name = line.strip()
-        known_truth = self.shell.user_ns[line.strip()]
-        ProveItMagicCommands.display_dependencies_latex(self, name, known_truth)
+        judgment = self.shell.user_ns[line.strip()]
+        ProveItMagicCommands.display_dependencies_latex(self, name, judgment)
         
 class Assignments:    
     def __init__(self, names, rightSides, beginningProof=False):
@@ -750,7 +750,7 @@ class Assignments:
         from proveit import singleOrCompositeExpression
         processedRightSides = []
         for rightSide in rightSides:
-            if not isinstance(rightSide, KnownTruth):
+            if not isinstance(rightSide, Judgment):
                 try:
                     # try to combine a composite expression if the right side is a
                     # list or dictionary that should convert to an expression.

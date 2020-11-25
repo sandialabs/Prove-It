@@ -49,10 +49,10 @@ class Greater(GreaterRelation):
     # operator of the Greater operation.
     _operator_ = Literal(stringFormat='>', context=__file__)
     
-    # map left-hand-sides to ">" KnownTruths
+    # map left-hand-sides to ">" Judgments
     #   (populated in TransitivityRelation.sideEffects)
     knownLeftSides = dict()    
-    # map right-hand-sides to ">" KnownTruths 
+    # map right-hand-sides to ">" Judgments 
     #   (populated in TransitivityRelation.sideEffects)
     knownRightSides = dict()   
             
@@ -203,10 +203,10 @@ class GreaterEq(GreaterRelation):
     # operator of the GreaterEq operation.
     _operator_ = Literal(stringFormat='>=', latexFormat=r'\geq', context=__file__)
     
-    # map left-hand-sides to ">=" KnownTruths
+    # map left-hand-sides to ">=" Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownLeftSides = dict()    
-    # map right-hand-sides to ">=" KnownTruths
+    # map right-hand-sides to ">=" Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()   
         

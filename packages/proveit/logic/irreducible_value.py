@@ -33,7 +33,7 @@ class IrreducibleValue:
     def notEqual(self, otherIrreducible, assumptions=USE_DEFAULTS):
         '''
         Attempt to prove that this irreducible values is not equal to
-        the other irreducible value, returning the KnownTruth.
+        the other irreducible value, returning the Judgment.
         '''
         raise NotImplementedError("notEqual method must be implemented by IrreducibleValue objects")
 

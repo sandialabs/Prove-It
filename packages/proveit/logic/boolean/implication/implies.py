@@ -6,10 +6,10 @@ from proveit import TransitiveRelation
 class Implies(TransitiveRelation):
     _operator_ = Literal(stringFormat='=>', latexFormat=r'\Rightarrow', context=__file__)
 
-    # map left-hand-sides to Subset KnownTruths
+    # map left-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownLeftSides = dict()
-    # map right-hand-sides to Subset KnownTruths
+    # map right-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()
 
@@ -33,7 +33,7 @@ class Implies(TransitiveRelation):
         '''
         return Implies
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Yield the TransitiveRelation side-effects (which also records
         knownLeftSides nd knownRightSides).  Also derive the consequent
@@ -43,14 +43,14 @@ class Implies(TransitiveRelation):
         deriveViaContradiction.
         '''
         from proveit.logic.boolean._common_ import FALSE
-        for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
+        for sideEffect in TransitiveRelation.sideEffects(self, judgment):
             yield sideEffect
         if self.antecedent.proven():
             yield self.deriveConsequent # B given A=>B and A
         if self.consequent == FALSE:
             yield self.deriveViaContradiction # Not(A) given A=>FALSE or A given Not(A)=>FALSE
 
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically when an implication is negated.
         implemented by JML on 6/17/19
@@ -324,10 +324,10 @@ def concludeViaImplication(consequent, assumptions):
                         knownImplication.antecedent.prove(assumptions, automation=False)
                         # found a solution; use it by deriving "local" consequents until getting to the desired consequent
                         while True:
-                            known_truth = Implies(local_antecedent, local_consequent).deriveConsequent(assumptions=assumptions)
-                            if known_truth.expr == consequent:
-                                return known_truth
-                            local_antecedent = known_truth.expr
+                            judgment = Implies(local_antecedent, local_consequent).deriveConsequent(assumptions=assumptions)
+                            if judgment.expr == consequent:
+                                return judgment
+                            local_antecedent = judgment.expr
                             local_consequent = consequent_map[local_antecedent]
                     except ProofFailure:
                         queue.append(local_antecedent)

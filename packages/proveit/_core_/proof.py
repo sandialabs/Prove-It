@@ -1,15 +1,15 @@
 """
 A Proof is a directed, acyclic graph (DAG) that represents the Prove-It
-proof for a KnownTruth.  Each object represents a derivation step
+proof for a Judgment.  Each object represents a derivation step
 (Assumption, ModusPonens, Deduction, Specialization,
-or Generalization) and has references to other KnownTruths that
+or Generalization) and has references to other Judgments that
 are directly required, each with its Proof.  In this way, the
 Proof objects form a DAG.
 """
 
 from collections import OrderedDict
 import re
-from proveit._core_.known_truth import KnownTruth
+from proveit._core_.judgment import Judgment
 from proveit._core_._unique_data import meaningData, styleData
 from .defaults import defaults
 from .context import Context
@@ -18,7 +18,7 @@ class Proof:
 
     # Map each Proof to the first instantiation of it that was created (noting that
     # multiple Proof objects can represent the same Proof and will have the same hash value).
-    # Using this, internal references (between KnownTruths and Proofs) unique .
+    # Using this, internal references (between Judgments and Proofs) unique .
     uniqueProofs = dict()
 
     @staticmethod
@@ -41,10 +41,10 @@ class Proof:
             print "prove", provenTruth.expr
         '''
 
-        assert isinstance(provenTruth, KnownTruth)
+        assert isinstance(provenTruth, Judgment)
         for requiredTruth in requiredTruths:
-            assert isinstance(requiredTruth, KnownTruth)
-        # note: the contained KnownTruth and Proofs are subject to style changes on a Proof instance basis.
+            assert isinstance(requiredTruth, Judgment)
+        # note: the contained Judgment and Proofs are subject to style changes on a Proof instance basis.
         self.provenTruth = provenTruth
         self.requiredTruths = tuple(requiredTruths)
         if markedRequiredTruthIndices is None:
@@ -136,7 +136,7 @@ class Proof:
         if requiringUnusableProof:
             # Raise an UnusableProof exception when an attempt is made
             # to use an "unusable" theorem directly or indirectly.
-            raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
+            raise UnusableProof(Judgment.theoremBeingProven, self._meaningData._unusableProof)
         if provenTruth.proof()==self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             # May derive any side-effects that are obvious consequences arising from this truth
             # (if it has not already been processed):
@@ -493,7 +493,7 @@ class Assumption(Proof):
         else:
             assumed_truth = expr
         try:
-            Proof.__init__(self, KnownTruth(assumed_truth, {expr}), [])
+            Proof.__init__(self, Judgment(assumed_truth, {expr}), [])
         finally:
             # Restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
@@ -528,7 +528,7 @@ class Axiom(Proof):
             raise ValueError("An axiom 'name' must be a string")
         self.context = context
         self.name = name
-        Proof.__init__(self, KnownTruth(expr, frozenset()), [])
+        Proof.__init__(self, Judgment(expr, frozenset()), [])
 
     def _generate_step_info(self, objectRepFn):
         return self.stepType() + '_' + str(self) + ':'
@@ -575,7 +575,7 @@ class Theorem(Proof):
         # before 'beginProof' is called so we will have the proof handy.
         self._possibleProofs = []
         # Note that _setUsability will be called within Proof.__init__
-        Proof.__init__(self, KnownTruth(expr, frozenset()), [])
+        Proof.__init__(self, Judgment(expr, frozenset()), [])
         Theorem.allTheorems.append(self)
 
     def _generate_step_info(self, objectRepFn):
@@ -741,20 +741,20 @@ class Theorem(Proof):
         same theorem.  Also, if it is presumed, ensure the logic
         is not circular.  Generally, this is preventing circular
         logic.  This applies when a proof has begun
-        (see KnownTruth.beginProof in known_truth.py).
-        When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
-        Otherwise only Theorems named in the KnownTruth.presumingTheoremNames set
-        or contained within any of the KnownTruth.presumingTheories
+        (see Judgment.beginProof in judgment.py).
+        When Judgment.theoremBeingProven is None, all Theorems are allowed.
+        Otherwise only Theorems named in the Judgment.presumingTheoremNames set
+        or contained within any of the Judgment.presumingTheories
         (i.e., context) are allowed.
         '''
         #from proveit.certify import isFullyProven
-        if KnownTruth.theoremBeingProven is None:
+        if Judgment.theoremBeingProven is None:
             self._meaningData._unusableProof = None # Nothing being proven, so all Theorems are usable
             return
         legitimately_presumed = False
         stored_theorem = self._storedTheorem()
-        theorem_being_proven_str = str(KnownTruth.theoremBeingProven)
-        if self.provenTruth==KnownTruth.theoremBeingProven.provenTruth:
+        theorem_being_proven_str = str(Judgment.theoremBeingProven)
+        if self.provenTruth==Judgment.theoremBeingProven.provenTruth:
             # Note that two differently-named theorems for the same thing may exists in
             # order to show an alternate proof.  In that case, we want to disable
             # the other alternates as well so we will be sure to generate the new proof.
@@ -763,9 +763,9 @@ class Theorem(Proof):
         else:
             name_and_containing_theories = list(
                     self.theoremNameAndContainingTheories())
-            exclusions = KnownTruth.presumingTheoremAndTheoryExclusions
+            exclusions = Judgment.presumingTheoremAndTheoryExclusions
             if exclusions.isdisjoint(name_and_containing_theories):
-                presumptions = KnownTruth.presumedTheoremsAndTheories
+                presumptions = Judgment.presumedTheoremsAndTheories
                 presumed = not presumptions.isdisjoint(name_and_containing_theories)
             else:
                 presumed = False
@@ -784,10 +784,10 @@ class Theorem(Proof):
                 if stored_theorem.hasProof():
                     my_possible_dependents.update(stored_theorem.allUsedTheoremNames())
                 if theorem_being_proven_str in my_possible_dependents:
-                    if str(self) in KnownTruth.presumedTheoremsAndTheories:
+                    if str(self) in Judgment.presumedTheoremsAndTheories:
                         # Theorem-specific presumption or dependency is
                         # mutual.  Raise a CircularLogic error.
-                        raise CircularLogic(KnownTruth.theoremBeingProven, self)
+                        raise CircularLogic(Judgment.theoremBeingProven, self)
                     # We must exclude this theorem implicitly to 
                     # avoid a circular dependency.
                     print("%s is being implicitly excluded as a "
@@ -818,7 +818,7 @@ class ModusPonens(Proof):
         prev_default_assumptions = defaults.assumptions
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
-            # obtain the implication and antecedent KnownTruths
+            # obtain the implication and antecedent Judgments
             assert isinstance(implicationExpr, Implies) and len(implicationExpr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
             try:
                 # Must prove the implication under the given assumptions.
@@ -834,7 +834,7 @@ class ModusPonens(Proof):
             assumptionsSet = implicationTruth.assumptionsSet | antecedentTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
             # we have what we need; set up the ModusPonens Proof
-            consequentTruth = KnownTruth(implicationExpr.operands[1], assumptions)
+            consequentTruth = Judgment(implicationExpr.operands[1], assumptions)
             _checkImplication(implicationTruth.expr, antecedentTruth.expr, consequentTruth.expr)
             self.implicationTruth = implicationTruth
             self.antecedentTruth = antecedentTruth
@@ -864,7 +864,7 @@ class Deduction(Proof):
         defaults.assumptions = assumptions
         try:
             implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
-            implicationTruth = KnownTruth(implicationExpr, assumptions)
+            implicationTruth = Judgment(implicationExpr, assumptions)
             self.consequentTruth = consequentTruth
             Proof.__init__(self, implicationTruth, [self.consequentTruth])
         finally:
@@ -875,7 +875,7 @@ class Deduction(Proof):
         return 'deduction'
 
 class Instantiation(Proof):
-    def __init__(self, orig_known_truth, num_forall_eliminations,
+    def __init__(self, orig_judgment, num_forall_eliminations,
                  repl_map, equiv_alt_expansions, assumptions):
         '''
         Create the specialization+instantiation proof step that eliminates
@@ -912,7 +912,7 @@ class Instantiation(Proof):
                 # for a full expansion, or it is an "equivalent alternative
                 # expansion".
                 # Should already have been checked in
-                # KnownTruth.instantiate:
+                # Judgment.instantiate:
                 try:
                     for param_entry in key:
                         getParamVar(param_entry)
@@ -927,19 +927,19 @@ class Instantiation(Proof):
             # These assumptions will be used for deriving any
             # side-effects:
             defaults.assumptions = set(assumptions)
-            if not isinstance(orig_known_truth, KnownTruth):
-                raise TypeError("May only 'instantiate' a KnownTruth")
-            if orig_known_truth.proof() is None:
-                raise UnusableProof(KnownTruth.theoremBeingProven,
-                                    orig_known_truth)
+            if not isinstance(orig_judgment, Judgment):
+                raise TypeError("May only 'instantiate' a Judgment")
+            if orig_judgment.proof() is None:
+                raise UnusableProof(Judgment.theoremBeingProven,
+                                    orig_judgment)
 
-            # The "original" KnownTruth is the first "requirement truth" for
+            # The "original" Judgment is the first "requirement truth" for
             # this derivation step.
             orig_subbed_assumptions = []
             requirements = []
             equality_repl_requirements = set()
 
-            # Make possible substitutions in the "original" KnownTruth
+            # Make possible substitutions in the "original" Judgment
             # assumption.
             operands = []
             for parameter in parameters:
@@ -950,7 +950,7 @@ class Instantiation(Proof):
                         operands.append(entry)
                 else:
                     operands.append(repl_map[parameter])
-            for assumption in orig_known_truth.assumptions:
+            for assumption in orig_judgment.assumptions:
                 subbed_assumption = Lambda._apply(
                         parameters, assumption, *operands,
                         allow_relabeling=False,
@@ -964,7 +964,7 @@ class Instantiation(Proof):
                     orig_subbed_assumptions.append(subbed_assumption)
 
             # Automatically use the assumptions of the
-            # original_known_truth plus the assumptions that were
+            # original_judgment plus the assumptions that were
             # provided.
             assumptions = tuple(orig_subbed_assumptions) + assumptions
             # Eliminate duplicates.
@@ -974,7 +974,7 @@ class Instantiation(Proof):
 
             instantiated_expr = \
                 Instantiation._instantiated_expr(
-                        orig_known_truth, num_forall_eliminations,
+                        orig_judgment, num_forall_eliminations,
                         parameters, repl_map, equiv_alt_expansions,
                         assumptions, requirements,
                         equality_repl_requirements)
@@ -996,7 +996,7 @@ class Instantiation(Proof):
             assumptions = list(OrderedDict.fromkeys(assumptions))
 
             # Sort the replaced variables in order of their appearance
-            # in the original KnownTruth.
+            # in the original Judgment.
             def get_key_var(key):
                 if isinstance(key, ExprTuple):
                     assert len(key)>=1
@@ -1004,7 +1004,7 @@ class Instantiation(Proof):
                 return getParamVar(key)
             repl_var_keys = {get_key_var(key):key for key in repl_map.keys()}
             repl_vars = repl_var_keys.keys()
-            repl_vars = list(orig_known_truth.orderOfAppearance(repl_vars))
+            repl_vars = list(orig_judgment.orderOfAppearance(repl_vars))
             # And remove duplicates.
             repl_vars = list(OrderedDict.fromkeys(repl_vars))
 
@@ -1018,9 +1018,9 @@ class Instantiation(Proof):
                 var_range_forms.setdefault(var, set()).add(var_range_form)
 
             # We have what we need; set up the Instantiation Proof
-            self.orig_known_truth = orig_known_truth
+            self.orig_judgment = orig_judgment
             # Exclude anything in the repl_map that does not appear in
-            # the original KnownTruth:
+            # the original Judgment:
             mapping = dict()
             mapping_key_order = []
             def var_range_form_sort(var_tuple):
@@ -1055,9 +1055,9 @@ class Instantiation(Proof):
                         mapping_key_order.append(var_range_form)
             self.mapping_key_order = mapping_key_order
             self.mapping = mapping
-            instantiated_truth = KnownTruth(instantiated_expr, assumptions)
-            # Make the 'original known truth' be the 1st requirement.
-            requirements.insert(0, orig_known_truth)
+            instantiated_truth = Judgment(instantiated_expr, assumptions)
+            # Make the 'original judgment' be the 1st requirement.
+            requirements.insert(0, orig_judgment)
             # Mark the requirements that are "equality replacements".
             marked_req_indices = set()
             for k, req in enumerate(requirements):
@@ -1066,7 +1066,7 @@ class Instantiation(Proof):
             Proof.__init__(self, instantiated_truth, requirements,
                            marked_req_indices)
         except LambdaApplicationError as e:
-            raise InstantiationFailure(orig_known_truth, repl_map,
+            raise InstantiationFailure(orig_judgment, repl_map,
                                        assumptions, str(e))
         finally:
             # restore the original default assumptions
@@ -1127,14 +1127,14 @@ class Instantiation(Proof):
         return parameters
 
     @staticmethod
-    def _instantiated_expr(original_known_truth, num_forall_eliminations,
+    def _instantiated_expr(original_judgment, num_forall_eliminations,
                            instantiation_params, repl_map,
                            equiv_alt_expansions,
                            assumptions, requirements,
                            equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
-        original_known_truth.  The assumptions on the left side of
+        original_judgment.  The assumptions on the left side of
         the turnstile are treated in Instantiation.__init__.
 
         Eliminates the specified number of Forall operations,
@@ -1148,9 +1148,9 @@ class Instantiation(Proof):
 
         # Eliminate the desired number of Forall operations and extract
         # appropriately mapped conditions.
-        expr = original_known_truth.expr
+        expr = original_judgment.expr
         def raiseFailure(msg):
-            raise InstantiationFailure(original_known_truth, repl_map,
+            raise InstantiationFailure(original_judgment, repl_map,
                                        assumptions, msg)
         instantiation_param_vars = [getParamVar(param) for param
                                     in instantiation_params]
@@ -1292,21 +1292,21 @@ class Instantiation(Proof):
 class Generalization(Proof):
     def __init__(self, instanceTruth, newForallParamLists, newConditions=tuple()):
         '''
-        A Generalization step wraps a KnownTruth (instanceTruth) in one or more Forall operations.
+        A Generalization step wraps a Judgment (instanceTruth) in one or more Forall operations.
         The number of Forall operations introduced is the number of lists in newForallVarLists.
         The conditions are introduced in the order they are given at the outermost level that is
         applicable.  For example, if newForallParamLists is [[x, y], z]  and the new
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (getParamVar, _guaranteed_to_be_independent)
         from proveit.logic import Forall
-        if not isinstance(instanceTruth, KnownTruth):
-            raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
+        if not isinstance(instanceTruth, Judgment):
+            raise GeneralizationFailure(None, [], 'May only generalize a Judgment instance')
         # the assumptions required for the generalization are the assumptions of
-        # the original KnownTruth minus the all of the new conditions (including those
+        # the original Judgment minus the all of the new conditions (including those
         # implied by the new domain).
         assumptions = set(instanceTruth.assumptions)
         prev_default_assumptions = defaults.assumptions
@@ -1349,7 +1349,7 @@ class Generalization(Proof):
             for assumption in assumptions:
                 if not _guaranteed_to_be_independent(assumption, introducedForallVars):
                     raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
-            generalizedTruth = KnownTruth(generalizedExpr, assumptions)
+            generalizedTruth = Judgment(generalizedExpr, assumptions)
             self.instanceTruth = instanceTruth
             self.newForallVars = newForallVars
             self.newConditions = newConditions
@@ -1420,7 +1420,7 @@ class _ShowProof:
             self.mapping_key_order = [key for key, value in key_mapping_pairs]
             self.mapping = dict(key_mapping_pairs)
         self.provenTruth = \
-            context_folder_storage.makeKnownTruth(refObjIdGroups[-2][0])
+            context_folder_storage.makeJudgment(refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
             [context.getShowProof(obj_id.rstrip('*')) for obj_id
@@ -1480,8 +1480,8 @@ class ModusPonensFailure(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 class InstantiationFailure(ProofFailure):
-    def __init__(self, original_known_truth, repl_map, assumptions, message):
-        message = "Attempting to instantiate %s with %s:\n%s"%(original_known_truth,
+    def __init__(self, original_judgment, repl_map, assumptions, message):
+        message = "Attempting to instantiate %s with %s:\n%s"%(original_judgment,
                                                         repl_map, message)
         ProofFailure.__init__(self, None, assumptions, message)
 
@@ -1520,7 +1520,7 @@ class CircularLogicLoop(ProofFailure):
     def __init__(self, presumptionLoop, presumedTheorem):
         assert presumptionLoop[0] == presumptionLoop[-1], "expecting a loop"
         assert str(presumedTheorem) == presumptionLoop[0], "expecting presumedTheorem to match the ends of the presumptionLoop"
-        CircularLogic.__init__(self, KnownTruth.theoremBeingProven, presumedTheorem)
+        CircularLogic.__init__(self, Judgment.theoremBeingProven, presumedTheorem)
         self.presumptionLoop = presumptionLoop
     def __str__(self):
         return "Circular presumption dependency detected: %s"%str(self.presumptionLoop)

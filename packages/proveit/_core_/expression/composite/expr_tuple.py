@@ -23,12 +23,12 @@ class ExprTuple(Composite, Expression):
         Initialize an ExprTuple from an iterable over Expression 
         objects.
         '''
-        from proveit._core_ import KnownTruth
+        from proveit._core_ import Judgment
         from .composite import singleOrCompositeExpression
         entries = []
         for entry in expressions:
-            if isinstance(entry, KnownTruth):
-                # Extract the Expression from the KnownTruth:
+            if isinstance(entry, Judgment):
+                # Extract the Expression from the Judgment:
                 entry = entry.expr 
             if not isinstance(entry, Expression):
                 entry = singleOrCompositeExpression(entry)

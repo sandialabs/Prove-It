@@ -1,4 +1,4 @@
-from proveit import KnownTruth, Literal, Operation, ExprRange, USE_DEFAULTS,StyleOptions, maybeFencedLatex, ProofFailure, InnerExpr
+from proveit import Judgment, Literal, Operation, ExprRange, USE_DEFAULTS,StyleOptions, maybeFencedLatex, ProofFailure, InnerExpr
 from proveit._common_ import a, b, c, d, i, j, k, l, n, x, y
 from proveit.logic import Equals
 from proveit.logic.irreducible_value import isIrreducibleValue
@@ -12,7 +12,7 @@ class Add(Operation):
     # operator of the Add operation
     _operator_ = Literal(stringFormat='+', context=__file__)
 
-    # Map terms to sets of KnownTruth equalities that involve
+    # Map terms to sets of Judgment equalities that involve
     # the term on the left hand side.
     knownEqualities = dict()
 
@@ -141,38 +141,38 @@ class Add(Operation):
         elif numberSet == Naturals:
             return addNatClosure
 
-    def equalitySideEffects(self, knownTruth):
+    def equalitySideEffects(self, judgment):
         '''
-        Record the knownTruth in Add.knownEqualities, associated for
+        Record the judgment in Add.knownEqualities, associated for
         each term.
         '''
         from proveit.number import Neg
-        if not isinstance(knownTruth, KnownTruth):
-            raise ValueError("Expecting 'knownTruth' to be a KnownTruth.")
-        if not isinstance(knownTruth.expr, Equals):
-            raise ValueError("Expecting the knownTruth to be an equality.")
-        addition = knownTruth.lhs
+        if not isinstance(judgment, Judgment):
+            raise ValueError("Expecting 'judgment' to be a Judgment.")
+        if not isinstance(judgment.expr, Equals):
+            raise ValueError("Expecting the judgment to be an equality.")
+        addition = judgment.lhs
         if not isinstance(addition, Add):
-            raise ValueError("Expecting lhs of knownTruth to be of an Add expression.")
+            raise ValueError("Expecting lhs of judgment to be of an Add expression.")
 
-        if isIrreducibleValue(knownTruth.rhs):
+        if isIrreducibleValue(judgment.rhs):
             for term in addition.terms:
                 # print("adding known equalities:", term)
-                Add.knownEqualities.setdefault(term, set()).add(knownTruth)
+                Add.knownEqualities.setdefault(term, set()).add(judgment)
 
             if len(addition.terms)==2:
                 # deduce the commutation form: b+a=c from a+b=c
                 if addition.terms[0] != addition.terms[1]:
-                    yield (lambda assumptions : knownTruth.innerExpr().lhs.commute(0, 1, assumptions))
+                    yield (lambda assumptions : judgment.innerExpr().lhs.commute(0, 1, assumptions))
 
                 if all(not isinstance(term, Neg) for term in addition.terms):
                     # From a+b=c
                     # deduce the negations form: -a-b=-c
                     #      the subtraction form: c-b=a
                     #      and the reversed subtraction form: b-c = -a
-                    yield (lambda assumptions : self.deduceNegation(knownTruth.rhs, assumptions))
-                    yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
-                    yield (lambda assumptions : self.deduceReversedSubtraction(knownTruth.rhs, assumptions))
+                    yield (lambda assumptions : self.deduceNegation(judgment.rhs, assumptions))
+                    yield (lambda assumptions : self.deduceSubtraction(judgment.rhs, assumptions))
+                    yield (lambda assumptions : self.deduceReversedSubtraction(judgment.rhs, assumptions))
 
     def deduceStrictIncAdd(self, x, assumptions=USE_DEFAULTS):
         '''

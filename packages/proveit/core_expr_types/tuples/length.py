@@ -347,13 +347,13 @@ class Len(Operation):
                             simplify=True, disable_range_reduction=True):
         '''
         Execute a function to get an equivalence, making sure that the
-        result is a proper equivalence, a KnownTruth for an
+        result is a proper equivalence, a Judgment for an
         Equals expression with the lhs being self.  If
         disable_range_reduction, then disable range reduction while
         deriving the equivalence to ensure it does not get reduced to
         a different form.
         '''
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit.logic import Equals
         was_range_reduction_disabled = (
                 ExprRange in defaults.disabled_auto_reduction_types)
@@ -370,7 +370,7 @@ class Len(Operation):
                 defaults.disabled_auto_reduction_types.remove(ExprRange)
         if simplify:
             equiv = equiv.innerExpr().rhs.simplify(assumptions=assumptions)
-        assert isinstance(equiv, KnownTruth)
+        assert isinstance(equiv, Judgment)
         assert isinstance(equiv.expr, Equals)
         assert equiv.lhs==self, ("%s differs from %s"%(equiv.lhs, self))
         return equiv

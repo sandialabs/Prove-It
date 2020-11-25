@@ -95,7 +95,7 @@ class Or(Operation):
                     # orIf[Any,Left,Right] must not have been a usable theorem; use the default below.
                     break
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -106,7 +106,7 @@ class Or(Operation):
                 return # stop to avoid infinite recursion.
         yield self.deriveInBool
 
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for Not(A or B or .. or .. Z).
         '''
@@ -123,7 +123,7 @@ class Or(Operation):
             demorganAnd = And(*[operand.operand for operand in self.operands])
             yield demorganAnd.concludeViaDemorgans
 
-    def inBoolSideEffects(self, knownTruth):
+    def inBoolSideEffects(self, judgment):
         '''
         From (A or B or .. or Z) in Booleans deduce (A in Booleans), (B in Booleans), ...
         (Z in Booleans).

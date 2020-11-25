@@ -22,7 +22,7 @@ is an equality (in which case, substitution may simply be performed).
 import itertools
 from collections import deque
 from proveit import Expression, Operation, OperationSequence
-from proveit import defaults, USE_DEFAULTS, KnownTruth, ProofFailure
+from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
 from .sorter import TransitivitySorter
 from .relation import Relation
 
@@ -37,7 +37,7 @@ class TransitiveRelation(Relation):
     def __init__(self, operator, lhs, rhs):
         Relation.__init__(self,operator, lhs, rhs)
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Automatically derive the reversed form of transitive
         relations as side effects (e.g., y > x from x < y).
@@ -47,8 +47,8 @@ class TransitiveRelation(Relation):
         '''
         if not hasattr(self.__class__, 'knownLeftSides') or not hasattr(self.__class__, 'knownRightSides'):
             raise NotImplementedError("Expressions derived from TransitiveRelation should define 'knownLeftSides' and 'knownRightSides' as class variables")
-        self.__class__.knownLeftSides.setdefault(self.lhs, set()).add(knownTruth)
-        self.__class__.knownRightSides.setdefault(self.rhs, set()).add(knownTruth)
+        self.__class__.knownLeftSides.setdefault(self.lhs, set()).add(judgment)
+        self.__class__.knownRightSides.setdefault(self.rhs, set()).add(judgment)
         return
         yield # makes this a generator as it should be
 
@@ -97,7 +97,7 @@ class TransitiveRelation(Relation):
     @classmethod
     def knownRelationsFromLeft(RelationClass, expr, assumptionsSet):
         '''
-        Yield (KnownTruth, right-hand-side) pairs for this
+        Yield (Judgment, right-hand-side) pairs for this
         transitive relationship (or equality) that involve the given expression on 
         the left side and are known to be true under the given assumptions.
         Equality relations will always be yielded first.
@@ -108,21 +108,21 @@ class TransitiveRelation(Relation):
         equiv_class = RelationClass.EquivalenceClass()
         # equivalence relationships are strongest and should come first.
         equiv_left_relations = equiv_class.knownRelationsFromLeft(expr, assumptionsSet)
-        for (knownTruth, otherExpr) in equiv_left_relations:
+        for (judgment, otherExpr) in equiv_left_relations:
             if expr != otherExpr: # exclude reflexive equations -- they don't count
-                yield (knownTruth, otherExpr)
+                yield (judgment, otherExpr)
         if RelationClass is not equiv_class:
             relation_classes = RelationClass._RelationClasses()
             # stronger then weaker relations
             for Relation in relation_classes:
-                for knownTruth in list(Relation.knownLeftSides.get(expr, [])):
-                    if knownTruth.isSufficient(assumptionsSet):
-                        yield (knownTruth, knownTruth.rhs)
+                for judgment in list(Relation.knownLeftSides.get(expr, [])):
+                    if judgment.isSufficient(assumptionsSet):
+                        yield (judgment, judgment.rhs)
                 
     @classmethod
     def knownRelationsFromRight(RelationClass, expr, assumptionsSet):
         '''
-        Yield (KnownTruth, left-hand-side) pairs for this
+        Yield (Judgment, left-hand-side) pairs for this
         transitivie relationship (or equality) that involve the given expression on 
         the right side and are known to be true under the given assumptions.
         Equality relations will always be yielded first.
@@ -133,16 +133,16 @@ class TransitiveRelation(Relation):
         equiv_class = RelationClass.EquivalenceClass()
         # equivalence relationships are strongest and should come first.
         equiv_right_relations = equiv_class.knownRelationsFromRight(expr, assumptionsSet)
-        for (knownTruth, otherExpr) in equiv_right_relations:
+        for (judgment, otherExpr) in equiv_right_relations:
             if expr != otherExpr: # exclude reflexive equations -- they don't count
-                yield (knownTruth, otherExpr)
+                yield (judgment, otherExpr)
         if RelationClass is not equiv_class:
             relation_classes = RelationClass._RelationClasses()
             # stronger then weaker relations
             for Relation in relation_classes:
-                for knownTruth in list(Relation.knownRightSides.get(expr, [])):
-                    if knownTruth.isSufficient(assumptionsSet):
-                        yield (knownTruth, knownTruth.lhs)
+                for judgment in list(Relation.knownRightSides.get(expr, [])):
+                    if judgment.isSufficient(assumptionsSet):
+                        yield (judgment, judgment.lhs)
     
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -177,9 +177,9 @@ class TransitiveRelation(Relation):
         '''
         Apply transitvity rules on a list of relations in the given chain
         to proof the relation over the chain end points.
-        Each element of the chain must be a KnownTruth object that represents
+        Each element of the chain must be a Judgment object that represents
         a proven relation for which transitivity rules may be applied via
-        an 'applyTransitivity' method (such as a KnownTruth for a proven
+        an 'applyTransitivity' method (such as a Judgment for a proven
         Equals statement).  The chain must "connect" in the sense that any
         two neighbors in the chain can be joined vie applyTransitivity.
         The transitivity rule will be applied left to right.
@@ -187,14 +187,14 @@ class TransitiveRelation(Relation):
         assumptions = defaults.checkedAssumptions(assumptions)
         if len(chain) == 0:
             raise TransitivityException(None, assumptions, 'Empty transitivity relation train')
-        if not all(isinstance(element, KnownTruth) for element in chain):
-            raise TypeError('Expecting chain elements to be KnownTruth objects')
+        if not all(isinstance(element, Judgment) for element in chain):
+            raise TypeError('Expecting chain elements to be Judgment objects')
         while len(chain) >= 2:
             first = chain.pop(0)
             second = chain.pop(0)
             new_relation = first.applyTransitivity(second, assumptions=assumptions)
-            if not isinstance(new_relation, KnownTruth):
-                raise TypeError("applyTransitivity should return a KnownTruth, not %s"%new_relation)
+            if not isinstance(new_relation, Judgment):
+                raise TypeError("applyTransitivity should return a Judgment, not %s"%new_relation)
             chain.insert(0, new_relation)
         return chain[0] # we are done
 
@@ -277,7 +277,7 @@ class TransitiveRelation(Relation):
     @classmethod
     def sort(cls, items, reorder=True, assumptions=USE_DEFAULTS):
         '''
-        Return the proven Sequence, a known truth for an expression 
+        Return the proven Sequence, a judgment for an expression 
         of type cls.SequenceClass(), representing the sorted sequence
         according to the cls.sorted_items method.
         Weak relations (e.g., <=) are only considered when calling
@@ -383,7 +383,7 @@ class TransitiveRelation(Relation):
                   skip_exact_reps=False, skip_equiv_reps=False,
                   requirements=None):
         '''
-        Return the proven Sequence, a known truth for an expression 
+        Return the proven Sequence, a judgment for an expression 
         of type cls.SequenceClass(), representing the sorted sequence
         according to the cls.mergesorted_items method.
         Weak relations (e.g., <=) are only considered when calling
@@ -408,7 +408,7 @@ class TransitiveRelation(Relation):
         sorted items to maintain the sorted order (according to
         the TransitivityRelation class cls).  The sorted_items should
         be provably sorted, with relations between consecutive items
-        that are KnownTruths.  
+        that are Judgments.  
         
         If equiv_group_pos is 'first', the insertion point will be one
         that would place he "item to insert" prior to any equivalent 
@@ -501,7 +501,7 @@ class TransitiveRelation(Relation):
         Performs a breadth-first, bidirectional (meet in the middle) search attempting
         to prove a relation between leftItem and rightItem according to the RelationClass
         by applying transitivity derivations.
-        If successful, the approprate KnownTruth relating these items (in weak or strong
+        If successful, the approprate Judgment relating these items (in weak or strong
         form as can be determined) is returned; otherwise a TransitivityException is raised.
         '''
         equiv_class = cls.EquivalenceClass()

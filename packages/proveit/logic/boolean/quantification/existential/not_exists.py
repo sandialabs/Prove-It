@@ -22,7 +22,7 @@ class NotExists(OperationOverInstances):
                 instanceExpr, domain=domain, domains=domains,
                 condition=condition, conditions=conditions, _lambda_map=_lambda_map)
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a NotExists operation.
         '''

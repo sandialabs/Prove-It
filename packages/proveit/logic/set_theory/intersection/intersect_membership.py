@@ -12,7 +12,7 @@ class IntersectMembership(Membership):
         Membership.__init__(self, element)
         self.domain = domain
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Unfold the enumerated set membership as a side-effect.
         '''
@@ -59,7 +59,7 @@ class IntersectNonmembership(Nonmembership):
         Nonmembership.__init__(self, element)
         self.domain = domain
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Currently non side-effects for intersection nonmembership.
         '''

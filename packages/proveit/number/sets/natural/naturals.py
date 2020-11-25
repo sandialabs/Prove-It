@@ -12,11 +12,11 @@ class NaturalSet(NumberSet):
         from proveit.number.sets.natural._theorems_ import naturalsLowerBound
         return naturalsLowerBound.specialize({n:member}, assumptions=assumptions)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in Naturals' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
         yield lambda assumptions : self.deduceMemberInInts(member, assumptions)
 
@@ -38,11 +38,11 @@ class NaturalPosSet(NumberSet):
         from proveit.number.sets.natural._theorems_ import naturalsPosLowerBound
         return naturalsPosLowerBound.specialize({n:member}, assumptions=assumptions)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in NaturalsPos' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
         yield lambda assumptions : self.deduceMemberInNats(member, assumptions)
         yield lambda assumptions : self.deduce_member_non_zero(member, assumptions)

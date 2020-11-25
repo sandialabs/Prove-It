@@ -452,7 +452,7 @@ class ExprRange(Expression):
         method because the reductions are of the form of reducing 'self' 
         wrapped in an ExprTuple rather than 'self' itself.
         '''
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit._common_ import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.number import Add, one
@@ -564,7 +564,7 @@ class ExprRange(Expression):
             else:
                 yield expr_range # no reduction
                 return
-        assert isinstance(reduction, KnownTruth)
+        assert isinstance(reduction, Judgment)
         assert isinstance(reduction.expr, Equals)
         assert len(reduction.expr.operands) == 2
         assert reduction.expr.operands[0] == ExprTuple(expr_range)

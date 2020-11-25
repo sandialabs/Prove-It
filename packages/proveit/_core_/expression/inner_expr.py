@@ -8,14 +8,14 @@ import inspect
 class InnerExpr:
     '''
     Represents an "inner" sub-expression of a particular "topLevel" 
-    Expression or KnownTruth.  The innerExpr method of the Expression 
-    (or KnownTruth) class will start an InnerExpr with that particular 
-    expression (or known truth) as the top-level.  This acts as an 
+    Expression or Judgment.  The innerExpr method of the Expression 
+    (or Judgment) class will start an InnerExpr with that particular 
+    expression (or judgment) as the top-level.  This acts as an 
     expression wrapper, starting at the top-level but can "descend" to 
-    any sub-expression (or the 'assumptions' in the KnownTruth case)
+    any sub-expression (or the 'assumptions' in the Judgment case)
     via accessing sub-expression attributes (or 'assumptions').
     This will allow us to manipute the inner expression in the
-    context of the containing Expression/KnownTruth object.  One can 
+    context of the containing Expression/Judgment object.  One can 
     change the style of the inner expression or replace it with an 
     equivalent form.
     
@@ -82,7 +82,7 @@ class InnerExpr:
                  assumptions=USE_DEFAULTS):
         '''
         Create an InnerExpr with the given top-level Expression
-        or KnownTruth.  When getting an item or attribute
+        or Judgment.  When getting an item or attribute
         that corresponds with an item/attribute of the current
         inner expression, a new InnerExpr is generated, extending the
         path from the top level to the corresponding inner expression.
@@ -93,7 +93,7 @@ class InnerExpr:
         the slice (ExprTuple.length) is necessary to when calling
         repl_lambda().
         '''
-        from proveit import KnownTruth
+        from proveit import Judgment
         self.innerExprPath = tuple(_innerExprPath)
         self.exprHierarchy = [topLevel]
         self.assumptions=assumptions
@@ -103,11 +103,11 @@ class InnerExpr:
         self.parameters = []
         expr = self.exprHierarchy[0]
         for idx in self.innerExprPath:
-            if isinstance(expr, KnownTruth) and idx==-1:
-                # The top level may actually be a KnownTruth rather
+            if isinstance(expr, Judgment) and idx==-1:
+                # The top level may actually be a Judgment rather
                 # than an expression.
                 # idx==-1 corresponds to the assumptions of the
-                # KnownTruth.
+                # Judgment.
                 kt = expr
                 expr = kt.assumptions
             else:
@@ -260,9 +260,9 @@ class InnerExpr:
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'."%equiv_method_name
             elif equiv_method_type == 'rhs':
-                inner_equiv.__doc__ = "Return an equivalent form of the top-level known truth by replacing the inner expression via '%s'."%equiv_method_name                         
+                inner_equiv.__doc__ = "Return an equivalent form of the top-level judgment by replacing the inner expression via '%s'."%equiv_method_name                         
             elif equiv_method_type == 'action':
-                inner_equiv.__doc__ = "Derive an equivalent form of the top-level known truth by replacing the inner expression via '%s'."%equiv_method_name             
+                inner_equiv.__doc__ = "Derive an equivalent form of the top-level judgment by replacing the inner expression via '%s'."%equiv_method_name             
             else:
                 raise ValueError("Unexpected 'equivalence method' type: %s."%equiv_method_type)
             inner_equiv.__name__ = attr
@@ -290,7 +290,7 @@ class InnerExpr:
             def reviseInnerExpr(*args, **kwargs):
                 # call the 'with...' method on the inner expression:
                 expr = getattr(cur_inner_expr, attr)(*args, **kwargs)
-                # Rebuild the expression (or KnownTruth) with the 
+                # Rebuild the expression (or Judgment) with the 
                 # inner expression replaced.
                 return self._rebuild(expr)
             '''            
@@ -305,13 +305,13 @@ class InnerExpr:
     @staticmethod
     def register_equivalence_method(expr_class, equiv_method, past_tense_name, action_name):
         '''
-        Register a method of an expression class that is used to derive and return (as a KnownTruth)
+        Register a method of an expression class that is used to derive and return (as a Judgment)
         the equivalence of that expression on the left side with a new form on the right side.
         (e.g., 'simplification', 'evaluation', 'commutation', 'association').
         In addition to the expression class and the method (as a name or function object), also
         provide the "past-tense" form of the name for deriving the equivalence and returning
         the right side, and provide the "action" form of the name that may be used to make
-        the replacement directly within a KnownTruth to produce a revised KnownTruth.
+        the replacement directly within a Judgment to produce a revised Judgment.
         The "past-tense" version will be added automatically as a method to the given expression
         class with an appropriate doc string.
         '''
@@ -344,11 +344,11 @@ class InnerExpr:
         Returns the lambda function/map that would replace this 
         particular inner expression within the top-level expression.
         '''
-        from proveit import KnownTruth, varRange
+        from proveit import Judgment, varRange
         # build the lambda expression, starting with the lambda 
         # parameter and working up the hierarchy.
         top_level = self.exprHierarchy[0]
-        if isinstance(top_level, KnownTruth):
+        if isinstance(top_level, Judgment):
             top_level_expr = top_level.expr
         else:
             top_level_expr = top_level
@@ -409,28 +409,28 @@ class InnerExpr:
         Rebuild the expression replacing the inner expression with the
         given 'inner_expr_replacement'.
         '''
-        from proveit import KnownTruth
+        from proveit import Judgment
         inner_expr = inner_expr_replacement
         # Work from the inside out.
         for expr, idx in reversed(list(zip(self.exprHierarchy, 
                                            self.innerExprPath))):
             if isinstance(idx, slice): continue
-            if isinstance(expr, KnownTruth):
+            if isinstance(expr, Judgment):
                 if idx < 0:
                     raise ValueError("Cannot call an InnerExpr.repl_lambda "
                                      "for an inner expression of one of "
-                                     "a KnownTruth's assumptions")
-                # Convert from a KnownTruth to an Expression.
+                                     "a Judgment's assumptions")
+                # Convert from a Judgment to an Expression.
                 expr = expr.expr 
             expr_subs = tuple(expr.subExprIter())
             inner_expr = expr.__class__._make(
                     expr.coreInfo(), expr.getStyles(), 
                     expr_subs[:idx] + (inner_expr,) + expr_subs[idx+1:])
         revised_expr = inner_expr
-        if (isinstance(self.exprHierarchy[0], KnownTruth) and 
+        if (isinstance(self.exprHierarchy[0], Judgment) and 
                 self.exprHierarchy[0].expr==revised_expr):
-            # Make a KnownTruth with only the style modified.
-            kt = KnownTruth(revised_expr, self.exprHierarchy[0].assumptions)
+            # Make a Judgment with only the style modified.
+            kt = Judgment(revised_expr, self.exprHierarchy[0].assumptions)
             kt._addProof(self.exprHierarchy[0].proof())
             return kt
         return revised_expr

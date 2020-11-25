@@ -24,7 +24,7 @@ class SetNotEquiv(Operation):
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
             
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for
         this SetNotEquiv operation.

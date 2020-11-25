@@ -27,8 +27,8 @@ class Composite:
 
 def singularExpression(expression):
     from .expr_range import ExprRange
-    from proveit._core_.known_truth import KnownTruth
-    if isinstance(expression, KnownTruth):
+    from proveit._core_.judgment import Judgment
+    if isinstance(expression, Judgment):
         expression = expression.expr   
     if isinstance(expression, ExprRange):
         raise TypeError("A singular expression may not be an ExprRange "
@@ -50,9 +50,9 @@ def compositeExpression(expressions):
     from .expr_tuple import ExprTuple
     from .named_exprs import NamedExprs
     from .expr_array import ExprArray
-    from proveit._core_.known_truth import KnownTruth
+    from proveit._core_.judgment import Judgment
     
-    if isinstance(expressions, KnownTruth):
+    if isinstance(expressions, Judgment):
         expressions = expressions.expr
     
     if isinstance(expressions, ExprTuple) or isinstance(expressions, NamedExprs):
@@ -79,10 +79,10 @@ def singleOrCompositeExpression(expr_or_exprs,
     the result is an ExprTuple with one item that is neither an
     ExprRange nor a nested ExprTuple, return the single item.
     '''
-    from proveit._core_.known_truth import KnownTruth
+    from proveit._core_.judgment import Judgment
     from .expr_tuple import ExprTuple
     from .expr_range import ExprRange
-    if isinstance(expr_or_exprs, KnownTruth):
+    if isinstance(expr_or_exprs, Judgment):
         expr_or_exprs = expr_or_exprs.expr
     if wrap_expr_range_in_tuple and isinstance(expr_or_exprs, ExprRange):
         # An ExprRange must be wrapped in an ExprTuple in the

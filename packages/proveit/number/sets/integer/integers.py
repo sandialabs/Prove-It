@@ -6,11 +6,11 @@ class IntegerSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Integers', r'\mathbb{Z}', context=__file__)
     
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in NaturalsPos' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInRationals(member, assumptions)
     
     def deduceInSetIsBool(self, element, assumptions=USE_DEFAULTS):

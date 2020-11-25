@@ -1,5 +1,5 @@
 '''
-Generic utilities for Expression, KnownTruth, and Proof objects --
+Generic utilities for Expression, Judgment, and Proof objects --
 the standard Prove-It objects that are stored and have dependencies
 between them.
 '''
@@ -7,7 +7,7 @@ between them.
 
 class _MeaningData:
     '''
-    Data to store information for Expression, KnownTruth, and Proof objects
+    Data to store information for Expression, Judgment, and Proof objects
     that can be shared among different instances that have the same "meaning"
     -- same structure independent of style.
     '''
@@ -20,11 +20,11 @@ class _MeaningData:
 
 class _StyleData:
     '''
-    Data to store information for Expression, KnownTruth, and Proof objects
+    Data to store information for Expression, Judgment, and Proof objects
     that can be shared among different instances that have the same style as
     well as meaning.  Stores parent-child relationships that can be used to
     update the style of an inner Expression to be reflected in a containing
-    Expression, KnownTruth, or Proof.
+    Expression, Judgment, or Proof.
     '''
     
     unique_id_map = dict() # map _unique_id's to UniqueData objects

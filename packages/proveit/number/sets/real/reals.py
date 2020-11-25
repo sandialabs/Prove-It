@@ -8,11 +8,11 @@ class RealSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealsPos' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInComplexes(member, 
                                                                 assumptions)
     
@@ -28,11 +28,11 @@ class RealPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealsPos' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
@@ -70,11 +70,11 @@ class RealNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealsNeg' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
 
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
@@ -113,11 +113,11 @@ class RealNonNegSet(NumberSet):
         NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{\ge 0}',
                            context=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealsNonNeg' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):

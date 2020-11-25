@@ -43,10 +43,10 @@ class SupersetEq(SupersetRelation):
     _operator_ = Literal(stringFormat='supseteq', latexFormat=r'\supseteq',
                          context=__file__)
 
-    # map left-hand-sides to SupersetEq KnownTruths
+    # map left-hand-sides to SupersetEq Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownLeftSides = dict()
-    # map right-hand-sides to SupersetEq KnownTruths
+    # map right-hand-sides to SupersetEq Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()
 
@@ -204,9 +204,9 @@ class NotSupersetEq(Operation):
     def __init__(self, superset, subset):
         Operation.__init__(self, NotSupersetEq._operator_, (superset, subset))
 
-    def deriveSideEffects(self, knownTruth):
+    def deriveSideEffects(self, judgment):
         # unfold as an automatic side-effect
-        self.unfold(knownTruth.assumptions)
+        self.unfold(judgment.assumptions)
 
     def conclude(self, assumptions):
         return self.concludeAsFolded(assumptions)
@@ -236,10 +236,10 @@ class ProperSuperset(SupersetRelation):
     _operator_ = Literal(stringFormat='proper_superset', latexFormat=r'\supset',
                          context=__file__)
 
-    # map left-hand-sides to ProperSuperset KnownTruths
+    # map left-hand-sides to ProperSuperset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownLeftSides = dict()
-    # map right-hand-sides to Superset KnownTruths
+    # map right-hand-sides to Superset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()
 
@@ -342,9 +342,9 @@ class NotProperSuperset(Operation):
         Operation.__init__(self, NotProperSuperset._operator_,
                            (superset, subset))
 
-    def deriveSideEffects(self, knownTruth):
+    def deriveSideEffects(self, judgment):
         # unfold as an automatic side-effect
-        self.unfold(knownTruth.assumptions)
+        self.unfold(judgment.assumptions)
 
     def conclude(self, assumptions):
         return self.concludeAsFolded(assumptions)

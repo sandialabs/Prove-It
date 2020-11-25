@@ -519,7 +519,7 @@ class ExpSetMembership(Membership):
                                                  assumptions=assumptions)
         return elem_in_set
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         return
         yield
 

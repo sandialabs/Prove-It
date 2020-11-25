@@ -20,7 +20,7 @@ from .expression import (
         varRange, RangeInstanceError,
         StyleOptions, maybeFencedString, 
         maybeFencedLatex, maybeFenced)
-from .known_truth import KnownTruth, asExpression, asExpressions
+from .judgment import Judgment, asExpression, asExpressions
 from .defaults import defaults, USE_DEFAULTS, InvalidAssumptions
 from .context import Context, ContextException
 from .proof import (Proof, Assumption, Axiom, Theorem, ModusPonens, 

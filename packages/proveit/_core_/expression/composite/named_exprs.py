@@ -11,7 +11,7 @@ class NamedExprs(Composite, Expression):
         Create a NamedExprs Expression object from a list (iterable) of
         (keyword, Expression) pairs, where each keyword is a string.
         '''
-        from proveit._core_ import KnownTruth
+        from proveit._core_ import Judgment
         keywords = []
         elems = dict()
         for key, val in items:
@@ -22,8 +22,8 @@ class NamedExprs(Composite, Expression):
                 raise TypeError("Keywords of an expression dictionary may only be strings")
             #if not re.match('[A-Za-z0-9_]+', key):
             #    raise ValueError('A NamedExprs key may only include alphanumeric or underscore chararcters.')
-            if isinstance(val, KnownTruth):
-                val = val.expr # extract the Expression from the KnownTruth
+            if isinstance(val, Judgment):
+                val = val.expr # extract the Expression from the Judgment
             try:
                 val = singleOrCompositeExpression(val)
             except TypeError:

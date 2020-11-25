@@ -21,7 +21,7 @@ from ._core_ import (
         ExprTuple, ExprTupleError, extract_var_tuple_indices, 
         ExprArray, NamedExprs, ExprRange, 
         varRange, RangeInstanceError,
-        KnownTruth, asExpression, asExpressions,
+        Judgment, asExpression, asExpressions,
         Proof, Assumption, Axiom, Theorem, ModusPonens, 
         Deduction, Instantiation, Generalization,
         ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
@@ -52,7 +52,7 @@ def reset():
     Expression._clear_()
     Literal._clear_()
     Operation._clear_()
-    KnownTruth._clear_()
+    Judgment._clear_()
     Proof._clear_()
     Context._clear_()
     defaults.reset()

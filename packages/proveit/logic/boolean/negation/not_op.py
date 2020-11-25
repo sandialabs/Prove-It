@@ -9,7 +9,7 @@ class Not(Operation):
     def __init__(self, A):
         Operation.__init__(self, Not._operator_, A)
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -33,10 +33,10 @@ class Not(Operation):
         if hasattr(self.operand, 'negationSideEffects'):
             # derive negation side-effects for the specific type of
             # expression being negated.
-            for negSideEffect in self.operand.negationSideEffects(knownTruth):
+            for negSideEffect in self.operand.negationSideEffects(judgment):
                 yield negSideEffect
             
-    def inBoolSideEffects(self, knownTruth):
+    def inBoolSideEffects(self, judgment):
         '''
         From not(A) in Booleans deduce A in Booleans, where self is not(A).
         '''

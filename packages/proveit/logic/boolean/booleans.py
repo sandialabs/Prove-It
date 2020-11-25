@@ -120,7 +120,7 @@ class BooleanMembership(Membership):
     def __init__(self, element):
         Membership.__init__(self, element)
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Yield side-effect methods to try when the element is proven to be in the set of Booleans
         by calling 'inBoolSideEffects' on the element if it has such a method.
@@ -128,7 +128,7 @@ class BooleanMembership(Membership):
         '''
         from proveit.logic.boolean._theorems_ import unfoldInBool, foldInBool
         if hasattr(self.element, 'inBoolSideEffects'):
-            for sideEffect in self.element.inBoolSideEffects(knownTruth):
+            for sideEffect in self.element.inBoolSideEffects(judgment):
                 yield sideEffect
         # don't automatically do unfoldInBoolExplicit if unfoldInBool is unusable -- avoids infinite recursion
         if unfoldInBool.isUsable():

@@ -8,7 +8,7 @@ class Equals(TransitiveRelation):
     # operator of the Equals operation
     _operator_ = Literal(stringFormat='=', context=__file__)        
     
-    # Map Expressions to sets of KnownTruths of equalities that involve
+    # Map Expressions to sets of Judgments of equalities that involve
     # the Expression on the left hand or right hand side.
     knownEqualities = dict()
 
@@ -50,9 +50,9 @@ class Equals(TransitiveRelation):
             Equals.initializing.remove(self)
         '''
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
-        Record the knownTruth in Equals.knownEqualities, associated from
+        Record the judgment in Equals.knownEqualities, associated from
         the left hand side and the right hand side.  This information
         may be useful for concluding new equations via transitivity. 
         If the right hand side is an "irreducible value" (see 
@@ -61,7 +61,7 @@ class Equals(TransitiveRelation):
         method is called.   Some side-effects derivations are also
         attempted depending upon the form of this equality.
         If the rhs is an "irreducible value" (see isIrreducibleValue),
-        also record the knownTruth in the Equals.known_simplifications
+        also record the judgment in the Equals.known_simplifications
         and Equals.known_evaluation_sets dictionaries, for use when the
         simplification or evaluation method is called. The key for the
         known_simplifications dictionary is the specific *combination*
@@ -73,18 +73,18 @@ class Equals(TransitiveRelation):
         equality.
         '''
         from proveit.logic.boolean._common_ import TRUE, FALSE
-        Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
-        Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
+        Equals.knownEqualities.setdefault(self.lhs, set()).add(judgment)
+        Equals.knownEqualities.setdefault(self.rhs, set()).add(judgment)
 
         if isIrreducibleValue(self.rhs):
-            assumptions_sorted = sorted(knownTruth.assumptions,
+            assumptions_sorted = sorted(judgment.assumptions,
                                         key=lambda expr : hash(expr))
             lhsKey = (self.lhs, tuple(assumptions_sorted))
             # n.b.: the values in the known_simplifications
-            # dictionary consist of single KnownTruths not sets
-            Equals.known_simplifications[lhsKey]=knownTruth
+            # dictionary consist of single Judgments not sets
+            Equals.known_simplifications[lhsKey]=judgment
             Equals.known_evaluation_sets.setdefault(
-                    self.lhs, set()).add(knownTruth)
+                    self.lhs, set()).add(judgment)
 
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
@@ -104,10 +104,10 @@ class Equals(TransitiveRelation):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             yield self.deriveViaBooleanEquality
         if hasattr(self.lhs, 'equalitySideEffects'):
-            for sideEffect in self.lhs.equalitySideEffects(knownTruth):
+            for sideEffect in self.lhs.equalitySideEffects(judgment):
                 yield sideEffect
         
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a negated
         equation.        
@@ -205,24 +205,24 @@ class Equals(TransitiveRelation):
     
     def knownRelationsFromLeft(expr, assumptionsSet):
         '''
-        For each KnownTruth that is an Equals involving the given expression on
-        the left hand side, yield the KnownTruth and the right hand side.
+        For each Judgment that is an Equals involving the given expression on
+        the left hand side, yield the Judgment and the right hand side.
         '''
-        for knownTruth in Equals.knownEqualities.get(expr, frozenset()):
-            if knownTruth.lhs == expr:
-                if knownTruth.isSufficient(assumptionsSet):
-                    yield (knownTruth, knownTruth.rhs)
+        for judgment in Equals.knownEqualities.get(expr, frozenset()):
+            if judgment.lhs == expr:
+                if judgment.isSufficient(assumptionsSet):
+                    yield (judgment, judgment.rhs)
     
     @staticmethod
     def knownRelationsFromRight(expr, assumptionsSet):
         '''
-        For each KnownTruth that is an Equals involving the given expression on
-        the right hand side, yield the KnownTruth and the left hand side.
+        For each Judgment that is an Equals involving the given expression on
+        the right hand side, yield the Judgment and the left hand side.
         '''
-        for knownTruth in Equals.knownEqualities.get(expr, frozenset()):
-            if knownTruth.rhs == expr:
-                if knownTruth.isSufficient(assumptionsSet):
-                    yield (knownTruth, knownTruth.lhs)
+        for judgment in Equals.knownEqualities.get(expr, frozenset()):
+            if judgment.rhs == expr:
+                if judgment.isSufficient(assumptionsSet):
+                    yield (judgment, judgment.lhs)
             
     def concludeViaReflexivity(self, assumptions=USE_DEFAULTS):
         '''
@@ -276,7 +276,7 @@ class Equals(TransitiveRelation):
             # If the other relation is not "Equals", call from the "other" side.
             return other.applyTransitivity(self, assumptions)
         otherEquality = other
-        # We can assume that y=x will be a KnownTruth if x=y is a KnownTruth because it is derived as a side-effect.
+        # We can assume that y=x will be a Judgment if x=y is a Judgment because it is derived as a side-effect.
         if self.rhs == otherEquality.lhs:
             return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions=assumptions)
         elif self.rhs == otherEquality.rhs:
@@ -597,8 +597,8 @@ def reduceOperands(innerExpr, inPlace=True, mustEvaluate=False, assumptions=USE_
     Attempt to return an InnerExpr object that is provably equivalent to
     the given innerExpr but with simplified operands at the 
     inner-expression level. 
-    If inPlace is True, the top-level expression must be a KnownTruth
-    and the simplified KnownTruth is derived instead of an equivalence
+    If inPlace is True, the top-level expression must be a Judgment
+    and the simplified Judgment is derived instead of an equivalence
     relation.
     If mustEvaluate is True, the simplified
     operands must be irreducible values (see isIrreducibleValue).
@@ -656,7 +656,7 @@ def concludeViaReduction(expr, assumptions):
     '''
     Attempts to prove that the given expression is TRUE under the
     given assumptions via evaluating that the expression is equal to true.
-    Returns the resulting KnownTruth if successful.
+    Returns the resulting Judgment if successful.
     '''
     from proveit.lambda_map import SubExprRepl
     if not isinstance(expr, Operation):
@@ -667,14 +667,14 @@ def concludeViaReduction(expr, assumptions):
     # reduce the operands
     reducedExpr = reduceOperands(expr, assumptions)
     # prove the reduced version
-    knownTruth = reducedExpr.prove(assumptions)
+    judgment = reducedExpr.prove(assumptions)
     # now rebuild the original via subLeftSideInto (for a shorter proof than substitutions)
     for k, operand in enumerate(expr.operands):
         # for each operand, replace it with the original
-        subExprRepl = SubExprRepl(knownTruth).operands[k]
-        knownTruth = operand.evaluation(assumptions=assumptions).subLeftSideInto(subExprRepl, assumptions)
-    assert knownTruth.expr == expr, 'Equivalence substitutions did not work out as they should have'
-    return knownTruth
+        subExprRepl = SubExprRepl(judgment).operands[k]
+        judgment = operand.evaluation(assumptions=assumptions).subLeftSideInto(subExprRepl, assumptions)
+    assert judgment.expr == expr, 'Equivalence substitutions did not work out as they should have'
+    return judgment
 """
             
 def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
@@ -682,12 +682,12 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
                           automation=True):
     '''
     Default attempt to simplify the given inner expression under the 
-    given assumptions.  If successful, returns a KnownTruth (using a 
+    given assumptions.  If successful, returns a Judgment (using a 
     subset of the given assumptions) that expresses an equality between 
     the expression (on the left) and one with a simplified form for the 
     "inner" part (in some canonical sense determined by the Operation).
-    If inPlace is True, the top-level expression must be a KnownTruth
-    and the simplified KnownTruth is derived instead of an equivalence
+    If inPlace is True, the top-level expression must be a Judgment
+    and the simplified Judgment is derived instead of an equivalence
     relation.
     If mustEvaluate=True, the simplified form must be an irreducible 
     value (see isIrreducibleValue).  Specifically, this method checks to
@@ -697,7 +697,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     substitions, then call simplification/evaluation on the expression 
     with operands substituted for simplified forms.  It also treats, 
     as a special case, evaluating the expression to be true if it is in 
-    the set of assumptions [also see KnownTruth.evaluation and 
+    the set of assumptions [also see Judgment.evaluation and 
     evaluateTruth].  If operandsOnly = True, only simplify the operands
     of the inner expression.
     '''
@@ -766,14 +766,14 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     if (mustEvaluate and inner in Equals.known_evaluation_sets):
         evaluations = Equals.known_evaluation_sets[inner]
         candidates = []
-        for knownTruth in evaluations:
-            if knownTruth.isSufficient(assumptionsSet):
+        for judgment in evaluations:
+            if judgment.isSufficient(assumptionsSet):
                 # Found existing evaluation suitable for the assumptions
-                candidates.append(knownTruth)
+                candidates.append(judgment)
         if len(candidates) >= 1:
             # Return the "best" candidate with respect to fewest number
             # of steps.
-            min_key = lambda knownTruth: knownTruth.proof().numSteps()
+            min_key = lambda judgment: judgment.proof().numSteps()
             simplification = min(candidates, key=min_key)
             return innerSimplification(simplification)
 
@@ -812,7 +812,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
                                             assumptions=assumptions, 
                                             automation=False)
                     if inPlace:
-                        # Returns KnownTruth with simplification:
+                        # Returns Judgment with simplification:
                         return equivSimp 
                     innerEquiv = knownEq.applyTransitivity(equivSimp, 
                                                            assumptions)
@@ -889,7 +889,7 @@ def evaluateTruth(expr, assumptions):
     '''
     Attempts to prove that the given expression equals TRUE under
     the given assumptions via proving the expression.
-    Returns the resulting KnownTruth evaluation if successful.
+    Returns the resulting Judgment evaluation if successful.
     '''
     from proveit.logic import TRUE
     return Equals(expr, TRUE).prove(assumptions)
@@ -898,7 +898,7 @@ def evaluateFalsehood(expr, assumptions):
     '''
     Attempts to prove that the given expression equals FALSE under
     the given assumptions via disproving the expression.
-    Returns the resulting KnownTruth evaluation if successful.
+    Returns the resulting Judgment evaluation if successful.
     '''
     from proveit.logic import FALSE
     return Equals(expr, FALSE).prove(assumptions)
