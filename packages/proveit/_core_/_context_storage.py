@@ -1020,9 +1020,9 @@ class ContextFolderStorage:
         if storage_ids is None:
             if unique_rep[:6] == 'Proof:':
                 storage_ids = Proof._extractReferencedObjIds(unique_rep[6:])
-            elif unique_rep[:11] == 'Judgment:':
+            elif unique_rep[:9] == 'Judgment:':
                 storage_ids = Judgment._extractReferencedObjIds(
-                        unique_rep[11:])
+                        unique_rep[9:])
             else:
                 # Assumed to be an expression then
                 storage_ids = Expression._extractReferencedObjIds(unique_rep)
