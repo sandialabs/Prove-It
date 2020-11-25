@@ -61,21 +61,6 @@ def _defineTheorems():
     return _firstTheorem, locals()
 """
 
-class CircuitOperator(Literal):
-    def __init__(self, stringFormat, latexFormat=None, context=None):
-        Literal.__init__(self, stringFormat, latexFormat, context)
-    
-    def formatted(self, formatType, fence=False):
-        lit_formatted = Literal.formatted(self, formatType, fence=False)
-        if formatType == 'latex':
-            spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
-            out_str += r'\lstick{' + lit_formatted + r'}'
-            out_str += ' \n' + r'} \hspace{2em}'
-            return out_str
-        else:
-            return lit_formatted
-
 class Input(Operation):
     '''
     Represents an input state entering from the left-hand side of a
@@ -457,13 +442,20 @@ class MultiQubitGate(Operation):
  #     else: return Operation._formatted(self, formatType, fence)
 
 
+class TargetOperator(Literal):
+    def __init__(self, stringFormat, latexFormat=None, context=None):
+        Literal.__init__(self, stringFormat, latexFormat, context)
+    
+    def latex(self, **kwargs):
+        return r'\oplus'
+
 class Target(Operation):
     '''
     Represents the target of a control.
     Updated 1/26/2020 by wdc.
     '''
     # the literal operator of the Target operation class
-    _operator_ = CircuitOperator('TARGET', latexFormat=r'\targ',  context=__file__)
+    _operator_ = TargetOperator('TARGET', latexFormat=r'\targ',  context=__file__)
     
     def __init__(self, target_gate):
         '''
