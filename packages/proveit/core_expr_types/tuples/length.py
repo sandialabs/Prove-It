@@ -113,7 +113,7 @@ class Len(Operation):
                 for param, entry in zip(len_thm.explicitInstanceParams(),
                                         entries):
                     repl_map[param] = entry
-                return len_thm.specialize(repl_map)
+                return len_thm.instantiate(repl_map)
             else:
                 #raise NotImplementedError("Can't handle length computation "
                  #                        ">= 10 for %s"%self)

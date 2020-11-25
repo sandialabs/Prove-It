@@ -22,7 +22,7 @@ class Abs(Operation):
         from ._theorems_ import absNotEqZero
         from proveit.number import zero
         if rhs == zero:
-            return absNotEqZero.specialize(
+            return absNotEqZero.instantiate(
                     {a:self.operand}, assumptions=assumptions)
         raise ProofFailure(Equals(self, zero), assumptions,
                 "'notEqual' only implemented for a right side of zero")
@@ -30,7 +30,7 @@ class Abs(Operation):
     def deduceGreaterThanEqualsZero(self, assumptions=USE_DEFAULTS):
         from proveit.number import Complexes
         from ._theorems_ import absIsNonNeg
-        return absIsNonNeg.specialize({a:self.operand}, assumptions=assumptions)
+        return absIsNonNeg.instantiate({a:self.operand}, assumptions=assumptions)
 
     def distribute(self, assumptions=USE_DEFAULTS):
         '''
@@ -47,12 +47,12 @@ class Abs(Operation):
         from proveit._common_ import n, x
         from proveit.number import num, Complexes, Div, Mult
         if isinstance(self.operand, Div):
-            return absFrac.specialize(
+            return absFrac.instantiate(
                     {a:self.operand.numerator, b:self.operand.denominator},
                     assumptions=assumptions)
         elif isinstance(self.operand, Mult):
             theOperands = self.operand.operands
-            return absProd.specialize(
+            return absProd.instantiate(
                     {n:num(len(theOperands)), x:theOperands},
                     assumptions=assumptions)
         else:
@@ -71,10 +71,10 @@ class Abs(Operation):
         from ._theorems_ import absNonNegElim, absNegElim
         # deduceNonNeg(self.operand, assumptions) # NOT YET IMPLEMENTED
         if operand_type == None or operand_type == 'non-negative':
-            return absNonNegElim.specialize({x:self.operand},
+            return absNonNegElim.instantiate({x:self.operand},
                                             assumptions=assumptions)
         elif operand_type == 'negative':
-            return absNegElim.specialize({x:self.operand},
+            return absNegElim.instantiate({x:self.operand},
                                           assumptions=assumptions)
         else:
             raise ValueError(
@@ -140,7 +140,7 @@ class Abs(Operation):
         if GreaterEq(self.operand, zero).proven(assumptions=assumptions):
             from proveit.number.sets.real._theorems_ import (
                     inRealsNonNegIfGreaterEqZero)
-            inRealsNonNegIfGreaterEqZero.specialize(
+            inRealsNonNegIfGreaterEqZero.instantiate(
                 {a: self.operand}, assumptions=assumptions)
             return self.absElimination(operand_type='non-negative',
                                        assumptions=assumptions)
@@ -215,7 +215,7 @@ class Abs(Operation):
 
                         InSet(negated_op_simp, RealsPos).prove(
                                 assumptions=assumptions)
-                        negInRealsNegIfPosInRealsPos.specialize(
+                        negInRealsNegIfPosInRealsPos.instantiate(
                             {a:negated_op_simp}, assumptions=assumptions)
                         return self.absElimination(operand_type='negative',
                                                    assumptions=assumptions)
@@ -244,15 +244,15 @@ class Abs(Operation):
         assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Reals:
-            return absComplexClosure.specialize({a:self.operand},
+            return absComplexClosure.instantiate({a:self.operand},
                       assumptions=assumptions)
 
         if number_set == RealsPos:
-            return absNonzeroClosure.specialize({a:self.operand},
+            return absNonzeroClosure.instantiate({a:self.operand},
                       assumptions=assumptions)
 
         if number_set == RealsNonNeg:
-            return absComplexClosureNonNegReals.specialize({a:self.operand},
+            return absComplexClosureNonNegReals.instantiate({a:self.operand},
                       assumptions=assumptions)
 
         # To be thorough and a little more general, we check if the
@@ -264,15 +264,15 @@ class Abs(Operation):
         # If so, use the appropiate thm to determine that self is in X,
         # then prove that self must also be in Y since Y contains X.
         if SubsetEq(Reals, number_set).proven(assumptions=assumptions):
-            absComplexClosure.specialize({a:self.operand},
+            absComplexClosure.instantiate({a:self.operand},
                       assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
         if SubsetEq(RealsPos, number_set).proven(assumptions=assumptions):
-            absNonzeroClosure.specialize({a:self.operand},
+            absNonzeroClosure.instantiate({a:self.operand},
                       assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
         if SubsetEq(RealsNonNeg, number_set).proven(assumptions=assumptions):
-            absComplexClosureNonNegReals.specialize({a:self.operand},
+            absComplexClosureNonNegReals.instantiate({a:self.operand},
                       assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
 

@@ -35,7 +35,7 @@ class NotExists(OperationOverInstances):
         from ._theorems_ import notExistsUnfolding
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
-        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
+        return notExistsUnfolding.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
     
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
@@ -45,7 +45,7 @@ class NotExists(OperationOverInstances):
         from ._theorems_ import notExistsFolding
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
-        folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
+        folding = notExistsFolding.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
         return folding.deriveConclusion(assumptions)
 
     """
@@ -64,10 +64,10 @@ class NotExists(OperationOverInstances):
         if isinstance(self.instanceExpr, Not):
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr.etcExpr
             assumption = Forall(operand.arguments, operand.expression.etcExpr, operand.domainCondition)
-            return forallImpliesNotExistsNot.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveConclusion().checked({assumption})
+            return forallImpliesNotExistsNot.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveConclusion().checked({assumption})
         else:
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
             assumption = Forall(operand.arguments, NotEquals(operand.expression, TRUE), operand.domainCondition)
-            return existsDefNegation.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveLeftViaEquivalence().checked({assumption})
+            return existsDefNegation.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveLeftViaEquivalence().checked({assumption})
     """
 

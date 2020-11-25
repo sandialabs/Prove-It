@@ -733,7 +733,7 @@ class Judgment:
         return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
     """
     
-    def specialize(self, repl_map=None, relabel_map=None,
+    def instantiate(self, repl_map=None, relabel_map=None,
                    assumptions=USE_DEFAULTS):
         # TEMPORARY BACKWARD COMPATIBILITY
         # if repl_map is None:
@@ -790,7 +790,7 @@ class Judgment:
                 self.raiseUnusableProof()
             return alternate.instantiate(repl_map, assumptions)
         
-        # If no repl_map is provided, specialize the "explicitInstanceVars" 
+        # If no repl_map is provided, instantiate the "explicitInstanceVars" 
         # of the Forall with default mappings (mapping instance variables to 
         # themselves)
         if repl_map is None: 

@@ -8,4 +8,4 @@ TimplT = impliesTT.deriveViaBooleanEquality()
 # (TRUE => TRUE) and (TRUE => TRUE) = TRUE
 TimplTandTimplT_eq_T = deriveStmtEqTrue(compose(TimplT, TimplT))
 # (TRUE <=> TRUE) = TRUE
-iffDef.specialize({A:TRUE, B:TRUE}).applyTransitivity(TimplTandTimplT_eq_T).qed(__file__)
+iffDef.instantiate({A:TRUE, B:TRUE}).applyTransitivity(TimplTandTimplT_eq_T).qed(__file__)

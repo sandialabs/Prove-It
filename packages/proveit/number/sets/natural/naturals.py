@@ -10,7 +10,7 @@ class NaturalSet(NumberSet):
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import naturalsLowerBound
-        return naturalsLowerBound.specialize({n:member}, assumptions=assumptions)
+        return naturalsLowerBound.instantiate({n:member}, assumptions=assumptions)
 
     def membershipSideEffects(self, judgment):
         '''
@@ -23,7 +23,7 @@ class NaturalSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import xInNatsInBool
         from proveit._common_ import x
-        return xInNatsInBool.specialize({x:member}, assumptions=assumptions)
+        return xInNatsInBool.instantiate({x:member}, assumptions=assumptions)
 
     def deduceMemberInInts(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.integer._theorems_ import natsInInts
@@ -36,7 +36,7 @@ class NaturalPosSet(NumberSet):
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import naturalsPosLowerBound
-        return naturalsPosLowerBound.specialize({n:member}, assumptions=assumptions)
+        return naturalsPosLowerBound.instantiate({n:member}, assumptions=assumptions)
 
     def membershipSideEffects(self, judgment):
         '''
@@ -62,7 +62,7 @@ class NaturalPosSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import xInNatsPosInBool
         from proveit._common_ import x
-        return xInNatsPosInBool.specialize({x:member}, assumptions=assumptions)
+        return xInNatsPosInBool.instantiate({x:member}, assumptions=assumptions)
     
     def deduceMemberInNats(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import natsPosInNats

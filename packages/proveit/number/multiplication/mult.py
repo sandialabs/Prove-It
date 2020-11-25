@@ -97,9 +97,9 @@ class Mult(Operation):
         # print("self in deduce in number set", self)
         # print("self.operands", self.operands)
         if bin:
-            return thm.specialize({a:self.operands[0], b:self.operands[1]},
+            return thm.instantiate({a:self.operands[0], b:self.operands[1]},
                                   assumptions=assumptions)
-        return thm.specialize({n:self.operands.length(assumptions),
+        return thm.instantiate({n:self.operands.length(assumptions),
                                a:self.operands},
                               assumptions=assumptions)
 
@@ -143,7 +143,7 @@ class Mult(Operation):
         if rhs == zero:
             _n = self.operands.length(assumptions)
             _a = self.operands
-            return multNotEqZero.specialize({n:_n, a:_a},
+            return multNotEqZero.instantiate({n:_n, a:_a},
                                             assumptions=assumptions)
         raise ProofFailure(Equals(self, zero), assumptions, (
                 "'notEqual' only implemented for a right side of zero"))
@@ -230,19 +230,19 @@ class Mult(Operation):
             if idx==0:
                 _x = self.operands[0].operand
                 _y = self.operands[1]
-                return multNegLeft.specialize({x:_x, y:_y},
+                return multNegLeft.instantiate({x:_x, y:_y},
                                               assumptions=assumptions)
             else:
                 _x = self.operands[0]
                 _y = self.operands[1].operand
-                return multNegRight.specialize({x:_x, y:_y},
+                return multNegRight.instantiate({x:_x, y:_y},
                                                assumptions=assumptions)
         _a = ExprTuple(*self.operands[:idx])
         _b = self.operands[idx].operand
         _c = ExprTuple(*self.operands[idx+1:])
         _i = _a.length(assumptions)
         _j = _c.length(assumptions)
-        return multNegAny.specialize({i:_i, j:_j, a:_a, b:_b, c:_c},
+        return multNegAny.instantiate({i:_i, j:_j, a:_a, b:_b, c:_c},
                                      assumptions=assumptions)
 
     def oneEliminations(self, assumptions=USE_DEFAULTS):
@@ -284,16 +284,16 @@ class Mult(Operation):
 
         if len(self.operands)==2:
             if idx==0:
-                return elimOneLeft.specialize({x:self.operands[1]},
+                return elimOneLeft.instantiate({x:self.operands[1]},
                                                assumptions=assumptions)
             else:
-                return elimOneRight.specialize({x:self.operands[0]},
+                return elimOneRight.instantiate({x:self.operands[0]},
                                                 assumptions=assumptions)
         _a = ExprTuple(*self.operands[:idx])
         _b = ExprTuple(*self.operands[idx+1:])
         _i = _a.length(assumptions)
         _j = _b.length(assumptions)
-        return elimOneAny.specialize({i:_i, j:_j, a:_a, b:_b},
+        return elimOneAny.instantiate({i:_i, j:_j, a:_a, b:_b},
                                      assumptions=assumptions)
     
     def deepOneEliminations(self, assumptions=USE_DEFAULTS):
@@ -596,14 +596,14 @@ class Mult(Operation):
             zeroIdx = self.operands.index(zero)
             if len(self.operands)==2:
                 if zeroIdx==0:
-                    return multZeroLeft.specialize({x:self.operands[1]}, assumptions=assumptions)
+                    return multZeroLeft.instantiate({x:self.operands[1]}, assumptions=assumptions)
                 else:
-                    return multZeroRight.specialize({x:self.operands[0]}, assumptions=assumptions)
+                    return multZeroRight.instantiate({x:self.operands[0]}, assumptions=assumptions)
             _a = self.operands[:zeroIdx]
             _b = self.operands[zeroIdx+1:]
             _i = ExprTuple(*_a.length(assumptions))
             _j = ExprTuple(*_b.length(assumptions))
-            return multZeroAny.specialize({i:_i, j:_j, a:_a, b:_b},
+            return multZeroAny.instantiate({i:_i, j:_j, a:_a, b:_b},
                                           assumptions=assumptions)
         except (ValueError, ProofFailure):
             pass # No such "luck" regarding a simple multiplication by zero.
@@ -655,7 +655,7 @@ class Mult(Operation):
             expr = eq.update(expr.association(1, len(self.operands)-1, assumptions))
         _x = self.operands[1]
         _n = num(reps)
-        eq.update(multDef.specialize({n:_n, a:[_x]*reps, x:_x},
+        eq.update(multDef.instantiate({n:_n, a:[_x]*reps, x:_x},
                                       assumptions=assumptions))
         return eq.relation
 
@@ -721,7 +721,7 @@ class Mult(Operation):
         from proveit.number.division._theorems_ import prodOfFracs #, fracInProd
         from proveit.number import Add, Div, Neg, Sum
         if idx is None and len(self.factors) == 2 and all(isinstance(factor, Div) for factor in self.factors):
-            return prodOfFracs.specialize({x:self.factors[0].numerator, y:self.factors[1].numerator, z:self.factors[0].denominator, w:self.factors[1].denominator}, assumptions=assumptions)
+            return prodOfFracs.instantiate({x:self.factors[0].numerator, y:self.factors[1].numerator, z:self.factors[0].denominator, w:self.factors[1].denominator}, assumptions=assumptions)
         operand = self.operands[idx]
         _a = ExprTuple(*self.operands[:idx])
         _c = ExprTuple(*self.operands[idx+1:])
@@ -730,7 +730,7 @@ class Mult(Operation):
         if isinstance(operand, Add):
             _b = self.operands[idx].operands
             _j = _b.length(assumptions)
-            return distributeThroughSum.specialize(
+            return distributeThroughSum.instantiate(
                     {i:_i, j:_j, k:_k, a:_a, b:_b, c:_c},
                     assumptions=assumptions)
         elif (isinstance(operand, Add) and len(operand.operands)==2
@@ -738,14 +738,14 @@ class Mult(Operation):
             _j = _k
             _x = self.operands[idx].operands[0]
             _y = self.operands[idx].operands[1].operand
-            return distributeThroughSubtract.specialize(
+            return distributeThroughSubtract.instantiate(
                     {i:_i, j:_j, a:_a, x:_x, y:_y, c:_c},
                     assumptions=assumptions)
         elif isinstance(operand, Div):
             raise NotImplementedError("Mult.distribution must be updated "
                                       "for Div case.")
             '''
-            eqn = fracInProd.specialize({wMulti:self.operands[:idx], x:self.operands[idx].operands[0], y:self.operands[idx].operands[1], zMulti:self.operands[idx+1:]}, assumptions=assumptions)
+            eqn = fracInProd.instantiate({wMulti:self.operands[:idx], x:self.operands[idx].operands[0], y:self.operands[idx].operands[1], zMulti:self.operands[idx+1:]}, assumptions=assumptions)
             try:
                 # see if the numerator can simplify (e.g., with a one factor)
                 numerSimplification = eqn.rhs.numerator.simplification(assumptions=assumptions)
@@ -762,9 +762,9 @@ class Mult(Operation):
             Pop, Pop_sub = Operation(P, operand.indices), operand.summand
             S_sub = operand.domain
             xDummy, zDummy = self.safeDummyVars(2)
-            spec1 = distributeThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yMulti:yMultiSub,
+            spec1 = distributeThroughSummation.instantiate({Pop:Pop_sub, S:S_sub, yMulti:yMultiSub,
                                                            xMulti:Etcetera(MultiVariable(xDummy)), zMulti:Etcetera(MultiVariable(zDummy))}, assumptions=assumptions)
-            return spec1.deriveConclusion().specialize({Etcetera(MultiVariable(xDummy)):self.operands[:idx], \
+            return spec1.deriveConclusion().instantiate({Etcetera(MultiVariable(xDummy)):self.operands[:idx], \
                                                         Etcetera(MultiVariable(zDummy)):self.operands[idx+1:]}, assumptions=assumptions)
             '''
         else:
@@ -842,9 +842,9 @@ class Mult(Operation):
         # if all(isinstance(factor, Sqrt) for factor in self.factors):
         #     # combine the square roots into one square root
         #     factorBases = [factor.base for factor in self.factors]
-        #     return prodOfSqrts.specialize({xMulti:factorBases},
+        #     return prodOfSqrts.instantiate({xMulti:factorBases},
         #                                   assumptions=assumptions)
-        # the following sqrt specialization modified by wdc on 2/29/2020
+        # the following sqrt instantiation modified by wdc on 2/29/2020
         # based on the above-commented-out code (kept here temporarily
         # until we're sure this works ok)
         
@@ -855,10 +855,10 @@ class Mult(Operation):
         if not self.operands.is_binary() or not isinstance(self.operands[0], Exp) or not isinstance(self.operands[1], Exp):
             if self.operands.is_binary() and isinstance(self.operands[0], Exp) and self.operands[0].base == self.operands[1]:
                 # Of the form a^b a
-                return addOneRightInExp.specialize({a:self.operands[1], b:self.operands[0].exponent}, assumptions=assumptions).deriveReversed(assumptions)
+                return addOneRightInExp.instantiate({a:self.operands[1], b:self.operands[0].exponent}, assumptions=assumptions).deriveReversed(assumptions)
             elif self.operands.is_binary() and isinstance(self.operands[1], Exp) and self.operands[1].base == self.operands[0]:
                 # Of the form a a^b
-                return addOneLeftInExp.specialize({a:self.operands[0], b:self.operands[1].exponent}, assumptions=assumptions).deriveReversed(assumptions)
+                return addOneLeftInExp.instantiate({a:self.operands[0], b:self.operands[1].exponent}, assumptions=assumptions).deriveReversed(assumptions)
             raise NotImplementedError("Need to better implement degenerate cases "
                                       "of a^b*a and a*a^b.")                 
             #raise ValueError(exp_operand_msg)

@@ -33,7 +33,7 @@ Jupyter notebooks (interactive Python sessions in a web browser).  These
 notebooks render LaTeX-formatted mathematical expressions inline.  Proofs 
 are constructed by invoking axioms and other theorems and employing 
 fundamental derivation steps (modus ponens, hypothetical reasoning, 
-specialization, generalization, or axiom elimination).  Axioms and theorems
+instantiation, generalization, or axiom elimination).  Axioms and theorems
 may be invoked indirectly via convenience methods or automation (methods
 that are automatically invoked when attempting to prove something or
 side-effects when something is proven).  Theorem proofs and their axiom/

@@ -15,16 +15,16 @@ class IntegerSet(NumberSet):
     
     def deduceInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from ._theorems_ import inIntsIsBool
-        return inIntsIsBool.specialize({a:element}, assumptions=assumptions)
+        return inIntsIsBool.instantiate({a:element}, assumptions=assumptions)
     
     def deduceNotInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from ._theorems_ import notInIntsIsBool
-        return notInIntsIsBool.specialize({a:element}, assumptions=assumptions)
+        return notInIntsIsBool.instantiate({a:element}, assumptions=assumptions)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInIntsInBool
         from proveit._common_ import x
-        return xInIntsInBool.specialize({x:member}, assumptions=assumptions)
+        return xInIntsInBool.instantiate({x:member}, assumptions=assumptions)
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.rational._theorems_ import intsInRationals

@@ -255,12 +255,12 @@ class Forall(OperationOverInstances):
     def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
         '''
         First attempt to prove that this Forall statement is true under
-        the assumptions, and then call specialize on the Judgment.
+        the assumptions, and then call instantiate on the Judgment.
         '''
         return self.prove(assumptions).instantiate(
                 repl_map, assumptions=assumptions)
 
-    def specialize(self, repl_map=None, assumptions=USE_DEFAULTS):
+    def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
         '''
         TEMPORARY FOR BACKWARD COMPATIBILITY
         '''
@@ -297,6 +297,6 @@ class Forall(OperationOverInstances):
         P_op, _P_op = Operation(P, _x), self.instanceExpr
         _n = _x.length(assumptions)
         x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
-        return forall_in_bool.specialize(
+        return forall_in_bool.instantiate(
                 {n: _n, P_op: _P_op, x_1_to_n: _x},
                 assumptions=assumptions)

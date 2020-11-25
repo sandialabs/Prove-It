@@ -24,10 +24,10 @@ class Prob(Operation):
     
     def deduceInInterval(self):
         from axioms import probBetweenZeroAndOne
-        return probBetweenZeroAndOne.specialize({x:self.random_variable, X:self.event})
+        return probBetweenZeroAndOne.instantiate({x:self.random_variable, X:self.event})
     
     def deduceInReals(self):
         from theorems import probInReals
-        return probInReals.specialize({x:self.random_variable, X:self.event})
+        return probInReals.instantiate({x:self.random_variable, X:self.event})
 
 # PROB = Literal(pkg, 'PROB', operationMaker = lambda operands : Prob(*operands))

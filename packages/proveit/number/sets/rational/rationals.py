@@ -22,7 +22,7 @@ class RationalsSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsInBool
         from proveit._common_ import x
-        return xInRationalsInBool.specialize(
+        return xInRationalsInBool.instantiate(
                 {x:member}, assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
@@ -64,7 +64,7 @@ class RationalsPosSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsPosInBool
         from proveit._common_ import x
-        return xInRationalsPosInBool.specialize(
+        return xInRationalsPosInBool.instantiate(
                 {x:member}, assumptions=assumptions)
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
@@ -105,7 +105,7 @@ class RationalsNegSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsNegInBool
         from proveit._common_ import x
-        return xInRationalsNegInBool.specialize(
+        return xInRationalsNegInBool.instantiate(
                 {x:member}, assumptions=assumptions)
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
@@ -147,7 +147,7 @@ class RationalsNonNegSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsNonNegInBool
         from proveit._common_ import x
-        return xInRationalsNonNegInBool.specialize(
+        return xInRationalsNonNegInBool.instantiate(
                 {x:member}, assumptions=assumptions)
     
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):

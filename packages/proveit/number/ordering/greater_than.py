@@ -82,11 +82,11 @@ class Greater(GreaterRelation):
         From, x > y derive y < x.
         '''
         from ._theorems_ import reverseGreater
-        return reverseGreater.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return reverseGreater.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
                     
     def deduceInBooleans(self, assumptions=frozenset()):
         from ._theorems_ import greaterThanInBools
-        return greaterThanInBools.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
+        return greaterThanInBools.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
     
     def deriveRelaxed(self, assumptions=frozenset()):
         '''
@@ -94,7 +94,7 @@ class Greater(GreaterRelation):
         Assumptions may be required to deduce that a and b are in Reals.
         '''
         from ._theorems_ import relaxGreater
-        return relaxGreater.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return relaxGreater.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
 
     def deduceIncAdd(self, assumptions=USE_DEFAULTS):
         '''
@@ -118,14 +118,14 @@ class Greater(GreaterRelation):
             other = other.deriveReversed(assumptions)
         if other.lhs == self.rhs:
             if isinstance(other,Greater):
-                return transitivityGreaterGreater.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
+                return transitivityGreaterGreater.instantiate({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
             elif isinstance(other,GreaterEq):
-                return transitivityGreaterGreaterEq.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
+                return transitivityGreaterGreaterEq.instantiate({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
         elif other.rhs == self.lhs:
             if isinstance(other,Greater):
-                return transitivityGreaterGreater.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
+                return transitivityGreaterGreater.instantiate({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
             elif isinstance(other,GreaterEq):
-                return transitivityGreaterGreaterEq.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
+                return transitivityGreaterGreaterEq.instantiate({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))        
 
@@ -135,7 +135,7 @@ class Greater(GreaterRelation):
         Assumptions may be required to prove that a, and b are in Reals.        
         '''
         from ._theorems_ import negatedGreaterThan
-        return negatedGreaterThan.specialize({a:self.lhs, b:self.rhs})
+        return negatedGreaterThan.instantiate({a:self.lhs, b:self.rhs})
 
     def deriveShifted(self, addend, addendSide='right', assumptions=USE_DEFAULTS):
         r'''
@@ -146,9 +146,9 @@ class Greater(GreaterRelation):
         '''
         from ._theorems_ import greaterShiftAddRight, greaterShiftAddLeft
         if addendSide == 'right':
-            return greaterShiftAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
+            return greaterShiftAddRight.instantiate({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
         elif addendSide == 'left':
-            return greaterShiftAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
+            return greaterShiftAddLeft.instantiate({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
@@ -158,7 +158,7 @@ class Greater(GreaterRelation):
         are all Real) where c is the given 'addend'.
         '''
         from ._theorems_ import greaterAddLeft
-        return greaterAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend},
+        return greaterAddLeft.instantiate({a:self.lhs, b:self.rhs, c:addend},
                                           assumptions=assumptions)
 
     def addRight(self, addend, assumptions=USE_DEFAULTS):
@@ -167,7 +167,7 @@ class Greater(GreaterRelation):
         are all Real) where c is the given 'addend'.
         '''
         from ._theorems_ import greaterAddRight
-        return greaterAddRight.specialize({a:self.lhs, b:self.rhs, c:addend},
+        return greaterAddRight.instantiate({a:self.lhs, b:self.rhs, c:addend},
                                            assumptions=assumptions)                
                                         
     def add(self, relation, assumptions=USE_DEFAULTS):
@@ -188,13 +188,13 @@ class Greater(GreaterRelation):
             raise ValueError("Greater.add 'relation' must be of type Less, "
                                "LessEq, Greater, or GreaterEq, not %s"
                                %str(relation.__class__))
-        return greaterAddBoth.specialize({a:self.lhs, b:self.rhs, c:c_val,
+        return greaterAddBoth.instantiate({a:self.lhs, b:self.rhs, c:c_val,
                                            d:d_val},
                                           assumptions=assumptions)
 
     def concludeViaEquality(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import relaxEqualToGreaterEq
-        return relaxEqualToGreaterEq.specialize(
+        return relaxEqualToGreaterEq.instantiate(
             {x: self.operands[0], y:self.operands[1]},
             assumptions=assumptions) 
 
@@ -238,15 +238,15 @@ class GreaterEq(GreaterRelation):
         From, x >= y derive y <= x.
         '''
         from ._theorems_ import reverseGreaterEq
-        return reverseGreaterEq.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return reverseGreaterEq.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
                             
     def deduceInBooleans(self, assumptions=frozenset()):
         from ._theorems_ import greaterThanEqualsInBools
-        return greaterThanEqualsInBools.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
+        return greaterThanEqualsInBools.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
 
     def unfold(self, assumptions=frozenset()):
         from ._axioms_ import greaterThanEqualsDef
-        return greaterThanEqualsDef.specialize({x:self.lhs, y:self.rhs})
+        return greaterThanEqualsDef.instantiate({x:self.lhs, y:self.rhs})
 
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -264,17 +264,17 @@ class GreaterEq(GreaterRelation):
             other = other.deriveReversed(assumptions)
         if other.lhs == self.rhs and other.rhs == self.lhs:
             # x >= y and y >= x implies that x=y
-            return symmetricGreaterEq.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+            return symmetricGreaterEq.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
         elif other.lhs == self.rhs:
             if isinstance(other,Greater):
-                return transitivityGreaterEqGreater.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
+                return transitivityGreaterEqGreater.instantiate({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
             elif isinstance(other,GreaterEq):
-                return transitivityGreaterEqGreaterEq.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
+                return transitivityGreaterEqGreaterEq.instantiate({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
         elif other.rhs == self.lhs:
             if isinstance(other,Greater):
-                return transitivityGreaterEqGreater.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
+                return transitivityGreaterEqGreater.instantiate({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
             elif isinstance(other,GreaterEq):
-                return transitivityGreaterEqGreaterEq.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
+                return transitivityGreaterEqGreaterEq.instantiate({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))        
     
@@ -285,7 +285,7 @@ class GreaterEq(GreaterRelation):
         Assumptions may be required to prove that a, and b are in Reals.        
         '''
         from ._theorems_ import negatedGreaterThanEquals
-        return negatedGreaterThanEquals.specialize({a:self.lhs, b:self.rhs})
+        return negatedGreaterThanEquals.instantiate({a:self.lhs, b:self.rhs})
     """
 
     def deriveShifted(self, addend, addendSide='right', assumptions=USE_DEFAULTS):
@@ -297,9 +297,9 @@ class GreaterEq(GreaterRelation):
         '''
         from ._theorems_ import greaterEqShiftAddRight, greaterEqShiftAddLeft
         if addendSide == 'right':
-            return greaterEqShiftAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
+            return greaterEqShiftAddRight.instantiate({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
         elif addendSide == 'left':
-            return greaterEqShiftAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
+            return greaterEqShiftAddLeft.instantiate({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
@@ -309,7 +309,7 @@ class GreaterEq(GreaterRelation):
         are all Real) where c is the given 'addend'.
         '''
         from ._theorems_ import greaterEqAddLeft
-        return greaterEqAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend},
+        return greaterEqAddLeft.instantiate({a:self.lhs, b:self.rhs, c:addend},
                                           assumptions=assumptions)
 
     def addRight(self, addend, assumptions=USE_DEFAULTS):
@@ -318,7 +318,7 @@ class GreaterEq(GreaterRelation):
         are all Real) where c is the given 'addend'.
         '''
         from ._theorems_ import greaterEqAddRight
-        return greaterEqAddRight.specialize({a:self.lhs, b:self.rhs, c:addend},
+        return greaterEqAddRight.instantiate({a:self.lhs, b:self.rhs, c:addend},
                                            assumptions=assumptions)                
                                         
     def add(self, relation, assumptions=USE_DEFAULTS):
@@ -339,7 +339,7 @@ class GreaterEq(GreaterRelation):
             raise ValueError("Greater.add 'relation' must be of type Less, "
                                "LessEq, Greater, or GreaterEq, not %s"
                                %str(relation.__class__))
-        return greaterEqAddBoth.specialize({a:self.lhs, b:self.rhs, c:c_val,
+        return greaterEqAddBoth.instantiate({a:self.lhs, b:self.rhs, c:c_val,
                                              d:d_val},
                                             assumptions=assumptions)
 

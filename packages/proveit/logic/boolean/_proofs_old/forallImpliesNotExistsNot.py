@@ -5,7 +5,7 @@ from proveit.common import P, S, xEtc, PxEtc, Qetc, etc_QxEtc
 # hypothesis = forall_{..x.. in S | ..Q(..x..)..} P(..x..)
 hypothesis = Forall(xEtc, PxEtc, S, etc_QxEtc)
 # [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))] => [Not(forall_{..x.. in S | ..Q(..x..)..} P(..x..)]
-existsNotImpliesNotForallSpec = existsNotImpliesNotForall.specialize().proven()
+existsNotImpliesNotForallSpec = existsNotImpliesNotForall.instantiate().proven()
 # exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..)) in BOOLEANS
 existsNotImpliesNotForallSpec.hypothesis.deduceInBool()
 # forall_{..x.. in S | ..Q(..x..)..} P(..x..) in BOOLEANS

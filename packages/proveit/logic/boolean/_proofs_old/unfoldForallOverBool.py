@@ -7,6 +7,6 @@ hypothesis = Forall(A, PofA, domain=BOOLEANS)
 # TRUE in BOOLEANS, FALSE in BOOLEANS
 trueInBool, falseInBool
 # P(TRUE) and P(FALSE) assuming hypothesis
-conclusion = compose(hypothesis.specialize({A:TRUE}), hypothesis.specialize({A:FALSE})).proven({hypothesis})
+conclusion = compose(hypothesis.instantiate({A:TRUE}), hypothesis.instantiate({A:FALSE})).proven({hypothesis})
 # forall_{P} [forall_{A in BOOLEANS} P(A)] => [P(TRUE) and P(FALSE)]
 Implies(hypothesis, conclusion).generalize(P).qed(__file__)

@@ -151,7 +151,7 @@ class Implies(TransitiveRelation):
         '''
         from ._theorems_ import doubleNegateConsequent
         if isinstance(self.consequent.operand, Not):
-            return doubleNegateConsequent.specialize({A: self.antecedent, B: self.consequent.operand.operand}, assumptions=assumptions)
+            return doubleNegateConsequent.instantiate({A: self.antecedent, B: self.consequent.operand.operand}, assumptions=assumptions)
         return "Not of the form 'A => B'"
 
 
@@ -175,7 +175,7 @@ class Implies(TransitiveRelation):
         implemented by JML on 6/18/19
         '''
         from ._theorems_ import notIffViaNotRightImpl
-        return notIffViaNotRightImpl.specialize({A:self.antecedent, B:self.consequent},assumptions=assumptions)
+        return notIffViaNotRightImpl.instantiate({A:self.antecedent, B:self.consequent},assumptions=assumptions)
 
     def deduceNegatedLeftImpl(self, assumptions=USE_DEFAULTS):
         r'''
@@ -183,12 +183,12 @@ class Implies(TransitiveRelation):
         implemented by JML on 6/18/19
         '''
         from ._theorems_ import notIffViaNotLeftImpl
-        return notIffViaNotLeftImpl.specialize({B: self.antecedent, A: self.consequent}, assumptions=assumptions)
+        return notIffViaNotLeftImpl.instantiate({B: self.antecedent, A: self.consequent}, assumptions=assumptions)
 
     def deduceNegatedReflex(self, assumptions=USE_DEFAULTS):
         #implemented by JML on 6/18/19
         from ._theorems_ import negatedReflex
-        return negatedReflex.specialize({A:self.antecedent, B:self.consequent},assumptions=assumptions)
+        return negatedReflex.instantiate({A:self.antecedent, B:self.consequent},assumptions=assumptions)
 
     def denyAntecedent(self, assumptions=USE_DEFAULTS):
         '''
@@ -196,9 +196,9 @@ class Implies(TransitiveRelation):
         '''
         from ._theorems_ import modusTollensAffirmation, modusTollensDenial
         if isinstance(self.antecedent,  Not):
-            return modusTollensAffirmation.specialize({A:self.antecedent.operand, B:self.consequent}, assumptions=assumptions)
+            return modusTollensAffirmation.instantiate({A:self.antecedent.operand, B:self.consequent}, assumptions=assumptions)
         else:
-            return modusTollensDenial.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
+            return modusTollensDenial.instantiate({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
 
     def applyTransitivity(self, otherImpl, assumptions=USE_DEFAULTS):
         '''
@@ -206,9 +206,9 @@ class Implies(TransitiveRelation):
         '''
         from ._theorems_ import implicationTransitivity
         if self.consequent == otherImpl.antecedent:
-            return implicationTransitivity.specialize({A:self.antecedent, B:self.consequent, C:otherImpl.consequent}, assumptions=assumptions)
+            return implicationTransitivity.instantiate({A:self.antecedent, B:self.consequent, C:otherImpl.consequent}, assumptions=assumptions)
         elif self.antecedent == otherImpl.consequent:
-            return implicationTransitivity.specialize({A:otherImpl.antecedent, B:self.antecedent, C:self.consequent}, assumptions=assumptions)
+            return implicationTransitivity.instantiate({A:otherImpl.antecedent, B:self.antecedent, C:self.consequent}, assumptions=assumptions)
 
     def deriveViaContradiction(self, assumptions=USE_DEFAULTS):
         r'''
@@ -223,18 +223,18 @@ class Implies(TransitiveRelation):
             raise ValueError('deriveViaContradiction method is only applicable if FALSE is implicated, not for ' + str(self))
         if isinstance(self.antecedent, Not):
             stmt = self.antecedent.operand
-            return affirmViaContradiction.specialize({A:stmt}, assumptions=assumptions)
+            return affirmViaContradiction.instantiate({A:stmt}, assumptions=assumptions)
         else:
             if inBool(self.antecedent).proven(assumptions):
-                return denyViaContradiction.specialize({A:self.antecedent}, assumptions=assumptions)
+                return denyViaContradiction.instantiate({A:self.antecedent}, assumptions=assumptions)
             else:
-                return notTrueViaContradiction.specialize({A:self.antecedent},assumptions=assumptions)
+                return notTrueViaContradiction.instantiate({A:self.antecedent},assumptions=assumptions)
 
     def concludeSelfImplication(self):
         from ._theorems_ import selfImplication
         if self.antecedent != self.consequent:
             raise ValueError('May only conclude a self implementation when the antecedent and consequent are the same')
-        return selfImplication.specialize({A:self.antecedent})
+        return selfImplication.instantiate({A:self.antecedent})
 
     def generalize(self, forallVars, domain=None, conditions=tuple()):
         r'''
@@ -276,13 +276,13 @@ class Implies(TransitiveRelation):
         from ._theorems_ import fromContraposition, toContraposition, contraposeNegConsequent, contraposeNegAntecedent
         from proveit.logic import Not
         if isinstance(self.antecedent, Not) and isinstance(self.consequent, Not):
-            return fromContraposition.specialize({B:self.antecedent.operand, A:self.consequent.operand}, assumptions=assumptions)
+            return fromContraposition.instantiate({B:self.antecedent.operand, A:self.consequent.operand}, assumptions=assumptions)
         elif isinstance(self.antecedent, Not):
-            return contraposeNegAntecedent.specialize({A:self.antecedent.operand, B:self.consequent}, assumptions=assumptions)
+            return contraposeNegAntecedent.instantiate({A:self.antecedent.operand, B:self.consequent}, assumptions=assumptions)
         elif isinstance(self.consequent, Not):
-            return contraposeNegConsequent.specialize({A:self.antecedent, B:self.consequent.operand}, assumptions=assumptions)
+            return contraposeNegConsequent.instantiate({A:self.antecedent, B:self.consequent.operand}, assumptions=assumptions)
         else:
-            return toContraposition.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
+            return toContraposition.instantiate({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
 
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
@@ -299,7 +299,7 @@ class Implies(TransitiveRelation):
         Attempt to deduce, then return, that this implication expression is in the set of BOOLEANS.
         '''
         from ._theorems_ import implicationClosure
-        return implicationClosure.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
+        return implicationClosure.instantiate({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
 
 def concludeViaImplication(consequent, assumptions):
     '''

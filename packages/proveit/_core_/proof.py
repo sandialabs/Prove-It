@@ -878,8 +878,8 @@ class Instantiation(Proof):
     def __init__(self, orig_judgment, num_forall_eliminations,
                  repl_map, equiv_alt_expansions, assumptions):
         '''
-        Create the specialization+instantiation proof step that eliminates
-        some number of nested Forall operations (specialization) and
+        Create the instantiation+instantiation proof step that eliminates
+        some number of nested Forall operations (instantiation) and
         simultaneously replaces Variables with Expressions (instantiation)
         according to the replacement map (repl_map). A Variable that is
         a parameter variable of an internal Lambda expression may only
@@ -1075,7 +1075,7 @@ class Instantiation(Proof):
     def _generate_step_info(self, objectRepFn):
         '''
         Generate information about this proof step, including mapping
-        information for this specialization.
+        information for this instantiation.
         '''
         mapping = self.mapping
         mapping_info = ','.join(objectRepFn(key) + ':' + objectRepFn(mapping[key])

@@ -6,9 +6,9 @@ forallPx = Forall(xEtc, PxEtc, S, etc_QxEtc)
 # forallPxEqT = [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
 forallPxEqT = Forall(xEtc, Equals(PxEtc, TRUE), S, etc_QxEtc)
 # forallPxEqT assuming forallPx
-deriveStmtEqTrue(forallPx.specialize()).generalize(xEtc, S, etc_QxEtc).proven({forallPx})
+deriveStmtEqTrue(forallPx.instantiate()).generalize(xEtc, S, etc_QxEtc).proven({forallPx})
 # forallPx assuming forallPxEqT
-forallPxEqT.specialize().deriveViaBooleanEquality().generalize(xEtc, S, etc_QxEtc).proven({forallPxEqT})
+forallPxEqT.instantiate().deriveViaBooleanEquality().generalize(xEtc, S, etc_QxEtc).proven({forallPxEqT})
 # [forall_{..x.. in S | ..Q(..x..)..} P(..x..)] <=> [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
 iffForalls = Iff(forallPx, forallPxEqT).concludeViaComposition().proven()
 # forallPx in BOOLEANS, forallPxEqT in BOOLEANS

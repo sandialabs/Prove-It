@@ -66,9 +66,9 @@ class Div(Operation):
             if self.numerator.exponent == self.denominator.exponent:
                 exponent = self.numerator.exponent
                 try:
-                    return fracNatPosExp.specialize({n:exponent}).specialize({a:self.numerator.base, b:self.denominator.base})
+                    return fracNatPosExp.instantiate({n:exponent}).instantiate({a:self.numerator.base, b:self.denominator.base})
                 except:
-                    return fracIntExp.specialize({n:exponent}).specialize({a:self.numerator.base, b:self.denominator.base})
+                    return fracIntExp.instantiate({n:exponent}).instantiate({a:self.numerator.base, b:self.denominator.base})
         raise Exception('Unable to combine exponents of this fraction')
     """
 
@@ -114,7 +114,7 @@ class Div(Operation):
         if self.numerator == self.denominator == term_to_cancel:
             # x/x = 1
             from ._theorems_ import fracCancelComplete
-            return fracCancelComplete.specialize({x:term_to_cancel}).checked(assumptions)
+            return fracCancelComplete.instantiate({x:term_to_cancel}).checked(assumptions)
         
         if term_to_cancel != self.numerator:
             if (not isinstance(self.numerator, Mult) or
@@ -200,9 +200,9 @@ class Div(Operation):
         from proveit.number import Add, subtract, Sum
         from ._theorems_ import distributefracThroughSum, distributefracThroughSubtract, distributefracThroughSummation
         if isinstance(self.numerator, Add):
-            return distributefracThroughSum.specialize({xEtc:self.numerator.operands, y:self.denominator})
+            return distributefracThroughSum.instantiate({xEtc:self.numerator.operands, y:self.denominator})
         elif isinstance(self.numerator, subtract):
-            return distributefracThroughSubtract.specialize({x:self.numerator.operands[0], y:self.numerator.operands[1], z:self.denominator})
+            return distributefracThroughSubtract.instantiate({x:self.numerator.operands[0], y:self.numerator.operands[1], z:self.denominator})
         elif isinstance(self.numerator, Sum):
             # Should deduce in Complexes, but distributeThroughSummation doesn't have a domain restriction right now
             # because this is a little tricky.   To do.
@@ -211,8 +211,8 @@ class Div(Operation):
             Pop, Pop_sub = Operation(P, self.numerator.indices), self.numerator.summand
             S_sub = self.numerator.domain
             dummyVar = safeDummyVar(self)            
-            spec1 = distributefracThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, z:dummyVar})
-            return spec1.deriveConclusion().specialize({dummyVar:self.denominator})
+            spec1 = distributefracThroughSummation.instantiate({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, z:dummyVar})
+            return spec1.deriveConclusion().instantiate({dummyVar:self.denominator})
         else:
             raise Exception("Unsupported operand type to distribute over: " + self.numerator.__class__)
     
@@ -294,15 +294,15 @@ class Div(Operation):
         from proveit.number import Reals, RealsPos, Complexes
 
         if number_set == Reals:
-            return divRealClosure.specialize(
+            return divRealClosure.instantiate(
                 {a:self.numerator, b:self.denominator},
                 assumptions=assumptions)
         elif number_set == RealsPos:
-            return divideRealPosClosure.specialize(
+            return divideRealPosClosure.instantiate(
                 {a:self.numerator, b:self.denominator},
                 assumptions=assumptions)
         elif number_set == Complexes:
-            return divideComplexClosure.specialize(
+            return divideComplexClosure.instantiate(
                 {a:self.numerator, b:self.denominator},
                 assumptions=assumptions)
 
@@ -332,7 +332,7 @@ class Div(Operation):
                 factoredNumer = numerFactorEqn.rhs
                 eqns.append(numerFactorEqn.substitution(frac(dummyVar, factoredDenom), dummyVar))
                 # factor the two fractions
-                eqns.append(prodOfFracsRev.specialize({x:factoredNumer.operands[0], y:factoredNumer.operands[1], 
+                eqns.append(prodOfFracsRev.instantiate({x:factoredNumer.operands[0], y:factoredNumer.operands[1], 
                                                     z:factoredDenom.operands[0], w:factoredDenom.operands[1]}))
             else:
                 # special case: one of the numerators is equal to one, no numerator factoring to be done
@@ -341,7 +341,7 @@ class Div(Operation):
                 else:
                     thm = prodOfFracsRightNumerOneRev
                 # factor the two fractions
-                eqns.append(thm.specialize({x:self.numerator, y:factoredDenom.operands[0], z:factoredDenom.operands[1]}))
+                eqns.append(thm.instantiate({x:self.numerator, y:factoredDenom.operands[0], z:factoredDenom.operands[1]}))
         else:
             numerFactorEqn = self.numerator.factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=assumptions)
             factoredNumer = numerFactorEqn.rhs
@@ -355,7 +355,7 @@ class Div(Operation):
                 wEtcSub = []
                 xSub = factoredNumer.operands[0]
                 zEtcSub = factoredNumer.operands[1:]
-            eqns.append(fracInProdRev.specialize({wEtc:wEtcSub, x:xSub, y:self.denominator, zEtc:zEtcSub}))
+            eqns.append(fracInProdRev.instantiate({wEtc:wEtcSub, x:xSub, y:self.denominator, zEtc:zEtcSub}))
             num = len(theFactor.operands) if isinstance(theFactor, Mult) else 1
             if groupFactor and num > 1:
                 if pull=='left':

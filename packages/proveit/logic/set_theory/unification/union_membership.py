@@ -26,7 +26,7 @@ class UnionMembership(Membership):
         from ._axioms_ import unionDef
         element = self.element
         operands = self.domain.operands
-        return unionDef.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return unionDef.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -37,7 +37,7 @@ class UnionMembership(Membership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return membershipUnfolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return membershipUnfolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -48,7 +48,7 @@ class UnionMembership(Membership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return membershipFolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return membershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
                         
 class UnionNonmembership(Nonmembership):
     '''
@@ -75,7 +75,7 @@ class UnionNonmembership(Nonmembership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipEquiv.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return nonmembershipEquiv.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -86,4 +86,4 @@ class UnionNonmembership(Nonmembership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipFolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return nonmembershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)

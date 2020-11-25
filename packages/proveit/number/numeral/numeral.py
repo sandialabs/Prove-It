@@ -26,9 +26,9 @@ class Numeral(Literal, IrreducibleValue):
         from proveit.number.ordering._theorems_ import lessIsNotEq, gtrIsNotEq
         _a, _b = Less.sorted_items([self, other], assumptions=assumptions)
         if self==_a:
-            return lessIsNotEq.specialize({a:_a, b:_b}, assumptions=assumptions)
+            return lessIsNotEq.instantiate({a:_a, b:_b}, assumptions=assumptions)
         else:
-            return gtrIsNotEq.specialize({a:_b, b:_a}, assumptions=assumptions)
+            return gtrIsNotEq.instantiate({a:_b, b:_a}, assumptions=assumptions)
 
     def remakeArguments(self):
         '''

@@ -51,7 +51,7 @@ class NotEquals(Relation):
         From x != y derive y != x.
         '''
         from ._theorems_ import notEqualsSymmetry
-        return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return notEqualsSymmetry.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
 
     def reversed(self):
         '''
@@ -68,7 +68,7 @@ class NotEquals(Relation):
         from proveit.logic import FALSE
         from proveit.logic.boolean._theorems_ import fromNotFalse
         if self.rhs == FALSE:
-            return fromNotFalse.specialize({A:self.lhs})
+            return fromNotFalse.instantiate({A:self.lhs})
         raise ValueError("deriveViaDoubleNegation does not apply to " + str(self) + " which is not of the form A != FALSE")
 
     def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
@@ -83,28 +83,28 @@ class NotEquals(Relation):
             NotEquals(self.rhs, self.lhs).prove(assumptions)
             return self.prove()
         if self.rhs == FALSE:
-            return notEqualsFalse.specialize({A:self.lhs}, assumptions=assumptions)
+            return notEqualsFalse.instantiate({A:self.lhs}, assumptions=assumptions)
 
     def definition(self):
         '''
         Return (x != y) = Not(x=y) where self represents (x != y).
         '''
         from ._axioms_ import notEqualsDef
-        return notEqualsDef.specialize({x:self.lhs, y:self.rhs})
+        return notEqualsDef.instantiate({x:self.lhs, y:self.rhs})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (x != y), derive and return Not(x=y).
         '''
         from ._theorems_ import unfoldNotEquals
-        return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return unfoldNotEquals.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
         Conclude (x != y) from Not(x = y).
         '''
         from ._theorems_ import foldNotEquals
-        return foldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return foldNotEquals.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
         
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
@@ -124,7 +124,7 @@ class NotEquals(Relation):
         From x != y, and assuming x = y, derive and return FALSE.
         '''
         from ._theorems_ import notEqualsContradiction
-        return notEqualsContradiction.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return notEqualsContradiction.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -147,4 +147,4 @@ class NotEquals(Relation):
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
         '''
         from ._theorems_ import notEqualsInBool
-        return notEqualsInBool.specialize({x:self.lhs, y:self.rhs})
+        return notEqualsInBool.instantiate({x:self.lhs, y:self.rhs})

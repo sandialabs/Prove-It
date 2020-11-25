@@ -190,8 +190,8 @@ class Add(Operation):
         _a = self.terms[:idx]
         _b = self.terms[idx]
         _c = self.terms[idx +1:]
-        # print(strictlyIncreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
-        return strictlyIncreasingAdditions.specialize(
+        # print(strictlyIncreasingAdditions.instantiate({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
+        return strictlyIncreasingAdditions.instantiate(
                 {i:_i,j:_j,a:_a,b:_b,c:_c}, assumptions=assumptions)
 
     def deduceStrictDecAdd(self, x, assumptions=USE_DEFAULTS):
@@ -211,7 +211,7 @@ class Add(Operation):
         _a = self.terms[:idx]
         _b = self.terms[idx]
         _c = self.terms[idx +1:]        # print(nVal)
-        return strictlyDecreasingAdditions.specialize(
+        return strictlyDecreasingAdditions.instantiate(
                 {i:_i,j:_j,a:_a,b:_b,c:_c}, assumptions=assumptions)
 
     def deduceNegation(self, rhs, assumptions=USE_DEFAULTS):
@@ -221,7 +221,7 @@ class Add(Operation):
         from proveit.number.addition.subtraction._theorems_ import negatedAdd
         if len(self.terms) != 2:
             raise Exception("deduceNegation implemented only when there are two and only two added terms")
-        deduction = negatedAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
+        deduction = negatedAdd.instantiate({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
         return deduction
 
     def deduceSubtraction(self, rhs, assumptions=USE_DEFAULTS):
@@ -231,7 +231,7 @@ class Add(Operation):
         from proveit.number.addition.subtraction._theorems_ import subtractFromAdd
         if len(self.terms) != 2:
             raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
-        deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
+        deduction = subtractFromAdd.instantiate({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
         return deduction
 
     def deduceReversedSubtraction(self, rhs, assumptions=USE_DEFAULTS):
@@ -241,7 +241,7 @@ class Add(Operation):
         from proveit.number.addition.subtraction._theorems_ import subtractFromAddReversed
         if len(self.terms) != 2:
             raise Exception("subtractFromAddReversed implemented only when there are two and only two added terms")
-        deduction = subtractFromAddReversed.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
+        deduction = subtractFromAddReversed.instantiate({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
         return deduction
 
     def conversionToMultiplication(self, assumptions=USE_DEFAULTS):
@@ -266,7 +266,7 @@ class Add(Operation):
         _n = self.operands.length(assumptions)
         _a = self.operands
         _x = self.operands[1]
-        return multDefRev.specialize({n:_n, a:_a, x:_x},
+        return multDefRev.instantiate({n:_n, a:_a, x:_x},
                                      assumptions=assumptions)
 
     def cancelations(self, assumptions=USE_DEFAULTS):
@@ -341,12 +341,12 @@ class Add(Operation):
                              "one is not the negation of the other.")
 
         if len(self.operands)==2:
-            return basic_thm.specialize({a:canceled_op}, assumptions=assumptions)
+            return basic_thm.instantiate({a:canceled_op}, assumptions=assumptions)
         elif len(self.operands)==3:
             # _k is the 3rd index, completing i and j in the set {0,1,2}.
             _k = {0,1,2}.difference([idx1, idx2]).pop()
             thm = triple_thms[2-_k]
-            return thm.specialize({a:canceled_op, b:self.operands[_k]},
+            return thm.instantiate({a:canceled_op, b:self.operands[_k]},
                                    assumptions=assumptions)
         else:
             _a = self.operands[:idx1]
@@ -356,7 +356,7 @@ class Add(Operation):
             _i = num(len(_a))
             _j = num(len(_c))
             _k = num(len(_d))
-            spec = general_thm.specialize(
+            spec = general_thm.instantiate(
                     {i:_i, j:_j, k:_k, a:_a, b:_b, c:_c, d:_d},
                     assumptions=assumptions)
             # set the proper subtraction styles to match the original
@@ -402,14 +402,14 @@ class Add(Operation):
 
         if len(self.operands)==2:
             if idx==0:
-                return elimZeroLeft.specialize({a:self.operands[1]}, assumptions=assumptions)
+                return elimZeroLeft.instantiate({a:self.operands[1]}, assumptions=assumptions)
             else:
-                return elimZeroRight.specialize({a:self.operands[0]}, assumptions=assumptions)
+                return elimZeroRight.instantiate({a:self.operands[0]}, assumptions=assumptions)
         _a = self.operands[:idx]
         _b = self.operands[idx+1:]
         _i = num(len(_a))
         _j = num(len(_b))
-        return elimZeroAny.specialize({i:_i, j:_j, a:_a, b:_b}, assumptions=assumptions)
+        return elimZeroAny.instantiate({i:_i, j:_j, a:_a, b:_b}, assumptions=assumptions)
 
     def deduceZeroFromNegSelf(self, assumptions=USE_DEFAULTS):
         '''
@@ -428,7 +428,7 @@ class Add(Operation):
                 raise ValueError("Expecting one value to be the negation of the other")
         else:
             raise ValueError("Expecting at least one value to be negated")
-        return addNegSelf.specialize({x:self.terms[0]}, assumptions=assumptions)
+        return addNegSelf.instantiate({x:self.terms[0]}, assumptions=assumptions)
     """
     def deriveExpandedNegSelf(self, idx=0, assumptions=USE_DEFAULTS):
         '''
@@ -462,7 +462,7 @@ class Add(Operation):
         else:
             raise ValueError("Expecting a value next to %s to be equal to %s"%(str(expr.operands[idx]), str(expr.operands[idx].operand)))
 
-        return expandedAddNegSelf.specialize({m:num(oneIdx),n:num(len(expr.operands)-1-twoIdx), AA:expr.operands[:oneIdx], y:one, x:two, BB:expr.operands[twoIdx + 1:]}, assumptions=assumptions)
+        return expandedAddNegSelf.instantiate({m:num(oneIdx),n:num(len(expr.operands)-1-twoIdx), AA:expr.operands[:oneIdx], y:one, x:two, BB:expr.operands[twoIdx + 1:]}, assumptions=assumptions)
     """
     def _createDict(self, assumptions=USE_DEFAULTS):
         '''
@@ -673,7 +673,7 @@ class Add(Operation):
                     expr = eq.update(expr.innerExpr().operands[_i].operands[0].simplification(assumptions))
                 if isinstance(expr.operands[_i].operands[0], Add) and len(expr.operands[_i].operands[0].operands) == 1:
                     from proveit.number.addition._axioms_ import singleAdd
-                    sub = singleAdd.specialize({x:expr.operands[_i].operands[0].operands[0]})
+                    sub = singleAdd.instantiate({x:expr.operands[_i].operands[0].operands[0]})
                     # print("single Add", sub)
                     expr = eq.update(sub.substitution(expr.innerExpr().operands[_i].operands[0], assumptions))
 
@@ -818,7 +818,7 @@ class Add(Operation):
         if len(expr.terms) > 2:
             # group all of the other terms
             expr = expr.group(0, -1)
-        return addNegAsSubtract.specialize({x:expr.operands[0], y:expr.operands[-1].operand})
+        return addNegAsSubtract.instantiate({x:expr.operands[0], y:expr.operands[-1].operand})
 
     """
     def deduceInNaturalsPosDirectly(self, assumptions=frozenset(), ruledOutSets=frozenset(), dontTryPos=False, dontTryNeg=False):
@@ -833,7 +833,7 @@ class Add(Operation):
             #try:
                 # found one positive term to make the sum positive
             deducePositive(term, assumptions)
-            return addNatPosClosure.specialize({i:num(_k), n:num(len(self.operands)-_k-1), a:self.operands[:_k], b:term, c:self.operands[_k+1:]}, assumptions=assumptions)
+            return addNatPosClosure.instantiate({i:num(_k), n:num(len(self.operands)-_k-1), a:self.operands[:_k], b:term, c:self.operands[_k+1:]}, assumptions=assumptions)
             #except:
                # pass
         # need to have one of the elements positive for the sum to be positive
@@ -860,8 +860,8 @@ class Add(Operation):
         from proveit.logic import InSet
         if number_set == Integers:
             if len(self.operands) == 2:
-                return addIntClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
-            return addIntClosure.specialize({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                return addIntClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addIntClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
         if number_set == Naturals:
             if len(self.operands) == 2:
                 if isinstance(self.operands[1], Neg):
@@ -903,23 +903,23 @@ class Add(Operation):
             else:
                 temp_thm = addRealPosFromNonNeg
             #print(temp_thm, {i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
-            return temp_thm.specialize({i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]}, assumptions=assumptions)
+            return temp_thm.instantiate({i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]}, assumptions=assumptions)
         if number_set == RealsPos:
             if len(self.operands) == 2:
-                return addRealPosClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
-            return addRealPosClosure.specialize({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                return addRealPosClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addRealPosClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
         if number_set == RealsNonNeg:
             if len(self.operands) == 2:
-                return addRealNonNegClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
-            return addRealNonNegClosure.specialize({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                return addRealNonNegClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addRealNonNegClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
         if number_set == Reals:
             if len(self.operands) == 2:
-                return addRealClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
-            return addRealClosure.specialize({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                return addRealClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addRealClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
         if number_set == Complexes:
             if len(self.operands) == 2:
-                return addComplexClosureBin.specialize({a:self.operands[0], b: self.operands[1]}, assumptions=assumptions)
-            return addComplexClosure.specialize({i:num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                return addComplexClosureBin.instantiate({a:self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addComplexClosure.instantiate({i:num(len(self.operands)), a: self.operands}, assumptions=assumptions)
         msg = "'deduceInNumberSet' not implemented for the %s set"%str(number_set)
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
 
@@ -933,7 +933,7 @@ class Add(Operation):
             raise ValueError("deduceDifferenceInNaturals only applicable "
                                "for a subtraction, got %s"%self)
         thm = differenceInNaturals
-        return thm.specialize({a:self.terms[0], b:self.terms[1].operand},
+        return thm.instantiate({a:self.terms[0], b:self.terms[1].operand},
                                assumptions=assumptions)
 
 
@@ -947,7 +947,7 @@ class Add(Operation):
             raise ValueError("deduceDifferenceInNaturalsPos only applicable "
                                "for a subtraction, got %s"%self)
         thm = differenceInNaturalsPos
-        return thm.specialize({a:self.terms[0], b:self.terms[1].operand},
+        return thm.instantiate({a:self.terms[0], b:self.terms[1].operand},
                                assumptions=assumptions)
     def deduceStrictIncrease(self, lowerBoundTermIndex, assumptions=frozenset()):
         '''
@@ -956,10 +956,10 @@ class Add(Operation):
         Assumptions may be needed to deduce that the terms are in RealsPos or Reals.
         '''
         from ._theorems_ import strictlyIncreasingAdditions
-        return strictlyIncreasingAdditions.specialize(
+        return strictlyIncreasingAdditions.instantiate(
                 {a:self.terms[:lowerBoundTermIndex],
                  c:self.terms[lowerBoundTermIndex+1:]},
-                 assumptions=assumptions).specialize(
+                 assumptions=assumptions).instantiate(
                          {b:self.terms[lowerBoundTermIndex]},
                          assumptions=assumptions)
 
@@ -970,9 +970,9 @@ class Add(Operation):
         Assumptions may be needed to deduce that the terms are in RealsPos or Reals.
         '''
         from ._theorems_ import strictlyDecreasingAdditions
-        return strictlyDecreasingAdditions.specialize(
+        return strictlyDecreasingAdditions.instantiate(
                 {a:self.terms[:upperBoundTermIndex],
-                 c:self.terms[upperBoundTermIndex+1:]}).specialize(
+                 c:self.terms[upperBoundTermIndex+1:]}).instantiate(
                  {b:self.terms[upperBoundTermIndex]},
                  assumptions=assumptions)
 
@@ -1024,7 +1024,7 @@ class Add(Operation):
         _i = num(len(_a))
         _j = num(len(_b))
         _k = num(len(_c))
-        eq.update(distributeThroughSum.specialize(
+        eq.update(distributeThroughSum.instantiate(
                 {i:_i,j:_j,k:_k,a:_a, b:_b, c:_c},
                 assumptions=assumptions).deriveReversed(assumptions))
         return eq.relation

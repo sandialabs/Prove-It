@@ -3,7 +3,7 @@ from proveit.basiclogic import Equals, Or
 from proveit.common import P, S, X, Qetc
 
 # exists_{..x.. in S | ..Q(..x..)..} P(..x..) = not(forall_{..x.. | ..Q(..x..)..} P(..x..) != TRUE)
-existsDefSpec = existsDef.specialize().proven()
+existsDefSpec = existsDef.instantiate().proven()
 # [not(forall_{..x.. in S | ..Q(..x..)..} P(..x..) != TRUE) = TRUE] or [not(forall_{..x.. in S| ..Q(..x..)..} P(..x..) != TRUE) = FALSE]
 rhsTrue, rhsFalse = existsDefSpec.rhs.deduceInBool().unfold().proven().operands
 # exists_{..x.. in S | ..Q(..x..)..} P(..x..) in BOOLEANS assuming [not(forall_{..x.. in S | ..Q(..x..)..} P(..x..) != TRUE) = TRUE]

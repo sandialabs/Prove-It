@@ -336,15 +336,15 @@ class Set(Operation):
         for elem in remaining_indices:
             desired_complement_list.append(self_reduced_list[elem])
 
-        # Organize info for theorem specialization
-        # then specialize.
+        # Organize info for theorem instantiation
+        # then instantiate.
         from ._theorems_ import subsetEqOfSuperset
         # from proveit._common_ import m, n, aa, bb
         from proveit.number import num
         m, n, a, b = subsetEqOfSuperset.allInstanceVars()
         a_sub, b_sub = (desired_subset_list, desired_complement_list)
         m_sub, n_sub = num(len(a_sub)), num(len(b_sub))
-        subset_of_permuted_superset = subsetEqOfSuperset.specialize(
+        subset_of_permuted_superset = subsetEqOfSuperset.instantiate(
                 {m: m_sub, n: n_sub, a: a_sub, b: b_sub},
                 assumptions=assumptions)
 
@@ -447,7 +447,7 @@ class Set(Operation):
         # finding a superset element not also in the subset) easier.
         # This seems like a lot of extra code, but should execute
         # fairly quickly because it doesn't depend on automation --
-        # just some list searches and theorem specializations.
+        # just some list searches and theorem instantiations.
         from proveit.logic import Equals, isIrreducibleValue
         from proveit import TransRelUpdater
         temp_subset = subset
@@ -612,8 +612,8 @@ class Set(Operation):
         for elem in remaining_indices:
             desired_complement_list.append(self_reduced_list[elem])
 
-        # Organize info for theorem specialization
-        # then specialize.
+        # Organize info for theorem instantiation
+        # then instantiate.
         from ._theorems_ import properSubsetOfSuperset
         from proveit.number import num
         m, n, a, b, c = properSubsetOfSuperset.allInstanceVars()
@@ -621,7 +621,7 @@ class Set(Operation):
         b_sub = desired_complement_list[0]
         c_sub = desired_complement_list[1:]
         m_sub, n_sub = num(len(a_sub)), num(len(c_sub))
-        subset_of_permuted_superset = properSubsetOfSuperset.specialize(
+        subset_of_permuted_superset = properSubsetOfSuperset.instantiate(
                 {m: m_sub, n: n_sub, a: a_sub, b: b_sub, c: c_sub},
                 assumptions=assumptions)
 
@@ -780,11 +780,11 @@ class Set(Operation):
                 list(self.operands)[idx_left + 1: idx_right],
                 list(self.operands)[idx_right + 1:])
         if idx_to_keep < idx_to_elim:
-            return reduction_right.specialize(
+            return reduction_right.instantiate(
                 {l: l_sub, m: m_sub, n: n_sub, aa: aa_sub, x: x_sub,
                  bb: bb_sub, cc: cc_sub}, assumptions=assumptions)
         else:
-            return reduction_left.specialize(
+            return reduction_left.instantiate(
                 {l: l_sub, m: m_sub, n: n_sub, aa: aa_sub, x: x_sub,
                  bb: bb_sub, cc: cc_sub}, assumptions=assumptions)
 
@@ -872,10 +872,10 @@ class Set(Operation):
         # set item to be replaced, either because it was explicitly
         # supplied or because it was derived from the elem argument
 
-        # We deduce the desired equality by specializing the
+        # We deduce the desired equality by instantiating the
         # equalElementEquality theorem from the enumeration context
         from ._theorems_ import equalElementEquality
-        # --- Organize the specialization mapping info.
+        # --- Organize the instantiation mapping info.
         from proveit.number import num
         m, n, aa, b, cc, d = equalElementEquality.allInstanceVars()
         # --- Break the set into [ ]+[idx]+[ ].
@@ -886,7 +886,7 @@ class Set(Operation):
                 list(self.operands)[idx + 1:],
                 sub_elem)
         # --- Specialize and return.
-        return equalElementEquality.specialize(
+        return equalElementEquality.instantiate(
             {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub},
             assumptions=assumptions)
 

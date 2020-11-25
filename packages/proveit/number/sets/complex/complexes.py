@@ -9,16 +9,16 @@ class ComplexSet(NumberSet):
 
     def deduceInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from .theorems import inComplexesIsBool
-        return inComplexesIsBool.specialize({a:element}, assumptions)
+        return inComplexesIsBool.instantiate({a:element}, assumptions)
     
     def deduceNotInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from .theorems import notInComplexesIsBool
-        return notInComplexesIsBool.specialize({a:element}, assumptions)
+        return notInComplexesIsBool.instantiate({a:element}, assumptions)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInComplexesInBool
         from proveit._common_ import x
-        return xInComplexesInBool.specialize({x:member}, assumptions=assumptions)
+        return xInComplexesInBool.instantiate({x:member}, assumptions=assumptions)
     
     @staticmethod
     def left_mult_both_sides_of_equals(relation, multiplier,

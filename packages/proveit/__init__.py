@@ -36,7 +36,7 @@ from .relation import (TransitiveRelation, TransitiveSequence, TransitivityExcep
 #from proveit.logic import reduceOperands, defaultEvaluate, evaluateTruth, concludeViaImplication
 # `Not` is used for the disprove convenience method (but not really a core concept)
 #from proveit.logic import Not
-# `Set` is used within the core for displaying assumptions sets and specialization mappings (but not really a core concept)
+# `Set` is used within the core for displaying assumptions sets and instantiation mappings (but not really a core concept)
 #from proveit.logic import Set
 
 # register Prove-It specific IPython magic:

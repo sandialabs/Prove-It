@@ -148,7 +148,7 @@ class SetEquiv(TransitiveRelation):
     #             return Iff(self.lhs, self.rhs).deriveEquality(assumptions)
     #         except:
     #             from proveit.logic.boolean.implication._theorems_ import eqFromMutualImpl
-    #             return eqFromMutualImpl.specialize({A:self.lhs, B:self.rhs}, assumptions=assumptions)
+    #             return eqFromMutualImpl.instantiate({A:self.lhs, B:self.rhs}, assumptions=assumptions)
     #     except ProofFailure:
     #         pass
         
@@ -191,7 +191,7 @@ class SetEquiv(TransitiveRelation):
         '''
         from ._theorems_ import setEquivReflexivity
         assert self.lhs == self.rhs
-        return setEquivReflexivity.specialize(
+        return setEquivReflexivity.instantiate(
                 {A:self.lhs}, assumptions=assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
@@ -218,7 +218,7 @@ class SetEquiv(TransitiveRelation):
         This derivation is an automatic side-effect.
         '''
         from ._theorems_ import setEquivReversal
-        return setEquivReversal.specialize(
+        return setEquivReversal.instantiate(
                 {A:self.lhs, B:self.rhs}, assumptions=assumptions)
 
     def deduceNotEquiv(self, assumptions=USE_DEFAULTS):
@@ -249,19 +249,19 @@ class SetEquiv(TransitiveRelation):
         # A set_equiv B is a Judgment because it is derived as a
         # side-effect.
         if self.rhs == otherSetEquiv.lhs:
-            return setEquivTransitivity.specialize(
+            return setEquivTransitivity.instantiate(
                     {A:self.lhs, B:self.rhs, C:otherSetEquiv.rhs},
                     assumptions=assumptions)
         elif self.rhs == otherSetEquiv.rhs:
-            return setEquivTransitivity.specialize(
+            return setEquivTransitivity.instantiate(
                 {A:self.lhs, B:self.rhs, C:otherSetEquiv.lhs},
                 assumptions=assumptions)
         elif self.lhs == otherSetEquiv.lhs:
-            return setEquivTransitivity.specialize(
+            return setEquivTransitivity.instantiate(
                 {A:self.rhs, B:self.lhs, C:otherSetEquiv.rhs},
                 assumptions=assumptions)
         elif self.lhs == otherSetEquiv.rhs:
-            return setEquivTransitivity.specialize(
+            return setEquivTransitivity.instantiate(
                 {A:self.rhs, B:self.lhs, C:otherSetEquiv.lhs},
                 assumptions=assumptions)
         else:
@@ -285,7 +285,7 @@ class SetEquiv(TransitiveRelation):
         from proveit.logic import Equals
         Plambda = Equals._lambdaExpr(lambdaMap, self.rhs)
 
-        return subLeftSideInto.specialize(
+        return subLeftSideInto.instantiate(
                 {A:self.lhs, B:self.rhs, P:Plambda}, assumptions=assumptions)
 
     def subRightSideInto(self, lambdaMap, assumptions=USE_DEFAULTS):
@@ -301,7 +301,7 @@ class SetEquiv(TransitiveRelation):
         from ._theorems_ import subRightSideInto
         from proveit.logic import Equals
         Plambda = Equals._lambdaExpr(lambdaMap, self.lhs)
-        return subRightSideInto.specialize(
+        return subRightSideInto.instantiate(
                 {A:self.lhs, B:self.rhs, P:Plambda}, assumptions=assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
@@ -310,7 +310,7 @@ class SetEquiv(TransitiveRelation):
         of Booleans.
         '''
         from ._theorems_ import setEquivInBool
-        return setEquivInBool.specialize({A:self.lhs, B:self.rhs},
+        return setEquivInBool.instantiate({A:self.lhs, B:self.rhs},
                                          assumptions=assumptions)
 
     

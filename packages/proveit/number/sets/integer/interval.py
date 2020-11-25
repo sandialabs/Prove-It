@@ -21,15 +21,15 @@ class Interval(Operation):
         
     def deduceElemInSet(self, member):
         from ._theorems_ import inInterval
-        return inInterval.specialize({a:self.lowerBound, b:self.upperBound, n:member})
+        return inInterval.instantiate({a:self.lowerBound, b:self.upperBound, n:member})
 
     def deduceMemberLowerBound(self, member, assumptions=frozenset()):
         from ._theorems_ import intervalLowerBound
-        return intervalLowerBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
+        return intervalLowerBound.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
     
     def deduceMemberUpperBound(self, member, assumptions=frozenset()):
         from ._theorems_ import intervalUpperBound
-        return intervalUpperBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
+        return intervalUpperBound.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
 
     def deduceMembership(self, element, assumptions=USE_DEFAULTS):
         from ._theorems_ import allInInterval_InInts, allInInterval_InNats, allInInterval_InNatsPos
@@ -39,20 +39,20 @@ class Interval(Operation):
         edited by JML 7/18/19
         '''
         from ._theorems_ import intervalInInts
-        return intervalInInts.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
+        return intervalInInts.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
 
     def deduceMemberInNaturals(self, member, assumptions=frozenset()):
         from ._theorems_ import allInDiscreteInterval_InNats
-        return allInDiscreteInterval_InNats.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
+        return allInDiscreteInterval_InNats.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
 
     def deduceMemberInNaturalsPos(self, member, assumptions=frozenset()):
         from ._theorems_ import allInDiscreteInterval_InNatsPos
-        return allInDiscreteInterval_InNatsPos.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
+        return allInDiscreteInterval_InNatsPos.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
 
     def deduceMemberIsPositive(self, member, assumptions=frozenset()):
         from ._theorems_ import allInPositiveIntervalArePositive
-        return allInPositiveIntervalArePositive.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})        
+        return allInPositiveIntervalArePositive.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})        
         
     def deduceMemberIsNegative(self, member, assumptions=frozenset()):
         from ._theorems_ import allInNegativeIntervalAreNegative
-        return allInNegativeIntervalAreNegative.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})        
+        return allInNegativeIntervalAreNegative.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})        

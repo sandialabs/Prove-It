@@ -19,12 +19,12 @@ class Mod(Operation):
     #         # if the operands are integers, then we can deduce that
     #         # a mod b is in 0..(b-1)
     #         deduceInIntegers(self.operands, assumptions)
-    #         return modInInterval.specialize(
+    #         return modInInterval.instantiate(
     #                 {a:self.dividend, b:self.divisor}).checked(assumptions)
     #     except:
     #         # if the operands are reals, then we can deduce that a mod b is in [0, b)
     #         deduceInReals(self.operands, assumptions)
-    #         return modInIntervalCO.specialize({a:self.dividend, b:self.divisor}).checked(assumptions)
+    #         return modInIntervalCO.instantiate({a:self.dividend, b:self.divisor}).checked(assumptions)
 
     def deduceInInterval(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import modInInterval, modInIntervalCO
@@ -32,12 +32,12 @@ class Mod(Operation):
         try:
             # if the operands are integers, then we can deduce that
             # a mod b is an integer in the set {0,1,...,(b-1)}
-            return modInInterval.specialize(
+            return modInInterval.instantiate(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
         except:
             # if the operands are reals, then we can deduce that
             # a mod b is in half-open real interval [0, b)
-            return modInIntervalCO.specialize(
+            return modInIntervalCO.instantiate(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
@@ -56,15 +56,15 @@ class Mod(Operation):
         assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Integers:
-            return modIntClosure.specialize(
+            return modIntClosure.instantiate(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
         if number_set == Naturals:
-            return modIntToNatsClosure.specialize(
+            return modIntToNatsClosure.instantiate(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
         if number_set == Reals:
-            return modRealClosure.specialize(
+            return modRealClosure.instantiate(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
         msg = ("'Mod.deduceInNumberSet()' not implemented for "

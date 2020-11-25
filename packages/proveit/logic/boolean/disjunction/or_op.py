@@ -138,20 +138,20 @@ class Or(Operation):
         elif len(self.operands)==0:
             return emptyDisjunction
         elif len(self.operands)==2:
-            return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return neitherIntro.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             from proveit.number import num
-            return notOrIfNotAny.specialize({m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
+            return notOrIfNotAny.instantiate({m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
 
     def concludeViaBoth(self, assumptions):
         from ._theorems_ import orIfBoth
         assert len(self.operands) == 2
-        return orIfBoth.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return orIfBoth.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def concludeViaOnlyLeft(self, assumptions):
         from ._theorems_ import orIfOnlyLeft
         assert len(self.operands) == 2
-        return orIfOnlyLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return orIfOnlyLeft.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def concludeViaLeft(self, assumptions):
         '''
@@ -159,12 +159,12 @@ class Or(Operation):
         '''
         from ._theorems_ import orIfLeft
         assert len(self.operands) == 2
-        return orIfLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return orIfLeft.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def concludeViaOnlyRight(self, assumptions):
         from ._theorems_ import orIfOnlyRight
         assert len(self.operands) == 2
-        return orIfOnlyRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return orIfOnlyRight.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def concludeViaDemorgans(self, assumptions=USE_DEFAULTS):
         '''
@@ -174,9 +174,9 @@ class Or(Operation):
         from ._theorems_ import demorgansLawAndToOr, demorgansLawAndToOrBin
         from proveit.number import num
         if len(self.operands) == 2:
-            return demorgansLawAndToOrBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return demorgansLawAndToOrBin.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return demorgansLawAndToOr.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
+            return demorgansLawAndToOr.instantiate({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -191,7 +191,7 @@ class Or(Operation):
         from ._theorems_ import rightIfNotLeft
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return rightIfNotLeft.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)#.deriveConclusion(assumptions)
+        return rightIfNotLeft.instantiate({A:leftOperand, B:rightOperand}, assumptions=assumptions)#.deriveConclusion(assumptions)
 
     def deriveLeftIfNotRight(self, assumptions=USE_DEFAULTS):
         '''
@@ -200,7 +200,7 @@ class Or(Operation):
         from ._theorems_ import leftIfNotRight
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return leftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)#.deriveConclusion(assumptions)
+        return leftIfNotRight.instantiate({A:leftOperand, B:rightOperand}, assumptions=assumptions)#.deriveConclusion(assumptions)
 
     def deriveViaSingularDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -209,9 +209,9 @@ class Or(Operation):
         '''
         from ._theorems_ import singularConstructiveDilemma, singularConstructiveMultiDilemma
         if len(self.operands) == 2:
-            return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
+            return singularConstructiveDilemma.instantiate({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
         from proveit.number import num
-        return singularConstructiveMultiDilemma.specialize({m: num(len(self.operands)), A: self.operands, C:conclusion}, assumptions=assumptions)
+        return singularConstructiveMultiDilemma.instantiate({m: num(len(self.operands)), A: self.operands, C:conclusion}, assumptions=assumptions)
 
     def deriveViaMultiDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -227,19 +227,19 @@ class Or(Operation):
             # destructive case.
             if len(self.operands) == 2 and destructiveDilemma.isUsable():
                 # From Not(C) or Not(D), A => C, B => D, conclude Not(A) or Not(B)
-                return destructiveDilemma.specialize({C:self.operands[0].operand, D:self.operands[1].operand, A:conclusion.operands[0].operand, B:conclusion.operands[1].operand}, assumptions=assumptions)
+                return destructiveDilemma.instantiate({C:self.operands[0].operand, D:self.operands[1].operand, A:conclusion.operands[0].operand, B:conclusion.operands[1].operand}, assumptions=assumptions)
             elif destructiveMultiDilemma.isUsable():
                 # raise NotImplementedError("Generalized destructive multi-dilemma not implemented yet.")
                 # Iterated destructive case.  From (Not(A) or Not(B) or Not(C) or Not(D)) as self
                 negatedOperandsSelf = [operand.operand for operand in self.operands]
                 negatedOperandsConc = [operand.operand for operand in conclusion.operands]
-                return destructiveMultiDilemma.specialize({m: num(len(self.operands)), A: negatedOperandsSelf, B: negatedOperandsConc}, assumptions=assumptions)
+                return destructiveMultiDilemma.instantiate({m: num(len(self.operands)), A: negatedOperandsSelf, B: negatedOperandsConc}, assumptions=assumptions)
         # constructive case.
         if len(self.operands) == 2:
             # From (A or B), A => C, B => D, conclude C or D.
-            return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion.operands[0], D:conclusion.operands[1]}, assumptions=assumptions)
+            return constructiveDilemma.instantiate({A:self.operands[0], B:self.operands[1], C:conclusion.operands[0], D:conclusion.operands[1]}, assumptions=assumptions)
         #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
-        return constructiveMultiDilemma.specialize({m: num(len(self.operands)), A: self.operands, B: conclusion.operands},assumptions=assumptions)
+        return constructiveMultiDilemma.instantiate({m: num(len(self.operands)), A: self.operands, B: conclusion.operands},assumptions=assumptions)
 
     def deriveViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -260,7 +260,7 @@ class Or(Operation):
         '''
         from ._axioms_ import leftInBool
         if len(self.operands) == 2:
-            return leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return leftInBool.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def deduceRightInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -268,7 +268,7 @@ class Or(Operation):
         '''
         from ._axioms_ import rightInBool
         if len(self.operands) == 2:
-            return rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return rightInBool.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def deducePartsInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -292,7 +292,7 @@ class Or(Operation):
             if idx==0: return self.deduceLeftInBool(assumptions)
             elif idx==1: return self.deduceRightInBool(assumptions)
         #attempt to replace with AA and CC over Amulti and Cmulti
-        return eachInBool.specialize({m:num(idx), n:num(len(self.operands)-idx-1), A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}, assumptions=assumptions)
+        return eachInBool.instantiate({m:num(idx), n:num(len(self.operands)-idx-1), A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}, assumptions=assumptions)
 
     def deduceNotLeftIfNeither(self, assumptions=USE_DEFAULTS):
         '''
@@ -301,7 +301,7 @@ class Or(Operation):
         from ._theorems_ import notLeftIfNeither
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return notLeftIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)
+        return notLeftIfNeither.instantiate({A:leftOperand, B:rightOperand}, assumptions=assumptions)
 
     def deduceNotRightIfNeither(self, assumptions=USE_DEFAULTS):
         '''
@@ -310,7 +310,7 @@ class Or(Operation):
         from ._theorems_ import notRightIfNeither
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return notRightIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)
+        return notRightIfNeither.instantiate({A:leftOperand, B:rightOperand}, assumptions=assumptions)
 
     def deriveCommonConclusion(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -325,7 +325,7 @@ class Or(Operation):
         rightImplConclusion = Implies(rightOperand, conclusion)
         # (A=>C and B=>C) assuming A=>C, B=>C
         compose([leftImplConclusion, rightImplConclusion], assumptions)
-        return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
+        return hypotheticalDisjunction.instantiate({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
 
     def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
                    minimal_automation=False, **kwargs):
@@ -390,10 +390,10 @@ class Or(Operation):
         '''
         from ._theorems_ import binaryOrContradiction, orContradiction
         if len(self.operands) == 2:
-            return binaryOrContradiction.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return binaryOrContradiction.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             from proveit.number import num
-            return orContradiction.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
+            return orContradiction.instantiate({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
         '''
@@ -406,7 +406,7 @@ class Or(Operation):
             raise IndexError ("Beginning and end value must be of the form beginning < end.")
         if end > len(self.operands) -1:
             raise IndexError("End value must be less than length of expression.")
-        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), A:self.operands[:beg], B:self.operands[beg : end], C: self.operands[end :]}, assumptions=assumptions)
+        return group.instantiate({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), A:self.operands[:beg], B:self.operands[beg : end], C: self.operands[end :]}, assumptions=assumptions)
 
     def deriveSwap(self, idx1, idx2, assumptions=USE_DEFAULTS):
         '''
@@ -417,7 +417,7 @@ class Or(Operation):
         from ._theorems_ import swap
         from proveit.number import num
         if 0 < idx1 < idx2 < len(self.operands) - 1:
-            return swap.specialize({l: num(idx1), m: num(idx2 - idx1 - 1), n: num(len(self.operands)-idx2 - 1), A: self.operands[:i], B: self.operands[i], C: self.operands[i+1:j], D: self.operands[j], E: self.operands[j + 1:]}, assumptions=assumptions)
+            return swap.instantiate({l: num(idx1), m: num(idx2 - idx1 - 1), n: num(len(self.operands)-idx2 - 1), A: self.operands[:i], B: self.operands[i], C: self.operands[i+1:j], D: self.operands[j], E: self.operands[j + 1:]}, assumptions=assumptions)
         else:
             raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
 
@@ -445,9 +445,9 @@ class Or(Operation):
         from ._theorems_ import binaryClosure, closure
         from proveit.number import num
         if len(self.operands) == 2:
-            return binaryClosure.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return binaryClosure.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return closure.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
+            return closure.instantiate({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
@@ -459,10 +459,10 @@ class Or(Operation):
         index = self.operands.index(trueOperand)
         if len(self.operands) == 2:
             if index == 0:
-                return orIfLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+                return orIfLeft.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
             elif index == 1:
-                return orIfRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-        return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), A:self.operands[:index], B:self.operands[index], C:self.operands[index+1:]}, assumptions=assumptions)
+                return orIfRight.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return orIfAny.instantiate({m:num(index), n:num(len(self.operands)-index-1), A:self.operands[:index], B:self.operands[index], C:self.operands[index+1:]}, assumptions=assumptions)
 
     def concludeViaSome(self, subset_disjunction, assumptions=USE_DEFAULTS):
         '''
@@ -573,7 +573,7 @@ class Or(Operation):
         operand = self.operands[0]
         with defaults.disabled_auto_reduction_types as disable_reduction_types:
             disable_reduction_types.add(Or)
-            return unaryOrReduction.specialize({A:operand},
+            return unaryOrReduction.instantiate({A:operand},
                                                assumptions = assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):

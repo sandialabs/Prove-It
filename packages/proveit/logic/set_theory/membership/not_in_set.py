@@ -66,7 +66,7 @@ class NotInSet(Operation):
         '''
         from ._theorems_ import notInSetInBool
         from proveit._common_ import x, S
-        return notInSetInBool.specialize({x:self.element, S:self.domain},
+        return notInSetInBool.instantiate({x:self.element, S:self.domain},
                                          assumptions=assumptions)
 
     def unfoldNotIn(self, assumptions=USE_DEFAULTS):
@@ -74,7 +74,7 @@ class NotInSet(Operation):
         From (x \notin y), derive and return Not(x \in y).
         '''
         from ._theorems_ import unfoldNotInSet
-        return unfoldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
+        return unfoldNotInSet.instantiate({x:self.element, S:self.domain}, assumptions=assumptions)
 
     def conclude(self, assumptions):
         '''
@@ -137,7 +137,7 @@ class NotInSet(Operation):
         Attempt to conclude x not in S via Not(x in S).
         '''
         from ._theorems_ import foldNotInSet
-        return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
+        return foldNotInSet.instantiate({x:self.element, S:self.domain}, assumptions=assumptions)
 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''

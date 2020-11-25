@@ -3,9 +3,9 @@ from proveit.basiclogic import Forall, Not, NotEquals, TRUE
 from proveit.common import X, P, S, xEtc, Qetc, PxEtc, etc_QxEtc
 
 # [exists_{..x.. in S | ..Q(..x..)..} P(..x..)] = not(forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE))
-existsDefSpec = existsDef.specialize().proven()
+existsDefSpec = existsDef.instantiate().proven()
 # notexists_{..x.. in S | ..Q..(..x..)} P(..x..) = not[exists_{..x.. in S | ..Q(..x..)..} P(..x..)]
-notExistsDefSpec = notExistsDef.specialize().proven()
+notExistsDefSpec = notExistsDef.instantiate().proven()
 # rhs = forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE)
 rhs = Forall(xEtc, NotEquals(PxEtc, TRUE), S, etc_QxEtc)
 # [forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE)] in BOOLEANS

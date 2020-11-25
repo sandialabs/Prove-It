@@ -22,11 +22,11 @@ class Neg(Operation):
         from ._theorems_ import intClosure, realClosure, complexClosure
         from proveit.logic import InSet
         if NumberSet == Integers:
-            return intClosure.specialize({a:self.operand})
+            return intClosure.instantiate({a:self.operand})
         elif NumberSet == Reals:
-            return realClosure.specialize({a:self.operand})
+            return realClosure.instantiate({a:self.operand})
         elif NumberSet == Complexes:
-            return complexClosure.specialize({a:self.operand})
+            return complexClosure.instantiate({a:self.operand})
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
 
@@ -64,7 +64,7 @@ class Neg(Operation):
     def doubleNegSimplification(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import doubleNegation
         assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)
-        return doubleNegation.specialize({x:self.operand.operand},
+        return doubleNegation.instantiate({x:self.operand.operand},
                                          assumptions=assumptions)
 
 
@@ -122,12 +122,12 @@ class Neg(Operation):
             if len(add_expr.operands)==2:
                 # special case of 2 operands
                 if isinstance(add_expr.operands[1], Neg):
-                    expr = eq.update(distributeNegThroughSubtract.specialize({a:add_expr.operands[0], b:add_expr.operands[1].operand}, assumptions=assumptions))
+                    expr = eq.update(distributeNegThroughSubtract.instantiate({a:add_expr.operands[0], b:add_expr.operands[1].operand}, assumptions=assumptions))
                 else:
-                    expr = eq.update(distributeNegThroughBinarySum.specialize({a:add_expr.operands[0], b:add_expr.operands[1]}, assumptions=assumptions))
+                    expr = eq.update(distributeNegThroughBinarySum.instantiate({a:add_expr.operands[0], b:add_expr.operands[1]}, assumptions=assumptions))
             else:
                 # distribute the negation over the sum
-                expr = eq.update(distributeNegThroughSum.specialize({n:num(len(add_expr.operands)), xx:add_expr.operands}), assumptions=assumptions)
+                expr = eq.update(distributeNegThroughSum.instantiate({n:num(len(add_expr.operands)), xx:add_expr.operands}), assumptions=assumptions)
             assert isinstance(expr, Add), "distributeNeg theorems are expected to yield an Add expression"
             # check for double negation
             for k, operand in enumerate(expr.operands):
@@ -164,14 +164,14 @@ class Neg(Operation):
             operandFactorEqn = self.operand.factor(theFactor, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
             eqn1 = operandFactorEqn.substitution(self.innerExpr().operand)
             new_operand = operandFactorEqn.rhs
-            eqn2 = thm.specialize({x:new_operand.operands[0], y:new_operand.operands[1]}, assumptions=assumptions).deriveReversed(assumptions)
+            eqn2 = thm.instantiate({x:new_operand.operands[0], y:new_operand.operands[1]}, assumptions=assumptions).deriveReversed(assumptions)
             return eqn1.applyTransitivity(eqn2)
         else:
             if self.operand != theFactor:
                 raise ValueError("%s is a factor in %s!"%(theFactor, self))
             if thm==negTimesPos: thm=multNegOneLeft
             if thm==posTimesNeg: thm=multNegOneRight
-            return thm.specialize({x:self.operand}, assumptions=assumptions).deriveReversed(assumptions)
+            return thm.instantiate({x:self.operand}, assumptions=assumptions).deriveReversed(assumptions)
 
     def innerNegMultSimplification(self, idx, assumptions=USE_DEFAULTS):
         '''
@@ -191,15 +191,15 @@ class Neg(Operation):
 
         if len(mult_expr.operands)==2:
             if idx==0:
-                return multNegLeftDouble.specialize({a:mult_expr.operands[1]}, assumptions=assumptions)
+                return multNegLeftDouble.instantiate({a:mult_expr.operands[1]}, assumptions=assumptions)
             else:
-                return multNegRightDouble.specialize({a:mult_expr.operands[0]}, assumptions=assumptions)
+                return multNegRightDouble.instantiate({a:mult_expr.operands[0]}, assumptions=assumptions)
         aVal = mult_expr.operands[:idx]
         bVal = mult_expr.operands[idx]
         cVal = mult_expr.operands[idx+1:]
         mVal = num(len(aVal))
         nVal = num(len(cVal))
-        return multNegAnyDouble.specialize({m:mVal, n:nVal, AA:aVal, B:bVal, CC:cVal}, assumptions=assumptions)
+        return multNegAnyDouble.instantiate({m:mVal, n:nVal, AA:aVal, B:bVal, CC:cVal}, assumptions=assumptions)
 
 # Register these expression equivalence methods:
 InnerExpr.register_equivalence_method(Neg, 'doubleNegSimplification', 'doubleNegSimplified', 'doubleNegSimplify')

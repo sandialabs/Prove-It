@@ -44,7 +44,7 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
     # number of operands or elements = 2
     if len(expr.operands)==2 and set([initIdx, finalIdx]) == {0, 1}:
         A, B = binaryThm.allInstanceVars()
-        return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
+        return binaryThm.instantiate({A:expr.operands[0], B:expr.operands[1]},
                                     assumptions=assumptions)
 
     # number of operands is ≥ 3
@@ -62,7 +62,7 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
             expr.operands[:finalIdx], expr.operands[finalIdx:initIdx],
             expr.operands[initIdx], expr.operands[initIdx+1:])
         lSub, mSub, nSub = num(len(Asub)), num(len(Bsub)), num(len(Dsub))
-    return thm.specialize(
+    return thm.instantiate(
         {l:lSub, m:mSub, n:nSub, A:Asub, B:Bsub, C:Csub, D:Dsub},
         assumptions=assumptions)
 
@@ -85,7 +85,7 @@ def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS)
     _i = _A.length(assumptions)
     _j = _B.length(assumptions)
     _k = _C.length(assumptions)
-    return thm.specialize({i:_i, j:_j, k:_k, A:_A, B:_B, C:_C},
+    return thm.instantiate({i:_i, j:_j, k:_k, A:_A, B:_B, C:_C},
                           assumptions=assumptions)
 
 def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
@@ -102,7 +102,7 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     _i = _A.length(assumptions)
     _j = _B.length(assumptions)
     _k = _C.length(assumptions)
-    return thm.specialize({i:_i, j:_j, k:_k, A:_A, B:_B, C:_C},
+    return thm.instantiate({i:_i, j:_j, k:_k, A:_A, B:_B, C:_C},
                           assumptions=assumptions)
 
 def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):

@@ -25,7 +25,7 @@ class ImplicitIdentities(Block):
     '''
     ImplicitIdentities are used in quantum circuits where they must be
     filled in with one or more identities as determined by the width of
-    the circuit (which isn't established until Blocks are specialized).
+    the circuit (which isn't established until Blocks are instantiated).
     See ForallWithImplicitIdentities.
     '''
     def __init__(self, name, formatMap = None):
@@ -375,7 +375,7 @@ class MultiQubitGate(Operation):
         operand = self.gate_set.operands[0]
         with defaults.disabled_auto_reduction_types as disable_reduction_types:
             disable_reduction_types.add(MultiQubitGate)
-            return unary_multiQubitGate_reduction.specialize({U: self.gate, A: operand}, assumptions=assumptions)
+            return unary_multiQubitGate_reduction.instantiate({U: self.gate, A: operand}, assumptions=assumptions)
 
     def emptySetReduction(self, assumptions=USE_DEFAULTS):
         from proveit.physics.quantum._theorems_ import empty_multiQubitGate_reduction
@@ -385,7 +385,7 @@ class MultiQubitGate(Operation):
         #operand = self.gate_set
         with defaults.disabled_auto_reduction_types as disable_reduction_types:
             disable_reduction_types.add(MultiQubitGate)
-            return empty_multiQubitGate_reduction.specialize({U: self.gate}, assumptions=assumptions)
+            return empty_multiQubitGate_reduction.instantiate({U: self.gate}, assumptions=assumptions)
 
     def formatted(self, formatType, representation=None, **kwargs):
         if representation is None:
@@ -599,24 +599,24 @@ class CircuitEquiv(TransitiveRelation):
             # are usable
             if self.rhs == TRUE:
                 # substituteTruth may provide a shorter proof option
-                substituteTruth.specialize({x: self.lhs, P: lambda_map},
+                substituteTruth.instantiate({x: self.lhs, P: lambda_map},
                                            assumptions=assumptions)
             elif self.lhs == TRUE:
                 # substituteInTrue may provide a shorter proof option
-                substituteInTrue.specialize({x: self.rhs, P: lambda_map},
+                substituteInTrue.instantiate({x: self.rhs, P: lambda_map},
                                             assumptions=assumptions)
             elif self.rhs == FALSE:
                 # substituteFalsehood may provide a shorter proof option
-                substituteFalsehood.specialize({x: self.lhs, P: lambda_map},
+                substituteFalsehood.instantiate({x: self.lhs, P: lambda_map},
                                                assumptions=assumptions)
             elif self.lhs == FALSE:
                 # substituteInFalse may provide a shorter proof option
-                substituteInFalse.specialize({x: self.rhs, P: lambda_map},
+                substituteInFalse.instantiate({x: self.rhs, P: lambda_map},
                                              assumptions=assumptions)
         except:
             pass
         '''
-        return subLeftSideInto.specialize(
+        return subLeftSideInto.instantiate(
             {x: self.lhs, y: self.rhs, P: lambda_map},
             assumptions=assumptions)
 
@@ -653,24 +653,24 @@ class CircuitEquiv(TransitiveRelation):
             # try some alternative proofs that may be shorter, if they are usable
             if self.lhs == TRUE:
                 # substituteTruth may provide a shorter proof options
-                substituteTruth.specialize({x: self.rhs, P: lambda_map},
+                substituteTruth.instantiate({x: self.rhs, P: lambda_map},
                                            assumptions=assumptions)
             elif self.rhs == TRUE:
                 # substituteInTrue may provide a shorter proof options
-                substituteInTrue.specialize({x: self.lhs, P: lambda_map},
+                substituteInTrue.instantiate({x: self.lhs, P: lambda_map},
                                             assumptions=assumptions)
             elif self.lhs == FALSE:
                 # substituteFalsehood may provide a shorter proof options
-                substituteFalsehood.specialize({x: self.rhs, P: lambda_map},
+                substituteFalsehood.instantiate({x: self.rhs, P: lambda_map},
                                                assumptions=assumptions)
             elif self.rhs == FALSE:
                 # substituteInFalse may provide a shorter proof options
-                substituteInFalse.specialize({x: self.lhs, P: lambda_map},
+                substituteInFalse.instantiate({x: self.lhs, P: lambda_map},
                                              assumptions=assumptions)
         except:
             pass
         '''
-        return subRightSideInto.specialize(
+        return subRightSideInto.instantiate(
             {x: self.lhs, y: self.rhs, P: lambda_map},
             assumptions=assumptions)
 
@@ -782,7 +782,7 @@ class Circuit(Operation):
         if current.getColHeight() != new.getColHeight() or current.getRowLength() != new.getRowLength():
             raise ValueError('The current circuit element and the replacement circuit element must be the same size.')
         if current.getRowLength() == 1 and current.getColHeight() == self.getColHeight():
-            #return sing_time_equiv.specialize({h:l, k:l, m: self.getColHeight, n:l, A:l, B: current, C:l, D: new, R:l, S: , Q:l},
+            #return sing_time_equiv.instantiate({h:l, k:l, m: self.getColHeight, n:l, A:l, B: current, C:l, D: new, R:l, S: , Q:l},
              #           assumptions=assumptions)
             pass
 
@@ -1849,7 +1849,7 @@ class ForallWithImplicitIdentities(Forall):
     By using this special kind of Forall, such MultiVariables are not
     explicitly shown as an instance variable when formatted in LATEX
     (and are not shown in the circuit).  Furthermore, they are
-    specialized automatically via an overridden "specialize"
+    instantiated automatically via an overridden "instantiate"
     method.
     '''
     
@@ -1857,7 +1857,7 @@ class ForallWithImplicitIdentities(Forall):
         '''
         Create a special Forall expression with ImplicitIdentities as one or
         more of the instanceVars.  Adds appropriate conditions that restrict
-        these to be specialized as one or more identities.
+        these to be instantiated as one or more identities.
         '''
         Forall.__init__(self, instanceVars, instanceExpr, conditions=ForallWithImplicitIdentities._with_implicit_conditions(instanceVars, conditions))
         # Extract the ImplicitIdentities
@@ -1887,9 +1887,9 @@ class ForallWithImplicitIdentities(Forall):
         if formatType == LATEX: return self.implicit_conditions
         else: return Forall.implicitConditions(self, formatType)
     
-    def specialize(self, subMap=None, conditionAsHypothesis=False):
+    def instantiate(self, subMap=None, conditionAsHypothesis=False):
         '''
-        Automatically sets the ImplicitIdentities if the other specializations
+        Automatically sets the ImplicitIdentities if the other instantiations
         cause the width of the quantum circuit to be determined.
         '''
         subbed_expr = self.instanceExpr.substituted(subMap)
@@ -1914,7 +1914,7 @@ class ForallWithImplicitIdentities(Forall):
                             if isinstance(gate, ImplicitIdentities):
                                 subMap[gate] = [I]*(width-column.min_nrows+1)
         fixImplicitIdentityWidths(subbed_expr)
-        return Forall.specialize(self, subMap)
+        return Forall.instantiate(self, subMap)
 """
 
 # class QuantumCircuitException():
@@ -2087,13 +2087,13 @@ class Circuit(Operation):
         multiD_val = column.gates[max(row, target_row):]
         target = column.gates[target_row]
         if target == Z and control_type == CTRL_DN:
-            return circuit.reverseCzDn.specialize({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
+            return circuit.reverseCzDn.instantiate({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
         elif target == Z and control_type == CTRL_UP:
-            return circuit.reverseCzUp.specialize({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
+            return circuit.reverseCzUp.instantiate({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
         elif target == X and control_type == CTRL_DN:
-            return circuit.reverseCnotDnToUp.specialize({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
+            return circuit.reverseCnotDnToUp.instantiate({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
         elif target == X and control_type == CTRL_UP:
-            return circuit.reverseCnotUpToDn.specialize({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
+            return circuit.reverseCnotUpToDn.instantiate({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
         
 
 Operation.registerOperation(CIRCUIT, lambda operands : Circuit(*operands))
@@ -2107,7 +2107,7 @@ class ForallWithImplicitIdentities(Forall):
     By using this special kind of Forall, such MultiVariables are not
     explicitly shown as an instance variable when formatted in LATEX
     (and are not shown in the circuit).  Furthermore, they are
-    specialized automatically via an overridden "specialize"
+    instantiated automatically via an overridden "instantiate"
     method.
     '''
     
@@ -2115,7 +2115,7 @@ class ForallWithImplicitIdentities(Forall):
         '''
         Create a special Forall expression with ImplicitIdentities as one or
         more of the instanceVars.  Adds appropriate conditions that restrict
-        these to be specialized as one or more identities.
+        these to be instantiated as one or more identities.
         '''
         Forall.__init__(self, instanceVars, instanceExpr, conditions=ForallWithImplicitIdentities._with_implicit_conditions(instanceVars, conditions))
         # Extract the ImplicitIdentities
@@ -2145,9 +2145,9 @@ class ForallWithImplicitIdentities(Forall):
         if formatType == LATEX: return self.implicit_conditions
         else: return Forall.implicitConditions(self, formatType)
     
-    def specialize(self, subMap=None, conditionAsHypothesis=False):
+    def instantiate(self, subMap=None, conditionAsHypothesis=False):
         '''
-        Automatically sets the ImplicitIdentities if the other specializations
+        Automatically sets the ImplicitIdentities if the other instantiations
         cause the width of the quantum circuit to be determined.
         '''
         subbed_expr = self.instanceExpr.substituted(subMap)
@@ -2172,6 +2172,6 @@ class ForallWithImplicitIdentities(Forall):
                             if isinstance(gate, ImplicitIdentities):
                                 subMap[gate] = [I]*(width-column.min_nrows+1)
         fixImplicitIdentityWidths(subbed_expr)
-        return Forall.specialize(self, subMap)
+        return Forall.instantiate(self, subMap)
             
 """            

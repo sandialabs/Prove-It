@@ -80,35 +80,35 @@ class Iff(TransitiveRelation):
         From (A<=>B) derive and return B=>A.
         '''
         from ._theorems_ import iffImpliesLeft
-        return iffImpliesLeft.specialize({A: self.A, B: self.B}, assumptions=assumptions)
+        return iffImpliesLeft.instantiate({A: self.A, B: self.B}, assumptions=assumptions)
         
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return A assuming B.
         '''
         from ._theorems_ import leftFromIff
-        return leftFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        return leftFromIff.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
 
     def deriveRightImplication(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return A=>B.
         '''
         from ._theorems_ import iffImpliesRight
-        return iffImpliesRight.specialize({A: self.A, B: self.B}, assumptions=assumptions)
+        return iffImpliesRight.instantiate({A: self.A, B: self.B}, assumptions=assumptions)
 
     def deriveRight(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return B assuming A.
         '''
         from ._theorems_ import rightFromIff
-        return rightFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        return rightFromIff.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return (B<=>A).
         '''
         from ._theorems_ import iffSymmetry
-        return iffSymmetry.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        return iffSymmetry.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
     
     def applyTransitivity(self, otherIff, assumptions=USE_DEFAULTS):
         '''
@@ -120,7 +120,7 @@ class Iff(TransitiveRelation):
         assert isinstance(otherIff, Iff)
         if self.B == otherIff.A:
             # from A <=> B, B <=> C, derive A <=> C
-            return iffTransitivity.specialize({A:self.A, B:self.B, C:otherIff.B}, assumptions=assumptions)
+            return iffTransitivity.instantiate({A:self.A, B:self.B, C:otherIff.B}, assumptions=assumptions)
         elif self.A == otherIff.A:
             # from y = x and y = z, derive x = z
             return self.deriveReversed(assumptions).applyTransitivity(otherIff, assumptions)
@@ -138,14 +138,14 @@ class Iff(TransitiveRelation):
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
         '''
         from ._axioms_ import iffDef
-        return iffDef.specialize({A:self.A, B:self.B})
+        return iffDef.instantiate({A:self.A, B:self.B})
     
     def concludeByDefinition(self, assumptions=USE_DEFAULTS):
         '''
         Conclude (A <=> B) assuming both (A => B), (B => A).
         '''
         from ._theorems_ import iffIntro
-        return iffIntro.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        return iffIntro.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
     
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
@@ -160,7 +160,7 @@ class Iff(TransitiveRelation):
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.
         '''
         from ._theorems_ import iffClosure
-        return iffClosure.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        return iffClosure.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
     
     def deriveEquality(self, assumptions=USE_DEFAULTS):
         '''
@@ -172,6 +172,6 @@ class Iff(TransitiveRelation):
         self.prove(assumptions=assumptions) 
         # eqFromMutualImpl may make for a shorter proof; do it both ways (if both are usable)
         if not eqFromIff.isUsable():
-            return eqFromMutualImpl.specialize({A:self.A, B:self.B}, assumptions=assumptions)
-        eqFromMutualImpl.specialize({A:self.A, B:self.B}, assumptions=assumptions)
-        return eqFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+            return eqFromMutualImpl.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
+        eqFromMutualImpl.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
+        return eqFromIff.instantiate({A:self.A, B:self.B}, assumptions=assumptions)

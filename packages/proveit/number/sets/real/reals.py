@@ -18,7 +18,7 @@ class RealSet(NumberSet):
     
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsInBool
-        return xInRealsInBool.specialize({x:member}, assumptions=assumptions)
+        return xInRealsInBool.instantiate({x:member}, assumptions=assumptions)
 
     def deduceMemberInComplexes(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.complex._theorems_ import realsInComplexes
@@ -37,7 +37,7 @@ class RealPosSet(NumberSet):
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import inRealsPos_iff_positive
-        return inRealsPos_iff_positive.specialize(
+        return inRealsPos_iff_positive.instantiate(
                 {a:member},assumptions=assumptions).deriveRightImplication(
                         assumptions)
 
@@ -60,7 +60,7 @@ class RealPosSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsPosInBool
         from proveit._common_ import x
-        return xInRealsPosInBool.specialize({x:member}, assumptions=assumptions)
+        return xInRealsPosInBool.instantiate({x:member}, assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import realsPosInReals
@@ -79,7 +79,7 @@ class RealNegSet(NumberSet):
 
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import inRealsNeg_iff_negative
-        return inRealsNeg_iff_negative.specialize(
+        return inRealsNeg_iff_negative.instantiate(
                 {a:member},assumptions=assumptions).deriveRightImplication(
                         assumptions)
 
@@ -102,7 +102,7 @@ class RealNegSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsNegInBool
         from proveit._common_ import x
-        return xInRealsNegInBool.specialize({x:member}, assumptions=assumptions)
+        return xInRealsNegInBool.instantiate({x:member}, assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import realsNegInReals
@@ -122,7 +122,7 @@ class RealNonNegSet(NumberSet):
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import inRealsNonNeg_iff_non_negative
-        return inRealsNonNeg_iff_non_negative.specialize(
+        return inRealsNonNeg_iff_non_negative.instantiate(
                 {a:member},assumptions=assumptions).deriveRightImplication(
                         assumptions)
 
@@ -145,7 +145,7 @@ class RealNonNegSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsNonNegInBool
         from proveit._common_ import x
-        return xInRealsNonNegInBool.specialize({x:member},
+        return xInRealsNonNegInBool.instantiate({x:member},
                                                assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):

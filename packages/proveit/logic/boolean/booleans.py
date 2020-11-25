@@ -36,7 +36,7 @@ class BooleanSet(Literal):
             # special case of Forall_{A in BOOLEANS} A
             falseEqFalse # FALSE = FALSE
             trueEqTrue # TRUE = TRUE
-            return forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr}).deriveConclusion()
+            return forallBoolEvalFalseViaTF.instantiate({P_op:instanceExpr}).deriveConclusion()
         else:
             # must evaluate for the TRUE and FALSE case separately
             evalTrueInstance = trueInstance.evaluation(assumptions)
@@ -49,17 +49,17 @@ class BooleanSet(Literal):
             if trueCaseVal == TRUE and falseCaseVal == TRUE:
                 # both cases are TRUE, so the forall over booleans is TRUE
                 compose([evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality()], assumptions)
-                forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar})
-                return forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+                forallBoolEvalTrue.instantiate({P_op:instanceExpr, A:instanceVar})
+                return forallBoolEvalTrue.instantiate({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
             else:
                 # one case is FALSE, so the forall over booleans is FALSE
                 compose([evalTrueInstance, evalFalseInstance], assumptions)
                 if trueCaseVal == FALSE and falseCaseVal == FALSE:
-                    return forallBoolEvalFalseViaFF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+                    return forallBoolEvalFalseViaFF.instantiate({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
                 elif trueCaseVal == FALSE and falseCaseVal == TRUE:
-                    return forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+                    return forallBoolEvalFalseViaFT.instantiate({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
                 elif trueCaseVal == TRUE and falseCaseVal == FALSE:
-                    return forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+                    return forallBoolEvalFalseViaTF.instantiate({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
                 else:
                     raise SimplificationError('Quantified instance evaluations must be TRUE or FALSE')         
     
@@ -75,7 +75,7 @@ class BooleanSet(Literal):
         Px = Operation(P, forallStmt.instanceVar)
         _Px = forallStmt.instanceExpr
         _A = forallStmt.instanceVar
-        return unfoldForallOverBool.specialize(
+        return unfoldForallOverBool.instantiate(
                 {Px:_Px, A:_A}, assumptions=assumptions)
 
     def foldAsForall(self, forallStmt, assumptions=USE_DEFAULTS):
@@ -143,12 +143,12 @@ class BooleanMembership(Membership):
         # if the element is already proven or disproven, use inBoolIfTrue or inBoolIfFalse
         try:
             element.prove(assumptions=assumptions, automation=False)
-            return inBoolIfTrue.specialize({A:element}, assumptions=assumptions)
+            return inBoolIfTrue.instantiate({A:element}, assumptions=assumptions)
         except ProofFailure:
             pass
         try:
             element.disprove(assumptions=assumptions, automation=False)
-            return inBoolIfFalse.specialize({A:element}, assumptions=assumptions)
+            return inBoolIfFalse.instantiate({A:element}, assumptions=assumptions)
         except ProofFailure:
             pass
         # Use 'deduceInBool' if the element has that method.
@@ -161,7 +161,7 @@ class BooleanMembership(Membership):
         Deduce [(element in Booleans) = [(element = TRUE) or (element = FALSE)].
         '''
         from ._theorems_ import inBoolDef
-        return inBoolDef.specialize({A:self.element})
+        return inBoolDef.instantiate({A:self.element})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -172,10 +172,10 @@ class BooleanMembership(Membership):
         from ._theorems_ import unfoldInBool, unfoldInBoolExplicit
         if unfoldInBool.isUsable():
             #  [element or not(element)] assuming inBool(element)
-            return unfoldInBool.specialize({A:self.element}, assumptions=assumptions)
+            return unfoldInBool.instantiate({A:self.element}, assumptions=assumptions)
         else:
             #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
-            return unfoldInBoolExplicit.specialize({A:self.element}, assumptions=assumptions)
+            return unfoldInBoolExplicit.instantiate({A:self.element}, assumptions=assumptions)
 
     def fold(self, assumptions=USE_DEFAULTS):
         '''
@@ -184,7 +184,7 @@ class BooleanMembership(Membership):
         '''
         from ._theorems_ import foldInBool
         if foldInBool.isUsable():
-            return foldInBool.specialize({A:self.element}, assumptions=assumptions)
+            return foldInBool.instantiate({A:self.element}, assumptions=assumptions)
 
     def deriveViaExcludedMiddle(self, consequent, assumptions=USE_DEFAULTS):
         '''
@@ -192,7 +192,7 @@ class BooleanMembership(Membership):
         given element => consequent and Not(element) => consequent.
         '''
         from ._theorems_ import fromExcludedMiddle
-        return fromExcludedMiddle.specialize({A:self.element, C:consequent}, assumptions=assumptions)
+        return fromExcludedMiddle.instantiate({A:self.element, C:consequent}, assumptions=assumptions)
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import inBoolInBool
@@ -209,7 +209,7 @@ class BooleanNonmembership(Nonmembership):
         Derive [(element not in Booleans) = [(element != TRUE) and (element != FALSE)].
         '''
         from ._theorems_ import notInBoolEquiv
-        return notInBoolEquiv.specialize({A:element})
+        return notInBoolEquiv.instantiate({A:element})
 
 
 class TrueLiteral(Literal, IrreducibleValue):

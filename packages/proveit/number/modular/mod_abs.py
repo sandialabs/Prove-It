@@ -36,11 +36,11 @@ class ModAbs(Operation):
         assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Integers:
-            return modAbsIntClosure.specialize(
+            return modAbsIntClosure.instantiate(
                     {a:self.value, b:self.divisor}, assumptions=assumptions)
 
         if number_set == Reals:
-            return modAbsRealClosure.specialize(
+            return modAbsRealClosure.instantiate(
                     {a:self.value, b:self.divisor}, assumptions=assumptions)
 
         msg = ("'ModAbs.deduceInNumberSet()' not implemented for "

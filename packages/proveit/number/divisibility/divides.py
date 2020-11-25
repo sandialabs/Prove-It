@@ -424,7 +424,7 @@ class Divides(DividesRelation):
         '''
         from ._theorems_ import dividesInBool
         _x, _y = dividesInBool.instanceParams
-        return dividesInBool.specialize(
+        return dividesInBool.instantiate(
         	  {_x:self.operands[0], _y:self.operands[1]},
               assumptions=assumptions)
 

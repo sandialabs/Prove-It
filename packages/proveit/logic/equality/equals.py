@@ -230,14 +230,14 @@ class Equals(TransitiveRelation):
         '''
         from ._axioms_ import equalsReflexivity
         assert self.lhs == self.rhs
-        return equalsReflexivity.specialize({x:self.lhs})
+        return equalsReflexivity.instantiate({x:self.lhs})
                 
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From x = y derive y = x.  This derivation is an automatic side-effect.
         '''
         from ._theorems_ import equalsReversal
-        return equalsReversal.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return equalsReversal.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     def reversed(self):
         '''
@@ -257,11 +257,11 @@ class Equals(TransitiveRelation):
         from proveit.logic.boolean.conjunction._theorems_ import falsifiedAndIfNotRight, falsifiedAndIfNotLeft, falsifiedAndIfNeither
         if i == 0:
             # Deduce Not(A and B) from Not(A).
-            return falsifiedAndIfNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+            return falsifiedAndIfNotRight.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         if i == 1:
-            return falsifiedAndIfNotLeft.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+            return falsifiedAndIfNotLeft.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         else:
-            return falsifiedAndIfNeither.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+            return falsifiedAndIfNeither.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -278,13 +278,13 @@ class Equals(TransitiveRelation):
         otherEquality = other
         # We can assume that y=x will be a Judgment if x=y is a Judgment because it is derived as a side-effect.
         if self.rhs == otherEquality.lhs:
-            return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions=assumptions)
+            return equalsTransitivity.instantiate({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions=assumptions)
         elif self.rhs == otherEquality.rhs:
-            return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.lhs}, assumptions=assumptions)
+            return equalsTransitivity.instantiate({x:self.lhs, y:self.rhs, z:otherEquality.lhs}, assumptions=assumptions)
         elif self.lhs == otherEquality.lhs:
-            return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.rhs}, assumptions=assumptions)
+            return equalsTransitivity.instantiate({x:self.rhs, y:self.lhs, z:otherEquality.rhs}, assumptions=assumptions)
         elif self.lhs == otherEquality.rhs:
-            return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.lhs}, assumptions=assumptions)
+            return equalsTransitivity.instantiate({x:self.rhs, y:self.lhs, z:otherEquality.lhs}, assumptions=assumptions)
         else:
             raise TransitivityException(self, assumptions, 'Transitivity cannot be applied unless there is something in common in the equalities: %s vs %s'%(str(self), str(other)))
         
@@ -298,7 +298,7 @@ class Equals(TransitiveRelation):
         from proveit.logic.boolean._axioms_ import eqTrueElim
         from proveit.logic import Not
         if self.rhs == TRUE:
-            return eqTrueElim.specialize({A:self.lhs}, assumptions=assumptions) # A
+            return eqTrueElim.instantiate({A:self.lhs}, assumptions=assumptions) # A
         elif self.rhs == FALSE:
             return Not(self.lhs).concludeViaFalsifiedNegation(assumptions=assumptions) # Not(A)
         
@@ -309,7 +309,7 @@ class Equals(TransitiveRelation):
         from proveit.logic import FALSE        
         from ._theorems_ import contradictionViaFalsification
         if self.rhs == FALSE:
-            return contradictionViaFalsification.specialize({A:self.lhs}, assumptions=assumptions)
+            return contradictionViaFalsification.instantiate({A:self.lhs}, assumptions=assumptions)
         raise ValueError('Equals.deriveContradiction is only applicable if the right-hand-side is FALSE')
     
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
@@ -335,7 +335,7 @@ class Equals(TransitiveRelation):
         from proveit.logic import TRUE, FALSE, Not        
         from proveit.logic.boolean._axioms_ import eqTrueIntro
         if self.rhs == TRUE:
-            return eqTrueIntro.specialize({A:self.lhs}, assumptions=assumptions)
+            return eqTrueIntro.instantiate({A:self.lhs}, assumptions=assumptions)
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
                 evaluation = self.lhs.evaluation(assumptions=assumptions)
@@ -352,7 +352,7 @@ class Equals(TransitiveRelation):
         From (x = y), derive (x in {y}).
         '''
         from proveit.logic.set_theory.enumeration._theorems_ import foldSingleton
-        return foldSingleton.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        return foldSingleton.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     @staticmethod
     def _lambdaExpr(lambda_map, expr_being_replaced, assumptions=USE_DEFAULTS):
@@ -437,23 +437,23 @@ class Equals(TransitiveRelation):
             # are usable
             if self.rhs == TRUE: 
                 # substituteTruth may provide a shorter proof option
-                substituteTruth.specialize({x:self.lhs, P:lambda_map}, 
+                substituteTruth.instantiate({x:self.lhs, P:lambda_map}, 
                                            assumptions=assumptions)
             elif self.lhs == TRUE: 
                 # substituteInTrue may provide a shorter proof option
-                substituteInTrue.specialize({x:self.rhs, P:lambda_map}, 
+                substituteInTrue.instantiate({x:self.rhs, P:lambda_map}, 
                                             assumptions=assumptions)            
             elif self.rhs == FALSE: 
                 # substituteFalsehood may provide a shorter proof option
-                substituteFalsehood.specialize({x:self.lhs, P:lambda_map}, 
+                substituteFalsehood.instantiate({x:self.lhs, P:lambda_map}, 
                                                assumptions=assumptions)            
             elif self.lhs == FALSE: 
                 # substituteInFalse may provide a shorter proof option
-                substituteInFalse.specialize({x:self.rhs, P:lambda_map}, 
+                substituteInFalse.instantiate({x:self.rhs, P:lambda_map}, 
                                              assumptions=assumptions)           
         except:
             pass 
-        return subLeftSideInto.specialize(
+        return subLeftSideInto.instantiate(
                 {x:self.lhs, y:self.rhs, P:lambda_map}, 
                 assumptions=assumptions)
         
@@ -488,23 +488,23 @@ class Equals(TransitiveRelation):
             # try some alternative proofs that may be shorter, if they are usable
             if self.lhs == TRUE: 
                 # substituteTruth may provide a shorter proof options
-                substituteTruth.specialize({x:self.rhs, P:lambda_map}, 
+                substituteTruth.instantiate({x:self.rhs, P:lambda_map}, 
                                            assumptions=assumptions)
             elif self.rhs == TRUE: 
                 # substituteInTrue may provide a shorter proof options
-                substituteInTrue.specialize({x:self.lhs, P:lambda_map}, 
+                substituteInTrue.instantiate({x:self.lhs, P:lambda_map}, 
                                             assumptions=assumptions)            
             elif self.lhs == FALSE: 
                 # substituteFalsehood may provide a shorter proof options
-                substituteFalsehood.specialize({x:self.rhs, P:lambda_map}, 
+                substituteFalsehood.instantiate({x:self.rhs, P:lambda_map}, 
                                                assumptions=assumptions)            
             elif self.rhs == FALSE: 
                 # substituteInFalse may provide a shorter proof options
-                substituteInFalse.specialize({x:self.lhs, P:lambda_map}, 
+                substituteInFalse.instantiate({x:self.lhs, P:lambda_map}, 
                                              assumptions=assumptions)            
         except:
             pass
-        return subRightSideInto.specialize(
+        return subRightSideInto.instantiate(
                 {x:self.lhs, y:self.rhs, P:lambda_map}, 
                 assumptions=assumptions)
         
@@ -513,14 +513,14 @@ class Equals(TransitiveRelation):
         From A = B, derive B (the Right-Hand-Side) assuming A.
         '''
         from ._theorems_ import rhsViaEquivalence
-        return rhsViaEquivalence.specialize({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
+        return rhsViaEquivalence.instantiate({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
 
     def deriveLeftViaEquivalence(self, assumptions=USE_DEFAULTS):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.
         '''
         from ._theorems_ import lhsViaEquivalence
-        return lhsViaEquivalence.specialize({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
+        return lhsViaEquivalence.instantiate({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
     
     def otherSide(self, expr):
         '''
@@ -537,7 +537,7 @@ class Equals(TransitiveRelation):
         Deduce and return that this equality statement is in the set of Booleans.
         '''
         from ._axioms_ import equalityInBool
-        return equalityInBool.specialize({x:self.lhs, y:self.rhs})
+        return equalityInBool.instantiate({x:self.lhs, y:self.rhs})
         
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''

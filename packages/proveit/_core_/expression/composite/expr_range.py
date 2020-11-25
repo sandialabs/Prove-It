@@ -1157,22 +1157,22 @@ class ExprRange(Expression):
         start_index, end_index = self.start_index, self.end_index
         if end_index == Add(before_split_idx, one):
             # special case which uses the axiom:
-            return range_extension_def.specialize(
+            return range_extension_def.instantiate(
                     {f:lambda_map, i:start_index, j:before_split_idx},
                     assumptions=assumptions)
         elif before_split_idx == self.start_index:
             # special case when peeling off the front
-            return partition_front.specialize(
+            return partition_front.instantiate(
                     {f:lambda_map, i:self.start_index, j:self.end_index},
                      assumptions=assumptions)
         elif (before_split_idx == subtract(end_index, one) or
               Equals(before_split_idx, subtract(end_index, one)).proven(assumptions)):
             # special case when peeling off the back
-            return partition_back.specialize(
+            return partition_back.instantiate(
                     {f:lambda_map, i:start_index, j:end_index},
                      assumptions=assumptions)
         else:
-            return partition.specialize(
+            return partition.instantiate(
                     {f:lambda_map, i:start_index, j:before_split_idx,
                      k:end_index}, assumptions=assumptions)
     

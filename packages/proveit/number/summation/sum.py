@@ -61,7 +61,7 @@ class Sum(OperationOverInstances):
             thm = summationComplexesClosure
         else:
             raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
-        return thm.specialize({P_op:P_op_sub, S:self.domain, Q_op:Q_op_sub}, relabelMap={xMulti:self.instanceVars}, 
+        return thm.instantiate({P_op:P_op_sub, S:self.domain, Q_op:Q_op_sub}, relabelMap={xMulti:self.instanceVars}, 
                                 assumptions=assumptions).deriveConsequent(assumptions=assumptions)    
     
     def _formatted(self, formatType, **kwargs):
@@ -96,7 +96,7 @@ class Sum(OperationOverInstances):
         from axioms import sumSingle
         if isinstance(self.domain, Interval) and self.domain.lowerBound == self.domain.upperBound:
             if len(self.instanceVars) == 1:
-                return sumSingle.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound})
+                return sumSingle.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:self.domain.lowerBound})
         raise SimplificationError("Sum simplification only implemented for a summation over a Interval of one instance variable where the upper and lower bound is the same")
 
     def simplified(self, assumptions=frozenset()):
@@ -128,7 +128,7 @@ class Sum(OperationOverInstances):
             if self.domain.lowerBound == zero and self.domain.upperBound == infinity:
                 #We're in the infinite geom sum domain!
                 deduceInComplexes(xVal, assumptions)
-                return infGeomSum.specialize({x:xVal, m:mVal})
+                return infGeomSum.instantiate({x:xVal, m:mVal})
             else:
                 #We're in the finite geom sum domain!
                 kVal = self.domain.lowerBound
@@ -136,7 +136,7 @@ class Sum(OperationOverInstances):
                 deduceInIntegers(kVal, assumptions)
                 deduceInIntegers(lVal, assumptions)
                 deduceInComplexes(xVal, assumptions)
-                return finGeomSum.specialize({x:xVal, m:mVal, k:kVal, l:lVal})
+                return finGeomSum.instantiate({x:xVal, m:mVal, k:kVal, l:lVal})
 #        else:
 #            print "Not a geometric sum!"
 
@@ -152,7 +152,7 @@ class Sum(OperationOverInstances):
         deduceInIntegers(self.domain.lowerBound, assumptions)
         deduceInIntegers(self.domain.upperBound, assumptions)
         deduceInIntegers(shiftAmount, assumptions)
-        return indexShift.specialize({fOp:fOpSub, x:self.index}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, c:shiftAmount})
+        return indexShift.instantiate({fOp:fOpSub, x:self.index}).instantiate({a:self.domain.lowerBound, b:self.domain.upperBound, c:shiftAmount})
 
     def join(self, secondSummation, assumptions=frozenset()):
         '''
@@ -181,7 +181,7 @@ class Sum(OperationOverInstances):
         deduceInIntegers(lowerBound, assumptions)
         deduceInIntegers(upperBound, assumptions)
         deduceInIntegers(splitIndex, assumptions)
-        return sumSplit.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:lowerBound, b:splitIndex, c:upperBound, x:self.indices[0]}).deriveReversed()
+        return sumSplit.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:lowerBound, b:splitIndex, c:upperBound, x:self.indices[0]}).deriveReversed()
         
     def split(self, splitIndex, side='after', assumptions=frozenset()):
         r'''
@@ -203,7 +203,7 @@ class Sum(OperationOverInstances):
             deduceInIntegers(self.domain.upperBound, assumptions)
             deduceInIntegers(splitIndex, assumptions)
             # Also needs lowerBound <= splitIndex and splitIndex < upperBound
-            return sumSplit.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:splitIndex, c:self.domain.upperBound, x:self.indices[0]})
+            return sumSplit.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:self.domain.lowerBound, b:splitIndex, c:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")
 
 
@@ -213,7 +213,7 @@ class Sum(OperationOverInstances):
             deduceInIntegers(self.domain.lowerBound, assumptions)
             deduceInIntegers(self.domain.upperBound, assumptions)
             # Also needs lowerBound < upperBound
-            return sumSplitLast.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
+            return sumSplitLast.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")
 
     def splitOffFirst(self, assumptions=frozenset()):
@@ -222,7 +222,7 @@ class Sum(OperationOverInstances):
             deduceInIntegers(self.domain.lowerBound, assumptions)
             deduceInIntegers(self.domain.upperBound, assumptions)
             # Also needs lowerBound < upperBound
-            return sumSplitFirst.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
+            return sumSplitFirst.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")
 
     def factor(self, theFactor, pull="left", groupFactor=False, groupRemainder=None, assumptions=frozenset()):
@@ -257,9 +257,9 @@ class Sum(OperationOverInstances):
         # We need to deduce that theFactor is in Complexes and that all instances of Pop_sup are in Complexes.
         deduceInComplexes(factorOperands, assumptions=assumptions)
         deduceInComplexes(Pop_sub, assumptions=assumptions | {InSet(idx, self.domain) for idx in self.indices}).generalize(self.indices, domain=self.domain).checked(assumptions)
-        # Now we specialize distributThroughSummationRev
-        spec1 = distributeThroughSummationRev.specialize({Pop:Pop_sub, S:self.domain, yEtc:self.indices, xEtc:Etcetera(MultiVariable(xDummy)), zEtc:Etcetera(MultiVariable(zDummy))}).checked()
-        eq.update(spec1.deriveConclusion().specialize({Etcetera(MultiVariable(xDummy)):xSub, Etcetera(MultiVariable(zDummy)):zSub}))
+        # Now we instantiate distributThroughSummationRev
+        spec1 = distributeThroughSummationRev.instantiate({Pop:Pop_sub, S:self.domain, yEtc:self.indices, xEtc:Etcetera(MultiVariable(xDummy)), zEtc:Etcetera(MultiVariable(zDummy))}).checked()
+        eq.update(spec1.deriveConclusion().instantiate({Etcetera(MultiVariable(xDummy)):xSub, Etcetera(MultiVariable(zDummy)):zSub}))
         if groupFactor and len(factorOperands) > 1:
             eq.update(eq.eqExpr.rhs.group(endIdx=len(factorOperands), assumptions=assumptions))
         return eq.eqExpr #.checked(assumptions)
