@@ -475,7 +475,7 @@ class ProveItMagicCommands:
             # as special expressions.
             for name, expr in self.definitions.items():
                 # remake the expression notebooks using the special expressions of the context
-                context.expressionNotebook(expr, useActiveFolder=True)  
+                context.expressionNotebook(expr, completeSpecialExprNotebook=True)  
             
             if len(self.definitions)==0:
                 print("Context %s has no %s"%(context.name, kind if kind != 'common' else 'common expressions'))

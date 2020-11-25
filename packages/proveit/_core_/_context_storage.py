@@ -1150,7 +1150,7 @@ class ContextFolderStorage:
 
     @staticmethod
     def expressionNotebook(expr, unofficialNameKindContext=None,
-                           useActiveFolder=False):
+                           completeSpecialExprNotebook=False):
         '''
         Return the path of the expression notebook, creating it if it
         does not already exist.  If 'unofficialNameKindContext' is
@@ -1169,7 +1169,7 @@ class ContextFolderStorage:
         if not isinstance(expr, Expression):
             raise ValueError("'expr' should be an Expression object")
         
-        if useActiveFolder:
+        if completeSpecialExprNotebook:
             context_folder_storage = \
                 ContextFolderStorage.active_context_folder_storage
         else:
@@ -1205,6 +1205,8 @@ class ContextFolderStorage:
                     template_name = '_special_expr_template_.ipynb'
             else:
                 template_name = '_expr_template_.ipynb'    
+        if completeSpecialExprNotebook:
+            assert 'common' in template_name or 'special' in template_name
         # Determine the appropriate hash folder to store the
         # expression notebook in.
         obj = expr
@@ -1224,9 +1226,10 @@ class ContextFolderStorage:
         full_hash_dir = os.path.join(context_folder_storage.path, 
                                      hash_directory)
 
-        if (ContextFolderStorage.owns_active_storage and
+        if (completeSpecialExprNotebook or (
+                ContextFolderStorage.owns_active_storage and
                 context_folder_storage == 
-                ContextFolderStorage.active_context_folder_storage):
+                ContextFolderStorage.active_context_folder_storage)):
             # Only build the notebook in the active folder storage
             nb = context_folder_storage._buildExpressionNotebook(
                 obj, expr, kind, name, full_hash_dir, template_name, 

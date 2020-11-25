@@ -946,7 +946,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             count += 1
             if git_clear:
                 git_clear_notebook(finished_notebook)
-        # Now wait for everyboy to finish.
+        # Now wait for everybody to finish.
         finished_ranks = set()
         while len(unfinished_ranks) > 0:
             ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
@@ -957,7 +957,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             if git_clear:
                 git_clear_notebook(finished_notebook)
         # And now we are done
-        for dest in finished_ranks:
+        for dest in range(1, nranks):
             comm.send("", dest)
         print("Finished executing %d notebooks"%count) 
         

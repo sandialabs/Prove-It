@@ -372,7 +372,7 @@ class Context:
     
     @staticmethod
     def expressionNotebook(expr, unofficialNameKindContext=None,
-                           useActiveFolder=False):
+                           completeSpecialExprNotebook=False):
         '''
         Return the path of the expression notebook, creating it if it does not
         already exist.  If 'unofficialNameKindContext' is provided,
@@ -382,7 +382,7 @@ class Context:
         '''
         # use the Storage object to generate/grab the expression notebook.
         return ContextFolderStorage.expressionNotebook(
-                expr, unofficialNameKindContext, useActiveFolder)
+                expr, unofficialNameKindContext, completeSpecialExprNotebook)
                  
     @staticmethod
     def getStoredAxiom(fullname):
