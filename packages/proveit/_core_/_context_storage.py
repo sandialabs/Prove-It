@@ -397,6 +397,10 @@ class ContextStorage:
                         pass # no worries
         # Remove proof dependencies of modified statements.
         for hash_id in obsolete_hash_ids:
+            if folder == 'theorems':
+                # Remove the proof of the modified theorem:
+                StoredTheorem(self.context, name).removeProof()
+            # Remove proofs that depended upon the modified theorem.
             StoredSpecialStmt.remove_dependency_proofs(
                     self.context, kind, hash_id)
         # Indicate special expression removals.
@@ -407,7 +411,11 @@ class ContextStorage:
             else:
                 print("Removing %s %s from %s context"%
                       (kind, name, context_name))
-                StoredSpecialStmt.remove_dependency_proofs(
+                if folder == 'theorems':
+                    # Remove the proof of the removed theorem:
+                    StoredTheorem(self.context, name).removeProof()
+            # Remove proofs that depended upon the removed theorem.
+            StoredSpecialStmt.remove_dependency_proofs(
                         self.context, kind, hash_id)
         
         # Now we'll write the new name to hash information.
@@ -2694,7 +2702,7 @@ class StoredTheorem(StoredSpecialStmt):
         obsolete links/references.
         '''     
         from .context import Context 
-        # Remove obsolete usedBy links that refer to this theorem by
+        # Remove obsolete used-by links that refer to this theorem by
         # its old proof.
         prevUsedAxiomNames, prevUsedTheoremNames = (
                 self.readUsedAxioms(), self.readUsedTheorems())
