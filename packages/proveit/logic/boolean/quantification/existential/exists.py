@@ -218,7 +218,7 @@ class Exists(OperationOverInstances):
         else:
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
             return existsDef.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
-                                        relabelMap={xMulti:self.instanceVars}).deriveRightViaEquivalence(assumptions)
+                                        relabelMap={xMulti:self.instanceVars}).deriveRightViaEquality(assumptions)
     
     def substituteDomain(self, superset, assumptions=USE_DEFAULTS):
         '''

@@ -806,7 +806,7 @@ class OperationOverInstances(Operation):
         Works also when there is no domain S and/or no conditions ..Q...
         '''
         substitution = self.instanceSubstitution(universality, assumptions=assumptions)
-        return substitution.deriveRightViaEquivalence(assumptions=assumptions)
+        return substitution.deriveRightViaEquality(assumptions=assumptions)
     """
 
 def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):

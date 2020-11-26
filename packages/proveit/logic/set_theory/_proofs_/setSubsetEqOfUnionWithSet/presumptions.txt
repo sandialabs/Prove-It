@@ -28,7 +28,7 @@ proveit.logic.boolean.unfoldInBool
 proveit.logic.boolean.unfoldInBoolExplicit
 proveit.logic.equality.equalsReversal
 proveit.logic.equality.foldNotEquals
-proveit.logic.equality.lhsViaEquivalence
+proveit.logic.equality.lhsViaEquality
 proveit.logic.equality.notEqualsSymmetry
 proveit.logic.equality.subLeftSideInto
 proveit.logic.equality.substituteFalsehood

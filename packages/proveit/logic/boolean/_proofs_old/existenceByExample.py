@@ -17,6 +17,6 @@ neverPy.deduceInBool().proven()
 # Not(forall_{..y.. in S | ..Q(..y..)..} (P(..y..) != TRUE) assuming ..Q(..x..).., P(..x..)
 Implies(neverPy, FALSE).deriveViaContradiction().proven({etc_QxEtc, PxEtc, inDomain})
 # exists_{..y.. in S | ..Q(..y..)..} P(..y..) assuming Q(..x..), P(..x..)
-existence = existsDef.instantiate({xEtc:yEtc}).deriveLeftViaEquivalence().proven({etc_QxEtc, PxEtc, inDomain})
+existence = existsDef.instantiate({xEtc:yEtc}).deriveLeftViaEquality().proven({etc_QxEtc, PxEtc, inDomain})
 # forall_{P, ..Q.., S} forall_{..x.. in S | ..Q(..x..)..} [P(..x..) => exists_{..y.. in S | ..Q(..y..)..} P(..y..)]
 Implies(PxEtc, existence).generalize(xEtc, S, etc_QxEtc).generalize((P, Qetc, S)).qed(__file__)

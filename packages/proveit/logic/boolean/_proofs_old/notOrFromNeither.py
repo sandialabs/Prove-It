@@ -12,6 +12,6 @@ notAorB_eq_notF = notAorB_eq_notForF.applyTransitivity(orFF.substitution(Not(X),
 # Not(FALSE)
 notFalse
 # Not(A or B) assuming Not(A), Not(B)
-notAorB = notAorB_eq_notF.deriveLeftViaEquivalence().proven({Not(A), Not(B)})
+notAorB = notAorB_eq_notF.deriveLeftViaEquality().proven({Not(A), Not(B)})
 # forall_{A, B} Not(A) => [Not(B) => Not(A or B)]
 Implies(Not(A), Implies(Not(B), notAorB)).generalize((A, B)).qed(__file__)

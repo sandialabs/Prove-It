@@ -6,7 +6,7 @@ inDomain = In(xEtc, S) # ..x.. in S
 # existsNot = [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))]
 existsNot = Exists(xEtc, Not(PxEtc), S, etc_QxEtc)
 # [Not(forall_{..x.. in S | ..Q(..x..)..} Not(P(..x..)) != TRUE] assuming existsNot
-existsDef.instantiate({PxEtc:Not(PxEtc)}).deriveRightViaEquivalence().proven({existsNot})
+existsDef.instantiate({PxEtc:Not(PxEtc)}).deriveRightViaEquality().proven({existsNot})
 # forall_{..x.. in S | ..Q(..x..)..} P(..x..)
 forallPx = Forall(xEtc, PxEtc, S, etc_QxEtc)
 # forall_{..x.. in S | ..Q(..x..)..} Not(P(..x..)) != TRUE

@@ -3,7 +3,7 @@ proveit.logic.boolean.negation.negationIntro
 proveit.logic.boolean.negation.notFalse
 proveit.logic.equality.equalsReversal
 proveit.logic.equality.foldNotEquals
-proveit.logic.equality.lhsViaEquivalence
+proveit.logic.equality.lhsViaEquality
 proveit.logic.equality.notEqualsSymmetry
 proveit.logic.equality.subLeftSideInto
 proveit.logic.equality.substituteFalsehood

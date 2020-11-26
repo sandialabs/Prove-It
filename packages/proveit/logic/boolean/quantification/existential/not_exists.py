@@ -68,6 +68,6 @@ class NotExists(OperationOverInstances):
         else:
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
             assumption = Forall(operand.arguments, NotEquals(operand.expression, TRUE), operand.domainCondition)
-            return existsDefNegation.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveLeftViaEquivalence().checked({assumption})
+            return existsDefNegation.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveLeftViaEquality().checked({assumption})
     """
 

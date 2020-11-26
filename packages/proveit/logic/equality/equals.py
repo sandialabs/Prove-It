@@ -508,19 +508,19 @@ class Equals(TransitiveRelation):
                 {x:self.lhs, y:self.rhs, P:lambda_map}, 
                 assumptions=assumptions)
         
-    def deriveRightViaEquivalence(self, assumptions=USE_DEFAULTS):
+    def deriveRightViaEquality(self, assumptions=USE_DEFAULTS):
         '''
         From A = B, derive B (the Right-Hand-Side) assuming A.
         '''
-        from ._theorems_ import rhsViaEquivalence
-        return rhsViaEquivalence.instantiate({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
+        from ._theorems_ import rhsViaEquality
+        return rhsViaEquality.instantiate({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
 
-    def deriveLeftViaEquivalence(self, assumptions=USE_DEFAULTS):
+    def deriveLeftViaEquality(self, assumptions=USE_DEFAULTS):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.
         '''
-        from ._theorems_ import lhsViaEquivalence
-        return lhsViaEquivalence.instantiate({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
+        from ._theorems_ import lhsViaEquality
+        return lhsViaEquality.instantiate({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
     
     def otherSide(self, expr):
         '''

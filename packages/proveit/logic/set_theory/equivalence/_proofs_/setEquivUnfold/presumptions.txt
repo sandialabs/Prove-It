@@ -1,5 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.logic.equality.equalsReversal
-proveit.logic.equality.rhsViaEquivalence
+proveit.logic.equality.rhsViaEquality
 proveit.logic.equality.subLeftSideInto
 # THEOREMS AND THEORIES TO EXCLUDE:

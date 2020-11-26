@@ -2,7 +2,7 @@
 proveit.logic.boolean.negation.negationIntro
 proveit.logic.boolean.negation.notFalse
 proveit.logic.equality.equalsReversal
-proveit.logic.equality.rhsViaEquivalence
+proveit.logic.equality.rhsViaEquality
 proveit.logic.equality.subLeftSideInto
 proveit.logic.equality.subRightSideInto
 # THEOREMS AND THEORIES TO EXCLUDE:

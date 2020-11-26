@@ -3,8 +3,8 @@ proveit.logic.boolean.conjunction.leftFromAnd
 proveit.logic.boolean.negation.negationIntro
 proveit.logic.boolean.negation.notFalse
 proveit.logic.equality.equalsReversal
-proveit.logic.equality.lhsViaEquivalence
-proveit.logic.equality.rhsViaEquivalence
+proveit.logic.equality.lhsViaEquality
+proveit.logic.equality.rhsViaEquality
 proveit.logic.equality.subLeftSideInto
 proveit.number.numeral.deci.less_0_1
 proveit.number.numeral.deci.less_1_2
