@@ -971,7 +971,7 @@ def theoremproof_path_generator(top_level_paths):
         for context_path in findContextPaths(path):
             context = Context(context_path)
             for theorem_name in context.theoremNames():
-                yield os.path.join(context._storage.directory, '_proofs_', '%s.ipynb'%theorem_name)
+                yield os.path.join(context._storage.directory, '_proofs_', theorem_name, 'thm_proof.ipynb')
 
 def database_notebook_path_generator(top_level_paths, filebases):
     for path in top_level_paths:

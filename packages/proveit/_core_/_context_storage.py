@@ -652,7 +652,8 @@ class ContextStorage:
         creating it if it does not already exist.
         '''
         proofs_path = os.path.join(self.directory, '_proofs_')
-        filename = os.path.join(proofs_path, '%s.ipynb'%theorem_name)
+        proof_path = os.path.join(proofs_path, theorem_name)
+        filename = os.path.join(proof_path, 'thm_proof.ipynb')
         if os.path.isfile(filename):
             # Check the theorem name and make sure the capitalization
             # is the same.  If not, revise it appropriately.
@@ -660,23 +661,29 @@ class ContextStorage:
             if existing_theorem_name is None:
                 # The format is not correct; stash this one and 
                 # generate a new one.
-                self._stashNotebook(filename)
+                self._stashProof(filename)
             else:
                 if existing_theorem_name != theorem_name:
-                    # update with the new capitalization
+                    # update with the theorem name
                     with open(filename, 'r') as proof_notebook:
                         nb = proof_notebook.read()
                     nb = nb.replace(existing_theorem_name, theorem_name)
-                    # remove the file before creating again to force the
-                    # new capitolization (e.g., in Windows where
-                    # capitolization can be flexible)
+                    # remove the file before creating again to force
+                    # new capitalization (e.g., in Windows where
+                    # capitalization can be flexible)
                     os.remove(filename) 
                     with open(filename, 'w') as proof_notebook:
                         proof_notebook.write(nb)
                 return relurl(filename)
-        if not os.path.isdir(proofs_path):
+        if not os.path.isdir(proof_path):
             # make the directory for the _proofs_
-            os.makedirs(proofs_path)            
+            os.makedirs(proof_path)
+        # make a generic 'presumptions.txt' file
+        presumptions_filename = os.path.join(proof_path, 'presumptions.txt')
+        with open(presumptions_filename, 'w') as _f:
+            _f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
+            _f.write('proveit\n') # presume all of Prove-It by default
+            _f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
         nb = self._generateGenericThmProofNotebook(theorem_name)
         # write the proof file
         with open(filename, 'w') as proof_notebook:
@@ -713,7 +720,6 @@ class ContextStorage:
             if match is None: return None
             return match.groups()[0]
     
-    # TODO: UPDATE STASHING AFTER PROOF NOTEBOOKS MOVE INTO FOLDERS.
     def stashExtraneousThmProofNotebooks(self, theorem_names):
         '''
         For any proof notebooks for theorem names not included in the 
@@ -723,53 +729,57 @@ class ContextStorage:
         proofs_path = os.path.join(self.directory, '_proofs_')
         if not os.path.isdir(proofs_path):
             return # nothing to stash
-        for filename in os.listdir(proofs_path):
-            if os.path.splitext(filename)[-1] != '.ipynb':
-                continue # just concerned with notebooks
-                
-            # see if this is a proof notebook that should be kept
-            if filename[:-len('.ipynb')] in theorem_names:
-                continue # this one is a keeper
-                
-            filename = os.path.join(proofs_path, filename)
-            if os.path.isdir(filename): continue # skip directories
+        for proof_folder in os.listdir(proofs_path):
+            if not os.path.isdir(proof_folder):
+                continue # disregard files, just directories
+            if proof_folder in theorem_names:
+                continue
+            proof_path = os.path.join(proofs_path, proof_folder)
             
-            if "~stashed~" in filename:
+            if "~stashed~" in proof_folder:
                 continue # already a stashed notebook
             
             # may be set to True below if it is a generic notebook
-            remove_file = False 
+            remove_folder = False 
             
             # next, let's see if this is a generic notebook by 
             # extracting its info, building the generic version, and
             # comparing.
-            theorem_name = self._proofNotebookTheoremName(filename)
-            if theorem_name is not None:
-                generic_version = self._generateGenericThmProofNotebook(
+            filename = os.path.join(proof_path, 'thm_proof.ipynb')
+            if os.path.isfile(filename):
+                theorem_name = self._proofNotebookTheoremName(filename)
+                if theorem_name is not None:
+                    generic_version = self._generateGenericThmProofNotebook(
                         theorem_name)        
-                with open(filename, 'r') as notebook:
-                    if generic_version == notebook.read():
-                        # just remove it, it is generic
-                        remove_file = True
+                    with open(filename, 'r') as notebook:
+                        if generic_version == notebook.read():
+                            # just remove it, it is generic
+                            remove_file = True
             
-            if remove_file:
-                os.remove(filename)
+            if remove_folder:
+                os.remove(proof_path)
             else:
-                self._stashNotebook(filename)
+                self._stashProof(proof_path)
     
-    def _stashNotebook(self, filename):
+    def _stashProof(self, path):
         '''
-        Stash a notebook to a "~stashed~#" file using a '#' (number)
-        that has not been used yet.
+        Stash a proof path or notebook to a "~stashed~#" 
+        file/directory using a '#' (number) that has not been 
+        used yet.
         '''
         num = 1
-        filename_base = filename[:-len('.ipynb')]
-        while os.path.isfile(filename_base + "~stashed~%d.ipynb"%num):
-            num += 1
-        new_filename = filename_base + "~stashed~%d.ipynb"%num
+        if path[-len('.ipynb'):] == '.ipynb':
+            filename_base = path[:-len('.ipynb')]
+            while os.path.isfile(filename_base + "~stashed~%d.ipynb"%num):
+                num += 1
+            new_path = filename_base + "~stashed~%d.ipynb"%num
+        else:
+            while os.path.isdir(path + "~stashed~%d"%num):
+                num += 1
+            new_path = path + "~stashed~%d"%num
         print("Stashing %s to %s in case it is needed."%
-              (relurl(filename), relurl(new_filename)))
-        os.rename(filename, new_filename)
+              (relurl(path), relurl(new_path)))
+        os.rename(path, new_path)
 
 class ContextFolderStorage:
     # The active context folder storage (e.g., corresponding to the
