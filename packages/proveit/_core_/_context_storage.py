@@ -1,6 +1,7 @@
 import hashlib, os
 import shutil
 import sys
+import glob
 import importlib
 import itertools
 import json
@@ -653,10 +654,23 @@ class ContextStorage:
         '''
         proofs_path = os.path.join(self.directory, '_proofs_')
         proof_path = os.path.join(proofs_path, theorem_name)
+        # Let's first check if the same expression existed
+        # in the previous version -- then we can simply
+        # move the proof.
+        context_folder_storage = \
+            self.context._contextFolderStorage('theorems') 
+        expr_id = context_folder_storage._proveItStorageId(expr)
+        expr_id = context_folder_storage._relative_to_explicit_prefix(expr_id)
+        if expr_id in context_folder_storage._prev_objhash_to_name:
+            old_name = context_folder_storage._prev_objhash_to_name[expr_id]
+            if theorem_name != old_name:
+                old_proof_path = os.path.join(proofs_path, old_name)
+                print("Renaming %s to %s"%(old_name, theorem_name))
+                os.rename(old_proof_path, proof_path)
         filename = os.path.join(proof_path, 'thm_proof.ipynb')
         if os.path.isfile(filename):
-            # Check the theorem name and make sure the capitalization
-            # is the same.  If not, revise it appropriately.
+            # Check the theorem name and make sure it is correct.
+            # If not, revise it appropriately.
             existing_theorem_name = self._proofNotebookTheoremName(filename)
             if existing_theorem_name is None:
                 # The format is not correct; stash this one and 
@@ -674,6 +688,15 @@ class ContextStorage:
                     os.remove(filename) 
                     with open(filename, 'w') as proof_notebook:
                         proof_notebook.write(nb)
+                return relurl(filename)
+        # Check if there is a stashed version of the proof that
+        # we can resurrect.
+        stashed_versions = glob.glob(proof_path + "~stashed~*")
+        if len(stashed_versions) > 0:
+            stashed_version = sorted(stashed_versions)[-1]
+            print("Resurrecting stashed version of theorem proof notebook: %s"%stashed_version)
+            os.rename(stashed_version, proof_path)
+            if os.path.isfile(filename):
                 return relurl(filename)
         if not os.path.isdir(proof_path):
             # make the directory for the _proofs_
@@ -730,7 +753,7 @@ class ContextStorage:
         if not os.path.isdir(proofs_path):
             return # nothing to stash
         for proof_folder in os.listdir(proofs_path):
-            if not os.path.isdir(proof_folder):
+            if not os.path.isdir(os.path.join(proofs_path, proof_folder)):
                 continue # disregard files, just directories
             if proof_folder in theorem_names:
                 continue
@@ -811,6 +834,10 @@ class ContextFolderStorage:
         # the object hash folder names to the name of the
         # axiom, theorem, or common expression.
         self._objhash_to_name = dict()
+        # When regenerating common expression, axioms, or
+        # theorems, we'll keep track of the previous
+        # version.
+        self._prev_objhash_to_name = dict()
     
     @staticmethod
     def getFolderStorageOfObj(obj):
@@ -860,6 +887,10 @@ class ContextFolderStorage:
             proveit_obj_to_storage.pop(obj_id)
         folder = self.folder
         kind = ContextStorage._folder_to_kind(folder)
+        # Load it before we unload it so we can then
+        # store the previous version.
+        self.context_storage._loadSpecialNames(kind)
+        self._prev_objhash_to_name = dict(self._objhash_to_name)
         for name in self._objhash_to_name.values():
             self.context_storage._kindname_to_exprhash.pop((kind, name), None)
         self._objhash_to_name.clear()
@@ -1026,6 +1057,20 @@ class ContextFolderStorage:
         return prefix + proveItObject._generate_unique_rep(
                 self._proveItStorageId)
     
+    def _relative_to_explicit_prefix(self, storage_id):
+        # If the exprId is relative to the context it is in, make the 
+        # context explicit.
+        split_id = storage_id.split('.')
+        context_name = self.context.name
+        folder = self.folder
+        if len(split_id) == 2:
+            return context_name + '.' + storage_id # explicit folder
+        elif len(split_id) == 1:
+            # convert local to explicit
+            return context_name + '.' + folder + '.' + storage_id
+        else:
+            return storage_id # already explicit
+    
     def _extractReferencedStorageIds(self, unique_rep, context_name, 
                                      folder, storage_ids=None):
         '''
@@ -1034,7 +1079,7 @@ class ContextFolderStorage:
         context_name may be given; if the Context is the one associated 
         with this Storage object then the default may be used.
         '''
-        from proveit import Expression, Judgment, Proof
+        from proveit import Expression, Judgment, Proof, Context
         if storage_ids is None:
             if unique_rep[:6] == 'Proof:':
                 storage_ids = Proof._extractReferencedObjIds(unique_rep[6:])
@@ -1044,20 +1089,13 @@ class ContextFolderStorage:
             else:
                 # Assumed to be an expression then
                 storage_ids = Expression._extractReferencedObjIds(unique_rep)
-        def relative_to_explicit_prefix(storage_id, context_name, folder):
-            # If the exprId is relative to the context it is in, make the 
-            # context explicit.
-            split_id = storage_id.split('.')
-            if len(split_id) == 2:
-                return context_name + '.' + storage_id # explicit folder
-            elif len(split_id) == 1:
-                # convert local to explicit
-                return context_name + '.' + folder + '.' + storage_id
+        if len(context_name) > 0 or folder != self.folder:
+            if len(context_name) == 0:
+                context = self.context
             else:
-                return storage_id # already explicit
-        if context_name != '' or folder != self.folder:
-            return [relative_to_explicit_prefix(storage_id, context_name,
-                                                folder) 
+                context = Context.getContext(context_name)
+            other_folder_storage = context._contextFolderStorage(folder)
+            return [other_folder_storage._relative_to_explicit_prefix(storage_id)
                     for storage_id in storage_ids]
         return storage_ids
     
@@ -1229,12 +1267,12 @@ class ContextFolderStorage:
         # expression notebook in.
         obj = expr
         if kind=='axiom':
-            # Store this "special" notebook if the hash for the
+            # Store this "special" notebook with the hash for the
             # Judgment object associated with the Axiom.
             obj = Axiom(expr, context_folder_storage.context, name)
             obj = obj.provenTruth
         elif kind=='theorem':
-            # Store this "special" notebook if the hash for the
+            # Store this "special" notebook with the hash for the
             # Judgment object associated with the Theorem.
             obj = Theorem(expr, context_folder_storage.context, name)
             obj = obj.provenTruth
@@ -2356,8 +2394,7 @@ class StoredTheorem(StoredSpecialStmt):
         Return the link to the theorem's proof notebook.
         '''
         return relurl(os.path.join(self.context.getPath(), '_proofs_', 
-                                   self.name + '.ipynb'))
-                                   #self.name, 'thm_proof.ipynb'))
+                                   self.name, 'thm_proof.ipynb'))
         
 
     def remove(self, keepPath=False):
@@ -2749,10 +2786,10 @@ class StoredTheorem(StoredSpecialStmt):
                             'obtain its requirements')
         usedAxiomNames, usedTheoremNames = (
                 self.readUsedAxioms(), self.readUsedTheorems())
-        requiredAxioms = usedAxiomNames # just a start
+        requiredAxioms = set(usedAxiomNames) # just a start
         requiredTheorems = set()
         processed = set()
-        toProcess = usedTheoremNames
+        toProcess = set(usedTheoremNames)
         while len(toProcess) > 0:
             nextTheorem = toProcess.pop()
             storedTheorem = Context.getStoredTheorem(nextTheorem)

@@ -495,11 +495,11 @@ class ProveItMagicCommands:
         self.kind = None
         self.context = None
             
-    def display_dependencies(self, name, judgment):
+    def display_dependencies(self, name, thm_expr):
         '''
         Show the dependencies of an axiom or theorem.
         '''
-        proof = judgment.proof() # Axiom or Theorem
+        proof = thm_expr.proof() # Axiom or Theorem
 
         from proveit._core_._context_storage import ContextFolderStorage
         
@@ -544,11 +544,11 @@ class ProveItMagicCommands:
                 displaySpecialStmt(Context.findTheorem(dependent))
             display(HTML('</dl>'))
 
-    def display_dependencies_latex(self, name, judgment):
+    def display_dependencies_latex(self, name, thm_expr):
         '''
         Show the dependencies of an axiom or theorem.
         '''
-        proof = judgment.proof() # Axiom or Theorem
+        proof = thm_expr.proof() # Axiom or Theorem
         
         def displaySpecialStmt(stmt):
             '''
@@ -732,8 +732,8 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         Show the dependencies of an axiom or theorem.
         '''
         name = line.strip()
-        judgment = self.shell.user_ns[line.strip()]
-        ProveItMagicCommands.display_dependencies(self, name, judgment)
+        thm_expr = self.shell.user_ns[line.strip()]
+        ProveItMagicCommands.display_dependencies(self, name, thm_expr)
         
     @line_magic
     def dependencies_latex(self, line):
@@ -741,8 +741,8 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         Show the dependencies of an axiom or theorem.
         '''
         name = line.strip()
-        judgment = self.shell.user_ns[line.strip()]
-        ProveItMagicCommands.display_dependencies_latex(self, name, judgment)
+        thm_expr = self.shell.user_ns[line.strip()]
+        ProveItMagicCommands.display_dependencies_latex(self, name, thm_expr)
         
 class Assignments:    
     def __init__(self, names, rightSides, beginningProof=False):
@@ -813,9 +813,10 @@ class Assignments:
         lhs_html = name + ':'
         unofficialNameKindContext = None
         kind = proveItMagic.kind
+        context = proveItMagic.context
         if kind in ('axioms', 'theorems', 'common'):
             if kind=='axioms' or kind=='theorems': kind = kind[:-1]
-            unofficialNameKindContext = (name, kind, proveItMagic.context)
+            unofficialNameKindContext = (name, kind, context)
         rightSideStr, expr = None, None
         if isinstance(rightSide, Expression):
             expr = rightSide
@@ -826,22 +827,22 @@ class Assignments:
             rightSideStr = str(rightSide)
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
-            proof_notebook_relurl = proveItMagic.context.thmProofNotebook(name, expr)
+            proof_notebook_relurl = context.thmProofNotebook(name, expr)
             status = 'conjecture without proof' # default
             try:
-                thm = proveItMagic.context.getTheorem(name)
-                if thm.isFullyProven():
+                thm = context.getStoredTheorem(context.name + '.' + name)
+                if thm.isComplete():
                     status = 'established theorem'
                 elif thm.hasProof():
                     status = 'conjecture with conjecture-based proof'
-            except:
+            except KeyError:
                 pass # e.g., a new theorem.
             lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
                         %(proof_notebook_relurl, name, status))
         html = '<strong id="%s">%s</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
-            expr_notebook_path = proveItMagic.context.expressionNotebook(expr)
-            dependencies_notebook_path = os.path.join(os.path.split(expr_notebook_path)[0], 'dependencies.ipynb')
+            stored_thm = context.getStoredTheorem(context.name + '.' + name)
+            dependencies_notebook_path = os.path.join(stored_thm.path, 'dependencies.ipynb')
             html += '(see <a class="ProveItLink" href="%s">dependencies</a>)<br>'%(relurl(dependencies_notebook_path))
         if (kind in ('axiom', 'theorem', 'common')) and len(proveItMagic.expr_names[rightSide])>1:
             prev = proveItMagic.expr_names[rightSide][-2]
