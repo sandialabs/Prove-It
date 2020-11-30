@@ -425,7 +425,6 @@ class ProveItMagicCommands:
         finally:
             proveit.defaults.automation = True
         proving_theorem_truth = proving_theorem.provenTruth
-        print("Beginning proof of", theorem_name)
         return proving_theorem_truth.beginProof(proving_theorem) #, presumptions, justRecordPresumingInfo=justRecordPresumingInfo)
         
     def qed(self):
@@ -841,7 +840,9 @@ class Assignments:
                 pass # e.g., a new theorem.
             lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
                         %(proof_notebook_relurl, name, status))
-        html = '<strong id="%s">%s</strong> %s<br>'%(name, lhs_html, rightSideStr)
+        if self.beginningProof:
+            html = 'Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br>'
+        html += '<strong id="%s">%s</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
             stored_thm = context.getStoredTheorem(context.name + '.' + name)
             dependencies_notebook_path = os.path.join(stored_thm.path, 'dependencies.ipynb')
