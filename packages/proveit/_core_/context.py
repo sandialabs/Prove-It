@@ -421,13 +421,13 @@ class Context:
         context_folder_storage = self._contextFolderStorage(folder)
         return context_folder_storage.makeExpression(expr_id)
     
-    def getStoredJudgment(self, truth_id, folder=None):
+    def getStoredJudgmentOrProof(self, storage_id, folder=None):
         '''
-        Return the stored Judgment with the given id (hash string).
-        Use the "active folder" as the default folder.
+        Return the stored Judgment or Proof with the given id 
+        (hash string).  Use the "active folder" as the default folder.
         '''
         context_folder_storage = self._contextFolderStorage(folder)
-        return context_folder_storage.makeJudgment(truth_id)
+        return context_folder_storage.makeJudgmentOrProof(storage_id)
     
     def getShowProof(self, proof_id, folder=None):
         '''

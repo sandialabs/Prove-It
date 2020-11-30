@@ -211,6 +211,19 @@ class Proof:
         return [objId.rstrip('*') for objId in objIds if len(objId) > 0]
 
     @staticmethod
+    def _extractKindAndName(unique_rep):
+        '''
+        Given a 'unique_rep' for an Axiom or Theorem, return 
+        'axiom' or 'theorem' and its full name.  Raise a ValueError
+        if it isn't an Axiom or Theorem.
+        '''
+        if unique_rep[:6] != 'Proof:':
+            raise ValueError("Invalid 'unique_rep' for Proof: %s"%unique_rep)
+        step_info, remaining = unique_rep[6:].split(':', 1)
+        kind, full_name = step_info.split('_', 1)
+        return (kind, full_name)
+
+    @staticmethod
     def _showProof(context, folder, proof_id, unique_rep):
         '''
         Given a unique representation string, returns a _ShowProof
@@ -1400,7 +1413,7 @@ class _ShowProof:
             # Must be an axiom or theorem with the format
             # axiom_context.name or theorem_context.name
             self.step_type_str, full_name = stepInfo.split('_', 1)
-            assert self.step_type_str in ('axiom', 'theorem', 'conjecture')
+            assert self.step_type_str in ('axiom', 'theorem')
             full_name_segments = full_name.split('.')
             context_name = '.'.join(full_name_segments[:-1])
             self.context =  Context.getContext(context_name)
@@ -1420,7 +1433,8 @@ class _ShowProof:
             self.mapping_key_order = [key for key, value in key_mapping_pairs]
             self.mapping = dict(key_mapping_pairs)
         self.provenTruth = \
-            context_folder_storage.makeJudgment(refObjIdGroups[-2][0])
+            context_folder_storage.makeJudgmentOrProof(
+                refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
             [context.getShowProof(obj_id.rstrip('*')) for obj_id
