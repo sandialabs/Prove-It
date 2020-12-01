@@ -85,9 +85,9 @@ proveit.number.numeral.deci.posnat7
 proveit.number.numeral.deci.posnat8
 proveit.number.numeral.deci.posnat9
 proveit.number.numeral.deci.tuple_len_1
-proveit.number.numeral.deci.tuple_len_1_typical_equiv
+proveit.number.numeral.deci.tuple_len_1_typical_eq
 proveit.number.numeral.deci.tuple_len_2
-proveit.number.numeral.deci.tuple_len_2_typical_equiv
+proveit.number.numeral.deci.tuple_len_2_typical_eq
 proveit.number.sets.natural.natsPosInNats
 proveit.number.sets.natural.naturalsLowerBound
 proveit.number.sets.natural.naturalsPosLowerBound

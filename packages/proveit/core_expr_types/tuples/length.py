@@ -55,7 +55,7 @@ class Len(Operation):
         # Don't auto-reduce ExprRanges on the left side if
         # 'self' is not reduced itself.
         disable_range_reduction = (reduced_operand != self.operand)
-        return self._tested_equivalence(
+        return self._tested_equality(
                 self._computation, assumptions,
                 disable_range_reduction=disable_range_reduction,
                 simplify=simplify)
@@ -100,7 +100,7 @@ class Len(Operation):
                 from proveit.core_expr_types.tuples._axioms_ import tuple_len_0
                 return tuple_len_0
             elif len(entries) < 10:
-                # Automatically get the count and equivalence with
+                # Automatically get the count and equality with
                 # the length of the proper iteration starting from
                 # 1.  For example,
                 # |(a, b, c)| = 3
@@ -258,7 +258,7 @@ class Len(Operation):
             return general_len.instantiate(
                        {n:_n, f:_f, i:_i, j:_j}, assumptions=assumptions)
     
-    def typical_equiv(self, assumptions=USE_DEFAULTS):
+    def typical_eq(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to prove that this Len expression is equal to
         something of the form |(i, ..., j)|.
@@ -267,16 +267,16 @@ class Len(Operation):
         Examples of handled cases:
             |(a, b, c)| = |(1, ..., 3)|
             |(x_i, ..., x_j)| = |i, ..., j|
-        These are typically useful equivalences for proving matching
+        These are typically useful equalities for proving matching
         length requirements when instantiating a range of parameters.
         '''
-        return self._tested_equivalence(self._typical_equiv, assumptions,
+        return self._tested_equality(self._typical_eq, assumptions,
                                         simplify=False)
     
-    def _typical_equiv(self, assumptions=USE_DEFAULTS):        
+    def _typical_eq(self, assumptions=USE_DEFAULTS):        
         from proveit.number import one
         if not isinstance(self.operand, ExprTuple):
-            raise ValueError("Len.typical_equiv may only be performed "
+            raise ValueError("Len.typical_eq may only be performed "
                              "on a Len operating on an ExprTuple, not %s"
                              %self)
 
@@ -292,65 +292,65 @@ class Len(Operation):
             lambda_map = range_entry.lambda_map
             if start_index==one:
                 from proveit.core_expr_types.tuples._theorems_ import \
-                    range_from1_len_typical_equiv
-                return range_from1_len_typical_equiv.instantiate(
+                    range_from1_len_typical_eq
+                return range_from1_len_typical_eq.instantiate(
                         {f:lambda_map, i:end_index}, assumptions=assumptions)
             else:
                 from proveit.core_expr_types.tuples._theorems_ import \
-                    range_len_typical_equiv
-                return range_len_typical_equiv.instantiate(
+                    range_len_typical_eq
+                return range_len_typical_eq.instantiate(
                         {f:lambda_map, i:start_index, j:end_index},
                         assumptions=assumptions)
         elif not any(isinstance(entry, ExprRange) for entry in entries):
             if len(entries)==0:
                 from proveit.core_expr_types.tuples._theorems_ import \
-                    tuple_len_0_typical_equiv
-                return tuple_len_0_typical_equiv
+                    tuple_len_0_typical_eq
+                return tuple_len_0_typical_eq
             elif len(entries) < 10:
-                # Get a "typical equivalence" for the case when there
+                # Get a "typical equality" for the case when there
                 # are no ExprRange's.  For example,
                 # |(a, b, c)| = |(1, .., 3)|
                 import proveit.number.numeral.deci
                 n = len(entries)
-                equiv_thm = proveit.number.numeral.deci._theorems_\
-                                .__getattr__('tuple_len_%d_typical_equiv'%n)
+                eq_thm = proveit.number.numeral.deci._theorems_\
+                                .__getattr__('tuple_len_%d_typical_eq'%n)
                 repl_map = dict()
-                for param, entry in zip(equiv_thm.explicitInstanceParams(),
+                for param, entry in zip(eq_thm.explicitInstanceParams(),
                                         entries):
                     repl_map[param] = entry
-                return equiv_thm.instantiate(repl_map)
+                return eq_thm.instantiate(repl_map)
         elif (len(entries)==2 and not isinstance(entries[1], ExprRange)
                 and not isinstance(entries[0].body, ExprRange)):
             # Case of an extended range:
             # |(a_1, ..., a_n, b| = n+1 
             from proveit.core_expr_types.tuples._theorems_ import \
-                (extended_range_len_typical_equiv, 
-                 extended_range_from1_len_typical_equiv)
+                (extended_range_len_typical_eq, 
+                 extended_range_from1_len_typical_eq)
             assert isinstance(entries[0], ExprRange)
             range_lambda = entries[0].lambda_map
             range_start = entries[0].start_index
             range_end = entries[0].end_index
             if range_start==one:
-                return extended_range_from1_len_typical_equiv.instantiate(
+                return extended_range_from1_len_typical_eq.instantiate(
                         {f:range_lambda, b:entries[1], i:range_end},
                         assumptions=assumptions)
             else:
-                return extended_range_len_typical_equiv.instantiate(
+                return extended_range_len_typical_eq.instantiate(
                         {f:range_lambda, b:entries[1], 
                          i:range_start, j:range_end},
                         assumptions=assumptions)                    
-        raise NotImplementedError("Len.typical_equiv not implemented for "
+        raise NotImplementedError("Len.typical_eq not implemented for "
                                   "this case: %s.  Try Len.deduceEquality "
                                   "instead."%self)
 
-    def _tested_equivalence(self, equivalence_fn, assumptions=USE_DEFAULTS,
+    def _tested_equality(self, eq_fn, assumptions=USE_DEFAULTS,
                             simplify=True, disable_range_reduction=True):
         '''
-        Execute a function to get an equivalence, making sure that the
-        result is a proper equivalence, a Judgment for an
+        Execute a function to get an equality, making sure that the
+        result is a proper equality, a Judgment for an
         Equals expression with the lhs being self.  If
         disable_range_reduction, then disable range reduction while
-        deriving the equivalence to ensure it does not get reduced to
+        deriving the equality to ensure it does not get reduced to
         a different form.
         '''
         from proveit import Judgment
@@ -359,21 +359,21 @@ class Len(Operation):
                 ExprRange in defaults.disabled_auto_reduction_types)
         try:
             if disable_range_reduction:
-                # Disalbe ExprRange reduction while applying the
-                # equivalence function (to make sure the right side
+                # Disable ExprRange reduction while applying the
+                # eq_fn function (to make sure the right side
                 # is not reduced).
                 defaults.disabled_auto_reduction_types.add(ExprRange)
-            equiv = equivalence_fn(assumptions)
+            eq = eq_fn(assumptions)
         finally:
             # Restore 'defaults'.
             if disable_range_reduction and not was_range_reduction_disabled:
                 defaults.disabled_auto_reduction_types.remove(ExprRange)
         if simplify:
-            equiv = equiv.innerExpr().rhs.simplify(assumptions=assumptions)
-        assert isinstance(equiv, Judgment)
-        assert isinstance(equiv.expr, Equals)
-        assert equiv.lhs==self, ("%s differs from %s"%(equiv.lhs, self))
-        return equiv
+            eq = eq.innerExpr().rhs.simplify(assumptions=assumptions)
+        assert isinstance(eq, Judgment)
+        assert isinstance(eq.expr, Equals)
+        assert eq.lhs==self, ("%s differs from %s"%(eq.lhs, self))
+        return eq
     
     def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
                        minimal_automation=False):
@@ -382,17 +382,17 @@ class Len(Operation):
             raise ValueError("The 'equality' should be an Equals expression")        
         if equality.lhs != self:
             raise ValueError("The left side of 'equality' should be 'self'")
-        # Try a special-case "typical equivalence".
+        # Try a special-case "typical equality".
         if isinstance(equality.rhs, Len):
             if (isinstance(equality.rhs.operand, ExprTuple)
                     and isinstance(self.operand, ExprTuple)):
                 if (len(equality.rhs.operand) == 1 and 
                         isinstance(equality.rhs.operand[0], ExprRange)):
                     try:
-                        equiv = \
-                            self.typical_equiv(assumptions=assumptions)
-                        if equiv.expr==equality:
-                            return equiv
+                        eq = \
+                            self.typical_eq(assumptions=assumptions)
+                        if eq.expr==equality:
+                            return eq
                     except (NotImplementedError, ValueError):
                         pass
         
@@ -458,7 +458,7 @@ class Len(Operation):
         '''
         A simplification of a Len operation computes the length as a sum
         of the lengths of each item of the ExprTuple operand, returning
-        the equivalence between the Len expression and this computation,
+        the equality between the Len expression and this computation,
         simplified to the extent possible.  An item may be a singular element
         (contribution 1 to the length) or an iteration contributing its length.
         '''

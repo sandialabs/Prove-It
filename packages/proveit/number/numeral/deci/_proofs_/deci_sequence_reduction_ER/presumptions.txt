@@ -1,7 +1,7 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.range_from1_len
-proveit.core_expr_types.tuples.range_from1_len_typical_equiv
-proveit.core_expr_types.tuples.tuple_len_0_typical_equiv
+proveit.core_expr_types.tuples.range_from1_len_typical_eq
+proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.logic.boolean.falseEqFalse
 proveit.logic.boolean.implication.falseImpliesFalse
 proveit.logic.boolean.implication.falseImpliesTrue

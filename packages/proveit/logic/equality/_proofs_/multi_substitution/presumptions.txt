@@ -1,6 +1,6 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
-proveit.core_expr_types.tuples.tuple_len_0_typical_equiv
+proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.logic.boolean.conjunction.eachInBool
 proveit.logic.boolean.conjunction.unary_and_reduction
 proveit.logic.boolean.falseEqFalse

@@ -71,5 +71,5 @@ proveit.number.numeral.deci.posnat6
 proveit.number.numeral.deci.posnat7
 proveit.number.numeral.deci.posnat8
 proveit.number.numeral.deci.posnat9
-proveit.number.numeral.deci.tuple_len_2_typical_equiv
+proveit.number.numeral.deci.tuple_len_2_typical_eq
 # THEOREMS AND THEORIES TO EXCLUDE:

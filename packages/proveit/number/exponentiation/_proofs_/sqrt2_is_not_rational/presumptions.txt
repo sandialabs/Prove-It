@@ -137,7 +137,7 @@ proveit.number.numeral.deci.posnat7
 proveit.number.numeral.deci.posnat8
 proveit.number.numeral.deci.posnat9
 proveit.number.numeral.deci.tuple_len_2
-proveit.number.numeral.deci.tuple_len_2_typical_equiv
+proveit.number.numeral.deci.tuple_len_2_typical_eq
 proveit.number.ordering.positiveIfInRealsPos
 proveit.number.ordering.relaxGreater
 proveit.number.ordering.relaxLess

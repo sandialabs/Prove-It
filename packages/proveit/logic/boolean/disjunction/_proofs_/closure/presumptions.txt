@@ -4,9 +4,9 @@ proveit.core_expr_types.conditionals.condition_merger_reduction
 proveit.core_expr_types.conditionals.condition_prepend_reduction
 proveit.core_expr_types.conditionals.singular_conjunction_condition_reduction
 proveit.core_expr_types.tuples.extended_range_from1_len
-proveit.core_expr_types.tuples.extended_range_from1_len_typical_equiv
+proveit.core_expr_types.tuples.extended_range_from1_len_typical_eq
 proveit.core_expr_types.tuples.extended_range_len
-proveit.core_expr_types.tuples.extended_range_len_typical_equiv
+proveit.core_expr_types.tuples.extended_range_len_typical_eq
 proveit.core_expr_types.tuples.merge
 proveit.core_expr_types.tuples.merge_back
 proveit.core_expr_types.tuples.merge_extension
@@ -15,10 +15,10 @@ proveit.core_expr_types.tuples.partition
 proveit.core_expr_types.tuples.partition_back
 proveit.core_expr_types.tuples.partition_front
 proveit.core_expr_types.tuples.range_from1_len
-proveit.core_expr_types.tuples.range_from1_len_typical_equiv
+proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.core_expr_types.tuples.singular_nested_range_reduction
 proveit.core_expr_types.tuples.singular_range_reduction
-proveit.core_expr_types.tuples.tuple_len_0_typical_equiv
+proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.logic.boolean.conjunction.andIfBoth
 proveit.logic.boolean.conjunction.anyFromAnd
 proveit.logic.boolean.conjunction.eachInBool
@@ -117,7 +117,7 @@ proveit.number.numeral.deci.posnat7
 proveit.number.numeral.deci.posnat8
 proveit.number.numeral.deci.posnat9
 proveit.number.numeral.deci.tuple_len_1
-proveit.number.numeral.deci.tuple_len_1_typical_equiv
+proveit.number.numeral.deci.tuple_len_1_typical_eq
 proveit.number.ordering.relaxGreater
 proveit.number.ordering.relaxLess
 proveit.number.ordering.reverseGreater

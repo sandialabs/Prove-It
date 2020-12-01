@@ -1,5 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.core_expr_types.tuples.tuple_len_0_typical_equiv
+proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.logic.boolean.conjunction.emptyConjunctionEval
 proveit.logic.boolean.falseEqFalse
 proveit.logic.boolean.falseInBool

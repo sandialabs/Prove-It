@@ -2,5 +2,5 @@
 proveit.logic.equality.subRightSideInto
 proveit.logic.set_theory.enumeration.unfold
 proveit.number.numeral.deci.nat2
-proveit.number.numeral.deci.tuple_len_2_typical_equiv
+proveit.number.numeral.deci.tuple_len_2_typical_eq
 # THEOREMS AND THEORIES TO EXCLUDE:
