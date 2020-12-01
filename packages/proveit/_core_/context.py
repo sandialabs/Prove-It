@@ -354,13 +354,15 @@ class Context:
             ContextFolderStorage.active_context_folder_storage
         return context_folder_storage.proofNotebook(proof)    
     
-    def thmProofNotebook(self, theoremName, expr):
+    def thmProofNotebook(self, theoremName, expr, num_duplicates=0):
         '''
         Return the path of the proof notebook for a theorem with the 
         given name and expression, creating it if it does not already 
-        exist.
+        exist.  num_duplicates is the number of previous instances
+        of the expression that we have encountered.
         '''
-        return self._storage.thmProofNotebook(theoremName, expr)
+        return self._storage.thmProofNotebook(theoremName, expr,
+                                              num_duplicates)
 
     def stashExtraneousThmProofNotebooks(self):
         '''
@@ -371,18 +373,19 @@ class Context:
                 self.theoremNames())
     
     @staticmethod
-    def expressionNotebook(expr, unofficialNameKindContext=None,
+    def expressionNotebook(expr, nameKindContext=None,
                            completeSpecialExprNotebook=False):
         '''
-        Return the path of the expression notebook, creating it if it does not
-        already exist.  If 'unofficialNameKindContext' is provided,
-        it should be the (name, kind, context) for a special expression
-        that is not-yet-official (%end_[common/axioms/theorems] has not been
+        Return the path of the expression notebook, creating it if it
+        does not already exist.  If 'nameKindContext' is
+        provided, it should be the (name, kind, context) for a special 
+        expression that may or may not be complete/official
+        (%end_[common/axioms/theorems] has not been
         called yet in the special expressions notebook).
         '''
         # use the Storage object to generate/grab the expression notebook.
         return ContextFolderStorage.expressionNotebook(
-                expr, unofficialNameKindContext, completeSpecialExprNotebook)
+                expr, nameKindContext, completeSpecialExprNotebook)
                  
     @staticmethod
     def getStoredAxiom(fullname):

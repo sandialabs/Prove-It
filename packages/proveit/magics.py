@@ -477,8 +477,10 @@ class ProveItMagicCommands:
             # Update the expression notebooks now that these have been registered
             # as special expressions.
             for name, expr in self.definitions.items():
+                print("complete", name)
                 # remake the expression notebooks using the special expressions of the context
-                context.expressionNotebook(expr, completeSpecialExprNotebook=True)  
+                context.expressionNotebook(expr, nameKindContext = (name, kind, context),
+                                           completeSpecialExprNotebook=True)  
             
             if len(self.definitions)==0:
                 print("Context %s has no %s"%(context.name, kind if kind != 'common' else 'common expressions'))
@@ -812,23 +814,24 @@ class Assignments:
     
     def html_line(self, name, rightSide):
         lhs_html = name + ':'
-        unofficialNameKindContext = None
+        nameKindContext = None
         kind = proveItMagic.kind
         context = proveItMagic.context
         if kind in ('axioms', 'theorems', 'common'):
             if kind=='axioms' or kind=='theorems': kind = kind[:-1]
-            unofficialNameKindContext = (name, kind, context)
+            nameKindContext = (name, kind, context)
         rightSideStr, expr = None, None
         if isinstance(rightSide, Expression):
             expr = rightSide
-            rightSideStr = rightSide._repr_html_(unofficialNameKindContext=unofficialNameKindContext)
+            rightSideStr = rightSide._repr_html_(unofficialNameKindContext=nameKindContext)
         elif hasattr(rightSide, '_repr_html_'):
             rightSideStr = rightSide._repr_html_()
         if rightSideStr is None:
             rightSideStr = str(rightSide)
+        num_duplicates = len(proveItMagic.expr_names[rightSide])-1
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
-            proof_notebook_relurl = context.thmProofNotebook(name, expr)
+            proof_notebook_relurl = context.thmProofNotebook(name, expr, num_duplicates)
             status = 'conjecture without proof' # default
             try:
                 thm = context.getStoredTheorem(context.name + '.' + name)
@@ -842,12 +845,14 @@ class Assignments:
                         %(proof_notebook_relurl, name, status))
         if self.beginningProof:
             html = 'Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br>'
+        else:
+            html = ''
         html += '<strong id="%s">%s</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
             stored_thm = context.getStoredTheorem(context.name + '.' + name)
             dependencies_notebook_path = os.path.join(stored_thm.path, 'dependencies.ipynb')
             html += '(see <a class="ProveItLink" href="%s">dependencies</a>)<br>'%(relurl(dependencies_notebook_path))
-        if (kind in ('axiom', 'theorem', 'common')) and len(proveItMagic.expr_names[rightSide])>1:
+        if (kind in ('axiom', 'theorem', 'common')) and num_duplicates > 0:
             prev = proveItMagic.expr_names[rightSide][-2]
             if kind == 'theorem':
                 html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)<br>'%(prev, prev)

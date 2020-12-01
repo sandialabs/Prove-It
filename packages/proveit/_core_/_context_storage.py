@@ -368,8 +368,10 @@ class ContextStorage:
                 hash_to_old_name.pop(hash_id)
             special_hash_ids[name] = hash_id
             self._kindname_to_objhash[(kind, name)] = hash_id
-            context_folder_storage._objhash_to_name[expr_id] = name
-            context_folder_storage._objhash_to_name[hash_id] = name
+            context_folder_storage._objhash_to_names.setdefault(
+                expr_id, []).append(name)
+            context_folder_storage._objhash_to_names.setdefault(
+                hash_id, []).append(name)
             if folder != 'common':
                 kind = folder[:-1]
                 if name not in old_name_to_hash:
@@ -482,23 +484,28 @@ class ContextStorage:
                         expr_id = hash_id
                     else:
                         # For an axiom or theorem, we must read in the
-                        # unique_rep.pv_it file to get the expr_id.
-                        unique_rep_filename = os.path.join(
-                                self.pv_it_dir, folder, hash_id, 
+                        # unique_rep.pv_it file to get the judgment_id
+                        # and then read its uniequ_rep.pv_it to get the
+                        # expr_id.
+                        storage_id = self.name + '.' + folder + '.' + hash_id
+                        for _ in range(2):
+                            _context_folder_storage, hash_folder = \
+                                context_folder_storage._split(storage_id)
+                            unique_rep_filename = os.path.join(
+                                _context_folder_storage.path, hash_folder,
                                 'unique_rep.pv_it')
-                        with open(unique_rep_filename, 'r') as f:
-                            rep = f.read()
-                        # hash ids will be relative to the corresponding
-                        # folder, appropriately so.
-                        exprids = \
-                            context_folder_storage.\
-                            _extractReferencedStorageIds(
-                                    rep, context_folder_storage.context.name, 
-                                    context_folder_storage.folder)
-                        expr_id = exprids[0]
+                            with open(unique_rep_filename, 'r') as f:
+                                rep = f.read()
+                            storage_ids = \
+                                _context_folder_storage.\
+                                _extractReferencedStorageIds(rep)
+                            storage_id = storage_ids[0]
+                        expr_id = storage_id
                     self._kindname_to_objhash[(kind, name)] = hash_id
-                    context_folder_storage._objhash_to_name[expr_id] = name
-                    context_folder_storage._objhash_to_name[hash_id] = name
+                    context_folder_storage._objhash_to_names.setdefault(
+                        expr_id, []).append(name)
+                    context_folder_storage._objhash_to_names.setdefault(
+                        hash_id, []).append(name)
                     yield name
     
     def getAxiomHash(self, name):
@@ -653,10 +660,12 @@ class ContextStorage:
                 context._storage._allPresumedTheoremNames(theorem_name, presumed_theorem_names, presumption_chain+[presumption_name])
     """
 
-    def thmProofNotebook(self, theorem_name, expr):
+    def thmProofNotebook(self, theorem_name, expr, num_duplicates = 0):
         '''
         Return the relative url to the proof notebook, 
         creating it if it does not already exist.
+        num_duplicates is the number of previous instances
+        of the expression that we have encountered.
         '''
         proofs_path = os.path.join(self.directory, '_proofs_')
         proof_path = os.path.join(proofs_path, theorem_name)
@@ -667,12 +676,14 @@ class ContextStorage:
             self.context._contextFolderStorage('theorems') 
         expr_id = context_folder_storage._proveItStorageId(expr)
         expr_id = context_folder_storage._relative_to_explicit_prefix(expr_id)
-        if expr_id in context_folder_storage._prev_objhash_to_name:
-            old_name = context_folder_storage._prev_objhash_to_name[expr_id]
-            if theorem_name != old_name:
-                old_proof_path = os.path.join(proofs_path, old_name)
-                print("Renaming %s to %s"%(old_name, theorem_name))
-                os.rename(old_proof_path, proof_path)
+        if expr_id in context_folder_storage._prev_objhash_to_names:
+            old_names = context_folder_storage._prev_objhash_to_names[expr_id]
+            if num_duplicates < len(old_names):
+                old_name = old_names[num_duplicates]
+                if theorem_name != old_name:
+                    old_proof_path = os.path.join(proofs_path, old_name)
+                    print("Renaming %s to %s"%(old_name, theorem_name))
+                    os.rename(old_proof_path, proof_path)
         filename = os.path.join(proof_path, 'thm_proof.ipynb')
         if os.path.isfile(filename):
             # Check the theorem name and make sure it is correct.
@@ -842,13 +853,13 @@ class ContextFolderStorage:
             os.makedirs(self.path)
 
         # For 'common', 'axioms', 'theorems' folders, we map
-        # the object hash folder names to the name of the
-        # axiom, theorem, or common expression.
-        self._objhash_to_name = dict()
+        # the object hash folder names to the name(s) of the
+        # axiom, theorem, or common expression(s).
+        self._objhash_to_names = dict()
         # When regenerating common expression, axioms, or
         # theorems, we'll keep track of the previous
         # version.
-        self._prev_objhash_to_name = dict()
+        self._prev_objhash_to_names = dict()
     
     @staticmethod
     def getFolderStorageOfObj(obj):
@@ -874,7 +885,7 @@ class ContextFolderStorage:
         expressions of this context, return the address as a tuple.
         '''
         kind = ContextStorage._folder_to_kind(self.folder)
-        name = self._objhash_to_name[obj_hash_id]
+        name = self._objhash_to_names[obj_hash_id][0] # use the first instance.
         if kind == 'axiom' or kind=='theorem':
             name = name + '.expr'
         return kind, self.context_storage._specialExprModules[kind], name
@@ -900,11 +911,12 @@ class ContextFolderStorage:
         kind = ContextStorage._folder_to_kind(folder)
         # Load it before we unload it so we can then
         # store the previous version.
-        self.context_storage._loadSpecialNames(kind)
-        self._prev_objhash_to_name = dict(self._objhash_to_name)
-        for name in self._objhash_to_name.values():
-            self.context_storage._kindname_to_objhash.pop((kind, name), None)
-        self._objhash_to_name.clear()
+        list(self.context_storage._loadSpecialNames(kind))
+        self._prev_objhash_to_names = dict(self._objhash_to_names)
+        for names in self._objhash_to_names.values():
+            for name in names:
+                self.context_storage._kindname_to_objhash.pop((kind, name), None)
+        self._objhash_to_names.clear()
         if folder=='axioms':
             self.context_storage._axiom_names = None
             self.context_storage._loadedAxioms = dict()
@@ -1015,22 +1027,22 @@ class ContextFolderStorage:
     def _split(self, proveItStorageId):
         '''
         Split the given storage-id into a context name, folder, and 
-        the hash directory.  The context may be implicit (if in the
-        same context it is referenced), in which case the context name 
-        will be empty.
+        the hash directory.  Return the corresponding ContextFolderStorage
+        and hash folder.
         '''
+        from proveit._core_.context import Context
         if '.' in proveItStorageId:
             # in a different context or folder
             splitId = proveItStorageId.split('.')
             if len(splitId) == 2:
-                folder, hash_directory = splitId[0], splitId[1]
-                return '', folder, hash_directory
+                folder, hash_folder = splitId[0], splitId[1]
+                return self.context._contextFolderStorage(folder), hash_folder
             else:
-                context_name, folder, hash_directory = (
+                context_name, folder, hash_folder = (
                         '.'.join(splitId[:-2]), splitId[-2], splitId[-1])
-                return context_name, folder, hash_directory
-        return '', self.folder, proveItStorageId
-            
+                context = Context.getContext(context_name)
+                return context._contextFolderStorage(folder), hash_folder
+        return self, proveItStorageId
     
     def _storagePath(self, proveItStorageId):
         '''
@@ -1038,12 +1050,8 @@ class ContextFolderStorage:
         the given storage id.
         '''
         from .context import Context
-        context_name, folder, hash_directory = self._split(proveItStorageId)
-        if context_name == '':
-            return os.path.join(self.pv_it_dir, folder, hash_directory)
-        else:
-            pv_it_dir = Context.getContext(context_name)._storage.pv_it_dir
-            return os.path.join(pv_it_dir, folder, hash_directory)
+        context_folder_storage, hash_directory = self._split(proveItStorageId)
+        return os.path.join(context_folder_storage.path, hash_directory)
     
     def _proveItObjUniqueRep(self, proveItObject):
         '''
@@ -1082,13 +1090,13 @@ class ContextFolderStorage:
         else:
             return storage_id # already explicit
     
-    def _extractReferencedStorageIds(self, unique_rep, context_name, 
-                                     folder, storage_ids=None):
+    def _extractReferencedStorageIds(self, unique_rep, 
+                                     storage_ids=None):
         '''
         Given a unique representation string, returns the list of 
-        Prove-It storage ids of objects that are referenced.  A 
-        context_name may be given; if the Context is the one associated 
-        with this Storage object then the default may be used.
+        Prove-It storage ids of objects that are referenced.
+        These will be 'explicit' ids (e.g., with the full
+        context and folder path).
         '''
         from proveit import Expression, Judgment, Proof, Context
         if storage_ids is None:
@@ -1100,16 +1108,9 @@ class ContextFolderStorage:
             else:
                 # Assumed to be an expression then
                 storage_ids = Expression._extractReferencedObjIds(unique_rep)
-        if len(context_name) > 0 or folder != self.folder:
-            if len(context_name) == 0:
-                context = self.context
-            else:
-                context = Context.getContext(context_name)
-            other_folder_storage = context._contextFolderStorage(folder)
-            return [other_folder_storage._relative_to_explicit_prefix(storage_id)
-                    for storage_id in storage_ids]
-        return storage_ids
-
+        return [self._relative_to_explicit_prefix(storage_id)
+                for storage_id in storage_ids]
+    
     def _record_storage(self, obj_style_id, hash_id):
         '''
         Record the object's style id to (context_folder_storage, hash_id)
@@ -1231,13 +1232,13 @@ class ContextFolderStorage:
                 self.proofNotebook(proveItObject)
 
     @staticmethod
-    def expressionNotebook(expr, unofficialNameKindContext=None,
+    def expressionNotebook(expr, nameKindContext=None,
                            completeSpecialExprNotebook=False):
         '''
         Return the path of the expression notebook, creating it if it
-        does not already exist.  If 'unofficialNameKindContext' is
+        does not already exist.  If 'nameKindContext' is
         provided, it should be the (name, kind, context) for a special 
-        expression that is not-yet-official 
+        expression that may or may not be complete/official
         (%end_[common/axioms/theorems] has not been
         called yet in the special expressions notebook).
         '''
@@ -1251,12 +1252,13 @@ class ContextFolderStorage:
         if not isinstance(expr, Expression):
             raise ValueError("'expr' should be an Expression object")
         
+        if nameKindContext is not None:
+            name, kind, context = nameKindContext
         if completeSpecialExprNotebook:
             context_folder_storage = \
                 ContextFolderStorage.active_context_folder_storage
         else:
-            if unofficialNameKindContext is not None:
-                name, kind, context = unofficialNameKindContext
+            if nameKindContext is not None:
                 context_folder_storage = context._contextFolderStorage(
                         ContextStorage._kind_to_folder(kind))
             else:
@@ -1265,28 +1267,30 @@ class ContextFolderStorage:
         
         # Determine the kind and name (if it is a "special" expression),
         # and appropriate template to be used.
-        if unofficialNameKindContext is not None:
-            name, kind, context = unofficialNameKindContext
+        if completeSpecialExprNotebook:
+            assert nameKindContext is not None, (
+                "Should provide 'nameKindContext' when completing a "
+                "special expression notebook")
+            expr_id = context_folder_storage._proveItStorageId(expr)
+            names = context_folder_storage._objhash_to_names[expr_id]
+            if name not in names: 
+                raise KeyError("Unable to complete '%s', not found as a "
+                               "name for %s."%(name, expr))
+            kind = ContextStorage._folder_to_kind(
+                context_folder_storage.folder)
+            if kind=='common':
+                template_name = '_common_expr_template_.ipynb'
+            else:
+                template_name = '_special_expr_template_.ipynb'
+        elif nameKindContext is not None:
             if kind=='common':
                 template_name = '_unofficial_common_expr_template_.ipynb'
             else:
                 template_name = '_unofficial_special_expr_template_.ipynb'
         else:
-            # Is this a "special" expression?
-            try:
-                expr_id = context_folder_storage._proveItStorageId(expr)
-                name = context_folder_storage._objhash_to_name[expr_id]
-                kind = ContextStorage._folder_to_kind(
-                    context_folder_storage.folder)
-            except KeyError:
-                name = kind = None
-            if kind is not None:
-                if kind=='common':
-                    template_name = '_common_expr_template_.ipynb'
-                else:
-                    template_name = '_special_expr_template_.ipynb'
-            else:
-                template_name = '_expr_template_.ipynb'    
+            name = kind = None
+            template_name = '_expr_template_.ipynb'    
+
         if completeSpecialExprNotebook:
             assert 'common' in template_name or 'special' in template_name
         # Determine the appropriate hash folder to store the
@@ -1312,7 +1316,7 @@ class ContextFolderStorage:
             # Only build the notebook in the active folder storage
             nb = context_folder_storage._buildExpressionNotebook(
                 obj, expr, kind, name, full_hash_dir, template_name, 
-                unofficialNameKindContext)
+                nameKindContext, completeSpecialExprNotebook)
         else:
             nb = None
 
@@ -1410,8 +1414,8 @@ class ContextFolderStorage:
 
 
     def _buildExpressionNotebook(self, obj, expr, kind, name, full_hash_dir,
-                                 template_name,
-                                 unofficialNameKindContext=None):
+                                 template_name, nameKindContext=None, 
+                                 completeSpecialExprNotebook=False):
         '''
         Helper method of expressionNotebook.
         '''
@@ -1432,7 +1436,7 @@ class ContextFolderStorage:
                 obj, expr_classes_and_constructors, 
                 unnamed_subexpr_occurences, named_subexpr_addresses, 
                 named_items, 
-                can_self_import = (unofficialNameKindContext is None),
+                can_self_import = completeSpecialExprNotebook,
                 isSubExpr=False)
         # find sub-expression style ids that are used multiple times, 
         # these ones will be assigned to a variable
@@ -1576,8 +1580,7 @@ class ContextFolderStorage:
             nb = nb.replace('#CONTEXT#', self.context.name)
             nb = nb.replace('#TYPE#',class_name)
             nb = nb.replace('#TYPE_LINK#', type_link.replace('\\', '\\\\'))
-            if (unofficialNameKindContext is not None 
-                    or kind is not None):
+            if nameKindContext is not None:
                 kind_str = kind[0].upper() + kind[1:]
                 nb = nb.replace('#KIND#', kind_str)
                 nb = nb.replace('#kind#', kind_str.lower())
@@ -1924,21 +1927,12 @@ class ContextFolderStorage:
             Given an expression id, yield the ids of all of its 
             sub-expressions.
             '''
-            context_name, folder, hash_directory = self._split(expr_id)
-            #if hash_directory=='ad618bf3877c30c0b90910432253dfea91e55a040':
-            #    print(context_name, folder, hash_directory)
-            if context_name != '' and context_name != self.context.name: 
-                context = Context.getContext(context_name)
-                context_folder_storage = context._contextFolderStorage(folder)
+            context_folder_storage, hash_directory = self._split(expr_id)
+            if context_folder_storage.context != self.context:
                 # Load the "special names" of the context so we
                 # will know, for future reference, if this is a special 
                 # expression that may be addressed as such.
                 context_folder_storage.context_storage.loadSpecialNames()                
-            elif folder != self.folder:
-                context_folder_storage = \
-                    self.context._contextFolderStorage(folder)
-            else:
-                context_folder_storage = self
             exprid_to_storage[expr_id] = (context_folder_storage,
                                          hash_directory)
             hash_path = self._storagePath(expr_id)
@@ -1960,9 +1954,8 @@ class ContextFolderStorage:
                 styles_map[expr_id] = style_dict
                 dependent_refs = sub_expr_refs
                 dependent_ids = \
-                    self._extractReferencedStorageIds(
-                            unique_rep, context_name, folder,
-                            storage_ids=dependent_refs)
+                    context_folder_storage._extractReferencedStorageIds(
+                            unique_rep, storage_ids=dependent_refs)
                 sub_expr_ids_map[expr_id] = dependent_ids
                 #print('dependent_ids', dependent_ids)
                 return dependent_ids
@@ -2024,22 +2017,18 @@ class ContextFolderStorage:
         '''
         from proveit import Context, Proof, Axiom, Theorem
         from proveit._core_.judgment import Judgment
-        context_name, folder, hash_folder = self._split(storage_id)
-        if context_name == '':
-            context = self.context
-        else:
-            context = Context.getContext(context_name)
-        context_folder_storage = context._contextFolderStorage(folder)
+        context_folder_storage, hash_folder = self._split(storage_id)
         if context_folder_storage != self:
             # Make it from the proper ContextFolderStorage.
             return context_folder_storage.makeJudgmentOrProof(storage_id)
+        context = self.context
         hash_path = self._storagePath(storage_id)
         with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
             # extract the unique representation from the pv_it file
             unique_rep = f.read()
         subids = \
-            self._extractReferencedStorageIds(unique_rep, context_name, 
-                                              folder)
+            context_folder_storage._extractReferencedStorageIds(unique_rep)
+
         if unique_rep[:6] == 'Proof:':
             kind, full_name = Proof._extractKindAndName(unique_rep)
             context_name, name = full_name.rsplit('.', 1)
@@ -2070,12 +2059,9 @@ class ContextFolderStorage:
         '''
         from proveit._core_.proof import Proof
         from proveit._core_.context import Context
-        context_name, folder, hash_directory = self._split(proof_id)
-        if context_name=='':
-            context = self.context
-        else:
-            context = Context.getContext(context_name)
-        context_folder_storage = context._contextFolderStorage(folder)
+        context_folder_storage, hash_directory = self._split(proof_id)
+        context = context_folder_storage.context
+        folder = context_folder_storage.folder
         hash_path = context_folder_storage._storagePath(proof_id)        
         with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
             # extract the unique representation from the pv_it file
@@ -2195,11 +2181,11 @@ class ContextFolderStorage:
             print("Unable to remove %s.\n  Skipping clean step "
                   "(don't worry, it's not critical)"%name)
         if self.folder in ('axioms', 'theorems'):
-            # When 'cleaning' the theorems folder, we will also
+            # When 'cleaning' the axioms or theorems folder, we will also
             # remove any obsolete 'used_by' folders or 'complete'
             # files.
             for hash_subfolder in os.listdir(self.path):
-                if not hash_subfolder in self._objhash_to_name:
+                if hash_subfolder not in self._objhash_to_names:
                     used_by_path = os.path.join(self.path, hash_subfolder,
                                                 'used_by')
                     if os.path.isdir(used_by_path):
@@ -2215,11 +2201,11 @@ class ContextFolderStorage:
                         except OSError:
                             unable_to_remove_warning(complete_path)                            
         
-        for hash_folder in paths_to_remove:
+        for hashpath in paths_to_remove:
             try:
-                shutil.rmtree(hash_folder)
+                shutil.rmtree(hashpath)
             except OSError:
-                unable_to_remove_warning(hash_folder)
+                unable_to_remove_warning(hashpath)
     
     def containsAnyExpression(self):
         '''
