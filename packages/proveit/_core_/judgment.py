@@ -227,7 +227,7 @@ class Judgment:
     def __hash__(self):
         return self._meaning_id
         
-    def beginProof(self, theorem): #, presuming=tuple(), justRecordPresumingInfo=False):
+    def beginProof(self, theorem):
         '''
         Begin a proof for a theorem.  Only use other theorems that are in 
         the presuming list of theorems/packages or theorems that are required,
@@ -244,46 +244,6 @@ class Judgment:
             raise TypeError('Only begin a proof for a Theorem')
         if theorem.provenTruth != self:
             raise ValueError('Inconsistent theorem for the Judgment in beginProof call')
-        
-        """
-        # Note: all previous theorems of the context are presumed automatically.
-        context = theorem.context
-        num_prev_thms = 0 # number of previous theorems within the context
-        for prev_thm_name in context.theoremNames():
-            if prev_thm_name == theorem.name:
-                break # concludes all "previous" theorems of the context
-            if (context.name + '.' +  prev_thm_name) in presuming:
-                raise ValueError("Do not explicitly presuming any previous theorems of the context.  They are automatically presumed.")
-            num_prev_thms += 1
-        
-        # split the presuming information into specific theorems (which are transitively presumed)
-        # and entire contexts (which are not transitively presumed only applies to theorems of
-        # the other context that do not presume this one).
-        explicitly_presumed_thm_names = [] # list of theorem name strings
-        presumed_context_names = [] # list of context name strings
-        for presumption_name in presuming:
-            if '.' in presumption_name:
-                try:
-                    context_name, theorem_name = presumption_name.rsplit('.', 1)
-                    context = Context.getContext(context_name)
-                    # Ensure we load the theorem and derive its automatic side-effects
-                    # for these explicitly presumed theorems (but not the indirectly
-                    # presumed ones).
-                    context.getTheorem(theorem_name)
-                    # it is a theorem
-                    explicitly_presumed_thm_names.append(presumption_name) # append as a string
-                    continue # continue to the next thing
-                except (ContextException, KeyError):
-                    pass
-            # it must not be a theorem; it should be a Context.
-            presumed_context_names.append(presumption_name) # not a theorem; must be a context
-        
-        # record the explicitly presumed theorems
-        theorem.recordPresumedContexts(sorted(presumed_context_names))
-        theorem.recordPresumedTheorems(sorted(explicitly_presumed_thm_names))
-        if justRecordPresumingInfo: return self.expr
-        print("Recorded 'presuming' information")
-        """
         
         # The full list of presumed theorems includes all previous theorems
         # of the context and all indirectly presumed theorems via transitivity
@@ -314,16 +274,6 @@ class Judgment:
         """
         if self._checkIfReadyForQED(self.proof()):
             return self.expr # already proven
-        """
-        if len(presumed_context_names) > 0:
-            print("Presuming theorems in %s (except any that presume this theorem)."%', '.join(sorted(presumed_context_names)))
-        if len(explicitly_presumed_thm_names) > 0:
-            theorem_or_theorems = 'theorem' if len(explicitly_presumed_thm_names)==1 else 'theorems'
-            print("Presuming %s %s (applied transitively)."%(', '.join(sorted(str(thm) for thm in explicitly_presumed_thm_names)), theorem_or_theorems))
-        if num_prev_thms > 0:
-            theorem_or_theorems = 'theorem' if num_prev_thms==1 else 'theorems'
-            print("Presuming previous %s (applied transitively)."%theorem_or_theorems)
-        """
         theorem._meaningData._unusableProof = theorem # can't use itself to prove itself
         return self.expr
     

@@ -411,7 +411,7 @@ class ProveItMagicCommands:
         context.set_active_folder(None)
         return show_proof
     
-    def proving(self, theorem_name, presumptions, justRecordPresumingInfo=False):
+    def proving(self, theorem_name):
         # the context should be up a directory from the _proofs_ directory
         import proveit
         active_folder = '_proof_' + theorem_name
@@ -425,7 +425,7 @@ class ProveItMagicCommands:
         finally:
             proveit.defaults.automation = True
         proving_theorem_truth = proving_theorem.provenTruth
-        return proving_theorem_truth.beginProof(proving_theorem) #, presumptions, justRecordPresumingInfo=justRecordPresumingInfo)
+        return proving_theorem_truth.beginProof(proving_theorem)
         
     def qed(self):
         import proveit
@@ -702,23 +702,8 @@ class ProveItMagic(Magics, ProveItMagicCommands):
                                                  
     @line_magic
     def proving(self, line):        
-        theorem_name, presuming_str = str(line.strip()).split(' ', 1)
-        if not presuming_str.find('presuming ') == 0:
-            print("Format: %proving <theorem_name> presuming [<list of theorems / context-names>]")
-            return
-        args = presuming_str.split(' ', 1)[-1].strip('[]').split(',')
-        presumptions = [arg.strip() for arg in args if arg.strip() != '']
-        # The list of 'presuming' theorems/context-names may be composed of full-path strings containing '.'s
-        # or may be actual theorem variables defined in the IPython sesson.  The latter
-        # instances will be converted to strings.
-        for k, arg in enumerate(list(presumptions)):
-            if '.' not in arg:
-                judgment = self.shell.user_ns[arg]
-                if not isinstance(judgment, Judgment) or not isinstance(judgment.proof(), Theorem):
-                    raise ValueError("Presuming list must be composed of full-path theorem/context-name containing '.'s or be Judgment variable representing a Theorem")
-                thm = judgment.proof()
-                presumptions[k] = str(thm) # full path of theorem 
-        begin_proof_result = ProveItMagicCommands.proving(self, theorem_name, presumptions)
+        theorem_name = line.strip()
+        begin_proof_result = ProveItMagicCommands.proving(self, theorem_name)
         assert isinstance(begin_proof_result, Expression), "Expecting result of 'proving' to be an expression"
         # assign the theorem name to the theorem expression
         # and display this assignment
