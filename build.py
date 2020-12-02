@@ -38,7 +38,7 @@ lt.use_breqn = False
 default_paths = ['packages/proveit', 'tutorial']#, 'tutorial/socks_demo']
 
 def findTheoryPaths(path):
-    if os.path.isfile(os.path.join(path, '_context_.ipynb')) or os.path.isfile(os.path.join(path, '_theory_.ipynb')):
+    if os.path.isfile(os.path.join(path, '_theory_.ipynb')):
         yield path
         sub_theories_txt = os.path.join(path, '_sub_theories_.txt')
         if os.path.isfile(sub_theories_txt):
