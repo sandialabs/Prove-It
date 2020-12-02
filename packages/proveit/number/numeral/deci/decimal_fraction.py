@@ -3,7 +3,7 @@ from proveit.number.set.integer.deci import WholeDecimal
 
 class DecimalFraction(Operation):
     # operator of the DecimalFraction operation.
-    _operator_ = Literal(stringFormat='DecimalFraction',context=__file__)   
+    _operator_ = Literal(stringFormat='DecimalFraction',theory=__file__)   
     
     def __init__(self, integer_part, fractional_part):
         Operation.__init__(self, DecimalFraction._operator_, [integer_part, fractional_part])

@@ -7,7 +7,7 @@ from proveit.number import one, two, Div, frac, num
 
 class Exp(Operation):
     # operator of the Exp operation.
-    _operator_ = Literal(stringFormat='Exp', context=__file__)    
+    _operator_ = Literal(stringFormat='Exp', theory=__file__)    
     
     def __init__(self, base, exponent):
         r'''

@@ -14,7 +14,7 @@ class SetEquiv(TransitiveRelation):
     '''
     # operator for the SetEquiv relation
     _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong',
-                         context=__file__)        
+                         theory=__file__)        
     
     # map Expressions to sets of Judgments of set equivalences that
     # involve the Expression on the left hand or right hand side.

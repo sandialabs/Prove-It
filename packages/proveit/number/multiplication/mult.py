@@ -13,7 +13,7 @@ from proveit import TransRelUpdater
 
 class Mult(Operation):
     # operator of the Mult operation.
-    _operator_ = Literal(stringFormat='*', latexFormat=r'\cdot', context=__file__)
+    _operator_ = Literal(stringFormat='*', latexFormat=r'\cdot', theory=__file__)
 
     # Multiplying two numerals may import a theorem for the evaluation.
     # Track which ones we have encountered already.

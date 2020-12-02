@@ -95,7 +95,7 @@ class DisabledAutoReductionTypes(set):
     '''
     The DisabledAutoReductionTypes class stores the set of Expression
     class types whose auto-reduction feature is currently disabled.
-    It is a "context manager" with an __enter__() and __exit__() 
+    It is a "theory manager" with an __enter__() and __exit__() 
     method such that one may do the following:
         
     with defaults.disabled_auto_reduction_types as disabled_types:

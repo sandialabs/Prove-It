@@ -8,7 +8,7 @@ from proveit._core_.proof import Generalization
 class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, instanceParamOrParams, instanceExpr, *,
                  domain=None, domains=None, condition=None,

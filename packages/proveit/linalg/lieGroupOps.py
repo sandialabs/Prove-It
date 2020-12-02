@@ -8,7 +8,7 @@ class SU(Operation):
     '''
 
 	  # the literal operator of the SU operation
-    _operator_ = Literal(stringFormat='SU', context=__file__)
+    _operator_ = Literal(stringFormat='SU', theory=__file__)
 
 
     def __init__(self, n):

@@ -15,7 +15,7 @@ class InnerExpr:
     any sub-expression (or the 'assumptions' in the Judgment case)
     via accessing sub-expression attributes (or 'assumptions').
     This will allow us to manipute the inner expression in the
-    context of the containing Expression/Judgment object.  One can 
+    theory of the containing Expression/Judgment object.  One can 
     change the style of the inner expression or replace it with an 
     equivalent form.
     

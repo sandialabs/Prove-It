@@ -42,7 +42,7 @@ def subsetSequence(operators, operands):
 class SubsetEq(SubsetRelation):
     # operator of the SubsetEq operation
     _operator_ = Literal(stringFormat='subseteq', latexFormat=r'\subseteq',
-                         context=__file__)
+                         theory=__file__)
 
     # map left-hand-sides to SubsetEq Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
@@ -191,7 +191,7 @@ class SubsetEq(SubsetRelation):
 class NotSubsetEq(Operation):
     # operator of the NotSubsetEq operation
     _operator_ = Literal(stringFormat='nsubseteq', latexFormat=r'\nsubseteq',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, subset, superset):
         Operation.__init__(self, NotSubsetEq._operator_, (subset, superset))
@@ -242,7 +242,7 @@ class ProperSubset(SubsetRelation):
     '''
     # operator of the Subset operation
     _operator_ = Literal(stringFormat='proper_subset', latexFormat=r'\subset',
-                         context=__file__)
+                         theory=__file__)
 
     # map left-hand-sides to ProperSubset Judgments
     #   (populated in TransitivityRelation.sideEffects)
@@ -344,7 +344,7 @@ class NotProperSubset(Operation):
     # operator for the NotProperSubset operation
     _operator_ = Literal(stringFormat='not_proper_subset',
                          latexFormat=r'\not\subset',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, subset, superset):
         Operation.__init__(self, NotProperSubset._operator_, (subset, superset))

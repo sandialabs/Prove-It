@@ -6,7 +6,7 @@ from proveit.number.sets.number_set import NumberSet
 
 class RealSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
+        NumberSet.__init__(self, 'Reals',r'\mathbb{R}', theory=__file__)
 
     def membershipSideEffects(self, judgment):
         '''
@@ -26,7 +26,7 @@ class RealSet(NumberSet):
 
 class RealPosSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
+        NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', theory=__file__)
 
     def membershipSideEffects(self, judgment):
         '''
@@ -68,7 +68,7 @@ class RealPosSet(NumberSet):
 
 class RealNegSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
+        NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', theory=__file__)
 
     def membershipSideEffects(self, judgment):
         '''
@@ -111,7 +111,7 @@ class RealNegSet(NumberSet):
 class RealNonNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{\ge 0}',
-                           context=__file__)
+                           theory=__file__)
 
     def membershipSideEffects(self, judgment):
         '''

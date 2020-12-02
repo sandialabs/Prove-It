@@ -12,7 +12,7 @@ import re
 from proveit._core_.judgment import Judgment
 from proveit._core_._unique_data import meaningData, styleData
 from .defaults import defaults
-from .context import Context
+from .theory import Theory
 
 class Proof:
 
@@ -174,7 +174,7 @@ class Proof:
         '''
         # Internally, for self._meaning_rep and self._style_rep, we will use self.requiredTruths in the unique representation
         # and the proofs are subject to change (if anything is disabled).
-        # For external storage (see _context_storage.py), we will use self.requiredProofs, locking the mapping from KnonwTruths of self.requiredTruths to Proofs.
+        # For external storage (see _theory_storage.py), we will use self.requiredProofs, locking the mapping from KnonwTruths of self.requiredTruths to Proofs.
         required_objs = (self.requiredProofs
                          if hasattr(self, 'requiredProofs')
                          else self.requiredTruths)
@@ -224,7 +224,7 @@ class Proof:
         return (kind, full_name)
 
     @staticmethod
-    def _showProof(context, folder, proof_id, unique_rep):
+    def _showProof(theory, folder, proof_id, unique_rep):
         '''
         Given a unique representation string, returns a _ShowProof
         object that mocks up a stored proof for the purposes of
@@ -255,7 +255,7 @@ class Proof:
             groups.append([objId for objId in objIds if len(objId) > 0])
         if proof_id in _ShowProof.show_proof_by_id:
             return _ShowProof.show_proof_by_id[proof_id]
-        return _ShowProof(context, folder, proof_id, step_info, groups)
+        return _ShowProof(theory, folder, proof_id, step_info, groups)
 
     def isUsable(self):
         '''
@@ -337,8 +337,8 @@ class Proof:
         Theorem or Axiom, this is overridden to return the link to
         the theorem/axiom definition.
         '''
-        context = Context()
-        return context.proofNotebook(self)
+        theory = Theory()
+        return theory.proofNotebook(self)
 
     def __setattr__(self, attr, value):
         '''
@@ -428,7 +428,7 @@ class Proof:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
             if proof.stepType() in {'axiom', 'theorem', 'conjecture'}:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
-                html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
+                html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.theory) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
         if any_marked:
             html += ('<tr><td colspan=4 style="text-align:left">'
@@ -460,7 +460,7 @@ class Proof:
             if proof.stepType()=='instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
             if proof.stepType()=='axiom' or proof.stepType()=='theorem':
-                out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
+                out_str += '\t' + str(proof.theory) + '.' + proof.name + '\n'
         if any_marked:
             out_str += ('* equality replacement requirements\n')
         return out_str
@@ -534,12 +534,12 @@ class Assumption(Proof):
         return 'assumption'
 
 class Axiom(Proof):
-    def __init__(self, expr, context, name):
-        if not isinstance(context, Context):
-            raise ValueError("An axiom 'context' must be a Context object")
+    def __init__(self, expr, theory, name):
+        if not isinstance(theory, Theory):
+            raise ValueError("An axiom 'theory' must be a Theory object")
         if not isinstance(name, str):
             raise ValueError("An axiom 'name' must be a string")
-        self.context = context
+        self.theory = theory
         self.name = name
         Proof.__init__(self, Judgment(expr, frozenset()), [])
 
@@ -550,8 +550,8 @@ class Axiom(Proof):
         return 'axiom'
 
     def _storedAxiom(self):
-        from ._context_storage import StoredAxiom
-        return StoredAxiom(self.context, self.name)
+        from ._theory_storage import StoredAxiom
+        return StoredAxiom(self.theory, self.name)
 
     def getLink(self):
         '''
@@ -572,17 +572,17 @@ class Axiom(Proof):
         return self._storedAxiom().allDependents()
 
     def __str__(self):
-        return self.context.name + '.' + self.name
+        return self.theory.name + '.' + self.name
 
 class Theorem(Proof):
     allTheorems = []
 
-    def __init__(self, expr, context, name):
-        if not isinstance(context, Context):
-            raise ValueError("A theorem 'package' must be a Context object")
+    def __init__(self, expr, theory, name):
+        if not isinstance(theory, Theory):
+            raise ValueError("A theorem 'package' must be a Theory object")
         if not isinstance(name, str):
             raise ValueError("A theorem 'name' must be a string")
-        self.context = context
+        self.theory = theory
         self.name = name
         # keep track of proofs that may be used to prove the theorem
         # before 'beginProof' is called so we will have the proof handy.
@@ -605,10 +605,10 @@ class Theorem(Proof):
         return {self}
 
     def __str__(self):
-        return self.context.name + '.' + self.name
+        return self.theory.name + '.' + self.name
 
     def __repr__(self):
-        return self.context.name + '.' + self.name
+        return self.theory.name + '.' + self.name
 
     def theoremNameAndContainingTheories(self):
         '''
@@ -626,8 +626,8 @@ class Theorem(Proof):
             theorem._setUsability()
 
     def _storedTheorem(self):
-        from ._context_storage import StoredTheorem
-        return StoredTheorem(self.context, self.name)
+        from ._theory_storage import StoredTheorem
+        return StoredTheorem(self.theory, self.name)
 
     def getLink(self):
         '''
@@ -636,18 +636,18 @@ class Theorem(Proof):
         return self._storedTheorem().getProofLink()
     
     """
-    def recordPresumedContexts(self, presumed_context_names):
+    def recordPresumedTheories(self, presumed_theory_names):
         '''
-        Record information about what other contexts are
+        Record information about what other theories are
         presumed in the proof of this theorem.
         '''
-        self._storedTheorem().recordPresumedContexts(presumed_context_names)
+        self._storedTheorem().recordPresumedTheories(presumed_theory_names)
 
-    def presumedContexts(self):
+    def presumedTheories(self):
         '''
-        Return the list of presumed contexts.
+        Return the list of presumed theories.
         '''
-        return self._storedTheorem().presumedContexts()
+        return self._storedTheorem().presumedTheories()
 
     def recordPresumedTheorems(self, explicitly_presumed_theorem_names):
         '''
@@ -667,7 +667,7 @@ class Theorem(Proof):
         '''
         Return the set of full names of presumed theorems that are
         directly or indirectly presumed by the theorem of the given name
-        in this context.
+        in this theory.
         '''
         return self._storedTheorem().getAllPresumedTheoremNames()
     """
@@ -758,7 +758,7 @@ class Theorem(Proof):
         When Judgment.theoremBeingProven is None, all Theorems are allowed.
         Otherwise only Theorems named in the Judgment.presumingTheoremNames set
         or contained within any of the Judgment.presumingTheories
-        (i.e., context) are allowed.
+        (i.e., theory) are allowed.
         '''
         #from proveit.certify import isFullyProven
         if Judgment.theoremBeingProven is None:
@@ -783,16 +783,16 @@ class Theorem(Proof):
             else:
                 presumed = False
             if presumed:
-                # This Theorem is being presumed specifically, or a context in which it is contained is presumed.
-                # Presumption via context (a.k.a. prefix) is contingent upon not having a mutual presumption
-                # (that is, some theorem T can presume everything in another context except for theorems
+                # This Theorem is being presumed specifically, or a theory in which it is contained is presumed.
+                # Presumption via theory (a.k.a. prefix) is contingent upon not having a mutual presumption
+                # (that is, some theorem T can presume everything in another theory except for theorems
                 # that presume T or, if proven, depend upon T).
                 # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
                 # is being proven.
                 # check the "presuming information, recursively, for circular logic.
                 my_possible_dependents, _ = stored_theorem.getPresumptionsAndExclusions()
                 # If this theorem has a proof, include all dependent theorems as
-                # presumed (this may have been presumed via context, so this can contain
+                # presumed (this may have been presumed via theory, so this can contain
                 # more information than the specifically presumed theorems).
                 if stored_theorem.hasProof():
                     my_possible_dependents.update(stored_theorem.allUsedTheoremNames())
@@ -1406,38 +1406,38 @@ class _ShowProof:
     # Map proof_id's to _ShowProof objects that have been created.
     show_proof_by_id = dict()
 
-    def __init__(self, context, folder, proof_id, stepInfo,
+    def __init__(self, theory, folder, proof_id, stepInfo,
                  refObjIdGroups):
         self._style_id = proof_id
         if '_' in stepInfo:
             # Must be an axiom or theorem with the format
-            # axiom_context.name or theorem_context.name
+            # axiom_theory.name or theorem_theory.name
             self.step_type_str, full_name = stepInfo.split('_', 1)
             assert self.step_type_str in ('axiom', 'theorem')
             full_name_segments = full_name.split('.')
-            context_name = '.'.join(full_name_segments[:-1])
-            self.context =  Context.getContext(context_name)
+            theory_name = '.'.join(full_name_segments[:-1])
+            self.theory =  Theory.getTheory(theory_name)
             self.name = full_name_segments[-1]
         else:
-            self.context = context
+            self.theory = theory
             self.step_type_str = stepInfo
-        self.context_folder_storage = context_folder_storage = \
-            self.context._contextFolderStorage(folder)
+        self.theory_folder_storage = theory_folder_storage = \
+            self.theory._theoryFolderStorage(folder)
         if self.step_type_str=='instantiation':
             # Extract the mapping information.
             group = refObjIdGroups[0]
             key_mapping_pairs = \
-                [(context_folder_storage.makeExpression(group[i]),
-                  context_folder_storage.makeExpression(group[i+1])) 
+                [(theory_folder_storage.makeExpression(group[i]),
+                  theory_folder_storage.makeExpression(group[i+1])) 
                     for i in range(0, len(group), 2)]
             self.mapping_key_order = [key for key, value in key_mapping_pairs]
             self.mapping = dict(key_mapping_pairs)
         self.provenTruth = \
-            context_folder_storage.makeJudgmentOrProof(
+            theory_folder_storage.makeJudgmentOrProof(
                 refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
-            [context.getShowProof(obj_id.rstrip('*')) for obj_id
+            [theory.getShowProof(obj_id.rstrip('*')) for obj_id
              in refObjIdGroups[-1]]
         self.markedRequiredTruthIndices = \
             {k for k, obj_id in enumerate(refObjIdGroups[-1])
@@ -1453,13 +1453,13 @@ class _ShowProof:
         return self.step_type_str
 
     def getLink(self):
-        from ._context_storage import StoredAxiom, StoredTheorem
+        from ._theory_storage import StoredAxiom, StoredTheorem
         if self.step_type_str=='axiom':
-            return StoredAxiom(self.context, self.name).getDefLink()
+            return StoredAxiom(self.theory, self.name).getDefLink()
         elif self.step_type_str in ('theorem', 'conjecture'):
-            return StoredTheorem(self.context, self.name).getProofLink()
+            return StoredTheorem(self.theory, self.name).getProofLink()
         else:
-            return self.context_folder_storage.proofNotebook(self)
+            return self.theory_folder_storage.proofNotebook(self)
 
     def _single_mapping(self, *args):
         return Instantiation._single_mapping(self, *args)

@@ -8,7 +8,7 @@ class InverseFourierTransform(Operation):
 
     # the literal operator(s) of the InverseFourierTransform operation
     _operator_ = Literal(stringFormat='FT^{dag}',
-                         latexFormat=r'{\mathrm {FT}}^{\dag}', context=__file__)
+                         latexFormat=r'{\mathrm {FT}}^{\dag}', theory=__file__)
 
     def __init__(self, n):
         '''

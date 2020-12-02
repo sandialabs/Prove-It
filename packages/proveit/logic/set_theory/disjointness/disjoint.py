@@ -8,7 +8,7 @@ class Disjoint(Function):
     We define this property to be True when given zero or one set
     (there are no pairs of sets, so all pairs are vacuously disjoint).
     '''
-    _operator_ = Literal('disjoint', r'\textrm{disjoint}', context=__file__)
+    _operator_ = Literal('disjoint', r'\textrm{disjoint}', theory=__file__)
     
     def __init__(self, *sets):
         Function.__init__(self, Disjoint._operator_, sets)

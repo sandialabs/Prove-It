@@ -5,7 +5,7 @@ from proveit.number.sets.number_set import NumberSet
 
 class ComplexSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Complexes', r'\mathbb{C}', context=__file__)
+        NumberSet.__init__(self, 'Complexes', r'\mathbb{C}', theory=__file__)
 
     def deduceInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from .theorems import inComplexesIsBool

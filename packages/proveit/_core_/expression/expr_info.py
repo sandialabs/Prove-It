@@ -47,7 +47,7 @@ class ExpressionInfo:
                 if len(expr._coreInfo)>4:
                     outStr += indent + 'extraCoreInfo: ' + str(expr._coreInfo[4:]) + '\n'                    
                 if isinstance(expr, Literal):
-                    outStr += indent + 'context: ' + expr.context.name + '\n'
+                    outStr += indent + 'theory: ' + expr.theory.name + '\n'
                 outStr += indent + 'class: ' + str(expr.__class__) + '\n'
             if isinstance(expr, NamedExprs):
                 for key in list(expr.keys()):
@@ -149,7 +149,7 @@ class ExpressionInfo:
                 # not a core expression so show the actual class when showing the details
                 html += '<tr><td colspan=4 style="text-align:left"><strong>class:</strong> %s</td></tr>\n'%expr._class_path()
             if self.show_details and isinstance(expr, Literal):
-                html += '<tr><td colspan=4 style="text-align:left"><strong>context:</strong> %s</td></tr>\n'%expr.context.name
+                html += '<tr><td colspan=4 style="text-align:left"><strong>theory:</strong> %s</td></tr>\n'%expr.theory.name
                 if len(expr._coreInfo)>4:
                     html += '<tr><td colspan=4 style="text-align:left"><strong>extraCoreInfo:</strong> %s</td></tr>\n'%str(expr._coreInfo[4:])
         html += '</table>\n'

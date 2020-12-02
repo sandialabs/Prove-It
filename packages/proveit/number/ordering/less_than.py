@@ -66,7 +66,7 @@ class LesserSequence(OrderingSequence):
 
 class Less(LesserRelation):
     # operator of the Less operation.
-    _operator_ = Literal(stringFormat='<', context=__file__)
+    _operator_ = Literal(stringFormat='<', theory=__file__)
     
     # map left-hand-sides to "<" Judgments
     #   (populated in TransitivityRelation.sideEffects)
@@ -392,7 +392,7 @@ class Less(LesserRelation):
 
 class LessEq(LesserRelation):
     # operator of the LessEq operation.
-    _operator_ = Literal(stringFormat='<=', latexFormat=r'\leq', context=__file__)
+    _operator_ = Literal(stringFormat='<=', latexFormat=r'\leq', theory=__file__)
     
     # map left-hand-sides to "<=" Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)

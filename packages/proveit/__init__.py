@@ -3,8 +3,8 @@ if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
 
 from ._core_ import (
-        defaults, USE_DEFAULTS, InvalidAssumptions, Context, 
-        ContextException,
+        defaults, USE_DEFAULTS, InvalidAssumptions, Theory, 
+        TheoryException,
         Expression, traverse_inner_expressions, used_vars, 
         possibly_free_var_ranges, free_vars, attempt_to_simplify,
         InnerExpr, expressionDepth,
@@ -54,7 +54,7 @@ def reset():
     Operation._clear_()
     Judgment._clear_()
     Proof._clear_()
-    Context._clear_()
+    Theory._clear_()
     defaults.reset()
     if hasattr(magics, 'proveItMagic'):
         magics.proveItMagic.reset()

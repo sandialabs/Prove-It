@@ -6,7 +6,7 @@ from proveit.abstract_algebra.generic_methods import apply_commutation_thm, appl
 
 class Or(Operation):
     # The operator of the Or operation
-    _operator_ = Literal(stringFormat='or', latexFormat=r'\lor', context=__file__)
+    _operator_ = Literal(stringFormat='or', latexFormat=r'\lor', theory=__file__)
 
     trivialDisjunctions = set() #used to avoid infinite recursion inside of unaryReduction
 

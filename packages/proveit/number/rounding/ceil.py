@@ -6,7 +6,7 @@ from proveit.number.rounding.rounding_methods import (
 
 class Ceil(Function):
     # operator of the Ceil operation.
-    _operator_ = Literal(stringFormat='ceil', context=__file__)
+    _operator_ = Literal(stringFormat='ceil', theory=__file__)
     
     def __init__(self, A):
         Function.__init__(self, Ceil._operator_, A)

@@ -6,7 +6,7 @@ from proveit._common_ import n
 
 class NaturalSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', context=__file__)
+        NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', theory=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import naturalsLowerBound
@@ -32,7 +32,7 @@ class NaturalSet(NumberSet):
 
 class NaturalPosSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', context=__file__)
+        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', theory=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import naturalsPosLowerBound

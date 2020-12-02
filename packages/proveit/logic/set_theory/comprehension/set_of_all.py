@@ -5,7 +5,7 @@ from proveit._common_ import x, y, f, P, Q, S
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
     _operator_ = Literal(stringFormat='SetOfAll',
-                         latexFormat=r'\textrm{SetOfAll}', context=__file__)
+                         latexFormat=r'\textrm{SetOfAll}', theory=__file__)
     _init_argname_mapping_ = {'instanceElement':'instanceExpr'}
 
     def __init__(self, instanceParamOrParams, instanceElement,

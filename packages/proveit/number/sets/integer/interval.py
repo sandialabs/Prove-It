@@ -3,7 +3,7 @@ from proveit._common_ import a, b, n
 
 class Interval(Operation):
     # operator of the Interval operation.
-    _operator_ = Literal(stringFormat='Interval',context=__file__)   
+    _operator_ = Literal(stringFormat='Interval',theory=__file__)   
     
     r'''
     Contiguous set of integers, from lowerBound to upperBound (both bounds to be interpreted inclusively)

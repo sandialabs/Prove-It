@@ -5,7 +5,7 @@ class NotInSet(Operation):
     # operator of the NotInSet operation
     _operator_ = Literal(stringFormat='not-in',
                          latexFormat=r'\notin',
-                         context=__file__)
+                         theory=__file__)
 
     # maps elements to NotInSet Judgments.
     # For example, map x to (x \nin S) if (x \nin S) is a Judgment.

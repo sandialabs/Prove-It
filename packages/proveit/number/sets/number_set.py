@@ -2,8 +2,8 @@ from proveit import Literal, ProofFailure, defaults, USE_DEFAULTS
 from proveit.logic import Equals, InSet, Membership
 
 class NumberSet(Literal):
-    def __init__(self, string, latex, context):
-        Literal.__init__(self, string, latex, context=context)
+    def __init__(self, string, latex, theory):
+        Literal.__init__(self, string, latex, theory=theory)
     
     def membershipObject(self, element):
         return NumberMembership(element, self)

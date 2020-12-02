@@ -4,7 +4,7 @@ class InSet(Operation):
     # operator of the InSet operation
     _operator_ = Literal(stringFormat='in',
                          latexFormat=r'\in',
-                         context=__file__)
+                         theory=__file__)
 
     # maps elements to InSet Judgments.
     # For example, map x to (x in S) if (x in S) is a Judgment.

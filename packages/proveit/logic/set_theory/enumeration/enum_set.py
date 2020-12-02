@@ -19,7 +19,7 @@ class Set(Operation):
 
     # operator of the Set operation
     _operator_ = Literal(stringFormat='Set',
-                         latexFormat=r'\textrm{Set}', context=__file__)
+                         latexFormat=r'\textrm{Set}', theory=__file__)
 
     def __init__(self, *elems):
         Operation.__init__(self, Set._operator_, elems)
@@ -873,7 +873,7 @@ class Set(Operation):
         # supplied or because it was derived from the elem argument
 
         # We deduce the desired equality by instantiating the
-        # equalElementEquality theorem from the enumeration context
+        # equalElementEquality theorem from the enumeration theory
         from ._theorems_ import equalElementEquality
         # --- Organize the instantiation mapping info.
         from proveit.number import num

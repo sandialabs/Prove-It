@@ -3,7 +3,7 @@ from proveit._common_ import a, b, x
 
 class Abs(Operation):
     # operator of the Abs operation.
-    _operator_ = Literal(stringFormat='Abs', context=__file__)    
+    _operator_ = Literal(stringFormat='Abs', theory=__file__)    
     
     def __init__(self, A):
         Operation.__init__(self, Abs._operator_, A)   

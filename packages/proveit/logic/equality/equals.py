@@ -6,7 +6,7 @@ from proveit._common_ import A, B, P, Q, f, n, x, y, z
 
 class Equals(TransitiveRelation):
     # operator of the Equals operation
-    _operator_ = Literal(stringFormat='=', context=__file__)        
+    _operator_ = Literal(stringFormat='=', theory=__file__)        
     
     # Map Expressions to sets of Judgments of equalities that involve
     # the Expression on the left hand or right hand side.

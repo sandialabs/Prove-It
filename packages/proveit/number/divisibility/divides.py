@@ -1,4 +1,4 @@
-from proveit import (asExpression, Context, defaults, Literal, Operation,
+from proveit import (asExpression, Theory, defaults, Literal, Operation,
                      ProofFailure, TransitiveRelation, USE_DEFAULTS)
 from proveit.logic import Equals, InSet, NotEquals
 from proveit.number import Exp, Mult, num
@@ -77,7 +77,7 @@ class Divides(DividesRelation):
     '''
 
     _operator_ = Literal(
-    	  stringFormat='|', latexFormat=r'\rvert', context=__file__
+    	  stringFormat='|', latexFormat=r'\rvert', theory=__file__
     	  )
 
     # map left-hand-sides to "Divides" Judgments
@@ -441,7 +441,7 @@ class DividesProper(DividesRelation):
     '''
 
     _operator_ = Literal(
-          stringFormat='|', latexFormat=r'{\rvert_{P}}', context=__file__
+          stringFormat='|', latexFormat=r'{\rvert_{P}}', theory=__file__
           )
 
     # map left-hand-sides to "Divides" Judgments

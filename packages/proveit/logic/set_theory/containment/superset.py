@@ -41,7 +41,7 @@ def supersetSequence(operators, operands):
 class SupersetEq(SupersetRelation):
     # operator of the SupersetEq operation
     _operator_ = Literal(stringFormat='supseteq', latexFormat=r'\supseteq',
-                         context=__file__)
+                         theory=__file__)
 
     # map left-hand-sides to SupersetEq Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
@@ -199,7 +199,7 @@ class NotSupersetEq(Operation):
     # operator of the NotSupersetEq operation
     _operator_ = Literal(stringFormat='nsupseteq',
                          latexFormat=r'\nsupseteq',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, superset, subset):
         Operation.__init__(self, NotSupersetEq._operator_, (superset, subset))
@@ -234,7 +234,7 @@ class NotSupersetEq(Operation):
 class ProperSuperset(SupersetRelation):
     # operator of the ProperSuperset operation
     _operator_ = Literal(stringFormat='proper_superset', latexFormat=r'\supset',
-                         context=__file__)
+                         theory=__file__)
 
     # map left-hand-sides to ProperSuperset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
@@ -336,7 +336,7 @@ class NotProperSuperset(Operation):
     # operator of the NotProperSuperset operation
     _operator_ = Literal(stringFormat='nsupset',
                          latexFormat=r'\not\supset',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, superset, subset):
         Operation.__init__(self, NotProperSuperset._operator_,

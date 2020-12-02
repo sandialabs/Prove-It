@@ -4,7 +4,7 @@ from proveit._common_ import A, B, C
 from proveit import TransitiveRelation
 
 class Implies(TransitiveRelation):
-    _operator_ = Literal(stringFormat='=>', latexFormat=r'\Rightarrow', context=__file__)
+    _operator_ = Literal(stringFormat='=>', latexFormat=r'\Rightarrow', theory=__file__)
 
     # map left-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)

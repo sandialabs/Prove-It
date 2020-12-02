@@ -3,7 +3,7 @@ This is the expression module.
 """
 
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit._core_.context import Context
+from proveit._core_.theory import Theory
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaningData, styleData
 import sys
@@ -256,11 +256,11 @@ class Expression(metaclass=ExprType):
             return Expression.class_paths[ExprClass]
         class_module = sys.modules[ExprClass.__module__]
         if hasattr(class_module, '__file__'):
-            context = Context(class_module.__file__)
+            theory = Theory(class_module.__file__)
         else:
-            context = Context() # use the current directory if using the main module
-        # get the full class path relative to the root context where the class is defined
-        class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
+            theory = Theory() # use the current directory if using the main module
+        # get the full class path relative to the root theory where the class is defined
+        class_path = theory.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
         # Store for future reference:
         Expression.class_paths[ExprClass] = class_path
         return class_path
@@ -1048,25 +1048,25 @@ class Expression(metaclass=ExprType):
             for expr in subExpr.orderOfAppearance(subExpressions):
                 yield expr
 
-    def _repr_html_(self, unofficialNameKindContext=None):
+    def _repr_html_(self, unofficialNameKindTheory=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
         from memory or storage if it was generated previously) with a link to
         an expr.ipynb notebook for displaying the expression information.
-        If 'context' is provided, find the stored expression information in
-        that context; otherwise, use the default, current directory Context.
-        If 'unofficialNameKindContext' is provided, it should be the
-        (name, kind, context) for a special expression that is not-yet-official
+        If 'theory' is provided, find the stored expression information in
+        that theory; otherwise, use the default, current directory Theory.
+        If 'unofficialNameKindTheory' is provided, it should be the
+        (name, kind, theory) for a special expression that is not-yet-official
         (%end_[common/axioms/theorems] has not been called yet in the special
         expressions notebook).
         '''
         if not defaults.display_latex:
             return None # No LaTeX display at this time.
         if not hasattr(self._styleData,'png'):
-            self._styleData.png, png_url = Context._stored_png(self, self.latex(), self._config_latex_tool)
+            self._styleData.png, png_url = Theory._stored_png(self, self.latex(), self._config_latex_tool)
             self._styleData.png_url = png_url
         if self._styleData.png_url is not None:
-            expr_notebook_rel_url = Context.expressionNotebook(self, unofficialNameKindContext)
+            expr_notebook_rel_url = Theory.expressionNotebook(self, unofficialNameKindTheory)
             html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
             if defaults.inline_pngs:
                 encoded_png = encodebytes(self._styleData.png).decode("utf-8")

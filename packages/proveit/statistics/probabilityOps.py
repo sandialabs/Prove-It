@@ -10,7 +10,7 @@ class Prob(Operation):
     methods untouched.
     '''
     # the literal operator of the Prob operation class
-    _operator_ = Literal('PROB', context=__file__)
+    _operator_ = Literal('PROB', theory=__file__)
 
     def __init__(self, event, random_variable):
         Operation.__init__(self, Prob._operator_, (event, random_variable))

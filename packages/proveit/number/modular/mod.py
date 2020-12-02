@@ -5,7 +5,7 @@ from proveit._common_ import a, b
 class Mod(Operation):
     # operator of the Mod operation.
     _operator_ = Literal(stringFormat='mod ', latexFormat=r'~\textup{mod}~',
-                         context=__file__)
+                         theory=__file__)
     
     def __init__(self, dividend, divisor):
         Operation.__init__(self, Mod._operator_, (dividend, divisor))

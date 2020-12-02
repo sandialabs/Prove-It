@@ -5,7 +5,7 @@ from proveit._common_ import a, b, m, n, x, y, B
 
 class Neg(Operation):
     # operator of the Neg operation.
-    _operator_ = Literal(stringFormat='-', context=__file__)
+    _operator_ = Literal(stringFormat='-', theory=__file__)
 
     def __init__(self,A):
         Operation.__init__(self, Neg._operator_, A)

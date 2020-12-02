@@ -13,7 +13,7 @@ class TensorProd(Operation):
     '''
     # the literal operator of the TensorProd operation
     _operator_ = Literal(stringFormat=r'otimes', latexFormat = r'{\otimes}',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, *operands):
         Operation.__init__(self, TensorProd._operator_, operands)
@@ -75,7 +75,7 @@ class TensorExp(Operation):
     
     # the literal operator of the TensorExp operation
     _operator_ = Literal(stringFormat=r'otimes', latexFormat = r'{\otimes}',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, base, exponent):
         r'''

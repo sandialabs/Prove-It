@@ -67,7 +67,7 @@ class Input(Operation):
     circuit. Updated 1/26/2020 by wdc
     '''
     # the literal operator of the Input operation class
-    _operator_ = Literal('INPUT', context=__file__)
+    _operator_ = Literal('INPUT', theory=__file__)
     
     def __init__(self, state):
         '''
@@ -104,7 +104,7 @@ class Output(Operation):
     a circuit. Updated 1/26/2020 by wdc
     '''
     # the literal operator of the Output operation class
-    _operator_ = Literal('OUTPUT', context=__file__)
+    _operator_ = Literal('OUTPUT', theory=__file__)
     
     def __init__(self, state):
         '''
@@ -197,7 +197,7 @@ class Gate(Operation):
     Represents a gate in a quantum circuit.
     '''
     # the literal operator of the Gate operation class
-    _operator_ = Literal('GATE', context=__file__)
+    _operator_ = Literal('GATE', theory=__file__)
     
     def __init__(self, *operand):
         '''
@@ -285,7 +285,7 @@ class MultiQubitGate(Operation):
     be represented as a block.
     '''
     # the literal operator of the Gate operation class
-    _operator_ = Literal('MULTI_QUBIT_GATE', context=__file__)
+    _operator_ = Literal('MULTI_QUBIT_GATE', theory=__file__)
 
     def __init__(self, gate, gate_set, styles=None):
         '''
@@ -443,8 +443,8 @@ class MultiQubitGate(Operation):
 
 
 class TargetOperator(Literal):
-    def __init__(self, stringFormat, latexFormat=None, context=None):
-        Literal.__init__(self, stringFormat, latexFormat, context)
+    def __init__(self, stringFormat, latexFormat=None, theory=None):
+        Literal.__init__(self, stringFormat, latexFormat, theory)
     
     def latex(self, **kwargs):
         return r'\oplus'
@@ -455,7 +455,7 @@ class Target(Operation):
     Updated 1/26/2020 by wdc.
     '''
     # the literal operator of the Target operation class
-    _operator_ = TargetOperator('TARGET', latexFormat=r'\targ',  context=__file__)
+    _operator_ = TargetOperator('TARGET', latexFormat=r'\targ',  theory=__file__)
     
     def __init__(self, target_gate):
         '''
@@ -489,7 +489,7 @@ class CircuitEquiv(TransitiveRelation):
     '''
     # operator for the CircuitEquiv relation
     _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong',
-                         context=__file__)
+                         theory=__file__)
     # map left-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownLeftSides = dict()
@@ -707,7 +707,7 @@ class Circuit(Operation):
     Represents a quantum circuit as a 2-D ExprArray
     '''
     # literal operator for the Circuit Class
-    _operator_ = Literal('CIRCUIT', context=__file__)
+    _operator_ = Literal('CIRCUIT', theory=__file__)
     DEFAULT_SPACING = '@C=1em @R=.7em'
 
     def __init__(self, array, styles=None):

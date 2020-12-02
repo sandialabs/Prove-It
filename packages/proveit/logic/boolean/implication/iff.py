@@ -7,7 +7,7 @@ from proveit import TransitiveRelation
 # if and only if: A => B and B => A
 class Iff(TransitiveRelation):
     # The operator of the Iff operation
-    _operator_ = Literal(stringFormat='<=>', latexFormat=r'\Leftrightarrow', context=__file__)
+    _operator_ = Literal(stringFormat='<=>', latexFormat=r'\Leftrightarrow', theory=__file__)
 
     # map left-hand-sides to Subset Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)

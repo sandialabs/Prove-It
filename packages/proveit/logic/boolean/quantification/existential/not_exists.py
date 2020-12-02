@@ -4,7 +4,7 @@ from proveit._common_ import P, Q, S
 
 class NotExists(OperationOverInstances):
     # operator of the NotExists operation
-    _operator_ = Literal(stringFormat='notexists', latexFormat=r'\nexists', context=__file__)
+    _operator_ = Literal(stringFormat='notexists', latexFormat=r'\nexists', theory=__file__)
     
     def __init__(self, instanceParamOrParams, instanceExpr, *,
                  domain=None, domains=None, condition=None,

@@ -4,7 +4,7 @@ from proveit._common_ import n, A, B, P, Q, R, S
 
 class Exists(OperationOverInstances):
     # operator of the Exists operation
-    _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', context=__file__)
+    _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', theory=__file__)
 
     # a dictionary to track Skolem constants chosen with the
     # Exists.choose() method
@@ -263,7 +263,7 @@ class Exists(OperationOverInstances):
         one that substitutes instance expressions given some 
         universality = forall_{..x.. in S | P(..x..), ..Q(..x..)..} R(..x..).
                                             or forall_{..x.. in S | ..Q(..x..)..} P(..x..) = R(..x..).
-        Either is allowed in the context of the existential quantifier.
+        Either is allowed in the theory of the existential quantifier.
         Derive and return the following type of existential operation assuming universality:
         Exists_{..x.. in S | ..Q(..x..)..} R(..x..)
         Works also when there is no domain S and/or no conditions ..Q...

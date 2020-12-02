@@ -3,7 +3,7 @@ from proveit.number.sets import Reals
 
 class ModAbs(Operation):
     # operator of the ModAbs operation.
-    _operator_ = Literal(stringFormat='ModAbs', context=__file__)
+    _operator_ = Literal(stringFormat='ModAbs', theory=__file__)
 
     def __init__(self, value, divisor):
         Operation.__init__(self, ModAbs._operator_, (value, divisor))

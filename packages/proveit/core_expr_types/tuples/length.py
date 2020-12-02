@@ -5,7 +5,7 @@ from proveit._common_ import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
 class Len(Operation):
     # operator of the Length operation.
-    _operator_ = Literal(stringFormat='length', context=__file__)   
+    _operator_ = Literal(stringFormat='length', theory=__file__)   
     
     def __init__(self, operand):
         '''

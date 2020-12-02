@@ -1,6 +1,6 @@
 '''
 Build the Prove-It notebooks (common expressions, axioms, theorems,
-and proofs) for the given contexts, including sub-contexts.
+and proofs) for the given theories, including sub-theories.
 '''
 
 from __future__ import print_function
@@ -26,7 +26,7 @@ import tarfile
 import urllib.request#Comment in for Python 3
 import zmq # to catch ZMQError which randomly occurs when starting a Jupyter kernel
 import proveit
-from proveit import Context
+from proveit import Theory
 
 #IPython.InteractiveShell.cache_size=0
 
@@ -37,16 +37,16 @@ lt.use_breqn = False
 
 default_paths = ['packages/proveit', 'tutorial']#, 'tutorial/socks_demo']
 
-def findContextPaths(path):
-    if os.path.isfile(os.path.join(path, '_context_.ipynb')):
+def findTheoryPaths(path):
+    if os.path.isfile(os.path.join(path, '_context_.ipynb')) or os.path.isfile(os.path.join(path, '_theory_.ipynb')):
         yield path
-        sub_contexts_txt = os.path.join(path, '_sub_contexts_.txt')
-        if os.path.isfile(sub_contexts_txt):
-            for sub_context in open(sub_contexts_txt).readlines():
-                sub_context = sub_context.rstrip() # strip off the carriage return
-                sub_context_path = os.path.join(path, sub_context)
-                for context_path in findContextPaths(sub_context_path):
-                    yield context_path
+        sub_theories_txt = os.path.join(path, '_sub_theories_.txt')
+        if os.path.isfile(sub_theories_txt):
+            for sub_theory in open(sub_theories_txt).readlines():
+                sub_theory = sub_theory.rstrip() # strip off the carriage return
+                sub_theory_path = os.path.join(path, sub_theory)
+                for theory_path in findTheoryPaths(sub_theory_path):
+                    yield theory_path
 
 # regular expression for finding 'a' html tags; trivially adapted from
 # http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
@@ -145,7 +145,7 @@ class ProveItHTMLPreprocessor(Preprocessor):
         while latex_start >= 0:
             latex_end = text.find('$', latex_start+1)
             latex = text[latex_start+1:latex_end]
-            png = latex_to_png(latex, backend='dvipng', wrap=True) # the 'matplotlib' backend can do some BAD rendering in my experience (like \lnot rendering as lnot in some contexts)
+            png = latex_to_png(latex, backend='dvipng', wrap=True) # the 'matplotlib' backend can do some BAD rendering in my experience (like \lnot rendering as lnot in some theories)
             revised_text += text[cur_pos:latex_start]
             revised_text += '<img style="vertical-align:text-bottom; display:inline;" src="data:image/png;base64,%s"/>'%base64.b64encode(png)
             cur_pos = latex_end+1
@@ -465,18 +465,18 @@ def revise_special_notebook(notebook_path):
         nbformat.write(nb, f)   
 """
 
-def fix_context(context_path):
+def fix_theory(theory_path):
     mode = None
-    with open(os.path.join(context_path, '_sub_contexts_.txt')) as f:
-        sub_context_names = []
+    with open(os.path.join(theory_path, '_sub_theories_.txt')) as f:
+        sub_theory_names = []
         for k, line in enumerate(f.readlines()):
             if k==0 and line[:6] == 'mode: ':
                 mode = line[6:].strip()
             else:
-                sub_context_names.append(line.strip())
-        Context(context_path).setSubContextNames(sub_context_names)
+                sub_theory_names.append(line.strip())
+        Theory(theory_path).setSubTheoryNames(sub_theory_names)
     if mode is not None:
-        with open(os.path.join(context_path, '_mode_.txt'), 'w') as fw:
+        with open(os.path.join(theory_path, '_mode_.txt'), 'w') as fw:
             fw.write(mode + '\n')
 
 def recordPresumingInfo(theorem, proof_notebook_path):
@@ -525,16 +525,16 @@ def recordPresumingInfo(theorem, proof_notebook_path):
     finally:
         os.chdir(__owd)
     
-def build(execute_processor, context_paths, all_paths, no_execute=False, 
+def build(execute_processor, theory_paths, all_paths, no_execute=False, 
           just_execute_essentials=False, just_execute_proofs=False, 
           just_execute_demos=False, just_execute_expression_nbs=False,
           no_latex=False):
     '''
-    Build all Context-related notebooks (_common_, _axioms_,
+    Build all Theory-related notebooks (_common_, _axioms_,
     _theorems_, and proof notebooks for the theorems)
-    in the context_paths.
+    in the theory_paths.
     For the paths in all_paths (which should include the
-    context paths), build any contained notebooks and
+    theory paths), build any contained notebooks and
     any of the expr.ipynb and dependencies.ipnyb notebooks
     within the __pv_it directory (storing Prove-It "database"
     information).
@@ -550,112 +550,112 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                 executeAndExportNotebook(execute_processor, 'guide.ipynb')
         
         # Make sure there is a _common_.py, _axioms_.py, and _theorems_.py
-        # in each context directory.
+        # in each theory directory.
         # These will be useful in figuring out dependencies between _common_
-        # notebooks (see CommonExpressions in proveit._core_.context as well
+        # notebooks (see CommonExpressions in proveit._core_.theory as well
         # as avoiding import errors.
-        for context_path in context_paths:
+        for theory_path in theory_paths:
             for spec_expr_kind in ('common', 'axioms', 'theorems'):
-                Context(context_path).makeSpecialExprModule(spec_expr_kind)
+                Theory(theory_path).makeSpecialExprModule(spec_expr_kind)
         
-        # Execute the _context_ notebooks in each context directory 
-        # and generate _context_.html.
-        for context_path in context_paths:
-            fix_context(context_path)
-            context_notebook_path = os.path.join(context_path, '_context_.ipynb')
-            with open(os.path.join(context_path, '_mode_.txt'), 'wt') as f:
+        # Execute the _theory_ notebooks in each theory directory 
+        # and generate _theory_.html.
+        for theory_path in theory_paths:
+            fix_theory(theory_path)
+            theory_notebook_path = os.path.join(theory_path, '_theory_.ipynb')
+            with open(os.path.join(theory_path, '_mode_.txt'), 'wt') as f:
                 f.write('interactive\n') # when executed again, it will toggle to 'static' mode                
             # execute into static mode
-            executeAndExportNotebook(execute_processor, context_notebook_path, 
+            executeAndExportNotebook(execute_processor, theory_notebook_path, 
                                      no_execute=no_execute, no_latex=no_latex)
         
-        # Next, run the _common_.ipynb (common expression) notebooks for the contexts.
-        # For any that depend up _common_.py of other contexts, run the
+        # Next, run the _common_.ipynb (common expression) notebooks for the theories.
+        # For any that depend up _common_.py of other theories, run the
         # requirements first.
         
         """
-        common_nb_queue = list(context_paths)
+        common_nb_queue = list(theory_paths)
         exececuted_common_nb = set()
         while len(common_nb_queue) > 0:
-            context_path = common_nb_queue.pop(0)
-            if context_path in exececuted_common_nb:
+            theory_path = common_nb_queue.pop(0)
+            if theory_path in exececuted_common_nb:
                 continue
             
             # The failed_common_import.txt file is used to communicate a failed
-            # common expression import from another context.  First erase this
+            # common expression import from another theory.  First erase this
             # file, then see if it is created after executing the common notebook.
-            failed_common_import_filename = os.path.join(context_path, '__pv_it', 'failed_common_import.txt')
+            failed_common_import_filename = os.path.join(theory_path, '__pv_it', 'failed_common_import.txt')
             if os.path.isfile(failed_common_import_filename):
                 os.remove(failed_common_import_filename)
                 
             try:
-                revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-                executeAndExportNotebook(os.path.join(context_path, '_common_.ipynb'))
-                exececuted_common_nb.add(context_path) # finished successfully
+                revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
+                executeAndExportNotebook(os.path.join(theory_path, '_common_.ipynb'))
+                exececuted_common_nb.add(theory_path) # finished successfully
             except execute.CellExecutionError as e:            
                 retry = False
                 if os.path.isfile(failed_common_import_filename):
                     # A failed_common_import.txt file was created.  It will indicate the
-                    # context from which a common expression was attempted to be imported.
+                    # theory from which a common expression was attempted to be imported.
                     # If its _common_ notebook has not already executed, execute it first
                     # and then try to execute this one again.
                     with open(failed_common_import_filename, 'r') as f:
-                        required_context_name = f.read().strip()
-                        if required_context_name not in exececuted_common_nb:
-                            print '  Failed to execute; try a prerequisite first:', required_context_name
-                            common_nb_queue.insert(0, context_path) # re-insert to try again
-                            # but first execute the _common_ notebook from the required_context.
-                            common_nb_queue.insert(0, context_map[required_context_name])
+                        required_theory_name = f.read().strip()
+                        if required_theory_name not in exececuted_common_nb:
+                            print '  Failed to execute; try a prerequisite first:', required_theory_name
+                            common_nb_queue.insert(0, theory_path) # re-insert to try again
+                            # but first execute the _common_ notebook from the required_theory.
+                            common_nb_queue.insert(0, theory_map[required_theory_name])
                             retry = True
                 if not retry:
                     raise e
         """
         
         if no_execute:
-            for context_path in context_paths:
-                #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-                exportToHTML(os.path.join(context_path, '_common_.ipynb'))
+            for theory_path in theory_paths:
+                #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
+                exportToHTML(os.path.join(theory_path, '_common_.ipynb'))
         else:
             # execute the commons notebooks first, and do this twice to work out inter-dependencies
             for _ in range(2):
-                for context_path in context_paths:
-                    #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-                    execute_processor.executeNotebook(os.path.join(context_path, '_common_.ipynb'), no_latex=no_latex)
+                for theory_path in theory_paths:
+                    #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
+                    execute_processor.executeNotebook(os.path.join(theory_path, '_common_.ipynb'), no_latex=no_latex)
             # Unless 'no_latex' is True, execute one last time to 
             # eliminate "expression notebook ... updated" messages 
             # and we'll export to html.
-            for context_path in context_paths:
-                #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-                executeAndExportNotebook(execute_processor, os.path.join(context_path, '_common_.ipynb'),
+            for theory_path in theory_paths:
+                #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
+                executeAndExportNotebook(execute_processor, os.path.join(theory_path, '_common_.ipynb'),
                                          no_execute=no_latex, no_latex=no_latex)
                     
-        # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the contexts.
+        # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the theories.
         # The order does not matter assuming these expression constructions
         # do not depend upon other axioms or theorems (but possibly common expressions).
         # Execute twice unless no_latex==True to get rid of extraneous 
         # information about adding/removing from database
         if no_execute:
-            for context_path in context_paths:
-                exportToHTML(os.path.join(context_path, '_axioms_.ipynb'))
-                exportToHTML(os.path.join(context_path, '_theorems_.ipynb'))    
+            for theory_path in theory_paths:
+                exportToHTML(os.path.join(theory_path, '_axioms_.ipynb'))
+                exportToHTML(os.path.join(theory_path, '_theorems_.ipynb'))    
         else:
-            for context_path in context_paths:
-                #revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
-                #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
-                execute_processor.executeNotebook(os.path.join(context_path, '_axioms_.ipynb'), no_latex=no_latex)
-                execute_processor.executeNotebook(os.path.join(context_path, '_theorems_.ipynb'), no_latex=no_latex)    
+            for theory_path in theory_paths:
+                #revise_special_notebook(os.path.join(theory_path, '_axioms_.ipynb'))
+                #revise_special_notebook(os.path.join(theory_path, '_theorems_.ipynb'))
+                execute_processor.executeNotebook(os.path.join(theory_path, '_axioms_.ipynb'), no_latex=no_latex)
+                execute_processor.executeNotebook(os.path.join(theory_path, '_theorems_.ipynb'), no_latex=no_latex)    
             # The second time we'll export to html.  Unless 'no_latex'
             # is True, we will execute again to clear extra information.
-            for context_path in context_paths:
-                #revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
-                #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
-                executeAndExportNotebook(execute_processor, os.path.join(context_path, '_axioms_.ipynb'),
+            for theory_path in theory_paths:
+                #revise_special_notebook(os.path.join(theory_path, '_axioms_.ipynb'))
+                #revise_special_notebook(os.path.join(theory_path, '_theorems_.ipynb'))
+                executeAndExportNotebook(execute_processor, os.path.join(theory_path, '_axioms_.ipynb'),
                                          no_execute=no_latex, no_latex=no_latex)
-                executeAndExportNotebook(execute_processor, os.path.join(context_path, '_theorems_.ipynb'),
+                executeAndExportNotebook(execute_processor, os.path.join(theory_path, '_theorems_.ipynb'),
                                          no_execute=no_latex, no_latex=no_latex)    
     if not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the 
-        # contexts.
+        # theories.
         # Map proof notebook names to corresponding Theorem objects:
         proof_notebook_theorems = dict() 
         theorem_proof_notebooks = []
@@ -663,13 +663,13 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
         # dependencies:
         #proveit.defaults.automation = False
         print("Finding theorem proof notebooks.")
-        for context_path in context_paths:
-            context = Context(context_path)
-            for theorem_name in context.theoremNames():
+        for theory_path in theory_paths:
+            theory = Theory(theory_path)
+            for theorem_name in theory.theoremNames():
                 start_time = time.time()
                 print("Loading", theorem_name, end='', flush=True)
-                theorem = context.getTheorem(theorem_name)
-                proof_notebook_name = context.thmProofNotebook(theorem_name, theorem.provenTruth.expr)
+                theorem = theory.getTheorem(theorem_name)
+                proof_notebook_name = theory.thmProofNotebook(theorem_name, theorem.provenTruth.expr)
                 proof_notebook_theorems[proof_notebook_name] = theorem
                 theorem_proof_notebooks.append(proof_notebook_name)
                 print("; finished in %0.2f seconds"%(time.time()-start_time))
@@ -713,7 +713,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                                              no_latex=no_latex)
             
     if not just_execute_essentials and not just_execute_expression_nbs and not just_execute_proofs:
-        # Next, run any other notebooks within path/context directories
+        # Next, run any other notebooks within path/theory directories
         # (e.g., with tests and demonstrations).
         for path in all_paths:
             for sub in os.listdir(path):
@@ -726,7 +726,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                         
     if not just_execute_essentials and not just_execute_proofs and not just_execute_demos:
         # Lastly, run expr.ipynb, proof.ipynb, and dependencies.ipynb within 
-        # the hash directories of the __pv_it folders for each context.
+        # the hash directories of the __pv_it folders for each theory.
         # May require multiple passes (showing expression info may generate
         # expr.ipynb notebooks for sub-expressions).
         executed_hash_paths = set()  # hash paths whose notebooks have been executed
@@ -801,21 +801,21 @@ if __name__ == '__main__':
                         const=True, default=False,
                         help='do not execute notebooks, just convert to HTML')   
     parser.add_argument('path', type=str, nargs='*', default=default_paths,
-                        help='paths to be processed; sub-contexts will be included recursively (default: %s)'%' '.join(default_paths))
+                        help='paths to be processed; sub-theories will be included recursively (default: %s)'%' '.join(default_paths))
     args = parser.parse_args()    
     paths = args.path
         
-    # Get all the contexts of the given top-level paths
-    # in the order indicated in _sub_context_.txt files.
-    context_paths = []
-    context_map = dict() # map Context names to paths
+    # Get all the theories of the given top-level paths
+    # in the order indicated in _sub_theory_.txt files.
+    theory_paths = []
+    theory_map = dict() # map Theory names to paths
     for path in paths:
-        for context_path in findContextPaths(path):
-            context_paths.append(context_path)
-            context_map[Context(context_path).name] = context_path
+        for theory_path in findTheoryPaths(path):
+            theory_paths.append(theory_path)
+            theory_map[Theory(theory_path).name] = theory_path
     
-    all_paths = list(context_paths)
-    all_paths += [path for path in paths if path not in context_paths]
+    all_paths = list(theory_paths)
+    all_paths += [path for path in paths if path not in theory_paths]
 
     if args.clean:
         # clean all of the __pv_it directories that may be auto-generated
@@ -841,10 +841,10 @@ if __name__ == '__main__':
                     os.remove(sub_path)
             '''
     elif not args.download:
-        # remove the __pv_it/commons.pv_it in all of the context paths
+        # remove the __pv_it/commons.pv_it in all of the theory paths
         # to make sure everything gets updated where there are dependencies
-        # between common expressions of different contexts.
-        for path in context_paths:
+        # between common expressions of different theories.
+        for path in theory_paths:
             generate_css_if_missing(path)
             pv_it_dir = os.path.join(path, '__pv_it')
             generate_css_if_missing(pv_it_dir)
@@ -853,7 +853,7 @@ if __name__ == '__main__':
                 if os.path.isfile(commons_filename):
                     os.remove(commons_filename) 
         with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
-            build(execute_processor, context_paths, all_paths, args.noexecute, 
+            build(execute_processor, theory_paths, all_paths, args.noexecute, 
                   args.just_execute_essentials, args.just_execute_proofs, 
                   args.just_execute_demos, args.just_execute_expression_nbs,
                   args.nolatex)
@@ -963,20 +963,20 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
         
 def notebook_path_generator(top_level_paths, notebook_filename):
     for path in top_level_paths:
-        for context_path in findContextPaths(path):
-            yield os.path.join(context_path, notebook_filename)
+        for theory_path in findTheoryPaths(path):
+            yield os.path.join(theory_path, notebook_filename)
 
 def theoremproof_path_generator(top_level_paths):
     for path in top_level_paths:
-        for context_path in findContextPaths(path):
-            context = Context(context_path)
-            for theorem_name in context.theoremNames():
-                yield os.path.join(context._storage.directory, '_proofs_', theorem_name, 'thm_proof.ipynb')
+        for theory_path in findTheoryPaths(path):
+            theory = Theory(theory_path)
+            for theorem_name in theory.theoremNames():
+                yield os.path.join(theory._storage.directory, '_proofs_', theorem_name, 'thm_proof.ipynb')
 
 def database_notebook_path_generator(top_level_paths, filebases):
     for path in top_level_paths:
-        for context_path in findContextPaths(path):
-            pv_it_dir = os.path.join(context_path, '__pv_it')
+        for theory_path in findTheoryPaths(path):
+            pv_it_dir = os.path.join(theory_path, '__pv_it')
             if os.path.isdir(pv_it_dir):
                 for folder in os.listdir(pv_it_dir):
                     folder_dir = os.path.join(pv_it_dir, folder)

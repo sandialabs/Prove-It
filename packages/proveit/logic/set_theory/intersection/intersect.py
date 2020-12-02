@@ -3,7 +3,7 @@ from proveit._common_ import n, x
 
 class Intersect(Operation):
     # operator of the Intersect operation
-    _operator_ = Literal(stringFormat='intersect', latexFormat=r'\cap', context=__file__)    
+    _operator_ = Literal(stringFormat='intersect', latexFormat=r'\cap', theory=__file__)    
     
     def __init__(self, *operands):
         '''

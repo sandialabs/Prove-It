@@ -7,7 +7,7 @@ from proveit.abstract_algebra.generic_methods import apply_commutation_thm, appl
 
 class And(Operation):
     # The operator of the And operation
-    _operator_ = Literal(stringFormat='and', latexFormat=r'\land', context=__file__)
+    _operator_ = Literal(stringFormat='and', latexFormat=r'\land', theory=__file__)
     
     def __init__(self, *operands):
         r'''

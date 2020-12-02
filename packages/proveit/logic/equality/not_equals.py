@@ -6,7 +6,7 @@ from proveit.relation import Relation
 
 class NotEquals(Relation):
     # operator of the NotEquals operation
-    _operator_ = Literal(stringFormat='!=', latexFormat=r'\neq', context=__file__)
+    _operator_ = Literal(stringFormat='!=', latexFormat=r'\neq', theory=__file__)
     
     def __init__(self, a, b):
         Operation.__init__(self, NotEquals._operator_, (a, b))

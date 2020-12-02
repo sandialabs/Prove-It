@@ -15,7 +15,7 @@ class RealInterval(Operation):
                 
 class IntervalOO(RealInterval):
     # operator of the IntervalOO operation.
-    _operator_ = Literal(stringFormat='IntervalOO',context=__file__)   
+    _operator_ = Literal(stringFormat='IntervalOO',theory=__file__)   
 
     def __init__(self,lowerBound,upperBound):
         RealInterval.__init__(self,IntervalOO._operator_,lowerBound,upperBound)
@@ -79,7 +79,7 @@ class IntervalOO(RealInterval):
 
 class IntervalOC(RealInterval):
     # operator of the IntervalOC operation.
-    _operator_ = Literal(stringFormat='IntervalOC',context=__file__)   
+    _operator_ = Literal(stringFormat='IntervalOC',theory=__file__)   
 
     def __init__(self,lowerBound,upperBound):
         RealInterval.__init__(self,IntervalOC._operator_,lowerBound,upperBound)
@@ -130,7 +130,7 @@ class IntervalOC(RealInterval):
 
 class IntervalCO(RealInterval):
     # operator of the IntervalCO operation.
-    _operator_ = Literal(stringFormat='IntervalCO',context=__file__)   
+    _operator_ = Literal(stringFormat='IntervalCO',theory=__file__)   
 
     def __init__(self,lowerBound,upperBound):
         RealInterval.__init__(self,IntervalCO._operator_,lowerBound,upperBound)
@@ -181,7 +181,7 @@ class IntervalCO(RealInterval):
 
 class IntervalCC(RealInterval):
     # operator of the IntervalCC operation.
-    _operator_ = Literal(stringFormat='IntervalCC',context=__file__)   
+    _operator_ = Literal(stringFormat='IntervalCC',theory=__file__)   
     
     def __init__(self,lowerBound,upperBound):
         RealInterval.__init__(self,IntervalCC._operator_,lowerBound,upperBound)

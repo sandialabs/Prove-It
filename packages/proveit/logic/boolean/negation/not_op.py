@@ -4,7 +4,7 @@ from proveit._common_ import A, x, y, S
 
 class Not(Operation):
     # operator of the Not operation
-    _operator_ = Literal(stringFormat='not', latexFormat=r'\lnot', context=__file__)
+    _operator_ = Literal(stringFormat='not', latexFormat=r'\lnot', theory=__file__)
     
     def __init__(self, A):
         Operation.__init__(self, Not._operator_, A)

@@ -1,6 +1,6 @@
 import sys
 from proveit.statement import Literals, Operation, Variable, MultiVariable, STRING, LATEX
-from proveit.context import Context
+from proveit.theory import Theory
 from proveit.basiclogic import Forall, Implies, In, NOTHING, multiA, X, List
 
 # quantum circuit literals
@@ -21,7 +21,7 @@ def _defineTheorems():
     combiningInKleene = Forall([multiA, X], Implies(In(List(multiA), KleeneRepetition(X)), In(List(multiA, X), KleeneRepetition(X))))
     return None
 
-regular_expressions = Context(sys.modules[__name__], literals, _defineAxioms, _defineTheorems)
+regular_expressions = Theory(sys.modules[__name__], literals, _defineAxioms, _defineTheorems)
 
 class KleeneRepetition(Operation):
     """

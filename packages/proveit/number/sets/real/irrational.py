@@ -8,7 +8,7 @@ class IrrationalLiteral(IrreducibleValue, Literal):
     _positiveStmts = None # initializes when needed
     
     def __init__(self, stringFormat, latexFormat = None):
-        Literal.__init__(self, stringFormat, latexFormat, context=__file__)
+        Literal.__init__(self, stringFormat, latexFormat, theory=__file__)
 
     def evalEquality(self, other, assumptions=USE_DEFAULTS):
         if other==self:

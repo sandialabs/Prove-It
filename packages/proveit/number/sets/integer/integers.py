@@ -4,7 +4,7 @@ from proveit.number.sets.number_set import NumberSet
 
 class IntegerSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Integers', r'\mathbb{Z}', context=__file__)
+        NumberSet.__init__(self, 'Integers', r'\mathbb{Z}', theory=__file__)
     
     def membershipSideEffects(self, judgment):
         '''

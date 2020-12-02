@@ -11,7 +11,7 @@ class QPE(Operation):
     '''
     # the literal operator of the QPE operation
     _operator_ = Literal(stringFormat='QPE', latexFormat = r'{\rm QPE}',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, U, t):
         '''
@@ -28,7 +28,7 @@ class PhaseEst(Operation):
     '''
     # the literal operator of the PhaseEst operation
     _operator_ = Literal(stringFormat='PHASE_EST',
-                         latexFormat = r'{\rm PHASE\_EST}', context=__file__)
+                         latexFormat = r'{\rm PHASE\_EST}', theory=__file__)
 
     def __init__(self, U, t):
         '''
@@ -45,7 +45,7 @@ class Psuccess(Operation):
     '''
     # the literal operator of the Psuccess operation
     _operator_ = Literal(stringFormat='Psuccess',
-                         latexFormat = r'P_{\rm success}', context=__file__)
+                         latexFormat = r'P_{\rm success}', theory=__file__)
 
     def __init__(self, eps):
         '''
@@ -62,7 +62,7 @@ class Pfail(Operation):
     '''
     # the literal operator of the Pfail operation
     _operator_ = Literal(stringFormat='Pfail',
-                         latexFormat = r'P_{\rm fail}', context=__file__)
+                         latexFormat = r'P_{\rm fail}', theory=__file__)
 
     def __init__(self, eps):
         '''
@@ -92,13 +92,13 @@ class ModAdd(Operation):
     '''
     Addition module 2^t
     Generated/updated from original above by wdc, beginning 1/26/2020.
-    This depends on the modAdClosure thm in the quantum/QPE context,
+    This depends on the modAdClosure thm in the quantum/QPE theory,
     BUT that theorem ipynb also requires items from this phaseEstOps.py
     file, in particular requiring this same ModAdd operation class.
     '''
     # the literal operator of the ModAdd operation class
     _operator_ = Literal('MOD_ADD', latexFormat = r'\oplus',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, a, b):
         Operation.__init__(self, ModAdd._operator_, (a, b))
@@ -116,7 +116,7 @@ class SubIndexed(Operation):
     '''
     # the literal operator of the Subscript operation
     _operator_ = Literal(stringFormat='SUB_INDEXED',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, label, index):
         Operation.__init__(self, SubIndexed._operator_, (label, index))

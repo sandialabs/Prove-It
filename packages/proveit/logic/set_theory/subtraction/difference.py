@@ -3,7 +3,7 @@ from proveit._common_ import x, A, B
 
 class Difference(Operation):
     # operator of the Difference operation
-    _operator_ = Literal(stringFormat='-', context=__file__)    
+    _operator_ = Literal(stringFormat='-', theory=__file__)    
 
     def __init__(self, A, B):
         Operation.__init__(self, Difference._operator_, [A, B])

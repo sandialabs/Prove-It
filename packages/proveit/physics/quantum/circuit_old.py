@@ -100,7 +100,7 @@ class Gate(Operation):
     Represents a gate in a quantum circuit.
     '''
     # the literal operator of the Gate operation class
-    _operator_ = Literal('GATE', context=__file__)
+    _operator_ = Literal('GATE', theory=__file__)
     
     def __init__(self, gate_operation):
         '''

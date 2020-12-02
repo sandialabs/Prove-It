@@ -7,7 +7,7 @@ DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 class DecimalSequence(NumeralSequence):
     # operator of the WholeDecimal operation.
-    _operator_ = Literal(stringFormat='Decimal',context=__file__)   
+    _operator_ = Literal(stringFormat='Decimal',theory=__file__)   
 
     def __init__(self, *digits):
         NumeralSequence.__init__(self, DecimalSequence._operator_, *digits)
@@ -243,7 +243,7 @@ class DecimalSequence(NumeralSequence):
 
 class DigitSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Digits', r'\mathbb{N}^{\leq 9}', context=__file__)
+        NumberSet.__init__(self, 'Digits', r'\mathbb{N}^{\leq 9}', theory=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import digitsLowerBound

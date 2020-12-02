@@ -2,7 +2,7 @@
 A TransitiveRelation is a generic base class for binary
 relationships that are transitive.  Less than and greater than
 relationships are examples (so are subset and superset relationships).
-For example, transitivity in the "less than" context means that 
+For example, transitivity in the "less than" theory means that 
 a<b and b<c implies that a<c.  The "equivalence class" 
 (proveit.logic.Equals by default) is special kind of TransitiveRelation 
 that is also symmetric; that is, y=x if x=y.  

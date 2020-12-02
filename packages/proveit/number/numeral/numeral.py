@@ -11,7 +11,7 @@ class Numeral(Literal, IrreducibleValue):
     
     def __init__(self, n, stringFormat=None, latexFormat=None):
         if stringFormat is None: stringFormat=str(n)
-        Literal.__init__(self, stringFormat, extraCoreInfo=[str(n)], context=__file__)
+        Literal.__init__(self, stringFormat, extraCoreInfo=[str(n)], theory=__file__)
         if not isinstance(n, int):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
@@ -44,14 +44,14 @@ class Numeral(Literal, IrreducibleValue):
         return self.n
             
     @staticmethod
-    def makeLiteral(string_format, latex_format, extra_core_info, context):
+    def makeLiteral(string_format, latex_format, extra_core_info, theory):
         '''
         Make the DigitLiteral that matches the core information.
         '''
-        from proveit import Context
-        assert context==Context(__file__), (
-                "Expecting a different Context for a DigitLiteral: "
-                "%s vs %s"%(context.name, Context(__file__).name))
+        from proveit import Theory
+        assert theory==Theory(__file__), (
+                "Expecting a different Theory for a DigitLiteral: "
+                "%s vs %s"%(theory.name, Theory(__file__).name))
         n = int(extra_core_info[0])
         return Numeral(n, string_format, latex_format)
      

@@ -4,7 +4,7 @@ from proveit._common_ import x, y, f, P, Q, S
 
 class IntersectAll(OperationOverInstances):
     # operator of the UnionOfAll operation
-    _operator_ = Literal(stringFormat='intersect_all', latexFormat=r'\bigcap', context=__file__)  
+    _operator_ = Literal(stringFormat='intersect_all', latexFormat=r'\bigcap', theory=__file__)  
     _init_argname_mapping_ = {'instanceElement':'instanceExpr'}
 
     def __init__(self, instanceParamOrParams, instanceElement,

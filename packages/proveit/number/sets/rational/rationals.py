@@ -7,7 +7,7 @@ class RationalsSet(NumberSet):
 
     def __init__(self):
         NumberSet.__init__(self, 'Rationals', r'\mathbb{Q}',
-                           context=__file__)
+                           theory=__file__)
 
     def membershipSideEffects(self, judgment):
         '''
@@ -33,7 +33,7 @@ class RationalsPosSet(NumberSet):
 
     def __init__(self):
         NumberSet.__init__(self, 'RationalsPos', r'\mathbb{Q}^+',
-                           context=__file__)
+                           theory=__file__)
 
     def membershipSideEffects(self, judgment):
         '''
@@ -74,7 +74,7 @@ class RationalsNegSet(NumberSet):
 
     def __init__(self):
         NumberSet.__init__(self, 'RationalsNeg', r'\mathbb{Q}^-',
-                           context=__file__)
+                           theory=__file__)
 
     def membershipSideEffects(self, judgment):
         '''
@@ -116,7 +116,7 @@ class RationalsNonNegSet(NumberSet):
 
     def __init__(self):
         NumberSet.__init__(self, 'RationalsNonNeg', r'\mathbb{Q}^{\geq 0}',
-                           context=__file__)
+                           theory=__file__)
 
     def membershipSideEffects(self, judgment):
         '''

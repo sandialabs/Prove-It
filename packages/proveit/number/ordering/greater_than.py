@@ -47,7 +47,7 @@ class GreaterSequence(OrderingSequence):
 
 class Greater(GreaterRelation):
     # operator of the Greater operation.
-    _operator_ = Literal(stringFormat='>', context=__file__)
+    _operator_ = Literal(stringFormat='>', theory=__file__)
     
     # map left-hand-sides to ">" Judgments
     #   (populated in TransitivityRelation.sideEffects)
@@ -201,7 +201,7 @@ class Greater(GreaterRelation):
 
 class GreaterEq(GreaterRelation):
     # operator of the GreaterEq operation.
-    _operator_ = Literal(stringFormat='>=', latexFormat=r'\geq', context=__file__)
+    _operator_ = Literal(stringFormat='>=', latexFormat=r'\geq', theory=__file__)
     
     # map left-hand-sides to ">=" Judgments
     #   (populated in TransitivityRelation.deriveSideEffects)

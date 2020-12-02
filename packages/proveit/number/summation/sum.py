@@ -7,7 +7,7 @@ from proveit._common_ import a, f, P, S
 
 class Sum(OperationOverInstances):
     # operator of the Sum operation.
-    _operator_ = Literal(stringFormat='Sum', latexFormat=r'\sum', context=__file__)   
+    _operator_ = Literal(stringFormat='Sum', latexFormat=r'\sum', theory=__file__)   
     _init_argname_mapping_ = {'indexOrIndices':'instanceParamOrParams', 
                               'summand':'instanceExpr'}
     

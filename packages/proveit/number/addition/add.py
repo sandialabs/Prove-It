@@ -10,7 +10,7 @@ import bisect
 
 class Add(Operation):
     # operator of the Add operation
-    _operator_ = Literal(stringFormat='+', context=__file__)
+    _operator_ = Literal(stringFormat='+', theory=__file__)
 
     # Map terms to sets of Judgment equalities that involve
     # the term on the left hand side.

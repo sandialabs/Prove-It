@@ -236,7 +236,7 @@ class Judgment:
         presumed theorem that has a direct or indirect dependence upon this 
         theorem then a CircularLogic exception is raised. 
         '''
-        from .context import Context, ContextException
+        from .theory import Theory, TheoryException
         from .proof import Theorem
         if Judgment.theoremBeingProven is not None:
             raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.")
@@ -246,7 +246,7 @@ class Judgment:
             raise ValueError('Inconsistent theorem for the Judgment in beginProof call')
         
         # The full list of presumed theorems includes all previous theorems
-        # of the context and all indirectly presumed theorems via transitivity
+        # of the theory and all indirectly presumed theorems via transitivity
         # (a presumption of a presumption is a presumption).
         presumptions, exclusions = theorem.getPresumptionsAndExclusions()
 

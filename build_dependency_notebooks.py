@@ -1,6 +1,6 @@
 '''
 Build the Prove-It dependency notebooks within '__pv_it' folders) for the 
-given contexts, including sub-contexts.
+given theories, including sub-theories.
 '''
 
 from build import default_paths, database_notebook_path_generator, mpi_build
@@ -27,7 +27,7 @@ if __name__ == '__main__':
                         const=True, default=False,
                         help='do not export notebooks to HTML, just execute them')   
     parser.add_argument('path', type=str, nargs='*', default=default_paths,
-                        help='paths to be processed; sub-contexts will be included recursively (default: %s)'%' '.join(default_paths))
+                        help='paths to be processed; sub-theories will be included recursively (default: %s)'%' '.join(default_paths))
     args = parser.parse_args()    
     paths = args.path
     

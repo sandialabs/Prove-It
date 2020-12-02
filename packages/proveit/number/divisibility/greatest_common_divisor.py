@@ -1,10 +1,10 @@
-from proveit import Context, Function, Literal, USE_DEFAULTS
+from proveit import Theory, Function, Literal, USE_DEFAULTS
 from proveit.logic import Equals
 from proveit.number import one
 
 class GCD(Function):
 
-    _operator_ = Literal('gcd', context=__file__)
+    _operator_ = Literal('gcd', theory=__file__)
     
     def __init__(self, a, b):
         Function.__init__(self, GCD._operator_, [a, b])

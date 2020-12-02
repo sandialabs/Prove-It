@@ -5,7 +5,7 @@ from proveit._common_ import a, b, c, m, n, x, y, z
 
 class Div(Operation):
     # operator of the Add operation
-    _operator_ = Literal(stringFormat='/', latexFormat= r'\div', context=__file__)    
+    _operator_ = Literal(stringFormat='/', latexFormat= r'\div', theory=__file__)    
     
     def __init__(self, numerator, denominator):
         r'''

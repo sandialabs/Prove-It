@@ -17,7 +17,7 @@ class SetNotEquiv(Operation):
     # operator of the SetNotEquiv operation
     _operator_ = Literal(stringFormat='not_equiv',
                          latexFormat=r'\ncong',
-                         context=__file__)
+                         theory=__file__)
     
     def __init__(self, a, b):
         Operation.__init__(self, SetNotEquiv._operator_, (a, b))

@@ -9,7 +9,7 @@ class Bra(Operation):
     Class to represent a Dirac bra vector of the form ⟨0| or ⟨1|.
     '''
     # the literal operator of the Bra operation
-    _operator_ = Literal(stringFormat='BRA', context=__file__)
+    _operator_ = Literal(stringFormat='BRA', theory=__file__)
 
     def __init__(self, label):
         Operation.__init__(self, Bra._operator_, label)
@@ -33,7 +33,7 @@ class Ket(Operation):
     Class to represent a Dirac ket vector of the form |0⟩ or |1⟩.
     '''
     # the literal operator of the Ket operation
-    _operator_ = Literal(stringFormat='KET', context=__file__)
+    _operator_ = Literal(stringFormat='KET', theory=__file__)
 
     def __init__(self, label):
         Operation.__init__(self, Ket._operator_, label)
@@ -58,7 +58,7 @@ class RegisterBra(Operation):
     size of the register. Intended params are not quite clear ...
     '''
     # the literal operator of the RegisterBra operation
-    _operator_ = Literal(stringFormat='REGISTER_BRA', context=__file__)
+    _operator_ = Literal(stringFormat='REGISTER_BRA', theory=__file__)
 
     def __init__(self, label, size):
         Operation.__init__(self, RegisterBra._operator_, (label, size))
@@ -93,7 +93,7 @@ class RegisterKet(Operation):
     size of the register on which it is defined.
     '''
     # the literal operator of the RegisterKet operation
-    _operator_ = Literal(stringFormat='REGISTER_KET', context=__file__)
+    _operator_ = Literal(stringFormat='REGISTER_KET', theory=__file__)
 
     def __init__(self, label, size):
         Operation.__init__(self, RegisterKet._operator_, (label, size))
@@ -119,7 +119,7 @@ class Meas(Function):
     '''
     # the literal operator of the Meas operation
     _operator_ = Literal(stringFormat='MEAS', latexFormat=r'\mathcal{M}',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, ket):
         Function.__init__(self, Meas._operator_, ket)
