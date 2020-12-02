@@ -8,7 +8,7 @@ from proveit.number.rounding.rounding_methods import (
 
 class Round(Function):
     # operator of the Round operation.
-    _operator_ = Literal(stringFormat='round', context=__file__)
+    _operator_ = Literal(stringFormat='round', theory=__file__)
     
     def __init__(self, A):
         Function.__init__(self, Round._operator_, A)

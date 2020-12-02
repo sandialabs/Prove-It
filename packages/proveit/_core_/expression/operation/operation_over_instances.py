@@ -253,6 +253,26 @@ class OperationOverInstances(Operation):
 
         Operation.__init__(self, operator, lambda_map, styles=styles)
 
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        OperationOverInstances class is to include appropriate 
+        'withWrapping', 'wrapParams', and 'withJustification' calls.
+        '''
+        withWrapping = (self.getStyle('withWrapping', 'False')=='True')
+        wrapParams = (self.getStyle('wrapParams', 'False')=='True')
+        justification = self.getStyle('justification')
+        call_strs = []
+        if withWrapping:
+            call_strs.append('withWrapping()')
+        if wrapParams:
+            call_strs.append('wrapParams()')
+        if justification != 'center':
+            call_strs.append('withJustification("' + justification + '")')
+        return call_strs
+    
     def effectiveCondition(self):
         '''
         Return the effective 'condition' of the OperationOverInstances.
@@ -750,9 +770,9 @@ class OperationOverInstances(Operation):
         '''
         from proveit.logic.equality._axioms_ import instanceSubstitution, noDomainInstanceSubstitution
         from proveit.logic import Forall, Equals
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit._common_ import n, Qmulti, xMulti, yMulti, zMulti, f, g, Upsilon, S
-        if isinstance(universality, KnownTruth):
+        if isinstance(universality, Judgment):
             universality = universality.expr
         if not isinstance(universality, Forall):
             raise InstanceSubstitutionException("'universality' must be a forall expression", self, universality)
@@ -772,10 +792,10 @@ class OperationOverInstances(Operation):
         g_op, g_op_sub = Operation(g, self.instanceVars), universality.instanceExpr.rhs.substituted(iVarSubstitutions)
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         if self.hasDomain():
-            return instanceSubstitution.specialize({Upsilon:self.operator, Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub},
+            return instanceSubstitution.instantiate({Upsilon:self.operator, Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub},
                                                     relabelMap={xMulti:universality.instanceVars, yMulti:self.instanceVars, zMulti:self.instanceVars}, assumptions=assumptions).deriveConsequent(assumptions=assumptions)
         else:
-            return noDomainInstanceSubstitution.specialize({Upsilon:self.operator, Q_op:Q_op_sub, f_op:f_op_sub, g_op:g_op_sub},
+            return noDomainInstanceSubstitution.instantiate({Upsilon:self.operator, Q_op:Q_op_sub, f_op:f_op_sub, g_op:g_op_sub},
                                                              relabelMap={xMulti:universality.instanceVars, yMulti:self.instanceVars, zMulti:self.instanceVars}, assumptions=assumptions).deriveConsequent(assumptions=assumptions)
 
     def substituteInstances(self, universality, assumptions=USE_DEFAULTS):
@@ -786,7 +806,7 @@ class OperationOverInstances(Operation):
         Works also when there is no domain S and/or no conditions ..Q...
         '''
         substitution = self.instanceSubstitution(universality, assumptions=assumptions)
-        return substitution.deriveRightViaEquivalence(assumptions=assumptions)
+        return substitution.deriveRightViaEquality(assumptions=assumptions)
     """
 
 def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):

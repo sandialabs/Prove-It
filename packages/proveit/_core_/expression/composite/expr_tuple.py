@@ -23,20 +23,18 @@ class ExprTuple(Composite, Expression):
         Initialize an ExprTuple from an iterable over Expression 
         objects.
         '''
-        from proveit._core_ import KnownTruth
+        from proveit._core_ import Judgment
         from .composite import singleOrCompositeExpression
         entries = []
         for entry in expressions:
-            if isinstance(entry, KnownTruth):
-                # Extract the Expression from the KnownTruth:
+            if isinstance(entry, Judgment):
+                # Extract the Expression from the Judgment:
                 entry = entry.expr 
             if not isinstance(entry, Expression):
                 entry = singleOrCompositeExpression(entry)
             assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
-        self._lastEntryCoordInfo = None
-        self._lastQueriedEntryIndex = 0
         
         if styles is None: styles = dict()
         if 'wrapPositions' not in styles:
@@ -391,12 +389,12 @@ class ExprTuple(Composite, Expression):
             j_sub = lambda_map.extractArgument(front_singles[-1])
             if len(front_singles)==2:
                 # Merge a pair of singular items.
-                front_merger = merge_pair.specialize(
+                front_merger = merge_pair.instantiate(
                         {f:lambda_map, i:i_sub, j:j_sub}, 
                         assumptions=assumptions)
             else:
                 # Merge a series of singular items in one shot.
-                front_merger = merge_series.specialize(
+                front_merger = merge_series.instantiate(
                         {f:lambda_map, x:front_singles, i:i_sub, j:j_sub}, 
                         assumptions=assumptions)
             eq.update(front_merger.substitution(self.innerExpr()[:first_range_pos], 
@@ -421,18 +419,18 @@ class ExprTuple(Composite, Expression):
                     _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
                     _k, _l = eq.expr[1].start_index, eq.expr[1].end_index
                     merger = \
-                        merge.specialize({f:lambda_map, i:_i, j:_j, k:_k, l:_l},
+                        merge.instantiate({f:lambda_map, i:_i, j:_j, k:_k, l:_l},
                                          assumptions=assumptions)
                 else:
                     # Merge an ExprRange and a singular item.
                     _i, _j = eq.expr[0].start_index, eq.expr[0].end_index    
                     _k = lambda_map.extractArgument(eq.expr[1])
                     if _k == Add(_j, one):
-                        merger = merge_extension.specialize(
+                        merger = merge_extension.instantiate(
                                 {f:lambda_map, i:_i, j:_j}, 
                                 assumptions=assumptions)                    
                     else:
-                        merger = merge_back.specialize(
+                        merger = merge_back.instantiate(
                                 {f:lambda_map, i:_i, j:_j, k:_k}, 
                                 assumptions=assumptions)                    
             else:
@@ -440,7 +438,7 @@ class ExprTuple(Composite, Expression):
                 iSub = lambda_map.extractArgument(eq.expr[0])
                 jSub, kSub = eq.expr[1].start_index, eq.expr[1].end_index
                 merger = \
-                    merge_front.specialize({f:lambda_map, i:iSub, j:jSub,
+                    merge_front.instantiate({f:lambda_map, i:iSub, j:jSub,
                                             k:kSub}, assumptions=assumptions)
             eq.update(merger)
             return eq.relation

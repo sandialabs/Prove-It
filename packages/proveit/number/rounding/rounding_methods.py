@@ -24,7 +24,7 @@ def apply_roundingElimination(expr, roundingEliminationThm,
     # to assumptions=() to avoid later len() errors
     assumptions = defaults.checkedAssumptions(assumptions)
 
-    return roundingEliminationThm.specialize(
+    return roundingEliminationThm.instantiate(
                 {x:expr.operand}, assumptions=assumptions)
 
 def apply_roundingExtraction(expr, roundingExtractionThm, idx_to_extract=None,
@@ -86,7 +86,7 @@ def apply_roundingExtraction(expr, roundingExtractionThm, idx_to_extract=None,
         # then update by applying the roundOfRealPlusInt thm
         x_sub = expr.operand.operands[0]
         n_sub = expr.operand.operands[1]
-        expr = eq.update(roundingExtractionThm.specialize(
+        expr = eq.update(roundingExtractionThm.instantiate(
                 {x:x_sub, n:n_sub}, assumptions=assumptions))
 
         return eq.relation
@@ -158,7 +158,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
         # Try to partition all suboperands into Integers vs.
         # Non-Integers, and if there is at least one integer, try to
         # apply the extraction theorem (allowing an error message
-        # if the specialization fails).
+        # if the instantiation fails).
 
         subops = expr.operand.operands
 
@@ -272,11 +272,11 @@ def rounding_deduceInNumberSet(expr, number_set, roundingRealClosureThm,
         assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Integers:
-            return roundingRealClosureThm.specialize(
+            return roundingRealClosureThm.instantiate(
                         {x:expr.operand}, assumptions=assumptions)
 
         if number_set == Naturals:
-            return roundingRealPosClosureThm.specialize(
+            return roundingRealPosClosureThm.instantiate(
                         {x:expr.operand}, assumptions=assumptions)
 
         msg = ("The rounding_methods.py function "

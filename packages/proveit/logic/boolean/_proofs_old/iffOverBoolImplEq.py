@@ -6,4 +6,4 @@ from proveit.common import A, B
 # forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) => (A = B)
 nestedVersion = Forall(A, Forall(B, Implies(Iff(A, B), Equals(A, B)), domain=BOOLEANS), domain=BOOLEANS).proveByEval()
 # forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) => (A = B)
-nestedVersion.specialize().specialize().generalize((A, B), domain=BOOLEANS).qed(__file__)
+nestedVersion.instantiate().instantiate().generalize((A, B), domain=BOOLEANS).qed(__file__)

@@ -51,7 +51,7 @@ class ScalarProd(BinaryOperation):
             except:
                 pass
             '''
-            eq.update(doublyScaledAsSinglyScaled.specialize({x:expr.scaled.scaled}).specialize({alpha:expr.scalar, beta:expr.scaled.scalar}))
+            eq.update(doublyScaledAsSinglyScaled.instantiate({x:expr.scaled.scaled}).instantiate({alpha:expr.scalar, beta:expr.scaled.scalar}))
             return eq.eqExpr
         else:
             raise ValueError('Only trivial simplification is implemented (nested scalar products)')

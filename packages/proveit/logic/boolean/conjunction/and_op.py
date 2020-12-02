@@ -7,7 +7,7 @@ from proveit.abstract_algebra.generic_methods import apply_commutation_thm, appl
 
 class And(Operation):
     # The operator of the And operation
-    _operator_ = Literal(stringFormat='and', latexFormat=r'\land', context=__file__)
+    _operator_ = Literal(stringFormat='and', latexFormat=r'\land', theory=__file__)
     
     def __init__(self, *operands):
         r'''
@@ -75,11 +75,11 @@ class And(Operation):
                 # Try a possibly simpler proof than concludeViaExample.
                 try:
                     if len(disprovenOperandIndices) == 2:
-                        return nandIfNeither.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                        return nandIfNeither.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                     elif disprovenOperandIndices[0] == 0:
-                        return nandIfRightButNotLeft.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                        return nandIfRightButNotLeft.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                     else:
-                        return nandIfLeftButNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                        return nandIfLeftButNotRight.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                 except:
                     pass
             if len(disprovenOperandIndices) > 0:
@@ -97,7 +97,7 @@ class And(Operation):
                            "we could not disprove any of the conjunction "
                            "operands.")
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -113,7 +113,7 @@ class And(Operation):
         yield self.deriveParts
         #yield self.deriveCommutation
 
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
         '''
@@ -125,7 +125,7 @@ class And(Operation):
             demorganOr = Or(*[operand.operand for operand in self.operands])
             yield demorganOr.concludeViaDemorgans
         
-    def inBoolSideEffects(self, knownTruth):
+    def inBoolSideEffects(self, judgment):
         '''
         From (A and B and .. and Z) in Booleans deduce (A in Booleans), (B in Booleans), ...
         (Z in Booleans).
@@ -194,7 +194,7 @@ class And(Operation):
                 C_sub = self.operands[idx+1:]
                 m_val = Len(A_sub).computed(assumptions)
                 n_val = Len(C_sub).computed(assumptions)
-                return anyFromAnd.specialize(
+                return anyFromAnd.instantiate(
                         {m:m_val, n:n_val, A:A_sub, B:B_sub, C:C_sub},
                         assumptions=assumptions)
     
@@ -245,7 +245,7 @@ class And(Operation):
         operand = self.operands[0]
         with defaults.disabled_auto_reduction_types as disable_reduction_types:
             disable_reduction_types.add(And)
-            return unary_and_reduction.specialize({A:operand},
+            return unary_and_reduction.instantiate({A:operand},
                                                   assumptions=assumptions)
 
     def concludeViaComposition(self, assumptions=USE_DEFAULTS):
@@ -261,7 +261,7 @@ class And(Operation):
         '''
         from ._axioms_ import leftInBool
         if len(self.operands) == 2:
-            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            leftInBool.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         
     def deduceRightInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -269,7 +269,7 @@ class And(Operation):
         '''
         from ._axioms_ import rightInBool
         if len(self.operands) == 2:
-            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            rightInBool.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def deducePartsInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -296,7 +296,7 @@ class And(Operation):
         else:
             from proveit.number import num
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
-            return eachInBool.specialize({m:mVal, n:nVal, A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}, assumptions=assumptions)
+            return eachInBool.instantiate({m:mVal, n:nVal, A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}, assumptions=assumptions)
 
     def concludeViaDemorgans(self, assumptions=USE_DEFAULTS):
         '''
@@ -306,9 +306,9 @@ class And(Operation):
         from ._theorems_ import demorgansLawOrToAnd, demorgansLawOrToAndBin
         from proveit.number import num
         if len(self.operands) == 2:
-            return demorgansLawOrToAndBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return demorgansLawOrToAndBin.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return demorgansLawOrToAnd.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
+            return demorgansLawOrToAnd.instantiate({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
@@ -320,10 +320,10 @@ class And(Operation):
         index = self.operands.index(trueOperand)
         if len(self.operands) == 2:
             if index == 0:
-                return nandIfNotLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+                return nandIfNotLeft.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
             elif index == 1:
-                return nandIfNotRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-        return nandIfNotOne.specialize({m:num(index), n:num(len(self.operands)-index-1), A:self.operands[:index], B:self.operands[index], C:self.operands[index+1:]}, assumptions=assumptions)
+                return nandIfNotRight.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return nandIfNotOne.instantiate({m:num(index), n:num(len(self.operands)-index-1), A:self.operands[:index], B:self.operands[index], C:self.operands[index+1:]}, assumptions=assumptions)
     
     def concludeAsRedundant(self, assumptions=USE_DEFAULTS):
         '''
@@ -413,10 +413,10 @@ class And(Operation):
         
         from ._theorems_ import binaryClosure, closure
         if len(self.operands)==2:
-            return binaryClosure.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return binaryClosure.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             from proveit.number import num    
-        return closure.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
+        return closure.instantiate({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
@@ -506,11 +506,11 @@ def compose(*expressions, assumptions=USE_DEFAULTS):
         return emptyConjunction
     if len(expressions)==2:
         from ._theorems_ import andIfBoth
-        return andIfBoth.specialize({A:expressions[0], B:expressions[1]}, assumptions=assumptions)
+        return andIfBoth.instantiate({A:expressions[0], B:expressions[1]}, assumptions=assumptions)
     else:
         from proveit.number import num
         from ._theorems_ import andIfAll
-        return andIfAll.specialize({m:num(len(expressions)), A:expressions}, assumptions=assumptions)
+        return andIfAll.instantiate({m:num(len(expressions)), A:expressions}, assumptions=assumptions)
 
 # Register these expression equivalence methods:
 InnerExpr.register_equivalence_method(And, 'commutation', 'commuted', 'commute')

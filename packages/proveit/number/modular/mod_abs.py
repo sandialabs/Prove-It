@@ -3,7 +3,7 @@ from proveit.number.sets import Reals
 
 class ModAbs(Operation):
     # operator of the ModAbs operation.
-    _operator_ = Literal(stringFormat='ModAbs', context=__file__)
+    _operator_ = Literal(stringFormat='ModAbs', theory=__file__)
 
     def __init__(self, value, divisor):
         Operation.__init__(self, ModAbs._operator_, (value, divisor))
@@ -36,11 +36,11 @@ class ModAbs(Operation):
         assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Integers:
-            return modAbsIntClosure.specialize(
+            return modAbsIntClosure.instantiate(
                     {a:self.value, b:self.divisor}, assumptions=assumptions)
 
         if number_set == Reals:
-            return modAbsRealClosure.specialize(
+            return modAbsRealClosure.instantiate(
                     {a:self.value, b:self.divisor}, assumptions=assumptions)
 
         msg = ("'ModAbs.deduceInNumberSet()' not implemented for "

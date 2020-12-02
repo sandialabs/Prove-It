@@ -7,7 +7,7 @@ from proveit.number import one, two, Div, frac, num
 
 class Exp(Operation):
     # operator of the Exp operation.
-    _operator_ = Literal(stringFormat='Exp', context=__file__)    
+    _operator_ = Literal(stringFormat='Exp', theory=__file__)    
     
     def __init__(self, base, exponent):
         r'''
@@ -69,7 +69,7 @@ class Exp(Operation):
         from proveit.number import one
         from ._theorems_ import complexXToFirstPowerIsX
         if self.exponent == one:
-            return complexXToFirstPowerIsX.specialize({a:self.base})
+            return complexXToFirstPowerIsX.instantiate({a:self.base})
         if (isinstance(self.base, Exp) and
             isinstance(self.base.exponent, Div) and
             self.base.exponent.numerator==one and
@@ -92,11 +92,11 @@ class Exp(Operation):
         from proveit.number import zero, one
         from ._theorems_ import expZeroEqOne, exponentiatedZero, exponentiatedOne
         if self.exponent == zero:
-            return expZeroEqOne.specialize({a:self.base}) # =1
+            return expZeroEqOne.instantiate({a:self.base}) # =1
         elif self.base == zero:
-            return exponentiatedZero.specialize({x:self.exponent}) # =0
+            return exponentiatedZero.instantiate({x:self.exponent}) # =0
         elif self.base == one:
-            return exponentiatedOne.specialize({x:self.exponent}) # =1
+            return exponentiatedOne.instantiate({x:self.exponent}) # =1
         else:
             raise EvaluationError('Only trivial evaluation is implemented '
                                   '(zero or one for the base or exponent).',
@@ -108,7 +108,7 @@ class Exp(Operation):
         if self.exponent == two:
             deduceInReals(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
-            return real.theorems.sqrdClosure.specialize(
+            return real.theorems.sqrdClosure.instantiate(
                 {a:self.base}).checked(assumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealsPos, assumptions)
@@ -291,8 +291,8 @@ class Exp(Operation):
                 deduceInComplexes([self.base.numerator, self.base.denominator],
                                   assumptions)
                 deduceNotZero(self.base.denominator, assumptions)
-                return fracNatPosExpRev.specialize(
-                        {n:exponent}).specialize(
+                return fracNatPosExpRev.instantiate(
+                        {n:exponent}).instantiate(
                             {a:self.numerator.base, b:self.denominator.base})
             except:
                 deduceInIntegers(exponent, assumptions)
@@ -300,8 +300,8 @@ class Exp(Operation):
                                   assumptions)
                 deduceNotZero(self.base.numerator, assumptions)
                 deduceNotZero(self.base.denominator, assumptions)
-                return fracIntExpRev.specialize(
-                        {n:exponent}).specialize(
+                return fracIntExpRev.instantiate(
+                        {n:exponent}).instantiate(
                             {a:self.base.numerator, b:self.base.denominator})
         raise Exception('distributeExponent currently only implemented for a '
                         'fraction base')
@@ -337,7 +337,7 @@ class Exp(Operation):
         deduceNotZero(aSub, assumptions)
         deduceInIntegers(nSub, assumptions)
         deduceInComplexes([aSub, bSub], assumptions)
-        return thm.specialize({n:nSub}).specialize({a:aSub, b:bSub}).deriveReversed()
+        return thm.instantiate({n:nSub}).instantiate({a:aSub, b:bSub}).deriveReversed()
 
     def lowerOuterExp(self, assumptions=frozenset()):
         # 
@@ -363,16 +363,16 @@ class Exp(Operation):
         deduceNotZero(self.base.base, assumptions)
         deduceInIntegers(n_, assumptions)
         deduceInComplexes([a_, b_], assumptions)
-        return thm.specialize({n:n_}).specialize({a:a_, b:b_})
+        return thm.instantiate({n:n_}).instantiate({a:a_, b:b_})
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
         Given a number set number_set, attempt to prove that the given
         expression is in that number set using the appropriate closure
-        theorem. This method uses specialized thms for the sqrt() cases.
+        theorem. This method uses instantiated thms for the sqrt() cases.
         Created: 2/20/2020 by wdc, based on the same method in the Add
                  class.
-        Last modified: 2/28/2020 by wdc. Added specialization for
+        Last modified: 2/28/2020 by wdc. Added instantiation for
                        sqrt() cases created using the sqrt() fxn.
         Last Modified: 2/20/2020 by wdc. Creation.
         Once established, these authorship notations can be deleted.
@@ -387,7 +387,7 @@ class Exp(Operation):
                 Complexes, NaturalsPos, RationalsPos, Reals, RealsPos)
 
         if number_set == NaturalsPos:
-            return expNatClosure.specialize({a:self.base, b:self.exponent},
+            return expNatClosure.instantiate({a:self.base, b:self.exponent},
                       assumptions=assumptions)
 
         if number_set == RationalsPos:
@@ -405,7 +405,7 @@ class Exp(Operation):
         # closure theorems, once we get the system to deal
         # effectively with the Or(A, And(B, C)) conditions
         # if number_set == Reals:
-        #     return expRealClosure.specialize(
+        #     return expRealClosure.instantiate(
         #                     {a:self.base, b:self.exponent},
         #                     assumptions=assumptions)
 
@@ -415,18 +415,18 @@ class Exp(Operation):
             # if base is positive real, exp can be any real;
             # if base is real ≥ 0, exp must be non-zero
             if self.exponent==frac(one, two):
-                return sqrtRealClosure.specialize(
+                return sqrtRealClosure.instantiate(
                         {a:self.base},assumptions=assumptions)
             else:
                 err_string = ''
                 try:
-                    return expRealClosureBasePos.specialize(
+                    return expRealClosureBasePos.instantiate(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
                 except:
                     err_string = 'Positive base condition failed '
                     try:
-                        return expRealClosureExpNonZero.specialize(
+                        return expRealClosureExpNonZero.instantiate(
                                 {a:self.base, b:self.exponent},
                                 assumptions=assumptions)
                     except:
@@ -437,18 +437,18 @@ class Exp(Operation):
 
         if number_set == RealsPos:
             if self.exponent==frac(one, two):
-                return sqrtRealPosClosure.specialize(
+                return sqrtRealPosClosure.instantiate(
                         {a:self.base},assumptions=assumptions)
             else:
-                return expRealPosClosure.specialize(
+                return expRealPosClosure.instantiate(
                         {a:self.base, b:self.exponent},assumptions=assumptions)
 
         if number_set == Complexes:
             if self.exponent==frac(one, two):
-                return sqrtComplexClosure.specialize(
+                return sqrtComplexClosure.instantiate(
                         {a:self.base}, assumptions=assumptions)
             else:
-                return expComplexClosure.specialize(
+                return expComplexClosure.instantiate(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
 
@@ -488,7 +488,7 @@ class ExpSetMembership(Membership):
         #print(exponent, base, exponent.asInt(),element, domain, len(element))
         if isLiteralInt(exponent):
             if exponent == zero:
-                return exp_set_0.specialize({S:base}, assumptions=assumptions)
+                return exp_set_0.instantiate({S:base}, assumptions=assumptions)
             if len(element) != exponent.asInt():
                 raise ProofFailure(
                     elem_in_set, assumptions,
@@ -500,7 +500,7 @@ class ExpSetMembership(Membership):
                 expr_map = {S:base} # S is the base
                 # map a, b, ... to the elements of element.
                 expr_map.update({proveit._common_.__getattr__(chr(ord('a')+k)):elem_k for k, elem_k in enumerate(element)})
-                elem_in_set = thm.specialize(expr_map, assumptions=assumptions)
+                elem_in_set = thm.instantiate(expr_map, assumptions=assumptions)
             else:
                 raise ProofFailure(
                     elem_in_set, assumptions,
@@ -519,7 +519,7 @@ class ExpSetMembership(Membership):
                                                  assumptions=assumptions)
         return elem_in_set
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         return
         yield
 

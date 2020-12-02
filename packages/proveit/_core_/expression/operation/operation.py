@@ -37,8 +37,8 @@ class Operation(Expression):
         if styles is None: styles = dict()
         if hasattr(self.__class__, '_operator_') and operator_or_operators==self.__class__._operator_:
             operator = operator_or_operators
-            #if Expression.contexts[operator._style_id] != operator.context:
-            #    raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
+            #if Expression.theories[operator._style_id] != operator.theory:
+            #    raise OperationError("Expecting '_operator_' Theory to match the Theory of the Operation sub-class.  Use 'theory=__file__'.")
         if isinstance(operator_or_operators, ExprRange):
             operator_or_operators = [operator_or_operators]
         if isinstance(operand_or_operands, ExprRange):

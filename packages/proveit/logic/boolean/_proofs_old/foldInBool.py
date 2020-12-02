@@ -6,9 +6,9 @@ from proveit.common import x, y, A, X
 # hypothesis = (A=TRUE or A=FALSE)
 hypothesis = Or(Equals(A, TRUE), Equals(A, FALSE))
 # (A=TRUE) or (A in {FALSE}) assuming hypothesis
-singletonDef.specialize({x:A, y:FALSE}).subLeftSideInto(Or(Equals(A, TRUE), X), X).proven({hypothesis})
+singletonDef.instantiate({x:A, y:FALSE}).subLeftSideInto(Or(Equals(A, TRUE), X), X).proven({hypothesis})
 # (A in {TRUE}) or (A in {FALSE}) assuming hypothesis
-singletonDef.specialize({x:A, y:TRUE}).subLeftSideInto(Or(X, In(A, Singleton(FALSE))), X).proven({hypothesis})
+singletonDef.instantiate({x:A, y:TRUE}).subLeftSideInto(Or(X, In(A, Singleton(FALSE))), X).proven({hypothesis})
 # [A in ({TRUE} union {FALSE})] assuming hypothesis
 In(A, Union(Singleton(TRUE), Singleton(FALSE))).concludeAsFolded()
 # (A in BOOLEANS) assuming hypothesis

@@ -1,4 +1,4 @@
-from proveit import (asExpression, Context, defaults, Literal, Operation,
+from proveit import (asExpression, Theory, defaults, Literal, Operation,
                      ProofFailure, TransitiveRelation, USE_DEFAULTS)
 from proveit.logic import Equals, InSet, NotEquals
 from proveit.number import Exp, Mult, num
@@ -11,7 +11,7 @@ class DividesRelation(TransitiveRelation):
         self.divisor = self.lhs
         self.dividend = self.rhs
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         In addition to the TransitiveRelation side-effects, also
         attempt (where applicable) eliminateDividenExponent,
@@ -19,7 +19,7 @@ class DividesRelation(TransitiveRelation):
         '''
         from proveit.number import two
         
-        for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
+        for sideEffect in TransitiveRelation.sideEffects(self, judgment):
             yield sideEffect
         
         # For each of the following, use the default assumptions to
@@ -77,13 +77,13 @@ class Divides(DividesRelation):
     '''
 
     _operator_ = Literal(
-    	  stringFormat='|', latexFormat=r'\rvert', context=__file__
+    	  stringFormat='|', latexFormat=r'\rvert', theory=__file__
     	  )
 
-    # map left-hand-sides to "Divides" KnownTruths
+    # map left-hand-sides to "Divides" Judgments
     #   (populated in TransitivityRelation.sideEffects)
     knownLeftSides = dict()
-    # map right-hand-sides to "Divides" KnownTruths
+    # map right-hand-sides to "Divides" Judgments
     #   (populated in TransitivityRelation.sideEffects)
     knownRightSides = dict()
 
@@ -424,7 +424,7 @@ class Divides(DividesRelation):
         '''
         from ._theorems_ import dividesInBool
         _x, _y = dividesInBool.instanceParams
-        return dividesInBool.specialize(
+        return dividesInBool.instantiate(
         	  {_x:self.operands[0], _y:self.operands[1]},
               assumptions=assumptions)
 
@@ -441,13 +441,13 @@ class DividesProper(DividesRelation):
     '''
 
     _operator_ = Literal(
-          stringFormat='|', latexFormat=r'{\rvert_{P}}', context=__file__
+          stringFormat='|', latexFormat=r'{\rvert_{P}}', theory=__file__
           )
 
-    # map left-hand-sides to "Divides" KnownTruths
+    # map left-hand-sides to "Divides" Judgments
     #   (populated in TransitivityRelation.sideEffects)
     knownLeftSides = dict()
-    # map right-hand-sides to "Divides" KnownTruths
+    # map right-hand-sides to "Divides" Judgments
     #   (populated in TransitivityRelation.sideEffects)
     knownRightSides = dict()
 

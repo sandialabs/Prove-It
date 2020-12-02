@@ -4,12 +4,12 @@ from proveit._common_ import A, x, y, S
 
 class Not(Operation):
     # operator of the Not operation
-    _operator_ = Literal(stringFormat='not', latexFormat=r'\lnot', context=__file__)
+    _operator_ = Literal(stringFormat='not', latexFormat=r'\lnot', theory=__file__)
     
     def __init__(self, A):
         Operation.__init__(self, Not._operator_, A)
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -33,10 +33,10 @@ class Not(Operation):
         if hasattr(self.operand, 'negationSideEffects'):
             # derive negation side-effects for the specific type of
             # expression being negated.
-            for negSideEffect in self.operand.negationSideEffects(knownTruth):
+            for negSideEffect in self.operand.negationSideEffects(judgment):
                 yield negSideEffect
             
-    def inBoolSideEffects(self, knownTruth):
+    def inBoolSideEffects(self, judgment):
         '''
         From not(A) in Booleans deduce A in Booleans, where self is not(A).
         '''
@@ -92,7 +92,7 @@ class Not(Operation):
         from proveit.logic.boolean.negation._theorems_ import falsifiedNegationIntro
         if self.operand.proven(assumptions) and self.operand != TRUE:
             # evaluate to FALSE via falsifiedNegationIntro
-            return falsifiedNegationIntro.specialize({A:self.operand}, assumptions=assumptions)
+            return falsifiedNegationIntro.instantiate({A:self.operand}, assumptions=assumptions)
         return Operation.evaluation(self, assumptions, automation=automation)
     
     def substituteInFalse(self, lambdaMap, assumptions=USE_DEFAULTS):
@@ -103,7 +103,7 @@ class Not(Operation):
         from proveit.logic import Equals
         from proveit._common_ import P
         Plambda = Equals._lambdaExpr(lambdaMap, self.operand)
-        return substituteInFalse.specialize({x:self.operand, P:Plambda}, assumptions=assumptions)            
+        return substituteInFalse.instantiate({x:self.operand, P:Plambda}, assumptions=assumptions)            
 
     def substituteFalsehood(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
@@ -113,7 +113,7 @@ class Not(Operation):
         from proveit.logic import Equals
         from proveit.common import P
         Plambda = Equals._lambdaExpr(lambdaMap, self.operand)
-        return substituteFalsehood.specialize({x:self.operand, P:Plambda}, assumptions=assumptions)            
+        return substituteFalsehood.instantiate({x:self.operand, P:Plambda}, assumptions=assumptions)            
                 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -121,15 +121,15 @@ class Not(Operation):
         '''
         from ._theorems_ import closure, doubleNegClosure
         if isinstance(self.operand, Not):
-            return doubleNegClosure.specialize({A:self.operand.operand}, assumptions=assumptions)
-        return closure.specialize({A:self.operand}, assumptions=assumptions)
+            return doubleNegClosure.instantiate({A:self.operand.operand}, assumptions=assumptions)
+        return closure.instantiate({A:self.operand}, assumptions=assumptions)
 
     def deduceOperandInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that the negated operand is in the set of BOOLEANS.
         '''
         from ._axioms_ import operandInBool
-        return operandInBool.specialize({A:self.operand}, assumptions=assumptions)
+        return operandInBool.instantiate({A:self.operand}, assumptions=assumptions)
           
     def equateNegatedToFalse(self, assumptions=USE_DEFAULTS):
         r'''
@@ -137,14 +137,14 @@ class Not(Operation):
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         from ._axioms_ import negationElim
-        return negationElim.specialize({A:self.operand}, assumptions=assumptions)
+        return negationElim.instantiate({A:self.operand}, assumptions=assumptions)
 
     def deriveUntrue(self, assumptions=USE_DEFAULTS):
         r'''
         From not(A), derive and return A != TRUE.
         '''
         from ._theorems_ import untrueFromNegation
-        return untrueFromNegation.specialize({A:self.operand}, assumptions=assumptions)    
+        return untrueFromNegation.instantiate({A:self.operand}, assumptions=assumptions)    
         
     def doubleNegationEquivalence(self, assumptions=USE_DEFAULTS):
         r'''
@@ -152,7 +152,7 @@ class Not(Operation):
         '''
         from ._theorems_ import doubleNegationEquiv
         if isinstance(self.operand, Not):
-            return doubleNegationEquiv.specialize({A:self.operand.operand}, assumptions=assumptions)
+            return doubleNegationEquiv.instantiate({A:self.operand.operand}, assumptions=assumptions)
         raise ValueError("doubleNegationEquivalence does not apply to " + str(self) + " which is not of the form not(not(A))")
     
     def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
@@ -162,7 +162,7 @@ class Not(Operation):
         '''
         from ._theorems_ import doubleNegationElim
         if isinstance(self.operand, Not):
-            return doubleNegationElim.specialize({A:self.operand.operand}, assumptions=assumptions)
+            return doubleNegationElim.instantiate({A:self.operand.operand}, assumptions=assumptions)
         raise ValueError("deriveViaDoubleNegation does not apply to " + str(self) + " which is not of the form not(not(A))")
 
     def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
@@ -173,21 +173,21 @@ class Not(Operation):
         from ._theorems_ import doubleNegationIntro
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
-            return doubleNegationIntro.specialize({A:stmt}, assumptions=assumptions)
+            return doubleNegationIntro.instantiate({A:stmt}, assumptions=assumptions)
 
     def concludeViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
         r'''
         Prove and return self of the form not(A) assuming A=FALSE.
         '''
         from ._theorems_ import negationIntro
-        return negationIntro.specialize({A:self.operand}, assumptions=assumptions)                        
+        return negationIntro.instantiate({A:self.operand}, assumptions=assumptions)                        
             
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
         From not(A), and assuming A, derive and return FALSE.
         '''
         from ._theorems_ import negationContradiction
-        return negationContradiction.specialize({A:self.operand}, assumptions=assumptions)
+        return negationContradiction.instantiate({A:self.operand}, assumptions=assumptions)
     
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -212,6 +212,6 @@ class Not(Operation):
         from ._theorems_ import doubleNegationEquiv
         if isinstance(self.operand, Not):
             Asub = self.operand.operand
-            return doubleNegationEquiv.specialize({A:Asub}, assumptions=assumptions)
+            return doubleNegationEquiv.instantiate({A:Asub}, assumptions=assumptions)
 
 

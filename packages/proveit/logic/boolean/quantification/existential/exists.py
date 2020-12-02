@@ -1,10 +1,10 @@
-from proveit import Lambda, Conditional, OperationOverInstances, KnownTruth
+from proveit import Lambda, Conditional, OperationOverInstances, Judgment
 from proveit import defaults, Literal, Operation, ExprTuple, USE_DEFAULTS
-from proveit._common_ import n, A, B, P, Q, R, S, xx, yy, QQ
+from proveit._common_ import n, A, B, P, Q, R, S
 
 class Exists(OperationOverInstances):
     # operator of the Exists operation
-    _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', context=__file__)
+    _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', theory=__file__)
 
     # a dictionary to track Skolem constants chosen with the
     # Exists.choose() method
@@ -26,14 +26,14 @@ class Exists(OperationOverInstances):
                 domain=domain, domains=domains, condition=condition,
                 conditions=conditions, _lambda_map=_lambda_map)
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for an exists operations.
         '''
         return
         yield self.deriveNegatedForall # derive the negated forall form
 
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a negated exists operation.
         '''
@@ -69,7 +69,7 @@ class Exists(OperationOverInstances):
         defaults.assumptions = (*defaults.assumptions, *Q_skolem, P_skolem)
         if print_message:
             print("Creating Skolem 'constant(s)': {0}.\n"
-                  "Call the KnownTruth.eliminate{0} to complete the "
+                  "Call the Judgment.eliminate{0} to complete the "
                   "Skolemization\n(when the 'constant(s)' are no longer needed).\n"
                   "Adding to defaults.assumptions:".
                   format(skolem_constants, (*Q_skolem)))
@@ -198,7 +198,7 @@ class Exists(OperationOverInstances):
             for iVar in self.instanceVars:
                 exampleConditions.append(InSet(iVar, self.domain))
         # exists_{..y.. | ..Q(..x..)..} P(..y..)]
-        return existenceByExample.specialize({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
+        return existenceByExample.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
                                               relabelMap={xMulti:exampleInstance, yMulti:self.instanceVars}).deriveConsequent(assumptions=assumptions)
 
     def deriveNegatedForall(self, assumptions=USE_DEFAULTS):
@@ -213,12 +213,12 @@ class Exists(OperationOverInstances):
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         if isinstance(self.instanceExpr, Not):
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr.operand
-            return existsNotImpliesNotForall.specialize({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
+            return existsNotImpliesNotForall.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
                                                         relabelMap={xMulti:self.instanceVars}).deriveConsequent(assumptions)
         else:
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-            return existsDef.specialize({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
-                                        relabelMap={xMulti:self.instanceVars}).deriveRightViaEquivalence(assumptions)
+            return existsDef.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
+                                        relabelMap={xMulti:self.instanceVars}).deriveRightViaEquality(assumptions)
     
     def substituteDomain(self, superset, assumptions=USE_DEFAULTS):
         '''
@@ -230,7 +230,7 @@ class Exists(OperationOverInstances):
         from ._theorems_ import existsInSuperset
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
-        return existsInSuperset.specialize({P_op:P_op_sub, Q_op:Q_op_sub, A:self.domain, B:superset}, assumptions=assumptions,
+        return existsInSuperset.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, A:self.domain, B:superset}, assumptions=assumptions,
                                             relabelMap={xMulti:self.instanceVars, yMulti:self.instanceVars}).deriveConsequent(assumptions)
         
     def elimDomain(self, assumptions=USE_DEFAULTS):
@@ -242,7 +242,7 @@ class Exists(OperationOverInstances):
         from ._theorems_ import existsInGeneral
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
-        return existsInGeneral.specialize({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
+        return existsInGeneral.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, assumptions=assumptions,
                                            relabelMap={xMulti:self.instanceVars, yMulti:self.instanceVars}).deriveConsequent(assumptions)
 
         
@@ -255,7 +255,7 @@ class Exists(OperationOverInstances):
         from ._theorems_ import existsInBool
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
-        return existsInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, relabelMap={xMulti:self.instanceVars}, assumptions=assumptions)
+        return existsInBool.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, S:self.domain}, relabelMap={xMulti:self.instanceVars}, assumptions=assumptions)
 
     def substituteInstances(self, universality, assumptions=USE_DEFAULTS):
         '''
@@ -263,7 +263,7 @@ class Exists(OperationOverInstances):
         one that substitutes instance expressions given some 
         universality = forall_{..x.. in S | P(..x..), ..Q(..x..)..} R(..x..).
                                             or forall_{..x.. in S | ..Q(..x..)..} P(..x..) = R(..x..).
-        Either is allowed in the context of the existential quantifier.
+        Either is allowed in the theory of the existential quantifier.
         Derive and return the following type of existential operation assuming universality:
         Exists_{..x.. in S | ..Q(..x..)..} R(..x..)
         Works also when there is no domain S and/or no conditions ..Q...
@@ -274,7 +274,7 @@ class Exists(OperationOverInstances):
         from proveit.logic import Forall
         from proveit._generic_ import InstanceSubstitutionException
         from proveit._common_ import n, Qmulti, xMulti, yMulti, zMulti, S
-        if isinstance(universality, KnownTruth):
+        if isinstance(universality, Judgment):
             universality = universality.expr
         if not isinstance(universality, Forall):
             raise InstanceSubstitutionException("'universality' must be a forall expression", self, universality)
@@ -295,10 +295,10 @@ class Exists(OperationOverInstances):
             Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
             R_op, R_op_sub = Operation(R, self.instanceVars), universality.instanceExpr.substituted(iVarSubstitutions)
             if self.hasDomain():
-                return existentialImplication.specialize({S:self.domain, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub}, \
+                return existentialImplication.instantiate({S:self.domain, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub}, \
                                                         relabelMap={xMulti:universality.instanceVars, yMulti:self.instanceVars, zMulti:self.instanceVars}, assumptions=assumptions).deriveConsequent(assumptions).deriveConsequent(assumptions)
             else:
-                return noDomainExistentialImplication.specialize({P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub}, 
+                return noDomainExistentialImplication.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub}, 
                                                                    relabelMap={xMulti:universality.instanceVars, yMulti:self.instanceVars, zMulti:self.instanceVars}, assumptions=assumptions).deriveConsequent(assumptions).deriveConsequent(assumptions)
         # Default to the OperationOverInstances version which works with universally quantified equivalences.
         return OperationOverInstances.substitute(self, universality, assumptions=assumptions)

@@ -1,6 +1,6 @@
 from collections import deque
 from proveit import Expression, Operation, OperationSequence
-from proveit import defaults, USE_DEFAULTS, KnownTruth, ProofFailure
+from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
 from .sorter import TransitivitySorter
 
 class Relation(Operation):

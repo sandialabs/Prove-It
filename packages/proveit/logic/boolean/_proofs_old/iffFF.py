@@ -8,4 +8,4 @@ FimplF = impliesFF.deriveViaBooleanEquality()
 # (FALSE => FALSE) and (FALSE => FALSE) = TRUE
 FimplFandFimplF_eq_T = deriveStmtEqTrue(compose(FimplF, FimplF))
 # (FALSE <=> FALSE) = TRUE
-iffDef.specialize({A:FALSE, B:FALSE}).applyTransitivity(FimplFandFimplF_eq_T).qed(__file__)
+iffDef.instantiate({A:FALSE, B:FALSE}).applyTransitivity(FimplFandFimplF_eq_T).qed(__file__)

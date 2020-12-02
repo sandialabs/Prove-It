@@ -4,7 +4,7 @@ from proveit.number.negation import Neg
 
 class Integrate(OperationOverInstances):
     # operator of the Integrate operation.
-    _operator_ = Literal(stringFormat='Integrate', latexFormat=r'\int', context=__file__)    
+    _operator_ = Literal(stringFormat='Integrate', latexFormat=r'\int', theory=__file__)    
 
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):

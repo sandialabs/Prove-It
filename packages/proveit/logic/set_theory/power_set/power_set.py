@@ -1,9 +1,9 @@
 from proveit import Literal, Function, USE_DEFAULTS
-from proveit._common_ import n, x, AA
+from proveit._common_ import n, x
         
 class PowerSet(Function):
     # operator of the Intersect operation
-    _operator_ = Literal(stringFormat='power_set', latexFormat=r'\mathbb{P}', context=__file__)    
+    _operator_ = Literal(stringFormat='power_set', latexFormat=r'\mathbb{P}', theory=__file__)    
     
     def __init__(self, operand):
         '''

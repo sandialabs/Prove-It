@@ -12,7 +12,7 @@ class IntersectMembership(Membership):
         Membership.__init__(self, element)
         self.domain = domain
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Unfold the enumerated set membership as a side-effect.
         '''
@@ -26,7 +26,7 @@ class IntersectMembership(Membership):
         from ._axioms_ import intersectionDef
         element = self.element
         operands = self.domain.operands
-        return intersectionDef.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return intersectionDef.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -37,7 +37,7 @@ class IntersectMembership(Membership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return membershipUnfolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return membershipUnfolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -48,7 +48,7 @@ class IntersectMembership(Membership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return membershipFolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return membershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
                         
 class IntersectNonmembership(Nonmembership):
     '''
@@ -59,7 +59,7 @@ class IntersectNonmembership(Nonmembership):
         Nonmembership.__init__(self, element)
         self.domain = domain
     
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Currently non side-effects for intersection nonmembership.
         '''
@@ -75,7 +75,7 @@ class IntersectNonmembership(Nonmembership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipEquiv.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return nonmembershipEquiv.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -86,4 +86,4 @@ class IntersectNonmembership(Nonmembership):
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipFolding.specialize({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return nonmembershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)

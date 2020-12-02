@@ -7,13 +7,13 @@ class RationalsSet(NumberSet):
 
     def __init__(self):
         NumberSet.__init__(self, 'Rationals', r'\mathbb{Q}',
-                           context=__file__)
+                           theory=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'q in Rationals' for a given q.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
     
     def membershipObject(self, element):
@@ -22,7 +22,7 @@ class RationalsSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsInBool
         from proveit._common_ import x
-        return xInRationalsInBool.specialize(
+        return xInRationalsInBool.instantiate(
                 {x:member}, assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
@@ -33,14 +33,14 @@ class RationalsPosSet(NumberSet):
 
     def __init__(self):
         NumberSet.__init__(self, 'RationalsPos', r'\mathbb{Q}^+',
-                           context=__file__)
+                           theory=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalsPos'
         for a given q.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInRationals(member, 
                                                                 assumptions)
     
@@ -64,7 +64,7 @@ class RationalsPosSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsPosInBool
         from proveit._common_ import x
-        return xInRationalsPosInBool.specialize(
+        return xInRationalsPosInBool.instantiate(
                 {x:member}, assumptions=assumptions)
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
@@ -74,14 +74,14 @@ class RationalsNegSet(NumberSet):
 
     def __init__(self):
         NumberSet.__init__(self, 'RationalsNeg', r'\mathbb{Q}^-',
-                           context=__file__)
+                           theory=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalsNeg' 
         for a given q.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInRationals(member, 
                                                                 assumptions)
     
@@ -105,7 +105,7 @@ class RationalsNegSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsNegInBool
         from proveit._common_ import x
-        return xInRationalsNegInBool.specialize(
+        return xInRationalsNegInBool.instantiate(
                 {x:member}, assumptions=assumptions)
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
@@ -116,14 +116,14 @@ class RationalsNonNegSet(NumberSet):
 
     def __init__(self):
         NumberSet.__init__(self, 'RationalsNonNeg', r'\mathbb{Q}^{\geq 0}',
-                           context=__file__)
+                           theory=__file__)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalsNonNeg' 
         for a given q.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberInRationals(member, 
                                                                 assumptions)
     
@@ -147,7 +147,7 @@ class RationalsNonNegSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRationalsNonNegInBool
         from proveit._common_ import x
-        return xInRationalsNonNegInBool.specialize(
+        return xInRationalsNonNegInBool.instantiate(
                 {x:member}, assumptions=assumptions)
     
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):

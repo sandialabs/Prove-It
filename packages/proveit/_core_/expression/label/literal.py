@@ -5,7 +5,7 @@ from .var import Variable
 class Literal(Label):
     """
     A Literal expresses contextual meaning.  Such Labels are not interchangeable.
-    The Literal must be associated with a 'context' that should be the name of a package.
+    The Literal must be associated with a 'theory' that should be the name of a package.
     Through Axiom elimination, a Literal may be converted to the Variable with the same
     label.
     """
@@ -21,36 +21,44 @@ class Literal(Label):
         '''
         Literal.instances.clear()
         
-    def __init__(self, stringFormat, latexFormat=None, extraCoreInfo=tuple(), context=None):
+    def __init__(self, stringFormat, latexFormat=None, extraCoreInfo=tuple(), theory=None, styles=None):
         '''
-        Create a Literal.  If latexFormat is not supplied, the stringFormat is used for both.
+        Create a Literal.  If latexFormat is not supplied, the 
+        stringFormat is used for both.  The Literal will be stored
+        in the 'common' folder of its theory.  For this reason, it
+        is important that the _common__ notebook imports all of the
+        Literal's that belong to it (which will typically be done
+        without any extra effort); otherwise, it will have to be
+        recreated each session.
         '''
-        from proveit._core_.context import Context
-        if context is None:
+        from proveit._core_.theory import Theory
+        if theory is None:
             # use the default
-            context = Context.default
-            if context is None:
-                # if no default is specified; use the current working directory
-                context = Context()
-        elif isinstance(context, str):
-            # convert a path string to a Context
-            if os.path.exists(context):
-                # Make a Context given a path.
-                context = Context(context)
+            theory = Theory.default
+            if theory is None:
+                # if no default is specified; use the current working 
+                # directory
+                theory = Theory()
+        elif isinstance(theory, str):
+            # convert a path string to a Theory
+            if os.path.exists(theory):
+                # Make a Theory given a path.
+                theory = Theory(theory)
             else:
-                # Make a Context given a name.
-                # First create the local context to make sure we have access 
-                # to context roots referenced by this context.
-                Context() 
-                context = Context.getContext(context)
-        Label.__init__(self, stringFormat, latexFormat, 'Literal', (context.name,)+tuple(extraCoreInfo))
-        self._setContext(context)
+                # Make a Theory given a name.
+                # First create the local theory to make sure we have access 
+                # to theory roots referenced by this theory.
+                Theory() 
+                theory = Theory.getTheory(theory)
+        Label.__init__(self, stringFormat, latexFormat, 'Literal', (theory.name,)+tuple(extraCoreInfo),
+                       styles=styles)
+        self.theory = theory
         #if self._coreInfo in Literal.instances:
-        #    raise DuplicateLiteralError("Only allowed to create one Literal with the same context and string/latex formats")
+        #    raise DuplicateLiteralError("Only allowed to create one Literal with the same theory and string/latex formats")
         Literal.instances[self._coreInfo] = self
     
     @classmethod
-    def instance(literalClass, context, stringFormat, latexFormat):
+    def instance(literalClass, theory, stringFormat, latexFormat):
         raise NotImplementedError("'instance' method has not been implemented for a Literal of type %s"%str(literalClass))
     
     def asVariable(self):
@@ -65,12 +73,12 @@ class Literal(Label):
         Make the object of class `literalClass` matching the core information
         and sub expressions.
         '''
-        from proveit import Context
+        from proveit import Theory
         import inspect
         if len(subExpressions) > 0:
             raise ValueError('Not expecting any subExpressions of Literal')
         if len(coreInfo) < 4:
-            raise ValueError("Expecting " + literalClass.__name__ + " coreInfo to contain at least 4 items: '" + literalClass.__name__ + "', stringFormat, latexFormat, and the context")
+            raise ValueError("Expecting " + literalClass.__name__ + " coreInfo to contain at least 4 items: '" + literalClass.__name__ + "', stringFormat, latexFormat, and the theory")
         if coreInfo[0] != 'Literal':
             raise ValueError("Expecting coreInfo[0] to be 'Literal'")
         coreInfo = tuple(coreInfo) # make it hashable
@@ -82,31 +90,35 @@ class Literal(Label):
             # Expression objects out of the __pv_it database without causing
             # a DuplicateLiteralError.
             string_format, latex_format = coreInfo[1:3]
-            context = Context.getContext(coreInfo[3])
-            prev_context_default = Context.default
-            Context.default = context
+            theory = Theory.getTheory(coreInfo[3])
+            prev_theory_default = Theory.default
+            Theory.default = theory
             try:
                 extra_core_info = coreInfo[4:]
                 init_args = inspect.getargspec(literalClass.__init__)[0]
-                if literalClass==Literal:
-                    made_obj = Literal(string_format, latex_format, extra_core_info, context)
+                kwargs = dict()
+                if 'theory' in init_args: kwargs['theory'] = theory
+                if 'styles' in init_args: kwargs['styles'] = styles
+                if len(extra_core_info) > 0:
+                    # If there is extra core information, we need to call
+                    # a makeLiteral method.
+                    if hasattr(literalClass, 'makeLiteral'):
+                        made_obj = literalClass.makeLiteral(string_format, latex_format, 
+                                                            extra_core_info, theory)
+                    else:
+                        raise NotImplementedError("Must implement the 'makeLiteral(string_format, latex_format, extra_core_info, theory)' static method for class %s which uses 'extra_core_info'"%str(literalClass))
+                elif literalClass==Literal:
+                    made_obj = Literal(string_format, latex_format, extra_core_info, theory)
                 elif len(init_args)==1:
                     made_obj = literalClass() # no arguments (except self) are taken
                 elif len(init_args)==2 and init_args[1]=='stringFormat' and coreInfo[1]==coreInfo[2]:
-                    made_obj = literalClass(string_format, context)
-                elif len(init_args)==3 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat':
-                    made_obj = literalClass(string_format, latex_format)
-                elif len(init_args)==4 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat' and init_args[3]=='context':
-                    made_obj = literalClass(string_format, latex_format, context)
-                elif hasattr(literalClass, 'makeLiteral'):
-                    if len(extra_core_info)==0:
-                        made_obj = literalClass.makeLiteral(string_format, latex_format, context)
-                    else:
-                        made_obj = literalClass.makeLiteral(string_format, latex_format, extra_core_info, context)
+                    made_obj = literalClass(string_format, theory)
+                elif len(init_args)>=3 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat':
+                    made_obj = literalClass(string_format, latex_format, **kwargs)
                 else:
-                    raise NotImplementedError("Must implement the 'makeLiteral(string_format, latex_format, context)' static method for class %s"%str(literalClass)) 
+                    made_obj = literalClass(**kwargs)
             finally:
-                Context.default = prev_context_default # restore the default
+                Theory.default = prev_theory_default # restore the default
             
             Literal.instances.pop(coreInfo)
             return made_obj.withStyles(**styles)
@@ -116,20 +128,22 @@ class Literal(Label):
         Yield the argument values that could be used to recreate the
         Literal.
         '''
-        for arg in Label.remakeArguments(self):
-            yield arg
         import inspect
         init_args = inspect.getargspec(self.__class__.__init__)[0]
         if len(init_args)==1:
+            return # nothing needed
+        for arg in Label.remakeArguments(self):
+            yield arg
+        if len(init_args)==3:
             return # nothing more
-        if (len(init_args)==5 and init_args[3]=='extraCoreInfo' \
-                and init_args[4]=='context'):
+        if (len(init_args)==6 and init_args[3]=='extraCoreInfo' \
+                and init_args[4]=='theory' and init_args[5]=='styles'):
             core_info = self.coreInfo()
-            context_name = core_info[3]
+            theory_name = core_info[3]
             extra_core_info = core_info[4:]
             if len(extra_core_info) > 0:
                 yield ('extraCoreInfo', extra_core_info)
-            yield ('context', '"' + context_name + '"')
+            yield ('theory', '"' + theory_name + '"')
         else:
             raise NotImplementedError("Must properly implement the "
                                       "'remakeArguments' method for "

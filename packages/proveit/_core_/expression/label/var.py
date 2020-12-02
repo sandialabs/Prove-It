@@ -5,7 +5,7 @@ from proveit._core_.defaults import USE_DEFAULTS
 class Variable(Label):
     """
     A Variable is an interchangeable label.  They may be relabeled 
-    Variable to Variable.  Through specialization of a Forall statement 
+    Variable to Variable.  Through instantiation of a Forall statement 
     over one or more Variables, those Variables may each be replaced 
     with a general Expression.
     """    

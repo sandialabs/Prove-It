@@ -6,24 +6,24 @@ from proveit._common_ import n
 
 class NaturalSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', context=__file__)
+        NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', theory=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import naturalsLowerBound
-        return naturalsLowerBound.specialize({n:member}, assumptions=assumptions)
+        return naturalsLowerBound.instantiate({n:member}, assumptions=assumptions)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in Naturals' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
         yield lambda assumptions : self.deduceMemberInInts(member, assumptions)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import xInNatsInBool
         from proveit._common_ import x
-        return xInNatsInBool.specialize({x:member}, assumptions=assumptions)
+        return xInNatsInBool.instantiate({x:member}, assumptions=assumptions)
 
     def deduceMemberInInts(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.integer._theorems_ import natsInInts
@@ -32,17 +32,17 @@ class NaturalSet(NumberSet):
 
 class NaturalPosSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', context=__file__)
+        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', theory=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import naturalsPosLowerBound
-        return naturalsPosLowerBound.specialize({n:member}, assumptions=assumptions)
+        return naturalsPosLowerBound.instantiate({n:member}, assumptions=assumptions)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in NaturalsPos' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
         yield lambda assumptions : self.deduceMemberInNats(member, assumptions)
         yield lambda assumptions : self.deduce_member_non_zero(member, assumptions)
@@ -62,7 +62,7 @@ class NaturalPosSet(NumberSet):
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import xInNatsPosInBool
         from proveit._common_ import x
-        return xInNatsPosInBool.specialize({x:member}, assumptions=assumptions)
+        return xInNatsPosInBool.instantiate({x:member}, assumptions=assumptions)
     
     def deduceMemberInNats(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import natsPosInNats

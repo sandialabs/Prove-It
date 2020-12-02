@@ -3,9 +3,9 @@ from proveit.basiclogic import Iff
 from proveit.common import P, S, Qetc, Retc
 
 # forall_{..x.. in S | ..Q(..x..)..} forall_{..y.. in S | ..R(..y..)..} P(..x.., ..y..) => forall_{..x.., ..y.. in S | ..Q(..x..).., ..R(..y..)..} P(..x.., ..y..)
-forallBundlingSpec = forallBundling.specialize().proven()
+forallBundlingSpec = forallBundling.instantiate().proven()
 # forall_{..x.., ..y.. in S | ..Q(..x..).., ..R(..y..)..} P(..x.., ..y..) => forall_{..x.. in S | ..Q(..x..)..} forall_{..y.. in S | ..R(..y..)..} P(..x.., ..y..)
-forallUnraveling.specialize().proven()
+forallUnraveling.instantiate().proven()
 # lhs = forall_{..x.. in S | ..Q(..x..)..} forall_{..y.. in S | ..R(..y..)..} P(..x.., ..y..)
 # rhs = forall_{..x.., ..y.. in S | ..Q(..x..).., ..R(..y..)..} P(..x.., ..y..) 
 lhs, rhs = forallBundlingSpec.conclusion, forallBundlingSpec.hypothesis

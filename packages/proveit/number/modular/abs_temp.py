@@ -3,7 +3,7 @@ from proveit._common_ import a, b, x
 
 class Abs(Operation):
     # operator of the Abs operation.
-    _operator_ = Literal(stringFormat='Abs', context=__file__)    
+    _operator_ = Literal(stringFormat='Abs', theory=__file__)    
     
     def __init__(self, A):
         Operation.__init__(self, Abs._operator_, A)   
@@ -19,7 +19,7 @@ class Abs(Operation):
         from ._theorems_ import absNotEqZero
         from proveit.number import zero
         if rhs == zero:
-            return absNotEqZero.specialize(
+            return absNotEqZero.instantiate(
                     {a:self.operand}, assumptions=assumptions)
         raise ProofFailure(Equals(self, zero), assumptions,
                 "'notEqual' only implemented for a right side of zero")
@@ -28,7 +28,7 @@ class Abs(Operation):
     #     # not yet clear how to update this method
     #     from ._theorems_ import absIsNonNeg
     #     deduceInComplexes(self.operand, assumptions)
-    #     return absIsNonNeg.specialize({a:self.operand}).checked(assumptions)
+    #     return absIsNonNeg.instantiate({a:self.operand}).checked(assumptions)
 
     def deduceGreaterThanEqualsZero(self, assumptions=USE_DEFAULTS):
         # 03/21/2020 wdc: a first attempt at updating this method
@@ -36,7 +36,7 @@ class Abs(Operation):
         from proveit.number import Complexes
         from ._theorems_ import absIsNonNeg
         # InSet(self.operand, Complexes).prove(assumptions=assumptions)
-        return absIsNonNeg.specialize({a:self.operand}, assumptions=assumptions)
+        return absIsNonNeg.instantiate({a:self.operand}, assumptions=assumptions)
     
     # def distribute(self, assumptions=frozenset()):
     #     '''
@@ -49,10 +49,10 @@ class Abs(Operation):
     #     if isinstance(self.operand, Div):
     #         deduceInComplexes(self.operand.numerator, assumptions)
     #         deduceInComplexes(self.operand.denominator, assumptions)
-    #         return absFrac.specialize({a:self.operand.numerator, b:self.operand.denominator}).checked(assumptions)
+    #         return absFrac.instantiate({a:self.operand.numerator, b:self.operand.denominator}).checked(assumptions)
     #     elif isinstance(self.operand, Mult):
     #         deduceInComplexes(self.operand.operands, assumptions)
-    #         return absProd.specialize({xEtc:self.operand.operands}).checked(assumptions)
+    #         return absProd.instantiate({xEtc:self.operand.operands}).checked(assumptions)
     #     else:
     #         raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
 
@@ -72,13 +72,13 @@ class Abs(Operation):
         from proveit.logic import InSet
         from proveit.number import num, Complexes, Div, Mult
         if isinstance(self.operand, Div):
-            return absFrac.specialize(
+            return absFrac.instantiate(
                     {a:self.operand.numerator, b:self.operand.denominator},
                     assumptions=assumptions)
         elif isinstance(self.operand, Mult):
             from proveit._common_ import xx
             theOperands = self.operand.operands
-            return absProd.specialize({n:num(len(theOperands)), xx:theOperands},
+            return absProd.instantiate({n:num(len(theOperands)), xx:theOperands},
                                       assumptions=assumptions)
         else:
             raise ValueError(
@@ -92,7 +92,7 @@ class Abs(Operation):
         '''
         from ._theorems_ import absElim
         # deduceNonNeg(self.operand, assumptions) # NOT YET IMPLEMENTED
-        return absElim.specialize({x:self.operand}, assumptions=assumptions)
+        return absElim.instantiate({x:self.operand}, assumptions=assumptions)
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -118,15 +118,15 @@ class Abs(Operation):
         assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Reals:
-            return absComplexClosure.specialize({a:self.operand},
+            return absComplexClosure.instantiate({a:self.operand},
                       assumptions=assumptions)
 
         if number_set == RealsPos:
-            return absNonzeroClosure.specialize({a:self.operand},
+            return absNonzeroClosure.instantiate({a:self.operand},
                       assumptions=assumptions)
 
         if number_set == RealsNonNeg:
-            return absComplexClosureNonNegReals.specialize({a:self.operand},
+            return absComplexClosureNonNegReals.instantiate({a:self.operand},
                       assumptions=assumptions)
 
         msg = ("'Abs.deduceInNumberSet()' not implemented for "

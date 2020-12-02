@@ -19,7 +19,7 @@ class ImplicitIdentities(Block):
     '''
     ImplicitIdentities are used in quantum circuits where they must be
     filled in with one or more identities as determined by the width of
-    the circuit (which isn't established until Blocks are specialized).
+    the circuit (which isn't established until Blocks are instantiated).
     See ForallWithImplicitIdentities.
     '''
     def __init__(self, name, formatMap = None):
@@ -100,7 +100,7 @@ class Gate(Operation):
     Represents a gate in a quantum circuit.
     '''
     # the literal operator of the Gate operation class
-    _operator_ = Literal('GATE', context=__file__)
+    _operator_ = Literal('GATE', theory=__file__)
     
     def __init__(self, gate_operation):
         '''
@@ -359,7 +359,7 @@ class ForallWithImplicitIdentities(Forall):
     By using this special kind of Forall, such MultiVariables are not
     explicitly shown as an instance variable when formatted in LATEX
     (and are not shown in the circuit).  Furthermore, they are
-    specialized automatically via an overridden "specialize"
+    instantiated automatically via an overridden "instantiate"
     method.
     '''
     
@@ -367,7 +367,7 @@ class ForallWithImplicitIdentities(Forall):
         '''
         Create a special Forall expression with ImplicitIdentities as one or
         more of the instanceVars.  Adds appropriate conditions that restrict
-        these to be specialized as one or more identities.
+        these to be instantiated as one or more identities.
         '''
         Forall.__init__(self, instanceVars, instanceExpr, conditions=ForallWithImplicitIdentities._with_implicit_conditions(instanceVars, conditions))
         # Extract the ImplicitIdentities
@@ -397,9 +397,9 @@ class ForallWithImplicitIdentities(Forall):
         if formatType == LATEX: return self.implicit_conditions
         else: return Forall.implicitConditions(self, formatType)
     
-    def specialize(self, subMap=None, conditionAsHypothesis=False):
+    def instantiate(self, subMap=None, conditionAsHypothesis=False):
         '''
-        Automatically sets the ImplicitIdentities if the other specializations
+        Automatically sets the ImplicitIdentities if the other instantiations
         cause the width of the quantum circuit to be determined.
         '''
         subbed_expr = self.instanceExpr.substituted(subMap)
@@ -424,7 +424,7 @@ class ForallWithImplicitIdentities(Forall):
                             if isinstance(gate, ImplicitIdentities):
                                 subMap[gate] = [I]*(width-column.min_nrows+1)
         fixImplicitIdentityWidths(subbed_expr)
-        return Forall.specialize(self, subMap)
+        return Forall.instantiate(self, subMap)
 """
 
 class QuantumCircuitException():
@@ -597,13 +597,13 @@ class Circuit(Operation):
         multiD_val = column.gates[max(row, target_row):]
         target = column.gates[target_row]
         if target == Z and control_type == CTRL_DN:
-            return circuit.reverseCzDn.specialize({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
+            return circuit.reverseCzDn.instantiate({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
         elif target == Z and control_type == CTRL_UP:
-            return circuit.reverseCzUp.specialize({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
+            return circuit.reverseCzUp.instantiate({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
         elif target == X and control_type == CTRL_DN:
-            return circuit.reverseCnotDnToUp.specialize({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
+            return circuit.reverseCnotDnToUp.instantiate({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
         elif target == X and control_type == CTRL_UP:
-            return circuit.reverseCnotUpToDn.specialize({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
+            return circuit.reverseCnotUpToDn.instantiate({Aetc:multiA_val, multiB:multiB_val, Cetc:multiC_val, multiD:multiD_val})
         
 
 Operation.registerOperation(CIRCUIT, lambda operands : Circuit(*operands))
@@ -617,7 +617,7 @@ class ForallWithImplicitIdentities(Forall):
     By using this special kind of Forall, such MultiVariables are not
     explicitly shown as an instance variable when formatted in LATEX
     (and are not shown in the circuit).  Furthermore, they are
-    specialized automatically via an overridden "specialize"
+    instantiated automatically via an overridden "instantiate"
     method.
     '''
     
@@ -625,7 +625,7 @@ class ForallWithImplicitIdentities(Forall):
         '''
         Create a special Forall expression with ImplicitIdentities as one or
         more of the instanceVars.  Adds appropriate conditions that restrict
-        these to be specialized as one or more identities.
+        these to be instantiated as one or more identities.
         '''
         Forall.__init__(self, instanceVars, instanceExpr, conditions=ForallWithImplicitIdentities._with_implicit_conditions(instanceVars, conditions))
         # Extract the ImplicitIdentities
@@ -655,9 +655,9 @@ class ForallWithImplicitIdentities(Forall):
         if formatType == LATEX: return self.implicit_conditions
         else: return Forall.implicitConditions(self, formatType)
     
-    def specialize(self, subMap=None, conditionAsHypothesis=False):
+    def instantiate(self, subMap=None, conditionAsHypothesis=False):
         '''
-        Automatically sets the ImplicitIdentities if the other specializations
+        Automatically sets the ImplicitIdentities if the other instantiations
         cause the width of the quantum circuit to be determined.
         '''
         subbed_expr = self.instanceExpr.substituted(subMap)
@@ -682,7 +682,7 @@ class ForallWithImplicitIdentities(Forall):
                             if isinstance(gate, ImplicitIdentities):
                                 subMap[gate] = [I]*(width-column.min_nrows+1)
         fixImplicitIdentityWidths(subbed_expr)
-        return Forall.specialize(self, subMap)
+        return Forall.instantiate(self, subMap)
             
 """            
         

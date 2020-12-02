@@ -14,7 +14,7 @@ class MatrixProd(Operation):
     # perhaps use MATRIX_PROD for string?
     # latexFormat try using \; in place of a blank space
     _operator_ = Literal(stringFormat=r'.', latexFormat = r'\thinspace',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, *operands):
         r'''
@@ -43,7 +43,7 @@ class ScalarProd(Operation):
     # perhaps use SCALAR_PROD for string?
     # latexFormat try using \; in place of a blank space
     _operator_ = Literal(stringFormat=r'*', latexFormat = r'\thinspace',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, scalar, scaled):
         r'''
@@ -72,7 +72,7 @@ class ScalarProd(Operation):
     #         except:
     #             pass
     #         '''
-    #         eq.update(doublyScaledAsSinglyScaled.specialize({x:expr.scaled.scaled}).specialize({alpha:expr.scalar, beta:expr.scaled.scalar}))
+    #         eq.update(doublyScaledAsSinglyScaled.instantiate({x:expr.scaled.scaled}).instantiate({alpha:expr.scalar, beta:expr.scaled.scalar}))
     #         return eq.eqExpr
     #     else:
     #         raise ValueError('Only trivial simplification is implemented (nested scalar products)')

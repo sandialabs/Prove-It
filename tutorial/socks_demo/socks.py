@@ -15,7 +15,7 @@ The Color operation returns the color of a given sock.
 '''
 class Color(Operation):
     # operator of the Color operation
-    _operator_ = Literal(stringFormat='Color', latexFormat=r'{\rm Color}', context=__file__)
+    _operator_ = Literal(stringFormat='Color', latexFormat=r'{\rm Color}', theory=__file__)
     
     def __init__(self, sock):
         return Operation.__init__(self, Color._operator_, sock)
@@ -26,7 +26,7 @@ that are of a given color.
 '''
 class MatchingSubset(Operation):
     # operator of the ColoredSubset operation
-    _operator_ = Literal(stringFormat='MatchingSubset', latexFormat=r'{\rm MatchingSubset}', context=__file__)
+    _operator_ = Literal(stringFormat='MatchingSubset', latexFormat=r'{\rm MatchingSubset}', theory=__file__)
     
     def __init__(self, sockSet, color):
         self.sockSet = sockSet
@@ -39,7 +39,7 @@ class MatchingSubset(Operation):
         '''
         from ._axioms_ import matchingSubsetDef
         from _common_ import color
-        return matchingSubsetDef.specialize({S:self.sockSet, color:self.color})
+        return matchingSubsetDef.instantiate({S:self.sockSet, color:self.color})
     
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
@@ -47,7 +47,7 @@ class MatchingSubset(Operation):
         '''
         from ._theorems_ import unfoldMatchingSubset
         from _common_ import color
-        return unfoldMatchingSubset.specialize({S:self.sockSet, color:self.color, x:element}, assumptions=assumptions)        
+        return unfoldMatchingSubset.instantiate({S:self.sockSet, color:self.color, x:element}, assumptions=assumptions)        
         
 
 """
@@ -57,7 +57,7 @@ iff all of the socks are the same color.
 '''
 class IsMatchingSet(Operation):
     # operator of the IsMatch operation
-    _operator_ = Literal(stringFormat='IsMatchingSet', latexFormat=r'{\rm IsMatchingSet}', context=__file__)
+    _operator_ = Literal(stringFormat='IsMatchingSet', latexFormat=r'{\rm IsMatchingSet}', theory=__file__)
     
     def __init__(self, sockA, sockB):
         return Operation.__init__(self, IsMatchingSet._operator_, [sockA, sockB])
@@ -68,7 +68,7 @@ iff the set is of size two and the two socks are the same color.
 '''
 class IsMatchingPair(Operation):
     # operator of the IsMatch operation
-    _operator_ = Literal(stringFormat='IsMatchingPair', latexFormat=r'{\rm IsMatchingPair}', context=__file__)
+    _operator_ = Literal(stringFormat='IsMatchingPair', latexFormat=r'{\rm IsMatchingPair}', theory=__file__)
     
     def __init__(self, sockA, sockB):
         return Operation.__init__(self, IsMatchingPair._operator_, [sockA, sockB])
@@ -80,7 +80,7 @@ returns TRUE if this is a matching pair.
 '''
 class IsMatch(Operation):
     # operator of the ContainsMatch operation
-    _operator_ = Literal(stringFormat='IsMatch', latexFormat=r'{\rm IsMatch}', context=__file__)
+    _operator_ = Literal(stringFormat='IsMatch', latexFormat=r'{\rm IsMatch}', theory=__file__)
     
     def __init__(self, a, b):
         self.a, self.b = a, b
@@ -92,7 +92,7 @@ class IsMatch(Operation):
         '''
         from ._axioms_ import isMatchDef
         from proveit._common_ import a, b
-        return isMatchDef.specialize({a:self.a, b:self.b}, assumptions=assumptions)
+        return isMatchDef.instantiate({a:self.a, b:self.b}, assumptions=assumptions)
 
 '''
 The ContainsMatch operation acting on a set of socks
@@ -100,7 +100,7 @@ returns TRUE iff there exists a pair of socks that match contained in the set.
 '''
 class ContainsMatch(Operation):
     # operator of the ContainsMatch operation
-    _operator_ = Literal(stringFormat='ContainsMatch', latexFormat=r'{\rm ContainsMatch}', context=__file__)
+    _operator_ = Literal(stringFormat='ContainsMatch', latexFormat=r'{\rm ContainsMatch}', theory=__file__)
     
     def __init__(self, socks):
         self.socks = socks
@@ -118,4 +118,4 @@ class ContainsMatch(Operation):
         '''
         from ._axioms_ import containsMatchDef
         from proveit._common_ import S
-        return containsMatchDef.specialize({S:self.socks}, assumptions=assumptions)
+        return containsMatchDef.instantiate({S:self.socks}, assumptions=assumptions)

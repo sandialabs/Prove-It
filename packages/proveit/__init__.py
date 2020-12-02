@@ -3,8 +3,8 @@ if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
 
 from ._core_ import (
-        defaults, USE_DEFAULTS, InvalidAssumptions, Context, 
-        ContextException,
+        defaults, USE_DEFAULTS, InvalidAssumptions, Theory, 
+        TheoryException,
         Expression, traverse_inner_expressions, used_vars, 
         possibly_free_var_ranges, free_vars, attempt_to_simplify,
         InnerExpr, expressionDepth,
@@ -21,7 +21,7 @@ from ._core_ import (
         ExprTuple, ExprTupleError, extract_var_tuple_indices, 
         ExprArray, NamedExprs, ExprRange, 
         varRange, RangeInstanceError,
-        KnownTruth, asExpression, asExpressions,
+        Judgment, asExpression, asExpressions,
         Proof, Assumption, Axiom, Theorem, ModusPonens, 
         Deduction, Instantiation, Generalization,
         ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
@@ -36,7 +36,7 @@ from .relation import (TransitiveRelation, TransitiveSequence, TransitivityExcep
 #from proveit.logic import reduceOperands, defaultEvaluate, evaluateTruth, concludeViaImplication
 # `Not` is used for the disprove convenience method (but not really a core concept)
 #from proveit.logic import Not
-# `Set` is used within the core for displaying assumptions sets and specialization mappings (but not really a core concept)
+# `Set` is used within the core for displaying assumptions sets and instantiation mappings (but not really a core concept)
 #from proveit.logic import Set
 
 # register Prove-It specific IPython magic:
@@ -52,9 +52,9 @@ def reset():
     Expression._clear_()
     Literal._clear_()
     Operation._clear_()
-    KnownTruth._clear_()
+    Judgment._clear_()
     Proof._clear_()
-    Context._clear_()
+    Theory._clear_()
     defaults.reset()
     if hasattr(magics, 'proveItMagic'):
         magics.proveItMagic.reset()

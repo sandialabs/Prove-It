@@ -20,14 +20,14 @@ from .expression import (
         varRange, RangeInstanceError,
         StyleOptions, maybeFencedString, 
         maybeFencedLatex, maybeFenced)
-from .known_truth import KnownTruth, asExpression, asExpressions
+from .judgment import Judgment, asExpression, asExpressions
 from .defaults import defaults, USE_DEFAULTS, InvalidAssumptions
-from .context import Context, ContextException
+from .theory import Theory, TheoryException
 from .proof import (Proof, Assumption, Axiom, Theorem, ModusPonens, 
                     Deduction, Instantiation, Generalization)
 from .proof import (ProofFailure, ModusPonensFailure, 
                     InstantiationFailure, GeneralizationFailure)
-#import _context_storage
-from ._context_storage import (relurl, ContextStorage, StoredSpecialStmt, 
+#import _theory_storage
+from ._theory_storage import (relurl, TheoryStorage, StoredSpecialStmt, 
                                StoredAxiom, StoredTheorem)
 #from . import magics#KMR addition 1/7/19

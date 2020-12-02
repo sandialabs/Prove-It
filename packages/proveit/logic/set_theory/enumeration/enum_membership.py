@@ -12,12 +12,11 @@ class EnumMembership(Membership):
         Membership.__init__(self, element)
         self.domain = domain
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Unfold the enumerated set membership, and in boolean as
         a side-effect.
         '''
-        return
         yield self.unfold
 
 
@@ -100,7 +99,7 @@ class EnumNonmembership(Nonmembership):
         Nonmembership.__init__(self, element)
         self.domain = domain
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Unfold the enumerated set nonmembership, and ....
         '''

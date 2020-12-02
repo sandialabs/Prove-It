@@ -12,7 +12,7 @@ class Label(Expression):
     """
     def __init__(self, stringFormat, latexFormat=None, labelType = 'Label', 
                  extraCoreInfo = tuple(), subExpressions=tuple(),
-                 fence_when_forced=False):
+                 fence_when_forced=False, styles=None):
         '''
         Create a Label with the given string and latex formatting.
         By default, the latex formatting is the same as the string formatting.
@@ -28,7 +28,8 @@ class Label(Expression):
             raise TypeError("'latexFormat' must be a str")
         if ',' in self.stringFormat or ',' in self.latexFormat:
             raise ValueError("Comma not allowed within a label's formatting")
-        styles = dict()
+        if styles is None:
+            styles = dict()
         if fence_when_forced: 
             styles['fence'] = 'when forced'
         coreInfo = [labelType] + self._labelInfo() + list(extraCoreInfo)
@@ -92,6 +93,10 @@ class Label(Expression):
                 yield ('latexFormat', 'r"' + latexFormat + '"')
         else:
             raise LabelError("Must properly implement the 'remakeArguments' method for class %s"%str(self.__class__))
+        if 'styles' in init_args and len(self.getStyles()) > 0:
+            yield ('styles', self.getStyles())
+        if 'fence_when_forced' in init_args and self.getStyle('fence', 'never')=='when forced':
+            yield ('fence_when_forced', True)
 
 class TemporaryLabel(Label):
     '''

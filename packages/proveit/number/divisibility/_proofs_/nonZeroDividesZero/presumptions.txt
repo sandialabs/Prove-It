@@ -1,0 +1,10 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.boolean.negation.negationIntro
+proveit.logic.boolean.negation.notFalse
+proveit.logic.equality.subLeftSideInto
+proveit.logic.set_theory.containment.supersetMembershipFromProperSubset
+proveit.number.division.fracZeroNumer
+proveit.number.sets.integer.natsInInts
+proveit.number.sets.integer.natsPosInInts
+proveit.number.sets.integer.zeroInIntegers
+# THEOREMS AND THEORIES TO EXCLUDE:

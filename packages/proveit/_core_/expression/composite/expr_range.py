@@ -387,7 +387,9 @@ class ExprRange(Expression):
             body_exclusions = None
         body_forms_dict = \
             self.body._possibly_free_var_ranges(exclusions=body_exclusions)
-        forms_dict = dict(body_forms_dict)
+        # deep copy body_forms_dict into forms_dict
+        forms_dict = {var:set(ranges) for var, ranges 
+                      in body_forms_dict.items()}
         param = self.parameter
         # Eliminate the parameter; it is not a free variable.
         if param in forms_dict.keys():
@@ -450,7 +452,7 @@ class ExprRange(Expression):
         method because the reductions are of the form of reducing 'self' 
         wrapped in an ExprTuple rather than 'self' itself.
         '''
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit._common_ import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.number import Add, one
@@ -562,7 +564,7 @@ class ExprRange(Expression):
             else:
                 yield expr_range # no reduction
                 return
-        assert isinstance(reduction, KnownTruth)
+        assert isinstance(reduction, Judgment)
         assert isinstance(reduction.expr, Equals)
         assert len(reduction.expr.operands) == 2
         assert reduction.expr.operands[0] == ExprTuple(expr_range)
@@ -1155,22 +1157,22 @@ class ExprRange(Expression):
         start_index, end_index = self.start_index, self.end_index
         if end_index == Add(before_split_idx, one):
             # special case which uses the axiom:
-            return range_extension_def.specialize(
+            return range_extension_def.instantiate(
                     {f:lambda_map, i:start_index, j:before_split_idx},
                     assumptions=assumptions)
         elif before_split_idx == self.start_index:
             # special case when peeling off the front
-            return partition_front.specialize(
+            return partition_front.instantiate(
                     {f:lambda_map, i:self.start_index, j:self.end_index},
                      assumptions=assumptions)
         elif (before_split_idx == subtract(end_index, one) or
               Equals(before_split_idx, subtract(end_index, one)).proven(assumptions)):
             # special case when peeling off the back
-            return partition_back.specialize(
+            return partition_back.instantiate(
                     {f:lambda_map, i:start_index, j:end_index},
                      assumptions=assumptions)
         else:
-            return partition.specialize(
+            return partition.instantiate(
                     {f:lambda_map, i:start_index, j:before_split_idx,
                      k:end_index}, assumptions=assumptions)
     

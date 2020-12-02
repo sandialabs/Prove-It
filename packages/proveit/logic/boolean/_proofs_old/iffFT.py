@@ -4,7 +4,7 @@ from proveit.basiclogic import TRUE, FALSE, Implies, And, Equation
 from proveit.common import A, B, X
 
 # (FALSE <=> TRUE) = [(FALSE => TRUE) and (TRUE => FALSE)]
-eqn = Equation(iffDef.specialize({A:FALSE, B:TRUE})).proven()
+eqn = Equation(iffDef.instantiate({A:FALSE, B:TRUE})).proven()
 # (FALSE <=> TRUE) = [TRUE and (TRUE => FALSE)]
 eqn.update(impliesFT.substitution(eqn.eqExpr.rhs)).proven()
 # (FALSE <=> TRUE) = (TRUE and FALSE)

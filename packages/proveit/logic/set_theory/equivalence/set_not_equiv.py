@@ -17,14 +17,14 @@ class SetNotEquiv(Operation):
     # operator of the SetNotEquiv operation
     _operator_ = Literal(stringFormat='not_equiv',
                          latexFormat=r'\ncong',
-                         context=__file__)
+                         theory=__file__)
     
     def __init__(self, a, b):
         Operation.__init__(self, SetNotEquiv._operator_, (a, b))
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
             
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for
         this SetNotEquiv operation.
@@ -63,7 +63,7 @@ class SetNotEquiv(Operation):
         Derived automatically as a side-effect in sideEffects() method.
         '''
         from ._theorems_ import setNotEquivReversal
-        return setNotEquivReversal.specialize({A:self.lhs, B:self.rhs},
+        return setNotEquivReversal.instantiate({A:self.lhs, B:self.rhs},
                                               assumptions=assumptions)
         
 
@@ -78,7 +78,7 @@ class SetNotEquiv(Operation):
     #     from proveit.logic import FALSE
     #     from proveit.logic.boolean._theorems_ import fromNotFalse
     #     if self.rhs == FALSE:
-    #         return fromNotFalse.specialize({A:self.lhs})
+    #         return fromNotFalse.instantiate({A:self.lhs})
     #     raise ValueError("deriveViaDoubleNegation does not apply to " + str(self) + " which is not of the form A != FALSE")
 
     # def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
@@ -93,7 +93,7 @@ class SetNotEquiv(Operation):
     #         NotEquals(self.rhs, self.lhs).prove(assumptions)
     #         return self.prove()
     #     if self.rhs == FALSE:
-    #         return notEqualsFalse.specialize({A:self.lhs}, assumptions=assumptions)
+    #         return notEqualsFalse.instantiate({A:self.lhs}, assumptions=assumptions)
 
     def definition(self):
         '''
@@ -101,14 +101,14 @@ class SetNotEquiv(Operation):
         (A not_equiv B).
         '''
         from ._axioms_ import setNotEquivDef
-        return setNotEquivDef.specialize({A:self.lhs, B:self.rhs})
+        return setNotEquivDef.instantiate({A:self.lhs, B:self.rhs})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (A not_equiv B) derive and return Not(A equiv B).
         '''
         from ._theorems_ import unfoldSetNotEquiv
-        return unfoldSetNotEquiv.specialize(
+        return unfoldSetNotEquiv.instantiate(
             {A:self.lhs, B:self.rhs}, assumptions=assumptions)
     
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
@@ -116,7 +116,7 @@ class SetNotEquiv(Operation):
         Conclude (A not_equiv B) from Not(A equiv B).
         '''
         from ._theorems_ import foldSetNotEquiv
-        return foldSetNotEquiv.specialize(
+        return foldSetNotEquiv.instantiate(
                 {A:self.lhs, B:self.rhs}, assumptions=assumptions)
         
     # def evaluation(self, assumptions=USE_DEFAULTS):
@@ -136,7 +136,7 @@ class SetNotEquiv(Operation):
         derive and return FALSE.
         '''
         from ._theorems_ import setNotEquivContradiction
-        return setNotEquivContradiction.specialize(
+        return setNotEquivContradiction.instantiate(
                 {A:self.lhs, B:self.rhs}, assumptions=assumptions)
     
     # def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
@@ -163,4 +163,4 @@ class SetNotEquiv(Operation):
         the set of BOOLEANS.
         '''
         from ._theorems_ import setNotEquivInBool
-        return setNotEquivInBool.specialize({A:self.lhs, B:self.rhs})
+        return setNotEquivInBool.instantiate({A:self.lhs, B:self.rhs})

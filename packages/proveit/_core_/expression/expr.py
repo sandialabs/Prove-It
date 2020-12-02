@@ -3,7 +3,7 @@ This is the expression module.
 """
 
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit._core_.context import Context
+from proveit._core_.theory import Theory
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaningData, styleData
 import sys
@@ -21,12 +21,12 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_generic_version', '_setContext',
+    protected = ('_canonical_version', 
                  'replaced', '_replaced', '_replaced_entries', 'relabeled',
                  '_make', '_checked_make', '_auto_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_coreInfo',
-                 '_subExpressions', '_genericExpr',
+                 '_subExpressions', '_canonical_expr',
                  '_meaningData', '_meaning_id',
                  '_styleData', '_style_id',
                  'is_parameter_independent', 'literal_int_extent')
@@ -47,20 +47,25 @@ class ExprType(type):
         type.__init__(cls, *args, **kwargs)
         if hasattr(cls, '_operator_'):
             from proveit._core_.expression.operation import Operation
+            from proveit._core_.expression.label.literal import Literal
             if issubclass(cls, Operation):
+                if not isinstance(cls._operator_, Literal):
+                    raise TypeError("'_operator_' class attributes must be "
+                                    "Literal expressions.")
                 Operation.operationClassOfOperator[cls._operator_] = cls
 
 class Expression(metaclass=ExprType):
-    # set of (style-id, Expression) tuples
-    displayed_expression_styles = set()
-
-    # map expression style ids to contexts (for expressions that "belong" to a Context)
-    contexts = dict()
-
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
     in_progress_to_conclude = set()
-
+    
+    # Map "labeled" meaning data to "canonical" meaning data.
+    labeled_to_canonical_meaning_data = dict()
+    
+    # Map Expression classes to their proper paths (as returned
+    # by the Expression._class_path method).
+    class_paths = dict()
+    
     @staticmethod
     def _clear_():
         '''
@@ -68,9 +73,9 @@ class Expression(metaclass=ExprType):
         the Expression jurisdiction.  All Expression classes that store Prove-It
         state information must implement _clear_ to clear that information.
         '''
-        Expression.displayed_expression_styles.clear()
-        Expression.contexts.clear()
         assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
+        Expression.labeled_to_canonical_meaning_data.clear()
+        Expression.class_paths.clear()
 
     def __init__(self, coreInfo, subExpressions=tuple(), styles=None):
         '''
@@ -100,47 +105,40 @@ class Expression(metaclass=ExprType):
             for style in styles.values():
                if not {',', ':', ';'}.isdisjoint(style):
                    raise ValueError("Styles are not allowed to contain a ',', ':', or ';'.  Just use spaces.")
-
-        # Set and initialize the "meaning data".
-        # The meaning data is shared among Expressions with the same
-        # structure disregarding style or chosen lambda paramterization.
-        if hasattr(self, '_genericExpr') and self._genericExpr is not self:
-            # The _genericExpr attribute was already set
-            # -- must be a Lambda Expression.
-            self._meaningData = self._genericExpr._meaningData
-        else:
-            object_rep_fn = lambda expr : hex(expr._meaning_id)
-            self._meaningData = meaningData(self._generate_unique_rep(object_rep_fn,
-                                                                      coreInfo))
-            if not hasattr(self._meaningData, '_coreInfo'):
-                # initialize the data of self._meaningData
-                self._meaningData._coreInfo = tuple(coreInfo)
-        '''
-        if not hasattr(self, '_genericExpr'):
-            self._genericExpr = self._generic_version()
-        if self._genericExpr is self:
-            # Create the meaning data.
-            object_rep_fn = lambda expr : hex(expr._meaning_id)
-            self._meaningData = meaningData(self._generate_unique_rep(object_rep_fn,
-                                                                      coreInfo))
-            if not hasattr(self._meaningData, '_coreInfo'):
-                # initialize the data of self._meaningData
-                self._meaningData._coreInfo = tuple(coreInfo)
-        else:
-            self._meaningData = self._genericExpr._meaningData
-        '''
-
+        
+        # Create the "labeled" meaning data.  This is data common
+        # to equivalent expressions which use the same lambda labels.
+        # This isn't the "true" meaning data which is based upon using
+        # "canonical" lambda labels.
+        object_rep_fn = lambda expr : hex(expr._labeled_meaning_id)
+        self._labeled_meaning_data = meaningData(
+                self._generate_unique_rep(object_rep_fn, coreInfo))
+        if not hasattr(self._labeled_meaning_data, '_coreInfo'):
+            # initialize the data of self._labeledMeaningData
+            self._labeled_meaning_data._coreInfo = tuple(coreInfo)
+        
+        # reference this unchanging data of the unique 'labeled meaning'
+        # data.
+        self._labeled_meaning_id = self._labeled_meaning_data._unique_id
+        self._coreInfo = self._labeled_meaning_data._coreInfo
+        # The "true" meaning "data" and id (based upon the canonical
+        # version of the exrpession) will be generated on demand,
+        # when expressions are compared (__eq__) or hashed (__hash__).
+        
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
         # initialize the style options
         self._styleData.styles = dict(styles) # formatting style options that don't affect the meaning of the expression
-
-        # reference this unchanging data of the unique 'meaning' data
-        self._meaning_id = self._meaningData._unique_id
-        self._coreInfo = self._meaningData._coreInfo
-
         self._style_id = self._styleData._unique_id
 
+        if len(self._subExpressions)==0:
+            # When there are no sub-expressions, we can immediately
+            # declare that the canonical expression is simply "self"
+            # and the "true" meaning data is the "labeled" meaning data.
+            self._canonical_expr = self
+            self._meaning_data = self._labeled_meaning_data
+            self._meaning_id = self._meaning_data._unique_id            
+        
         """
         self._styles = dict(styles) # formatting style options that don't affect the meaning of the expression
         # meaning representations and unique ids are independent of style
@@ -153,58 +151,89 @@ class Expression(metaclass=ExprType):
         for subExpression in subExpressions: # update Expression.parent_expr_map
             self._styleData.addChild(self, subExpression)
 
-    def _generic_version(self):
+    def _canonical_version(self):
         '''
-        Retrieve (and create if necessary) the generic version of this
+        Retrieve (and create if necessary) the canonical version of this
         expression in which deterministic 'dummy' variables are used as
         Lambda parameters, determines the 'meaning' of the expression.
         '''
-        if hasattr(self, '_genericExpr'):
-            return self._genericExpr
-        # Get the generic versions of the sub-expressions.
-        generic_sub_expressions = tuple(sub_expr._generic_version()
-                                        for sub_expr in self._subExpressions)
+        if hasattr(self, '_canonical_expr'):
+            return self._canonical_expr
+        if hasattr(self, '_meaningData'):
+            # Set via '_meaningData':
+            self._canonical_expr = self._meaningData.canonical_expr
+            return self._canonical_expr
+        labeled_to_canonical_meaning_data = \
+            Expression.labeled_to_canonical_meaning_data
+        if self._labeled_meaning_data in labeled_to_canonical_meaning_data:
+            # Set the '_meaningData' via '_labeled_meaning_data' and 
+            # 'labeled_to_canonical_meaning_data'.
+            self._meaningData = \
+                labeled_to_canonical_meaning_data[self._labeled_meaning_data]
+            self._meaning_id = self._meaningData._unique_id
+            # Now we can set the _canonical_expr via the '_meaningData'.
+            return self._canonical_version()
+        
+        # Get the canonical versions of the sub-expressions.
+        canonical_sub_expressions = tuple(
+                sub_expr._canonical_version()
+                for sub_expr in self._subExpressions)
         # Get the styles of the sub expressions.
         sub_expression_styles = tuple(sub_expr._styleData
                                       for sub_expr in self._subExpressions)
-        # Get the styles of the generic versions of the sub-expressions.
-        generic_sub_expression_styles = \
-            tuple(generic_sub_expr._styleData
-                  for generic_sub_expr in generic_sub_expressions)
+        # Get the styles of the canonical versions of the 
+        # sub-expressions.
+        canonical_sub_expression_styles = \
+            tuple(canonical_sub_expr._styleData
+                  for canonical_sub_expr in canonical_sub_expressions)
 
-        if sub_expression_styles == generic_sub_expression_styles:
-            # This is the generic version.
-            self._genericExpr = self
+        if sub_expression_styles == canonical_sub_expression_styles:
+            # This is the canonical version.
+            self._canonical_expr = self
             return self
 
-        # The 'generic' sub-expressions are different than the sub-expressions,
-        # so that propagates to this Expression's generic version.
-        self._genericExpr = self.__class__._checked_make(
-                self._meaningData._coreInfo, dict(self._styleData.styles),
-                generic_sub_expressions)
-        return self._genericExpr
-
-
-    def _setContext(self, context):
+        # The 'canonical' sub-expressions are different than the
+        # sub-expressions, so that propagates to this Expression's 
+        # canonical version.
+        self._canonical_expr = self.__class__._checked_make(
+                self._coreInfo, dict(self._styleData.styles),
+                canonical_sub_expressions)
+        return self._canonical_expr
+    
+    def _establish_and_get_meaning_id(self):
         '''
-        Assign a Context to this expression.
+        The "meaning" of an expression is determined by it's
+        canonical version and is only established as needed (on demand).
+        Return the "meaning id" after it is established.
         '''
-        self.context = context
-        Expression.contexts[self._style_id] = context
-        """
-        # Commenting this out because this make a strange first-come, first-serve
-        # context assignment that might keep changing expression representations around;
-        # that can be a nuisance for version controlling the Prove-It notebooks.
-        for sub_expr in self._subExpressions:
-            if sub_expr._style_id not in Expression.contexts:
-                sub_expr._setContext(context)
-        """
-
+        if hasattr(self, '_meaning_id'):
+            return self._meaning_id
+        canonical_expr = self._canonical_version()
+        if hasattr(self, '_meaning_id'):
+            # It may have been set via the '_canonical_version' call.
+            return self._meaning_id
+        if canonical_expr is self:
+            # The "true" meaning data is the "labeled" meaning data.
+            self._meaningData = self._labeled_meaning_data
+        else:
+            canonical_expr._establish_and_get_meaning_id()
+            self._meaningData = canonical_expr._meaningData
+        if not hasattr(self._meaningData, 'canonical_expr'):
+            # store the canonical expression for future reference
+            self._meaningData.canonical_expr = canonical_expr
+        # Anything with the same "labeled meaning data" must have the
+        # same "canonical meaning data".
+        labeled_to_canonical_meaning_data = \
+            Expression.labeled_to_canonical_meaning_data
+        labeled_to_canonical_meaning_data[self._labeled_meaning_data] = \
+            self._meaningData
+        self._meaning_id = self._meaningData._unique_id
+        return self._meaning_id
+    
     def _generate_unique_rep(self, objectRepFn, coreInfo=None, styles=None):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
-        from proveit._core_.expression.lambda_expr import Lambda
         if coreInfo is None: coreInfo = self._coreInfo
         if styles is None and hasattr(self, '_styleData'):
             styles = self._styleData.styles
@@ -212,48 +241,39 @@ class Expression(metaclass=ExprType):
             style_str = ','.join(style_name + ':' + styles[style_name]
                                  for style_name in sorted(styles.keys()))
         else: style_str = ''
-        sub_expr_info = ','.join(objectRepFn(expr) for expr in self._subExpressions)
-        # All Lambda expressions are embued with a "generic version" (which may
-        # be itself) which we will store with the unique representation info.
-        if isinstance(self, Lambda):
-            if self._genericExpr is self:
-                generic_ref = '.' # Denote that it is "generic" itself.
-            else:
-                generic_ref = objectRepFn(self._genericExpr)
-        else:
-            # Only retain the reference to the generic version for Lambda
-            # expressions.  Other expressions may set a _genericExpr for
-            # convenience during runtime, but since these are generated on an
-            # as-needed basis, it shouldn't be included as part of the
-            # unique representation and there is no good reason to store it.
-            generic_ref = ''
+        sub_expr_info = ','.join(objectRepFn(expr) 
+                                 for expr in self._subExpressions)
         # Note: putting the sub-expressions at the front makes it convenient
         # to just grab that piece which is used when adding or removing
         # references to stored information.
-        return '%s;%s;%s;%s;%s'%(generic_ref, sub_expr_info, self._class_path(),
+        return '%s;%s;%s;%s'%(sub_expr_info, self._class_path(),
                                  ','.join(coreInfo), style_str)
     #self._class_path() + '[' + ','.join(coreInfo) + ']' + style_str + ';[' +  + ']'
 
     def _class_path(self):
         ExprClass = self.__class__
+        if ExprClass in Expression.class_paths:
+            return Expression.class_paths[ExprClass]
         class_module = sys.modules[ExprClass.__module__]
         if hasattr(class_module, '__file__'):
-            context = Context(class_module.__file__)
+            theory = Theory(class_module.__file__)
         else:
-            context = Context() # use the current directory if using the main module
-        # get the full class path relative to the root context where the class is defined
-        class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
+            theory = Theory() # use the current directory if using the main module
+        # get the full class path relative to the root theory where the class is defined
+        class_path = theory.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
+        # Store for future reference:
+        Expression.class_paths[ExprClass] = class_path
         return class_path
 
     @staticmethod
     def _parse_unique_rep(unique_rep):
-        generic_ref, sub_expr_info, expr_class_str, core_info_str, style_str = \
+        sub_expr_info, expr_class_str, core_info_str, style_str = \
             unique_rep.split(';')
         core_info = [_ for _ in core_info_str.split(',') if _ != '']
         style_pairs = [_ for _ in style_str.split(',') if _ != '']
         style_dict = dict(style_pair.split(':') for style_pair in style_pairs)
         sub_expr_refs = [_ for _ in sub_expr_info.split(',') if _ != '']
-        return expr_class_str, core_info, style_dict, sub_expr_refs, generic_ref
+        return expr_class_str, core_info, style_dict, sub_expr_refs
 
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
@@ -261,10 +281,7 @@ class Expression(metaclass=ExprType):
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
         '''
-        # The generic reference and sub expressions come respectfully at the
-        # beginning of unique_rep.
-        generic_ref_end = unique_rep.find(';')
-        sub_expr_end = unique_rep.find(';', generic_ref_end+1)
+        sub_expr_end = unique_rep.find(';')
         ref_info = unique_rep[:sub_expr_end]
         # Split by ',' or ';' to get the individual reference ids.
         return [_ for _ in re.split(',|;', ref_info) if _ not in ('', '.')]
@@ -316,14 +333,15 @@ class Expression(metaclass=ExprType):
 
     def __eq__(self, other):
         if isinstance(other, Expression):
-            return self._meaning_id == other._meaning_id
+            return (self._establish_and_get_meaning_id() == 
+                    other._establish_and_get_meaning_id())
         else: return False # other must be an Expression to be equal to self
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return self._meaning_id
+        return self._establish_and_get_meaning_id()
 
     def __str__(self):
         '''
@@ -358,7 +376,7 @@ class Expression(metaclass=ExprType):
         if formatType == 'latex': return self.latex(**kwargs)
 
     @classmethod
-    def _make(cls, coreInfo, styles, subExpressions, genericExpr=None):
+    def _make(cls, coreInfo, styles, subExpressions, canonical_version=None):
         '''
         Should make the Expression object for the specific Expression sub-class
         based upon the coreInfo and subExpressions.  Must be implemented for
@@ -367,15 +385,17 @@ class Expression(metaclass=ExprType):
         raise MakeNotImplemented(cls)
 
     @classmethod
-    def _checked_make(cls, coreInfo, styles, subExpressions, genericExpr=None):
+    def _checked_make(cls, coreInfo, styles, subExpressions, 
+                      canonical_version=None):
         '''
         Check that '_make' is done appropriately since it is not
         entirely within the control of the core.
         '''
         coreInfo = tuple(coreInfo)
         subExpressions = tuple(subExpressions)
-        if genericExpr is not None:
-            made = cls._make(coreInfo, styles, subExpressions, genericExpr)
+        if canonical_version is not None:
+            made = cls._make(coreInfo, styles, subExpressions, 
+                             canonical_version)
         else:
             made = cls._make(coreInfo, styles, subExpressions)
         assert made._coreInfo == coreInfo, (
@@ -388,13 +408,13 @@ class Expression(metaclass=ExprType):
     def _auto_reduced(self, assumptions, requirements,
                       equality_repl_requirements):
         if defaults.auto_reduce and hasattr(self, 'auto_reduction'):
-            from proveit import KnownTruth
+            from proveit import Judgment
             from proveit.logic import Equals
             reduction = self.auto_reduction(assumptions=assumptions)
             if reduction is not None:
-                if not isinstance(reduction, KnownTruth):
+                if not isinstance(reduction, Judgment):
                     raise TypeError("'auto_reduction' must return a "
-                                    "proven equality as a KnownTruth: "
+                                    "proven equality as a Judgment: "
                                     "got %s for %s"%(reduction, self))
                 if not isinstance(reduction.expr, Equals):
                     raise TypeError("'auto_reduction' must return a "
@@ -547,25 +567,25 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to prove this expression automatically under the
         given assumptions (if None, uses defaults.assumptions).  First
-        it tries to find an existing KnownTruth, then it tries a simple
+        it tries to find an existing Judgment, then it tries a simple
         proof by assumption (if self is contained in the assumptions),
         then it attempts to call the 'conclude' method.  If successful,
-        the KnownTruth is returned, otherwise an exception is raised.
+        the Judgment is returned, otherwise an exception is raised.
         Cyclic attempts to `conclude` the same expression under the
         same set of assumptions will be blocked, so `conclude` methods are
         free make attempts that may be cyclic.
         '''
-        from proveit import KnownTruth, ProofFailure
+        from proveit import Judgment, ProofFailure
         from proveit.logic import Not
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptionsSet = set(assumptions)
         if automation is USE_DEFAULTS:
             automation = defaults.automation
 
-        foundTruth = KnownTruth.findKnownTruth(self, assumptionsSet)
+        foundTruth = Judgment.findJudgment(self, assumptionsSet)
         if foundTruth is not None:
             foundTruth.withMatchingStyles(self, assumptions) # give it the appropriate style
-            return foundTruth # found an existing KnownTruth that does the job!
+            return foundTruth # found an existing Judgment that does the job!
 
         if self in assumptionsSet:
             # prove by assumption if self is in the list of assumptions.
@@ -598,12 +618,12 @@ class Expression(metaclass=ExprType):
                     concludedTruth = self.conclude(assumptions)
             if concludedTruth is None:
                 raise ProofFailure(self, assumptions, "Failure to automatically 'conclude'")
-            if not isinstance(concludedTruth, KnownTruth):
-                raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
+            if not isinstance(concludedTruth, Judgment):
+                raise ValueError("'conclude' method should return a Judgment (or raise an exception)")
             if concludedTruth.expr != self:
-                raise ValueError("'conclude' method should return a KnownTruth for this Expression object: " + str(concludedTruth.expr) + " does not match " + str(self))
+                raise ValueError("'conclude' method should return a Judgment for this Expression object: " + str(concludedTruth.expr) + " does not match " + str(self))
             if not concludedTruth.assumptionsSet.issubset(assumptionsSet):
-                raise ValueError("While proving " + str(self) + ", 'conclude' method returned a KnownTruth with extra assumptions: " + str(set(concludedTruth.assumptions) - assumptionsSet))
+                raise ValueError("While proving " + str(self) + ", 'conclude' method returned a Judgment with extra assumptions: " + str(set(concludedTruth.assumptions) - assumptionsSet))
             if concludedTruth.expr._style_id == self._style_id:
                 return concludedTruth # concludedTruth with the same style as self.
             return concludedTruth.withMatchingStyles(self, assumptions) # give it the appropriate style
@@ -626,7 +646,7 @@ class Expression(metaclass=ExprType):
     def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Attempt to prove the logical negation (Not) of this expression.
-        If successful, the KnownTruth is returned, otherwise an exception
+        If successful, the Judgment is returned, otherwise an exception
         is raised.  By default, this simply calls prove on the negated
         expression. Override `concludeNegation` for automation specific to
         the type of expression being negated.
@@ -649,7 +669,7 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to conclude this expression under the given assumptions,
         using automation specific to this type of expression.
-        Return the KnownTruth if successful, or raise an exception.
+        Return the Judgment if successful, or raise an exception.
         This is called by the `prove` method when no existing proof was found
         and it cannot be proven trivially via assumption or defaultConclude.
         The `prove` method has a mechanism to prevent infinite recursion,
@@ -675,7 +695,7 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to conclude the negation of this expression under the given
         assumptions, using automation specific to the type of expression being negated.
-        Return the KnownTruth if successful, or raise an exception.
+        Return the Judgment if successful, or raise an exception.
         This is called by the `prove` method of the negated expression
         when no existing proof for the negation was found.
         The `prove` method has a mechanism to prevent infinite recursion,
@@ -683,15 +703,15 @@ class Expression(metaclass=ExprType):
         '''
         raise NotImplementedError("'concludeNegation' not implemented for " + str(self.__class__))
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Yield methods to attempt as side-effects when this expression
-        is proven as a known truth.  These should each accept an
+        is proven as a judgment.  These should each accept an
         'assumptions' parameter.
         These should be obvious and useful consequences, trivial and limited.
         There is no need to call this manually; it is called automatically when
-        the corresponding KnownTruth is created.
-        It also may be desirable to store the knownTruth for future automation.
+        the corresponding Judgment is created.
+        It also may be desirable to store the judgment for future automation.
         '''
         return iter(())
 
@@ -832,7 +852,7 @@ class Expression(metaclass=ExprType):
     def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
                    **kwargs):
         '''
-        If possible, return a KnownTruth of this expression equal to its
+        If possible, return a Judgment of this expression equal to its
         irreducible value.  Checks for an existing evaluation.  If it
         doesn't exist, try some default strategies including a reduction.
         Attempt the Expression-class-specific "doReducedEvaluation"
@@ -845,7 +865,7 @@ class Expression(metaclass=ExprType):
         '''
         from proveit.logic import (Equals, defaultSimplification,
                                    SimplificationError, EvaluationError)
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit.logic.irreducible_value import isIrreducibleValue
 
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -872,19 +892,19 @@ class Expression(metaclass=ExprType):
                 # and that failed.
                 raise EvaluationError(self, assumptions)
 
-        if not isinstance(evaluation, KnownTruth) or not isinstance(evaluation.expr, Equals):
-            msg = ("%s must return an KnownTruth, "
+        if not isinstance(evaluation, Judgment) or not isinstance(evaluation.expr, Equals):
+            msg = ("%s must return an Judgment, "
                    "not %s for %s assuming %s"
                    %(method_called, evaluation, self, assumptions))
             raise ValueError(msg)
         if evaluation.lhs != self:
-            msg = ("%s must return an KnownTruth "
+            msg = ("%s must return an Judgment "
                    "equality with self on the left side, "
                    "not %s for %s assuming %s"
                    %(method_called, evaluation, self, assumptions))
             raise ValueError(msg)
         if not isIrreducibleValue(evaluation.rhs):
-            msg = ("%s must return an KnownTruth "
+            msg = ("%s must return an Judgment "
                    "equality with an irreducible value on the right side, "
                    "not %s for %s assuming %s"
                    %(method_called, evaluation, self, assumptions))
@@ -900,7 +920,7 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to evaluate 'self', which should be a reduced
         expression with operands already evaluated.
-        Return the evaluation as a KnownTruth equality
+        Return the evaluation as a Judgment equality
         with 'self' on the left side.
         Must be overridden for class-specific evaluation.
         Raise a SimplificationError if the evaluation
@@ -923,7 +943,7 @@ class Expression(metaclass=ExprType):
     def simplification(self, assumptions=USE_DEFAULTS, *, automation=True,
                        **kwargs):
         '''
-        If possible, return a KnownTruth of this expression equal to a
+        If possible, return a Judgment of this expression equal to a
         canonically simplified form. Checks for an existing simplifcation.
         If it doesn't exist and automation is True, try some default strategies
         including a reduction.  Attempt the Expression-class-specific
@@ -934,7 +954,7 @@ class Expression(metaclass=ExprType):
         be passed along to doReducedEvaluation to instruct it on how it
         should behave (e.g., 'minimal_automation').
         '''
-        from proveit import KnownTruth, ProofFailure
+        from proveit import Judgment, ProofFailure
         from proveit.logic import (Equals, defaultSimplification,
                                    SimplificationError, EvaluationError)
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -975,13 +995,13 @@ class Expression(metaclass=ExprType):
                     simplification = self_eq.prove()
                     method_called = self_eq.prove
 
-        if not isinstance(simplification, KnownTruth) or not isinstance(simplification.expr, Equals):
-            msg = ("%s must return a KnownTruth "
+        if not isinstance(simplification, Judgment) or not isinstance(simplification.expr, Equals):
+            msg = ("%s must return a Judgment "
                    "equality, not %s for %s assuming %s"
                    %(method_called, simplification, self, assumptions))
             raise ValueError(msg)
         if simplification.lhs != self:
-            msg = ("%s must return a KnownTruth "
+            msg = ("%s must return a Judgment "
                    "equality with 'self' on the left side, not %s for %s "
                    "assuming %s"%(method_called, simplification, self, assumptions))
             raise ValueError(msg)
@@ -997,7 +1017,7 @@ class Expression(metaclass=ExprType):
         '''
         Attempt to simplify 'self', which should be a reduced
         expression with operands already simplified.
-        Return the evaluation as a KnownTruth equality
+        Return the evaluation as a Judgment equality
         with 'self' on the left side.
         Must be overridden for class-specific simplification.
         Raise a SimplificationError if the simplification
@@ -1028,27 +1048,25 @@ class Expression(metaclass=ExprType):
             for expr in subExpr.orderOfAppearance(subExpressions):
                 yield expr
 
-    def _repr_html_(self, context=None, unofficialNameKindContext=None):
+    def _repr_html_(self, unofficialNameKindTheory=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
         from memory or storage if it was generated previously) with a link to
         an expr.ipynb notebook for displaying the expression information.
-        If 'context' is provided, find the stored expression information in
-        that context; otherwise, use the default, current directory Context.
-        If 'unofficialNameKindContext' is provided, it should be the
-        (name, kind, context) for a special expression that is not-yet-official
+        If 'theory' is provided, find the stored expression information in
+        that theory; otherwise, use the default, current directory Theory.
+        If 'unofficialNameKindTheory' is provided, it should be the
+        (name, kind, theory) for a special expression that is not-yet-official
         (%end_[common/axioms/theorems] has not been called yet in the special
         expressions notebook).
         '''
         if not defaults.display_latex:
             return None # No LaTeX display at this time.
-        if context is None:
-            context = Context()
         if not hasattr(self._styleData,'png'):
-            self._styleData.png, png_url = context._stored_png(self, self.latex(), self._config_latex_tool)
+            self._styleData.png, png_url = Theory._stored_png(self, self.latex(), self._config_latex_tool)
             self._styleData.png_url = png_url
         if self._styleData.png_url is not None:
-            expr_notebook_rel_url = context.expressionNotebook(self, unofficialNameKindContext)
+            expr_notebook_rel_url = Theory.expressionNotebook(self, unofficialNameKindTheory)
             html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
             if defaults.inline_pngs:
                 encoded_png = encodebytes(self._styleData.png).decode("utf-8")
@@ -1056,8 +1074,6 @@ class Expression(metaclass=ExprType):
             else:
                 html += '<img src="' + self._styleData.png_url + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
-        # record as a "displayed" (style-specific) expression
-        Expression.displayed_expression_styles.add((self._style_id, self))
         return html
 
     def _config_latex_tool(self, lt):
@@ -1192,8 +1208,8 @@ def traverse_inner_expressions(expr):
     including the expression itself.  These will be reported in a depth-
     first order.
     '''
-    from proveit import KnownTruth
-    if isinstance(expr, KnownTruth):
+    from proveit import Judgment
+    if isinstance(expr, Judgment):
         expr = expr.expr
     yield expr
     for sub_expr in expr.subExprIter():

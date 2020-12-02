@@ -2,13 +2,13 @@ from proveit import Literal, ProofFailure, defaults, USE_DEFAULTS
 from proveit.logic import Equals, InSet, Membership
 
 class NumberSet(Literal):
-    def __init__(self, string, latex, context):
-        Literal.__init__(self, string, latex, context=context)
+    def __init__(self, string, latex, theory):
+        Literal.__init__(self, string, latex, theory=theory)
     
     def membershipObject(self, element):
         return NumberMembership(element, self)
     
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects for when the given member is in this number
         set.  The default is to have no side-effects, but this
@@ -23,24 +23,24 @@ class NumberMembership(Membership):
         Membership.__init__(self, element)
         self.number_set = number_set
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Yield side-effects for when the represented membership,
         that self.element is in self.number_set, is proven.
         '''
         number_set, element = self.number_set, self.element
-        if not isinstance(knownTruth.expr, InSet):
-            raise ValueError("Expecting the knownTruth of a NumberMembership "
+        if not isinstance(judgment.expr, InSet):
+            raise ValueError("Expecting the judgment of a NumberMembership "
                                "sideEffects call to be for an InSet expression.")
-        if knownTruth.element != element:
+        if judgment.element != element:
             raise ValueError("NumberMembership.sideEffects called with a "
-                               "knownTruth that is inconsistent w.r.t. the "
+                               "judgment that is inconsistent w.r.t. the "
                                "element.")
-        if knownTruth.domain != number_set:
+        if judgment.domain != number_set:
             raise ValueError("NumberMembership.sideEffects called with a "
-                               "knownTruth that is inconsistent w.r.t. the "
+                               "judgment that is inconsistent w.r.t. the "
                                "domain.")
-        for side_effect in number_set.membershipSideEffects(knownTruth):
+        for side_effect in number_set.membershipSideEffects(judgment):
             yield side_effect
         
     def conclude(self, assumptions=USE_DEFAULTS):

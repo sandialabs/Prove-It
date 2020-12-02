@@ -15,7 +15,7 @@ class RealInterval(Operation):
                 
 class IntervalOO(RealInterval):
     # operator of the IntervalOO operation.
-    _operator_ = Literal(stringFormat='IntervalOO',context=__file__)   
+    _operator_ = Literal(stringFormat='IntervalOO',theory=__file__)   
 
     def __init__(self,lowerBound,upperBound):
         RealInterval.__init__(self,IntervalOO._operator_,lowerBound,upperBound)
@@ -29,57 +29,57 @@ class IntervalOO(RealInterval):
 
     def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import in_IntervalOO
-        return in_IntervalOO.specialize(
+        return in_IntervalOO.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOO_lower_bound
-        return intervalOO_lower_bound.specialize(
+        return intervalOO_lower_bound.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOO_upper_bound
-        return intervalOO_upper_bound.specialize(
+        return intervalOO_upper_bound.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalOO_in_Reals
-        return all_in_IntervalOO_in_Reals.specialize(
+        return all_in_IntervalOO_in_Reals.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalOO
-        return rescale_in_IntervalOO.specialize(
+        return rescale_in_IntervalOO.instantiate(
             {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
             assumptions=assumptions)
 
     def deduceLeftRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOO_left
-        return relax_IntervalOO_left.specialize(
+        return relax_IntervalOO_left.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceRightRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOO_right
-        return relax_IntervalOO_right.specialize(
+        return relax_IntervalOO_right.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceLeftRightRelaxedMembership(self, member,
                                          assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOO_left_right
-        return relax_IntervalOO_left_right.specialize(
+        return relax_IntervalOO_left_right.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
 class IntervalOC(RealInterval):
     # operator of the IntervalOC operation.
-    _operator_ = Literal(stringFormat='IntervalOC',context=__file__)   
+    _operator_ = Literal(stringFormat='IntervalOC',theory=__file__)   
 
     def __init__(self,lowerBound,upperBound):
         RealInterval.__init__(self,IntervalOC._operator_,lowerBound,upperBound)
@@ -93,44 +93,44 @@ class IntervalOC(RealInterval):
         
     def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import in_IntervalOC
-        return in_IntervalOC.specialize(
+        return in_IntervalOC.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOC_lower_bound
-        return intervalOC_lower_bound.specialize(
+        return intervalOC_lower_bound.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOC_upper_bound
-        return intervalOC_upper_bound.specialize(
+        return intervalOC_upper_bound.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalOC_in_Reals
-        return all_in_IntervalOC_in_Reals.specialize(
+        return all_in_IntervalOC_in_Reals.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalOC
-        return rescale_in_IntervalOC.specialize(
+        return rescale_in_IntervalOC.instantiate(
                 {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
                 assumptions=assumptions)
 
     def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOC
-        return relax_IntervalOC.specialize(
+        return relax_IntervalOC.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
 class IntervalCO(RealInterval):
     # operator of the IntervalCO operation.
-    _operator_ = Literal(stringFormat='IntervalCO',context=__file__)   
+    _operator_ = Literal(stringFormat='IntervalCO',theory=__file__)   
 
     def __init__(self,lowerBound,upperBound):
         RealInterval.__init__(self,IntervalCO._operator_,lowerBound,upperBound)
@@ -144,44 +144,44 @@ class IntervalCO(RealInterval):
 
     def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import in_IntervalCO
-        return in_IntervalCO.specialize(
+        return in_IntervalCO.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCO_lower_bound
-        return intervalCO_lower_bound.specialize(
+        return intervalCO_lower_bound.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCO_upper_bound
-        return intervalCO_upper_bound.specialize(
+        return intervalCO_upper_bound.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalCO_in_Reals
-        return all_in_IntervalCO_in_Reals.specialize(
+        return all_in_IntervalCO_in_Reals.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalCO
-        return rescale_in_IntervalCO.specialize(
+        return rescale_in_IntervalCO.instantiate(
                 {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
                 assumptions=assumptions)
 
     def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalCO
-        return relax_IntervalCO.specialize(
+        return relax_IntervalCO.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
 class IntervalCC(RealInterval):
     # operator of the IntervalCC operation.
-    _operator_ = Literal(stringFormat='IntervalCC',context=__file__)   
+    _operator_ = Literal(stringFormat='IntervalCC',theory=__file__)   
     
     def __init__(self,lowerBound,upperBound):
         RealInterval.__init__(self,IntervalCC._operator_,lowerBound,upperBound)
@@ -195,32 +195,32 @@ class IntervalCC(RealInterval):
 
     def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import in_IntervalCC
-        return in_IntervalCC.specialize(
+        return in_IntervalCC.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCC_lower_bound
-        return intervalCC_lower_bound.specialize(
+        return intervalCC_lower_bound.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCC_upper_bound
-        return intervalCC_upper_bound.specialize(
+        return intervalCC_upper_bound.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalCC_in_Reals
-        return all_in_IntervalCC_in_Reals.specialize(
+        return all_in_IntervalCC_in_Reals.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalCC
-        return rescale_in_IntervalCC.specialize(
+        return rescale_in_IntervalCC.instantiate(
             {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
             assumptions=assumptions)
 

@@ -10,7 +10,7 @@ class Prob(Operation):
     methods untouched.
     '''
     # the literal operator of the Prob operation class
-    _operator_ = Literal('PROB', context=__file__)
+    _operator_ = Literal('PROB', theory=__file__)
 
     def __init__(self, event, random_variable):
         Operation.__init__(self, Prob._operator_, (event, random_variable))
@@ -24,10 +24,10 @@ class Prob(Operation):
     
     def deduceInInterval(self):
         from axioms import probBetweenZeroAndOne
-        return probBetweenZeroAndOne.specialize({x:self.random_variable, X:self.event})
+        return probBetweenZeroAndOne.instantiate({x:self.random_variable, X:self.event})
     
     def deduceInReals(self):
         from theorems import probInReals
-        return probInReals.specialize({x:self.random_variable, X:self.event})
+        return probInReals.instantiate({x:self.random_variable, X:self.event})
 
 # PROB = Literal(pkg, 'PROB', operationMaker = lambda operands : Prob(*operands))

@@ -3,9 +3,9 @@ from proveit.basiclogic import BOOLEANS, inBool, Not, Iff
 from proveit.common import A
 
 # A => Not(Not(A))
-doubleNegationImplied = doubleNegation.specialize().proven()
+doubleNegationImplied = doubleNegation.instantiate().proven()
 # Not(Not(A)) => A
-impliesDoubleNegation = fromDoubleNegation.specialize().proven()
+impliesDoubleNegation = fromDoubleNegation.instantiate().proven()
 # [A => Not(Not(A))] in BOOLEANS if A in BOOLEANS
 doubleNegationImplied.deduceInBool().proven({inBool(A)})
 # [Not(Not(A)) => A] in BOOLEANS if A in BOOLEANS

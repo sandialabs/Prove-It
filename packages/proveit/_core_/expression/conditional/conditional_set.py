@@ -4,7 +4,7 @@ from proveit._core_.expression.operation import Operation
 class ConditionalSet(Operation):
     # operator of the ConditionalSet operation
     _operator_ = Literal(stringFormat='CondSet', 
-                         latexFormat=r'\textrm{CondSet}', context=__file__)   
+                         latexFormat=r'\textrm{CondSet}', theory=__file__)   
     
     def __init__(self, conditionals):
         Operation.__init__(ConditionalSet._operator_, conditionals)

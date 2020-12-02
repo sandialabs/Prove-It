@@ -7,7 +7,7 @@ DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 class DecimalSequence(NumeralSequence):
     # operator of the WholeDecimal operation.
-    _operator_ = Literal(stringFormat='Decimal',context=__file__)   
+    _operator_ = Literal(stringFormat='Decimal',theory=__file__)   
 
     def __init__(self, *digits):
         NumeralSequence.__init__(self, DecimalSequence._operator_, *digits)
@@ -156,7 +156,7 @@ class DecimalSequence(NumeralSequence):
                     "Sequences and one, not %s, %s" % (str(num1), str(num2)))
         if all(digit == nine for digit in num2.digits):
             # every digit is 9
-            return md_only_nine_add_one.specialize({k: num2.digits.length(assumptions)}, assumptions=assumptions)
+            return md_only_nine_add_one.instantiate({k: num2.digits.length(assumptions)}, assumptions=assumptions)
         elif num2.digits[-1] == nine:
             # the last digit is nine
             from proveit.number import Add
@@ -174,14 +174,14 @@ class DecimalSequence(NumeralSequence):
             _k = num(count)
             _a = num2.digits[:-(count + 1)]
             _b = num2.digits[-(count + 1)]
-            return md_nine_add_one.specialize({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
+            return md_nine_add_one.instantiate({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
         else:
             # the last digit is not nine
             _m = num(num2.digits.length(assumptions).asInt() - 1)
             _k = num(0)
             _a = num2.digits[:-1]
             _b = num2.digits[-1]
-        eq = md_nine_add_one.specialize({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
+        eq = md_nine_add_one.instantiate({m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
         return eq.innerExpr().rhs.operands[-1].evaluate(assumptions=assumptions)
 
     def evaluate_add_digit(self, assumptions=USE_DEFAULTS):
@@ -243,21 +243,21 @@ class DecimalSequence(NumeralSequence):
 
 class DigitSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Digits', r'\mathbb{N}^{\leq 9}', context=__file__)
+        NumberSet.__init__(self, 'Digits', r'\mathbb{N}^{\leq 9}', theory=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import digitsLowerBound
-        return digitsLowerBound.specialize({n: member}, assumptions=assumptions)
+        return digitsLowerBound.instantiate({n: member}, assumptions=assumptions)
 
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import digitsUpperBound
-        return digitsUpperBound.specialize({n: member}, assumptions=assumptions)
+        return digitsUpperBound.instantiate({n: member}, assumptions=assumptions)
 
-    def membershipSideEffects(self, knownTruth):
+    def membershipSideEffects(self, judgment):
         '''
         Yield side-effects when proving 'n in Naturals' for a given n.
         '''
-        member = knownTruth.element
+        member = judgment.element
         yield lambda assumptions: self.deduceMemberLowerBound(member, assumptions)
         yield lambda assumptions: self.deduceMemberUpperBound(member, assumptions)
 

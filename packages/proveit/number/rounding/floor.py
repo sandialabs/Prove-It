@@ -6,7 +6,7 @@ from proveit.number.rounding.rounding_methods import (
 
 class Floor(Function):
     # operator of the Floor operation.
-    _operator_ = Literal(stringFormat='floor', context=__file__)
+    _operator_ = Literal(stringFormat='floor', theory=__file__)
     
     def __init__(self, A):
         Function.__init__(self, Floor._operator_, A)

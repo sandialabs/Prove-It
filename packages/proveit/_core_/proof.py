@@ -1,24 +1,24 @@
 """
 A Proof is a directed, acyclic graph (DAG) that represents the Prove-It
-proof for a KnownTruth.  Each object represents a derivation step
-(Assumption, ModusPonens, HypotheticalReasoning, Specialization,
-or Generalization) and has references to other KnownTruths that
+proof for a Judgment.  Each object represents a derivation step
+(Assumption, ModusPonens, Deduction, Specialization,
+or Generalization) and has references to other Judgments that
 are directly required, each with its Proof.  In this way, the
 Proof objects form a DAG.
 """
 
 from collections import OrderedDict
 import re
-from proveit._core_.known_truth import KnownTruth
+from proveit._core_.judgment import Judgment
 from proveit._core_._unique_data import meaningData, styleData
 from .defaults import defaults
-from .context import Context
+from .theory import Theory
 
 class Proof:
 
     # Map each Proof to the first instantiation of it that was created (noting that
     # multiple Proof objects can represent the same Proof and will have the same hash value).
-    # Using this, internal references (between KnownTruths and Proofs) unique .
+    # Using this, internal references (between Judgments and Proofs) unique .
     uniqueProofs = dict()
 
     @staticmethod
@@ -41,10 +41,10 @@ class Proof:
             print "prove", provenTruth.expr
         '''
 
-        assert isinstance(provenTruth, KnownTruth)
+        assert isinstance(provenTruth, Judgment)
         for requiredTruth in requiredTruths:
-            assert isinstance(requiredTruth, KnownTruth)
-        # note: the contained KnownTruth and Proofs are subject to style changes on a Proof instance basis.
+            assert isinstance(requiredTruth, Judgment)
+        # note: the contained Judgment and Proofs are subject to style changes on a Proof instance basis.
         self.provenTruth = provenTruth
         self.requiredTruths = tuple(requiredTruths)
         if markedRequiredTruthIndices is None:
@@ -57,8 +57,14 @@ class Proof:
                 raise ValueError("markedRequiredTruthIndices must be a set "
                                  "of integers indexing requiredTruths")
 
-        # The meaning data is shared among Proofs with the same structure disregarding style
-        self._meaningData = meaningData(self._generate_unique_rep(lambda obj : hex(obj._meaning_id)))
+        # The meaning data is shared among Proofs with the same 
+        # structure disregarding style
+        def meaning_hexid_fn(obj):
+            if hasattr(obj, '_meaning_id'):
+                return hex(obj._meaning_id)
+            return hex(obj._establish_and_get_meaning_id())
+        self._meaningData = meaningData(self._generate_unique_rep(
+                meaning_hexid_fn))
         if not hasattr(self._meaningData, 'requiredProofs'):
             self._meaningData.requiredProofs = [requiredTruth.proof() for requiredTruth in requiredTruths]
             self._meaningData._dependents = set() # meanng data of proofs that directly require this one
@@ -130,7 +136,7 @@ class Proof:
         if requiringUnusableProof:
             # Raise an UnusableProof exception when an attempt is made
             # to use an "unusable" theorem directly or indirectly.
-            raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
+            raise UnusableProof(Judgment.theoremBeingProven, self._meaningData._unusableProof)
         if provenTruth.proof()==self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             # May derive any side-effects that are obvious consequences arising from this truth
             # (if it has not already been processed):
@@ -168,7 +174,7 @@ class Proof:
         '''
         # Internally, for self._meaning_rep and self._style_rep, we will use self.requiredTruths in the unique representation
         # and the proofs are subject to change (if anything is disabled).
-        # For external storage (see _context_storage.py), we will use self.requiredProofs, locking the mapping from KnonwTruths of self.requiredTruths to Proofs.
+        # For external storage (see _theory_storage.py), we will use self.requiredProofs, locking the mapping from KnonwTruths of self.requiredTruths to Proofs.
         required_objs = (self.requiredProofs
                          if hasattr(self, 'requiredProofs')
                          else self.requiredTruths)
@@ -205,7 +211,20 @@ class Proof:
         return [objId.rstrip('*') for objId in objIds if len(objId) > 0]
 
     @staticmethod
-    def _showProof(context, proof_id, unique_rep):
+    def _extractKindAndName(unique_rep):
+        '''
+        Given a 'unique_rep' for an Axiom or Theorem, return 
+        'axiom' or 'theorem' and its full name.  Raise a ValueError
+        if it isn't an Axiom or Theorem.
+        '''
+        if unique_rep[:6] != 'Proof:':
+            raise ValueError("Invalid 'unique_rep' for Proof: %s"%unique_rep)
+        step_info, remaining = unique_rep[6:].split(':', 1)
+        kind, full_name = step_info.split('_', 1)
+        return (kind, full_name)
+
+    @staticmethod
+    def _showProof(theory, folder, proof_id, unique_rep):
         '''
         Given a unique representation string, returns a _ShowProof
         object that mocks up a stored proof for the purposes of
@@ -236,7 +255,7 @@ class Proof:
             groups.append([objId for objId in objIds if len(objId) > 0])
         if proof_id in _ShowProof.show_proof_by_id:
             return _ShowProof.show_proof_by_id[proof_id]
-        return _ShowProof(context, proof_id, step_info, groups)
+        return _ShowProof(theory, folder, proof_id, step_info, groups)
 
     def isUsable(self):
         '''
@@ -318,8 +337,8 @@ class Proof:
         Theorem or Axiom, this is overridden to return the link to
         the theorem/axiom definition.
         '''
-        context = Context()
-        return context.proofNotebook(self)
+        theory = Theory()
+        return theory.proofNotebook(self)
 
     def __setattr__(self, attr, value):
         '''
@@ -409,7 +428,7 @@ class Proof:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
             if proof.stepType() in {'axiom', 'theorem', 'conjecture'}:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
-                html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
+                html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.theory) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
         if any_marked:
             html += ('<tr><td colspan=4 style="text-align:left">'
@@ -441,7 +460,7 @@ class Proof:
             if proof.stepType()=='instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
             if proof.stepType()=='axiom' or proof.stepType()=='theorem':
-                out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
+                out_str += '\t' + str(proof.theory) + '.' + proof.name + '\n'
         if any_marked:
             out_str += ('* equality replacement requirements\n')
         return out_str
@@ -487,7 +506,7 @@ class Assumption(Proof):
         else:
             assumed_truth = expr
         try:
-            Proof.__init__(self, KnownTruth(assumed_truth, {expr}), [])
+            Proof.__init__(self, Judgment(assumed_truth, {expr}), [])
         finally:
             # Restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
@@ -515,14 +534,14 @@ class Assumption(Proof):
         return 'assumption'
 
 class Axiom(Proof):
-    def __init__(self, expr, context, name):
-        if not isinstance(context, Context):
-            raise ValueError("An axiom 'context' must be a Context object")
+    def __init__(self, expr, theory, name):
+        if not isinstance(theory, Theory):
+            raise ValueError("An axiom 'theory' must be a Theory object")
         if not isinstance(name, str):
             raise ValueError("An axiom 'name' must be a string")
-        self.context = context
+        self.theory = theory
         self.name = name
-        Proof.__init__(self, KnownTruth(expr, frozenset()), [])
+        Proof.__init__(self, Judgment(expr, frozenset()), [])
 
     def _generate_step_info(self, objectRepFn):
         return self.stepType() + '_' + str(self) + ':'
@@ -531,8 +550,8 @@ class Axiom(Proof):
         return 'axiom'
 
     def _storedAxiom(self):
-        from ._context_storage import StoredAxiom
-        return StoredAxiom(self.context, self.name)
+        from ._theory_storage import StoredAxiom
+        return StoredAxiom(self.theory, self.name)
 
     def getLink(self):
         '''
@@ -553,27 +572,29 @@ class Axiom(Proof):
         return self._storedAxiom().allDependents()
 
     def __str__(self):
-        return self.context.name + '.' + self.name
+        return self.theory.name + '.' + self.name
 
 class Theorem(Proof):
     allTheorems = []
 
-    def __init__(self, expr, context, name):
-        if not isinstance(context, Context):
-            raise ValueError("A theorem 'package' must be a Context object")
+    def __init__(self, expr, theory, name):
+        if not isinstance(theory, Theory):
+            raise ValueError("A theorem 'package' must be a Theory object")
         if not isinstance(name, str):
             raise ValueError("A theorem 'name' must be a string")
-        self.context = context
+        self.theory = theory
         self.name = name
         # keep track of proofs that may be used to prove the theorem
         # before 'beginProof' is called so we will have the proof handy.
         self._possibleProofs = []
         # Note that _setUsability will be called within Proof.__init__
-        Proof.__init__(self, KnownTruth(expr, frozenset()), [])
+        Proof.__init__(self, Judgment(expr, frozenset()), [])
         Theorem.allTheorems.append(self)
 
     def _generate_step_info(self, objectRepFn):
-        return self.stepType() + '_' + str(self) + ':'
+        # For these purposes, we should use 'theorem' even if the
+        # status is 'conjecture'.
+        return 'theorem_' + str(self) + ':'
 
     def stepType(self):
         if self.isConjecture():
@@ -584,14 +605,14 @@ class Theorem(Proof):
         return {self}
 
     def __str__(self):
-        return self.context.name + '.' + self.name
+        return self.theory.name + '.' + self.name
 
     def __repr__(self):
-        return self.context.name + '.' + self.name
+        return self.theory.name + '.' + self.name
 
-    def containingPrefixes(self):
+    def theoremNameAndContainingTheories(self):
         '''
-        Yields all containing context names and the full theorem name.
+        Yields all containing theory names and the full theorem name.
         '''
         s = str(self)
         hierarchy = s.split('.')
@@ -605,27 +626,28 @@ class Theorem(Proof):
             theorem._setUsability()
 
     def _storedTheorem(self):
-        from ._context_storage import StoredTheorem
-        return StoredTheorem(self.context, self.name)
+        from ._theory_storage import StoredTheorem
+        return StoredTheorem(self.theory, self.name)
 
     def getLink(self):
         '''
         Return the HTML link to the theorem proof file.
         '''
         return self._storedTheorem().getProofLink()
-
-    def recordPresumedContexts(self, presumed_context_names):
+    
+    """
+    def recordPresumedTheories(self, presumed_theory_names):
         '''
-        Record information about what other contexts are
+        Record information about what other theories are
         presumed in the proof of this theorem.
         '''
-        self._storedTheorem().recordPresumedContexts(presumed_context_names)
+        self._storedTheorem().recordPresumedTheories(presumed_theory_names)
 
-    def presumedContexts(self):
+    def presumedTheories(self):
         '''
-        Return the list of presumed contexts.
+        Return the list of presumed theories.
         '''
-        return self._storedTheorem().presumedContexts()
+        return self._storedTheorem().presumedTheories()
 
     def recordPresumedTheorems(self, explicitly_presumed_theorem_names):
         '''
@@ -645,18 +667,28 @@ class Theorem(Proof):
         '''
         Return the set of full names of presumed theorems that are
         directly or indirectly presumed by the theorem of the given name
-        in this context.
+        in this theory.
         '''
         return self._storedTheorem().getAllPresumedTheoremNames()
-
-    def recordProof(self, proof):
+    """
+    
+    def getPresumptionsAndExclusions(self):
+        '''
+        Return the set of theorems and theories that are explicitly
+        presumed by this theorem, and a set of exclusions (e.g.,
+        you could presume the proveit.logic theory but exclude
+        proveit.logic.equality).
+        '''
+        return self._storedTheorem().getPresumptionsAndExclusions()
+    
+    def _recordProof(self, proof):
         '''
         Record the given proof as the proof of this theorem.  Updates
         dependency links (usedAxioms.txt, usedTheorems.txt, and usedBy.txt files)
         and proven dependency indicators (various provenTheorems.txt files
         for theorems that depend upon the one being proven) appropriately.
         '''
-        self._storedTheorem().recordProof(proof)
+        self._storedTheorem()._recordProof(proof)
 
     def removeProof(self):
         '''
@@ -722,52 +754,60 @@ class Theorem(Proof):
         same theorem.  Also, if it is presumed, ensure the logic
         is not circular.  Generally, this is preventing circular
         logic.  This applies when a proof has begun
-        (see KnownTruth.beginProof in known_truth.py).
-        When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
-        Otherwise only Theorems named in the KnownTruth.presumingTheoremNames set
-        or contained within any of the KnownTruth.presumingPrefixes
-        (i.e., context) are allowed.
+        (see Judgment.beginProof in judgment.py).
+        When Judgment.theoremBeingProven is None, all Theorems are allowed.
+        Otherwise only Theorems named in the Judgment.presumingTheoremNames set
+        or contained within any of the Judgment.presumingTheories
+        (i.e., theory) are allowed.
         '''
         #from proveit.certify import isFullyProven
-        if KnownTruth.theoremBeingProven is None:
+        if Judgment.theoremBeingProven is None:
             self._meaningData._unusableProof = None # Nothing being proven, so all Theorems are usable
             return
         legitimately_presumed = False
         stored_theorem = self._storedTheorem()
-        theorem_being_proven_str = str(KnownTruth.theoremBeingProven)
-        if self.provenTruth==KnownTruth.theoremBeingProven.provenTruth:
+        theorem_being_proven_str = str(Judgment.theoremBeingProven)
+        if self.provenTruth==Judgment.theoremBeingProven.provenTruth:
             # Note that two differently-named theorems for the same thing may exists in
             # order to show an alternate proof.  In that case, we want to disable
             # the other alternates as well so we will be sure to generate the new proof.
             self.disable()
             return
         else:
-            presumed_via_context = not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes())
-            if str(self) in KnownTruth.presumingTheoremNames or presumed_via_context:
-                # This Theorem is being presumed specifically, or a context in which it is contained is presumed.
-                # Presumption via context (a.k.a. prefix) is contingent upon not having a mutual presumption
-                # (that is, some theorem T can presume everything in another context except for theorems
+            name_and_containing_theories = list(
+                    self.theoremNameAndContainingTheories())
+            exclusions = Judgment.presumingTheoremAndTheoryExclusions
+            if exclusions.isdisjoint(name_and_containing_theories):
+                presumptions = Judgment.presumedTheoremsAndTheories
+                presumed = not presumptions.isdisjoint(name_and_containing_theories)
+            else:
+                presumed = False
+            if presumed:
+                # This Theorem is being presumed specifically, or a theory in which it is contained is presumed.
+                # Presumption via theory (a.k.a. prefix) is contingent upon not having a mutual presumption
+                # (that is, some theorem T can presume everything in another theory except for theorems
                 # that presume T or, if proven, depend upon T).
                 # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
                 # is being proven.
                 # check the "presuming information, recursively, for circular logic.
-                presumed_theorem_names = stored_theorem.getAllPresumedTheoremNames()
+                my_possible_dependents, _ = stored_theorem.getPresumptionsAndExclusions()
                 # If this theorem has a proof, include all dependent theorems as
-                # presumed (this may have been presumed via context, so this can contain
+                # presumed (this may have been presumed via theory, so this can contain
                 # more information than the specifically presumed theorems).
                 if stored_theorem.hasProof():
-                    presumed_theorem_names.update(stored_theorem.allUsedTheoremNames())
-                if presumed_via_context:
-                    if theorem_being_proven_str not in presumed_theorem_names:
-                        # Presumed via context without any mutual specific presumption or existing co-dependence.
-                        legitimately_presumed=True # It's legit; don't disable.
-                    # If there is a conflict, don't presume something via context.
+                    my_possible_dependents.update(stored_theorem.allUsedTheoremNames())
+                if theorem_being_proven_str in my_possible_dependents:
+                    if str(self) in Judgment.presumedTheoremsAndTheories:
+                        # Theorem-specific presumption or dependency is
+                        # mutual.  Raise a CircularLogic error.
+                        raise CircularLogic(Judgment.theoremBeingProven, self)
+                    # We must exclude this theorem implicitly to 
+                    # avoid a circular dependency.
+                    print("%s is being implicitly excluded as a "
+                          "presumption to avoid a Circular dependency."
+                          %str(self))
                 else:
-                    # This Theorem is being presumed specifically
-                    if (theorem_being_proven_str in presumed_theorem_names):
-                        # Theorem-specific presumptions are mutual.  Raise a CircularLogic error.
-                        raise CircularLogic(KnownTruth.theoremBeingProven, self)
-                    legitimately_presumed=True # This theorem is specifically and legitimately being presumed.
+                    legitimately_presumed = True
         if not legitimately_presumed:
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all dependents.
@@ -779,10 +819,10 @@ def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
     antecedentExpr as the antecedent and consequentExpr as the consequent.
     '''
     from proveit.logic import Implies
-    assert isinstance(implicationExpr, Implies),  'The result of hypothetical reasoning must be an Implies operation'
+    assert isinstance(implicationExpr, Implies),  'The result of deduction must be an Implies operation'
     assert len(implicationExpr.operands)==2, 'Implications are expected to have two operands'
-    assert antecedentExpr==implicationExpr.operands[0], 'The result of hypothetical reasoning must be an Implies operation with the proper antecedent'
-    assert consequentExpr==implicationExpr.operands[1], 'The result of hypothetical reasoning must be an Implies operation with the proper consequent'
+    assert antecedentExpr==implicationExpr.operands[0], 'The result of deduction must be an Implies operation with the proper antecedent'
+    assert consequentExpr==implicationExpr.operands[1], 'The result of deduction must be an Implies operation with the proper consequent'
 
 class ModusPonens(Proof):
     def __init__(self, implicationExpr, assumptions=None):
@@ -791,7 +831,7 @@ class ModusPonens(Proof):
         prev_default_assumptions = defaults.assumptions
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
-            # obtain the implication and antecedent KnownTruths
+            # obtain the implication and antecedent Judgments
             assert isinstance(implicationExpr, Implies) and len(implicationExpr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
             try:
                 # Must prove the implication under the given assumptions.
@@ -807,7 +847,7 @@ class ModusPonens(Proof):
             assumptionsSet = implicationTruth.assumptionsSet | antecedentTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
             # we have what we need; set up the ModusPonens Proof
-            consequentTruth = KnownTruth(implicationExpr.operands[1], assumptions)
+            consequentTruth = Judgment(implicationExpr.operands[1], assumptions)
             _checkImplication(implicationTruth.expr, antecedentTruth.expr, consequentTruth.expr)
             self.implicationTruth = implicationTruth
             self.antecedentTruth = antecedentTruth
@@ -837,7 +877,7 @@ class Deduction(Proof):
         defaults.assumptions = assumptions
         try:
             implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
-            implicationTruth = KnownTruth(implicationExpr, assumptions)
+            implicationTruth = Judgment(implicationExpr, assumptions)
             self.consequentTruth = consequentTruth
             Proof.__init__(self, implicationTruth, [self.consequentTruth])
         finally:
@@ -848,11 +888,11 @@ class Deduction(Proof):
         return 'deduction'
 
 class Instantiation(Proof):
-    def __init__(self, orig_known_truth, num_forall_eliminations,
+    def __init__(self, orig_judgment, num_forall_eliminations,
                  repl_map, equiv_alt_expansions, assumptions):
         '''
-        Create the specialization+instantiation proof step that eliminates
-        some number of nested Forall operations (specialization) and
+        Create the instantiation+instantiation proof step that eliminates
+        some number of nested Forall operations (instantiation) and
         simultaneously replaces Variables with Expressions (instantiation)
         according to the replacement map (repl_map). A Variable that is
         a parameter variable of an internal Lambda expression may only
@@ -861,8 +901,8 @@ class Instantiation(Proof):
 
         See Expression.substituted for details regarding the replacement rules.
         '''
-        from proveit import (Expression, Lambda, ExprRange, ExprTuple,
-                             IndexedVar)
+        from proveit import (Expression, Function, Lambda, ExprRange, 
+                             ExprTuple, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (getParamVar, LambdaApplicationError)
 
@@ -885,7 +925,7 @@ class Instantiation(Proof):
                 # for a full expansion, or it is an "equivalent alternative
                 # expansion".
                 # Should already have been checked in
-                # KnownTruth.instantiate:
+                # Judgment.instantiate:
                 try:
                     for param_entry in key:
                         getParamVar(param_entry)
@@ -900,19 +940,19 @@ class Instantiation(Proof):
             # These assumptions will be used for deriving any
             # side-effects:
             defaults.assumptions = set(assumptions)
-            if not isinstance(orig_known_truth, KnownTruth):
-                raise TypeError("May only 'instantiate' a KnownTruth")
-            if orig_known_truth.proof() is None:
-                raise UnusableProof(KnownTruth.theoremBeingProven,
-                                    orig_known_truth)
+            if not isinstance(orig_judgment, Judgment):
+                raise TypeError("May only 'instantiate' a Judgment")
+            if orig_judgment.proof() is None:
+                raise UnusableProof(Judgment.theoremBeingProven,
+                                    orig_judgment)
 
-            # The "original" KnownTruth is the first "requirement truth" for
+            # The "original" Judgment is the first "requirement truth" for
             # this derivation step.
             orig_subbed_assumptions = []
             requirements = []
             equality_repl_requirements = set()
 
-            # Make possible substitutions in the "original" KnownTruth
+            # Make possible substitutions in the "original" Judgment
             # assumption.
             operands = []
             for parameter in parameters:
@@ -923,7 +963,7 @@ class Instantiation(Proof):
                         operands.append(entry)
                 else:
                     operands.append(repl_map[parameter])
-            for assumption in orig_known_truth.assumptions:
+            for assumption in orig_judgment.assumptions:
                 subbed_assumption = Lambda._apply(
                         parameters, assumption, *operands,
                         allow_relabeling=False,
@@ -937,7 +977,7 @@ class Instantiation(Proof):
                     orig_subbed_assumptions.append(subbed_assumption)
 
             # Automatically use the assumptions of the
-            # original_known_truth plus the assumptions that were
+            # original_judgment plus the assumptions that were
             # provided.
             assumptions = tuple(orig_subbed_assumptions) + assumptions
             # Eliminate duplicates.
@@ -947,7 +987,7 @@ class Instantiation(Proof):
 
             instantiated_expr = \
                 Instantiation._instantiated_expr(
-                        orig_known_truth, num_forall_eliminations,
+                        orig_judgment, num_forall_eliminations,
                         parameters, repl_map, equiv_alt_expansions,
                         assumptions, requirements,
                         equality_repl_requirements)
@@ -969,7 +1009,7 @@ class Instantiation(Proof):
             assumptions = list(OrderedDict.fromkeys(assumptions))
 
             # Sort the replaced variables in order of their appearance
-            # in the original KnownTruth.
+            # in the original Judgment.
             def get_key_var(key):
                 if isinstance(key, ExprTuple):
                     assert len(key)>=1
@@ -977,7 +1017,7 @@ class Instantiation(Proof):
                 return getParamVar(key)
             repl_var_keys = {get_key_var(key):key for key in repl_map.keys()}
             repl_vars = repl_var_keys.keys()
-            repl_vars = list(orig_known_truth.orderOfAppearance(repl_vars))
+            repl_vars = list(orig_judgment.orderOfAppearance(repl_vars))
             # And remove duplicates.
             repl_vars = list(OrderedDict.fromkeys(repl_vars))
 
@@ -991,11 +1031,11 @@ class Instantiation(Proof):
                 var_range_forms.setdefault(var, set()).add(var_range_form)
 
             # We have what we need; set up the Instantiation Proof
-            self.orig_known_truth = orig_known_truth
+            self.orig_judgment = orig_judgment
             # Exclude anything in the repl_map that does not appear in
-            # the original KnownTruth:
+            # the original Judgment:
             mapping = dict()
-            mapping_var_order = []
+            mapping_key_order = []
             def var_range_form_sort(var_tuple):
                 # For sorting equivalent ExprTuples of indexed
                 # variables (e.g., {(x_1, ..., x_{n+1}),
@@ -1006,8 +1046,16 @@ class Instantiation(Proof):
             for var in repl_vars:
                 if var in repl_map:
                     # The variable itself is in the replacement map.
-                    mapping[var] = repl_map[var]
-                    mapping_var_order.append(var)
+                    replacement = repl_map[var]
+                    if isinstance(replacement, Lambda):
+                        # If the replacement is a Lambda, convert it
+                        # to a Function mapping form.
+                        key = Function(var, replacement.parameter_or_parameters)
+                        replacement = replacement.body
+                    else:
+                        key = var
+                    mapping[key] = replacement
+                    mapping_key_order.append(key)
                 if var in var_range_forms:
                     # There are replacements for various forms of the
                     # variable indexed over the same range.
@@ -1017,12 +1065,12 @@ class Instantiation(Proof):
                                                  key=var_range_form_sort):
                         mapping[var_range_form] = \
                             equiv_alt_expansions[var_range_form]
-                        mapping_var_order.append(var_range_form)
-            self.mapping_var_order = mapping_var_order
+                        mapping_key_order.append(var_range_form)
+            self.mapping_key_order = mapping_key_order
             self.mapping = mapping
-            instantiated_truth = KnownTruth(instantiated_expr, assumptions)
-            # Make the 'original known truth' be the 1st requirement.
-            requirements.insert(0, orig_known_truth)
+            instantiated_truth = Judgment(instantiated_expr, assumptions)
+            # Make the 'original judgment' be the 1st requirement.
+            requirements.insert(0, orig_judgment)
             # Mark the requirements that are "equality replacements".
             marked_req_indices = set()
             for k, req in enumerate(requirements):
@@ -1031,7 +1079,7 @@ class Instantiation(Proof):
             Proof.__init__(self, instantiated_truth, requirements,
                            marked_req_indices)
         except LambdaApplicationError as e:
-            raise InstantiationFailure(orig_known_truth, repl_map,
+            raise InstantiationFailure(orig_judgment, repl_map,
                                        assumptions, str(e))
         finally:
             # restore the original default assumptions
@@ -1040,30 +1088,26 @@ class Instantiation(Proof):
     def _generate_step_info(self, objectRepFn):
         '''
         Generate information about this proof step, including mapping
-        information for this specialization.
+        information for this instantiation.
         '''
         mapping = self.mapping
-        mapping_info = ','.join(objectRepFn(var) + ':' + objectRepFn(mapping[var])
-                               for var in self.mapping_var_order)
+        mapping_info = ','.join(objectRepFn(key) + ':' + objectRepFn(mapping[key])
+                               for key in self.mapping_key_order)
         return self.stepType() + ':{' + mapping_info + '}'
 
     def stepType(self):
         return 'instantiation'
 
-    def _single_mapping(self, var, replacement, formatType):
-        from proveit import Function, Lambda
+    def _single_mapping(self, key, replacement, formatType):
         formatted = lambda expr : expr._repr_html_() if formatType=='HTML' else str(expr)
-        if isinstance(replacement, Lambda):
-            return (formatted(Function(var, replacement.parameter_or_parameters))
-                    + ' : ' + formatted(replacement.body))
-        return formatted(var) + ' : ' + formatted(replacement)
+        return formatted(key) + ' : ' + formatted(replacement)
 
     def _mapping(self, formatType='HTML'):
         if formatType=='HTML':
             out = '<span style="font-size:20px;">'
         else: out = ''
-        out += ', '.join(self._single_mapping(var, self.mapping[var], formatType)
-                         for var in self.mapping_var_order)
+        out += ', '.join(self._single_mapping(key, self.mapping[key], formatType)
+                         for key in self.mapping_key_order)
         if formatType=='HTML':
             out += '</span>'
         return out
@@ -1096,14 +1140,14 @@ class Instantiation(Proof):
         return parameters
 
     @staticmethod
-    def _instantiated_expr(original_known_truth, num_forall_eliminations,
+    def _instantiated_expr(original_judgment, num_forall_eliminations,
                            instantiation_params, repl_map,
                            equiv_alt_expansions,
                            assumptions, requirements,
                            equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
-        original_known_truth.  The assumptions on the left side of
+        original_judgment.  The assumptions on the left side of
         the turnstile are treated in Instantiation.__init__.
 
         Eliminates the specified number of Forall operations,
@@ -1117,9 +1161,9 @@ class Instantiation(Proof):
 
         # Eliminate the desired number of Forall operations and extract
         # appropriately mapped conditions.
-        expr = original_known_truth.expr
+        expr = original_judgment.expr
         def raiseFailure(msg):
-            raise InstantiationFailure(original_known_truth, repl_map,
+            raise InstantiationFailure(original_judgment, repl_map,
                                        assumptions, msg)
         instantiation_param_vars = [getParamVar(param) for param
                                     in instantiation_params]
@@ -1261,21 +1305,21 @@ class Instantiation(Proof):
 class Generalization(Proof):
     def __init__(self, instanceTruth, newForallParamLists, newConditions=tuple()):
         '''
-        A Generalization step wraps a KnownTruth (instanceTruth) in one or more Forall operations.
+        A Generalization step wraps a Judgment (instanceTruth) in one or more Forall operations.
         The number of Forall operations introduced is the number of lists in newForallVarLists.
         The conditions are introduced in the order they are given at the outermost level that is
         applicable.  For example, if newForallParamLists is [[x, y], z]  and the new
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
-        from proveit import KnownTruth
+        from proveit import Judgment
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (getParamVar, _guaranteed_to_be_independent)
         from proveit.logic import Forall
-        if not isinstance(instanceTruth, KnownTruth):
-            raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
+        if not isinstance(instanceTruth, Judgment):
+            raise GeneralizationFailure(None, [], 'May only generalize a Judgment instance')
         # the assumptions required for the generalization are the assumptions of
-        # the original KnownTruth minus the all of the new conditions (including those
+        # the original Judgment minus the all of the new conditions (including those
         # implied by the new domain).
         assumptions = set(instanceTruth.assumptions)
         prev_default_assumptions = defaults.assumptions
@@ -1318,7 +1362,7 @@ class Generalization(Proof):
             for assumption in assumptions:
                 if not _guaranteed_to_be_independent(assumption, introducedForallVars):
                     raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
-            generalizedTruth = KnownTruth(generalizedExpr, assumptions)
+            generalizedTruth = Judgment(generalizedExpr, assumptions)
             self.instanceTruth = instanceTruth
             self.newForallVars = newForallVars
             self.newConditions = newConditions
@@ -1362,32 +1406,38 @@ class _ShowProof:
     # Map proof_id's to _ShowProof objects that have been created.
     show_proof_by_id = dict()
 
-    def __init__(self, context, proof_id, stepInfo, refObjIdGroups):
+    def __init__(self, theory, folder, proof_id, stepInfo,
+                 refObjIdGroups):
         self._style_id = proof_id
         if '_' in stepInfo:
             # Must be an axiom or theorem with the format
-            # axiom_context.name or theorem_context.name
+            # axiom_theory.name or theorem_theory.name
             self.step_type_str, full_name = stepInfo.split('_', 1)
-            assert self.step_type_str in ('axiom', 'theorem', 'conjecture')
+            assert self.step_type_str in ('axiom', 'theorem')
             full_name_segments = full_name.split('.')
-            context_name = '.'.join(full_name_segments[:-1])
-            self.context =  Context.getContext(context_name)
+            theory_name = '.'.join(full_name_segments[:-1])
+            self.theory =  Theory.getTheory(theory_name)
             self.name = full_name_segments[-1]
         else:
-            self.context = context
+            self.theory = theory
             self.step_type_str = stepInfo
+        self.theory_folder_storage = theory_folder_storage = \
+            self.theory._theoryFolderStorage(folder)
         if self.step_type_str=='instantiation':
             # Extract the mapping information.
             group = refObjIdGroups[0]
-            var_mapping_pairs = [(context.getStoredExpr(group[i]),
-                                  context.getStoredExpr(group[i+1])) \
-                                 for i in range(0, len(group), 2)]
-            self.mapping_var_order = [key for key, value in var_mapping_pairs]
-            self.mapping = dict(var_mapping_pairs)
-        self.provenTruth = context.getStoredKnownTruth(refObjIdGroups[-2][0])
+            key_mapping_pairs = \
+                [(theory_folder_storage.makeExpression(group[i]),
+                  theory_folder_storage.makeExpression(group[i+1])) 
+                    for i in range(0, len(group), 2)]
+            self.mapping_key_order = [key for key, value in key_mapping_pairs]
+            self.mapping = dict(key_mapping_pairs)
+        self.provenTruth = \
+            theory_folder_storage.makeJudgmentOrProof(
+                refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
-            [context.getShowProof(obj_id.rstrip('*')) for obj_id
+            [theory.getShowProof(obj_id.rstrip('*')) for obj_id
              in refObjIdGroups[-1]]
         self.markedRequiredTruthIndices = \
             {k for k, obj_id in enumerate(refObjIdGroups[-1])
@@ -1403,13 +1453,13 @@ class _ShowProof:
         return self.step_type_str
 
     def getLink(self):
-        from ._context_storage import StoredAxiom, StoredTheorem
+        from ._theory_storage import StoredAxiom, StoredTheorem
         if self.step_type_str=='axiom':
-            return StoredAxiom(self.context, self.name).getDefLink()
+            return StoredAxiom(self.theory, self.name).getDefLink()
         elif self.step_type_str in ('theorem', 'conjecture'):
-            return StoredTheorem(self.context, self.name).getProofLink()
+            return StoredTheorem(self.theory, self.name).getProofLink()
         else:
-            return self.context.proofNotebook(self)
+            return self.theory_folder_storage.proofNotebook(self)
 
     def _single_mapping(self, *args):
         return Instantiation._single_mapping(self, *args)
@@ -1444,8 +1494,8 @@ class ModusPonensFailure(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 class InstantiationFailure(ProofFailure):
-    def __init__(self, original_known_truth, repl_map, assumptions, message):
-        message = "Attempting to instantiate %s with %s:\n%s"%(original_known_truth,
+    def __init__(self, original_judgment, repl_map, assumptions, message):
+        message = "Attempting to instantiate %s with %s:\n%s"%(original_judgment,
                                                         repl_map, message)
         ProofFailure.__init__(self, None, assumptions, message)
 
@@ -1484,7 +1534,7 @@ class CircularLogicLoop(ProofFailure):
     def __init__(self, presumptionLoop, presumedTheorem):
         assert presumptionLoop[0] == presumptionLoop[-1], "expecting a loop"
         assert str(presumedTheorem) == presumptionLoop[0], "expecting presumedTheorem to match the ends of the presumptionLoop"
-        CircularLogic.__init__(self, KnownTruth.theoremBeingProven, presumedTheorem)
+        CircularLogic.__init__(self, Judgment.theoremBeingProven, presumedTheorem)
         self.presumptionLoop = presumptionLoop
     def __str__(self):
         return "Circular presumption dependency detected: %s"%str(self.presumptionLoop)

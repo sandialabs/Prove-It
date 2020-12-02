@@ -4,10 +4,10 @@ class InSet(Operation):
     # operator of the InSet operation
     _operator_ = Literal(stringFormat='in',
                          latexFormat=r'\in',
-                         context=__file__)
+                         theory=__file__)
 
-    # maps elements to InSet KnownTruths.
-    # For example, map x to (x in S) if (x in S) is a KnownTruth.
+    # maps elements to InSet Judgments.
+    # For example, map x to (x in S) if (x in S) is a Judgment.
     knownMemberships = dict()
 
     def __init__(self, element, domain):
@@ -41,18 +41,18 @@ class InSet(Operation):
             return getattr(self.membershipObject, attr)
         raise AttributeError
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         '''
         Store the proven membership in knownMemberships.
         If the domain has a 'membershipObject' method, side effects
         will also be generated from the 'sideEffects' object that it generates.
         '''
-        InSet.knownMemberships.setdefault(self.element, set()).add(knownTruth)
+        InSet.knownMemberships.setdefault(self.element, set()).add(judgment)
         if hasattr(self, 'membershipObject'):
-            for sideEffect in self.membershipObject.sideEffects(knownTruth):
+            for sideEffect in self.membershipObject.sideEffects(judgment):
                 yield sideEffect
 
-    def negationSideEffects(self, knownTruth):
+    def negationSideEffects(self, judgment):
         '''
         Fold Not(x in S) as (x not-in S) as an automatic side-effect.
         '''
@@ -94,7 +94,7 @@ class InSet(Operation):
         if self.element in InSet.knownMemberships:
             for knownMembership in InSet.knownMemberships[self.element]:
                 if knownMembership.isSufficient(assumptions):
-                    # x in R is a known truth; if we know that R subseteq S,
+                    # x in R is a judgment; if we know that R subseteq S,
                     # or R = S we are done.
                     eqRel = Equals(knownMembership.domain, self.domain)
                     if eqRel.proven(assumptions):
@@ -176,7 +176,7 @@ class Membership:
         '''
         self.element = element
 
-    def sideEffects(self, knownTruth):
+    def sideEffects(self, judgment):
         raise NotImplementedError("Membership object, %s, has no 'sideEffects' method implemented"%str(self.__class__))
 
     def conclude(self, assumptions):

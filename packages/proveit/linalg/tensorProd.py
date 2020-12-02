@@ -13,7 +13,7 @@ class TensorProd(Operation):
     '''
     # the literal operator of the TensorProd operation
     _operator_ = Literal(stringFormat=r'otimes', latexFormat = r'{\otimes}',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, *operands):
         Operation.__init__(self, TensorProd._operator_, operands)
@@ -26,7 +26,7 @@ class TensorProd(Operation):
         from theorems import factorScalarFromTensorProd
         for k, operand in enumerate(self.operands):
             if isinstance(operand, ScalarProd) and operand.scalar == scalar:
-                return factorScalarFromTensorProd.specialize({xEtc:self.operands[:k], y:operand.scaled, zEtc:self.operands[k+1:]}).specialize({alpha:scalar})
+                return factorScalarFromTensorProd.instantiate({xEtc:self.operands[:k], y:operand.scaled, zEtc:self.operands[k+1:]}).instantiate({alpha:scalar})
         raise ValueError('Scalar not found in any of the tensor product factors')
 
     def distribute(self, factorIdx):
@@ -37,12 +37,12 @@ class TensorProd(Operation):
         from proveit.number import Add, Sum
         factor = self.factors[factorIdx]
         if isinstance(factor, Add):
-            return distributeTensorProdOverSum.specialize({xEtc:self.factors[:factorIdx], yEtc:factor.terms, zEtc:self.factors[factorIdx+1:]})
+            return distributeTensorProdOverSum.instantiate({xEtc:self.factors[:factorIdx], yEtc:factor.terms, zEtc:self.factors[factorIdx+1:]})
         elif isinstance(factor, Sum):
             domain = factor.domain
             summand = factor.summand
             index = factor.index
-            return distributeTensorProdOverSummation.specialize({xEtc:self.factors[:factorIdx], Operation(f, index):summand, S:domain, y:index, zEtc:self.factors[factorIdx+1:]})            
+            return distributeTensorProdOverSummation.instantiate({xEtc:self.factors[:factorIdx], Operation(f, index):summand, S:domain, y:index, zEtc:self.factors[factorIdx+1:]})            
         else:
             raise Exception("Don't know how to distribute tensor product over " + str(factor.__class__) + " factor")
 
@@ -65,7 +65,7 @@ class TensorProd(Operation):
     #         if factor1 != factor2:
     #             if tensorEquality.lhs.factors[:k] != tensorEquality.rhs.factors[:k] or tensorEquality.lhs.factors[k+1:] != tensorEquality.rhs.factors[k+1:]:
     #                 raise ValueError("tensorEquality should be an Equals expression of tensor products that are the same except for only one factor")
-    #             return tensorProdEquivByElimination.specialize({aEtc:tensorEquality.lhs.factors[:k], x:factor1, y:factor2, zEtc:tensorEquality.lhs.factors[k+1:]})
+    #             return tensorProdEquivByElimination.instantiate({aEtc:tensorEquality.lhs.factors[:k], x:factor1, y:factor2, zEtc:tensorEquality.lhs.factors[k+1:]})
 
 # TENSOR_PROD = Literal(pkg, 'TENSOR_PROD', {STRING: r'otimes', LATEX: r'\otimes'}, operationMaker = lambda operands : TensorProd(*operands))
 
@@ -75,7 +75,7 @@ class TensorExp(Operation):
     
     # the literal operator of the TensorExp operation
     _operator_ = Literal(stringFormat=r'otimes', latexFormat = r'{\otimes}',
-                         context=__file__)
+                         theory=__file__)
 
     def __init__(self, base, exponent):
         r'''
@@ -104,7 +104,7 @@ class TensorExp(Operation):
         from proveit.number.common import zero, one
         from axioms import tensorExpOne
         if self.exponent == one:
-            return tensorExpOne.specialize({x:self.base})
+            return tensorExpOne.instantiate({x:self.base})
             raise ValueError('Only trivial simplification is implemented '
                              '(tensor exponent of one).')
 
