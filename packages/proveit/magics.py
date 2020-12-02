@@ -343,6 +343,10 @@ class ProveItMagicCommands:
             #layout = widgets.Layout(float='bottom')
             display(widgets.VBox([special_notebook_links, sub_theories_label, theory_interface.widget, add_theory_widget]))       
     
+    def prepare_notebook(self, kind):
+        import proveit
+        proveit.defaults.automation = False
+    
     def begin_axioms(self):
         # theory based upon current working directory
         if len(self.definitions) > 0 or self.kind is not None:
@@ -625,6 +629,27 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         for sub-theories which may be edited.
         '''
         ProveItMagicCommands.display_theory(self)
+    
+    @line_magic
+    def common_expressions_notebook(self, line):
+        '''
+        Prepare for defining common expressions of a theory.
+        '''
+        ProveItMagicCommands.prepare_notebook(self, 'common')
+    
+    @line_magic
+    def axioms_notebook(self, line):
+        '''
+        Prepare for defining axioms of a theory.
+        '''
+        ProveItMagicCommands.prepare_notebook(self, 'axioms')
+    
+    @line_magic
+    def theorems_notebook(self, line):
+        '''
+        Prepare for defining theorems of a theory.
+        '''
+        ProveItMagicCommands.prepare_notebook(self, 'theorems')
     
     def _extract_kind(self, line):
         kind = line.strip()
