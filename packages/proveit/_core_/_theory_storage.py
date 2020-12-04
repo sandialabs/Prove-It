@@ -744,7 +744,7 @@ class TheoryStorage:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
             theory_links = self.theory.links(
-                    os.path.join(self.directory, '_proofs_'))
+                    os.path.join(self.directory, '_proofs_', theorem_name))
             nb = nb.replace('#THEORY#', theory_links)
         return nb
     
