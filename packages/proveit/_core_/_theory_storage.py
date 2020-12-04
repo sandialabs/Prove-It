@@ -1586,7 +1586,7 @@ class TheoryFolderStorage:
                 nb = nb.replace('#kind#', kind_str.lower())
                 nb = nb.replace('#SPECIAL_EXPR_NAME#', name)
                 special_expr_link = '/'.join(
-                        ['..', '..', 
+                        ['..', '..', '..',
                          Theory.specialExprKindToModuleName[kind] + '.ipynb'])
                 nb = nb.replace(
                         '#SPECIAL_EXPR_LINK#', 
@@ -1620,7 +1620,7 @@ class TheoryFolderStorage:
                                 json.dumps(special_expr_link).strip('"'))  
                 if kind_str == 'Theorem':
                     see_proof_str = ('***see <a class=\\"ProveItLink\\" '
-                                     'href=\\"../../_proofs_/%s.ipynb\\">'
+                                     'href=\\"../../../_proofs_/%s/thm_proof.ipynb\\">'
                                      'proof</a>***'%name)
                 else: see_proof_str = ''
                 dep_nb = dep_nb.replace('#SEE_PROOF#', see_proof_str)
@@ -2162,6 +2162,7 @@ class TheoryFolderStorage:
         paths_to_remove = list()
         for hash_subfolder in os.listdir(self.path):
             if hash_subfolder == 'name_to_hash.txt': continue
+            if hash_subfolder == 'notebook.css': continue
             hashpath = os.path.join(self.path, hash_subfolder)
             if hash_subfolder not in owned_hash_folders:
                 paths_to_remove.append(hashpath)

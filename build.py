@@ -178,6 +178,8 @@ class ProveItHTMLPreprocessor(Preprocessor):
         return new_text
         
     def preprocess(self, nb, resources):
+        import proveit
+        proveit_path = os.path.split(proveit.__file__)[0]
         new_cells = []
         empty_cells = [] # skip empty cells at the end for a cleaner look
         title = None # take the first line of the first cell to be the title
@@ -209,7 +211,13 @@ class ProveItHTMLPreprocessor(Preprocessor):
         nb.cells = new_cells  
         resources['today'] = str(datetime.datetime.today()).split()[0]
         resources['title'] = title
-        resources['up_to_index'] = '../'*self.path.count('/')
+        index_path = os.path.join(proveit_path, '..', '..', 'index.html')
+        logo_path = os.path.join(proveit_path, '..', '..', 'pv_it.png')
+        if self.path == '': self.path = '.'
+        relpath_to_index = os.path.relpath(index_path, self.path)
+        relpath_to_logo = os.path.relpath(logo_path, self.path)
+        resources['relpath_to_index'] = relpath_to_index
+        resources['relpath_to_logo'] = relpath_to_logo
         return nb, resources
 
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
@@ -972,6 +980,10 @@ def theoremproof_path_generator(top_level_paths):
             theory = Theory(theory_path)
             for theorem_name in theory.theoremNames():
                 yield os.path.join(theory._storage.directory, '_proofs_', theorem_name, 'thm_proof.ipynb')
+            proofs_path = os.path.join(theory._storage.directory, '_proofs_')
+            if os.path.isdir(proofs_path):
+                # add notebook.css if needed
+                generate_css_if_missing(proofs_path)
 
 def database_notebook_path_generator(top_level_paths, filebases):
     for path in top_level_paths:
@@ -981,6 +993,7 @@ def database_notebook_path_generator(top_level_paths, filebases):
                 for folder in os.listdir(pv_it_dir):
                     folder_dir = os.path.join(pv_it_dir, folder)
                     if os.path.isdir(folder_dir):
+                        generate_css_if_missing(folder_dir)
                         for hash_directory in os.listdir(folder_dir):
                             hash_path = os.path.join(folder_dir, hash_directory)
                             if os.path.isdir(hash_path):

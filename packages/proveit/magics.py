@@ -481,7 +481,6 @@ class ProveItMagicCommands:
             # Update the expression notebooks now that these have been registered
             # as special expressions.
             for name, expr in self.definitions.items():
-                print("complete", name)
                 # remake the expression notebooks using the special expressions of the theory
                 theory.expressionNotebook(expr, nameKindTheory = (name, kind, theory),
                                            completeSpecialExprNotebook=True)  
@@ -838,7 +837,8 @@ class Assignments:
             rightSideStr = rightSide._repr_html_()
         if rightSideStr is None:
             rightSideStr = str(rightSide)
-        num_duplicates = len(proveItMagic.expr_names[rightSide])-1
+        if kind in ('axiom', 'theorem', 'common'):
+            num_duplicates = len(proveItMagic.expr_names[rightSide])-1
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
             proof_notebook_relurl = theory.thmProofNotebook(name, expr, num_duplicates)
