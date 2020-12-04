@@ -279,7 +279,7 @@ class ProveItMagicCommands:
             for theory in theories:
                 href = relurl(os.path.join(theory.getPath(), '_theory_.ipynb'))
                 html += '<li><a class="ProveItLink" href="%s">%s</a></li>\n'%(href, theory.name)
-                html += generateContents(list(theory.getSubTheories()))
+                html += generateContents(list(theory.generate_sub_theories()))
             return html + '</ul>\n'
         display(HTML(generateContents([Theory(theory_name) for theory_name in theory_names])))
             
@@ -342,6 +342,16 @@ class ProveItMagicCommands:
             #display(widgets.Button(description='Edit...', disabled=False, button_style='', tooltip='Edit the sub-contents list', layout=layout))
             #layout = widgets.Layout(float='bottom')
             display(widgets.VBox([special_notebook_links, sub_theories_label, theory_interface.widget, add_theory_widget]))       
+        
+        display(HTML('<h3>Axioms contained (directly or indirectly) within this theory</h3>'))
+        for axiom in theory.generate_all_contained_axioms():
+            self.display_special_stmt(axiom)
+
+        display(HTML('Also see list of all contained <a href="contain_theorems.ipynb">theorems</a>.'))
+    
+    def display_all_contained_theorems(self, theory):
+        for theorem in theory.generate_all_contained_theorems():
+            self.display_special_stmt(theorem)
     
     def prepare_notebook(self, kind):
         import proveit
@@ -498,7 +508,20 @@ class ProveItMagicCommands:
             self.theory.stashExtraneousThmProofNotebooks()            
         self.kind = None
         self.theory = None
-            
+
+    def display_special_stmt(self, stmt, format_type='html'):
+        '''
+        Given an Axiom or Theorem, display HTML with a link
+        to the definition.
+        '''
+        expr = stmt.provenTruth.expr
+        if format_type == 'html':
+            display(HTML('<dt><a class="ProveItLink" href="%s">%s</a></dt><dd>%s</dd>'%(stmt.getLink(), str(stmt), expr._repr_html_())))
+        elif format_type == 'latex':
+            print('\item $' + expr.latex() + '$')
+        else:
+            raise ValueError("Unknown format type: %s"%format_type)
+    
     def display_dependencies(self, name, thm_expr):
         '''
         Show the dependencies of an axiom or theorem.
@@ -506,14 +529,6 @@ class ProveItMagicCommands:
         proof = thm_expr.proof() # Axiom or Theorem
 
         from proveit._core_._theory_storage import TheoryFolderStorage
-        
-        def displaySpecialStmt(stmt):
-            '''
-            Given an Axiom or Theorem, display HTML with a link
-            to the definition.
-            '''
-            expr = stmt.provenTruth.expr
-            display(HTML('<dt><a class="ProveItLink" href="%s">%s</a></dt><dd>%s</dd>'%(stmt.getLink(), str(stmt), expr._repr_html_())))
         
         def stmt_sort(stmt):
             return str(stmt)
@@ -529,13 +544,13 @@ class ProveItMagicCommands:
                 display(HTML('<h3>Unproven conjectures required (directly or indirectly) to prove %s</h3>'%name))
                 display(HTML('<dl>'))
                 for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
-                    displaySpecialStmt(Theory.findTheorem(required_unproven_theorem))
+                    self.display_special_stmt(Theory.findTheorem(required_unproven_theorem))
                 display(HTML('</dl>'))
             if len(required_axioms) > 0:
                 display(HTML('<h3>Axioms required (directly or indirectly) to prove %s</h3>'%name))
                 display(HTML('<dl>'))
                 for required_axiom in sorted(required_axioms, key=stmt_sort):       
-                    displaySpecialStmt(Theory.findAxiom(required_axiom))
+                    self.display_special_stmt(Theory.findAxiom(required_axiom))
                 display(HTML('</dl>'))
         
         dependents = proof.directDependents()
@@ -545,7 +560,7 @@ class ProveItMagicCommands:
             display(HTML('<h3>Theorems/conjectures that depend directly on %s</h3>'%name))
             display(HTML('<dl>'))
             for dependent in sorted(proof.directDependents(), key=stmt_sort):
-                displaySpecialStmt(Theory.findTheorem(dependent))
+                self.display_special_stmt(Theory.findTheorem(dependent))
             display(HTML('</dl>'))
 
     def display_dependencies_latex(self, name, thm_expr):
@@ -553,14 +568,6 @@ class ProveItMagicCommands:
         Show the dependencies of an axiom or theorem.
         '''
         proof = thm_expr.proof() # Axiom or Theorem
-        
-        def displaySpecialStmt(stmt):
-            '''
-            Given an Axiom or Theorem, display HTML with a link
-            to the definition.
-            '''
-            expr = stmt.provenTruth.expr
-            print('\item $' + expr.latex() + '$')
         
         def stmt_sort(stmt):
             return str(stmt)
@@ -576,13 +583,13 @@ class ProveItMagicCommands:
                 print('Unproven conjectures required (directly or indirectly) to prove %s'%name)
                 print(r'\begin{itemize}')
                 for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
-                    displaySpecialStmt(Theory.findTheorem(required_unproven_theorem))
+                    self.display_special_stmt(Theory.findTheorem(required_unproven_theorem), 'latex')
                 print(r'\end{itemize}')
             if len(required_axioms) > 0:
                 print('Axioms required (directly or indirectly) to prove %s'%name)
                 print(r'\begin{itemize}')
                 for required_axiom in sorted(required_axioms, key=stmt_sort):       
-                    displaySpecialStmt(Theory.findAxiom(required_axiom))
+                    self.display_special_stmt(Theory.findAxiom(required_axiom), 'latex')
                 print(r'\end{itemize}')
         
         dependents = proof.directDependents()
@@ -591,7 +598,7 @@ class ProveItMagicCommands:
         else:
             print('Theorems/conjectures that depend directly on %s'%name)
             for dependent in sorted(proof.directDependents(), key=stmt_sort):
-                displaySpecialStmt(Theory.findTheorem(dependent))
+                self.display_special_stmt(Theory.findTheorem(dependent), 'latex')
     
 
 @magics_class

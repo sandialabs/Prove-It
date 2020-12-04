@@ -673,7 +673,7 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
         print("Finding theorem proof notebooks.")
         for theory_path in theory_paths:
             theory = Theory(theory_path)
-            for theorem_name in theory.theoremNames():
+            for theorem_name in theory.get_theorem_names():
                 start_time = time.time()
                 print("Loading", theorem_name, end='', flush=True)
                 theorem = theory.getTheorem(theorem_name)
@@ -978,7 +978,7 @@ def theoremproof_path_generator(top_level_paths):
     for path in top_level_paths:
         for theory_path in findTheoryPaths(path):
             theory = Theory(theory_path)
-            for theorem_name in theory.theoremNames():
+            for theorem_name in theory.get_theorem_names():
                 yield os.path.join(theory._storage.directory, '_proofs_', theorem_name, 'thm_proof.ipynb')
             proofs_path = os.path.join(theory._storage.directory, '_proofs_')
             if os.path.isdir(proofs_path):

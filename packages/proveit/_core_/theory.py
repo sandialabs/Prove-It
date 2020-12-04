@@ -211,7 +211,7 @@ class Theory:
     def getSubTheoryNames(self):
         return self._storage.getSubTheoryNames()
 
-    def getSubTheories(self):
+    def generate_sub_theories(self):
         '''
         Yield the Theory objects for the sub-theories.
         '''
@@ -264,11 +264,11 @@ class Theory:
             with open(filename, 'w') as f:
                 f.write(output)
     
-    def axiomNames(self):
-        return self._storage.axiomNames()
+    def get_axiom_names(self):
+        return self._storage.get_axiom_names()
     
-    def theoremNames(self):
-        return self._storage.theoremNames()
+    def get_theorem_names(self):
+        return self._storage.get_theorem_names()
     
     def commonExpressionNames(self):
         return self._storage.commonExpressionNames()
@@ -318,6 +318,26 @@ class Theory:
         Return the Theorem of the given name in this theory.
         '''
         return self._storage.getTheorem(name)
+
+    def generate_local_axioms(self):
+        '''
+        Yield each of the axioms contained at the local level
+        of this theory.
+        '''
+        for name in self.get_axiom_names():
+            yield self.getAxiom(name)
+    
+    def generate_all_contained_axioms(self):
+        '''
+        Yield each of the axioms contained both at the local
+        level of this theory and recursively through contained
+        theorys.
+        '''
+        for axiom in self.generate_local_axioms():
+            yield axiom
+        for theory in self.generate_sub_theories():
+            for axiom in theory.generate_all_contained_axioms():
+                yield axiom
     
     @staticmethod
     def findAxiom(fullName):
@@ -370,7 +390,7 @@ class Theory:
         theory, stash them or remove them if they are generic notebooks.
         '''
         self._storage.stashExtraneousThmProofNotebooks(
-                self.theoremNames())
+                self.get_theorem_names())
     
     @staticmethod
     def expressionNotebook(expr, nameKindTheory=None,
@@ -475,30 +495,6 @@ class Theory:
         if theory_folder_storage is not None:
             return theory_folder_storage.clean(clear)
     
-    """
-    def clear(self):
-        '''
-        Remove reference counts to all common expressions, axioms,
-        theorems, and recorded displayed expressions and then
-        clean the __pv_it folder of any stored expressions with
-        zero reference counts.  Note that this can, in principle
-        (assuming nothing is corrupted), be undone by re-executing
-        the notebooks that generated these in the first place.
-        '''
-        self._setTheorems([], dict())
-        self._setAxioms([], dict())
-        self._setCommonExpressions([], dict())
-        self.clean()
-        
-    def clearAll(self):
-        '''
-        Clear (see clear method) this theory and all sub-theories.
-        '''
-        for sub_theory in self.getSubTheories():
-            sub_theory.clear()
-        self.clear()
-    """
-
     def containsAnyExpression(self):
         '''
         Return True if this theory and all of its sub-theories
@@ -506,7 +502,7 @@ class Theory:
         '''
         if self._storage.containsAnyExpression():
             return True
-        for sub_theory in self.getSubTheories():
+        for sub_theory in self.generate_sub_theories():
             if sub_theory.containsAnyExpression():
                 return True
         return False                    
@@ -522,7 +518,7 @@ class Axioms(ModuleType):
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(list(self.__dict__.keys()) + self._theory.axiomNames())
+        return sorted(list(self.__dict__.keys()) + self._theory.get_axiom_names())
 
     def __getattr__(self, name):
         if name[0:2]=='__': 
@@ -552,7 +548,7 @@ class Theorems(ModuleType):
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(list(self.__dict__.keys()) + self._theory.theoremNames())
+        return sorted(list(self.__dict__.keys()) + self._theory.get_theorem_names())
                 
     def __getattr__(self, name):
         if name[0:2]=='__': 

@@ -432,12 +432,12 @@ class TheoryStorage:
             self._updateTheoremDependencyOrder(names)  
         """
 
-    def axiomNames(self):
+    def get_axiom_names(self):
         if self._axiom_names is None:
             self._axiom_names = list(self._loadSpecialStatementNames('axiom'))
         return self._axiom_names
 
-    def theoremNames(self):
+    def get_theorem_names(self):
         if self._theorem_names is None:
             self._theorem_names = list(self._loadSpecialStatementNames('theorem'))
         return self._theorem_names
@@ -634,7 +634,7 @@ class TheoryStorage:
         from .proof import CircularLogicLoop
         if self._theorem_dependency_order is None:
             # The theorem dependency order is stale -- needs to be updated.
-            self._updateTheoremDependencyOrder(self.theoremNames()) # update the dependency order first
+            self._updateTheoremDependencyOrder(self.get_theorem_names()) # update the dependency order first
         idx = self._theorem_dependency_order.index(theorem_name)
         # new presumptions in an external theory as the full theorem name (with theory prefix)
         new_external_presumptions = []
@@ -649,7 +649,7 @@ class TheoryStorage:
         for presumption_name in new_external_presumptions:
             theory_name, theorem_name = presumption_name.rsplit('.', 1)
             theory = Theory.getTheory(theory_name)
-            if theorem_name not in theory.theoremNames():
+            if theorem_name not in theory.get_theorem_names():
                 raise KeyError("Theorem %s not found in theory %s"%(theorem_name, theory.name))
             if presumption_name in presumption_chain:
                 chain_index = presumption_chain.index(presumption_name)
@@ -2167,7 +2167,7 @@ class TheoryFolderStorage:
             if hash_subfolder not in owned_hash_folders:
                 paths_to_remove.append(hashpath)
         
-        thm_names = set(self.theory.theoremNames())
+        thm_names = set(self.theory.get_theorem_names())
         if self.folder == 'theorems':
             # When 'cleaning' the theorems folder, we will also
             # remove any '_proof_<theorem_name>' folders that are
