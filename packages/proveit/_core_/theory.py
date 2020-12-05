@@ -382,7 +382,6 @@ class Theory:
         if replace_str is None:
             return title
         else:
-            print(title, title==replace_str)
             if title != replace_str:
                 nb_str = nb_str[:idx+1] + replace_str + nb_str[end_idx:]
             return (title, nb_str)
