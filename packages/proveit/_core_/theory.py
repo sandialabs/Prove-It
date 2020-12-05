@@ -362,7 +362,63 @@ class Theory:
         theory = Theory.getTheory(theory_name)
         if kind == 'axiom': return theory.getAxiom(stmt_name)
         if kind == 'theorem': return theory.getTheorem(stmt_name)
-    
+
+    @staticmethod
+    def extract_markdowntitle_of_notebook(nb_str, replace_str=None):
+        '''
+        Given a Prove-It notebook as a string, extract the
+        title displayed at the top of the first markdown
+        cell.  If a 'replace_str' is given, then replace
+        this title with the given replacement string and
+        also return this replacement.
+        '''
+        idx = nb_str.find("source") # find the source of the first cell
+        idx = nb_str.find("[", idx) # find the following '['
+        idx = nb_str.find('"', idx) # find the following '"'
+        end_idx = nb_str.find(r'\n"', idx) # find the end
+        if idx==-1 or end_idx==-1:
+            raise ValueError("Notebook not in proper format")
+        title = nb_str[idx+1:end_idx]
+        if replace_str is None:
+            return title
+        else:
+            print(title, title==replace_str)
+            if title != replace_str:
+                nb_str = nb_str[:idx+1] + replace_str + nb_str[end_idx:]
+            return (title, nb_str)
+
+    @staticmethod
+    def update_title_if_needed(filename, generic_nb_str):
+        '''
+        Check if the notebook stored in 'filename' has the same
+        markdown title as the generic version.  If not, update
+        it to the generic version.  Return the possibly updated
+        notebook string, or None if it file was not in an
+        expected format to be able to extract the title.
+        '''
+        generic_title = Theory.extract_markdowntitle_of_notebook(
+            generic_nb_str)
+        with open(filename, 'r') as _f:
+            nb_str = _f.read()
+        try:
+            existing_title, nb_str = \
+                Theory.extract_markdowntitle_of_notebook(
+                    nb_str, generic_title)
+        except ValueError:
+            # The format is not correct; stash this one and 
+            # generate a new one.
+            existing_title, nb_str = None, None
+        if nb_str is not None:
+            if existing_title != generic_title:
+                # Update the title.
+                # Remove the file before creating again to force
+                # new capitalization (e.g., in Windows where
+                # capitalization can be flexible)
+                os.remove(filename) 
+                with open(filename, 'w') as _f:
+                    _f.write(nb_str)
+        return nb_str
+
     def proofNotebook(self, proof):
         '''
         Return the "basic" proof notebook corresponding to the given 

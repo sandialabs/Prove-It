@@ -659,7 +659,7 @@ class TheoryStorage:
                 presumed_theorem_names.add(presumption_name)
                 theory._storage._allPresumedTheoremNames(theorem_name, presumed_theorem_names, presumption_chain+[presumption_name])
     """
-
+    
     def thmProofNotebook(self, theorem_name, expr, num_duplicates = 0):
         '''
         Return the relative url to the proof notebook, 
@@ -667,6 +667,7 @@ class TheoryStorage:
         num_duplicates is the number of previous instances
         of the expression that we have encountered.
         '''
+        from proveit._core_.theory import Theory
         proofs_path = os.path.join(self.directory, '_proofs_')
         proof_path = os.path.join(proofs_path, theorem_name)
         # Let's first check if the same expression existed
@@ -684,27 +685,20 @@ class TheoryStorage:
                     old_proof_path = os.path.join(proofs_path, old_name)
                     print("Renaming %s to %s"%(old_name, theorem_name))
                     os.rename(old_proof_path, proof_path)
+        # Create the generic version; we'll want to make sure the
+        # title of the current version (if it exists) matches that of the
+        # generic version.
+        generic_nb_str = self._generateGenericThmProofNotebook(theorem_name)
         filename = os.path.join(proof_path, 'thm_proof.ipynb')
         if os.path.isfile(filename):
-            # Check the theorem name and make sure it is correct.
-            # If not, revise it appropriately.
-            existing_theorem_name = self._proofNotebookTheoremName(filename)
-            if existing_theorem_name is None:
-                # The format is not correct; stash this one and 
+            # Update the title of the existing notebook if needed.
+            nb_str = Theory.update_title_if_needed(filename, generic_nb_str)
+            if nb_str is None:
+                # The format is not correct; stash this one and
                 # generate a new one.
                 self._stashProof(filename)
             else:
-                if existing_theorem_name != theorem_name:
-                    # update with the theorem name
-                    with open(filename, 'r') as proof_notebook:
-                        nb = proof_notebook.read()
-                    nb = nb.replace(existing_theorem_name, theorem_name)
-                    # remove the file before creating again to force
-                    # new capitalization (e.g., in Windows where
-                    # capitalization can be flexible)
-                    os.remove(filename) 
-                    with open(filename, 'w') as proof_notebook:
-                        proof_notebook.write(nb)
+                # Use the existing notebook.
                 return relurl(filename)
         # Check if there is a stashed version of the proof that
         # we can resurrect.
@@ -724,10 +718,9 @@ class TheoryStorage:
             _f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
             _f.write('proveit\n') # presume all of Prove-It by default
             _f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
-        nb = self._generateGenericThmProofNotebook(theorem_name)
-        # write the proof file
+        # write the generic proof file
         with open(filename, 'w') as proof_notebook:
-            proof_notebook.write(nb)
+            proof_notebook.write(generic_nb_str)
         return relurl(filename) # return the new proof file
     
     def _generateGenericThmProofNotebook(self, theorem_name):

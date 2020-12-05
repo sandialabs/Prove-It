@@ -159,17 +159,22 @@ class TheoryInterface:
             os.mkdir(subTheoryName)
             init_name = os.path.join(subTheoryName, '__init__.py')
             open(init_name, 'w')
-        if os.path.isfile(notebook_name):
-            # already exists
-            return notebook_name
+        # Create the generic version from the template
+        # (even if we have an existing version so we can update the
+        # markdown title if we need to.)
         proveit_path = os.path.split(proveit.__file__)[0]
         with open(os.path.join(proveit_path, '..', '_theory_template_.ipynb'), 'r') as template:
-            nb = template.read()
+            generic_nb_str = template.read()
             super_theory_links = Theory('.').links(from_directory=subTheoryName)
-            nb = nb.replace('#THEORY#', super_theory_links + '.' + subTheoryName)
+            generic_nb_str = generic_nb_str.replace(
+                '#THEORY#', super_theory_links + '.' + subTheoryName)
+        if os.path.isfile(notebook_name):
+            # already exists, but title may need to be updated
+            Theory.update_title_if_needed(notebook_name, generic_nb_str)
+            return notebook_name
         # write the notebook file
         with open(notebook_name, 'w') as notebook_file:
-            notebook_file.write(nb)
+            notebook_file.write(generic_nb_str)
         return notebook_name        
     
     def addSubTheory(self, subTheoryName):
@@ -300,13 +305,17 @@ class ProveItMagicCommands:
         special_notebook_texts = ('common expressions', 'axioms', 'theorems', 'demonstrations')
         for special_notebook_type in special_notebook_types:
             notebook_name = '_%s_.ipynb'%special_notebook_type
-            if not os.path.isfile(notebook_name):
-                # notebook does not yet exist, create it from the template
-                template_name = '_%s_template_.ipynb'%special_notebook_type
-                with open(os.path.join(proveit_path, '..', template_name), 'r') as template:
-                    nb = template.read()
-                    nb = nb.replace('#THEORY#', theory.name)
-                # write the notebook file
+            # Create the generic version from the template
+            # (even if we have an existing version so we can update the
+            # markdown title if we need to.)
+            template_name = '_%s_template_.ipynb'%special_notebook_type
+            with open(os.path.join(proveit_path, '..', template_name), 'r') as template:
+                generic_nb_str = template.read()
+                generic_nb_str = generic_nb_str.replace('#THEORY#', theory.name)
+            if os.path.isfile(notebook_name):
+                Theory.update_title_if_needed(notebook_name, generic_nb_str)
+            else:
+                # Write the notebook file which did not previously exist.
                 with open(notebook_name, 'w') as notebook_file:
                     notebook_file.write(nb)
                     
