@@ -418,7 +418,7 @@ class TheoryStorage:
         
         # Now we'll write the new name to hash information.
         new_lines = []
-        for name in sorted(names):
+        for name in names:
             new_lines.append(name + ' ' + special_hash_ids[name])
         if new_lines != orig_lines:
             with open(name_to_hash_file, 'w') as f:
