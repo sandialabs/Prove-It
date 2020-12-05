@@ -445,6 +445,14 @@ def executeAndMaybeExportNotebook(
     Read, execute, and rewrite a notebook and also export it
     to HTML. 
     '''
+    theory_notebook_name = '_theory_.ipynb'
+    if notebook_path[-len(theory_notebook_name):] == theory_notebook_name:
+        # This is a theory notebook.
+        # Set the mode to 'interactive' so it will toggle to 'static' mode
+        # when we execute this theory notebook.
+        with open(os.path.join(os.path.split(notebook_path)[0], '_mode_.txt'), 
+                  'wt') as f:
+            f.write('interactive\n') 
     if export_to_html:
         executeAndExportNotebook(execute_processor, notebook_path, 
                                  no_latex=no_latex, no_execute=no_execute, 
