@@ -295,6 +295,7 @@ class ProveItMagicCommands:
             open('__init__.py', 'w').close() # create an empty __init__.py
         theory = Theory()
         proveit_path = os.path.split(proveit.__file__)[0]
+        display(HTML('<h3>Local content of this theory</h3>'))
         special_notebook_types = ('common', 'axioms', 'theorems', 'demonstrations')
         special_notebook_texts = ('common expressions', 'axioms', 'theorems', 'demonstrations')
         for special_notebook_type in special_notebook_types:
@@ -310,12 +311,12 @@ class ProveItMagicCommands:
                     notebook_file.write(nb)
                     
         theory_interface = TheoryInterface()
-        
         if theory_interface.mode == 'static':
             special_notebooks_html = '<table><tr>\n'
             for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_texts):
                 special_notebooks_html += '<th><a class="ProveItLink" href="_%s_.ipynb">%s</a></th>\n'%(special_notebook_type, special_notebook_text)
             special_notebooks_html += '</tr></table>\n'
+            special_notebooks_html += '<h3>Sub-theories</h3>\n'
             if len(theory_interface.subTheoryNames) > 0:
                 special_notebooks_html += '<table>\n'
                 for name in theory_interface.subTheoryNames:
@@ -330,8 +331,8 @@ class ProveItMagicCommands:
             for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_texts):
                 special_notebook_links.append(widgets.HTML('<a class="ProveItLink" href="_%s_.ipynb">%s</a>'%(special_notebook_type, special_notebook_text), layout=full_width_layout))
             special_notebook_links = widgets.HBox(special_notebook_links)
-                
-            sub_theories_label = widgets.Label('List of sub-theories:', layout = widgets.Layout(width='100%'))
+        
+            sub_theories_label = widgets.HTML('<h3>Sub-theories</h3>')
             #sub_theory_widgets = widgets.VBox(sub_theory_widgets)
             add_theory_widget = widgets.Text(value='', placeholder='Add sub-theory...')
             def addSubTheory(sender):
@@ -344,14 +345,42 @@ class ProveItMagicCommands:
             display(widgets.VBox([special_notebook_links, sub_theories_label, theory_interface.widget, add_theory_widget]))       
         
         display(HTML('<h3>Axioms contained (directly or indirectly) within this theory</h3>'))
-        for axiom in theory.generate_all_contained_axioms():
-            self.display_special_stmt(axiom)
+        self.display_all_contained_axioms(theory)
 
-        display(HTML('Also see list of all contained <a href="contain_theorems.ipynb">theorems</a>.'))
+        display(HTML('<h3>Theorems (or conjectures) contained (directly or indirectly) within this theory</h3>'))
+        display(HTML('Also see list of all contained <a href="contain_theorems.ipynb">theorems (or conjectures)</a>.'))
+    
+    def display_all_contained_axioms(self, theory):
+        count = 0
+        for axiom in theory.generate_local_axioms():
+            self.display_special_stmt(axiom)
+            count += 1
+        if count == 0:
+            display(HTML('This theory contains no axioms directly.'))
+        for sub_theory in theory.generate_sub_theories():
+            display(HTML('<h4>%s</h4>'%sub_theory.name))
+            count = 0
+            for axiom in sub_theory.generate_all_contained_axioms():
+                self.display_special_stmt(axiom)
+                count += 1
+            if count==0:
+                display(HTML('This sub-theory contains no axioms.'))
     
     def display_all_contained_theorems(self, theory):
-        for theorem in theory.generate_all_contained_theorems():
+        count = 0
+        for theorem in theory.generate_local_theorems():
             self.display_special_stmt(theorem)
+            count += 1
+        if count == 0:
+            display(HTML('This theory contains no theorems directly.'))
+        for sub_theory in theory.generate_sub_theories():
+            display(HTML('<h4>%s</h4>'%sub_theory.name))
+            count = 0
+            for theorem in sub_theory.generate_all_contained_theorems():
+                self.display_special_stmt(theorem)
+                count += 1
+            if count==0:
+                display(HTML('This sub-theory contains no theorems.'))
     
     def prepare_notebook(self, kind):
         import proveit
