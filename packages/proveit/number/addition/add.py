@@ -131,12 +131,12 @@ class Add(Operation):
 
     def _closureTheorem(self, numberSet):
         from ._theorems_ import addNatClosure, addRealClosure, addComplexClosure, addIntClosure
-        from proveit.number import Reals, Complexes, Integers, Natural
+        from proveit.number import Reals, Complexes, Integer, Natural
         if numberSet == Reals:
             return addRealClosure
         elif numberSet == Complexes:
             return addComplexClosure
-        elif numberSet == Integers:
+        elif numberSet == Integer:
             return addIntClosure
         elif numberSet == Natural:
             return addNatClosure
@@ -855,10 +855,10 @@ class Add(Operation):
         from proveit.number.addition.subtraction._theorems_ import (
                 subtractNatClosureBin, subOneInNat)
         from proveit.number import (zero, one, num, Neg, Greater,
-                                    Integers, Natural, Reals, RealsPos,
+                                    Integer, Natural, Reals, RealsPos,
                                     RealsNonNeg, Complexes, NaturalPos)
         from proveit.logic import InSet
-        if number_set == Integers:
+        if number_set == Integer:
             if len(self.operands) == 2:
                 return addIntClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addIntClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)

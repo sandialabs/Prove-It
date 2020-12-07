@@ -3,7 +3,7 @@ proveit.logic.boolean.negation.negationIntro
 proveit.logic.boolean.negation.notFalse
 proveit.logic.equality.subLeftSideInto
 proveit.logic.set_theory.containment.supersetMembershipFromProperSubset
-proveit.number.sets.integer.natInInts
-proveit.number.sets.integer.natPosInInts
-proveit.number.sets.integer.xInIntsInBool
+proveit.number.sets.integer.natInInt
+proveit.number.sets.integer.natPosInInt
+proveit.number.sets.integer.xInIntInBool
 # THEOREMS AND THEORIES TO EXCLUDE:

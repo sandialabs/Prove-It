@@ -295,7 +295,7 @@ class Exp(Operation):
                         {n:exponent}).instantiate(
                             {a:self.numerator.base, b:self.denominator.base})
             except:
-                deduceInIntegers(exponent, assumptions)
+                deduceInInteger(exponent, assumptions)
                 deduceInComplexes([self.base.numerator, self.base.denominator],
                                   assumptions)
                 deduceNotZero(self.base.numerator, assumptions)
@@ -335,7 +335,7 @@ class Exp(Operation):
         aSub = self.base
         bSub = b_times_c.operands[0]
         deduceNotZero(aSub, assumptions)
-        deduceInIntegers(nSub, assumptions)
+        deduceInInteger(nSub, assumptions)
         deduceInComplexes([aSub, bSub], assumptions)
         return thm.instantiate({n:nSub}).instantiate({a:aSub, b:bSub}).deriveReversed()
 
@@ -361,7 +361,7 @@ class Exp(Operation):
             thm = intExpOfExp
         a_ = self.base.base
         deduceNotZero(self.base.base, assumptions)
-        deduceInIntegers(n_, assumptions)
+        deduceInInteger(n_, assumptions)
         deduceInComplexes([a_, b_], assumptions)
         return thm.instantiate({n:n_}).instantiate({a:a_, b:b_})
 

@@ -94,7 +94,7 @@ ineqThm7a = Forall([x],
                                         Mult(a,frac(one,Exp(Sub(l,x),two))),
                                         Mult(a,frac(one,Exp(l,two)))
                                         ),
-                          domain=Integers,
+                          domain=Integer,
                           conditions = LessThanEquals(l,zero)),
                         domain=Reals,
                         conditions=GreaterThanEquals(a,zero)),                
@@ -121,7 +121,7 @@ ineqThm8a = Forall([x],
                                             Mult(a,frac(one,Exp(Sub(l,x),two))),
                                             Mult(a,frac(one,Exp(Sub(l,one),two))),
                                             ),
-                              domain = Integers,
+                              domain = Integer,
                               conditions = GreaterThan(l,zero)),
                         domain=Reals,
                         conditions=GreaterThanEquals(a,zero)),
@@ -215,7 +215,7 @@ notEq_iff_diffNotZero
 sumIntegrateIneq1 = Forall(f,
                     Forall([a,b],LessThanEquals(Sum(x,Operation(f,x),Interval(a,b)),
                     Add(fa, Int(x,Operation(f,x),IntervalCC(a,b)))),
-                    domain=Integers,conditions=LessThanEquals(a,b)),
+                    domain=Integer,conditions=LessThanEquals(a,b)),
                     domain=MonDecFuncs)
 sumIntegrateIneq1
 
@@ -227,7 +227,7 @@ sumIneq1 = Forall([a,b],
                                         domain=Interval(m,n)), 
                                  LessThanEquals(Sum(l,Operation(a,l),Interval(m,n)), Sum(l,Operation(b,l),Interval(m,n)))
                                  ),
-                        domain=Integers))
+                        domain=Integer))
 sumIneq1
 
 
@@ -235,7 +235,7 @@ evenFuncSum = Forall(f,
                      Forall([a,b],
                            Equals(Sum(x,Operation(f,x),Interval(a,b)),
                                   Sum(x,Operation(f,x),Interval(Neg(b),Neg(a)))),
-                            domain = Integers),
+                            domain = Integer),
                     domain = EvenFuncs
                     )
 evenFuncSum

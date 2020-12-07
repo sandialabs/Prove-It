@@ -18,16 +18,16 @@ class NaturalSet(NumberSet):
         '''
         member = judgment.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
-        yield lambda assumptions : self.deduceMemberInInts(member, assumptions)
+        yield lambda assumptions : self.deduceMemberInInt(member, assumptions)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import xInNatInBool
         from proveit._common_ import x
         return xInNatInBool.instantiate({x:member}, assumptions=assumptions)
 
-    def deduceMemberInInts(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.integer._theorems_ import natInInts
-        return natInInts.deriveSupersetMembership(member, assumptions)
+    def deduceMemberInInt(self, member, assumptions=USE_DEFAULTS):
+        from proveit.number.sets.integer._theorems_ import natInInt
+        return natInInt.deriveSupersetMembership(member, assumptions)
 
 
 class NaturalPosSet(NumberSet):
@@ -78,13 +78,13 @@ if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     from proveit.number.sets.natural._theorems_ import natPosInNat
-    from proveit.number.sets.integer._theorems_ import natInInts, natPosInInts
+    from proveit.number.sets.integer._theorems_ import natInInt, natPosInInt
 
 # if proveit.defaults.automation:
 #     try:
 #         # Import some fundamental theorems without quantifiers that are
 #         # imported when automation is used.
 #         # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-#         from ._theorems_ import natPosInNat, natInInts, natPosInInts
+#         from ._theorems_ import natPosInNat, natInInt, natPosInInt
 #     except:
 #         pass

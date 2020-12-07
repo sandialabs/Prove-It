@@ -1,5 +1,5 @@
 from proveit.logic import Forall, Implies, InSet, NotEquals, And, Or, Booleans
-from proveit.number import Integers, Reals, RealsPos
+from proveit.number import Integer, Reals, RealsPos
 from proveit.number import GreaterThan, GreaterThanEquals, LessThan, LessThanEquals, Min, Max, Add, Sub, Neg, Mult, frac
 from proveit.common import a, b, c, d, x
 from proveit.number.common import zero, one
@@ -46,7 +46,7 @@ greaterThanEqualsInBools
 notEqualsIsLessThanOrGreaterThan = Forall((a, x), Or(LessThan(x, a), GreaterThan(x, a)), domain=Reals, conditions=[NotEquals(x, a)])
 notEqualsIsLessThanOrGreaterThan
 
-shiftLessThanToLessThanEquals = Forall((a, b), LessThanEquals(a, b), domain=Integers, conditions=[LessThan(Sub(a, one), b)])
+shiftLessThanToLessThanEquals = Forall((a, b), LessThanEquals(a, b), domain=Integer, conditions=[LessThan(Sub(a, one), b)])
 shiftLessThanToLessThanEquals
 
 lessThanEqualsAddRight = Forall([a, b, c], LessThanEquals(Add(a, c), Add(b, c)), domain=Reals, conditions=[LessThanEquals(a, b)])

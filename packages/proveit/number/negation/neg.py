@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex, InnerExpr, USE_DEFAULTS, ProofFailure
 from proveit.logic import isIrreducibleValue
-from proveit.number.sets import Integers, Reals, Complexes
+from proveit.number.sets import Integer, Reals, Complexes
 from proveit._common_ import a, b, m, n, x, y, B
 
 class Neg(Operation):
@@ -21,7 +21,7 @@ class Neg(Operation):
         '''
         from ._theorems_ import intClosure, realClosure, complexClosure
         from proveit.logic import InSet
-        if NumberSet == Integers:
+        if NumberSet == Integer:
             return intClosure.instantiate({a:self.operand})
         elif NumberSet == Reals:
             return realClosure.instantiate({a:self.operand})
@@ -75,7 +75,7 @@ class Neg(Operation):
             return _theorems_.negComplexClosure
         elif numberSet == Reals:
             return _theorems_.negRealClosure
-        elif numberSet == Integers:
+        elif numberSet == Integer:
             return _theorems_.negIntClosure
 
     def _negativeTheorem(self):

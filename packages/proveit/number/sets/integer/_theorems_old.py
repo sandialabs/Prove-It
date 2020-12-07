@@ -1,6 +1,6 @@
 from proveit import Operation
 from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, Equals, Booleans
-from proveit.number import Integers, Natural, NaturalPos, Interval, Reals, RealsPos, Complexes
+from proveit.number import Integer, Natural, NaturalPos, Interval, Reals, RealsPos, Complexes
 from proveit.number import Add, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.number import Len
 from proveit.common import a, b, n, m, x, y, P, S, xMulti, xEtc, PxEtc
@@ -22,50 +22,50 @@ zeroLenExprTuple = Equals(Len(), zero)
 
 multiVarInduction = Forall(P, Implies(Forall((xMulti, y), Implies(PxEtc, Operation(P, [xEtc, y]))), Forall(xMulti, PxEtc)))
 
-inIntsIsBool = Forall(a, InSet(InSet(a, Integers), Booleans))
+inIntsIsBool = Forall(a, InSet(InSet(a, Integer), Booleans))
 inIntsIsBool
 
-notInIntsIsBool = Forall(a, InSet(NotInSet(a, Integers), Booleans))
+notInIntsIsBool = Forall(a, InSet(NotInSet(a, Integer), Booleans))
 notInIntsIsBool
 
-intsInReals = Forall(a, InSet(a, Reals), domain=Integers)
-intsInReals
+intInReals = Forall(a, InSet(a, Reals), domain=Integer)
+intInReals
 
-intsInComplexes = Forall(a, InSet(a, Complexes), domain=Integers)
-intsInComplexes
+intInComplexes = Forall(a, InSet(a, Complexes), domain=Integer)
+intInComplexes
 
-inNaturalIfNonNeg = Forall(a, InSet(a,Natural), domain=Integers, conditions=[GreaterThanEquals(a, zero)])
+inNaturalIfNonNeg = Forall(a, InSet(a,Natural), domain=Integer, conditions=[GreaterThanEquals(a, zero)])
 inNaturalIfNonNeg
 
-inNaturalPosIfPos = Forall(a, InSet(a,NaturalPos), domain=Integers, conditions=[GreaterThan(a, zero)])
+inNaturalPosIfPos = Forall(a, InSet(a,NaturalPos), domain=Integer, conditions=[GreaterThan(a, zero)])
 inNaturalPosIfPos
 
-intervalInInts = Forall((a, b), Forall(n, InSet(n, Integers), domain=Interval(a, b)), domain=Integers)
-intervalInInts          
+intervalInInt = Forall((a, b), Forall(n, InSet(n, Integer), domain=Interval(a, b)), domain=Integer)
+intervalInInt          
 
 intervalInNat = Forall((a, b), Forall(n, InSet(n, Natural), domain=Interval(a, b)), domain=Natural)
 intervalInNat  
 
-intervalInNatPos = Forall((a, b), Forall(n, InSet(n, NaturalPos), domain=Interval(a, b)), domain=Integers, conditions=[GreaterThan(a, zero)])
+intervalInNatPos = Forall((a, b), Forall(n, InSet(n, NaturalPos), domain=Interval(a, b)), domain=Integer, conditions=[GreaterThan(a, zero)])
 intervalInNatPos
 
-allInNegativeIntervalAreNegative = Forall((a, b), Forall(n, LessThan(n, zero), domain=Interval(a, b)), domain=Integers, conditions=[LessThan(b, zero)])
+allInNegativeIntervalAreNegative = Forall((a, b), Forall(n, LessThan(n, zero), domain=Interval(a, b)), domain=Integer, conditions=[LessThan(b, zero)])
 allInNegativeIntervalAreNegative
 
-allInPositiveIntervalArePositive = Forall((a, b), Forall(n, GreaterThan(n, zero), domain=Interval(a, b)), domain=Integers, conditions=[GreaterThan(a, zero)])
+allInPositiveIntervalArePositive = Forall((a, b), Forall(n, GreaterThan(n, zero), domain=Interval(a, b)), domain=Integer, conditions=[GreaterThan(a, zero)])
 allInPositiveIntervalArePositive
 
-intervalLowerBound = Forall((a, b), Forall(n, LessThanEquals(a, n), domain=Interval(a, b)), domain=Integers)
+intervalLowerBound = Forall((a, b), Forall(n, LessThanEquals(a, n), domain=Interval(a, b)), domain=Integer)
 intervalLowerBound
 
-intervalUpperBound = Forall((a, b), Forall(n, LessThanEquals(n, b), domain=Interval(a, b)), domain=Integers)
+intervalUpperBound = Forall((a, b), Forall(n, LessThanEquals(n, b), domain=Interval(a, b)), domain=Integer)
 intervalUpperBound
 
-inInterval = Forall((a, b, n), InSet(n, Interval(a, b)), domain=Integers, conditions=[LessThanEquals(a, n), LessThanEquals(n, b)])
+inInterval = Forall((a, b, n), InSet(n, Interval(a, b)), domain=Integer, conditions=[LessThanEquals(a, n), LessThanEquals(n, b)])
 inInterval
 
-natInInts = Forall(a,InSet(a,Integers),domain = Natural)
-natInInts
+natInInt = Forall(a,InSet(a,Integer),domain = Natural)
+natInInt
 
 natInReals = Forall(a,InSet(a,Reals),domain = Natural)
 natInReals
@@ -76,8 +76,8 @@ natInComplexes
 natsPosInNatural = Forall(a,InSet(a,Natural),domain = NaturalPos)
 natsPosInNatural
 
-natsPosInIntegers = Forall(a,InSet(a,Integers),domain = NaturalPos)
-natsPosInIntegers
+natsPosInInteger = Forall(a,InSet(a,Integer),domain = NaturalPos)
+natsPosInInteger
 
 natPosInRealsPos = Forall(a,InSet(a,RealsPos),domain = NaturalPos)
 natPosInRealsPos

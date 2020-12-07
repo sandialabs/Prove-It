@@ -1,7 +1,7 @@
 from proveit import (Literal, Operation, OperationOverInstances, free_vars,
                      maybeFenced, USE_DEFAULTS, ProofFailure)
 from proveit.logic import InSet
-from proveit.number.sets import RealInterval, Interval, Reals, Integers, Natural, Complexes
+from proveit.number.sets import RealInterval, Interval, Reals, Integer, Natural, Complexes
 from proveit.number.negation import Neg
 from proveit._common_ import a, f, P, S
 
@@ -39,7 +39,7 @@ class Sum(OperationOverInstances):
             raise ValueError('Sum cannot sum over non-discrete set (e.g. Interval)')
         elif self.domain == Reals:
             raise ValueError('Sum cannot sum over Reals.')
-        elif self.domain == Integers:
+        elif self.domain == Integer:
             self.domain = Interval(Neg(infinity),infinity)
         elif self.domain == Natural:
             self.domain = Interval(zero,infinity)
@@ -53,7 +53,7 @@ class Sum(OperationOverInstances):
         self.summand
         if numberSet == Natural:
             thm = summationNatsClosure
-        elif numberSet == Integers:
+        elif numberSet == Integer:
             thm = summationIntsClosure
         elif numberSet == Reals:
             thm = summationRealsClosure
@@ -133,8 +133,8 @@ class Sum(OperationOverInstances):
                 #We're in the finite geom sum domain!
                 kVal = self.domain.lowerBound
                 lVal = self.domain.upperBound
-                deduceInIntegers(kVal, assumptions)
-                deduceInIntegers(lVal, assumptions)
+                deduceInInteger(kVal, assumptions)
+                deduceInInteger(lVal, assumptions)
                 deduceInComplexes(xVal, assumptions)
                 return finGeomSum.instantiate({x:xVal, m:mVal, k:kVal, l:lVal})
 #        else:
@@ -149,9 +149,9 @@ class Sum(OperationOverInstances):
         if len(self.indices) != 1 or not isinstance(self.domain, Interval):
             raise Exception('Sum shift only implemented for summations with one index over a Interval')
         fOp, fOpSub = Operation(f, self.index), self.summand
-        deduceInIntegers(self.domain.lowerBound, assumptions)
-        deduceInIntegers(self.domain.upperBound, assumptions)
-        deduceInIntegers(shiftAmount, assumptions)
+        deduceInInteger(self.domain.lowerBound, assumptions)
+        deduceInInteger(self.domain.upperBound, assumptions)
+        deduceInInteger(shiftAmount, assumptions)
         return indexShift.instantiate({fOp:fOpSub, x:self.index}).instantiate({a:self.domain.lowerBound, b:self.domain.upperBound, c:shiftAmount})
 
     def join(self, secondSummation, assumptions=frozenset()):
@@ -178,9 +178,9 @@ class Sum(OperationOverInstances):
         else:
             raise Exception('Sum joining only implemented when there is an explicit increment of one from the upper bound and the second summations lower bound')
         lowerBound, upperBound = self.domain.lowerBound, secondSummation.domain.upperBound
-        deduceInIntegers(lowerBound, assumptions)
-        deduceInIntegers(upperBound, assumptions)
-        deduceInIntegers(splitIndex, assumptions)
+        deduceInInteger(lowerBound, assumptions)
+        deduceInInteger(upperBound, assumptions)
+        deduceInInteger(splitIndex, assumptions)
         return sumSplit.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:lowerBound, b:splitIndex, c:upperBound, x:self.indices[0]}).deriveReversed()
         
     def split(self, splitIndex, side='after', assumptions=frozenset()):
@@ -199,9 +199,9 @@ class Sum(OperationOverInstances):
         if isinstance(self.domain, Interval) and len(self.instanceVars) == 1:
             from theorems import sumSplitAfter, sumSplitBefore
             sumSplit = sumSplitAfter if side == 'after' else sumSplitBefore
-            deduceInIntegers(self.domain.lowerBound, assumptions)
-            deduceInIntegers(self.domain.upperBound, assumptions)
-            deduceInIntegers(splitIndex, assumptions)
+            deduceInInteger(self.domain.lowerBound, assumptions)
+            deduceInInteger(self.domain.upperBound, assumptions)
+            deduceInInteger(splitIndex, assumptions)
             # Also needs lowerBound <= splitIndex and splitIndex < upperBound
             return sumSplit.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:self.domain.lowerBound, b:splitIndex, c:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")
@@ -210,8 +210,8 @@ class Sum(OperationOverInstances):
     def splitOffLast(self, assumptions=frozenset()):
         from axioms import sumSplitLast
         if isinstance(self.domain, Interval) and len(self.instanceVars) == 1:
-            deduceInIntegers(self.domain.lowerBound, assumptions)
-            deduceInIntegers(self.domain.upperBound, assumptions)
+            deduceInInteger(self.domain.lowerBound, assumptions)
+            deduceInInteger(self.domain.upperBound, assumptions)
             # Also needs lowerBound < upperBound
             return sumSplitLast.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")
@@ -219,8 +219,8 @@ class Sum(OperationOverInstances):
     def splitOffFirst(self, assumptions=frozenset()):
         from theorems import sumSplitFirst # only for associative summation
         if isinstance(self.domain, Interval) and len(self.instanceVars) == 1:
-            deduceInIntegers(self.domain.lowerBound, assumptions)
-            deduceInIntegers(self.domain.upperBound, assumptions)
+            deduceInInteger(self.domain.lowerBound, assumptions)
+            deduceInInteger(self.domain.upperBound, assumptions)
             # Also needs lowerBound < upperBound
             return sumSplitFirst.instantiate({Operation(f, self.instanceVars):self.summand}).instantiate({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")

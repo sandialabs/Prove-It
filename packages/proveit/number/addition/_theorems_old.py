@@ -1,5 +1,5 @@
 from proveit.logic import Forall, InSet, Equals
-from proveit.number import Integers, Natural, NaturalPos, Reals, RealsPos, RealsNeg, Complexes
+from proveit.number import Integer, Natural, NaturalPos, Reals, RealsPos, RealsNeg, Complexes
 from proveit.number import Add, GreaterThan, LessThan
 from proveit.common import a, b, x, aEtc, cEtc, xEtc, yEtc, zEtc, vEtc, wEtc
 from proveit.number.common import zero
@@ -7,7 +7,7 @@ from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-addIntClosure = Forall([xEtc], InSet(Add(xEtc),Integers), domain = Integers)
+addIntClosure = Forall([xEtc], InSet(Add(xEtc),Integer), domain = Integer)
 addIntClosure
 
 addNatClosure = Forall((a, b), InSet(Add(a, b), Natural), domain=Natural)

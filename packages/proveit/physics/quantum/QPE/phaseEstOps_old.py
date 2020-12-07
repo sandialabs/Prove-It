@@ -1,6 +1,6 @@
 from proveit.expression import Literal, Operation, STRING, LATEX
 from proveit.basiclogic.genericOps import BinaryOperation
-from proveit.number.numberSets import NumberOp, Integers
+from proveit.number.numberSets import NumberOp, Integer
 
 pkg = __package__
 
@@ -65,7 +65,7 @@ class ModAdd(BinaryOperation, NumberOp):
 
     def _closureTheorem(self, numberSet):
         from .theorems import modAddClosure
-        if numberSet == Integers:
+        if numberSet == Integer:
             return modAddClosure
     
 MOD_ADD = Literal(pkg, 'MOD_ADD', {LATEX:r'\oplus'}, operationMaker = lambda operands : ModAdd(*operands))

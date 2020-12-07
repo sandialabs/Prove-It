@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals, Implies
-from proveit.number import Mult, Natural, NaturalPos, Integers, Reals, RealsPos, Complexes, Add, Sub, Sum
+from proveit.number import Mult, Natural, NaturalPos, Integer, Reals, RealsPos, Complexes, Add, Sub, Sum
 from proveit.common import a, b, x, y, P, S, yMulti, vEtc, wEtc, xEtc, yEtc, zEtc, PyEtc
 from proveit.number.common import zero, one, ComplexesSansZero
 from proveit import beginTheorems, endTheorems
@@ -23,7 +23,7 @@ multNatClosure
 multNatPosClosure = Forall((a, b), InSet(Mult(a, b), NaturalPos), domain=NaturalPos)
 multNatPosClosure
 
-multIntClosure = Forall([xEtc], InSet(Mult(xEtc), Integers), domain=Integers)
+multIntClosure = Forall([xEtc], InSet(Mult(xEtc), Integer), domain=Integer)
 multIntClosure
 
 multRealClosure = Forall([xEtc], InSet(Mult(xEtc), Reals), domain=Reals)

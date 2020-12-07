@@ -34,12 +34,12 @@ class Interval(Operation):
     def deduceMembership(self, element, assumptions=USE_DEFAULTS):
         from ._theorems_ import allInInterval_InInts, allInInterval_InNats, allInInterval_InNatsPos
 
-    def deduceMemberInIntegers(self, member, assumptions=frozenset()):
+    def deduceMemberInInteger(self, member, assumptions=frozenset()):
         '''
         edited by JML 7/18/19
         '''
-        from ._theorems_ import intervalInInts
-        return intervalInInts.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
+        from ._theorems_ import intervalInInt
+        return intervalInInt.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
 
     def deduceMemberInNatural(self, member, assumptions=frozenset()):
         from ._theorems_ import allInDiscreteInterval_InNats

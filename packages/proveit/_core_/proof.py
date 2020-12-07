@@ -1310,7 +1310,7 @@ class Generalization(Proof):
         The conditions are introduced in the order they are given at the outermost level that is
         applicable.  For example, if newForallParamLists is [[x, y], z]  and the new
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
-            forall_{x, y in Integers | f(x, y)} forall_{z | g(y, z), h(z)} ...
+            forall_{x, y in Integer | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
         from proveit import Judgment
         from proveit._core_.expression.lambda_expr.lambda_expr import \

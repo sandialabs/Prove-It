@@ -4,7 +4,7 @@ from proveit.number.sets.number_set import NumberSet
 
 class IntegerSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Integers', r'\mathbb{Z}', theory=__file__)
+        NumberSet.__init__(self, 'Integer', r'\mathbb{Z}', theory=__file__)
     
     def membershipSideEffects(self, judgment):
         '''
@@ -22,10 +22,10 @@ class IntegerSet(NumberSet):
         return notInIntsIsBool.instantiate({a:element}, assumptions=assumptions)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import xInIntsInBool
+        from ._theorems_ import xInIntInBool
         from proveit._common_ import x
-        return xInIntsInBool.instantiate({x:member}, assumptions=assumptions)
+        return xInIntInBool.instantiate({x:member}, assumptions=assumptions)
 
     def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.rational._theorems_ import intsInRationals
-        return intsInRationals.deriveSupersetMembership(member, assumptions)
+        from proveit.number.sets.rational._theorems_ import intInRationals
+        return intInRationals.deriveSupersetMembership(member, assumptions)

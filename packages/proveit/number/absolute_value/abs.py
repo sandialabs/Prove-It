@@ -230,7 +230,7 @@ class Abs(Operation):
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
-        Given a number set number_set (such as Integers, Reals, etc),
+        Given a number set number_set (such as Integer, Reals, etc),
         attempt to prove that the given expression is in that number
         set using the appropriate closure theorem.
         '''

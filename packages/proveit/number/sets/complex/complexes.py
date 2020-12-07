@@ -246,11 +246,11 @@ class ComplexSet(NumberSet):
 # if proveit.defaults.automation:
 #     # Import some fundamental theorems without quantifiers that are
 #     # imported when automation is used.
-#     from ._theorems_ import realsInComplexes, realsPosInComplexes, realsNegInComplexes, intsInComplexes, natInComplexes
+#     from ._theorems_ import realsInComplexes, realsPosInComplexes, realsNegInComplexes, intInComplexes, natInComplexes
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-    from ._theorems_ import realsInComplexes, intsInComplexes, natInComplexes
+    from ._theorems_ import realsInComplexes, intInComplexes, natInComplexes
     

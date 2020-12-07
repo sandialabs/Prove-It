@@ -1,13 +1,13 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
-from proveit.number import Neg, Integers, Reals, Complexes, Add, Sub, Mult, LessThan, GreaterThan
+from proveit.number import Neg, Integer, Reals, Complexes, Add, Sub, Mult, LessThan, GreaterThan
 from proveit.common import a, b, x, y, xEtc, xMulti
 from proveit.number.common import zero
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-negIntClosure = Forall(a, InSet(Neg(a), Integers), domain=Integers)
+negIntClosure = Forall(a, InSet(Neg(a), Integer), domain=Integer)
 negIntClosure
 
 negRealClosure = Forall(a, InSet(Neg(a), Reals), domain=Reals)

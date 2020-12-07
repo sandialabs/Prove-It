@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals, Iff, And, SetOfAll
-from proveit.number import Integers, Interval, Reals, RealsPos, Complexes
+from proveit.number import Integer, Interval, Reals, RealsPos, Complexes
 from proveit.number import Abs, Mod, ModAbs, GreaterThanEquals, LessThanEquals, Add, Sub, Neg, Mult, frac, IntervalCO
 from proveit.common import a, b, c, x, y, N, xEtc, xMulti
 from proveit.number.common import zero, one
@@ -9,11 +9,11 @@ from proveit import beginTheorems, endTheorems
 beginTheorems(locals())
 
 # transferred by wdc 3/11/2020
-modIntClosure = Forall((a, b), InSet(Mod(a, b), Integers), domain=Integers)
+modIntClosure = Forall((a, b), InSet(Mod(a, b), Integer), domain=Integer)
 modIntClosure
 
 # transferred by wdc 3/11/2020
-modInInterval = Forall((a, b), InSet(Mod(a, b), Interval(zero, Sub(b, one))), domain=Integers)
+modInInterval = Forall((a, b), InSet(Mod(a, b), Interval(zero, Sub(b, one))), domain=Integer)
 modInInterval
 
 # transferred by wdc 3/11/2020
@@ -88,21 +88,21 @@ modAbsSubtractCancel
 fullModularRangeEquiv = Forall((N, a, b), 
                                Equals(SetOfAll(x, Mod(x, N), domain=Interval(a, b)), 
                                       Interval(zero, Sub(N, one))),
-                               domain=Integers, conditions=[Equals(Sub(b, a), Sub(N, one))])
+                               domain=Integer, conditions=[Equals(Sub(b, a), Sub(N, one))])
 fullModularRangeEquiv
 
 # transferred by wdc 3/11/2020
 fullModularRangeEquivLeftShift = Forall((N, a, b, c), 
                                Equals(SetOfAll(x, Mod(Add(c, x), N), domain=Interval(a, b)), 
                                       Interval(zero, Sub(N, one))),
-                               domain=Integers, conditions=[Equals(Sub(b, a), Sub(N, one))])
+                               domain=Integer, conditions=[Equals(Sub(b, a), Sub(N, one))])
 fullModularRangeEquivLeftShift
 
 # transferred by wdc 3/11/2020
 fullModularRangeEquivRightShift = Forall((N, a, b, c), 
                                Equals(SetOfAll(x, Mod(Add(x, c), N), domain=Interval(a, b)), 
                                       Interval(zero, Sub(N, one))),
-                               domain=Integers, conditions=[Equals(Sub(b, a), Sub(N, one))])
+                               domain=Integer, conditions=[Equals(Sub(b, a), Sub(N, one))])
 fullModularRangeEquivRightShift
 
 

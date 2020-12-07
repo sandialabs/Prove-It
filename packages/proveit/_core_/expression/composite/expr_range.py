@@ -486,7 +486,7 @@ class ExprRange(Expression):
                 # Re-enable automation.
                 defaults.disabled_auto_reduction_types.remove(ExprRange)
         else:
-            # If the start and end are literal ints and form an
+            # If the start and end are literal integers and form an
             # empty range, then it should be straightforward to
             # prove that the range is empty.
             from proveit.number import isLiteralInt
@@ -532,9 +532,9 @@ class ExprRange(Expression):
             elif expr_range.nested_range_depth() > 1:
                 # this is a nested range so the inner range could be empty.
 
-                # If the start and end of the inner range are literal ints and form an
-                # empty range, then it should be straightforward to
-                # prove that the entire range is empty.
+                # If the start and end of the inner range are literal 
+                # integers and form an empty range, then it should be 
+                # straightforward to prove that the entire range is empty.
                 from proveit.number import isLiteralInt
                 empty_req = Equals(Add(expr_range.first().end_index, one), expr_range.first().start_index)
                 if isLiteralInt(expr_range.first().start_index) and isLiteralInt(expr_range.first().end_index):

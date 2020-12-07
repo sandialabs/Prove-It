@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
-from proveit.number import Integers, Natural, NaturalPos, Reals, RealsPos, Complexes
+from proveit.number import Integer, Natural, NaturalPos, Reals, RealsPos, Complexes
 from proveit.number import Exp, sqrt, Add, Mult, Sub, Neg, frac, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.common import a, b, c, d, n, x, y, z, xEtc, xMulti
 from proveit.number.common import zero, one, two
@@ -176,7 +176,7 @@ intExpOfProd = Forall(n, Forall((a, b),
                                 Equals(Exp(Mult(a,b),n),
                                        Mult(Exp(a,n),Exp(b,n))),
                                 domain=Complexes, conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
-                      domain=Integers)
+                      domain=Integer)
 intExpOfProd
 
 # transferred & updated 2/20/2020
@@ -186,7 +186,7 @@ intExpOfProdRev = Forall(n, Forall((a, b),
                                    Equals(Mult(Exp(a,n),Exp(b,n)),
                                           Exp(Mult(a,b),n)),
                                    domain=Complexes, conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
-                         domain=Integers)
+                         domain=Integer)
 intExpOfProdRev
 
 # transferred 2/20/2020
@@ -212,7 +212,7 @@ intExpOfExp = Forall(n, Forall((a, b),
                             Equals(Exp(Exp(a, b), n),
                                    Exp(a, Mult(b, n))),
                             domain=Complexes, conditions=[NotEquals(a, zero)]),
-                  domain=Integers)
+                  domain=Integer)
 intExpOfExp
 
 # transferred 2/20/2020
@@ -220,7 +220,7 @@ intExpOfNegExp = Forall(n, Forall((a, b),
                                Equals(Exp(Exp(a, Neg(b)), n),
                                       Exp(a, Neg(Mult(b, n)))),
                                domain=Complexes, conditions=[NotEquals(a, zero)]),
-                        domain=Integers)
+                        domain=Integer)
 intExpOfNegExp
 
 # transferred 2/20/2020
@@ -228,7 +228,7 @@ negIntExpOfExp = Forall(n, Forall((a, b),
                             Equals(Exp(Exp(a, b), Neg(n)),
                                    Exp(a, Neg(Mult(b, n)))),
                                domain=Complexes, conditions=[NotEquals(a, zero)]),
-                        domain=Integers)
+                        domain=Integer)
 
 negIntExpOfExp
 
@@ -237,7 +237,7 @@ negIntExpOfNegExp = Forall(n, Forall((a, b),
                                      Equals(Exp(Exp(a, Neg(b)), Neg(n)),
                                             Exp(a, Mult(b, n))),
                                domain=Complexes, conditions=[NotEquals(a, zero)]),
-                           domain=Integers)
+                           domain=Integer)
 
 negIntExpOfNegExp
 

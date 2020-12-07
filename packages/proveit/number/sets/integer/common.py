@@ -5,7 +5,7 @@ from digit import DigitLiteral
 
 Natural = NaturalSet()
 NaturalPos = NaturalPosSet()
-Integers = IntegerSet()
+Integer = IntegerSet()
 
 zero = DigitLiteral(0)
 one = DigitLiteral(1)

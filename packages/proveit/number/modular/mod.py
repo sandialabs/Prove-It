@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-# from proveit.number.sets import Integers, Reals
+# from proveit.number.sets import Integer, Reals
 from proveit._common_ import a, b
 
 class Mod(Operation):
@@ -14,11 +14,11 @@ class Mod(Operation):
     
     # def deduceInInterval(self, assumptions=frozenset()):
     #     from ._theorems_ import modInInterval, modInIntervalCO
-    #     from numberSets import deduceInIntegers, deduceInReals
+    #     from numberSets import deduceInInteger, deduceInReals
     #     try:
     #         # if the operands are integers, then we can deduce that
     #         # a mod b is in 0..(b-1)
-    #         deduceInIntegers(self.operands, assumptions)
+    #         deduceInInteger(self.operands, assumptions)
     #         return modInInterval.instantiate(
     #                 {a:self.dividend, b:self.divisor}).checked(assumptions)
     #     except:
@@ -28,7 +28,7 @@ class Mod(Operation):
 
     def deduceInInterval(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import modInInterval, modInIntervalCO
-        # from numberSets import deduceInIntegers, deduceInReals
+        # from numberSets import deduceInInteger, deduceInReals
         try:
             # if the operands are integers, then we can deduce that
             # a mod b is an integer in the set {0,1,...,(b-1)}
@@ -42,20 +42,20 @@ class Mod(Operation):
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
-        Given a number set number_set (such as Integers, Reals, etc),
+        Given a number set number_set (such as Integer, Reals, etc),
         attempt to prove that the given Mod expression is in that number
         set using the appropriate closure theorem.
         '''
         from proveit.logic import InSet
         from proveit.number.modular._theorems_ import (
                   modIntClosure, modIntToNatClosure, modRealClosure)
-        from proveit.number import Integers, Natural, Reals
+        from proveit.number import Integer, Natural, Reals
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
         assumptions = defaults.checkedAssumptions(assumptions)
 
-        if number_set == Integers:
+        if number_set == Integer:
             return modIntClosure.instantiate(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 

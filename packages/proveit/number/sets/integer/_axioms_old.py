@@ -1,6 +1,6 @@
 from proveit import ExpressionList
 from proveit.logic import Forall, InSet, Iff, Equals, Implies, SubsetEq, And, SetOfAll, Union
-from proveit.number import Natural, NaturalPos, Neg, Integers
+from proveit.number import Natural, NaturalPos, Neg, Integer
 from proveit.number import Add, GreaterThanEquals
 from proveit.number import Len
 from proveit.common import n, xMulti, xEtc, x, y, S
@@ -19,7 +19,7 @@ exprListLengthDef = And(Equals(Len(), zero), Forall((xMulti, y), Equals(Len(xEtc
 naturalsPosDef = Forall(n, Iff(InSet(n, NaturalPos), GreaterThanEquals(n, one)), domain=Natural)
 naturalsPosDef
 
-integersDef = Equals(Integers, Union(Natural, SetOfAll(n, Neg(n), domain=Natural)))
+integersDef = Equals(Integer, Union(Natural, SetOfAll(n, Neg(n), domain=Natural)))
 
 
 endAxioms(locals(), __package__)

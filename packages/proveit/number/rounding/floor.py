@@ -1,5 +1,5 @@
 from proveit import defaults, Function, InnerExpr, Literal, USE_DEFAULTS
-from proveit.number.sets import Integers, Natural
+from proveit.number.sets import Integer, Natural
 from proveit.number.rounding.rounding_methods import (
     apply_roundingElimination, apply_roundingExtraction,
     apply_reducedSimplification, rounding_deduceInNumberSet)
@@ -16,7 +16,7 @@ class Floor(Function):
         from . import theorems
         if numberSet == Natural:
             return theorems.floorRealPosClosure
-        elif numberSet == Integers:
+        elif numberSet == Integer:
             return theorems.floorRealClosure
             
     def latex(self, **kwargs):

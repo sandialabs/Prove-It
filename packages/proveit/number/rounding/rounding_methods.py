@@ -114,7 +114,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     '''
     from proveit._common_ import n, x
     from proveit.logic import InSet
-    from proveit.number import Add, Integers, Reals
+    from proveit.number import Add, Integer, Reals
 
     # among other things, convert any assumptions=None
     # to assumptions=() (thus averting len(None) errors)
@@ -124,7 +124,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #-- Case (1): F(x) where entire operand x is known or        --#
     #--           assumed to be an Integer.                      --#
     #-- -------------------------------------------------------- --#
-    if InSet(expr.operand, Integers).proven(assumptions=assumptions):
+    if InSet(expr.operand, Integer).proven(assumptions=assumptions):
         # Entire operand is known to be or assumed to be an integer
         # so we can simply remove the Ceil, Floor, or Round wrapper
         return expr.roundingElimination(assumptions)
@@ -138,10 +138,10 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
         from proveit.logic.set_theory import ProperSubset, SubsetEq
         for kt in InSet.knownMemberships[expr.operand]:
             if kt.isSufficient(assumptions):
-                if (SubsetEq(kt.expr.operands[1], Integers).proven(assumptions)
+                if (SubsetEq(kt.expr.operands[1], Integer).proven(assumptions)
                     or 
-                    ProperSubset(kt.expr.operands[1], Integers).proven(assumptions)):
-                    InSet(expr.operand, Integers).prove()
+                    ProperSubset(kt.expr.operands[1], Integer).proven(assumptions)):
+                    InSet(expr.operand, Integer).prove()
                     return expr.roundingElimination(assumptions)
 
 
@@ -152,18 +152,19 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #-- -------------------------------------------------------- --#
     #-- Case (3): F(x) = F(Add(a,b,...,n)), where operand x is   --#
     #--           an Add object, not known or assumed to be an   --#
-    #--           an int, but addends might be reals and ints    --#
+    #--           an int, but addends might be real and integer  --#
+    #--           numbers.                                       --#
     #-- -------------------------------------------------------- --#
     if isinstance(expr.operand, Add):
-        # Try to partition all suboperands into Integers vs.
-        # Non-Integers, and if there is at least one integer, try to
+        # Try to partition all suboperands into Integer vs.
+        # Non-Integer, and if there is at least one integer, try to
         # apply the extraction theorem (allowing an error message
         # if the instantiation fails).
 
         subops = expr.operand.operands
 
         # Collect indices of operands known or assumed to be
-        # ints versus reals versus neither
+        # integers versus real numbers versus neither
         indices_of_known_ints = []
         indices_of_non_ints = []
         for i in range(len(subops)):
@@ -171,7 +172,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
 
             # (a) first perform easiest check: is the subop already known
             #     to be an Integer?
-            if InSet(the_subop, Integers).proven(assumptions):
+            if InSet(the_subop, Integer).proven(assumptions):
                 indices_of_known_ints.append(i)
 
             # (b) then try something just a little harder
@@ -179,11 +180,11 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                 from proveit.logic.set_theory import ProperSubset, SubsetEq
                 for kt in InSet.knownMemberships[the_subop]:
                     if kt.isSufficient(assumptions):
-                        if (SubsetEq(kt.expr.operands[1], Integers).
+                        if (SubsetEq(kt.expr.operands[1], Integer).
                                 proven(assumptions) or
-                            ProperSubset(kt.expr.operands[1], Integers).
+                            ProperSubset(kt.expr.operands[1], Integer).
                                 proven(assumptions)):
-                            InSet(the_subop, Integers).prove()
+                            InSet(the_subop, Integer).prove()
                             indices_of_known_ints.append(i)
                             break
 
@@ -265,13 +266,13 @@ def rounding_deduceInNumberSet(expr, number_set, roundingRealClosureThm,
         from proveit import ProofFailure
         from proveit._common_ import x
         from proveit.logic import InSet
-        from proveit.number import Integers, Natural
+        from proveit.number import Integer, Natural
 
         # among other things, convert any assumptions=None
         # to assumptions=()
         assumptions = defaults.checkedAssumptions(assumptions)
 
-        if number_set == Integers:
+        if number_set == Integer:
             return roundingRealClosureThm.instantiate(
                         {x:expr.operand}, assumptions=assumptions)
 

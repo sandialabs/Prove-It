@@ -2,7 +2,7 @@ from proveit import (Literal, Operation, USE_DEFAULTS, ExprTuple,
                      ProofFailure, InnerExpr)
 from proveit.logic import Equals, InSet
 from proveit.number import num
-from proveit.number.sets import (Integers, Natural, NaturalPos, Reals,
+from proveit.number.sets import (Integer, Natural, NaturalPos, Reals,
                                  RealsNonNeg, RealsPos, Complexes)
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
@@ -47,7 +47,7 @@ class Mult(Operation):
         if hasattr(self, 'number_set'):
             numberSet = numberSet.number_set
         bin = False
-        if numberSet == Integers:
+        if numberSet == Integer:
             if len(self.operands) == 2:
                 thm = multIntClosureBin
                 bin = True

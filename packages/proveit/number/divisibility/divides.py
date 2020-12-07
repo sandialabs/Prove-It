@@ -2,7 +2,7 @@ from proveit import (asExpression, Theory, defaults, Literal, Operation,
                      ProofFailure, TransitiveRelation, USE_DEFAULTS)
 from proveit.logic import Equals, InSet, NotEquals
 from proveit.number import Exp, Mult, num
-from proveit.number import zero, Complexes, Integers, NaturalPos
+from proveit.number import zero, Complexes, Integer, NaturalPos
 
 class DividesRelation(TransitiveRelation):
 
@@ -30,14 +30,14 @@ class DividesRelation(TransitiveRelation):
         # (can be generalized to any prime number).
         if (isinstance(self.rhs, Exp) and
                 self.lhs == two and
-                InSet(self.rhs.base, Integers).proven() and
-                InSet(self.rhs.exponent, Integers).proven()):
+                InSet(self.rhs.base, Integer).proven() and
+                InSet(self.rhs.exponent, Integer).proven()):
             yield self.eliminateDividendExponent
 
         # for (a^n)|(b^n)
         if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp) and
-                InSet(self.lhs.base, Integers).proven() and
-                InSet(self.rhs.base, Integers).proven() and
+                InSet(self.lhs.base, Integer).proven() and
+                InSet(self.rhs.base, Integer).proven() and
                 self.lhs.exponent == self.rhs.exponent and
                 InSet(self.lhs.exponent, NaturalPos).proven()):
             yield self.eliminate_common_exponent
@@ -156,8 +156,8 @@ class Divides(DividesRelation):
         #-- Case (4): x^n|y^n if x|y                                 --#
         #-- -------------------------------------------------------- --#
         if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp)):
-            if (InSet(self.lhs.base, Integers).proven(assumptions) and
-                InSet(self.rhs.base, Integers).proven(assumptions) and
+            if (InSet(self.lhs.base, Integer).proven(assumptions) and
+                InSet(self.rhs.base, Integer).proven(assumptions) and
                 Equals(self.lhs.exponent, self.rhs.exponent) and
                 InSet(self.lhs.exponent, NaturalPos).proven(assumptions) and
                 Divides(self.lhs.base, self.rhs.base).proven(assumptions)):
@@ -313,8 +313,8 @@ class Divides(DividesRelation):
             a = self.rhs.base
             n = self.lhs.exponent
 
-            if (InSet(k, Integers).proven(assumptions) and 
-                InSet(a, Integers).proven(assumptions) and
+            if (InSet(k, Integer).proven(assumptions) and 
+                InSet(a, Integer).proven(assumptions) and
                 InSet(n, NaturalPos).proven(assumptions)):
 
                 from ._theorems_ import common_exponent_elimination
