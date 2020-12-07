@@ -47,7 +47,7 @@ class Exp(Operation):
         import real.theorems
         import complex.theorems
         from proveit.number import two
-        if numberSet == NaturalsPos:
+        if numberSet == NaturalPos:
             return natural.theorems.powClosure
         elif numberSet == Reals:
             return real.theorems.powClosure
@@ -198,7 +198,7 @@ class Exp(Operation):
             (a^b)^c = a^(b*c)
         '''
         from proveit.logic import InSet
-        from proveit.number import Mult, Div, NaturalsPos, RealsPos, Reals
+        from proveit.number import Mult, Div, NaturalPos, RealsPos, Reals
         from ._theorems_ import (
                 posnat_power_of_product, posnat_power_of_products,
                 posnat_power_of_quotient, posnat_power_of_posnat_power,
@@ -216,7 +216,7 @@ class Exp(Operation):
             else:
                 _m = self.operands.length(assumptions)
                 _a = self.operands
-            if InSet(exponent, NaturalsPos).proven(assumptions):
+            if InSet(exponent, NaturalPos).proven(assumptions):
                 if self.base.operands.is_binary():
                     return posnat_power_of_product.instantiate(
                             {a:_a, b:_b, n:exponent}, assumptions=assumptions)
@@ -247,7 +247,7 @@ class Exp(Operation):
         elif isinstance(base, Div):
             assert self.base.operands.is_binary()
             _a, _b = self.base.operands
-            if InSet(exponent, NaturalsPos).proven(assumptions):
+            if InSet(exponent, NaturalPos).proven(assumptions):
                 return posnat_power_of_quotient.instantiate(
                         {a:_a, b:_b, n:exponent}, assumptions=assumptions)
             else:
@@ -261,7 +261,7 @@ class Exp(Operation):
                         {a:_a, b:_b, c:exponent}, assumptions=assumptions)
         elif isinstance(base, Exp):
             _a = base.base
-            if InSet(exponent, NaturalsPos).proven(assumptions):
+            if InSet(exponent, NaturalPos).proven(assumptions):
                 _m, _n = base.exponent, exponent
                 return posnat_power_of_posnat_power.instantiate(
                         {a:_a, m:_m, n:_n}, assumptions=assumptions)
@@ -287,7 +287,7 @@ class Exp(Operation):
         if isinstance(self.base, Div):
             exponent = self.exponent
             try:
-                deduceInNaturalsPos(exponent, assumptions)
+                deduceInNaturalPos(exponent, assumptions)
                 deduceInComplexes([self.base.numerator, self.base.denominator],
                                   assumptions)
                 deduceNotZero(self.base.denominator, assumptions)
@@ -384,9 +384,9 @@ class Exp(Operation):
                   expRealPosClosure, sqrtComplexClosure, sqrtRealClosure,
                   sqrtRealPosClosure)
         from proveit.number import (
-                Complexes, NaturalsPos, RationalsPos, Reals, RealsPos)
+                Complexes, NaturalPos, RationalsPos, Reals, RealsPos)
 
-        if number_set == NaturalsPos:
+        if number_set == NaturalPos:
             return expNatClosure.instantiate({a:self.base, b:self.exponent},
                       assumptions=assumptions)
 

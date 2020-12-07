@@ -2,7 +2,7 @@ from proveit import (Literal, Operation, USE_DEFAULTS, ExprTuple,
                      ProofFailure, InnerExpr)
 from proveit.logic import Equals, InSet
 from proveit.number import num
-from proveit.number.sets import (Integers, Naturals, NaturalsPos, Reals,
+from proveit.number.sets import (Integers, Natural, NaturalPos, Reals,
                                  RealsNonNeg, RealsPos, Complexes)
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
@@ -53,13 +53,13 @@ class Mult(Operation):
                 bin = True
             else:
                 thm = multIntClosure
-        elif numberSet == Naturals:
+        elif numberSet == Natural:
             if len(self.operands) == 2:
                 thm = multNatClosureBin
                 bin = True
             else:
                 thm = multNatClosure
-        elif numberSet == NaturalsPos:
+        elif numberSet == NaturalPos:
             if len(self.operands) == 2:
                 thm = multNatPosClosureBin
                 bin = True
@@ -920,7 +920,7 @@ class Mult(Operation):
             # Same base: a^b a^c = a^{b+c}$, or something similar
             
             # Find out the known type of the exponents.
-            possible_exponent_types = [NaturalsPos, RealsPos, Reals,
+            possible_exponent_types = [NaturalPos, RealsPos, Reals,
                                        Complexes]
             for exponent in operand_exponents:
                 while len(possible_exponent_types) > 1:
@@ -940,7 +940,7 @@ class Mult(Operation):
                     possible_exponent_types.pop(0)
             known_exponent_type = possible_exponent_types[0]
             
-            if known_exponent_type == NaturalsPos:
+            if known_exponent_type == NaturalPos:
                 if self.base.operands.is_binary():
                     _m, _n = operand_exponents
                     return product_of_posnat_powers.instantiate(

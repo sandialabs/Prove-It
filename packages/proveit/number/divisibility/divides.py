@@ -2,7 +2,7 @@ from proveit import (asExpression, Theory, defaults, Literal, Operation,
                      ProofFailure, TransitiveRelation, USE_DEFAULTS)
 from proveit.logic import Equals, InSet, NotEquals
 from proveit.number import Exp, Mult, num
-from proveit.number import zero, Complexes, Integers, NaturalsPos
+from proveit.number import zero, Complexes, Integers, NaturalPos
 
 class DividesRelation(TransitiveRelation):
 
@@ -39,7 +39,7 @@ class DividesRelation(TransitiveRelation):
                 InSet(self.lhs.base, Integers).proven() and
                 InSet(self.rhs.base, Integers).proven() and
                 self.lhs.exponent == self.rhs.exponent and
-                InSet(self.lhs.exponent, NaturalsPos).proven()):
+                InSet(self.lhs.exponent, NaturalPos).proven()):
             yield self.eliminate_common_exponent
 
         # for (ka)|(kb)
@@ -159,7 +159,7 @@ class Divides(DividesRelation):
             if (InSet(self.lhs.base, Integers).proven(assumptions) and
                 InSet(self.rhs.base, Integers).proven(assumptions) and
                 Equals(self.lhs.exponent, self.rhs.exponent) and
-                InSet(self.lhs.exponent, NaturalsPos).proven(assumptions) and
+                InSet(self.lhs.exponent, NaturalPos).proven(assumptions) and
                 Divides(self.lhs.base, self.rhs.base).proven(assumptions)):
 
                 return (Divides(self.lhs.base, self.rhs.base).
@@ -315,7 +315,7 @@ class Divides(DividesRelation):
 
             if (InSet(k, Integers).proven(assumptions) and 
                 InSet(a, Integers).proven(assumptions) and
-                InSet(n, NaturalsPos).proven(assumptions)):
+                InSet(n, NaturalPos).proven(assumptions)):
 
                 from ._theorems_ import common_exponent_elimination
                 _k, _a, _n = common_exponent_elimination.instanceParams

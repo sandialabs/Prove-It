@@ -29,11 +29,11 @@ proveit.logic.set_theory.containment.supersetMembershipFromProperSubset
 proveit.number.ordering.reverseGreaterEq
 proveit.number.ordering.reverseLessEq
 proveit.number.sets.complex.realsInComplexes
-proveit.number.sets.integer.natsInInts
-proveit.number.sets.natural.natsPosInNats
-proveit.number.sets.natural.naturalsLowerBound
-proveit.number.sets.natural.naturalsPosLowerBound
-proveit.number.sets.natural.nonZeroIfInNaturalsPos
+proveit.number.sets.integer.natInInts
+proveit.number.sets.natural.natPosInNat
+proveit.number.sets.natural.naturalLowerBound
+proveit.number.sets.natural.naturalPosLowerBound
+proveit.number.sets.natural.nonZeroIfInNaturalPos
 proveit.number.sets.rational.intsInRationals
 proveit.number.sets.rational.rationalsNegInRationals
 proveit.number.sets.rational.rationalsNonNegInRationals

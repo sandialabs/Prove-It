@@ -8,7 +8,7 @@ class IntegerSet(NumberSet):
     
     def membershipSideEffects(self, judgment):
         '''
-        Yield side-effects when proving 'n in NaturalsPos' for a given n.
+        Yield side-effects when proving 'n in NaturalPos' for a given n.
         '''
         member = judgment.element
         yield lambda assumptions : self.deduceMemberInRationals(member, assumptions)

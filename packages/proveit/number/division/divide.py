@@ -223,7 +223,7 @@ class Div(Operation):
         $a^c/b^c$ to $(a/b)^c$.
         '''
         from proveit.logic import InSet
-        from proveit.number import (Exp, NaturalsPos, RealsPos, Reals,
+        from proveit.number import (Exp, NaturalPos, RealsPos, Reals,
                                     Complexes)
         from proveit.number.exponentiation._theorems_ import (
                 quotient_of_posnat_powers, quotient_of_pos_powers,
@@ -236,7 +236,7 @@ class Div(Operation):
                 exponents = (self.numerator.exponent, 
                              self.denominator.exponent)
                 # Find out the known type of the exponents.
-                possible_exponent_types = [NaturalsPos, RealsPos, Reals,
+                possible_exponent_types = [NaturalPos, RealsPos, Reals,
                                            Complexes]
                 for exponent in exponents:
                     while len(possible_exponent_types) > 1:
@@ -248,7 +248,7 @@ class Div(Operation):
                         possible_exponent_types.pop(0)
                 known_exponent_type = possible_exponent_types[0]
                 
-                if known_exponent_type==NaturalsPos:
+                if known_exponent_type==NaturalPos:
                     _m, _n = exponents
                     return quotient_of_posnat_powers.instantiate(
                             {a:same_base, m:_m, n:_n}, assumptions=assumptions)        

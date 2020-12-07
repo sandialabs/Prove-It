@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
-from proveit.number import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
+from proveit.number import Integers, Natural, NaturalPos, Reals, RealsPos, Complexes
 from proveit.number import Exp, sqrt, Add, Mult, Sub, Neg, frac, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.common import a, b, c, d, n, x, y, z, xEtc, xMulti
 from proveit.number.common import zero, one, two
@@ -9,7 +9,7 @@ from proveit import beginTheorems, endTheorems
 beginTheorems(locals())
 
 # transferred & updated 2/20/2020
-expNatClosure = Forall((a, b), InSet(Exp(a, b), NaturalsPos), domain=Naturals, conditions=[NotEquals(a, zero)])
+expNatClosure = Forall((a, b), InSet(Exp(a, b), NaturalPos), domain=Natural, conditions=[NotEquals(a, zero)])
 expNatClosure
 
 # transferred & updated 2/20/2020
@@ -194,7 +194,7 @@ natsPosExpOfProd = Forall(n, Forall((a, b),
                                     Equals(Exp(Mult(a,b),n),
                                            Mult(Exp(a,n),Exp(b,n))),
                                     domain=Complexes),
-                          domain=NaturalsPos)
+                          domain=NaturalPos)
 natsPosExpOfProd
 
 # omitted from transfer (essentially duplicates above) 2/20/2020
@@ -202,7 +202,7 @@ natsPosExpOfProdRev = Forall(n, Forall((a, b),
                                        Equals(Mult(Exp(a,n),Exp(b,n)),
                                               Exp(Mult(a,b),n)),
                                        domain=Complexes),
-                             domain=NaturalsPos)
+                             domain=NaturalPos)
 natsPosExpOfProdRev
 
 # transferred 2/20/2020

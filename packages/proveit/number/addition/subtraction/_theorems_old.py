@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, NotEquals, Equals
-from proveit.number import Sub, Naturals, NaturalsPos, Integers, Reals, Complexes, Add, Neg, GreaterThan, GreaterThanEquals
+from proveit.number import Sub, Natural, NaturalPos, Integers, Reals, Complexes, Add, Neg, GreaterThan, GreaterThanEquals
 from proveit.common import a, b, w, x, y, z, xEtc, yEtc, vEtc, wEtc, zEtc, yMulti
 from proveit.number.common import zero, one
 from proveit import beginTheorems, endTheorems
@@ -10,10 +10,10 @@ beginTheorems(locals())
 subtractIntClosure = Forall([a, b], InSet(Sub(a, b), Integers), domain=Integers)
 subtractIntClosure
 
-subtractClosureNats = Forall([a, b], InSet(Sub(a, b), Naturals), domain=Integers, conditions=[GreaterThanEquals(a, b)])
+subtractClosureNats = Forall([a, b], InSet(Sub(a, b), Natural), domain=Integers, conditions=[GreaterThanEquals(a, b)])
 subtractClosureNats
 
-subtractClosureNatsPos = Forall([a, b], InSet(Sub(a, b), NaturalsPos), domain=Integers, conditions=[GreaterThan(a, b)])
+subtractClosureNatsPos = Forall([a, b], InSet(Sub(a, b), NaturalPos), domain=Integers, conditions=[GreaterThan(a, b)])
 subtractClosureNatsPos
 
 subtractComplexClosure = Forall([a, b], InSet(Sub(a, b), Complexes), domain=Complexes)
@@ -22,7 +22,7 @@ subtractComplexClosure
 subtractRealClosure = Forall([a, b], InSet(Sub(a, b), Reals), domain=Reals)
 subtractRealClosure
 
-subtractOneInNats = Forall(a, InSet(Sub(a, one), Naturals), domain=NaturalsPos)
+subtractOneInNats = Forall(a, InSet(Sub(a, one), Natural), domain=NaturalPos)
 subtractOneInNats
 
 diffNotEqZero = Forall((a, b), NotEquals(Sub(a, b), zero), domain=Complexes, conditions=[NotEquals(a, b)])

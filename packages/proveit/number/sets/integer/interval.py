@@ -41,11 +41,11 @@ class Interval(Operation):
         from ._theorems_ import intervalInInts
         return intervalInInts.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
 
-    def deduceMemberInNaturals(self, member, assumptions=frozenset()):
+    def deduceMemberInNatural(self, member, assumptions=frozenset()):
         from ._theorems_ import allInDiscreteInterval_InNats
         return allInDiscreteInterval_InNats.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
 
-    def deduceMemberInNaturalsPos(self, member, assumptions=frozenset()):
+    def deduceMemberInNaturalPos(self, member, assumptions=frozenset()):
         from ._theorems_ import allInDiscreteInterval_InNatsPos
         return allInDiscreteInterval_InNatsPos.instantiate({a:self.lowerBound, b:self.upperBound}).instantiate({n:member})
 

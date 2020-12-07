@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
-from proveit.number import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
+from proveit.number import Integers, Natural, NaturalPos, Reals, RealsPos, Complexes
 from proveit.number import Exp, sqrt, Add, Mult, Sub, Neg, frac, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.common import a, b, c, d, n, x, y, z, xEtc, xMulti
 from proveit.number.common import zero, one, two
@@ -8,7 +8,7 @@ from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-expNatClosure = Forall((a, b), InSet(Exp(a, b), NaturalsPos), domain=Naturals, conditions=[NotEquals(a, zero)])
+expNatClosure = Forall((a, b), InSet(Exp(a, b), NaturalPos), domain=Natural, conditions=[NotEquals(a, zero)])
 expNatClosure
 
 expRealClosure = Forall([a, b], InSet(Exp(a, b), Reals), domain=Reals,
@@ -161,14 +161,14 @@ natsPosExpOfProd = Forall(n, Forall((a, b),
                                     Equals(Exp(Mult(a,b),n),
                                            Mult(Exp(a,n),Exp(b,n))),
                                     domain=Complexes),
-                          domain=NaturalsPos)
+                          domain=NaturalPos)
 natsPosExpOfProd
 
 natsPosExpOfProdRev = Forall(n, Forall((a, b),
                                        Equals(Mult(Exp(a,n),Exp(b,n)),
                                               Exp(Mult(a,b),n)),
                                        domain=Complexes),
-                             domain=NaturalsPos)
+                             domain=NaturalPos)
 natsPosExpOfProdRev
 
 # Works for integers powers through repetition of a^b (or a^{-b}) and adding exponents.

@@ -435,22 +435,22 @@ class Len(Operation):
     
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.core_expr_types.tuples._theorems_ import (
-                range_len_in_nats, range_from1_len_in_nats)
-        from proveit.number import Naturals, one
+                range_len_in_nat, range_from1_len_in_nat)
+        from proveit.number import Natural, one
         operand = self.operand
-        if number_set == Naturals:
+        if number_set == Natural:
             if len(operand)==1 and isinstance(operand[0], ExprRange):
                 # Special case of proving that the length
-                # of a single range is in the set of Naturals.
+                # of a single range is in the set of Natural.
                 range_start = operand[0].start_index
                 range_end = operand[0].end_index   
                 range_lambda = operand[0].lambda_map
                 if range_start == one:
-                    return range_from1_len_in_nats.instantiate(
+                    return range_from1_len_in_nat.instantiate(
                             {f:range_lambda, i:range_end},
                             assumptions=assumptions)
                 else:
-                    return range_len_in_nats.instantiate(
+                    return range_len_in_nat.instantiate(
                             {f:range_lambda, i:range_start, j:range_end},
                             assumptions=assumptions)
     

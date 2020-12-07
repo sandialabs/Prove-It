@@ -6,41 +6,41 @@ from proveit._common_ import n
 
 class NaturalSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', theory=__file__)
+        NumberSet.__init__(self, 'Natural', r'\mathbb{N}', theory=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.natural._theorems_ import naturalsLowerBound
-        return naturalsLowerBound.instantiate({n:member}, assumptions=assumptions)
+        from proveit.number.sets.natural._theorems_ import naturalLowerBound
+        return naturalLowerBound.instantiate({n:member}, assumptions=assumptions)
 
     def membershipSideEffects(self, judgment):
         '''
-        Yield side-effects when proving 'n in Naturals' for a given n.
+        Yield side-effects when proving 'n in Natural' for a given n.
         '''
         member = judgment.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
         yield lambda assumptions : self.deduceMemberInInts(member, assumptions)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.natural._theorems_ import xInNatsInBool
+        from proveit.number.sets.natural._theorems_ import xInNatInBool
         from proveit._common_ import x
-        return xInNatsInBool.instantiate({x:member}, assumptions=assumptions)
+        return xInNatInBool.instantiate({x:member}, assumptions=assumptions)
 
     def deduceMemberInInts(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.integer._theorems_ import natsInInts
-        return natsInInts.deriveSupersetMembership(member, assumptions)
+        from proveit.number.sets.integer._theorems_ import natInInts
+        return natInInts.deriveSupersetMembership(member, assumptions)
 
 
 class NaturalPosSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', theory=__file__)
+        NumberSet.__init__(self, 'NaturalPos', r'\mathbb{N}^+', theory=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.natural._theorems_ import naturalsPosLowerBound
-        return naturalsPosLowerBound.instantiate({n:member}, assumptions=assumptions)
+        from proveit.number.sets.natural._theorems_ import naturalPosLowerBound
+        return naturalPosLowerBound.instantiate({n:member}, assumptions=assumptions)
 
     def membershipSideEffects(self, judgment):
         '''
-        Yield side-effects when proving 'n in NaturalsPos' for a given n.
+        Yield side-effects when proving 'n in NaturalPos' for a given n.
         '''
         member = judgment.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
@@ -60,31 +60,31 @@ class NaturalPosSet(NumberSet):
         return maybeFencedString(inner_str, **kwargs)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.natural._theorems_ import xInNatsPosInBool
+        from proveit.number.sets.natural._theorems_ import xInNatPosInBool
         from proveit._common_ import x
-        return xInNatsPosInBool.instantiate({x:member}, assumptions=assumptions)
+        return xInNatPosInBool.instantiate({x:member}, assumptions=assumptions)
     
     def deduceMemberInNats(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.natural._theorems_ import natsPosInNats
-        return natsPosInNats.deriveSupersetMembership(member, assumptions)
+        from proveit.number.sets.natural._theorems_ import natPosInNat
+        return natPosInNat.deriveSupersetMembership(member, assumptions)
 
     def deduce_member_non_zero(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.natural._theorems_ import nonZeroIfInNaturalsPos
-        _n = nonZeroIfInNaturalsPos.instanceParam
-        return nonZeroIfInNaturalsPos.instantiate(
+        from proveit.number.sets.natural._theorems_ import nonZeroIfInNaturalPos
+        _n = nonZeroIfInNaturalPos.instanceParam
+        return nonZeroIfInNaturalPos.instantiate(
                 {_n:member}, assumptions=assumptions)
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
-    from proveit.number.sets.natural._theorems_ import natsPosInNats
-    from proveit.number.sets.integer._theorems_ import natsInInts, natsPosInInts
+    from proveit.number.sets.natural._theorems_ import natPosInNat
+    from proveit.number.sets.integer._theorems_ import natInInts, natPosInInts
 
 # if proveit.defaults.automation:
 #     try:
 #         # Import some fundamental theorems without quantifiers that are
 #         # imported when automation is used.
 #         # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-#         from ._theorems_ import natsPosInNats, natsInInts, natsPosInInts
+#         from ._theorems_ import natPosInNat, natInInts, natPosInInts
 #     except:
 #         pass

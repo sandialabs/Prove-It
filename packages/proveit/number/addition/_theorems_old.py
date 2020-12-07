@@ -1,5 +1,5 @@
 from proveit.logic import Forall, InSet, Equals
-from proveit.number import Integers, Naturals, NaturalsPos, Reals, RealsPos, RealsNeg, Complexes
+from proveit.number import Integers, Natural, NaturalPos, Reals, RealsPos, RealsNeg, Complexes
 from proveit.number import Add, GreaterThan, LessThan
 from proveit.common import a, b, x, aEtc, cEtc, xEtc, yEtc, zEtc, vEtc, wEtc
 from proveit.number.common import zero
@@ -10,7 +10,7 @@ beginTheorems(locals())
 addIntClosure = Forall([xEtc], InSet(Add(xEtc),Integers), domain = Integers)
 addIntClosure
 
-addNatClosure = Forall((a, b), InSet(Add(a, b), Naturals), domain=Naturals)
+addNatClosure = Forall((a, b), InSet(Add(a, b), Natural), domain=Natural)
 addNatClosure
 
 addRealClosure = Forall([xEtc], InSet(Add(xEtc),Reals), domain=Reals)
@@ -19,7 +19,7 @@ addRealClosure
 addComplexClosure = Forall([xEtc], InSet(Add(xEtc),Complexes), domain = Complexes)
 addComplexClosure
 
-addNatPosClosure = Forall((aEtc, b, cEtc), InSet(Add(aEtc, b, cEtc), NaturalsPos), domain=Naturals, conditions=[GreaterThan(b, zero)])
+addNatPosClosure = Forall((aEtc, b, cEtc), InSet(Add(aEtc, b, cEtc), NaturalPos), domain=Natural, conditions=[GreaterThan(b, zero)])
 addNatPosClosure
 
 addZero = Forall(x, Equals(Add(zero, x), x), domain=Complexes)

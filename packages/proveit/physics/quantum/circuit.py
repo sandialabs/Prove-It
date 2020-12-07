@@ -327,7 +327,7 @@ class MultiQubitGate(Operation):
                 return self.unaryReduction(assumptions)
             except:
                 # Cannot do the reduction if the operand is not known
-                # to be in NaturalsPos.
+                # to be in NaturalPos.
                 pass
 
         if isinstance(self.gate_set, Set) and len(self.gate_set.operands) == 0:

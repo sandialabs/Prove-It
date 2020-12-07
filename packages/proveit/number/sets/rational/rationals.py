@@ -214,10 +214,10 @@ class RationalsMembership(NumberMembership):
         Call "eliminate" to finish the Skolemization proof.
         '''
         from proveit.number import RationalsPos
-        from ._theorems_ import reducedNatsPosRatio
+        from ._theorems_ import reducedNatPosRatio
 
         if self.number_set == RationalsPos:
-            return reducedNatsPosRatio.instantiate(
+            return reducedNatPosRatio.instantiate(
                     {q:self.element}, assumptions=assumptions).choose(
                         numerator_var, denominator_var)
         else:

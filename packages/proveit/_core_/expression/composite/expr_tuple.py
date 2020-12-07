@@ -351,7 +351,7 @@ class ExprTuple(Composite, Expression):
         If this is an tuple of expressions that can be directly merged 
         together into a single ExprRange, return this proven 
         equivalence.  For example,
-        {j \in Naturals, k-(j+1) \in Naturals} 
+        {j \in Natural, k-(j+1) \in Natural} 
         |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)
         '''
         from proveit._core_.expression.lambda_expr import Lambda

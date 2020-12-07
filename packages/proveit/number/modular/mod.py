@@ -48,8 +48,8 @@ class Mod(Operation):
         '''
         from proveit.logic import InSet
         from proveit.number.modular._theorems_ import (
-                  modIntClosure, modIntToNatsClosure, modRealClosure)
-        from proveit.number import Integers, Naturals, Reals
+                  modIntClosure, modIntToNatClosure, modRealClosure)
+        from proveit.number import Integers, Natural, Reals
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
@@ -59,8 +59,8 @@ class Mod(Operation):
             return modIntClosure.instantiate(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
-        if number_set == Naturals:
-            return modIntToNatsClosure.instantiate(
+        if number_set == Natural:
+            return modIntToNatClosure.instantiate(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
         if number_set == Reals:

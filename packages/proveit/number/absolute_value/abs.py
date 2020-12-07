@@ -95,7 +95,7 @@ class Abs(Operation):
         the simplification.
         '''
         from proveit.number import Greater, GreaterEq, Mult, Neg
-        from proveit.number import (zero, Naturals, NaturalsPos, RealsNeg,
+        from proveit.number import (zero, Natural, NaturalPos, RealsNeg,
                                     RealsNonNeg, RealsPos)
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
@@ -151,7 +151,7 @@ class Abs(Operation):
                     if isEqualToOrSubsetEqOf(
                             kt.expr.operands[1],
                             equal_sets=[RealsNonNeg, RealsPos],
-                            subset_eq_sets=[Naturals, NaturalsPos, RealsPos],
+                            subset_eq_sets=[Natural, NaturalPos, RealsPos],
                             assumptions=assumptions):
 
                         InSet(self.operand, RealsNonNeg).prove(
@@ -173,7 +173,7 @@ class Abs(Operation):
                             and isEqualToOrSubsetEqOf(
                                         kt.expr.operands[1],
                                         equal_sets=[RealsNonNeg, RealsPos],
-                                        subset_eq_sets=[Naturals, NaturalsPos,
+                                        subset_eq_sets=[Natural, NaturalPos,
                                                 RealsPos, RealsNonNeg],
                                         assumptions=assumptions)):
 
@@ -209,8 +209,8 @@ class Abs(Operation):
                     if isEqualToOrSubsetEqOf(
                             kt.expr.operands[1],
                             equal_sets=[RealsNonNeg, RealsPos],
-                            subset_sets=[NaturalsPos, RealsPos],
-                            subset_eq_sets=[NaturalsPos, RealsPos],
+                            subset_sets=[NaturalPos, RealsPos],
+                            subset_eq_sets=[NaturalPos, RealsPos],
                             assumptions=assumptions):
 
                         InSet(negated_op_simp, RealsPos).prove(

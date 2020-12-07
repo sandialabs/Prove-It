@@ -1,6 +1,6 @@
 # Arithmetic and number theory concepts.
 
-from .sets import (Integers, Naturals, NaturalsPos,
+from .sets import (Integers, Natural, NaturalPos,
                    Rationals, RationalsPos, RationalsNonNeg,
                    Reals, RealsNeg, RealsPos, RealsNonNeg, Complexes)
 from .sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC

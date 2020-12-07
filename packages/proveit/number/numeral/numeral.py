@@ -3,8 +3,8 @@ from proveit.logic import IrreducibleValue, Equals
 from proveit._common_ import a, b
 
 class Numeral(Literal, IrreducibleValue):
-    _inNaturalsStmts = None # initializes when needed
-    _inNaturalsPosStmts = None # initializes when needed
+    _inNaturalStmts = None # initializes when needed
+    _inNaturalPosStmts = None # initializes when needed
     _inDigitsStmts = None  # initializes when needed
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
@@ -56,41 +56,41 @@ class Numeral(Literal, IrreducibleValue):
         return Numeral(n, string_format, latex_format)
      
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
-        from proveit.number import Naturals, NaturalsPos, Digits
+        from proveit.number import Natural, NaturalPos, Digits
         from proveit.logic import InSet
-        if number_set==Naturals:
-            return self.deduceInNaturals(assumptions)
-        elif number_set==NaturalsPos:
-            return self.deduceInNaturalsPos(assumptions)
+        if number_set==Natural:
+            return self.deduceInNatural(assumptions)
+        elif number_set==NaturalPos:
+            return self.deduceInNaturalPos(assumptions)
         elif number_set==Digits:
             return self.deduceInDigits(assumptions)
         else:
             try:
                 # Do this to avoid infinite recursion -- if
-                # we already know this numeral is in NaturalsPos
+                # we already know this numeral is in NaturalPos
                 # we should know how to prove that it is in any
                 # number set that contains the naturals.
                 if self.n > 0:
-                    InSet(self, NaturalsPos).prove(automation=False)
+                    InSet(self, NaturalPos).prove(automation=False)
                 else:
-                    InSet(self, Naturals).prove(automation=False)
+                    InSet(self, Natural).prove(automation=False)
             except:
                 # Try to prove that it is in the given number
                 # set after proving that the numeral is in 
-                # Naturals and NaturalsPos.
-                self.deduceInNaturals()
+                # Natural and NaturalPos.
+                self.deduceInNatural()
                 if self.n > 0:
-                    self.deduceInNaturalsPos()
+                    self.deduceInNaturalPos()
             return InSet(self, number_set).conclude(assumptions)
         
-    def deduceInNaturals(self, assumptions=USE_DEFAULTS):
-        if Numeral._inNaturalsStmts is None:
+    def deduceInNatural(self, assumptions=USE_DEFAULTS):
+        if Numeral._inNaturalStmts is None:
             from proveit.number.sets.natural._axioms_ import zero_in_nats
             from .deci._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
-            Numeral._inNaturalsStmts = {0:zero_in_nats, 1:nat1, 2:nat2, 
+            Numeral._inNaturalStmts = {0:zero_in_nats, 1:nat1, 2:nat2, 
                                         3:nat3, 4:nat4, 5:nat5, 6:nat6, 
                                         7:nat7, 8:nat8, 9:nat9}
-        return Numeral._inNaturalsStmts[self.n]
+        return Numeral._inNaturalStmts[self.n]
     
     '''
     def deduceNotZero(self):
@@ -101,15 +101,15 @@ class Numeral(Literal, IrreducibleValue):
         return Numeral._notZeroStmts[self.n]
     '''
 
-    def deduceInNaturalsPos(self, assumptions=USE_DEFAULTS):
-        if Numeral._inNaturalsPosStmts is None:
+    def deduceInNaturalPos(self, assumptions=USE_DEFAULTS):
+        if Numeral._inNaturalPosStmts is None:
             from .deci._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
             from .deci._theorems_ import posnat6, posnat7, posnat8, posnat9
-            Numeral._inNaturalsPosStmts = {1:posnat1, 2:posnat2, 3:posnat3, 4:posnat4, 5:posnat5, 6:posnat6, 7:posnat7, 8:posnat8, 9:posnat9}
+            Numeral._inNaturalPosStmts = {1:posnat1, 2:posnat2, 3:posnat3, 4:posnat4, 5:posnat5, 6:posnat6, 7:posnat7, 8:posnat8, 9:posnat9}
         if self.n <= 0:
             raise ProofFailure(self, [], 
-                               "Cannot prove %d in NaturalsPos"%self.n)
-        return Numeral._inNaturalsPosStmts[self.n]
+                               "Cannot prove %d in NaturalPos"%self.n)
+        return Numeral._inNaturalPosStmts[self.n]
 
     def deduceInDigits(self, assumptions=USE_DEFAULTS):
         if Numeral._inDigitsStmts is None:

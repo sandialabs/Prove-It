@@ -84,8 +84,8 @@ proveit.number.numeral.deci.tuple_len_2
 proveit.number.numeral.deci.tuple_len_2_typical_eq
 proveit.number.numeral.deci.tuple_len_3
 proveit.number.numeral.deci.tuple_len_3_typical_eq
-proveit.number.sets.natural.natsPosInNats
-proveit.number.sets.natural.naturalsLowerBound
-proveit.number.sets.natural.naturalsPosLowerBound
-proveit.number.sets.natural.nonZeroIfInNaturalsPos
+proveit.number.sets.natural.natPosInNat
+proveit.number.sets.natural.naturalLowerBound
+proveit.number.sets.natural.naturalPosLowerBound
+proveit.number.sets.natural.nonZeroIfInNaturalPos
 # THEOREMS AND THEORIES TO EXCLUDE:

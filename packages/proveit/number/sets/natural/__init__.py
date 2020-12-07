@@ -1,1 +1,1 @@
-from ._common_ import Naturals, NaturalsPos
+from ._common_ import Natural, NaturalPos

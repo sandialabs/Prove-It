@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals, Implies
-from proveit.number import Integers, NaturalsPos, Reals, RealsPos, Complexes
+from proveit.number import Integers, NaturalPos, Reals, RealsPos, Complexes
 from proveit.number import Divide, frac, Add, Sub, Sum, Mult, Exp
 from proveit.common import a, b, c, n, w, x, y, z, P, S, xMulti, wEtc, xEtc, yEtc, zEtc, PyEtc
 from proveit.number.common import zero, one, ComplexesSansZero
@@ -162,14 +162,14 @@ fracNatPosExp = Forall(n, Forall((a, b),
                               Equals(frac(Exp(a, n), Exp(b, n)),
                                      Exp(frac(a, b), n)),
                              conditions = [NotEquals(b, zero)]),
-                    domain=NaturalsPos)
+                    domain=NaturalPos)
 fracNatPosExp
 
 fracNatPosExpRev = Forall(n, Forall((a, b), 
                               Equals(Exp(frac(a, b), n),
                                      frac(Exp(a, n), Exp(b, n))),
                              conditions = [NotEquals(b, zero)]),
-                    domain=NaturalsPos)
+                    domain=NaturalPos)
 fracNatPosExpRev
 
 endTheorems(locals(), __package__)

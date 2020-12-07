@@ -329,7 +329,7 @@ class And(Operation):
         '''
         Conclude an expression of the form
         A and ..n repeats.. and A
-        given n in Naturals and A is TRUE.
+        given n in Natural and A is TRUE.
         '''
         from proveit import ExprRange
         from proveit.number import one

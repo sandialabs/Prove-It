@@ -1,7 +1,7 @@
 from proveit import (Literal, Operation, OperationOverInstances, free_vars,
                      maybeFenced, USE_DEFAULTS, ProofFailure)
 from proveit.logic import InSet
-from proveit.number.sets import RealInterval, Interval, Reals, Integers, Naturals, Complexes
+from proveit.number.sets import RealInterval, Interval, Reals, Integers, Natural, Complexes
 from proveit.number.negation import Neg
 from proveit._common_ import a, f, P, S
 
@@ -41,7 +41,7 @@ class Sum(OperationOverInstances):
             raise ValueError('Sum cannot sum over Reals.')
         elif self.domain == Integers:
             self.domain = Interval(Neg(infinity),infinity)
-        elif self.domain == Naturals:
+        elif self.domain == Natural:
             self.domain = Interval(zero,infinity)
         """
 
@@ -51,7 +51,7 @@ class Sum(OperationOverInstances):
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         Operation(P, self.instanceVars)
         self.summand
-        if numberSet == Naturals:
+        if numberSet == Natural:
             thm = summationNatsClosure
         elif numberSet == Integers:
             thm = summationIntsClosure

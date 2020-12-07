@@ -265,7 +265,7 @@ def rounding_deduceInNumberSet(expr, number_set, roundingRealClosureThm,
         from proveit import ProofFailure
         from proveit._common_ import x
         from proveit.logic import InSet
-        from proveit.number import Integers, Naturals
+        from proveit.number import Integers, Natural
 
         # among other things, convert any assumptions=None
         # to assumptions=()
@@ -275,7 +275,7 @@ def rounding_deduceInNumberSet(expr, number_set, roundingRealClosureThm,
             return roundingRealClosureThm.instantiate(
                         {x:expr.operand}, assumptions=assumptions)
 
-        if number_set == Naturals:
+        if number_set == Natural:
             return roundingRealPosClosureThm.instantiate(
                         {x:expr.operand}, assumptions=assumptions)
 

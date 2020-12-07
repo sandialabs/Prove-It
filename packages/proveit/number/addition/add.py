@@ -131,14 +131,14 @@ class Add(Operation):
 
     def _closureTheorem(self, numberSet):
         from ._theorems_ import addNatClosure, addRealClosure, addComplexClosure, addIntClosure
-        from proveit.number import Reals, Complexes, Integers, Naturals
+        from proveit.number import Reals, Complexes, Integers, Natural
         if numberSet == Reals:
             return addRealClosure
         elif numberSet == Complexes:
             return addComplexClosure
         elif numberSet == Integers:
             return addIntClosure
-        elif numberSet == Naturals:
+        elif numberSet == Natural:
             return addNatClosure
 
     def equalitySideEffects(self, judgment):
@@ -821,14 +821,14 @@ class Add(Operation):
         return addNegAsSubtract.instantiate({x:expr.operands[0], y:expr.operands[-1].operand})
 
     """
-    def deduceInNaturalsPosDirectly(self, assumptions=frozenset(), ruledOutSets=frozenset(), dontTryPos=False, dontTryNeg=False):
+    def deduceInNaturalPosDirectly(self, assumptions=frozenset(), ruledOutSets=frozenset(), dontTryPos=False, dontTryNeg=False):
         '''
-        If all of the terms are in Naturals and just one is positive, then the sum is positive.
+        If all of the terms are in Natural and just one is positive, then the sum is positive.
         '''
         from proveit.number.numberSets import DeduceInNumberSetException, deducePositive
         from ._theorems_ import addNatPosClosure
-        from proveit.number import NaturalsPos, num
-        # first make sure all the terms are in Naturals
+        from proveit.number import NaturalPos, num
+        # first make sure all the terms are in Natural
         for _k, term in enumerate(self.operands):
             #try:
                 # found one positive term to make the sum positive
@@ -837,7 +837,7 @@ class Add(Operation):
             #except:
                # pass
         # need to have one of the elements positive for the sum to be positive
-        raise DeduceInNumberSetException(self, NaturalsPos, assumptions)
+        raise DeduceInNumberSetException(self, NaturalPos, assumptions)
     """
 
     def deduceInNumberSet(self, number_set,assumptions=USE_DEFAULTS):
@@ -853,25 +853,25 @@ class Add(Operation):
                 addRealPosClosure, addRealPosClosureBin, addRealPosFromNonNeg,
                 addComplexClosure, addComplexClosureBin)
         from proveit.number.addition.subtraction._theorems_ import (
-                subtractNatClosureBin, subOneInNats)
+                subtractNatClosureBin, subOneInNat)
         from proveit.number import (zero, one, num, Neg, Greater,
-                                    Integers, Naturals, Reals, RealsPos,
-                                    RealsNonNeg, Complexes, NaturalsPos)
+                                    Integers, Natural, Reals, RealsPos,
+                                    RealsNonNeg, Complexes, NaturalPos)
         from proveit.logic import InSet
         if number_set == Integers:
             if len(self.operands) == 2:
                 return addIntClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addIntClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
-        if number_set == Naturals:
+        if number_set == Natural:
             if len(self.operands) == 2:
                 if isinstance(self.operands[1], Neg):
                     # A subtraction case:
                     if self.operands[1].operand==one:
-                        # Special a-1 in Naturals case.  If a is
-                        # in NaturalsPos, we are good.
-                        return subOneInNats.instantiate(
+                        # Special a-1 in Natural case.  If a is
+                        # in NaturalPos, we are good.
+                        return subOneInNat.instantiate(
                                 {a:self.operands[0]}, assumptions=assumptions)
-                    # (a-b) in Naturals requires that b <= a.
+                    # (a-b) in Natural requires that b <= a.
                     return subtractNatClosureBin.instantiate(
                             {a:self.operands[0], b:self.operands[1].operand},
                             assumptions=assumptions)
@@ -881,7 +881,7 @@ class Add(Operation):
             return addNatClosure.instantiate(
                     {i: num(len(self.operands)), a: self.operands},
                     assumptions=assumptions)
-        if (number_set == NaturalsPos or number_set == RealsPos and not
+        if (number_set == NaturalPos or number_set == RealsPos and not
                 all(InSet(operand, number_set).proven(assumptions) for
                     operand in self.operands)):
             # Unless we know that all of the operands are in the
@@ -898,7 +898,7 @@ class Add(Operation):
                                    "Expecting at least one value to be "
                                    "known to be greater than zero")
             # print(len(self.operands))
-            if number_set == NaturalsPos:
+            if number_set == NaturalPos:
                 temp_thm = addNatPosFromNonNeg
             else:
                 temp_thm = addRealPosFromNonNeg
@@ -923,30 +923,30 @@ class Add(Operation):
         msg = "'deduceInNumberSet' not implemented for the %s set"%str(number_set)
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
 
-    def deduceDifferenceInNaturals(self, assumptions=USE_DEFAULTS):
+    def deduceDifferenceInNatural(self, assumptions=USE_DEFAULTS):
         from proveit.number import Neg
-        from proveit.number.sets.integer._theorems_ import differenceInNaturals
+        from proveit.number.sets.integer._theorems_ import differenceInNatural
         if len(self.terms) != 2:
-            raise ValueError("deduceDifferenceInNaturals only applicable "
+            raise ValueError("deduceDifferenceInNatural only applicable "
                                "when there are two terms, got %s"%self)
         if not isinstance(self.terms[1], Neg):
-            raise ValueError("deduceDifferenceInNaturals only applicable "
+            raise ValueError("deduceDifferenceInNatural only applicable "
                                "for a subtraction, got %s"%self)
-        thm = differenceInNaturals
+        thm = differenceInNatural
         return thm.instantiate({a:self.terms[0], b:self.terms[1].operand},
                                assumptions=assumptions)
 
 
-    def deduceDifferenceInNaturalsPos(self, assumptions=USE_DEFAULTS):
+    def deduceDifferenceInNaturalPos(self, assumptions=USE_DEFAULTS):
         from proveit.number import Neg
-        from proveit.number.sets.integer._theorems_ import differenceInNaturalsPos
+        from proveit.number.sets.integer._theorems_ import differenceInNaturalPos
         if len(self.terms) != 2:
-            raise ValueError("deduceDifferenceInNaturalsPos only applicable "
+            raise ValueError("deduceDifferenceInNaturalPos only applicable "
                                "when there are two terms, got %s"%self)
         if not isinstance(self.terms[1], Neg):
-            raise ValueError("deduceDifferenceInNaturalsPos only applicable "
+            raise ValueError("deduceDifferenceInNaturalPos only applicable "
                                "for a subtraction, got %s"%self)
-        thm = differenceInNaturalsPos
+        thm = differenceInNaturalPos
         return thm.instantiate({a:self.terms[0], b:self.terms[1].operand},
                                assumptions=assumptions)
     def deduceStrictIncrease(self, lowerBoundTermIndex, assumptions=frozenset()):

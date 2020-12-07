@@ -1,10 +1,10 @@
 from proveit import Literal
-from proveit.number.sets.natural.naturals import NaturalsSet, NaturalsPosSet
+from proveit.number.sets.natural.naturals import NaturalSet, NaturalPosSet
 from .integers import IntegerSet
 from digit import DigitLiteral
 
-Naturals = NaturalsSet()
-NaturalsPos = NaturalsPosSet()
+Natural = NaturalSet()
+NaturalPos = NaturalPosSet()
 Integers = IntegerSet()
 
 zero = DigitLiteral(0)
