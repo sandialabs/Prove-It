@@ -1,5 +1,5 @@
 from proveit import Operation
-from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, Equals, Booleans
+from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, Equals, Boolean
 from proveit.number import Integer, Natural, NaturalPos, Interval, Reals, RealsPos, Complexes
 from proveit.number import Add, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.number import Len
@@ -22,10 +22,10 @@ zeroLenExprTuple = Equals(Len(), zero)
 
 multiVarInduction = Forall(P, Implies(Forall((xMulti, y), Implies(PxEtc, Operation(P, [xEtc, y]))), Forall(xMulti, PxEtc)))
 
-inIntsIsBool = Forall(a, InSet(InSet(a, Integer), Booleans))
+inIntsIsBool = Forall(a, InSet(InSet(a, Integer), Boolean))
 inIntsIsBool
 
-notInIntsIsBool = Forall(a, InSet(NotInSet(a, Integer), Booleans))
+notInIntsIsBool = Forall(a, InSet(NotInSet(a, Integer), Boolean))
 notInIntsIsBool
 
 intInReals = Forall(a, InSet(a, Reals), domain=Integer)

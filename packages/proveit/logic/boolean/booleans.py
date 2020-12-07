@@ -22,10 +22,10 @@ class BooleanSet(Literal):
         from proveit.logic import Forall, Equals, SimplificationError
         from ._theorems_ import falseEqFalse, trueEqTrue 
         from ._theorems_ import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
-        from ._common_ import TRUE, FALSE, Booleans
+        from ._common_ import TRUE, FALSE, Boolean
         from .conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply forallEvaluation method of BOOLEANS to a forall statement"
-        assert(forallStmt.domain == Booleans), "May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain"
+        assert(forallStmt.domain == Boolean), "May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain"
         instanceList = list(forallStmt.instanceParamLists())
         instanceVar = instanceList[0][0]
         instanceExpr = forallStmt.instanceExpr
@@ -65,13 +65,13 @@ class BooleanSet(Literal):
     
     def unfoldForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
-        Given forall_{A in Booleans} P(A), derive and return [P(TRUE) and P(FALSE)].
+        Given forall_{A in Boolean} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
         from ._theorems_ import unfoldForallOverBool
-        from ._common_ import Booleans
-        assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Booleans to a forall statement"
-        assert(forallStmt.domain == Booleans), "May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain"
+        from ._common_ import Boolean
+        assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Boolean to a forall statement"
+        assert(forallStmt.domain == Boolean), "May only apply unfoldForall method of Boolean to a forall statement with the Boolean domain"
         Px = Operation(P, forallStmt.instanceVar)
         _Px = forallStmt.instanceExpr
         _A = forallStmt.instanceVar
@@ -80,14 +80,14 @@ class BooleanSet(Literal):
 
     def foldAsForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
-        Given forall_{A in Booleans} P(A), conclude and return it from 
+        Given forall_{A in Boolean} P(A), conclude and return it from 
         [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall, And
         from ._theorems_ import foldForallOverBool, foldConditionedForallOverBool
-        from ._common_ import Booleans
-        assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
-        assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
+        from ._common_ import Boolean
+        assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Boolean to a forall statement"
+        assert(forallStmt.domain == Boolean), "May only apply foldAsForall method of Boolean to a forall statement with the Boolean domain"
         if(len(forallStmt.conditions)>1):
             if len(forallStmt.conditions)==2:
                 condition = forallStmt.conditions[1]
@@ -102,7 +102,7 @@ class BooleanSet(Literal):
                     {Qx:_Qx, Px:_Px, A:_A}, num_forall_eliminations=1,
                     assumptions=assumptions)
         else:
-            # forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)
+            # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
             Px = Operation(P, forallStmt.instanceVar)
             _Px = forallStmt.instanceExpr
             _A = forallStmt.instanceVar
@@ -112,8 +112,8 @@ class BooleanSet(Literal):
 
 class BooleanMembership(Membership):
     '''
-    Defines methods that apply to InSet(element, Booleans) objects
-    via InSet.__getattr__ which calls Booleans.membershipObject(element)
+    Defines methods that apply to InSet(element, Boolean) objects
+    via InSet.__getattr__ which calls Boolean.membershipObject(element)
     to return a BooleanMembership object.
     '''
     
@@ -122,7 +122,7 @@ class BooleanMembership(Membership):
     
     def sideEffects(self, judgment):
         '''
-        Yield side-effect methods to try when the element is proven to be in the set of Booleans
+        Yield side-effect methods to try when the element is proven to be in the set of Boolean
         by calling 'inBoolSideEffects' on the element if it has such a method.
         Edited by JML on 6/27/19 to add foldInBool sideEffect
         '''
@@ -136,7 +136,7 @@ class BooleanMembership(Membership):
     
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
-        Try to deduce that the given element is in the set of Booleans under the given assumptions.
+        Try to deduce that the given element is in the set of Boolean under the given assumptions.
         '''   
         from ._theorems_ import inBoolIfTrue, inBoolIfFalse
         element = self.element
@@ -158,7 +158,7 @@ class BooleanMembership(Membership):
 
     def equivalence(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce [(element in Booleans) = [(element = TRUE) or (element = FALSE)].
+        Deduce [(element in Boolean) = [(element = TRUE) or (element = FALSE)].
         '''
         from ._theorems_ import inBoolDef
         return inBoolDef.instantiate({A:self.element})
@@ -188,7 +188,7 @@ class BooleanMembership(Membership):
 
     def deriveViaExcludedMiddle(self, consequent, assumptions=USE_DEFAULTS):
         '''
-        Derive the consequent from (element in Booleans)
+        Derive the consequent from (element in Boolean)
         given element => consequent and Not(element) => consequent.
         '''
         from ._theorems_ import fromExcludedMiddle
@@ -206,7 +206,7 @@ class BooleanNonmembership(Nonmembership):
 
     def equivalence(self, element, assumptions=USE_DEFAULTS):
         '''
-        Derive [(element not in Booleans) = [(element != TRUE) and (element != FALSE)].
+        Derive [(element not in Boolean) = [(element != TRUE) and (element != FALSE)].
         '''
         from ._theorems_ import notInBoolEquiv
         return notInBoolEquiv.instantiate({A:element})
@@ -282,7 +282,7 @@ class FalseLiteral(Literal, IrreducibleValue):
 
 def inBool(*elements):
     from proveit.logic.set_theory import InSet
-    from ._common_ import Booleans
+    from ._common_ import Boolean
     if len(elements) == 1:
-        return InSet(elements[0], Booleans)
-    return [InSet(element, Booleans) for element in elements]
+        return InSet(elements[0], Boolean)
+    return [InSet(element, Boolean) for element in elements]

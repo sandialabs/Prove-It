@@ -190,7 +190,7 @@ class SupersetEq(SupersetRelation):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this SupersetEq expression
-        is in the set of Booleans.
+        is in the set of Boolean.
         '''
         from ._theorems_ import supsetEqInBool
         return supsetEqInBool.instantiate({A:self.lhs, B:self.rhs})
@@ -324,7 +324,7 @@ class ProperSuperset(SupersetRelation):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this ProperSuperset expression
-        is in the set of Booleans.
+        is in the set of Boolean.
         '''
         from ._theorems_ import properSupsetInBool
         return properSupsetInBool.instantiate({A:self.lhs, B:self.rhs})

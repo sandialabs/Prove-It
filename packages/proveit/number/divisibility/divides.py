@@ -420,7 +420,7 @@ class Divides(DividesRelation):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this 'Divides' expression is in
-        the set of Booleans.
+        the set of Boolean.
         '''
         from ._theorems_ import dividesInBool
         _x, _y = dividesInBool.instanceParams

@@ -113,7 +113,7 @@ class Or(Operation):
         from proveit.logic import Not, And
         if len(self.operands) == 0:
             return # No side-effects needed for [Or]()
-        yield self.deriveInBool # A or B or .. or .. Z in Booleans
+        yield self.deriveInBool # A or B or .. or .. Z in Boolean
         if len(self.operands) == 2: # Not(A or B)
             yield self.deduceNotLeftIfNeither # Not(A)
             yield self.deduceNotRightIfNeither # Not(B)
@@ -125,8 +125,8 @@ class Or(Operation):
 
     def inBoolSideEffects(self, judgment):
         '''
-        From (A or B or .. or Z) in Booleans deduce (A in Booleans), (B in Booleans), ...
-        (Z in Booleans).
+        From (A or B or .. or Z) in Boolean deduce (A in Boolean), (B in Boolean), ...
+        (Z in Boolean).
         '''
         yield self.deducePartsInBool
 
@@ -180,7 +180,7 @@ class Or(Operation):
 
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
-        From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].
+        From (A or B or ... or Z) derive [(A or B or ... or Z) in Boolean].
         '''
         return inBool(self).prove(assumptions=assumptions)
 
@@ -204,7 +204,7 @@ class Or(Operation):
 
     def deriveViaSingularDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
-        From (A or B) as self, and assuming A => C, B => C, and A and B are Booleans,
+        From (A or B) as self, and assuming A => C, B => C, and A and B are Boolean,
         derive and return the conclusion, C.  Self is (A or B).
         '''
         from ._theorems_ import singularConstructiveDilemma, singularConstructiveMultiDilemma
@@ -215,7 +215,7 @@ class Or(Operation):
 
     def deriveViaMultiDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
-        From (A or B) as self, and assuming A => C, B => D, and A, B, C, and D are Booleans,
+        From (A or B) as self, and assuming A => C, B => D, and A, B, C, and D are Boolean,
         derive and return the conclusion, C or D.
         '''
         from ._theorems_ import constructiveDilemma, destructiveDilemma, constructiveMultiDilemma, destructiveMultiDilemma
@@ -256,7 +256,7 @@ class Or(Operation):
 
     def deduceLeftInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce A in Booleans from (A or B) in Booleans.
+        Deduce A in Boolean from (A or B) in Boolean.
         '''
         from ._axioms_ import leftInBool
         if len(self.operands) == 2:
@@ -264,7 +264,7 @@ class Or(Operation):
 
     def deduceRightInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce B in Booleans from (A or B) in Booleans.
+        Deduce B in Boolean from (A or B) in Boolean.
         '''
         from ._axioms_ import rightInBool
         if len(self.operands) == 2:
@@ -272,15 +272,15 @@ class Or(Operation):
 
     def deducePartsInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce A in Booleans, B in Booleans, ..., Z in Booleans
-        from (A or B or ... or Z) in Booleans.
+        Deduce A in Boolean, B in Boolean, ..., Z in Boolean
+        from (A or B or ... or Z) in Boolean.
         '''
         for _i in range(len(self.operands)):
             self.deducePartInBool(_i, assumptions)
 
     def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
         '''
-        Deduce X in Booleans from (A or B or .. or X or .. or Z) in Booleans
+        Deduce X in Boolean from (A or B or .. or X or .. or Z) in Boolean
         provided X by expression or index number.
         '''
         from ._theorems_ import eachInBool
@@ -397,7 +397,7 @@ class Or(Operation):
 
     def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
         '''
-        From (A or B or ... or Y or Z), assuming in Booleans and given beginning and end of group, derive and return
+        From (A or B or ... or Y or Z), assuming in Boolean and given beginning and end of group, derive and return
         (A or B ... or (l or ... or M) or ... or X or Z).
         '''
         from ._theorems_ import group
@@ -410,7 +410,7 @@ class Or(Operation):
 
     def deriveSwap(self, idx1, idx2, assumptions=USE_DEFAULTS):
         '''
-        From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Booleans and given
+        From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Boolean and given
         the beginning and end of the groups to be switched,
         derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).
         '''

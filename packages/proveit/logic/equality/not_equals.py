@@ -22,7 +22,7 @@ class NotEquals(Relation):
         # automatically derive the reversed form which is equivalent
         yield self.deriveReversed # y != x from x != y
         if self.rhs==FALSE:
-            yield self.deriveViaDoubleNegation # A from A != False and A in Booleans
+            yield self.deriveViaDoubleNegation # A from A != False and A in Boolean
         yield self.unfold # Not(x=y) from x != y
     
     def conclude(self, assumptions):

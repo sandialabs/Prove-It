@@ -38,13 +38,13 @@ class Not(Operation):
             
     def inBoolSideEffects(self, judgment):
         '''
-        From not(A) in Booleans deduce A in Booleans, where self is not(A).
+        From not(A) in Boolean deduce A in Boolean, where self is not(A).
         '''
         yield self.deduceOperandInBool
         
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
-        From Not(A) derive [Not(A) in Booleans].
+        From Not(A) derive [Not(A) in Boolean].
         '''
         return inBool(self).prove(assumptions=assumptions)
     
@@ -207,7 +207,7 @@ class Not(Operation):
                         
     def deduceDoubleNegationEquiv(self, assumptions=USE_DEFAULTS):
         '''
-        For some not(not(A)), derive and return A = not(not(A)) assuming A in Booleans.
+        For some not(not(A)), derive and return A = not(not(A)) assuming A in Boolean.
         '''
         from ._theorems_ import doubleNegationEquiv
         if isinstance(self.operand, Not):

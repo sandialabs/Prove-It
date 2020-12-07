@@ -32,7 +32,7 @@ class Equals(TransitiveRelation):
     inversions = dict()
     
     # Record the Equals objects being initialized (to avoid infinite
-    # recursion while automatically deducing an equality is in Booleans).
+    # recursion while automatically deducing an equality is in Boolean).
     initializing = set()
 
     def __init__(self, a, b):
@@ -43,7 +43,7 @@ class Equals(TransitiveRelation):
         if self not in Equals.initializing:
             Equals.initializing.add(self)
             try:
-                self.deduceInBool() # proactively prove (a=b) in Booleans.
+                self.deduceInBool() # proactively prove (a=b) in Boolean.
             except:
                 # may fail before the relevent _axioms_ have been generated
                 pass # and that's okay            
@@ -534,7 +534,7 @@ class Equals(TransitiveRelation):
         
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce and return that this equality statement is in the set of Booleans.
+        Deduce and return that this equality statement is in the set of Boolean.
         '''
         from ._axioms_ import equalityInBool
         return equalityInBool.instantiate({x:self.lhs, y:self.rhs})

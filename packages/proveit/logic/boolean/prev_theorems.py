@@ -3,7 +3,7 @@
 
 # In[1]:
 
-from proveit.logic import Forall, Exists, NotExists, Booleans, TRUE, FALSE, inBool, Not, And, Or, Implies, Iff, Equals, NotEquals
+from proveit.logic import Forall, Exists, NotExists, Boolean, TRUE, FALSE, inBool, Not, And, Or, Implies, Iff, Equals, NotEquals
 from proveit.common import A, B, C, P, Q, R, S, x, y, PofA, Qetc, Retc, xEtc, yEtc, zEtc, PxEtc, PyEtc, PxyEtc, etc_QxEtc, etc_QyEtc, etc_RyEtc
 from proveit.logic.common import PofTrue, PofFalse
 from proveit import beginTheorems, endTheorems
@@ -35,24 +35,24 @@ trueInBool = inBool(TRUE)
 
 falseInBool = inBool(FALSE)
 
-unfoldForallOverBool = Forall(P, Implies(Forall(A, PofA, domain=Booleans), And(PofTrue, PofFalse)))
+unfoldForallOverBool = Forall(P, Implies(Forall(A, PofA, domain=Boolean), And(PofTrue, PofFalse)))
 
 inBoolIfTrue = Forall(A, inBool(A), conditions=[A])
 
 inBoolIfFalse = Forall(A, inBool(A), conditions=[Not(A)])
 
 # This weak form requires B to be a Boolean
-byCasesWeak = Forall((A, B), B, domain=Booleans, conditions=[Implies(A, B), Implies(Not(A), B)])
+byCasesWeak = Forall((A, B), B, domain=Boolean, conditions=[Implies(A, B), Implies(Not(A), B)])
 
 # This is a stronger form that does not require B to be a Boolean
-byCases = Forall(A, Forall(B, B, conditions=[Implies(A, B), Implies(Not(A), B)]), domain=Booleans)
+byCases = Forall(A, Forall(B, B, conditions=[Implies(A, B), Implies(Not(A), B)]), domain=Boolean)
 
-foldForallOverBool = Forall(P, Forall(A, PofA, domain = Booleans), conditions=[PofTrue, PofFalse])
+foldForallOverBool = Forall(P, Forall(A, PofA, domain = Boolean), conditions=[PofTrue, PofFalse])
 
-forallBoolEvalTrue = Forall(P, Equals(Forall(A, PofA, domain=Booleans), TRUE),  conditions=[PofTrue, PofFalse])
+forallBoolEvalTrue = Forall(P, Equals(Forall(A, PofA, domain=Boolean), TRUE),  conditions=[PofTrue, PofFalse])
 
 # uses constructive dilemma
-unfoldInBool = Forall(A, Or(A, Not(A)), domain=Booleans)
+unfoldInBool = Forall(A, Or(A, Not(A)), domain=Boolean)
 
 
 
@@ -60,7 +60,7 @@ unfoldInBool = Forall(A, Or(A, Not(A)), domain=Booleans)
 
 
 
-fromNotFalse = Forall(A, A, domain=Booleans, conditions=[NotEquals(A, FALSE)])
+fromNotFalse = Forall(A, A, domain=Boolean, conditions=[NotEquals(A, FALSE)])
 
 
 notInBoolEquiv = Forall(A, Equals(inBool(A), And(NotEquals(A, TRUE), NotEquals(A, FALSE))))

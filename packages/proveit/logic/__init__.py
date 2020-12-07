@@ -1,6 +1,6 @@
 # Boolean arithmetic, equality, and set theory.
 
-from .boolean import Booleans, TRUE, FALSE
+from .boolean import Boolean, TRUE, FALSE
 from .boolean import And, Or, Not, Implies, Iff, compose, concludeViaImplication
 from .boolean import inBool, BooleanSet, TrueLiteral, FalseLiteral
 from .boolean import Forall, Exists, NotExists

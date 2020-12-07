@@ -84,9 +84,9 @@ class Greater(GreaterRelation):
         from ._theorems_ import reverseGreater
         return reverseGreater.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
                     
-    def deduceInBooleans(self, assumptions=frozenset()):
-        from ._theorems_ import greaterThanInBools
-        return greaterThanInBools.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
+    def deduceInBool(self, assumptions=frozenset()):
+        from ._theorems_ import greaterThanInBool
+        return greaterThanInBool.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
     
     def deriveRelaxed(self, assumptions=frozenset()):
         '''
@@ -240,9 +240,9 @@ class GreaterEq(GreaterRelation):
         from ._theorems_ import reverseGreaterEq
         return reverseGreaterEq.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
                             
-    def deduceInBooleans(self, assumptions=frozenset()):
-        from ._theorems_ import greaterThanEqualsInBools
-        return greaterThanEqualsInBools.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
+    def deduceInBool(self, assumptions=frozenset()):
+        from ._theorems_ import greaterThanEqualsInBool
+        return greaterThanEqualsInBool.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
 
     def unfold(self, assumptions=frozenset()):
         from ._axioms_ import greaterThanEqualsDef

@@ -127,9 +127,9 @@ class Less(LesserRelation):
         from ._theorems_ import reverseLess
         return reverseLess.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
                 
-    def deduceInBooleans(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import lessThanInBools
-        return lessThanInBools.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import lessThanInBool
+        return lessThanInBool.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
     
     def deriveRelaxed(self, assumptions=USE_DEFAULTS):
         '''
@@ -421,9 +421,9 @@ class LessEq(LesserRelation):
         from ._theorems_ import reverseLessEq
         return reverseLessEq.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
 
-    def deduceInBooleans(self, assumptions=frozenset()):
-        from ._theorems_ import lessThanEqualsInBools
-        return lessThanEqualsInBools.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
+    def deduceInBool(self, assumptions=frozenset()):
+        from ._theorems_ import lessThanEqualsInBool
+        return lessThanEqualsInBool.instantiate({a:self.lhs, b:self.rhs}, assumptions=assumptions)
     
     def unfold(self, assumptions=frozenset()):
         from ._axioms_ import lessThanEqualsDef

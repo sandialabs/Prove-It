@@ -118,7 +118,7 @@ class And(Operation):
         Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
         '''
         from proveit.logic import Not, Or
-        yield self.deriveInBool # (A and B and ... and Z) in Booleans
+        yield self.deriveInBool # (A and B and ... and Z) in Boolean
         # implemented by JML on 7/2/19
         # If all of the operands are negated call the disjunction form of DeMorgan's
         if all(isinstance(operand, Not) for operand in self.operands):
@@ -127,14 +127,14 @@ class And(Operation):
         
     def inBoolSideEffects(self, judgment):
         '''
-        From (A and B and .. and Z) in Booleans deduce (A in Booleans), (B in Booleans), ...
-        (Z in Booleans).
+        From (A and B and .. and Z) in Boolean deduce (A in Boolean), (B in Boolean), ...
+        (Z in Boolean).
         '''
         yield self.deducePartsInBool
     
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
-        From (A and B and ... and Z) derive [(A and B and ... and Z) in Booleans].
+        From (A and B and ... and Z) derive [(A and B and ... and Z) in Boolean].
         '''
         return inBool(self).prove(assumptions=assumptions)
     
@@ -257,7 +257,7 @@ class And(Operation):
     
     def deduceLeftInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce A in Booleans from (A and B) in Booleans.
+        Deduce A in Boolean from (A and B) in Boolean.
         '''
         from ._axioms_ import leftInBool
         if len(self.operands) == 2:
@@ -265,7 +265,7 @@ class And(Operation):
         
     def deduceRightInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce B in Booleans from (A and B) in Booleans.
+        Deduce B in Boolean from (A and B) in Boolean.
         '''
         from ._axioms_ import rightInBool
         if len(self.operands) == 2:
@@ -273,15 +273,15 @@ class And(Operation):
 
     def deducePartsInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce A in Booleans, B in Booleans, ..., Z in Booleans
-        from (A and B and ... and Z) in Booleans.
+        Deduce A in Boolean, B in Boolean, ..., Z in Boolean
+        from (A and B and ... and Z) in Boolean.
         '''
         for i in range(len(self.operands)):
             self.deducePartInBool(i, assumptions)        
 
     def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
         '''
-        Deduce X in Booleans from (A and B and .. and X and .. and Z) in Booleans
+        Deduce X in Boolean from (A and B and .. and X and .. and Z) in Boolean
         provided X by expression or index number.
         '''
         from ._theorems_ import eachInBool

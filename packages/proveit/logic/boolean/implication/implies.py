@@ -212,8 +212,8 @@ class Implies(TransitiveRelation):
 
     def deriveViaContradiction(self, assumptions=USE_DEFAULTS):
         r'''
-        From (Not(A) => FALSE), derive and return A assuming A in Booleans.
-        Or from (A => FALSE), derive and return Not(A) assuming A in Booleans.
+        From (Not(A) => FALSE), derive and return A assuming A in Boolean.
+        Or from (A => FALSE), derive and return Not(A) assuming A in Boolean.
         Or from (A => FALSE), derive and return A != TRUE.
         '''
         from proveit.logic import FALSE, inBool

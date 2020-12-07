@@ -33,7 +33,7 @@ class SetNotEquiv(Operation):
         # automatically derive the reversed form which is equivalent
         yield self.deriveReversed # B not_equiv A from A not_equiv B
         # if self.rhs==FALSE:
-        #     yield self.deriveViaDoubleNegation # A from A != False and A in Booleans
+        #     yield self.deriveViaDoubleNegation # A from A != False and A in Boolean
         # yield self.unfold # Not(x=y) from x != y
     
     # def conclude(self, assumptions):
