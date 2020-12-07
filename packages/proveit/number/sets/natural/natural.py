@@ -44,7 +44,7 @@ class NaturalPosSet(NumberSet):
         '''
         member = judgment.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
-        yield lambda assumptions : self.deduceMemberInNats(member, assumptions)
+        yield lambda assumptions : self.deduceMemberInNat(member, assumptions)
         yield lambda assumptions : self.deduce_member_non_zero(member, assumptions)
 
     def string(self, **kwargs):
@@ -64,7 +64,7 @@ class NaturalPosSet(NumberSet):
         from proveit._common_ import x
         return xInNatPosInBool.instantiate({x:member}, assumptions=assumptions)
     
-    def deduceMemberInNats(self, member, assumptions=USE_DEFAULTS):
+    def deduceMemberInNat(self, member, assumptions=USE_DEFAULTS):
         from proveit.number.sets.natural._theorems_ import natPosInNat
         return natPosInNat.deriveSupersetMembership(member, assumptions)
 
