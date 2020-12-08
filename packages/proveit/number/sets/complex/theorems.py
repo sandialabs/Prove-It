@@ -1,19 +1,19 @@
 from proveit.logic import Forall, InSet, NotEquals
-from proveit.number import Complexes
+from proveit.number import Complex
 from proveit.common import a
-from proveit.number.common import zero, i, ComplexesSansZero
+from proveit.number.common import zero, i, ComplexSansZero
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-iInComplexes = InSet(i, Complexes)
-iInComplexes
+iInComplex = InSet(i, Complex)
+iInComplex
 
 iNotZero = NotEquals(i, zero)
 iNotZero
 
-inComplexesSansZero = Forall(a, InSet(a, ComplexesSansZero), 
-                             domain=Complexes, conditions=[NotEquals(a, zero)])
-inComplexesSansZero
+inComplexSansZero = Forall(a, InSet(a, ComplexSansZero), 
+                             domain=Complex, conditions=[NotEquals(a, zero)])
+inComplexSansZero
 
 endTheorems(locals(), __package__)

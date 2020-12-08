@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex, InnerExpr, USE_DEFAULTS, ProofFailure
 from proveit.logic import isIrreducibleValue
-from proveit.number.sets import Integer, Reals, Complexes
+from proveit.number.sets import Integer, Real, Complex
 from proveit._common_ import a, b, m, n, x, y, B
 
 class Neg(Operation):
@@ -23,9 +23,9 @@ class Neg(Operation):
         from proveit.logic import InSet
         if NumberSet == Integer:
             return intClosure.instantiate({a:self.operand})
-        elif NumberSet == Reals:
+        elif NumberSet == Real:
             return realClosure.instantiate({a:self.operand})
-        elif NumberSet == Complexes:
+        elif NumberSet == Complex:
             return complexClosure.instantiate({a:self.operand})
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
@@ -71,9 +71,9 @@ class Neg(Operation):
     """
     def _closureTheorem(self, numberSet):
         import _theorems_
-        if numberSet == Complexes:
+        if numberSet == Complex:
             return _theorems_.negComplexClosure
-        elif numberSet == Reals:
+        elif numberSet == Real:
             return _theorems_.negRealClosure
         elif numberSet == Integer:
             return _theorems_.negIntClosure
@@ -144,7 +144,7 @@ class Neg(Operation):
         groupFactor and groupRemainder are not relevant but kept for compatibility with
         other factor methods.
         Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complexes so that
+        Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''

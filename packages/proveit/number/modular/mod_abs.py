@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-from proveit.number.sets import Reals
+from proveit.number.sets import Real
 
 class ModAbs(Operation):
     # operator of the ModAbs operation.
@@ -21,7 +21,7 @@ class ModAbs(Operation):
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
-        Given a number set number_set (such as Integer, Reals, etc),
+        Given a number set number_set (such as Integer, Real, etc),
         attempt to prove that the given ModAbs expression is in that
         number set using the appropriate closure theorem.
         '''
@@ -29,7 +29,7 @@ class ModAbs(Operation):
         from proveit.logic import InSet
         from proveit.number.modular._theorems_ import (
                 modAbsIntClosure, modAbsRealClosure)
-        from proveit.number import Integer, Reals
+        from proveit.number import Integer, Real
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
@@ -39,7 +39,7 @@ class ModAbs(Operation):
             return modAbsIntClosure.instantiate(
                     {a:self.value, b:self.divisor}, assumptions=assumptions)
 
-        if number_set == Reals:
+        if number_set == Real:
             return modAbsRealClosure.instantiate(
                     {a:self.value, b:self.divisor}, assumptions=assumptions)
 

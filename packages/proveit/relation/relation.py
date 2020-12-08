@@ -50,7 +50,7 @@ class Relation(Operation):
         Methods that end in '_both_sides' (as in performing an operation
         on both sides) can be defined for the relation indirectly via
         any domain known to contain either the left or right side of the 
-        relation.  For example, if (x in Complexes) is
+        relation.  For example, if (x in Complex) is
         known, (x = y) will have methods called "left_mult_both_sides",
         "divide_both_sides" built from 
         ComplexSet.left_mult_both_sides_of_equals and

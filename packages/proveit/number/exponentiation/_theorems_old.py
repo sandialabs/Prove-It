@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
-from proveit.number import Integer, Natural, NaturalPos, Reals, RealsPos, Complexes
+from proveit.number import Integer, Natural, NaturalPos, Real, RealPos, Complex
 from proveit.number import Exp, sqrt, Add, Mult, Sub, Neg, frac, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.common import a, b, c, d, n, x, y, z, xEtc, xMulti
 from proveit.number.common import zero, one, two
@@ -13,71 +13,71 @@ expNatClosure = Forall((a, b), InSet(Exp(a, b), NaturalPos), domain=Natural, con
 expNatClosure
 
 # transferred & updated 2/20/2020
-expRealClosure = Forall([a, b], InSet(Exp(a, b), Reals), domain=Reals,
+expRealClosure = Forall([a, b], InSet(Exp(a, b), Real), domain=Real,
                        conditions=[GreaterThanEquals(a, zero), GreaterThan(b, zero)])
 expRealClosure
 
 # transferred & updated 2/20/2020
-expRealPosClosure = Forall([a, b], InSet(Exp(a, b), RealsPos), domain=Reals,
+expRealPosClosure = Forall([a, b], InSet(Exp(a, b), RealPos), domain=Real,
                        conditions=[GreaterThan(a, zero)])
 expRealPosClosure
 
 # transferred & updated 2/20/2020
-expComplexClosure = Forall([a, b], InSet(Exp(a, b), Complexes), domain=Complexes,
+expComplexClosure = Forall([a, b], InSet(Exp(a, b), Complex), domain=Complex,
                     conditions=[NotEquals(a, zero)])
 expComplexClosure
 
-sqrtRealClosure = Forall([a], InSet(sqrt(a), Reals), domain=Reals,
+sqrtRealClosure = Forall([a], InSet(sqrt(a), Real), domain=Real,
                          conditions=[GreaterThanEquals(a, zero)])
 sqrtRealClosure
 
-sqrtRealPosClosure = Forall([a], InSet(sqrt(a), RealsPos), domain=RealsPos)
+sqrtRealPosClosure = Forall([a], InSet(sqrt(a), RealPos), domain=RealPos)
 sqrtRealPosClosure
 
-sqrtComplexClosure = Forall([a], InSet(sqrt(a), Complexes), domain=Complexes)
+sqrtComplexClosure = Forall([a], InSet(sqrt(a), Complex), domain=Complex)
 sqrtComplexClosure
 
 # Should generalize to even power closure, but need to define and implement evens set to do this.
 
 # transferred & updated 2/20/2020
-sqrdPosClosure = Forall(a, InSet(Exp(a, two), RealsPos),
-                        domain=Reals, conditions=[NotEquals(a, zero)])
+sqrdPosClosure = Forall(a, InSet(Exp(a, two), RealPos),
+                        domain=Real, conditions=[NotEquals(a, zero)])
 sqrdPosClosure
 
 # transferred & updated 2/20/2020
 squarePosIneq = Forall([a,b],
                         LessThanEquals(Exp(Abs(a),two),Exp(b,two)),
-                        domain = Reals,
+                        domain = Real,
                         conditions = (LessThanEquals(Abs(a),b),))
 squarePosIneq
 
 # transferred & updated 2/20/2020
 squarePosEq = Forall(a,
                      Equals(Exp(Abs(a),two),Exp(a,two)),
-                     domain = Reals)
+                     domain = Real)
 squarePosEq
 
 # transferred & updated 2/20/2020
-expNotEqZero = Forall([a, b], NotEquals(Exp(a,b), zero), domain=Complexes, conditions=[NotEquals(a, zero)])
+expNotEqZero = Forall([a, b], NotEquals(Exp(a,b), zero), domain=Complex, conditions=[NotEquals(a, zero)])
 expNotEqZero
 
 # already present in new _theorems_
-expZeroEqOne = Forall([a], Equals(Exp(a, zero), one), domain=Complexes, conditions=[NotEquals(a, zero)])
+expZeroEqOne = Forall([a], Equals(Exp(a, zero), one), domain=Complex, conditions=[NotEquals(a, zero)])
 expZeroEqOne
 
 # already present in new _theorems_
-exponentiatedZero = Forall([x], Equals(Exp(zero, x), zero), domain=Complexes, conditions=[NotEquals(x, zero)])
+exponentiatedZero = Forall([x], Equals(Exp(zero, x), zero), domain=Complex, conditions=[NotEquals(x, zero)])
 exponentiatedZero
 
 # already present in new _theorems_
-exponentiatedOne = Forall([x], Equals(Exp(one, x), one), domain=Complexes)
+exponentiatedOne = Forall([x], Equals(Exp(one, x), one), domain=Complex)
 exponentiatedOne
 
 # transferred & updated 2/20/2020
 sumInExp = Forall([a,b,c],
                 Equals(Exp(a,Add(b,c)),
                        Mult(Exp(a,b),Exp(a,c))),
-                domain = Complexes, conditions=[NotEquals(a, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero)])
 sumInExp
 
 # transferred & updated 2/20/2020
@@ -85,14 +85,14 @@ sumInExp
 sumInExpRev = Forall([a,b,c],
                 Equals(Mult(Exp(a,b),Exp(a,c)),
                        Exp(a,Add(b,c))),
-                domain = Complexes, conditions=[NotEquals(a, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero)])
 sumInExpRev
 
 # transferred & updated 2/20/2020
 addOneRightInExp = Forall([a,b],
                 Equals(Exp(a,Add(b,one)),
                        Mult(Exp(a,b),a)),
-                domain = Complexes, conditions=[NotEquals(a, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero)])
 addOneRightInExp
 
 # transferred & updated 2/20/2020
@@ -100,14 +100,14 @@ addOneRightInExp
 addOneRightInExpRev = Forall([a,b],
                 Equals(Mult(Exp(a,b),a),
                        Exp(a,Add(b,one))),
-                domain = Complexes, conditions=[NotEquals(a, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero)])
 addOneRightInExpRev
 
 # transferred & updated 2/20/2020
 addOneLeftInExp = Forall([a,b],
                 Equals(Exp(a,Add(one, b)),
                        Mult(a, Exp(a,b))),
-                domain = Complexes, conditions=[NotEquals(a, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero)])
 addOneLeftInExp
 
 # transferred & updated 2/20/2020
@@ -115,14 +115,14 @@ addOneLeftInExp
 addOneLeftInExpRev = Forall([a,b],
                 Equals(Mult(a, Exp(a,b)),
                        Exp(a,Add(one, b))),
-                domain = Complexes, conditions=[NotEquals(a, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero)])
 addOneLeftInExpRev
 
 # transferred & updated 2/20/2020
 diffInExp = Forall([a,b,c],
                 Equals(Exp(a,Sub(b,c)),
                        Mult(Exp(a,b),Exp(a,Neg(c)))),
-                domain = Complexes, conditions=[NotEquals(a, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero)])
 diffInExp
 
 # transferred & updated 2/20/2020
@@ -130,14 +130,14 @@ diffInExp
 diffInExpRev = Forall([a,b,c],
                 Equals(Mult(Exp(a,b),Exp(a,Neg(c))),
                        Exp(a,Sub(b,c))),
-                domain = Complexes, conditions=[NotEquals(a, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero)])
 diffInExpRev
 
 # transferred & updated 2/20/2020
 diffFracInExp = Forall([a,b,c,d],
                 Equals(Exp(a,Sub(b,frac(c, d))),
                        Mult(Exp(a,b),Exp(a,frac(Neg(c), d)))),
-                domain = Complexes, conditions=[NotEquals(a, zero), NotEquals(d, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero), NotEquals(d, zero)])
 diffFracInExp
 
 # transferred & updated 2/20/2020
@@ -145,7 +145,7 @@ diffFracInExp
 diffFracInExpRev = Forall([a,b,c,d],
                 Equals(Mult(Exp(a,b),Exp(a,frac(Neg(c), d))),
                        Exp(a,Sub(b,frac(c, d)))),
-                domain = Complexes, conditions=[NotEquals(a, zero), NotEquals(d, zero)])
+                domain = Complex, conditions=[NotEquals(a, zero), NotEquals(d, zero)])
 diffFracInExpRev
 
 # transferred & updated 2/20/2020
@@ -154,8 +154,8 @@ diffFracInExpRev
 expOfPositivesProd = Forall(c, Forall((a, b),
                              Equals(Exp(Mult(a,b),c),
                                     Mult(Exp(a,c),Exp(b,c))),
-                             domain=RealsPos),
-                domain=Complexes)
+                             domain=RealPos),
+                domain=Complex)
 expOfPositivesProd
 
 # transferred & updated 2/20/2020
@@ -164,8 +164,8 @@ expOfPositivesProd
 expOfPositivesProdRev = Forall(c, Forall((a, b),
                              Equals(Mult(Exp(a,c),Exp(b,c)),
                                    Exp(Mult(a,b),c)),
-                             domain=RealsPos),
-                domain=Complexes)
+                             domain=RealPos),
+                domain=Complex)
 expOfPositivesProdRev
 
 # transferred & updated 2/20/2020
@@ -175,7 +175,7 @@ expOfPositivesProdRev
 intExpOfProd = Forall(n, Forall((a, b),
                                 Equals(Exp(Mult(a,b),n),
                                        Mult(Exp(a,n),Exp(b,n))),
-                                domain=Complexes, conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
+                                domain=Complex, conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
                       domain=Integer)
 intExpOfProd
 
@@ -185,7 +185,7 @@ intExpOfProd
 intExpOfProdRev = Forall(n, Forall((a, b),
                                    Equals(Mult(Exp(a,n),Exp(b,n)),
                                           Exp(Mult(a,b),n)),
-                                   domain=Complexes, conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
+                                   domain=Complex, conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
                          domain=Integer)
 intExpOfProdRev
 
@@ -193,7 +193,7 @@ intExpOfProdRev
 natsPosExpOfProd = Forall(n, Forall((a, b),
                                     Equals(Exp(Mult(a,b),n),
                                            Mult(Exp(a,n),Exp(b,n))),
-                                    domain=Complexes),
+                                    domain=Complex),
                           domain=NaturalPos)
 natsPosExpOfProd
 
@@ -201,7 +201,7 @@ natsPosExpOfProd
 natsPosExpOfProdRev = Forall(n, Forall((a, b),
                                        Equals(Mult(Exp(a,n),Exp(b,n)),
                                               Exp(Mult(a,b),n)),
-                                       domain=Complexes),
+                                       domain=Complex),
                              domain=NaturalPos)
 natsPosExpOfProdRev
 
@@ -211,7 +211,7 @@ natsPosExpOfProdRev
 intExpOfExp = Forall(n, Forall((a, b),
                             Equals(Exp(Exp(a, b), n),
                                    Exp(a, Mult(b, n))),
-                            domain=Complexes, conditions=[NotEquals(a, zero)]),
+                            domain=Complex, conditions=[NotEquals(a, zero)]),
                   domain=Integer)
 intExpOfExp
 
@@ -219,7 +219,7 @@ intExpOfExp
 intExpOfNegExp = Forall(n, Forall((a, b),
                                Equals(Exp(Exp(a, Neg(b)), n),
                                       Exp(a, Neg(Mult(b, n)))),
-                               domain=Complexes, conditions=[NotEquals(a, zero)]),
+                               domain=Complex, conditions=[NotEquals(a, zero)]),
                         domain=Integer)
 intExpOfNegExp
 
@@ -227,7 +227,7 @@ intExpOfNegExp
 negIntExpOfExp = Forall(n, Forall((a, b),
                             Equals(Exp(Exp(a, b), Neg(n)),
                                    Exp(a, Neg(Mult(b, n)))),
-                               domain=Complexes, conditions=[NotEquals(a, zero)]),
+                               domain=Complex, conditions=[NotEquals(a, zero)]),
                         domain=Integer)
 
 negIntExpOfExp
@@ -236,7 +236,7 @@ negIntExpOfExp
 negIntExpOfNegExp = Forall(n, Forall((a, b),
                                      Equals(Exp(Exp(a, Neg(b)), Neg(n)),
                                             Exp(a, Mult(b, n))),
-                               domain=Complexes, conditions=[NotEquals(a, zero)]),
+                               domain=Complex, conditions=[NotEquals(a, zero)]),
                            domain=Integer)
 
 negIntExpOfNegExp
@@ -246,45 +246,45 @@ diffSquareComm = Forall([a,b],
                         Equals(
                             Exp(Sub(a,b),two),
                             Exp(Sub(b,a),two)),
-                        domain = Complexes)
+                        domain = Complex)
 diffSquareComm
 
 # transferred 2/20/2020
 oneExp = Forall([x],
                Equals(Exp(x,one),
                       x),
-               domain = Complexes)
+               domain = Complex)
 oneExp
 
 # already transferred
 expOne = Forall([x],
                Equals(Exp(one,x),
                      one),
-               domain = Complexes)
+               domain = Complex)
 expOne
 
 # transferred 2/20/2020
 sameExpDistribute = Forall([x,y,z],
                             Equals(Mult(Exp(x,y),Exp(z,y)),
                                  Exp(Mult(x,z),y)),
-                            domain = Complexes)
+                            domain = Complex)
 sameExpDistribute
 
 # transferred 2/20/2020
 sqrtOfProd = Forall(xEtc, Equals(sqrt(Mult(xEtc)),
                               Mult(Etcetera(sqrt(xMulti)))),
-                  domain=RealsPos)
+                  domain=RealPos)
 sqrtOfProd
 
 # transferred 2/20/2020
 prodOfSqrts = Forall(xEtc, Equals(Mult(Etcetera(sqrt(xMulti))),
                                   sqrt(Mult(xEtc))),
-                     domain=RealsPos)
+                     domain=RealPos)
 prodOfSqrts
 
 # transferred 2/20/2020
 sqrtTimesItself = Forall(x, Equals(Mult(sqrt(x), sqrt(x)), x),
-                         domain=Reals, conditions=[GreaterThanEquals(x, zero)])
+                         domain=Real, conditions=[GreaterThanEquals(x, zero)])
 sqrtTimesItself
 
 endTheorems(locals(), __package__)

@@ -1,5 +1,5 @@
 from proveit.logic import Forall, InSet, Equals
-from proveit.number import Integer, Natural, NaturalPos, Reals, RealsPos, RealsNeg, Complexes
+from proveit.number import Integer, Natural, NaturalPos, Real, RealPos, RealNeg, Complex
 from proveit.number import Add, GreaterThan, LessThan
 from proveit.common import a, b, x, aEtc, cEtc, xEtc, yEtc, zEtc, vEtc, wEtc
 from proveit.number.common import zero
@@ -13,16 +13,16 @@ addIntClosure
 addNatClosure = Forall((a, b), InSet(Add(a, b), Natural), domain=Natural)
 addNatClosure
 
-addRealClosure = Forall([xEtc], InSet(Add(xEtc),Reals), domain=Reals)
+addRealClosure = Forall([xEtc], InSet(Add(xEtc),Real), domain=Real)
 addRealClosure
 
-addComplexClosure = Forall([xEtc], InSet(Add(xEtc),Complexes), domain = Complexes)
+addComplexClosure = Forall([xEtc], InSet(Add(xEtc),Complex), domain = Complex)
 addComplexClosure
 
 addNatPosClosure = Forall((aEtc, b, cEtc), InSet(Add(aEtc, b, cEtc), NaturalPos), domain=Natural, conditions=[GreaterThan(b, zero)])
 addNatPosClosure
 
-addZero = Forall(x, Equals(Add(zero, x), x), domain=Complexes)
+addZero = Forall(x, Equals(Add(zero, x), x), domain=Complex)
 addZero
 
 addComm = Forall([vEtc,wEtc,xEtc,yEtc,zEtc],
@@ -30,7 +30,7 @@ addComm = Forall([vEtc,wEtc,xEtc,yEtc,zEtc],
                         Add(vEtc,wEtc,xEtc,yEtc,zEtc),
                         Add(vEtc,yEtc,xEtc,wEtc,zEtc)
                         ),
-                 domain = Complexes
+                 domain = Complex
                  )
 addComm
 
@@ -58,8 +58,8 @@ addAssocRev
 # for applying the theorem because there will be an error if b is left alone with Add, but
 # it will be an issue when deriving this.  Probably need to include |aEtc|+|bEtc| > 0 as a condition.
 strictlyIncreasingAdditions = Forall((aEtc, cEtc), Forall(b, GreaterThan(Add(aEtc, b, cEtc), b),
-                                                          domain=Reals),
-                                     domain=RealsPos)
+                                                          domain=Real),
+                                     domain=RealPos)
 strictlyIncreasingAdditions
 
 
@@ -69,8 +69,8 @@ strictlyIncreasingAdditions
 # for applying the theorem because there will be an error if b is left alone with Add, but
 # it will be an issue when deriving this.  Probably need to include |aEtc|+|bEtc| > 0 as a condition.
 strictlyDecreasingAdditions = Forall((aEtc, cEtc), Forall(b, LessThan(Add(aEtc, b, cEtc), b),
-                                                          domain=Reals),
-                                     domain=RealsNeg)
+                                                          domain=Real),
+                                     domain=RealNeg)
 strictlyDecreasingAdditions
 
 

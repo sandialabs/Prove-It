@@ -42,7 +42,7 @@ def apply_roundingExtraction(expr, roundingExtractionThm, idx_to_extract=None,
     an integer) for the simplification. For example,
     let F(x) = Ceil(x+2+y). Calling
         F(x).roundingExtraction(
-                1, assumptions=[InSet(x, Reals), InSet(y, Reals)]),
+                1, assumptions=[InSet(x, Real), InSet(y, Real)]),
     will eventually end up here and return
         |- F(x) = Ceil(x+y) + 2
     This method is utilized by the F(x).apply_reducedSimplification()
@@ -114,7 +114,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     '''
     from proveit._common_ import n, x
     from proveit.logic import InSet
-    from proveit.number import Add, Integer, Reals
+    from proveit.number import Add, Integer, Real
 
     # among other things, convert any assumptions=None
     # to assumptions=() (thus averting len(None) errors)

@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.number.sets import Reals, RealsPos
+from proveit.number.sets import Real, RealPos
 
 class Max(Operation):
     # operator of the Max operation.
@@ -10,7 +10,7 @@ class Max(Operation):
 
     def _closureTheorem(self, numberSet):
         from . import theorems
-        if numberSet == Reals:
+        if numberSet == Real:
             return theorems.maxRealClosure
-        elif numberSet == RealsPos:
+        elif numberSet == RealPos:
             return theorems.maxRealPosClosure               

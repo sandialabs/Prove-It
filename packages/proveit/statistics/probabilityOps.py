@@ -6,7 +6,7 @@ pkg = __package__
 class Prob(Operation):
     '''
     Updated Sun 1/26/2020 by wdc: updating the __init__ and _formatted
-    methods, import statements. deduceInInterval and deduceInReals
+    methods, import statements. deduceInInterval and deduceInReal
     methods untouched.
     '''
     # the literal operator of the Prob operation class
@@ -26,8 +26,8 @@ class Prob(Operation):
         from axioms import probBetweenZeroAndOne
         return probBetweenZeroAndOne.instantiate({x:self.random_variable, X:self.event})
     
-    def deduceInReals(self):
-        from theorems import probInReals
-        return probInReals.instantiate({x:self.random_variable, X:self.event})
+    def deduceInReal(self):
+        from theorems import probInReal
+        return probInReal.instantiate({x:self.random_variable, X:self.event})
 
 # PROB = Literal(pkg, 'PROB', operationMaker = lambda operands : Prob(*operands))

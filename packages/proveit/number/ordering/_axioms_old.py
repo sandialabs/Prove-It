@@ -1,15 +1,15 @@
 from proveit.logic import Forall, Or, Equals, Implies
-from proveit.number import Reals
+from proveit.number import Real
 from proveit.number import LessThan, LessThanEquals, GreaterThan, GreaterThanEquals
 from proveit.common import x, y, z
 from proveit import beginAxioms, endAxioms
 
 beginAxioms(locals())
 
-lessThanEqualsDef = Forall([x, y], Or(LessThan(x, y), Equals(x, y)), domain=Reals, conditions=LessThanEquals(x, y))
+lessThanEqualsDef = Forall([x, y], Or(LessThan(x, y), Equals(x, y)), domain=Real, conditions=LessThanEquals(x, y))
 lessThanEqualsDef
 
-greaterThanEqualsDef = Forall([x, y], Or(GreaterThan(x, y), Equals(x, y)), domain=Reals, conditions=GreaterThanEquals(x, y))
+greaterThanEqualsDef = Forall([x, y], Or(GreaterThan(x, y), Equals(x, y)), domain=Real, conditions=GreaterThanEquals(x, y))
 greaterThanEqualsDef
 
 reverseGreaterThanEquals = Forall((x, y), Implies(GreaterThanEquals(x, y), LessThanEquals(y, x)))

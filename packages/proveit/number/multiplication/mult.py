@@ -2,8 +2,8 @@ from proveit import (Literal, Operation, USE_DEFAULTS, ExprTuple,
                      ProofFailure, InnerExpr)
 from proveit.logic import Equals, InSet
 from proveit.number import num
-from proveit.number.sets import (Integer, Natural, NaturalPos, Reals,
-                                 RealsNonNeg, RealsPos, Complexes)
+from proveit.number.sets import (Integer, Natural, NaturalPos, Real,
+                                 RealNonNeg, RealPos, Complex)
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
 from proveit._common_ import a, b, c, d, e, i, j, k, m, n, w, x, y, z
@@ -65,25 +65,25 @@ class Mult(Operation):
                 bin = True
             else:
                 thm = multNatPosClosure
-        elif numberSet == Reals:
+        elif numberSet == Real:
             if len(self.operands) == 2:
                 thm = multRealClosureBin
                 bin = True
             else:
                 thm = multRealClosure
-        elif numberSet == RealsPos:
+        elif numberSet == RealPos:
             if len(self.operands) == 2:
                 thm = multRealPosClosureBin
                 bin = True
             else:
                 thm = multRealPosClosure
-        elif numberSet == Complexes:
+        elif numberSet == Complex:
             if len(self.operands) == 2:
                 thm = multComplexClosureBin
                 bin = True
             else:
                 thm = multComplexClosure
-        elif numberSet == RealsNonNeg:
+        elif numberSet == RealNonNeg:
             if len(self.operands) == 2:
                 thm = multRealNonNegClosureBin
                 bin = True
@@ -693,7 +693,7 @@ class Mult(Operation):
         Pull a subset of consecutive operands, self.operands[startIdx:endIdx],
         to one side or another. Returns the equality that equates self to
         this new version.  Give any assumptions necessary to prove that the
-        operands are in Complexes so that the commutation theorem is applicable.
+        operands are in Complex so that the commutation theorem is applicable.
         '''
         if direction == "left": # pull the factor(s) to the left
             if startIdx == 0 or startIdx is None:
@@ -714,7 +714,7 @@ class Mult(Operation):
             :math:`a (b + c + a) d = a b d + a c d + a a d`
             :math:`a (b - c) d = a b d - a c d`
             :math:`a \left(\sum_x f(x)\right c = \sum_x a f(x) c`
-        Give any assumptions necessary to prove that the operands are in Complexes so that
+        Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         '''
         from ._theorems_ import distributeThroughSum, distributeThroughSubtract#, distributeThroughSummation
@@ -780,7 +780,7 @@ class Mult(Operation):
         If groupRemainder is True and there are multiple remaining operands (those not in
         "theFactor"), then these remaining operands are grouped together as a sub-product.
         Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complexes so that
+        Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         '''
         expr = self
@@ -920,8 +920,8 @@ class Mult(Operation):
             # Same base: a^b a^c = a^{b+c}$, or something similar
             
             # Find out the known type of the exponents.
-            possible_exponent_types = [NaturalPos, RealsPos, Reals,
-                                       Complexes]
+            possible_exponent_types = [NaturalPos, RealPos, Real,
+                                       Complex]
             for exponent in operand_exponents:
                 while len(possible_exponent_types) > 1:
                     exponent_type = possible_exponent_types[0]
@@ -953,9 +953,9 @@ class Mult(Operation):
             else:
                 if self.operands.is_binary():
                     _b, _c = operand_exponents
-                    if known_exponent_type == RealsPos:
+                    if known_exponent_type == RealPos:
                         thm = product_of_pos_powers
-                    elif known_exponent_type == Reals:
+                    elif known_exponent_type == Real:
                         thm = product_of_real_powers
                     else: # Complex is default
                         thm = product_of_complex_powers
@@ -964,9 +964,9 @@ class Mult(Operation):
                 else:
                     _b = ExprTuple(*operand_exponents)
                     _m = _b.length(assumptions)
-                    if known_exponent_type == RealsPos:
+                    if known_exponent_type == RealPos:
                         thm = products_of_pos_powers # plural products
-                    elif known_exponent_type == Reals:
+                    elif known_exponent_type == Real:
                         thm = products_of_real_powers # plural products
                     else: # Complex is default
                         thm = products_of_complex_powers 

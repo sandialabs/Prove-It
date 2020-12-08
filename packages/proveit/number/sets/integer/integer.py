@@ -11,7 +11,7 @@ class IntegerSet(NumberSet):
         Yield side-effects when proving 'n in NaturalPos' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions : self.deduceMemberInRationals(member, assumptions)
+        yield lambda assumptions : self.deduceMemberInRational(member, assumptions)
     
     def deduceInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from ._theorems_ import inIntsIsBool
@@ -26,6 +26,6 @@ class IntegerSet(NumberSet):
         from proveit._common_ import x
         return xInIntInBool.instantiate({x:member}, assumptions=assumptions)
 
-    def deduceMemberInRationals(self, member, assumptions=USE_DEFAULTS):
-        from proveit.number.sets.rational._theorems_ import intInRationals
-        return intInRationals.deriveSupersetMembership(member, assumptions)
+    def deduceMemberInRational(self, member, assumptions=USE_DEFAULTS):
+        from proveit.number.sets.rational._theorems_ import intInRational
+        return intInRational.deriveSupersetMembership(member, assumptions)

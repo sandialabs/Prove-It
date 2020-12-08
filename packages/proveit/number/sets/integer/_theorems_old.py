@@ -1,6 +1,6 @@
 from proveit import Operation
 from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, Equals, Boolean
-from proveit.number import Integer, Natural, NaturalPos, Interval, Reals, RealsPos, Complexes
+from proveit.number import Integer, Natural, NaturalPos, Interval, Real, RealPos, Complex
 from proveit.number import Add, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.number import Len
 from proveit.common import a, b, n, m, x, y, P, S, xMulti, xEtc, PxEtc
@@ -28,11 +28,11 @@ inIntsIsBool
 notInIntsIsBool = Forall(a, InSet(NotInSet(a, Integer), Boolean))
 notInIntsIsBool
 
-intInReals = Forall(a, InSet(a, Reals), domain=Integer)
-intInReals
+intInReal = Forall(a, InSet(a, Real), domain=Integer)
+intInReal
 
-intInComplexes = Forall(a, InSet(a, Complexes), domain=Integer)
-intInComplexes
+intInComplex = Forall(a, InSet(a, Complex), domain=Integer)
+intInComplex
 
 inNaturalIfNonNeg = Forall(a, InSet(a,Natural), domain=Integer, conditions=[GreaterThanEquals(a, zero)])
 inNaturalIfNonNeg
@@ -67,11 +67,11 @@ inInterval
 natInInt = Forall(a,InSet(a,Integer),domain = Natural)
 natInInt
 
-natInReals = Forall(a,InSet(a,Reals),domain = Natural)
-natInReals
+natInReal = Forall(a,InSet(a,Real),domain = Natural)
+natInReal
 
-natInComplexes = Forall(a,InSet(a,Complexes),domain = Natural)
-natInComplexes
+natInComplex = Forall(a,InSet(a,Complex),domain = Natural)
+natInComplex
 
 natsPosInNatural = Forall(a,InSet(a,Natural),domain = NaturalPos)
 natsPosInNatural
@@ -79,14 +79,14 @@ natsPosInNatural
 natsPosInInteger = Forall(a,InSet(a,Integer),domain = NaturalPos)
 natsPosInInteger
 
-natPosInRealsPos = Forall(a,InSet(a,RealsPos),domain = NaturalPos)
-natPosInRealsPos
+natPosInRealPos = Forall(a,InSet(a,RealPos),domain = NaturalPos)
+natPosInRealPos
 
-natPosInReals = Forall(a,InSet(a,Reals),domain = NaturalPos)
-natPosInReals
+natPosInReal = Forall(a,InSet(a,Real),domain = NaturalPos)
+natPosInReal
 
-natPosInComplexes = Forall(a,InSet(a,Complexes),domain = NaturalPos)
-natPosInComplexes
+natPosInComplex = Forall(a,InSet(a,Complex),domain = NaturalPos)
+natPosInComplex
 
 naturalLowerBound = Forall(n, GreaterThanEquals(n, zero), domain=Natural)
 naturalLowerBound

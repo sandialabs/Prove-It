@@ -131,10 +131,10 @@ class Add(Operation):
 
     def _closureTheorem(self, numberSet):
         from ._theorems_ import addNatClosure, addRealClosure, addComplexClosure, addIntClosure
-        from proveit.number import Reals, Complexes, Integer, Natural
-        if numberSet == Reals:
+        from proveit.number import Real, Complex, Integer, Natural
+        if numberSet == Real:
             return addRealClosure
-        elif numberSet == Complexes:
+        elif numberSet == Complex:
             return addComplexClosure
         elif numberSet == Integer:
             return addIntClosure
@@ -745,7 +745,7 @@ class Add(Operation):
         if self not in Equals.known_evaluation_sets:
             raise Exception("Should have an evaluation for %s now.  Why not?  "
                               "Perhaps we were not able to prove that the involved numbers "
-                              "are in the Complexes set."%self)
+                              "are in the Complex set."%self)
         return self.evaluation()
 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
@@ -798,7 +798,7 @@ class Add(Operation):
         Given a negated term, termIdx or the first negated term if termIdx is None,
         deduce the equivalence between self and a Subtract form (with the specified
         negated term on the right of the subtraction).  Assumptions
-        may be necessary to deduce operands being in the set of Complexes.
+        may be necessary to deduce operands being in the set of Complex.
         '''
         from proveit.number import Neg
         from proveit.number.addition.subtraction.theorems import addNegAsSubtract
@@ -855,8 +855,8 @@ class Add(Operation):
         from proveit.number.addition.subtraction._theorems_ import (
                 subtractNatClosureBin, subOneInNat)
         from proveit.number import (zero, one, num, Neg, Greater,
-                                    Integer, Natural, Reals, RealsPos,
-                                    RealsNonNeg, Complexes, NaturalPos)
+                                    Integer, Natural, Real, RealPos,
+                                    RealNonNeg, Complex, NaturalPos)
         from proveit.logic import InSet
         if number_set == Integer:
             if len(self.operands) == 2:
@@ -881,7 +881,7 @@ class Add(Operation):
             return addNatClosure.instantiate(
                     {i: num(len(self.operands)), a: self.operands},
                     assumptions=assumptions)
-        if (number_set == NaturalPos or number_set == RealsPos and not
+        if (number_set == NaturalPos or number_set == RealPos and not
                 all(InSet(operand, number_set).proven(assumptions) for
                     operand in self.operands)):
             # Unless we know that all of the operands are in the
@@ -904,19 +904,19 @@ class Add(Operation):
                 temp_thm = addRealPosFromNonNeg
             #print(temp_thm, {i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
             return temp_thm.instantiate({i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]}, assumptions=assumptions)
-        if number_set == RealsPos:
+        if number_set == RealPos:
             if len(self.operands) == 2:
                 return addRealPosClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addRealPosClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
-        if number_set == RealsNonNeg:
+        if number_set == RealNonNeg:
             if len(self.operands) == 2:
                 return addRealNonNegClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addRealNonNegClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
-        if number_set == Reals:
+        if number_set == Real:
             if len(self.operands) == 2:
                 return addRealClosureBin.instantiate({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addRealClosure.instantiate({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
-        if number_set == Complexes:
+        if number_set == Complex:
             if len(self.operands) == 2:
                 return addComplexClosureBin.instantiate({a:self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addComplexClosure.instantiate({i:num(len(self.operands)), a: self.operands}, assumptions=assumptions)
@@ -951,9 +951,9 @@ class Add(Operation):
                                assumptions=assumptions)
     def deduceStrictIncrease(self, lowerBoundTermIndex, assumptions=frozenset()):
         '''
-        Deducing that all other terms are in RealsPos, deduce an return
+        Deducing that all other terms are in RealPos, deduce an return
         the statement that the sum is greater than the term at lowerBoundTermIndex.
-        Assumptions may be needed to deduce that the terms are in RealsPos or Reals.
+        Assumptions may be needed to deduce that the terms are in RealPos or Real.
         '''
         from ._theorems_ import strictlyIncreasingAdditions
         return strictlyIncreasingAdditions.instantiate(
@@ -965,9 +965,9 @@ class Add(Operation):
 
     def deduceStrictDecrease(self, upperBoundTermIndex, assumptions=frozenset()):
         '''
-        Deducing that all other terms are in RealsNeg, deduce an return
+        Deducing that all other terms are in RealNeg, deduce an return
         the statement that the sum is less than the term at upperBoundTermIndex.
-        Assumptions may be needed to deduce that the terms are in RealsPos or Reals.
+        Assumptions may be needed to deduce that the terms are in RealPos or Real.
         '''
         from ._theorems_ import strictlyDecreasingAdditions
         return strictlyDecreasingAdditions.instantiate(
@@ -981,7 +981,7 @@ class Add(Operation):
         Factor out "theFactor" from this sum, pulling it either to the "left" or "right".
         If groupFactor is True and theFactor is a product, these operands are grouped
         together as a sub-product.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complexes so that
+        Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         '''
         from proveit.number.multiplication._theorems_ import distributeThroughSum

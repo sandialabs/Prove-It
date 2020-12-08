@@ -3,7 +3,7 @@ from proveit.logic import IrreducibleValue, Equals
 
 
 class IrrationalLiteral(IrreducibleValue, Literal):
-    _inRealsPosStmts = None # initializes when needed
+    _inRealPosStmts = None # initializes when needed
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
     
@@ -15,11 +15,11 @@ class IrrationalLiteral(IrreducibleValue, Literal):
             return Equals(self, self).prove()
         pass # need axioms/theorems to prove inequality amongst different numerals
         
-    def deduceInRealsPos(self):
-        if IrrationalLiteral._inRealsPosStmts is None:
-            from real.theorems import eInRealsPos, piInRealsPos
-            IrrationalLiteral._inRealsPosStmts = {'e':eInRealsPos, 'pi':piInRealsPos}
-        return IrrationalLiteral._inRealsPosStmts[self.name]
+    def deduceInRealPos(self):
+        if IrrationalLiteral._inRealPosStmts is None:
+            from real.theorems import eInRealPos, piInRealPos
+            IrrationalLiteral._inRealPosStmts = {'e':eInRealPos, 'pi':piInRealPos}
+        return IrrationalLiteral._inRealPosStmts[self.name]
 
     def deduceNotZero(self):
         if IrrationalLiteral._notZeroStmts is None:

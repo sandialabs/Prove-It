@@ -1,6 +1,6 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals, Iff, And, SetOfAll
-from proveit.number import Integer, Interval, Reals, RealsPos, Complexes
+from proveit.number import Integer, Interval, Real, RealPos, Complex
 from proveit.number import Abs, Mod, ModAbs, GreaterThanEquals, LessThanEquals, Add, Sub, Neg, Mult, frac, IntervalCO
 from proveit.common import a, b, c, x, y, N, xEtc, xMulti
 from proveit.number.common import zero, one
@@ -17,71 +17,71 @@ modInInterval = Forall((a, b), InSet(Mod(a, b), Interval(zero, Sub(b, one))), do
 modInInterval
 
 # transferred by wdc 3/11/2020
-modRealClosure = Forall((a, b), InSet(Mod(a, b), Reals), domain=Reals)
+modRealClosure = Forall((a, b), InSet(Mod(a, b), Real), domain=Real)
 modRealClosure
 
 # transferred by wdc 3/11/2020
-modAbsRealClosure = Forall((a, b), InSet(ModAbs(a, b), Reals), domain=Reals)
+modAbsRealClosure = Forall((a, b), InSet(ModAbs(a, b), Real), domain=Real)
 modAbsRealClosure
 
 # transferred by wdc 3/11/2020
-absComplexClosure = Forall([a], InSet(Abs(a), Reals), domain=Complexes)
+absComplexClosure = Forall([a], InSet(Abs(a), Real), domain=Complex)
 absComplexClosure
 
 # transferred by wdc 3/11/2020
-absNonzeroClosure = Forall([a], InSet(Abs(a), RealsPos), domain=Complexes, conditions=[NotEquals(a, zero)])
+absNonzeroClosure = Forall([a], InSet(Abs(a), RealPos), domain=Complex, conditions=[NotEquals(a, zero)])
 absNonzeroClosure
 
 # transferred by wdc 3/11/2020
-modInIntervalCO = Forall((a, b), InSet(Mod(a, b), IntervalCO(zero, b)), domain=Reals)
+modInIntervalCO = Forall((a, b), InSet(Mod(a, b), IntervalCO(zero, b)), domain=Real)
 modInIntervalCO
 
 # transferred by wdc 3/11/2020
-absIsNonNeg = Forall(a, GreaterThanEquals(Abs(a), zero), domain=Complexes)
+absIsNonNeg = Forall(a, GreaterThanEquals(Abs(a), zero), domain=Complex)
 absIsNonNeg
 
 # transferred by wdc 3/11/2020
-absNotEqZero = Forall([a], NotEquals(Abs(a), zero), domain=Complexes, conditions=[NotEquals(a, zero)])
+absNotEqZero = Forall([a], NotEquals(Abs(a), zero), domain=Complex, conditions=[NotEquals(a, zero)])
 absNotEqZero
 
 # transferred by wdc 3/11/2020
 absElim = Forall(x, Equals(Abs(x), x),
-                domain = RealsPos)
+                domain = RealPos)
 absElim
 
 # transferred by wdc 3/11/2020
 absIneq = Forall((x, y), Iff(LessThanEquals(Abs(x), y), 
                              And(LessThanEquals(Neg(y), x), LessThanEquals(x, y))),
-                 domain = Reals, conditions=[GreaterThanEquals(y, zero)])
+                 domain = Real, conditions=[GreaterThanEquals(y, zero)])
 absIneq
 
 # transferred by wdc 3/11/2020
 triangleInequality = Forall([a,b],
                         LessThanEquals(Abs(Add(a,b)),Add(Abs(a),Abs(b))),
-                        domain=Complexes)
+                        domain=Complex)
 triangleInequality
 
 # transferred by wdc 3/11/2020
 absProd = Forall(xEtc,
                  Equals(Abs(Mult(xEtc)),
                         Mult(Etcetera(Abs(xMulti)))),
-                 domain = Complexes)
+                 domain = Complex)
 absProd
 
 # transferred by wdc 3/11/2020
 absFrac = Forall([a,b],
                  Equals(Abs(frac(a,b)),frac(Abs(a),Abs(b))),
-                 domain = Complexes)
+                 domain = Complex)
 absFrac
 
 # transferred by wdc 3/11/2020
-modAbsScaled = Forall((a, b, c), Equals(Mult(a, ModAbs(b, c)), ModAbs(Mult(a, b), Mult(a, c))), domain=Reals)
+modAbsScaled = Forall((a, b, c), Equals(Mult(a, ModAbs(b, c)), ModAbs(Mult(a, b), Mult(a, c))), domain=Real)
 modAbsScaled
 
 # transferred by wdc 3/11/2020
 modAbsSubtractCancel = Forall((a, b, c), LessThanEquals(ModAbs(Sub(Mod(Add(b, a), c), b), c), 
                                                         Abs(a)),
-                              domain=Reals)
+                              domain=Real)
 modAbsSubtractCancel
 
 # transferred by wdc 3/11/2020

@@ -27,15 +27,15 @@ class Abs(Operation):
     # def deduceGreaterThanEqualsZero(self, assumptions=frozenset()):
     #     # not yet clear how to update this method
     #     from ._theorems_ import absIsNonNeg
-    #     deduceInComplexes(self.operand, assumptions)
+    #     deduceInComplex(self.operand, assumptions)
     #     return absIsNonNeg.instantiate({a:self.operand}).checked(assumptions)
 
     def deduceGreaterThanEqualsZero(self, assumptions=USE_DEFAULTS):
         # 03/21/2020 wdc: a first attempt at updating this method
         from proveit.logic import InSet
-        from proveit.number import Complexes
+        from proveit.number import Complex
         from ._theorems_ import absIsNonNeg
-        # InSet(self.operand, Complexes).prove(assumptions=assumptions)
+        # InSet(self.operand, Complex).prove(assumptions=assumptions)
         return absIsNonNeg.instantiate({a:self.operand}, assumptions=assumptions)
     
     # def distribute(self, assumptions=frozenset()):
@@ -47,11 +47,11 @@ class Abs(Operation):
     #     from ._theorems_ import absFrac, absProd
     #     from proveit.number import Div, Mult
     #     if isinstance(self.operand, Div):
-    #         deduceInComplexes(self.operand.numerator, assumptions)
-    #         deduceInComplexes(self.operand.denominator, assumptions)
+    #         deduceInComplex(self.operand.numerator, assumptions)
+    #         deduceInComplex(self.operand.denominator, assumptions)
     #         return absFrac.instantiate({a:self.operand.numerator, b:self.operand.denominator}).checked(assumptions)
     #     elif isinstance(self.operand, Mult):
-    #         deduceInComplexes(self.operand.operands, assumptions)
+    #         deduceInComplex(self.operand.operands, assumptions)
     #         return absProd.instantiate({xEtc:self.operand.operands}).checked(assumptions)
     #     else:
     #         raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
@@ -70,7 +70,7 @@ class Abs(Operation):
         from ._theorems_ import absFrac, absProd
         from proveit._common_ import n, xx
         from proveit.logic import InSet
-        from proveit.number import num, Complexes, Div, Mult
+        from proveit.number import num, Complex, Div, Mult
         if isinstance(self.operand, Div):
             return absFrac.instantiate(
                     {a:self.operand.numerator, b:self.operand.denominator},
@@ -96,7 +96,7 @@ class Abs(Operation):
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
-        Given a number set number_set (such as Integer, Reals, etc),
+        Given a number set number_set (such as Integer, Real, etc),
         attempt to prove that the given expression is in that number
         set using the appropriate closure theorem.
         Created: 3/21/2020 by wdc, based on the same method in the Add
@@ -110,23 +110,23 @@ class Abs(Operation):
         from proveit.logic import InSet
         from proveit.number.absolute_value._theorems_ import (
                   absComplexClosure, absNonzeroClosure,
-                  absComplexClosureNonNegReals)
-        from proveit.number import Complexes, Reals, RealsNonNeg, RealsPos
+                  absComplexClosureNonNegReal)
+        from proveit.number import Complex, Real, RealNonNeg, RealPos
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
         assumptions = defaults.checkedAssumptions(assumptions)
 
-        if number_set == Reals:
+        if number_set == Real:
             return absComplexClosure.instantiate({a:self.operand},
                       assumptions=assumptions)
 
-        if number_set == RealsPos:
+        if number_set == RealPos:
             return absNonzeroClosure.instantiate({a:self.operand},
                       assumptions=assumptions)
 
-        if number_set == RealsNonNeg:
-            return absComplexClosureNonNegReals.instantiate({a:self.operand},
+        if number_set == RealNonNeg:
+            return absComplexClosureNonNegReal.instantiate({a:self.operand},
                       assumptions=assumptions)
 
         msg = ("'Abs.deduceInNumberSet()' not implemented for "

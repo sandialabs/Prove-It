@@ -194,7 +194,7 @@ class Div(Operation):
             :math:`(a + b + c) / d = a / d + b / d + c / d`
             :math:`(a - b) / d = a / d - b / d`
             :math:`\left(\sum_x f(x)\right / y = \sum_x [f(x) / y]`
-        Give any assumptions necessary to prove that the operands are in Complexes so that
+        Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.            
         '''
         from proveit.number import Add, subtract, Sum
@@ -204,9 +204,9 @@ class Div(Operation):
         elif isinstance(self.numerator, subtract):
             return distributefracThroughSubtract.instantiate({x:self.numerator.operands[0], y:self.numerator.operands[1], z:self.denominator})
         elif isinstance(self.numerator, Sum):
-            # Should deduce in Complexes, but distributeThroughSummation doesn't have a domain restriction right now
+            # Should deduce in Complex, but distributeThroughSummation doesn't have a domain restriction right now
             # because this is a little tricky.   To do.
-            #deduceInComplexes(self.operands, assumptions)
+            #deduceInComplex(self.operands, assumptions)
             yEtcSub = self.numerator.indices
             Pop, Pop_sub = Operation(P, self.numerator.indices), self.numerator.summand
             S_sub = self.numerator.domain
@@ -223,8 +223,8 @@ class Div(Operation):
         $a^c/b^c$ to $(a/b)^c$.
         '''
         from proveit.logic import InSet
-        from proveit.number import (Exp, NaturalPos, RealsPos, Reals,
-                                    Complexes)
+        from proveit.number import (Exp, NaturalPos, RealPos, Real,
+                                    Complex)
         from proveit.number.exponentiation._theorems_ import (
                 quotient_of_posnat_powers, quotient_of_pos_powers,
                 quotient_of_real_powers, quotient_of_complex_powers)
@@ -236,8 +236,8 @@ class Div(Operation):
                 exponents = (self.numerator.exponent, 
                              self.denominator.exponent)
                 # Find out the known type of the exponents.
-                possible_exponent_types = [NaturalPos, RealsPos, Reals,
-                                           Complexes]
+                possible_exponent_types = [NaturalPos, RealPos, Real,
+                                           Complex]
                 for exponent in exponents:
                     while len(possible_exponent_types) > 1:
                         exponent_type = possible_exponent_types[0]
@@ -254,9 +254,9 @@ class Div(Operation):
                             {a:same_base, m:_m, n:_n}, assumptions=assumptions)        
                 else:
                     _b, _c = exponents
-                    if known_exponent_type==RealsPos:
+                    if known_exponent_type==RealPos:
                         thm = quotient_of_pos_powers
-                    elif known_exponent_type==Reals:
+                    elif known_exponent_type==Real:
                         thm = quotient_of_real_powers
                     else: # Complex is the default
                         thm = quotient_of_complex_powers
@@ -291,17 +291,17 @@ class Div(Operation):
         from proveit.number.division._theorems_ import (divRealClosure,
                                                         divideRealPosClosure,
                                                         divideComplexClosure)
-        from proveit.number import Reals, RealsPos, Complexes
+        from proveit.number import Real, RealPos, Complex
 
-        if number_set == Reals:
+        if number_set == Real:
             return divRealClosure.instantiate(
                 {a:self.numerator, b:self.denominator},
                 assumptions=assumptions)
-        elif number_set == RealsPos:
+        elif number_set == RealPos:
             return divideRealPosClosure.instantiate(
                 {a:self.numerator, b:self.denominator},
                 assumptions=assumptions)
-        elif number_set == Complexes:
+        elif number_set == Complex:
             return divideComplexClosure.instantiate(
                 {a:self.numerator, b:self.denominator},
                 assumptions=assumptions)
@@ -314,7 +314,7 @@ class Div(Operation):
         If groupFactor is True and theFactor is a product, it will be grouped together as a 
         sub-product.  groupRemainder is not relevant kept for compatibility with other factor
         methods.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complexes so that
+        Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         '''        
         from ._theorems_ import fracInProdRev, prodOfFracsRev, prodOfFracsLeftNumerOneRev, prodOfFracsRightNumerOneRev

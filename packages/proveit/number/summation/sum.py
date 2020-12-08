@@ -1,7 +1,7 @@
 from proveit import (Literal, Operation, OperationOverInstances, free_vars,
                      maybeFenced, USE_DEFAULTS, ProofFailure)
 from proveit.logic import InSet
-from proveit.number.sets import RealInterval, Interval, Reals, Integer, Natural, Complexes
+from proveit.number.sets import RealInterval, Interval, Real, Integer, Natural, Complex
 from proveit.number.negation import Neg
 from proveit._common_ import a, f, P, S
 
@@ -37,8 +37,8 @@ class Sum(OperationOverInstances):
         # think about this later
         if isinstance(self.domain,RealInterval):
             raise ValueError('Sum cannot sum over non-discrete set (e.g. Interval)')
-        elif self.domain == Reals:
-            raise ValueError('Sum cannot sum over Reals.')
+        elif self.domain == Real:
+            raise ValueError('Sum cannot sum over Real.')
         elif self.domain == Integer:
             self.domain = Interval(Neg(infinity),infinity)
         elif self.domain == Natural:
@@ -46,7 +46,7 @@ class Sum(OperationOverInstances):
         """
 
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
-        from ._theorems_ import summationNatsClosure, summationIntsClosure, summationRealsClosure, summationComplexesClosure
+        from ._theorems_ import summationNatsClosure, summationIntsClosure, summationRealClosure, summationComplexClosure
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         Operation(P, self.instanceVars)
@@ -55,10 +55,10 @@ class Sum(OperationOverInstances):
             thm = summationNatsClosure
         elif numberSet == Integer:
             thm = summationIntsClosure
-        elif numberSet == Reals:
-            thm = summationRealsClosure
-        elif numberSet == Complexes:
-            thm = summationComplexesClosure
+        elif numberSet == Real:
+            thm = summationRealClosure
+        elif numberSet == Complex:
+            thm = summationComplexClosure
         else:
             raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
         return thm.instantiate({P_op:P_op_sub, S:self.domain, Q_op:Q_op_sub}, relabelMap={xMulti:self.instanceVars}, 
@@ -127,7 +127,7 @@ class Sum(OperationOverInstances):
         else:
             if self.domain.lowerBound == zero and self.domain.upperBound == infinity:
                 #We're in the infinite geom sum domain!
-                deduceInComplexes(xVal, assumptions)
+                deduceInComplex(xVal, assumptions)
                 return infGeomSum.instantiate({x:xVal, m:mVal})
             else:
                 #We're in the finite geom sum domain!
@@ -135,7 +135,7 @@ class Sum(OperationOverInstances):
                 lVal = self.domain.upperBound
                 deduceInInteger(kVal, assumptions)
                 deduceInInteger(lVal, assumptions)
-                deduceInComplexes(xVal, assumptions)
+                deduceInComplex(xVal, assumptions)
                 return finGeomSum.instantiate({x:xVal, m:mVal, k:kVal, l:lVal})
 #        else:
 #            print "Not a geometric sum!"
@@ -231,7 +231,7 @@ class Sum(OperationOverInstances):
         If groupFactor is True and theFactor is a product, it will be grouped together as a 
         sub-product.  groupRemainder is not relevant kept for compatibility with other factor
         methods.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complexes so that
+        Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         '''
         from proveit.number.multiplication.theorems import distributeThroughSummationRev
@@ -254,9 +254,9 @@ class Sum(OperationOverInstances):
             Pop, Pop_sub = Operation(P, self.indices), summandFactorEq.rhs.operands[0]
             xSub = []
             zSub = factorOperands
-        # We need to deduce that theFactor is in Complexes and that all instances of Pop_sup are in Complexes.
-        deduceInComplexes(factorOperands, assumptions=assumptions)
-        deduceInComplexes(Pop_sub, assumptions=assumptions | {InSet(idx, self.domain) for idx in self.indices}).generalize(self.indices, domain=self.domain).checked(assumptions)
+        # We need to deduce that theFactor is in Complex and that all instances of Pop_sup are in Complex.
+        deduceInComplex(factorOperands, assumptions=assumptions)
+        deduceInComplex(Pop_sub, assumptions=assumptions | {InSet(idx, self.domain) for idx in self.indices}).generalize(self.indices, domain=self.domain).checked(assumptions)
         # Now we instantiate distributThroughSummationRev
         spec1 = distributeThroughSummationRev.instantiate({Pop:Pop_sub, S:self.domain, yEtc:self.indices, xEtc:Etcetera(MultiVariable(xDummy)), zEtc:Etcetera(MultiVariable(zDummy))}).checked()
         eq.update(spec1.deriveConclusion().instantiate({Etcetera(MultiVariable(xDummy)):xSub, Etcetera(MultiVariable(zDummy)):zSub}))

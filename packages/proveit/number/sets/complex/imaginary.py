@@ -2,7 +2,7 @@ from proveit import Literal, USE_DEFAULTS
 from proveit.logic import IrreducibleValue, Equals
 
 class ImaginaryLiteral(IrreducibleValue, Literal):
-    _inComplexesStmts = None # initializes when needed
+    _inComplexStmts = None # initializes when needed
 
     def __init__(self):
         Literal.__init__(self, 'i', r'\mathsf{i}', theory=__file__)
@@ -12,11 +12,11 @@ class ImaginaryLiteral(IrreducibleValue, Literal):
             return Equals(self, self).prove()
         pass # need axioms/theorems to prove inequality amongst different numerals
         
-    def deduceInComplexes(self):
-        if ComplexLiteral._inComplexesStmts is None:
-            from complex.theorems import iInComplexes
-            ComplexLiteral._inComplexesStmts = {'i':iInComplexes}
-        return ComplexLiteral._inComplexesStmts[self.name]    
+    def deduceInComplex(self):
+        if ComplexLiteral._inComplexStmts is None:
+            from complex.theorems import iInComplex
+            ComplexLiteral._inComplexStmts = {'i':iInComplex}
+        return ComplexLiteral._inComplexStmts[self.name]    
 
     def deduceNotZero(self):
         if ComplexLiteral._notZeroStmts is None:

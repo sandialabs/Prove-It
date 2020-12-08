@@ -1,1 +1,1 @@
-from ._common_ import Rationals, RationalsPos, RationalsNeg, RationalsNonNeg
+from ._common_ import Rational, RationalPos, RationalNeg, RationalNonNeg

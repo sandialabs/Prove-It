@@ -86,8 +86,8 @@ class Less(LesserRelation):
         # positive added to it.
         from proveit.number import Add, zero
         if self.rhs == zero:
-            from ._theorems import negativeIfInRealsNeg
-            return negativeIfInRealsNeg.instantiate(
+            from ._theorems import negativeIfInRealNeg
+            return negativeIfInRealNeg.instantiate(
                     {a:self.lhs}, assumptions=assumptions)
         if isinstance(self.rhs, Add):
             if self.lhs in self.rhs.terms:
@@ -134,7 +134,7 @@ class Less(LesserRelation):
     def deriveRelaxed(self, assumptions=USE_DEFAULTS):
         '''
         Relax a < b to a <= b, deducing the latter from the former (self) and returning the latter.
-        Assumptions may be required to deduce that a and b are in Reals.
+        Assumptions may be required to deduce that a and b are in Real.
         '''
         from ._theorems_ import relaxLess
         return relaxLess.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
@@ -182,7 +182,7 @@ class Less(LesserRelation):
     def deriveNegated(self, assumptions=frozenset()):
         '''
         From :math:`a < b`, derive and return :math:`-a > -b`.
-        Assumptions may be required to prove that a, and b are in Reals.        
+        Assumptions may be required to prove that a, and b are in Real.        
         '''
         from ._theorems_ import negatedLessThan
         return negatedLessThan.instantiate({a:self.lhs, b:self.rhs})
@@ -193,7 +193,7 @@ class Less(LesserRelation):
         From a < b, derive and return a + c < b + c
         where c is the given 'addend'.
         Assumptions may be required to prove that a, b, and c are in 
-        Reals.
+        Real.
         '''
         from ._theorems_ import lessShiftAddRight, lessShiftAddLeft #, lessThanSubtract
         if addendSide == 'right':
@@ -462,7 +462,7 @@ class LessEq(LesserRelation):
     def deriveNegated(self, assumptions=frozenset()):
         '''
         From :math:`a \leq b`, derive and return :math:`-a \geq -b`.
-        Assumptions may be required to prove that a, and b are in Reals.        
+        Assumptions may be required to prove that a, and b are in Real.        
         '''
         from ._theorems_ import negatedLessThanEquals
         return negatedLessThanEquals.instantiate({a:self.lhs, b:self.rhs})
@@ -472,7 +472,7 @@ class LessEq(LesserRelation):
         From a <= b, derive and return a + c <= b + c 
         where c is the given 'addend'.
         Assumptions may be required to prove that a, b, and c are in 
-        Reals.
+        Real.
         '''
         from ._theorems_ import lessEqShiftAddRight, lessEqShiftAddLeft #, lessThanSubtract
         if addendSide == 'right':

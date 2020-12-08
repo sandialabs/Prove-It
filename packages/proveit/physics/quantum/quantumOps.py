@@ -1,6 +1,6 @@
 from proveit import Operation, Literal, Function
 from proveit.linalg import SU, TensorExp
-from proveit.number import num, Complexes, Exp
+from proveit.number import num, Complex, Exp
 
 pkg = __package__ # delete this later; will no longer be needed
 
@@ -134,7 +134,7 @@ def QubitRegisterSpace(num_Qbits):
     # need some extra curly brackets around the Exp() expression
     # to allow the latex superscript to work on something
     # already superscripted
-    return TensorExp({Exp(Complexes, num(2))}, num_Qbits)
+    return TensorExp({Exp(Complex, num(2))}, num_Qbits)
 
 def RegisterSU(n):
     '''

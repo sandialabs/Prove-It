@@ -63,10 +63,10 @@ class Greater(GreaterRelation):
         OrderingRelation.__init__(self, Greater._operator_,lhs,rhs)
         
     def conclude(self, assumptions):
-        from ._theorems_ import positiveIfInRealsPos
+        from ._theorems_ import positiveIfInRealPos
         from proveit.number import zero
         if self.rhs == zero:
-            positiveIfInRealsPos.instantiate({a:self.lhs},
+            positiveIfInRealPos.instantiate({a:self.lhs},
                                              assumptions=assumptions)
         return GreaterRelation.conclude(self, assumptions)
     
@@ -91,7 +91,7 @@ class Greater(GreaterRelation):
     def deriveRelaxed(self, assumptions=frozenset()):
         '''
         Relax a > b to a >= b, deducing the latter from the former (self) and returning the latter.
-        Assumptions may be required to deduce that a and b are in Reals.
+        Assumptions may be required to deduce that a and b are in Real.
         '''
         from ._theorems_ import relaxGreater
         return relaxGreater.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
@@ -132,7 +132,7 @@ class Greater(GreaterRelation):
     def deriveNegated(self, assumptions=frozenset()):
         '''
         From :math:`a > b`, derive and return :math:`-a < -b`.
-        Assumptions may be required to prove that a, and b are in Reals.        
+        Assumptions may be required to prove that a, and b are in Real.        
         '''
         from ._theorems_ import negatedGreaterThan
         return negatedGreaterThan.instantiate({a:self.lhs, b:self.rhs})
@@ -142,7 +142,7 @@ class Greater(GreaterRelation):
         From a > b, derive and return a + c > b + c 
         where c is the given 'addend'.
         Assumptions may be required to prove that a, b, and c are in 
-        Reals.
+        Real.
         '''
         from ._theorems_ import greaterShiftAddRight, greaterShiftAddLeft
         if addendSide == 'right':
@@ -221,8 +221,8 @@ class GreaterEq(GreaterRelation):
         # positive added to it.
         from proveit.number import zero
         if self.rhs == zero:
-            from ._theorems_ import nonNegIfInRealsNonNeg
-            return nonNegIfInRealsNonNeg.instantiate(
+            from ._theorems_ import nonNegIfInRealNonNeg
+            return nonNegIfInRealNonNeg.instantiate(
                     {a:self.lhs}, assumptions=assumptions)
         return GreaterRelation.conclude(self, assumptions)
     
@@ -282,7 +282,7 @@ class GreaterEq(GreaterRelation):
     def deriveNegated(self, assumptions=frozenset()):
         '''
         From :math:`a \geq b`, derive and return :math:`-a \leq -b`.
-        Assumptions may be required to prove that a, and b are in Reals.        
+        Assumptions may be required to prove that a, and b are in Real.        
         '''
         from ._theorems_ import negatedGreaterThanEquals
         return negatedGreaterThanEquals.instantiate({a:self.lhs, b:self.rhs})
@@ -293,7 +293,7 @@ class GreaterEq(GreaterRelation):
         From a >= b, derive and return a + c >= b + c
         where c is the given 'addend'.
         Assumptions may be required to prove that a, b, and c are in 
-        Reals.
+        Real.
         '''
         from ._theorems_ import greaterEqShiftAddRight, greaterEqShiftAddLeft
         if addendSide == 'right':

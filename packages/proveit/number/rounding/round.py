@@ -1,7 +1,7 @@
 from proveit import (defaults, Function, InnerExpr, Literal, ProofFailure,
                      USE_DEFAULTS)
 from proveit.logic import InSet
-from proveit.number.sets import Integer, Natural, Reals
+from proveit.number.sets import Integer, Natural, Real
 from proveit.number.rounding.rounding_methods import (
         apply_roundingElimination, apply_roundingExtraction,
         apply_reducedSimplification, rounding_deduceInNumberSet)

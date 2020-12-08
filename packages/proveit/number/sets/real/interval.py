@@ -45,9 +45,9 @@ class IntervalOO(RealInterval):
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
-    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import all_in_IntervalOO_in_Reals
-        return all_in_IntervalOO_in_Reals.instantiate(
+    def deduceMemberInReal(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import all_in_IntervalOO_in_Real
+        return all_in_IntervalOO_in_Real.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
@@ -109,9 +109,9 @@ class IntervalOC(RealInterval):
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
-    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import all_in_IntervalOC_in_Reals
-        return all_in_IntervalOC_in_Reals.instantiate(
+    def deduceMemberInReal(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import all_in_IntervalOC_in_Real
+        return all_in_IntervalOC_in_Real.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
@@ -160,9 +160,9 @@ class IntervalCO(RealInterval):
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
-    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import all_in_IntervalCO_in_Reals
-        return all_in_IntervalCO_in_Reals.instantiate(
+    def deduceMemberInReal(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import all_in_IntervalCO_in_Real
+        return all_in_IntervalCO_in_Real.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
@@ -211,9 +211,9 @@ class IntervalCC(RealInterval):
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 
-    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import all_in_IntervalCC_in_Reals
-        return all_in_IntervalCC_in_Reals.instantiate(
+    def deduceMemberInReal(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import all_in_IntervalCC_in_Real
+        return all_in_IntervalCC_in_Real.instantiate(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
 

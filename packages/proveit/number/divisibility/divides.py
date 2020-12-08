@@ -2,7 +2,7 @@ from proveit import (asExpression, Theory, defaults, Literal, Operation,
                      ProofFailure, TransitiveRelation, USE_DEFAULTS)
 from proveit.logic import Equals, InSet, NotEquals
 from proveit.number import Exp, Mult, num
-from proveit.number import zero, Complexes, Integer, NaturalPos
+from proveit.number import zero, Complex, Integer, NaturalPos
 
 class DividesRelation(TransitiveRelation):
 
@@ -108,11 +108,11 @@ class Divides(DividesRelation):
         #-- Case (1): x|x with x != 0 known or assumed               --#
         #-- -------------------------------------------------------- --#
         from proveit.logic import InSet, NotEquals
-        from proveit.number import zero, Complexes
+        from proveit.number import zero, Complex
         err_str = "In Divides.conclude() we tried:\n"
         if self.lhs==self.rhs:
             if (NotEquals(self.lhs, zero).proven(assumptions=assumptions) and
-                InSet(self.lhs, Complexes).proven(assumptions=assumptions)):
+                InSet(self.lhs, Complex).proven(assumptions=assumptions)):
                 # Trivial x|x with complex x ≠ 0
                 return self.concludeViaReflexivity(assumptions)
             else:
@@ -129,7 +129,7 @@ class Divides(DividesRelation):
         #-- -------------------------------------------------------- --#
         if self.rhs==zero:
             if (NotEquals(self.lhs, zero).proven(assumptions=assumptions) and
-                InSet(self.lhs, Complexes).proven(assumptions=assumptions)):
+                InSet(self.lhs, Complex).proven(assumptions=assumptions)):
                 # We have 0/x with complex x ≠ 0
                 return self.concludeViaZeroFactor(assumptions)
             else:
@@ -364,7 +364,7 @@ class Divides(DividesRelation):
                 rhs1 = self.rhs.operands[0]
                 rhs2 = self.rhs.operands[1]
 
-                if (lhs1 == rhs1 and InSet(lhs1, Complexes).proven() and
+                if (lhs1 == rhs1 and InSet(lhs1, Complex).proven() and
                     NotEquals(lhs1, zero).proven()):
 
                     from ._theorems_ import common_factor_elimination

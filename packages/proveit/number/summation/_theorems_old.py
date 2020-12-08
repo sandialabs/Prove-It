@@ -1,6 +1,6 @@
 from proveit import Operation
 from proveit.logic import Forall, Implies, InSet, Equals, SetOfAll
-from proveit.number import Integer, Reals, Complexes
+from proveit.number import Integer, Real, Complex
 from proveit.number import Sum, Interval, Exp, frac, Sub, Add, LessThan, LessThanEquals
 from proveit.common import a, b, c, f, g, k, l, m, n, x, y, fa, fx, gx, gy, xMulti, xEtc, P, R, S, PxEtc
 from proveit.number.common import zero, one, infinity
@@ -9,12 +9,12 @@ from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-summationRealClosure = Forall([P, S], Implies(Forall(xMulti, InSet(PxEtc, Reals), domain=S), 
-                                              InSet(Sum(xMulti, PxEtc, domain=S), Reals)))
+summationRealClosure = Forall([P, S], Implies(Forall(xMulti, InSet(PxEtc, Real), domain=S), 
+                                              InSet(Sum(xMulti, PxEtc, domain=S), Real)))
 summationRealClosure
 
-summationComplexClosure = Forall([P, S], Implies(Forall(xMulti, InSet(PxEtc, Complexes), domain=S), 
-                                          InSet(Sum(xMulti, PxEtc, domain=S), Complexes)))
+summationComplexClosure = Forall([P, S], Implies(Forall(xMulti, InSet(PxEtc, Complex), domain=S), 
+                                          InSet(Sum(xMulti, PxEtc, domain=S), Complex)))
 summationComplexClosure
 
 
@@ -49,7 +49,7 @@ indexShift
 
 infGeomSum = Forall(x,Equals(Sum(m,Exp(x,m),Interval(zero,infinity)), 
              frac(one,Sub(one,x))),
-              domain=Complexes
+              domain=Complex
               )
 infGeomSum
 
@@ -58,7 +58,7 @@ finGeomSum = Forall([x,k,l],
                  frac(Sub(Exp(x,Add(l,one)),Exp(x,k)),Sub(x,one))),
                  conditions=[InSet(k,Integer),
                   InSet(l,Integer),
-                  InSet(x,Complexes),
+                  InSet(x,Complex),
                   LessThan(k,l)])
 finGeomSum
 
@@ -72,9 +72,9 @@ sameSums = Forall([f,g],
                         domain=Integer))
 sameSums
 
-# Could also make such a theorem to apply whenever addition is commutative, not just Complexes.
+# Could also make such a theorem to apply whenever addition is commutative, not just Complex.
 equivSums = Forall((f, g, R, S),
-                   Implies(Forall(a, InSet(fa, Complexes), domain=R),
+                   Implies(Forall(a, InSet(fa, Complex), domain=R),
                            Equals(Sum(x, fx, domain=R),
                                   Sum(y, Operation(f, gy), domain=S))),
                   conditions=[Equals(SetOfAll(y, gy, domain=S), R)])

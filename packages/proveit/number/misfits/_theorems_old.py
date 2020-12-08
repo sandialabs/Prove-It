@@ -17,28 +17,28 @@ beginTheorems(locals())
 
 divIneqThm1 = Forall([a,b,c],
                     LessThanEquals(frac(a,b),frac(c,b)),
-                    domain=Reals,
+                    domain=Real,
                     conditions=(LessThanEquals(a,c),GreaterThan(b,zero))
                     )
 divIneqThm1
 
 divIneqThm1strong = Forall([a,b,c],
                     LessThan(frac(a,b),frac(c,b)),
-                    domain=Reals,
+                    domain=Real,
                     conditions=(LessThan(a,c),GreaterThan(b,zero))
                     )
 divIneqThm1strong
 
 divIneqThm1cor = Forall([a,b,c],
                     LessThanEquals(Mult(b,a),Mult(b,c)),
-                    domain=Reals,
+                    domain=Real,
                     conditions=(LessThanEquals(a,c),GreaterThan(b,zero))
                     )
 divIneqThm1cor
 
 divIneqThm2 = Forall([a,b,c],
                     LessThanEquals(frac(a,b),frac(a,c)),
-                    domain=Reals,
+                    domain=Real,
                     conditions=(
                                 GreaterThanEquals(b,c),
                                 GreaterThanEquals(a,zero),
@@ -50,29 +50,29 @@ divIneqThm2
 
 sumIneq2 = Forall([a,b,c,d],
                   Implies(And(LessThanEquals(a,c), LessThanEquals(b,d)), LessThanEquals(Add(a,b),Add(c,d))),
-                 domain=Reals)
+                 domain=Real)
 sumIneq2
 
 
 ineqThm5 = Forall([a,b,c],
                   GreaterThanEquals(Mult(c,a),Mult(c,b)),
-                  domain = Reals,
+                  domain = Real,
                   conditions = (GreaterThan(c,zero),GreaterThanEquals(a,b)))
 ineqThm5
 
 powIneq = Forall([a, b, c], GreaterThanEquals(Exp(a, b), Exp(a, c)), 
-                 domain=Reals, conditions= (GreaterThanEquals(a, one), GreaterThanEquals(b, c)))
+                 domain=Real, conditions= (GreaterThanEquals(a, one), GreaterThanEquals(b, c)))
 powIneq
 
 ineqThm6 = Forall([a,b],
                   GreaterThanEquals(Add(a,b),a),
-                  domain = Reals,
+                  domain = Real,
                   conditions = GreaterThanEquals(b,zero))
 ineqThm6
 
 ineqThm6a = Forall([a,b],
                   LessThanEquals(Add(a,b),a),
-                  domain = Reals,
+                  domain = Real,
                   conditions = LessThanEquals(b,zero))
 ineqThm6a
 
@@ -81,7 +81,7 @@ ineqThm7 = Forall([x,l],
                                 frac(one,Exp(Sub(l,x),two)),
                                 frac(one,Exp(l,two))
                                 ),
-                  domain = Reals,
+                  domain = Real,
                   conditions = (LessThanEquals(l,zero),
                                 LessThanEquals(zero,x),
                                 LessThanEquals(x,one)))
@@ -96,9 +96,9 @@ ineqThm7a = Forall([x],
                                         ),
                           domain=Integer,
                           conditions = LessThanEquals(l,zero)),
-                        domain=Reals,
+                        domain=Real,
                         conditions=GreaterThanEquals(a,zero)),                
-                   domain = Reals,
+                   domain = Real,
                    conditions = (LessThanEquals(zero,x),
                                  LessThanEquals(x,one)))
 ineqThm7a
@@ -108,7 +108,7 @@ ineqThm8 = Forall([x,l],
                                 frac(one,Exp(Sub(l,x),two)),
                                 frac(one,Exp(Sub(l,one),two)),
                                 ),
-                  domain = Reals,
+                  domain = Real,
                   conditions = (GreaterThan(l,zero),
                                 LessThanEquals(zero,x),
                                 LessThanEquals(x,one)))
@@ -123,18 +123,18 @@ ineqThm8a = Forall([x],
                                             ),
                               domain = Integer,
                               conditions = GreaterThan(l,zero)),
-                        domain=Reals,
+                        domain=Real,
                         conditions=GreaterThanEquals(a,zero)),
-                   domain = Reals, 
+                   domain = Real, 
                    conditions = (LessThanEquals(zero,x),
                                 LessThanEquals(x,one)))
 ineqThm8a
 
-ineqThm9 = Forall(theta,LessThanEquals(Abs(Sub(one,Exp(e,Mult(i,theta)))),two),domain = Reals)
+ineqThm9 = Forall(theta,LessThanEquals(Abs(Sub(one,Exp(e,Mult(i,theta)))),two),domain = Real)
 ineqThm9
 
 ineqThm10 =  Forall([w,x,y,z],LessThanEquals(w,frac(x,z)),
-                    domain = Reals,
+                    domain = Real,
                     conditions = (LessThanEquals(w,frac(x,y)),
                                   GreaterThanEquals(y,z),
                                   GreaterThan(w,zero),
@@ -144,7 +144,7 @@ ineqThm10 =  Forall([w,x,y,z],LessThanEquals(w,frac(x,z)),
 ineqThm10
 
 ineqThm10a =  Forall([w,x,y,z],LessThanEquals(w,frac(x,z)),
-                    domain = Reals,
+                    domain = Real,
                     conditions = (LessThanEquals(w,frac(x,y)),
                                   GreaterThanEquals(y,z),
                                   GreaterThanEquals(w,zero),
@@ -156,7 +156,7 @@ ineqThm10a
 
 
 
-sumFactor_temp = Forall([a,b,c], Equals(Add(Mult(a,b), Mult(a,c)), Mult(a, Add(b,c))), domain=Reals)
+sumFactor_temp = Forall([a,b,c], Equals(Add(Mult(a,b), Mult(a,c)), Mult(a, Add(b,c))), domain=Real)
 sumFactor_temp
 
 
@@ -167,7 +167,7 @@ simplifyQuarterTimesTwo
 boundedInvSqrdIntegral = Forall([a, b], LessThanEquals(Int(l, frac(one,Exp(l,two)), 
                                                                  IntervalCC(a, b)),
                                                        frac(one, a)),
-                                domain=RealsPos, conditions=[LessThanEquals(a, b)])
+                                domain=RealPos, conditions=[LessThanEquals(a, b)])
 boundedInvSqrdIntegral   
 
 
@@ -187,29 +187,29 @@ twoSubOne
 # special theorem for expediency
 subTwoAddOne = Forall(a, Equals(Add(Sub(a, two), one),
                                Sub(a, one)),
-                     domain=Complexes)
+                     domain=Complex)
 subTwoAddOne
 
 # special theorem for expediency
 outerCancel = Forall((a, b), Equals(Add(a, Sub(b, a)),
                                    b),
-                    domain=Complexes)
+                    domain=Complex)
 outerCancel
 
 addTwice = Forall([a],
                   Equals(Add(a,a), Mult(two, a)),
-                 domain=Complexes)
+                 domain=Complex)
 addTwice
 
 squarePosIneq = Forall([a],
                        Forall([b],
                             LessThanEquals(Exp(Abs(a),two),Exp(b,two)),
-                            domain = Reals,
+                            domain = Real,
                             conditions = (LessThanEquals(Abs(a),b),)),
-                       domain = Complexes)
+                       domain = Complex)
 squarePosIneq
 
-notEq_iff_diffNotZero = Forall((a, b), Iff(NotEquals(a, b), NotEquals(Sub(a, b), zero)), domain=Complexes)
+notEq_iff_diffNotZero = Forall((a, b), Iff(NotEquals(a, b), NotEquals(Sub(a, b), zero)), domain=Complex)
 notEq_iff_diffNotZero
 
 sumIntegrateIneq1 = Forall(f,

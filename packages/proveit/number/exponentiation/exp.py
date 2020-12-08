@@ -49,13 +49,13 @@ class Exp(Operation):
         from proveit.number import two
         if numberSet == NaturalPos:
             return natural.theorems.powClosure
-        elif numberSet == Reals:
+        elif numberSet == Real:
             return real.theorems.powClosure
-        elif numberSet == RealsPos:
+        elif numberSet == RealPos:
             if self.exponent != two: # otherwise, use
-                                     # deduceInRealsPosDirectly(..)
+                                     # deduceInRealPosDirectly(..)
                 return real.theorems.powPosClosure            
-        elif numberSet == Complexes:
+        elif numberSet == Complex:
             return complex.theorems.powClosure
     
     def doReducedSimplification(self, assumptions=USE_DEFAULTS):
@@ -102,16 +102,16 @@ class Exp(Operation):
                                   '(zero or one for the base or exponent).',
                                   assumptions)
                 
-    def deduceInRealsPosDirectly(self, assumptions=frozenset()):
+    def deduceInRealPosDirectly(self, assumptions=frozenset()):
         import real.theorems
         from number import two
         if self.exponent == two:
-            deduceInReals(self.base, assumptions)
+            deduceInReal(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
             return real.theorems.sqrdClosure.instantiate(
                 {a:self.base}).checked(assumptions)
         # only treating certain special case(s) in this manner
-        raise DeduceInNumberSetException(self, RealsPos, assumptions)
+        raise DeduceInNumberSetException(self, RealPos, assumptions)
 
     def expansion(self, assumptions=USE_DEFAULTS):
         '''
@@ -198,7 +198,7 @@ class Exp(Operation):
             (a^b)^c = a^(b*c)
         '''
         from proveit.logic import InSet
-        from proveit.number import Mult, Div, NaturalPos, RealsPos, Reals
+        from proveit.number import Mult, Div, NaturalPos, RealPos, Real
         from ._theorems_ import (
                 posnat_power_of_product, posnat_power_of_products,
                 posnat_power_of_quotient, posnat_power_of_posnat_power,
@@ -223,14 +223,14 @@ class Exp(Operation):
                 else:
                     return posnat_power_of_products.instantiate(
                             {m:_m, a:_a, n:exponent}, assumptions=assumptions)
-            elif InSet(exponent, RealsPos).proven(assumptions):
+            elif InSet(exponent, RealPos).proven(assumptions):
                 if self.base.operands.is_binary():
                     return pos_power_of_product.instantiate(
                             {a:_a, b:_b, c:exponent}, assumptions=assumptions)
                 else:
                     return pos_power_of_products.instantiate(
                             {m:_m, a:_a, c:exponent}, assumptions=assumptions)
-            elif InSet(exponent, Reals).proven(assumptions):
+            elif InSet(exponent, Real).proven(assumptions):
                 if self.base.operands.is_binary():
                     return real_power_of_product.instantiate(
                             {a:_a, b:_b, c:exponent}, assumptions=assumptions)
@@ -251,9 +251,9 @@ class Exp(Operation):
                 return posnat_power_of_quotient.instantiate(
                         {a:_a, b:_b, n:exponent}, assumptions=assumptions)
             else:
-                if InSet(exponent, RealsPos).proven(assumptions):
+                if InSet(exponent, RealPos).proven(assumptions):
                     thm = pos_power_of_quotient
-                elif InSet(exponent, Reals).proven(assumptions):
+                elif InSet(exponent, Real).proven(assumptions):
                     thm = real_power_of_quotient
                 else: # Complex is the default
                     thm = complex_power_of_quotient
@@ -267,9 +267,9 @@ class Exp(Operation):
                         {a:_a, m:_m, n:_n}, assumptions=assumptions)
             else:
                 _b, _c = base.exponent, exponent
-                if InSet(exponent, RealsPos).proven(assumptions):
+                if InSet(exponent, RealPos).proven(assumptions):
                     thm = pos_power_of_pos_power
-                elif InSet(exponent, Reals).proven(assumptions):
+                elif InSet(exponent, Real).proven(assumptions):
                     thm = real_power_of_real_power
                 else: # Complex is the default
                     thm = complex_power_of_complex_power 
@@ -288,7 +288,7 @@ class Exp(Operation):
             exponent = self.exponent
             try:
                 deduceInNaturalPos(exponent, assumptions)
-                deduceInComplexes([self.base.numerator, self.base.denominator],
+                deduceInComplex([self.base.numerator, self.base.denominator],
                                   assumptions)
                 deduceNotZero(self.base.denominator, assumptions)
                 return fracNatPosExpRev.instantiate(
@@ -296,7 +296,7 @@ class Exp(Operation):
                             {a:self.numerator.base, b:self.denominator.base})
             except:
                 deduceInInteger(exponent, assumptions)
-                deduceInComplexes([self.base.numerator, self.base.denominator],
+                deduceInComplex([self.base.numerator, self.base.denominator],
                                   assumptions)
                 deduceNotZero(self.base.numerator, assumptions)
                 deduceNotZero(self.base.denominator, assumptions)
@@ -336,7 +336,7 @@ class Exp(Operation):
         bSub = b_times_c.operands[0]
         deduceNotZero(aSub, assumptions)
         deduceInInteger(nSub, assumptions)
-        deduceInComplexes([aSub, bSub], assumptions)
+        deduceInComplex([aSub, bSub], assumptions)
         return thm.instantiate({n:nSub}).instantiate({a:aSub, b:bSub}).deriveReversed()
 
     def lowerOuterExp(self, assumptions=frozenset()):
@@ -362,7 +362,7 @@ class Exp(Operation):
         a_ = self.base.base
         deduceNotZero(self.base.base, assumptions)
         deduceInInteger(n_, assumptions)
-        deduceInComplexes([a_, b_], assumptions)
+        deduceInComplex([a_, b_], assumptions)
         return thm.instantiate({n:n_}).instantiate({a:a_, b:b_})
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
@@ -384,13 +384,13 @@ class Exp(Operation):
                   expRealPosClosure, sqrtComplexClosure, sqrtRealClosure,
                   sqrtRealPosClosure)
         from proveit.number import (
-                Complexes, NaturalPos, RationalsPos, Reals, RealsPos)
+                Complex, NaturalPos, RationalPos, Real, RealPos)
 
         if number_set == NaturalPos:
             return expNatClosure.instantiate({a:self.base, b:self.exponent},
                       assumptions=assumptions)
 
-        if number_set == RationalsPos:
+        if number_set == RationalPos:
             # if we have a^b with a Rational and b Integer
             # if b is proven to be any Integer
 
@@ -401,15 +401,15 @@ class Exp(Operation):
             # to be continued later
             pass
 
-        # the following would be useful to replace the next two Reals
+        # the following would be useful to replace the next two Real
         # closure theorems, once we get the system to deal
         # effectively with the Or(A, And(B, C)) conditions
-        # if number_set == Reals:
+        # if number_set == Real:
         #     return expRealClosure.instantiate(
         #                     {a:self.base, b:self.exponent},
         #                     assumptions=assumptions)
 
-        if number_set == Reals:
+        if number_set == Real:
             # Would prefer the more general approach commented-out
             # above; in the meantime, allowing for 2 possibilities here:
             # if base is positive real, exp can be any real;
@@ -435,7 +435,7 @@ class Exp(Operation):
                             'Need base ≥ 0 and exponent ≠ 0, OR base > 0.')
                         raise Exception(err_string)
 
-        if number_set == RealsPos:
+        if number_set == RealPos:
             if self.exponent==frac(one, two):
                 return sqrtRealPosClosure.instantiate(
                         {a:self.base},assumptions=assumptions)
@@ -443,7 +443,7 @@ class Exp(Operation):
                 return expRealPosClosure.instantiate(
                         {a:self.base, b:self.exponent},assumptions=assumptions)
 
-        if number_set == Complexes:
+        if number_set == Complex:
             if self.exponent==frac(one, two):
                 return sqrtComplexClosure.instantiate(
                         {a:self.base}, assumptions=assumptions)

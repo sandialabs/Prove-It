@@ -1,5 +1,5 @@
 from proveit import Literal, OperationOverInstances
-from proveit.number.sets import Interval, infinity, Reals, IntervalCC
+from proveit.number.sets import Interval, infinity, Real, IntervalCC
 from proveit.number.negation import Neg
 
 class Integrate(OperationOverInstances):
@@ -25,7 +25,7 @@ class Integrate(OperationOverInstances):
             raise ValueError('Only one index allowed per integral!')
         elif isinstance(self.domain,Interval):
             raise ValueError('Can\'t integrate over DiscreteContiguousSet!')
-        elif self.domain == Reals:
+        elif self.domain == Real:
             self.domain = IntervalCC(Neg(infinity),infinity)
         self.index = self.instanceVars[0]
         self.integrand = self.instanceExpr
@@ -33,9 +33,9 @@ class Integrate(OperationOverInstances):
     def _closureTheorem(self, numberSet):
         from . import theorems
         #import complex.theorems
-        if numberSet == Reals:
+        if numberSet == Real:
             return theorems.integrationClosure
-        #if numberSet == Complexes:
+        #if numberSet == Complex:
         #    return complex.theorems.integrationClosure
 
         

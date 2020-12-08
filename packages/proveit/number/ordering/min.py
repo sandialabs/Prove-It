@@ -1,5 +1,5 @@
 from proveit import Literal, Function
-from proveit.number.sets import Reals, RealsPos
+from proveit.number.sets import Real, RealPos
 
 class Min(Function):
     # operator of the Min operation.
@@ -10,8 +10,8 @@ class Min(Function):
 
     def _closureTheorem(self, numberSet):
         from . import theorems
-        if numberSet == Reals:
+        if numberSet == Real:
             return theorems.minRealClosure
-        elif numberSet == RealsPos:
+        elif numberSet == RealPos:
             return theorems.minRealPosClosure            
 
