@@ -44,11 +44,11 @@ proveit.number.sets.natural.nonZeroIfInNaturalPos
 proveit.number.sets.rational.intInRationals
 proveit.number.sets.rational.zeroInRationals
 proveit.number.sets.real.intInReals
-proveit.number.sets.real.natPosInRealsPos
 proveit.number.sets.real.natInReals
 proveit.number.sets.real.natInRealsNonNeg
 proveit.number.sets.real.natPosInReals
 proveit.number.sets.real.natPosInRealsNonNeg
+proveit.number.sets.real.natPosInRealsPos
 proveit.number.sets.real.rationalsInReals
 proveit.number.sets.real.realsNegInReals
 proveit.number.sets.real.realsNonNegInReals
