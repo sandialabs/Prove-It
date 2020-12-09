@@ -38,7 +38,7 @@ class SetEquiv(TransitiveRelation):
     inversions = dict()
     
     # Record the SetEquiv objects being initialized (to avoid infinite
-    # recursion while automatically deducing an equality is in Boolean).
+    # recursion while automatically deducing an equality is in the Boolean set).
     initializing = set()
 
     def __init__(self, a, b):
@@ -306,8 +306,7 @@ class SetEquiv(TransitiveRelation):
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce and return that this SetEquiv claim is in the set
-        of Boolean.
+        Deduce and return that this SetEquiv claim is in the Boolean set.
         '''
         from ._theorems_ import setEquivInBool
         return setEquivInBool.instantiate({A:self.lhs, B:self.rhs},

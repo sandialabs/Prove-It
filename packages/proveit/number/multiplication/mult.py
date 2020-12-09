@@ -693,7 +693,7 @@ class Mult(Operation):
         Pull a subset of consecutive operands, self.operands[startIdx:endIdx],
         to one side or another. Returns the equality that equates self to
         this new version.  Give any assumptions necessary to prove that the
-        operands are in Complex so that the commutation theorem is applicable.
+        operands are in the Complex numbers so that the commutation theorem is applicable.
         '''
         if direction == "left": # pull the factor(s) to the left
             if startIdx == 0 or startIdx is None:
@@ -714,7 +714,7 @@ class Mult(Operation):
             :math:`a (b + c + a) d = a b d + a c d + a a d`
             :math:`a (b - c) d = a b d - a c d`
             :math:`a \left(\sum_x f(x)\right c = \sum_x a f(x) c`
-        Give any assumptions necessary to prove that the operands are in Complex so that
+        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
         from ._theorems_ import distributeThroughSum, distributeThroughSubtract#, distributeThroughSummation
@@ -780,7 +780,7 @@ class Mult(Operation):
         If groupRemainder is True and there are multiple remaining operands (those not in
         "theFactor"), then these remaining operands are grouped together as a sub-product.
         Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complex so that
+        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
         expr = self

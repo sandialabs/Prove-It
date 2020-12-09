@@ -67,17 +67,17 @@ class Numeral(Literal, IrreducibleValue):
         else:
             try:
                 # Do this to avoid infinite recursion -- if
-                # we already know this numeral is in NaturalPos
+                # we already know this numeral is in the NaturalPos set
                 # we should know how to prove that it is in any
-                # number set that contains the naturals.
+                # number set that contains the natural numbers.
                 if self.n > 0:
                     InSet(self, NaturalPos).prove(automation=False)
                 else:
                     InSet(self, Natural).prove(automation=False)
             except:
                 # Try to prove that it is in the given number
-                # set after proving that the numeral is in 
-                # Natural and NaturalPos.
+                # set after proving that the numeral is in the
+                # Natural set and the NaturalPos set.
                 self.deduceInNatural()
                 if self.n > 0:
                     self.deduceInNaturalPos()

@@ -441,7 +441,7 @@ class Len(Operation):
         if number_set == Natural:
             if len(operand)==1 and isinstance(operand[0], ExprRange):
                 # Special case of proving that the length
-                # of a single range is in the set of Natural.
+                # of a single range is in the set of Natural numbers.
                 range_start = operand[0].start_index
                 range_end = operand[0].end_index   
                 range_lambda = operand[0].lambda_map

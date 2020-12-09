@@ -72,7 +72,7 @@ sameSums = Forall([f,g],
                         domain=Integer))
 sameSums
 
-# Could also make such a theorem to apply whenever addition is commutative, not just Complex.
+# Could also make such a theorem to apply whenever addition is commutative, not just for the Complex numbers.
 equivSums = Forall((f, g, R, S),
                    Implies(Forall(a, InSet(fa, Complex), domain=R),
                            Equals(Sum(x, fx, domain=R),

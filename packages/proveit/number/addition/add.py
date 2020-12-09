@@ -798,7 +798,7 @@ class Add(Operation):
         Given a negated term, termIdx or the first negated term if termIdx is None,
         deduce the equivalence between self and a Subtract form (with the specified
         negated term on the right of the subtraction).  Assumptions
-        may be necessary to deduce operands being in the set of Complex.
+        may be necessary to deduce operands being in the set of Complex numbers.
         '''
         from proveit.number import Neg
         from proveit.number.addition.subtraction.theorems import addNegAsSubtract
@@ -981,7 +981,7 @@ class Add(Operation):
         Factor out "theFactor" from this sum, pulling it either to the "left" or "right".
         If groupFactor is True and theFactor is a product, these operands are grouped
         together as a sub-product.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complex so that
+        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
         from proveit.number.multiplication._theorems_ import distributeThroughSum

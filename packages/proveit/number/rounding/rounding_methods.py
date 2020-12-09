@@ -152,14 +152,14 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #-- -------------------------------------------------------- --#
     #-- Case (3): F(x) = F(Add(a,b,...,n)), where operand x is   --#
     #--           an Add object, not known or assumed to be an   --#
-    #--           an int, but addends might be real and integer  --#
-    #--           numbers.                                       --#
+    #--           an integer, but addends might be real and      --#
+    #--           integer numbers.                               --#
     #-- -------------------------------------------------------- --#
     if isinstance(expr.operand, Add):
         # Try to partition all suboperands into Integer vs.
-        # Non-Integer, and if there is at least one integer, try to
-        # apply the extraction theorem (allowing an error message
-        # if the instantiation fails).
+        # Non-Integer numbers, and if there is at least one integer,
+        # try to apply the extraction theorem (allowing an error
+        # message if the instantiation fails).
 
         subops = expr.operand.operands
 

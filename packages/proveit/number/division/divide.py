@@ -194,8 +194,8 @@ class Div(Operation):
             :math:`(a + b + c) / d = a / d + b / d + c / d`
             :math:`(a - b) / d = a / d - b / d`
             :math:`\left(\sum_x f(x)\right / y = \sum_x [f(x) / y]`
-        Give any assumptions necessary to prove that the operands are in Complex so that
-        the associative and commutation theorems are applicable.            
+        Give any assumptions necessary to prove that the operands are in the Complex
+        numbers so that the associative and commutation theorems are applicable.
         '''
         from proveit.number import Add, subtract, Sum
         from ._theorems_ import distributefracThroughSum, distributefracThroughSubtract, distributefracThroughSummation
@@ -314,7 +314,7 @@ class Div(Operation):
         If groupFactor is True and theFactor is a product, it will be grouped together as a 
         sub-product.  groupRemainder is not relevant kept for compatibility with other factor
         methods.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complex so that
+        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''        
         from ._theorems_ import fracInProdRev, prodOfFracsRev, prodOfFracsLeftNumerOneRev, prodOfFracsRightNumerOneRev

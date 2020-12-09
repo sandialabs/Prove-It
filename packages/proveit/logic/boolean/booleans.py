@@ -5,7 +5,7 @@ from proveit._common_ import A, C, P, Q
 
 class BooleanSet(Literal):
     def __init__(self):
-        Literal.__init__(self, stringFormat='BOOLEANS', latexFormat=r'\mathbb{B}')
+        Literal.__init__(self, stringFormat='BOOLEAN', latexFormat=r'\mathbb{B}')
     
     def membershipObject(self, element):
         return BooleanMembership(element)
@@ -15,7 +15,7 @@ class BooleanSet(Literal):
     
     def forallEvaluation(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
-        Given a forall statement over the BOOLEANS domain, evaluate to TRUE or FALSE
+        Given a forall statement over the BOOLEAN domain, evaluate to TRUE or FALSE
         if possible.
         updated by JML 6/28/19
         '''        
@@ -24,8 +24,8 @@ class BooleanSet(Literal):
         from ._theorems_ import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
         from ._common_ import TRUE, FALSE, Boolean
         from .conjunction import compose
-        assert(isinstance(forallStmt, Forall)), "May only apply forallEvaluation method of BOOLEANS to a forall statement"
-        assert(forallStmt.domain == Boolean), "May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain"
+        assert(isinstance(forallStmt, Forall)), "May only apply forallEvaluation method of BOOLEAN to a forall statement"
+        assert(forallStmt.domain == Boolean), "May only apply forallEvaluation method of BOOLEAN to a forall statement with the BOOLEAN domain"
         instanceList = list(forallStmt.instanceParamLists())
         instanceVar = instanceList[0][0]
         instanceExpr = forallStmt.instanceExpr
@@ -33,7 +33,7 @@ class BooleanSet(Literal):
         trueInstance = instanceExpr.replaced({instanceVar:TRUE})
         falseInstance = instanceExpr.replaced({instanceVar:FALSE})
         if trueInstance == TRUE and falseInstance == FALSE:
-            # special case of Forall_{A in BOOLEANS} A
+            # special case of Forall_{A in BOOLEAN} A
             falseEqFalse # FALSE = FALSE
             trueEqTrue # TRUE = TRUE
             return forallBoolEvalFalseViaTF.instantiate({P_op:instanceExpr}).deriveConclusion()
@@ -47,12 +47,12 @@ class BooleanSet(Literal):
             trueCaseVal = evalTrueInstance.rhs
             falseCaseVal = evalFalseInstance.rhs
             if trueCaseVal == TRUE and falseCaseVal == TRUE:
-                # both cases are TRUE, so the forall over booleans is TRUE
+                # both cases are TRUE, so the forall over the boolean set is TRUE
                 compose([evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality()], assumptions)
                 forallBoolEvalTrue.instantiate({P_op:instanceExpr, A:instanceVar})
                 return forallBoolEvalTrue.instantiate({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
             else:
-                # one case is FALSE, so the forall over booleans is FALSE
+                # one case is FALSE, so the forall over the boolean set is FALSE
                 compose([evalTrueInstance, evalFalseInstance], assumptions)
                 if trueCaseVal == FALSE and falseCaseVal == FALSE:
                     return forallBoolEvalFalseViaFF.instantiate({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
@@ -122,7 +122,7 @@ class BooleanMembership(Membership):
     
     def sideEffects(self, judgment):
         '''
-        Yield side-effect methods to try when the element is proven to be in the set of Boolean
+        Yield side-effect methods to try when the element is proven to be in the Boolean set
         by calling 'inBoolSideEffects' on the element if it has such a method.
         Edited by JML on 6/27/19 to add foldInBool sideEffect
         '''
@@ -136,7 +136,7 @@ class BooleanMembership(Membership):
     
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
-        Try to deduce that the given element is in the set of Boolean under the given assumptions.
+        Try to deduce that the given element is in the Boolean set under the given assumptions.
         '''   
         from ._theorems_ import inBoolIfTrue, inBoolIfFalse
         element = self.element

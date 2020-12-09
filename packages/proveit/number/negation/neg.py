@@ -144,7 +144,7 @@ class Neg(Operation):
         groupFactor and groupRemainder are not relevant but kept for compatibility with
         other factor methods.
         Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complex so that
+        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''

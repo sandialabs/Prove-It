@@ -127,10 +127,10 @@ class Abs(Operation):
         #--           proven to be a non-negative Real because it is --#
         #--           (a) known or assumed to be ≥ 0 or
         #--           (b) known or assumed to be in a subset of the  --#
-        #--               non-negative Real, or                     --#
+        #--               non-negative Real numbers, or              --#
         #--           (c) the addition or product of operands, all   --#
         #--               of which are known or assumed to be non-   --#
-        #--               negative reals. TBA!
+        #--               negative real numbers. TBA!
         #-- -------------------------------------------------------- --#
         if (Greater(self.operand, zero).proven(assumptions=assumptions) and
             not GreaterEq(self.operand, zero).proven(assumptions=assumptions)):
@@ -191,8 +191,9 @@ class Abs(Operation):
 
         #-- -------------------------------------------------------- --#
         #-- Case (4): Abs(x) where operand x can easily be proven    --#
-        #--           to be a negative Real because -x is known to   --#
-        #--           be in a subset of the positive Real           --#
+        #--           to be a negative Real number because -x is     --#
+        #--           known to be in a subset of the positive Real   --#
+        #--           numbers.                                       --#
         #-- -------------------------------------------------------- --#
         negated_op = None
         if isinstance(self.operand, Neg):

@@ -67,8 +67,8 @@ class InSet(Operation):
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce and return that this membership statement is in the set of
-        Boolean (i.e. membership is True or False).
+        Deduce and return that this membership statement is in the
+        Boolean set (i.e. membership is True or False).
         '''
         if hasattr(self, 'membershipObject'):
             return self.membershipObject.deduceInBool(assumptions)

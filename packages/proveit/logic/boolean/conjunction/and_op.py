@@ -313,7 +313,7 @@ class And(Operation):
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
         From one true operand, conclude that this 'or' expression is true.
-        Requires all of the operands to be in the set of BOOLEANS.
+        Requires all of the operands to be in the BOOLEAN set.
         '''
         from proveit.number import num
         from ._theorems_ import nandIfNotOne, nandIfNotLeft, nandIfNotRight
@@ -408,7 +408,7 @@ class And(Operation):
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Attempt to deduce, then return, that this 'and' expression is in the set of BOOLEANS.
+        Attempt to deduce, then return, that this 'and' expression is in the BOOLEAN set.
         '''
         
         from ._theorems_ import binaryClosure, closure
@@ -432,7 +432,7 @@ class And(Operation):
         '''
         Given Boolean operands, deduce that this expression is equal to a form in which the operands
         at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
-        It will do this by performing association first.  If disassocate is True, it
+        It will do this by performing association first.  If disassociate is True, it
         will be disassociated afterwards.
         '''
         return groupCommutation(self, initIdx, finalIdx, length, disassociate, assumptions)

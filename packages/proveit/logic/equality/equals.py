@@ -534,7 +534,7 @@ class Equals(TransitiveRelation):
         
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce and return that this equality statement is in the set of Boolean.
+        Deduce and return that this equality statement is in the Boolean set.
         '''
         from ._axioms_ import equalityInBool
         return equalityInBool.instantiate({x:self.lhs, y:self.rhs})

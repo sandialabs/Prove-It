@@ -183,7 +183,7 @@ class SubsetEq(SubsetRelation):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this SubsetEq statement is
-        in the set of Boolean.
+        in the Boolean set.
         '''
         from ._theorems_ import subsetEqInBool
         return subsetEqInBool.instantiate({A:self.lhs, B:self.rhs})
@@ -223,7 +223,7 @@ class NotSubsetEq(Operation):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this NotSubsetEq statement is in the
-        set of Boolean. NOTE that the NotSubsetEq class has been
+        Boolean set. NOTE that the NotSubsetEq class has been
         created as an Operation and thus has operands instead of lhs
         and rhs attributes.
         '''
@@ -335,7 +335,7 @@ class ProperSubset(SubsetRelation):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this ProperSubset expression
-        is in the set of Boolean.
+        is in the Boolean set.
         '''
         from ._theorems_ import properSubsetInBool
         return properSubsetInBool.instantiate({A:self.lhs, B:self.rhs})
@@ -377,7 +377,7 @@ class NotProperSubset(Operation):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this NotProperSubset statement is in the
-        set of Boolean. NOTE that the NotProperSubset class has been
+        Boolean set. NOTE that the NotProperSubset class has been
         created as an Operation and thus has operands instead of lhs
         and rhs attributes.
         '''
