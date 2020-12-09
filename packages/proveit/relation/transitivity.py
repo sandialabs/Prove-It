@@ -260,7 +260,7 @@ class TransitiveRelation(Relation):
         this method on a weak relation class (otherwise, only
         equality and strong relations are used in the sorting).
         '''
-        from proveit.number import isLiteralInt
+        from proveit.numbers import isLiteralInt
         assumptions = defaults.checkedAssumptions(assumptions)
         if all(isLiteralInt(item) for item in items):
             # All the items are integers.  Use efficient n log(n) sorting to

@@ -1,6 +1,6 @@
 from proveit import defaults, USE_DEFAULTS, ExprTuple
 from proveit.logic import Membership, Nonmembership
-from proveit.number import num
+from proveit.numbers import num
 from proveit._common_ import a, b, c, m, n, x, y
 
 class EnumMembership(Membership):

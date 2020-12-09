@@ -291,7 +291,7 @@ class Forall(OperationOverInstances):
         is in the set of BOOLEANS, as all forall expressions are
         (they are taken to be false when not true).
         '''
-        from proveit.number import one
+        from proveit.numbers import one
         from ._axioms_ import forall_in_bool
         _x = self.instanceParams
         P_op, _P_op = Operation(P, _x), self.instanceExpr

@@ -50,7 +50,7 @@ class Set(Operation):
         '''
         from proveit._common_ import a, n, x, P, Q
         from proveit.logic import And, Forall, InSet
-        from proveit.number import one
+        from proveit.numbers import one
         from ._theorems_ import true_for_each_then_true_for_all
         assert(isinstance(forallStmt, Forall)), (
                 "May only call the prove_by_cases method of the enumerated "
@@ -340,7 +340,7 @@ class Set(Operation):
         # then instantiate.
         from ._theorems_ import subsetEqOfSuperset
         # from proveit._common_ import m, n, aa, bb
-        from proveit.number import num
+        from proveit.numbers import num
         m, n, a, b = subsetEqOfSuperset.allInstanceVars()
         a_sub, b_sub = (desired_subset_list, desired_complement_list)
         m_sub, n_sub = num(len(a_sub)), num(len(b_sub))
@@ -615,7 +615,7 @@ class Set(Operation):
         # Organize info for theorem instantiation
         # then instantiate.
         from ._theorems_ import properSubsetOfSuperset
-        from proveit.number import num
+        from proveit.numbers import num
         m, n, a, b, c = properSubsetOfSuperset.allInstanceVars()
         a_sub = desired_subset_list
         b_sub = desired_complement_list[0]
@@ -763,7 +763,7 @@ class Set(Operation):
         # Now ready to apply the single-elem reduction theorem
         from ._theorems_ import reduction_right, reduction_left
         from proveit._common_ import l, m, n, x
-        from proveit.number import num
+        from proveit.numbers import num
         l, m, n, aa, x, bb, cc = reduction_right.allInstanceVars()
 
         # NOTICE most of this is the same whether we are eliminating an
@@ -876,7 +876,7 @@ class Set(Operation):
         # equalElementEquality theorem from the enumeration theory
         from ._theorems_ import equalElementEquality
         # --- Organize the instantiation mapping info.
-        from proveit.number import num
+        from proveit.numbers import num
         m, n, aa, b, cc, d = equalElementEquality.allInstanceVars()
         # --- Break the set into [ ]+[idx]+[ ].
         m_sub, n_sub = (num(idx), num(set_length - idx - 1))

@@ -65,7 +65,7 @@ class Len(Operation):
         # What it should do is make sure it evaluates to a number
         # and can circumvent any attempt that will not evaluate to
         # number.
-        from proveit.number import zero, one
+        from proveit.numbers import zero, one
         if not isinstance(self.operand, ExprTuple):
             # Don't know how to compute the length if the operand is
             # not a tuple. For example, it could be a variable that
@@ -105,9 +105,9 @@ class Len(Operation):
                 # 1.  For example,
                 # |(a, b, c)| = 3
                 # |(a, b, c)| = |(1, .., 3)|
-                import proveit.number.numeral.deci
+                import proveit.numbers.numeral.deci
                 _n = len(entries)
-                len_thm = proveit.number.numeral.deci._theorems_\
+                len_thm = proveit.numbers.numeral.deci._theorems_\
                             .__getattr__('tuple_len_%d'%_n)
                 repl_map = dict()
                 for param, entry in zip(len_thm.explicitInstanceParams(),
@@ -118,7 +118,7 @@ class Len(Operation):
                 #raise NotImplementedError("Can't handle length computation "
                  #                        ">= 10 for %s"%self)
                 from proveit.core_expr_types.tuples._axioms_ import tuple_len_incr
-                from proveit.number import num
+                from proveit.numbers import num
                 from proveit.logic import Equals
 
                 eq = tuple_len_incr.instantiate({i: num(len(entries) - 1), a: entries[:-1], b: entries[-1]},
@@ -203,7 +203,7 @@ class Len(Operation):
                 # If the start and end are literal ints and form an
                 # empty range, then it should be straightforward to
                 # prove that the range is empty.
-                from proveit.number import isLiteralInt, Add
+                from proveit.numbers import isLiteralInt, Add
                 from proveit.logic import Equals
                 from proveit._common_ import m
                 _m = entries[0].start_index
@@ -224,7 +224,7 @@ class Len(Operation):
             _j = [entry_end(entry) for entry in entries]
             _n = Len(_i).computed(assumptions=assumptions, simplify=False)
 
-            from proveit.number import isLiteralInt
+            from proveit.numbers import isLiteralInt
             if len(entries)==1 and isinstance(entries[0], ExprRange):
                 if isLiteralInt(entries[0].start_index) and isLiteralInt(entries[0].end_index):
                     if entries[0].end_index.asInt() + 1 == entries[0].start_index.asInt():
@@ -274,7 +274,7 @@ class Len(Operation):
                                         simplify=False)
     
     def _typical_eq(self, assumptions=USE_DEFAULTS):        
-        from proveit.number import one
+        from proveit.numbers import one
         if not isinstance(self.operand, ExprTuple):
             raise ValueError("Len.typical_eq may only be performed "
                              "on a Len operating on an ExprTuple, not %s"
@@ -310,9 +310,9 @@ class Len(Operation):
                 # Get a "typical equality" for the case when there
                 # are no ExprRange's.  For example,
                 # |(a, b, c)| = |(1, .., 3)|
-                import proveit.number.numeral.deci
+                import proveit.numbers.numeral.deci
                 n = len(entries)
-                eq_thm = proveit.number.numeral.deci._theorems_\
+                eq_thm = proveit.numbers.numeral.deci._theorems_\
                                 .__getattr__('tuple_len_%d_typical_eq'%n)
                 repl_map = dict()
                 for param, entry in zip(eq_thm.explicitInstanceParams(),
@@ -436,7 +436,7 @@ class Len(Operation):
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.core_expr_types.tuples._theorems_ import (
                 range_len_in_nat, range_from1_len_in_nat)
-        from proveit.number import Natural, one
+        from proveit.numbers import Natural, one
         operand = self.operand
         if number_set == Natural:
             if len(operand)==1 and isinstance(operand[0], ExprRange):

@@ -361,7 +361,7 @@ class ExprTuple(Composite, Expression):
                 merge, merge_front, merge_back, merge_extension,
                 merge_pair, merge_series)
         from proveit._common_ import f, i, j, k, l, x
-        from proveit.number import Add, one
+        from proveit.numbers import Add, one
         
         # A convenience to allow successive update to the equation via 
         # transitivities (starting with self=self).
@@ -459,7 +459,7 @@ class ExprTuple(Composite, Expression):
         if equality.lhs != self:
             raise ValueError("The left side of 'equality' should be 'self'")
 
-        from proveit.number import num, one
+        from proveit.numbers import num, one
         
         # Handle the special counting cases.  For example,
         #   (1, 2, 3, 4) = (1, ..., 4)
@@ -475,8 +475,8 @@ class ExprTuple(Composite, Expression):
                         raise NotImplementedError("counting range equality "
                                                   "not implemented for more "
                                                   "then 10 elements")
-                    import proveit.number.numeral.deci
-                    equiv_thm = proveit.number.numeral.deci._theorems_\
+                    import proveit.numbers.numeral.deci
+                    equiv_thm = proveit.numbers.numeral.deci._theorems_\
                                 .__getattr__('count_to_%d_range'%_n)
                     return equiv_thm
         raise NotImplementedError("ExprTuple.deduceEquality not implemented "

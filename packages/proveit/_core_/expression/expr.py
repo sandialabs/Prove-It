@@ -542,7 +542,7 @@ class Expression(metaclass=ExprType):
         Method to call to reconstruct this Expression.  The default is the class name
         itself to use the __init__ method, but sometimes a different method is more
         appropriate for setting the proper style (e.g. the Frac method in
-        proveit.number.division.divide which constructs a Div object with a different
+        proveit.numbers.division.divide which constructs a Div object with a different
         style).  This constructor method must be in the same module as the class.
         '''
         return self.__class__.__name__

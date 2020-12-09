@@ -99,7 +99,7 @@ def singleOrCompositeExpression(expr_or_exprs,
     return expr_or_exprs
 
 def _generateCoordOrderAssumptions(coords):
-    from proveit.number import LessEq, GreaterEq
+    from proveit.numbers import LessEq, GreaterEq
     for prev_coord, next_coord in zip(coords[:-1], coords[1:]):
         yield LessEq(prev_coord, next_coord)
         yield GreaterEq(next_coord, prev_coord)

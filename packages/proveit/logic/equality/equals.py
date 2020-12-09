@@ -368,7 +368,7 @@ class Equals(TransitiveRelation):
                              "be a single parameter or a range; got "
                              "%s as 'lambda_map'"%lambda_map)
         if isinstance(lambda_map.parameters[0], ExprRange):
-            from proveit.number import one
+            from proveit.numbers import one
             if lambda_map.parameters[0].start_index != one:
                 raise ValueError("When substituting a range, expecting "
                                  "the 'lambda_map' parameter range to "
@@ -395,7 +395,7 @@ class Equals(TransitiveRelation):
             # substitution.
             from proveit.core_expr_types.operations._axioms_ import \
                 operands_substitution
-            from proveit.number import one
+            from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return operands_substitution.instantiate(
@@ -425,7 +425,7 @@ class Equals(TransitiveRelation):
             # substitution.
             from proveit.logic.equality._theorems_ import \
                 sub_in_left_operands
-            from proveit.number import one
+            from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return sub_in_left_operands.instantiate(
@@ -477,7 +477,7 @@ class Equals(TransitiveRelation):
             # substitution.
             from proveit.logic.equality._theorems_ import \
                 sub_in_right_operands
-            from proveit.number import one
+            from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return sub_in_right_operands.instantiate(

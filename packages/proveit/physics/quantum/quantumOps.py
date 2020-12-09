@@ -1,6 +1,6 @@
 from proveit import Operation, Literal, Function
 from proveit.linalg import SU, TensorExp
-from proveit.number import num, Complex, Exp
+from proveit.numbers import num, Complex, Exp
 
 pkg = __package__ # delete this later; will no longer be needed
 

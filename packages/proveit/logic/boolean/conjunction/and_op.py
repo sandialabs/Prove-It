@@ -294,7 +294,7 @@ class And(Operation):
             elif idx==1:
                 return self.deduceRightInBool(assumptions)
         else:
-            from proveit.number import num
+            from proveit.numbers import num
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
             return eachInBool.instantiate({m:mVal, n:nVal, A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}, assumptions=assumptions)
 
@@ -304,7 +304,7 @@ class And(Operation):
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
         from ._theorems_ import demorgansLawOrToAnd, demorgansLawOrToAndBin
-        from proveit.number import num
+        from proveit.numbers import num
         if len(self.operands) == 2:
             return demorgansLawOrToAndBin.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
@@ -315,7 +315,7 @@ class And(Operation):
         From one true operand, conclude that this 'or' expression is true.
         Requires all of the operands to be in the BOOLEAN set.
         '''
-        from proveit.number import num
+        from proveit.numbers import num
         from ._theorems_ import nandIfNotOne, nandIfNotLeft, nandIfNotRight
         index = self.operands.index(trueOperand)
         if len(self.operands) == 2:
@@ -332,7 +332,7 @@ class And(Operation):
         given n in Natural and A is TRUE.
         '''
         from proveit import ExprRange
-        from proveit.number import one
+        from proveit.numbers import one
         from ._theorems_ import redundant_conjunction
         if (len(self.operands) != 1 or 
                 not isinstance(self.operands[0], ExprRange) or
@@ -415,7 +415,7 @@ class And(Operation):
         if len(self.operands)==2:
             return binaryClosure.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            from proveit.number import num    
+            from proveit.numbers import num    
         return closure.instantiate({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
@@ -508,7 +508,7 @@ def compose(*expressions, assumptions=USE_DEFAULTS):
         from ._theorems_ import andIfBoth
         return andIfBoth.instantiate({A:expressions[0], B:expressions[1]}, assumptions=assumptions)
     else:
-        from proveit.number import num
+        from proveit.numbers import num
         from ._theorems_ import andIfAll
         return andIfAll.instantiate({m:num(len(expressions)), A:expressions}, assumptions=assumptions)
 

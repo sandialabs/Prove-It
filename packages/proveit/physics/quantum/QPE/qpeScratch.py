@@ -1,5 +1,5 @@
 from proveit.basiclogic import *
-from proveit.numbers import *
+from proveit.numberss import *
 
 m = Variable('m')
 n = Variable('n')

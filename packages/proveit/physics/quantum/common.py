@@ -1,9 +1,9 @@
 from proveit.common import A, B, C, D
 from proveit.expression import Variable, Literal, LATEX, STRING
 from proveit.multiExpression import Block
-from proveit.number import Exp, frac, sqrt
-from proveit.number.common import zero, one, two
-from proveit.number.numberSets import Complex
+from proveit.numbers import Exp, frac, sqrt
+from proveit.numbers.common import zero, one, two
+from proveit.numbers.numberSets import Complex
 from proveit.linalg import TensorExp, SU
 from proveit.physics.quantum.circuit import Gate
 from proveit.physics.quantum.quantumOps import Ket

@@ -110,7 +110,7 @@ class IndexedVar(Operation):
         each end_base + end_shift plus the range going from
         start_base + max(start_shifts) .. end_base + min(end_shifts).
         '''
-        from proveit.number import const_shift_decomposition
+        from proveit.numbers import const_shift_decomposition
         index_base, index_shift = const_shift_decomposition(self.index)
         # The start and end are the same so we have repetition below.
         return {self.var:(index_base, {index_shift}, 
@@ -153,7 +153,7 @@ class IndexedVar(Operation):
         For "const-shifted", use the convention that the constant
         shift comes after (e.g., "k+1" rather than "1+k").
         '''
-        from proveit.number import const_shift_decomposition
+        from proveit.numbers import const_shift_decomposition
         index_base, shift = const_shift_decomposition(self.index)
         if index_base == range_param:
             return shift

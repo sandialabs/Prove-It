@@ -1,6 +1,6 @@
 from proveit import USE_DEFAULTS
 from proveit.logic import Membership, Nonmembership
-from proveit.number import num
+from proveit.numbers import num
 from proveit._common_ import m, x, A
 
 class IntersectMembership(Membership):
@@ -34,7 +34,7 @@ class IntersectMembership(Membership):
         where self represents (A intersection B ...). 
         '''
         from ._theorems_ import membershipUnfolding
-        from proveit.number import num
+        from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
         return membershipUnfolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
@@ -45,7 +45,7 @@ class IntersectMembership(Membership):
         where self represents (A intersection B ...). 
         '''
         from ._theorems_ import membershipFolding
-        from proveit.number import num
+        from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
         return membershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
@@ -72,7 +72,7 @@ class IntersectNonmembership(Nonmembership):
         where self = (A intersect B ...).
         '''
         from ._theorems_ import nonmembershipEquiv
-        from proveit.number import num
+        from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
         return nonmembershipEquiv.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
@@ -83,7 +83,7 @@ class IntersectNonmembership(Nonmembership):
         where self represents (A intersection B ...). 
         '''
         from ._theorems_ import nonmembershipFolding
-        from proveit.number import num
+        from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
         return nonmembershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)

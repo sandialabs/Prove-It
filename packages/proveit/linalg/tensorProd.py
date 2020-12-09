@@ -34,7 +34,7 @@ class TensorProd(Operation):
         Distribute over the factor at the given index.
         '''
         from theorems import distributeTensorProdOverSum, distributeTensorProdOverSummation
-        from proveit.number import Add, Sum
+        from proveit.numbers import Add, Sum
         factor = self.factors[factorIdx]
         if isinstance(factor, Add):
             return distributeTensorProdOverSum.instantiate({xEtc:self.factors[:factorIdx], yEtc:factor.terms, zEtc:self.factors[factorIdx+1:]})
@@ -101,7 +101,7 @@ class TensorExp(Operation):
         form. Assumptions may be necessary to deduce necessary
         conditions for the simplification.
         '''
-        from proveit.number.common import zero, one
+        from proveit.numbers.common import zero, one
         from axioms import tensorExpOne
         if self.exponent == one:
             return tensorExpOne.instantiate({x:self.base})

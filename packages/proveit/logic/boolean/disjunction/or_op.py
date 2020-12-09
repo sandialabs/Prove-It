@@ -140,7 +140,7 @@ class Or(Operation):
         elif len(self.operands)==2:
             return neitherIntro.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            from proveit.number import num
+            from proveit.numbers import num
             return notOrIfNotAny.instantiate({m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
 
     def concludeViaBoth(self, assumptions):
@@ -172,7 +172,7 @@ class Or(Operation):
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
         from ._theorems_ import demorgansLawAndToOr, demorgansLawAndToOrBin
-        from proveit.number import num
+        from proveit.numbers import num
         if len(self.operands) == 2:
             return demorgansLawAndToOrBin.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
@@ -210,7 +210,7 @@ class Or(Operation):
         from ._theorems_ import singularConstructiveDilemma, singularConstructiveMultiDilemma
         if len(self.operands) == 2:
             return singularConstructiveDilemma.instantiate({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
-        from proveit.number import num
+        from proveit.numbers import num
         return singularConstructiveMultiDilemma.instantiate({m: num(len(self.operands)), A: self.operands, C:conclusion}, assumptions=assumptions)
 
     def deriveViaMultiDilemma(self, conclusion, assumptions=USE_DEFAULTS):
@@ -220,7 +220,7 @@ class Or(Operation):
         '''
         from ._theorems_ import constructiveDilemma, destructiveDilemma, constructiveMultiDilemma, destructiveMultiDilemma
         from proveit.logic import Not, Or
-        from proveit.number import num
+        from proveit.numbers import num
         assert isinstance(conclusion, Or) and len(conclusion.operands) == len(self.operands), "deriveViaMultiDilemma requires conclusion to be a disjunction, the same number of operands as self."
         # Check for destructive versus constructive dilemma cases.
         if all(isinstance(operand, Not) for operand in self.operands) and all(isinstance(operand, Not) for operand in conclusion.operands):
@@ -284,7 +284,7 @@ class Or(Operation):
         provided X by expression or index number.
         '''
         from ._theorems_ import eachInBool
-        from proveit.number import num
+        from proveit.numbers import num
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
@@ -392,7 +392,7 @@ class Or(Operation):
         if len(self.operands) == 2:
             return binaryOrContradiction.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            from proveit.number import num
+            from proveit.numbers import num
             return orContradiction.instantiate({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
@@ -401,7 +401,7 @@ class Or(Operation):
         (A or B ... or (l or ... or M) or ... or X or Z).
         '''
         from ._theorems_ import group
-        from proveit.number import num
+        from proveit.numbers import num
         if end <= beg:
             raise IndexError ("Beginning and end value must be of the form beginning < end.")
         if end > len(self.operands) -1:
@@ -415,7 +415,7 @@ class Or(Operation):
         derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).
         '''
         from ._theorems_ import swap
-        from proveit.number import num
+        from proveit.numbers import num
         if 0 < idx1 < idx2 < len(self.operands) - 1:
             return swap.instantiate({l: num(idx1), m: num(idx2 - idx1 - 1), n: num(len(self.operands)-idx2 - 1), A: self.operands[:i], B: self.operands[i], C: self.operands[i+1:j], D: self.operands[j], E: self.operands[j + 1:]}, assumptions=assumptions)
         else:
@@ -443,7 +443,7 @@ class Or(Operation):
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
         '''
         from ._theorems_ import binaryClosure, closure
-        from proveit.number import num
+        from proveit.numbers import num
         if len(self.operands) == 2:
             return binaryClosure.instantiate({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
@@ -454,7 +454,7 @@ class Or(Operation):
         From one true operand, conclude that this 'or' expression is true.
         Requires all of the operands to be in the set of BOOLEANS.
         '''
-        from proveit.number import num
+        from proveit.numbers import num
         from ._theorems_ import orIfAny, orIfLeft, orIfRight
         index = self.operands.index(trueOperand)
         if len(self.operands) == 2:

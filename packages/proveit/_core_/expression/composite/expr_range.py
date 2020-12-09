@@ -107,7 +107,7 @@ class ExprRange(Expression):
             a_{1,1}, ..., a_{1,3}, ......, a_{4,1}, ..., a_{4,3}
         has a literal_int_extent of 12.
         '''
-        from proveit.number import isLiteralInt
+        from proveit.numbers import isLiteralInt
         if (isLiteralInt(self.start_index) and isLiteralInt(self.end_index)):
             toplevel_extent = (self.end_index.asInt() - self.start_index.asInt() + 1)
             if isinstance(self.body, ExprRange):
@@ -253,7 +253,7 @@ class ExprRange(Expression):
                                **kwargs) 
              for subExpr in check_points]
         if self.is_parameter_independent:
-            from proveit.number import one
+            from proveit.numbers import one
             repeats_str = (r'\textrm{ repeats}' if formatType=='latex' 
                            else 'repeats')
             if self.start_index==one:
@@ -321,7 +321,7 @@ class ExprRange(Expression):
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
         '''
-        from proveit.number import LessEq
+        from proveit.numbers import LessEq
         
         if requirements is None:
             # requirements won't be passed back in this case 
@@ -455,7 +455,7 @@ class ExprRange(Expression):
         from proveit import Judgment
         from proveit._common_ import f, i, j, m, n
         from proveit.logic import Equals
-        from proveit.number import Add, one
+        from proveit.numbers import Add, one
         if (not defaults.auto_reduce 
                 or ExprRange in defaults.disabled_auto_reduction_types):
             # Auto-reduction for this is disabled.
@@ -489,7 +489,7 @@ class ExprRange(Expression):
             # If the start and end are literal integers and form an
             # empty range, then it should be straightforward to
             # prove that the range is empty.
-            from proveit.number import isLiteralInt
+            from proveit.numbers import isLiteralInt
             empty_req = Equals(Add(end_index, one), start_index)
             if isLiteralInt(start_index) and isLiteralInt(end_index):
                 if end_index.asInt()+1 == start_index.asInt():
@@ -535,7 +535,7 @@ class ExprRange(Expression):
                 # If the start and end of the inner range are literal 
                 # integers and form an empty range, then it should be 
                 # straightforward to prove that the entire range is empty.
-                from proveit.number import isLiteralInt
+                from proveit.numbers import isLiteralInt
                 empty_req = Equals(Add(expr_range.first().end_index, one), expr_range.first().start_index)
                 if isLiteralInt(expr_range.first().start_index) and isLiteralInt(expr_range.first().end_index):
                     if expr_range.first().end_index.asInt() + 1 == expr_range.first().start_index.asInt():
@@ -634,7 +634,7 @@ class ExprRange(Expression):
             getParamVar, extract_param_replacements
         from proveit._core_.expression.label.var import safeDummyVar
         from proveit.logic import Equals#, InSet
-        from proveit.number import Add, one#, Interval
+        from proveit.numbers import Add, one#, Interval
                         
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be replaced.
@@ -1147,7 +1147,7 @@ class ExprRange(Expression):
         '''
         from proveit._common_ import f, i, j, k
         from proveit.logic import Equals
-        from proveit.number import Add, one, subtract
+        from proveit.numbers import Add, one, subtract
         from proveit.core_expr_types.tuples._axioms_ import (
                 range_extension_def)
         from proveit.core_expr_types.tuples._theorems_ import (
@@ -1189,7 +1189,7 @@ class ExprRange(Expression):
         to deduce them from the other parameters.
         '''
         from proveit._common_ import a, b, f, i, j, k, l
-        from proveit.number import Add, Neg, subtract
+        from proveit.numbers import Add, Neg, subtract
         from proveit._core_.expression.label.var import safeDummyVar
         from proveit.core_expr_types.tuples._theorems_ import (
                 shift_equivalence, shift_equivalence_both)

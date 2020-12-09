@@ -360,7 +360,7 @@ class InnerExpr:
             # When there is a slice of an ExprTuple at the bottom level, 
             # we will map an iteration of parameters as the filler for 
             # the slice.
-            from proveit.number import one
+            from proveit.numbers import one
             assert isinstance(cur_sub_expr, ExprTuple), "Unexpected type"
             parent_tuple = self.exprHierarchy[-2]
             assert isinstance(parent_tuple, ExprTuple), "Unexpected type"

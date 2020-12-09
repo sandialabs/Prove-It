@@ -21,7 +21,7 @@ class Card(Function):
         Assuming the cardinality of the domain can be proven to be >= 2,
         proves and returns that there exists distinct elements in that domain.
         '''
-        from proveit.number import num
+        from proveit.numbers import num
         from ._theorems_ import distinctSubsetExistence, distinctPairExistence
         if len(elems)==2:
             aVar, bVar = elems

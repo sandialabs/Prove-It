@@ -1,6 +1,6 @@
 from proveit import Literal, Operation
 # from proveit.basiclogic.genericOps import BinaryOperation
-# from proveit.number.numberSets import NumberOp, Integer
+# from proveit.numbers.numberSets import NumberOp, Integer
 
 pkg = __package__ # delete later?
 

@@ -5,7 +5,7 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
                           rightwardThm, assumptions=USE_DEFAULTS):
 
     from proveit.logic import Equals, Set, SetEquiv
-    from proveit.number import num
+    from proveit.numbers import num
 
     # check validity of default usage of indices
     if initIdx is None or finalIdx is None:

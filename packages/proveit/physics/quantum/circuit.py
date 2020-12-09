@@ -319,7 +319,7 @@ class MultiQubitGate(Operation):
         '''
         Automatically reduce "MultiQubitGate(a, Set()) = IdentityOp()" and "MultiQubitGate(a, Set(n)) = Gate(a)".
         '''
-        from proveit.number import isLiteralInt
+        from proveit.numbers import isLiteralInt
 
         if isinstance(self.gate_set, Set) and len(self.gate_set.operands) == 1 and \
                 isLiteralInt(self.gate_set.operands[0]):
@@ -411,7 +411,7 @@ class MultiQubitGate(Operation):
                 out_str += formattedGateOperation
 
             else:
-                from proveit.number import isLiteralInt
+                from proveit.numbers import isLiteralInt
                 if isinstance(self.gate_set, Set) and all(isLiteralInt(entry) for entry in self.gate_set.operands):
                     # everything is a literal
                     if len(self.gate_set.operands) <= 1:
@@ -516,7 +516,7 @@ class CircuitEquiv(TransitiveRelation):
                              "be a single parameter or a range; got "
                              "%s as 'lambda_map'" % lambda_map)
         if isinstance(lambda_map.parameters[0], ExprRange):
-            from proveit.number import one
+            from proveit.numbers import one
             if lambda_map.parameters[0].start_index != one:
                 raise ValueError("When substituting a range, expecting "
                                  "the 'lambda_map' parameter range to "
@@ -545,7 +545,7 @@ class CircuitEquiv(TransitiveRelation):
             # substitution.
             from proveit.core_expr_types.operations._axioms_ import \
                 operands_substitution
-            from proveit.number import one
+            from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return operands_substitution.instantiate(
@@ -579,7 +579,7 @@ class CircuitEquiv(TransitiveRelation):
             # substitution.
             from proveit.logic.equality._theorems_ import \
                 sub_in_left_operands
-            from proveit.number import one
+            from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return sub_in_left_operands.instantiate(
@@ -634,7 +634,7 @@ class CircuitEquiv(TransitiveRelation):
             # substitution.
             from proveit.logic.equality._theorems_ import \
                 sub_in_right_operands
-            from proveit.number import one
+            from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return sub_in_right_operands.instantiate(
@@ -1028,7 +1028,7 @@ class Circuit(Operation):
         placed and returns a nested array with the indices. This method
         also determines if and where there will be a block gate.
         '''
-        from proveit.number.numeral import num
+        from proveit.numbers.numeral import num
         wire_placement = []
         # list of the wires
 
