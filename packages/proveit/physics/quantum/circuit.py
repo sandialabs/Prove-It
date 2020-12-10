@@ -1028,7 +1028,7 @@ class Circuit(Operation):
         placed and returns a nested array with the indices. This method
         also determines if and where there will be a block gate.
         '''
-        from proveit.numbers.numeral import num
+        from proveit.numbers.numerals import num
         wire_placement = []
         # list of the wires
 

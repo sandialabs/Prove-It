@@ -2,8 +2,8 @@ from proveit import Judgment, Literal, Operation, ExprRange, USE_DEFAULTS,StyleO
 from proveit._common_ import a, b, c, d, i, j, k, l, n, x, y
 from proveit.logic import Equals
 from proveit.logic.irreducible_value import isIrreducibleValue
-from proveit.numbers.numeral.deci import DIGITS
-import proveit.numbers.numeral.deci._theorems_
+from proveit.numbers.numerals.decimals import DIGITS
+import proveit.numbers.numerals.decimals._theorems_
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, pairwiseEvaluation
 from proveit import TransRelUpdater
 import bisect
@@ -699,7 +699,7 @@ class Add(Operation):
         Evaluate the sum of possibly negated single digit numbers.
         '''
         from proveit.numbers import Neg, isLiteralInt, num
-        from proveit.numbers.numeral import NumeralSequence
+        from proveit.numbers.numerals import NumeralSequence
         abs_terms = [term.operand if isinstance(term, Neg) else term for term in self.terms]
         if len(abs_terms)!=2 or not all(isLiteralInt(abs_term) for abs_term in abs_terms):
             raise ValueError("_integerBinaryEval only applicable for binary addition of integers")
@@ -736,7 +736,7 @@ class Add(Operation):
             try:
                 # for single digit addition, import the theorem that provides the evaluation
                 Add.addedNumerals.add((_a, _b))
-                proveit.numbers.numeral.deci._theorems_.__getattr__(
+                proveit.numbers.numerals.decimals._theorems_.__getattr__(
                         'add_%d_%d'%(_a,_b))
             except:
                 # may fail before the relevent _commons_ and _theorems_ have been generated

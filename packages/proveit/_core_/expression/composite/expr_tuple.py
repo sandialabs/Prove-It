@@ -475,8 +475,8 @@ class ExprTuple(Composite, Expression):
                         raise NotImplementedError("counting range equality "
                                                   "not implemented for more "
                                                   "then 10 elements")
-                    import proveit.numbers.numeral.deci
-                    equiv_thm = proveit.numbers.numeral.deci._theorems_\
+                    import proveit.numbers.numerals.decimals
+                    equiv_thm = proveit.numbers.numerals.decimals._theorems_\
                                 .__getattr__('count_to_%d_range'%_n)
                     return equiv_thm
         raise NotImplementedError("ExprTuple.deduceEquality not implemented "

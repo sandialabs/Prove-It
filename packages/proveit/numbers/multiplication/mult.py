@@ -4,8 +4,8 @@ from proveit.logic import Equals, InSet
 from proveit.numbers import num
 from proveit.numbers.sets import (Integer, Natural, NaturalPos, Real,
                                  RealNonNeg, RealPos, Complex)
-import proveit.numbers.numeral.deci
-from proveit.numbers.numeral.deci import DIGITS
+import proveit.numbers.numerals.decimals
+from proveit.numbers.numerals.decimals import DIGITS
 from proveit._common_ import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, pairwiseEvaluation
 from proveit import TransRelUpdater
@@ -30,7 +30,7 @@ class Mult(Operation):
                 try:
                     # for single digit addition, import the theorem that provides the evaluation
                     Mult.multipliedNumerals.add(self)
-                    proveit.numbers.numeral.deci._theorems_.__getattr__('mult_%d_%d'%(self.factors[0].asInt(), self.factors[1].asInt()))
+                    proveit.numbers.numerals.decimals._theorems_.__getattr__('mult_%d_%d'%(self.factors[0].asInt(), self.factors[1].asInt()))
                 except:
                     # may fail before the relevent _commons_ and _theorems_ have been generated
                     pass # and that's okay
