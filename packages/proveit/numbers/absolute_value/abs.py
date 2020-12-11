@@ -138,7 +138,7 @@ class Abs(Operation):
             # and then it will get picked up in the next if() below
 
         if GreaterEq(self.operand, zero).proven(assumptions=assumptions):
-            from proveit.numbers.sets.real._theorems_ import (
+            from proveit.numbers.number_sets.real_numbers._theorems_ import (
                     inRealNonNegIfGreaterEqZero)
             inRealNonNegIfGreaterEqZero.instantiate(
                 {a: self.operand}, assumptions=assumptions)
@@ -203,7 +203,7 @@ class Abs(Operation):
         negated_op_simp = negated_op.simplification(assumptions=assumptions).rhs
 
         if negated_op_simp in InSet.knownMemberships.keys():
-            from proveit.numbers.sets.real._theorems_ import (
+            from proveit.numbers.number_sets.real_numbers._theorems_ import (
                     negInRealNegIfPosInRealPos)
             for kt in InSet.knownMemberships[negated_op_simp]:
                 if kt.isSufficient(assumptions):

@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-# from proveit.numbers.sets import Integer, Real
+# from proveit.numbers.number_sets import Integer, Real
 from proveit._common_ import a, b
 
 class Mod(Operation):

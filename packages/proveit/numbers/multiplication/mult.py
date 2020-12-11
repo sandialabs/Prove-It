@@ -2,7 +2,7 @@ from proveit import (Literal, Operation, USE_DEFAULTS, ExprTuple,
                      ProofFailure, InnerExpr)
 from proveit.logic import Equals, InSet
 from proveit.numbers import num
-from proveit.numbers.sets import (Integer, Natural, NaturalPos, Real,
+from proveit.numbers.number_sets import (Integer, Natural, NaturalPos, Real,
                                  RealNonNeg, RealPos, Complex)
 import proveit.numbers.numerals.decimals
 from proveit.numbers.numerals.decimals import DIGITS

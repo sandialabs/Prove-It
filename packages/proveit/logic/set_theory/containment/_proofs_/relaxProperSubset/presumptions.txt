@@ -37,6 +37,5 @@ proveit.logic.set_theory.containment.reverseProperSubset
 proveit.logic.set_theory.containment.reverseProperSuperset
 proveit.logic.set_theory.containment.reverseSubsetEq
 proveit.logic.set_theory.containment.reverseSupsetEq
-proveit.logic.set_theory.containment.supersetMembershipFromProperSubset
 proveit.logic.set_theory.equivalence.setNotEquivReversal
 # THEOREMS AND THEORIES TO EXCLUDE:

@@ -1,5 +1,5 @@
 from proveit import defaults, Function, InnerExpr, Literal, USE_DEFAULTS
-from proveit.numbers.sets import Integer, Natural, NaturalPos
+from proveit.numbers.number_sets import Integer, Natural, NaturalPos
 from proveit.numbers.rounding.rounding_methods import (
     apply_roundingElimination, apply_roundingExtraction,
     apply_reducedSimplification, rounding_deduceInNumberSet)

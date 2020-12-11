@@ -1,6 +1,6 @@
 from proveit import Literal, USE_DEFAULTS, Operation, ExprRange
 from proveit._common_ import a, b, c, d, k, m, n, x
-from proveit.numbers.sets.number_set import NumberSet, NumberMembership
+from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 from proveit.numbers.numerals.numeral import NumeralSequence, Numeral
 from proveit.numbers.numerals._common_ import zero, one, two, three, four, five, six, seven, eight, nine
 DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
@@ -64,7 +64,7 @@ class DecimalSequence(NumeralSequence):
         return deci_sequence_in_natural.instantiate({n: self.operands.length(assumptions),
                                                       a: self.digits}, assumptions=assumptions)
         # if Numeral._inNaturalStmts is None:
-        #     from proveit.numbers.sets.integer._theorems_ import zeroInNats
+        #     from proveit.numbers.number_sets.integers._theorems_ import zeroInNats
         #     from proveit.numbers.numerals.decimals._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
         #     Numeral._inNaturalStmts = {0: zeroInNats, 1: nat1, 2: nat2, 3: nat3, 4: nat4, 5: nat5, 6: nat6, 7: nat7,
         #                                 8: nat8, 9: nat9}

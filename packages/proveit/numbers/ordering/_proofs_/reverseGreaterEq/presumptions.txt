@@ -37,7 +37,5 @@ proveit.logic.set_theory.containment.reverseProperSuperset
 proveit.logic.set_theory.containment.reverseSubsetEq
 proveit.logic.set_theory.containment.reverseSupsetEq
 proveit.logic.set_theory.containment.supersetMembershipFromProperSubset
-proveit.numbers.ordering.reverseGreater
-proveit.numbers.ordering.reverseLess
 proveit.numbers.ordering.reverseLessEq
 # THEOREMS AND THEORIES TO EXCLUDE:

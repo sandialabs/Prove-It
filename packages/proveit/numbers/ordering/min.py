@@ -1,5 +1,5 @@
 from proveit import Literal, Function
-from proveit.numbers.sets import Real, RealPos
+from proveit.numbers.number_sets import Real, RealPos
 
 class Min(Function):
     # operator of the Min operation.

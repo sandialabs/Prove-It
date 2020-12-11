@@ -1,5 +1,0 @@
-natural
-integer
-rational
-real
-complex

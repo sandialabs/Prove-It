@@ -925,7 +925,7 @@ class Add(Operation):
 
     def deduceDifferenceInNatural(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Neg
-        from proveit.numbers.sets.integer._theorems_ import differenceInNatural
+        from proveit.numbers.number_sets.integers._theorems_ import differenceInNatural
         if len(self.terms) != 2:
             raise ValueError("deduceDifferenceInNatural only applicable "
                                "when there are two terms, got %s"%self)
@@ -939,7 +939,7 @@ class Add(Operation):
 
     def deduceDifferenceInNaturalPos(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Neg
-        from proveit.numbers.sets.integer._theorems_ import differenceInNaturalPos
+        from proveit.numbers.number_sets.integers._theorems_ import differenceInNaturalPos
         if len(self.terms) != 2:
             raise ValueError("deduceDifferenceInNaturalPos only applicable "
                                "when there are two terms, got %s"%self)
