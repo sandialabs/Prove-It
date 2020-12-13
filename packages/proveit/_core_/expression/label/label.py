@@ -98,34 +98,6 @@ class Label(Expression):
         if 'fence_when_forced' in init_args and self.getStyle('fence', 'never')=='when forced':
             yield ('fence_when_forced', True)
 
-class TemporaryLabel(Label):
-    '''
-    A TemporaryLabel is used temporarily during a build process until
-    mutual dependencies of common expressions are resolved.
-    '''
-    _prefix = "Temporary_placeholder_for_undefined_"
-    
-    def __init__(self, name):
-        string_format = "%s%s"%(TemporaryLabel._prefix, name)
-        latex_format = "%s%s"%(TemporaryLabel._prefix.replace('_', '\_'),
-                               name)
-        Label.__init__(self, string_format, latex_format, 
-                       labelType = 'TemporaryLabel')
-
-    @classmethod
-    def _make(labelClass, coreInfo, styles, subExpressions):
-        name = coreInfo[1][len(TemporaryLabel._prefix):]
-        return TemporaryLabel(name)
-    
-    def remakeArguments(self):
-        '''
-        Yield the argument values that could be used to recreate the 
-        TemporaryLabel.
-        '''
-        name = self.stringFormat[len(TemporaryLabel._prefix):]
-        yield name
-
-
 class LabelError(Exception):
     def __init__(self, msg):
         self.msg = msg

@@ -394,6 +394,18 @@ class ProveItMagicCommands:
     def prepare_notebook(self, kind):
         import proveit
         proveit.defaults.automation = False
+        theory = Theory()
+        if kind == 'common':
+            import_failure_filename = os.path.join(
+                    theory._theoryFolderStorage('common').path, 
+                    'import_failure.txt')
+            if os.path.isfile(import_failure_filename):
+                # Start with a clean slate
+                os.remove(import_failure_filename)
+            proveit.defaults._common_import_failure_filename = \
+                import_failure_filename
+        proveit.defaults._running_proveit_notebook = (theory, kind)
+         
     
     def begin_axioms(self):
         # theory based upon current working directory
@@ -505,19 +517,14 @@ class ProveItMagicCommands:
         elif kind=='theorems':            
             theory._setTheorems(self.keys, self.definitions)
         elif kind=='common':
-            # Record the theory names of common expressions referenced
-            # by this theory's common expressions notebook...
-            theory.recordCommonExprDependencies()
-            # and check for illegal mutual references.
-            cyclically_referenced_common_expr_theory = self.theory.cyclicallyReferencedCommonExprTheory()
-            if cyclically_referenced_common_expr_theory is not None:
-                raise ProveItMagicFailure("Not allowed to have cyclically dependent 'common expression' notebooks: %s._common_"%cyclically_referenced_common_expr_theory)
             theory._setCommonExpressions(self.keys, self.definitions)
         
         # clean unreferenced expressions, but only when "display latex"
         # is enabled (otherwise, references won't be complete).
         if proveit.defaults.display_latex:
             self.theory.clean_active_folder()
+
+        proveit.defaults._running_proveit_notebook = None
         
         # Turn off the ownership while remaking expression notebooks.
         theory.set_active_folder(active_folder=kind, owns_active_folder=False)

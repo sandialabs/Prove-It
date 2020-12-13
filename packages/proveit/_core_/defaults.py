@@ -32,6 +32,14 @@ class Defaults:
         # Put expression pngs inline versus using links.
         self.inline_pngs = True
         
+        # Will be set to a (theory, kind) object when a common
+        # expressions, axioms, or theorms notebook is being executed.
+        self._running_proveit_notebook = None
+        # When running a common expressions notebook, this will be
+        # set to the appropriate file to send information about failed
+        # imports of other common expressions.
+        self._common_import_failure_filename = None
+        
         Defaults.consideredAssumptionSets.clear()
     
     def checkedAssumptions(self, assumptions):

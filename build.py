@@ -289,28 +289,36 @@ __init_modules # avoid Prove-It magic assignment
         cd_cell = nbformat.NotebookNode(cell_type='code', source=cd_source, metadata=dict())
         self.preprocess_cell(cd_cell, resources, 0)
         
-        # Execute each cell.  We must correct the execution count so we treat this
-        # like it was the only notebook executed in this session (even though we
-        # are actually recycling the Kernel).
-        exec_count = 0
-        for index, cell in enumerate(nb.cells): 
-            if hasattr(cell, 'source') and cell['source'].strip() != '':
-                cell, resources = self.preprocess_cell(cell, resources, index)
-                if 'execution_count' in cell:
-                    # make proper execution counts
-                    exec_count += 1
-                    cell['execution_count'] = exec_count
-                    if 'outputs' in cell:
-                        for output in cell['outputs']:
-                            if 'execution_count' in output:
-                                output['execution_count'] = exec_count
-            nb.cells[index]
-        
-        # "reset" the stored Prove-It data.  Also,
-        # Delete all modules except those that were initially loaded.
-        # Also, %reset local variables and history.
-        # We are preparing the Kernel to be recycled.
-        reset_source = """
+        try:
+            # Execute each cell.  We must correct the execution count so we treat this
+            # like it was the only notebook executed in this session (even though we
+            # are actually recycling the Kernel).
+            exec_count = 0
+            for index, cell in enumerate(nb.cells): 
+                if hasattr(cell, 'source') and cell['source'].strip() != '':
+                    cell, resources = self.preprocess_cell(cell, resources, index)
+                    if 'execution_count' in cell:
+                        # make proper execution counts
+                        exec_count += 1
+                        cell['execution_count'] = exec_count
+                        if 'outputs' in cell:
+                            for output in cell['outputs']:
+                                if 'execution_count' in output:
+                                    output['execution_count'] = exec_count
+                nb.cells[index]
+
+            if display_latex:
+                # for notebooks with no %end or %qed
+                clean_cell = nbformat.NotebookNode(
+                        cell_type='code', source="%clean_active_folder\n", 
+                        metadata=dict())
+                cell, _ = self.preprocess_cell(clean_cell, resources, 0)
+        finally:
+            # "reset" the stored Prove-It data.  Also,
+            # Delete all modules except those that were initially loaded.
+            # Also, %reset local variables and history.
+            # We are preparing the Kernel to be recycled.
+            reset_source = """
 import sys
 import proveit
 proveit.reset()
@@ -326,24 +334,20 @@ for m in list(sys.modules.keys()):
 %reset
 %reset in
 %reset out
-"""
-        if display_latex:
-            # for notebooks with no %end or %qed
-            reset_source = "%clean_active_folder\n" + reset_source
-
-        reset_cell = nbformat.NotebookNode(cell_type='code', source=reset_source, metadata=dict())
-        cell, _ = self.preprocess_cell(reset_cell, resources, 0)
-        
-        # Garbage collect.
-        garbage_collect_source = """import sys
+    """    
+            reset_cell = nbformat.NotebookNode(cell_type='code', source=reset_source, metadata=dict())
+            cell, _ = self.preprocess_cell(reset_cell, resources, 0)
+            
+            # Garbage collect.
+            garbage_collect_source = """import sys
 import gc
 gc.collect()
 len(gc.get_objects()) # used to check for memory leaks
-"""
-        garbage_collect_cell = nbformat.NotebookNode(cell_type='code', source=garbage_collect_source, metadata=dict())
-        cell, _ = self.preprocess_cell(garbage_collect_cell, resources, 0)
-        # Useful debugging to check for memory leaks:
-        #print('num gc objects', cell['outputs'][0]['data']['text/plain'])    
+    """
+            garbage_collect_cell = nbformat.NotebookNode(cell_type='code', source=garbage_collect_source, metadata=dict())
+            cell, _ = self.preprocess_cell(garbage_collect_cell, resources, 0)
+            # Useful debugging to check for memory leaks:
+            #print('num gc objects', cell['outputs'][0]['data']['text/plain'])    
         return nb, resources
 
     def executeNotebook(self, notebook_path, no_latex=False, git_clear=True):
@@ -905,14 +909,94 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
     
     assert export_to_html or not no_execute, "Nothing to do, in that case??"
     
+    # List of notebooks that should be attempted after prerequisites
+    # have been satisfied (e.g., other common expression notebooks):
+    retry_notebooks = []
+    # Map notebooks, to be retried, to theory names:
+    retry_notebook_to_theory_name = dict()
+    # Map notebooks that need to be retried to their original error
+    # message:
+    retry_orig_err_msg = dict()
+    # Map notebooks that need to be retried to the theory whose common
+    # expression notebook must be executed first:
+    retry_prerequisite = dict()
+    # retry_prerequisite values that have not been satisfied:
+    unmet_prerequisites = set()
+    
+    # Inner functions to address retrying notebooks when executing
+    # common expression notebooks and one imports from another that
+    # hasn't been executed yet.
+    def generate_notebook_paths_with_retries():
+        # Try all of the notebooks once.
+        while True:
+            try:
+                yield next(notebook_paths)
+            except StopIteration:
+                break
+        # Retry some of the notebooks as needed.
+        while len(retry_notebooks) > 0:
+            print("# to retry:", len(retry_notebooks))
+            to_retry = retry_notebooks.pop()
+            retry_theory_name = retry_notebook_to_theory_name[to_retry]
+            prerequisite = retry_prerequisite[retry_theory_name]
+            if prerequisite in unmet_prerequisites:
+                if prerequisite not in retry_prerequisite.keys():
+                    # Unable to satisfy the prerequisite because
+                    # it isn't queued up.
+                    raise Exception(retry_orig_err_msg[to_retry])
+                # Not ready, so put it back.
+                retry_notebooks.insert(0, to_retry)
+            yield to_retry
+    def should_retry_after_failed_execution(notebook_path, orig_err_msg):
+        common_notebook_name = '_common_.ipynb'
+        print("should retry?", common_notebook_name)
+        if notebook_path[-len(common_notebook_name):] != common_notebook_name:
+            # Only retry for common expression notebooks.
+            return False
+        theory = Theory(notebook_path)
+        import_failure_filename = os.path.join(
+                theory._theoryFolderStorage('common').path, 
+                'import_failure.txt')
+        print('import_failure_filename', import_failure_filename)
+        if os.path.isfile(import_failure_filename):
+            # There was a failure to import a common expression from
+            # a different theory, so we should try again.
+            retry_notebooks.append(notebook_path)
+            retry_notebook_to_theory_name[notebook_path] = theory.name
+            with open(import_failure_filename, 'r') as f:
+                failed_import = f.read().strip()
+            print("failed import", failed_import)
+            retry_prerequisite[theory.name] = failed_import
+            if (failed_import in retry_prerequisite and
+                    retry_prerequisite[failed_import] == theory.name):
+                raise Exception("Cyclic dependency between %s and %s common "
+                                "expression notebooks detected"%
+                                (failed_import, theory.name))
+            retry_orig_err_msg[notebook_path] = orig_err_msg
+            unmet_prerequisites.add(failed_import)
+            return True
+        else:
+            print("No import file")
+            return False
+    def successful_execution_notification(notebook_path):
+        if len(unmet_prerequisites) > 0:
+            theory = Theory(notebook_path)
+            unmet_prerequisites.discard(theory.name)
+    
     if nranks == 1:
         # The boring single rank case.
         with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor: 
-            for notebook_path in notebook_paths:
-                executeAndMaybeExportNotebook(
-                        execute_processor, notebook_path, no_latex=no_latex, 
-                        no_execute=no_execute, git_clear=True,
-                        export_to_html=export_to_html)
+            for notebook_path in generate_notebook_paths_with_retries():
+                try:
+                    executeAndMaybeExportNotebook(
+                            execute_processor, notebook_path, no_latex=no_latex, 
+                            no_execute=no_execute, git_clear=True,
+                            export_to_html=export_to_html)
+                except Exception as e:
+                    if not should_retry_after_failed_execution(notebook_path, 
+                                                               str(e)):
+                        raise e
+                successful_execution_notification(notebook_path)
     elif rank > 0:
         # These ranks will request assignments from rank 0
         try:
@@ -950,12 +1034,15 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
                 # it must be an exception message.
                 err_rank = int(msg[0])
                 failed_notebook = assignments[err_rank]
-                print("Error while excecuting %s:"%failed_notebook)
-                print(msg[1])
-                comm.Abort()
-        for notebook_path in notebook_paths:
+                if not should_retry_after_failed_execution(failed_notebook, 
+                                                           msg[1]):
+                    print("Error while excecuting %s:"%failed_notebook)
+                    print(msg[1])
+                    comm.Abort()
+        for notebook_path in generate_notebook_paths_with_retries():
             ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
             finished_notebook = assignments[ready_rank]
+            successful_execution_notification(finished_notebook)
             unfinished_ranks.add(ready_rank)
             comm.send(notebook_path, ready_rank)
             assignments[ready_rank] = notebook_path
@@ -967,6 +1054,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
         while len(unfinished_ranks) > 0:
             ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
             finished_notebook = assignments[ready_rank]
+            successful_execution_notification(finished_notebook)
             unfinished_ranks.discard(ready_rank)
             finished_ranks.add(ready_rank)
             count += 1

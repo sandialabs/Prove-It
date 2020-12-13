@@ -61,7 +61,6 @@ class Theory:
         Theory._rootTheoryPaths.clear()
         Theory.default = None
         Theory.storages.clear()
-        CommonExpressions.referenced_theories.clear()
         TheoryFolderStorage.active_theory_folder_storage = None
         TheoryFolderStorage.proveit_object_to_storage.clear()
         
@@ -140,6 +139,7 @@ class Theory:
             # if the _sub_theories_.txt file has not been created, make an empty one
             sub_theories_path = os.path.join(path, '_sub_theories_.txt')
             if not os.path.isfile(sub_theories_path):
+                assert False
                 open(sub_theories_path, 'wt').close()
         self._storage = Theory.storages[normpath]
         if active_folder is not None:
@@ -272,15 +272,6 @@ class Theory:
     
     def commonExpressionNames(self):
         return self._storage.commonExpressionNames()
-    
-    def recordCommonExprDependencies(self):
-        '''
-        Record the theory names of any referenced common expressions
-        in storage while creating the common expressions for this
-        theory (for the purposes of checking for illegal cyclic
-        dependencies).
-        '''
-        self._common_storage().recordCommonExprDependencies()
 
     def storedCommonExprDependencies(self):
         '''
@@ -288,14 +279,7 @@ class Theory:
         referenced by the common expressions of this theory.
         '''
         return self._storage.storedCommonExprDependencies()    
-
-    def cyclicallyReferencedCommonExprTheory(self):
-        '''
-        Check for illegal cyclic dependencies of common expression notebooks.
-        If there is one, return the name; otherwise return None.
-        '''
-        return self._common_storage().cyclicallyReferencedCommonExprTheory()
-        
+    
     def referenceHyperlinkedObjects(self, name, clear=False):
         '''
         Reference displayed expressions, recorded under the given name
@@ -626,10 +610,7 @@ class CommonExpressions(ModuleType):
     '''
     Used in _common_.py modules for accessing common sub-expressions.
     '''
-    
-    # set of theories that has a common expression being referenced
-    referenced_theories = set() # populated in Storage._addReference(...)
-    
+        
     def __init__(self, name, filename):
         ModuleType.__init__(self, name)
         self._theory = Theory(filename)
@@ -639,36 +620,70 @@ class CommonExpressions(ModuleType):
         return sorted(list(self.__dict__.keys()) + list(self._theory.commonExpressionNames()))
 
     def __getattr__(self, name):
-        from proveit._core_.expression.label.label import TemporaryLabel
+        import proveit
+
         if name[0:2]=='__': 
             raise AttributeError # don't handle internal Python attributes
         
-        # Is the current directory a "theory" directory?
-        #in_theory = os.path.isfile('_theory_.ipynb')
-        
-        # File to store information about a failure to import a common expression:
-        #failed_common_import_filename = os.path.join('__pv_it', 'failed_common_import.txt')
-        # This is used to track dependencies which automatically executing 
-        # notebooks via 'build.py' (at the root level of Prove-It).
-        
         try:
             expr = self._theory.getCommonExpr(name)
-            #if in_theory and os.path.isfile(failed_common_import_filename):
-            #    # successful import -- don't need this 'failure' file anymore.
-            #    os.remove(failed_common_import_filename)
             return expr
-        except (UnsetCommonExpressions, KeyError) as e:
-            # if this is a theory directory, store the theory that failed to import.
-            #if in_theory:
-            #    # store the theory in which a common expression failed to import.
-            #    with open(failed_common_import_filename, 'w') as f:
-            #        f.write(self._theory.name + '\n')
-            if isinstance(e, UnsetCommonExpressions):
-                # Use a temporary placeholder if the common expressions are not set.
-                # This avoids exceptions while common exppressions are being built/rebuilt.
-                return TemporaryLabel(self._theory.name + '.' + name)
-            
+        except (KeyError, OSError, TheoryException):
+            if proveit.defaults._running_proveit_notebook is not None:
+                running_theory, running_kind = \
+                    proveit.defaults._running_proveit_notebook
+                if running_kind == 'common':
+                    # Failed to import a common expression while 
+                    # executing a common expression notebook.  Maybe the
+                    # other notebook must be executed first.  Return an 
+                    # UnsetCommonExpressionPlaceholder.
+                    # If this placeholder is used in creating any
+                    # expression, record the import failure and raise an
+                    # exception so we know to execute the other common
+                    # expression notebook first.
+                    return UnsetCommonExpressionPlaceholder(
+                            self._theory,  name)
             raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self._theory.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
+
+class UnsetCommonExpressionPlaceholder(object):
+    '''
+    A placeholder for a common expression that was attempted to be
+    imported from a common expression notebook but fails to import.
+    If it isn't used, don't worry about it.  If the notebook attempts
+    to use it, mark it as a failed import and raise an exception --
+    run the other notebook (from which there was a failed import) before
+    trying again.
+    '''
+    def __init__(self, theory, name):
+        self.theory = theory
+        self.name = name
+    
+    def raise_attempted_use_error(self):
+        '''
+        An error occurs when there is any attempt to use this
+        placeholder.  Record this failure so we know to execute the 
+        other notebook first (used in build.py).
+        Raise an exception.
+        '''
+        # File to store information about a failure to 
+        # import a common expression:
+        import proveit
+        import_failure_filename = \
+            proveit.defaults._common_import_failure_filename
+        assert proveit.defaults._running_proveit_notebook is not None, (
+                "Should only use UnsetCommonExpressionPlaceholder when "
+                "executing a common expression notebook.")
+        running_theory, running_kind = \
+            proveit.defaults._running_proveit_notebook
+        assert self.theory.name != running_theory.name, (
+                "Cannot reference %s.%s within the notebook that creates "
+                "it."%(self.theory.name, self.name))
+        with open(import_failure_filename, 'w') as f:
+            f.write(self.theory.name + '\n')
+        raise CommonExpressionDependencyError(
+                "Must execute '_common_.ipynb' for the theory of %s "
+                "to define '%s' before it may be used"%
+                (self.theory.name, self.name))
 
 class TheoryException(Exception):
     def __init__(self, message):
@@ -677,10 +692,10 @@ class TheoryException(Exception):
     def __str__(self):
         return self.message
 
-
-class UnsetCommonExpressions(Exception):
-    def __init__(self, theory_name):
-        self.theory_name = theory_name
+class CommonExpressionDependencyError(Exception):
+    def __init__(self, message):
+        self.message = message
         
     def __str__(self):
-        return "The common expressions in '%s' have not been set"%self.theory_name
+        return self.message
+    

@@ -18,7 +18,6 @@ def getParamVar(parameter, *, _required_indices=None):
     x_1, ..n repeats.., x_1
     should not be allowed.
     '''
-    from proveit._core_.expression.label.label import TemporaryLabel
     from proveit._core_.expression.label import Variable
     from proveit._core_.expression.composite import ExprRange
     from proveit._core_.expression.operation.indexed_var import IndexedVar 
@@ -46,7 +45,7 @@ def getParamVar(parameter, *, _required_indices=None):
         if _required_indices is not None:
             _required_indices.difference_update(parameter.indices)
         return parameter.var
-    elif isinstance(parameter, Variable) or isinstance(parameter, TemporaryLabel):
+    elif isinstance(parameter, Variable):
         return parameter
     else:
         raise TypeError('Parameter must be a Variable, Indexed variable, or '
