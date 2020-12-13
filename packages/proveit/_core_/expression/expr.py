@@ -87,11 +87,14 @@ class Expression(metaclass=ExprType):
         fraction).  The meaning of the expression is independent of its styles
         signature.
         '''
+        from proveit._core_.theory import UnsetCommonExpressionPlaceholder
         if styles is None: styles = dict()
         for coreInfoElem in coreInfo:
             if not isinstance(coreInfoElem, str):
                 raise TypeError('Expecting coreInfo elements to be of string type')
         for subExpression in subExpressions:
+            if isinstance(subExpression, UnsetCommonExpressionPlaceholder):
+                subExpression.raise_attempted_use_error()
             if not isinstance(subExpression, Expression):
                 raise TypeError('Expecting subExpression elements to be of Expression type')
 
@@ -1140,12 +1143,8 @@ def free_vars(expr, *, err_inclusively):
     n because it requires some extra work to determine that x
     is not comletely bound.
     '''
-    # Exclude TemporaryLabels to avoid errors when doing a clean
-    # rebuild.
-    from proveit._core_.expression.label.label import TemporaryLabel
     if err_inclusively:
-        return {var for var in expr._possibly_free_var_ranges().keys()
-                if not isinstance(var, TemporaryLabel)}
+        return {var for var in expr._possibly_free_var_ranges().keys()}
     else:
         return _entirely_unbound_vars(expr)
 

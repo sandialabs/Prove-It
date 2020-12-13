@@ -25,11 +25,9 @@ class IndexedVar(Operation):
         via 'index_or_indices'.  The 'var' must be a Variable.  
         '''
         from proveit._core_.expression.composite import compositeExpression
-        from proveit._core_.expression.label.label import TemporaryLabel
         if not isinstance(var, Variable):
-            if not isinstance(var, TemporaryLabel):
-                raise TypeError("'var' being indexed should be a Variable "
-                                "or IndexedVar itself; got %s"%str(var))
+            raise TypeError("'var' being indexed should be a Variable "
+                            "or IndexedVar itself; got %s"%str(var))
         self.indices = compositeExpression(index_or_indices)
         if len(self.indices) == 1:
             # has a single index

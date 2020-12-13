@@ -49,24 +49,28 @@ def compositeExpression(expressions):
     '''
     from .expr_tuple import ExprTuple
     from .named_exprs import NamedExprs
-    from .expr_array import ExprArray
     from proveit._core_.judgment import Judgment
+    from proveit._core_.theory import UnsetCommonExpressionPlaceholder
     
+    if isinstance(expressions, UnsetCommonExpressionPlaceholder):
+        expressions.raise_attempted_use_error()
     if isinstance(expressions, Judgment):
         expressions = expressions.expr
-    
     if isinstance(expressions, ExprTuple) or isinstance(expressions, NamedExprs):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
         # A single expression that we will wrap in an ExprTuple:
         return ExprTuple(expressions) 
     else:
+        if len(expressions) == 0:
+            return ExprTuple()
         try:
+            # try to see if we can use expressions to generate a 
+            # NamedExpressions object
+            return NamedExprs(expressions)
+        except (TypeError, ValueError):
             # See if we can build an ExprTuple.
             return ExprTuple(*expressions)
-        except:
-            # try to see if we can use expressions to generate a NamedExpressions object
-            return NamedExprs(expressions)
 
 def singleOrCompositeExpression(expr_or_exprs, 
                                 wrap_expr_range_in_tuple=True,
@@ -80,8 +84,11 @@ def singleOrCompositeExpression(expr_or_exprs,
     ExprRange nor a nested ExprTuple, return the single item.
     '''
     from proveit._core_.judgment import Judgment
+    from proveit._core_.theory import UnsetCommonExpressionPlaceholder
     from .expr_tuple import ExprTuple
     from .expr_range import ExprRange
+    if isinstance(expr_or_exprs, UnsetCommonExpressionPlaceholder):
+        expr_or_exprs.raise_attempted_use_error()
     if isinstance(expr_or_exprs, Judgment):
         expr_or_exprs = expr_or_exprs.expr
     if wrap_expr_range_in_tuple and isinstance(expr_or_exprs, ExprRange):

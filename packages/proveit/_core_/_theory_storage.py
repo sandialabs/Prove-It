@@ -27,6 +27,7 @@ class TheoryStorage:
 
     def __init__(self, theory, name, directory, rootDirectory):
         from .theory import Theory, TheoryException
+        
         if not isinstance(theory, Theory):
             raise TheoryException("'theory' should be a Theory object")
         self.theory = theory
@@ -565,7 +566,7 @@ class TheoryStorage:
         
     def _getSpecialObject(self, kind, name):
         from proveit._core_.proof import Axiom, Theorem
-        from .theory import Theory, UnsetCommonExpressions
+        from .theory import Theory
         folder = TheoryStorage._kind_to_folder(kind)
         special_hash_ids = self._special_hash_ids[kind]
         if special_hash_ids is None:
@@ -574,8 +575,6 @@ class TheoryStorage:
             list(self._loadSpecialNames(kind))
             special_hash_ids = self._special_hash_ids[kind]
         if special_hash_ids is None:
-            if kind=='common':
-                raise UnsetCommonExpressions(self.name)
             raise KeyError("%s of name '%s' not found"%(kind, name))  
             
         # set the default Theory in case there is a Literal
@@ -587,8 +586,6 @@ class TheoryStorage:
                     theory_folder_storage == TheoryFolderStorage.active_theory_folder_storage):
                 # Don't allow anything to be imported from the folder
                 # that is currently being generated.
-                if kind=='common':
-                    raise UnsetCommonExpressions(self.name)
                 raise KeyError("Self importing is not allowed")
             obj_id = self._kindname_to_objhash[(kind, name)]
             # make and return expression, axiom, or theorem
@@ -1238,7 +1235,6 @@ class TheoryFolderStorage:
         import proveit
         from proveit import Expression
         from proveit._core_.proof import Axiom, Theorem
-        from .theory import UnsetCommonExpressions
         from json import JSONDecodeError
         proveit_path = os.path.split(proveit.__file__)[0]
         
@@ -1885,7 +1881,12 @@ class TheoryFolderStorage:
         # Load the "special names" of the theory so we
         # will know, for future reference, if this is a special 
         # expression that may be addressed as such.
-        self.theory_storage.loadSpecialNames()                
+        try:
+            self.theory_storage.loadSpecialNames()
+        except Exception:
+            # Don't worry if we can't load these right now -- we may
+            # by in the process of rebuilding.
+            pass
         expr = self._makeExpression(exprId, importFn, exprBuilderFn)
         return expr
         
@@ -2065,25 +2066,7 @@ class TheoryFolderStorage:
         proveit_obj_to_storage[proof_id] = (
                 theory_folder_storage, hash_directory)   
         return Proof._showProof(theory, folder, proof_id, unique_rep)
-        
-    def recordCommonExprDependencies(self):
-        '''
-        Record the theory names of any reference common expressions in storage
-        while creating the common expressions for this theory
-        (for the purposes of checking for illegal mutual dependencies).
-        '''
-        from .theory import CommonExpressions
-        theoryNames = CommonExpressions.referenced_theories
-        theoryNames = set(theoryNames)
-        theoryNames.discard(self.theory.name) # exclude the source theory
-        if theoryNames == self.storedCommonExprDependencies():
-            return # unchanged
-        referenced_commons_filename = os.path.join(self.pv_it_dir, 'commons',
-                                                   'package_dependencies.txt')
-        with open(referenced_commons_filename, 'w') as f:
-            for theory_name in theoryNames:
-                f.write(theory_name + '\n')
-
+    
     def storedCommonExprDependencies(self):
         '''
         Return the stored set of theory names of common expressions
@@ -2095,33 +2078,6 @@ class TheoryFolderStorage:
             with open(referenced_commons_filename, 'r') as f:
                 return {line.strip() for line in f.readlines()}
         return set() # empty set by default
-        
-    def cyclicallyReferencedCommonExprTheory(self):
-        '''
-        Check for illegal cyclic dependencies of common expression
-        notebooks.  If there is one, return the name; 
-        otherwise return None.
-        '''        
-        from .theory import Theory, CommonExpressions
-        theoryNames = CommonExpressions.referenced_theories
-        referencing_theories = {theoryName:self.theory for theoryName 
-                                in theoryNames if theoryName != self.name}
-        while len(referencing_theories) > 0:
-            theoryName, referencing_theory = referencing_theories.popitem()
-            theory = Theory.getTheory(theoryName)
-            if theory == self.theory:
-                # a directly or indirectly referenced theory refers 
-                # back to the referencing source.
-                # cycle found; report theory with a common expression 
-                # referencing the source
-                return referencing_theory 
-            # extend with indirect references
-            new_theory_names = theory.storedCommonExprDependencies()
-            for new_theory_name in new_theory_names:
-                if new_theory_name not in referencing_theories:
-                    # add an indirect reference
-                    referencing_theories[new_theory_name] = theory
-        return None
     
     def clean(self, clear=False):
         '''
@@ -2160,11 +2116,11 @@ class TheoryFolderStorage:
             if hash_subfolder not in owned_hash_folders:
                 paths_to_remove.append(hashpath)
         
-        thm_names = set(self.theory.get_theorem_names())
         if self.folder == 'theorems':
             # When 'cleaning' the theorems folder, we will also
             # remove any '_proof_<theorem_name>' folders that are
             # obsolete.
+            thm_names = set(self.theory.get_theorem_names())
             for _folder in os.listdir(self.pv_it_dir):
                 if _folder[:7] == '_proof_':
                     thm_name = _folder[7:]
