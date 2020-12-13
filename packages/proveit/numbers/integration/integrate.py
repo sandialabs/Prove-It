@@ -1,5 +1,5 @@
 from proveit import Literal, OperationOverInstances
-from proveit.numbers.sets import Interval, infinity, Real, IntervalCC
+from proveit.numbers.number_sets import Interval, infinity, Real, IntervalCC
 from proveit.numbers.negation import Neg
 
 class Integrate(OperationOverInstances):

@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex, InnerExpr, USE_DEFAULTS, ProofFailure
 from proveit.logic import isIrreducibleValue
-from proveit.numbers.sets import Integer, Real, Complex
+from proveit.numbers.number_sets import Integer, Real, Complex
 from proveit._common_ import a, b, m, n, x, y, B
 
 class Neg(Operation):

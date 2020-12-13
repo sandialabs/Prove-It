@@ -2216,7 +2216,7 @@ class StoredSpecialStmt:
     
     @staticmethod
     def remove_dependency_proofs(theory, kind, hash_folder):
-        from .theory import Theory
+        from .theory import Theory, TheoryException
         if kind == 'axiom':
             theory_folder_storage = \
                 theory._theoryFolderStorage('axioms')
@@ -2231,7 +2231,7 @@ class StoredSpecialStmt:
         for dependent in dependentTheorems:
             try:
                 Theory.getStoredTheorem(dependent).removeProof()
-            except KeyError:
+            except (KeyError, TheoryException):
                 # If the dependent is no longer there, we don't need to
                 # worry about it (assuming it was removed
                 # responsibly with its dependents removed already).
@@ -2571,7 +2571,7 @@ class StoredTheorem(StoredSpecialStmt):
         that were actually used in a presumptions.txt file.
         '''
         from proveit._core_ import Proof
-        from .theory import Theory
+        from .theory import Theory, TheoryException
               
         # add a reference to the new proof
         active_folder_storage = \
@@ -2601,14 +2601,14 @@ class StoredTheorem(StoredSpecialStmt):
                 try:
                     Theory.getStoredAxiom(prevUsedAxiom)._removeUsedByEntry(
                             str(self))
-                except KeyError:
+                except (KeyError, TheoryException):
                     pass # don't worry if it has alread been removed
         for prevUsedTheorem in prevUsedTheoremNames:
             if prevUsedTheorem not in usedTheoremNames:
                 try:
                     Theory.getStoredTheorem(prevUsedTheorem)._removeUsedByEntry(
                             str(self))
-                except KeyError:
+                except (KeyError, TheoryException):
                     pass # don't worry if it has alread been removed
 
         storedUsedAxiomNames = [Theory.getStoredAxiom(usedAxiomName) for 
@@ -2698,7 +2698,7 @@ class StoredTheorem(StoredSpecialStmt):
         this update causes a dependent to become complete, propagate the
         news onward.
         '''
-        from .theory import Theory
+        from .theory import Theory, TheoryException
         self._markIfComplete()
         if self.isComplete():
             # This theorem has been completely proven.
@@ -2707,7 +2707,7 @@ class StoredTheorem(StoredSpecialStmt):
             for dependent in dependentTheorems:
                 try:
                     storedDependent = Theory.getStoredTheorem(dependent)
-                except KeyError:
+                except (KeyError, TheoryException):
                     # Dependent was removed; skip it.
                     continue
                 # propagate this recursively in case self's theorem was 
@@ -2729,7 +2729,7 @@ class StoredTheorem(StoredSpecialStmt):
         Erase the proof of this theorem from the database and all 
         obsolete links/references.
         '''     
-        from .theory import Theory 
+        from .theory import Theory, TheoryException
         # Remove obsolete used-by links that refer to this theorem by
         # its old proof.
         prevUsedAxiomNames, prevUsedTheoremNames = (
@@ -2737,12 +2737,12 @@ class StoredTheorem(StoredSpecialStmt):
         for usedAxiom in prevUsedAxiomNames:
             try:
                 Theory.getStoredAxiom(usedAxiom)._removeUsedByEntry(str(self))
-            except KeyError:
+            except (KeyError, TheoryException):
                 pass # If it doesn't exist, never mind.
         for usedTheorem in prevUsedTheoremNames:
             try:
                 Theory.getStoredTheorem(usedTheorem)._removeUsedByEntry(str(self))
-            except KeyError:
+            except (KeyError, TheoryException):
                 pass # If it doesn't exist, never mind.
         # If it was previously complete before, we need to erase the
         # completion marker and inform dependents that it is not longer 

@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.numbers.sets import Real, RealPos
+from proveit.numbers.number_sets import Real, RealPos
 
 class Max(Operation):
     # operator of the Max operation.

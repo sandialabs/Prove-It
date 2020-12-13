@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-from proveit.numbers.sets import Real
+from proveit.numbers.number_sets import Real
 
 class ModAbs(Operation):
     # operator of the ModAbs operation.

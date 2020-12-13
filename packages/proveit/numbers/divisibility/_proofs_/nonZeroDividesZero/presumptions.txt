@@ -4,7 +4,7 @@ proveit.logic.boolean.negation.notFalse
 proveit.logic.equality.subLeftSideInto
 proveit.logic.set_theory.containment.supersetMembershipFromProperSubset
 proveit.numbers.division.fracZeroNumer
-proveit.numbers.sets.integer.natInInt
-proveit.numbers.sets.integer.natPosInInt
-proveit.numbers.sets.integer.zeroInInteger
+proveit.numbers.number_sets.integers.natInInt
+proveit.numbers.number_sets.integers.natPosInInt
+proveit.numbers.number_sets.integers.zeroInInteger
 # THEOREMS AND THEORIES TO EXCLUDE:

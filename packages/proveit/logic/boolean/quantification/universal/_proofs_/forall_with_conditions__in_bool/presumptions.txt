@@ -5,8 +5,8 @@ proveit.logic.boolean.negation.notFalse
 proveit.logic.equality.equalsReversal
 proveit.logic.equality.subLeftSideInto
 proveit.logic.set_theory.containment.supersetMembershipFromProperSubset
-proveit.numbers.sets.natural.natPosInNat
-proveit.numbers.sets.natural.naturalLowerBound
-proveit.numbers.sets.natural.naturalPosLowerBound
-proveit.numbers.sets.natural.nonZeroIfInNaturalPos
+proveit.numbers.number_sets.natural_numbers.natPosInNat
+proveit.numbers.number_sets.natural_numbers.naturalLowerBound
+proveit.numbers.number_sets.natural_numbers.naturalPosLowerBound
+proveit.numbers.number_sets.natural_numbers.nonZeroIfInNaturalPos
 # THEOREMS AND THEORIES TO EXCLUDE:
