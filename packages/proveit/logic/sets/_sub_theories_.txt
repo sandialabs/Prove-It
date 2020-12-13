@@ -1,7 +1,7 @@
 membership
 equivalence
 enumeration
-containment
+inclusion
 unification
 intersection
 subtraction

@@ -25,7 +25,7 @@ proveit.logic.equality.substituteInFalse
 proveit.logic.equality.substituteInTrue
 proveit.logic.equality.substituteTruth
 proveit.logic.equality.unfoldNotEquals
-proveit.logic.sets.containment.supersetMembershipFromProperSubset
+proveit.logic.sets.inclusion.supersetMembershipFromProperSubset
 proveit.numbers.number_sets.natural_numbers.natPosInNat
 proveit.numbers.number_sets.natural_numbers.naturalLowerBound
 proveit.numbers.numerals.decimals.nat1

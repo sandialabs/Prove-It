@@ -1,0 +1,4 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.sets.inclusion.foldSupsetEq
+proveit.logic.sets.inclusion.unfoldSubsetEq
+# THEOREMS AND THEORIES TO EXCLUDE:

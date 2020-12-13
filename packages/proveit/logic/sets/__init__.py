@@ -2,7 +2,7 @@ from .membership import InSet, NotInSet, Membership, Nonmembership
 from .enumeration import Set
 # StrictSubset and SubsetProper are aliases for ProperSubset.
 # StrictSuperset and SupersetProper are aliases for ProperSuperset.
-from .containment import (
+from .inclusion import (
         SubsetEq, NotSubsetEq, ProperSubset, StrictSubset, SubsetProper,
         NotProperSubset, SupersetEq, NotSupersetEq, ProperSuperset, 
         StrictSuperset, SupersetProper, NotProperSuperset)

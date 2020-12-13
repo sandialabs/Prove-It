@@ -55,7 +55,7 @@ proveit.logic.equality.substituteInFalse
 proveit.logic.equality.substituteInTrue
 proveit.logic.equality.substituteTruth
 proveit.logic.equality.unfoldNotEquals
-proveit.logic.sets.containment.supersetMembershipFromProperSubset
+proveit.logic.sets.inclusion.supersetMembershipFromProperSubset
 proveit.numbers.addition.addIntClosure
 proveit.numbers.addition.addIntClosureBin
 proveit.numbers.addition.addNatClosureBin
