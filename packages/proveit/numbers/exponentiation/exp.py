@@ -470,7 +470,7 @@ class ExpSetMembership(Membership):
         Attempt to conclude that the element is in the exponentiated set.
         '''   
         from proveit.logic import InSet
-        from proveit.logic.set_theory.membership._theorems_ import (
+        from proveit.logic.sets.membership._theorems_ import (
             exp_set_0, exp_set_1, exp_set_2, exp_set_3, exp_set_4, exp_set_5,
             exp_set_6, exp_set_7, exp_set_8, exp_set_9)
         from proveit.numbers import zero, isLiteralInt, DIGITS

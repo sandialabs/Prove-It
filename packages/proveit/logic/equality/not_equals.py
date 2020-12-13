@@ -18,7 +18,7 @@ class NotEquals(Relation):
         Side-effect derivations to attempt automatically for
         this NotEquals operation.
         '''
-        from proveit.logic.boolean._common_ import FALSE
+        from proveit.logic.booleans._common_ import FALSE
         # automatically derive the reversed form which is equivalent
         yield self.deriveReversed # y != x from x != y
         if self.rhs==FALSE:
@@ -66,7 +66,7 @@ class NotEquals(Relation):
         Also see version in Not class.
         '''
         from proveit.logic import FALSE
-        from proveit.logic.boolean._theorems_ import fromNotFalse
+        from proveit.logic.booleans._theorems_ import fromNotFalse
         if self.rhs == FALSE:
             return fromNotFalse.instantiate({A:self.lhs})
         raise ValueError("deriveViaDoubleNegation does not apply to " + str(self) + " which is not of the form A != FALSE")
@@ -77,7 +77,7 @@ class NotEquals(Relation):
         Also see version in Not class.
         '''
         from proveit.logic import FALSE
-        from proveit.logic.boolean._theorems_ import notEqualsFalse
+        from proveit.logic.booleans._theorems_ import notEqualsFalse
         if self.lhs == FALSE:
             # switch left and right sides and prove it that way.
             NotEquals(self.rhs, self.lhs).prove(assumptions)
@@ -131,7 +131,7 @@ class NotEquals(Relation):
         From x != y, derive the conclusion provided that the negated conclusion
         implies x != y and x = y, and the conclusion is a Boolean.
         '''
-        from proveit.logic.boolean.implication import affirmViaContradiction
+        from proveit.logic.booleans.implication import affirmViaContradiction
         return affirmViaContradiction(self, conclusion, assumptions)
 
     def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
@@ -139,7 +139,7 @@ class NotEquals(Relation):
         From x != y, derive the negated conclusion provided that the conclusion
         implies x != y and x = y, and the conclusion is a Boolean.
         '''
-        from proveit.logic.boolean.implication import denyViaContradiction
+        from proveit.logic.booleans.implication import denyViaContradiction
         return denyViaContradiction(self, conclusion, assumptions)
                         
     def deduceInBool(self, assumptions=USE_DEFAULTS):

@@ -823,8 +823,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
     via bundle with num_levels=2.
 
     For example of the form of the theorem required, see
-    proveit.logic.boolean.quantification.bundling or
-    proveit.logic.boolean.quantification.bundling_equality.
+    proveit.logic.booleans.quantification.bundling or
+    proveit.logic.booleans.quantification.bundling_equality.
     '''
     from proveit.relation import TransRelUpdater
     from proveit.logic import Implies, Equals
@@ -915,8 +915,8 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
     by the remaining number of parameters.
 
     For example of the form of the theorem required, see
-    proveit.logic.boolean.quantification.unbundling or
-    proveit.logic.boolean.quantification.bundling_equality.
+    proveit.logic.booleans.quantification.unbundling or
+    proveit.logic.booleans.quantification.bundling_equality.
     '''
     from proveit.relation import TransRelUpdater
     from proveit.logic import Implies, Equals, And

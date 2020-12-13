@@ -1,7 +1,7 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit._common_ import a, b, x
 from proveit.logic import InSet
-from proveit.logic.set_theory import ProperSubset, SubsetEq
+from proveit.logic.sets import ProperSubset, SubsetEq
 from proveit.numbers import Add, Mult
 
 class Abs(Operation):

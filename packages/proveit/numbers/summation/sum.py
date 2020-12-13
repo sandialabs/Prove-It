@@ -19,7 +19,7 @@ class Sum(OperationOverInstances):
                  conditions=None, _lambda_map=None):
         r'''
         Sum summand over indices over domains.
-        Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
+        Arguments serve analogous roles to Forall arguments (found in basiclogic.booleanss):
         indices: instance vars
         summand: instanceExpressions
         domains: conditions (except no longer optional)

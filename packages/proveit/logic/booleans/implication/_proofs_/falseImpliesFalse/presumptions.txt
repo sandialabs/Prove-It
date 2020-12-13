@@ -1,0 +1,4 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.booleans.implication.selfImplication
+proveit.logic.booleans.implication.trueImpliesTrue
+# THEOREMS AND THEORIES TO EXCLUDE:

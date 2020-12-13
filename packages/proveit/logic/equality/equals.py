@@ -72,7 +72,7 @@ class Equals(TransitiveRelation):
         derivations are also attempted depending upon the form of this
         equality.
         '''
-        from proveit.logic.boolean._common_ import TRUE, FALSE
+        from proveit.logic.booleans._common_ import TRUE, FALSE
         Equals.knownEqualities.setdefault(self.lhs, set()).add(judgment)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(judgment)
 
@@ -254,7 +254,7 @@ class Equals(TransitiveRelation):
         return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
 
     def deduceNegated(self, i, assumptions=USE_DEFAULTS):
-        from proveit.logic.boolean.conjunction._theorems_ import falsifiedAndIfNotRight, falsifiedAndIfNotLeft, falsifiedAndIfNeither
+        from proveit.logic.booleans.conjunction._theorems_ import falsifiedAndIfNotRight, falsifiedAndIfNotLeft, falsifiedAndIfNeither
         if i == 0:
             # Deduce Not(A and B) from Not(A).
             return falsifiedAndIfNotRight.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -295,7 +295,7 @@ class Equals(TransitiveRelation):
         Note, see deriveStmtEqTrue or Not.equateNegatedToFalse for the reverse process.
         '''
         from proveit.logic import TRUE, FALSE        
-        from proveit.logic.boolean._axioms_ import eqTrueElim
+        from proveit.logic.booleans._axioms_ import eqTrueElim
         from proveit.logic import Not
         if self.rhs == TRUE:
             return eqTrueElim.instantiate({A:self.lhs}, assumptions=assumptions) # A
@@ -317,7 +317,7 @@ class Equals(TransitiveRelation):
         From (A=FALSE), derive the conclusion provided that the negated conclusion
         implies both (A=FALSE) as well as A, and the conclusion is a Boolean.
         '''
-        from proveit.logic.boolean.implication import affirmViaContradiction
+        from proveit.logic.booleans.implication import affirmViaContradiction
         return affirmViaContradiction(self, conclusion, assumptions)
 
     def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
@@ -325,7 +325,7 @@ class Equals(TransitiveRelation):
         From (A=FALSE), derive the negated conclusion provided that the conclusion
         implies both (A=FALSE) as well as A, and the conclusion is a Boolean.
         '''
-        from proveit.logic.boolean.implication import denyViaContradiction
+        from proveit.logic.booleans.implication import denyViaContradiction
         return denyViaContradiction(self, conclusion, assumptions)
     
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
@@ -333,7 +333,7 @@ class Equals(TransitiveRelation):
         Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.
         '''
         from proveit.logic import TRUE, FALSE, Not        
-        from proveit.logic.boolean._axioms_ import eqTrueIntro
+        from proveit.logic.booleans._axioms_ import eqTrueIntro
         if self.rhs == TRUE:
             return eqTrueIntro.instantiate({A:self.lhs}, assumptions=assumptions)
         elif self.rhs == FALSE:
@@ -351,7 +351,7 @@ class Equals(TransitiveRelation):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from proveit.logic.set_theory.enumeration._theorems_ import foldSingleton
+        from proveit.logic.sets.enumeration._theorems_ import foldSingleton
         return foldSingleton.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     @staticmethod
@@ -706,7 +706,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     assumptions = defaults.checkedAssumptions(assumptions)
 
     from proveit.logic import TRUE, FALSE
-    from proveit.logic.boolean._axioms_ import trueAxiom
+    from proveit.logic.booleans._axioms_ import trueAxiom
     topLevel = innerExpr.exprHierarchy[0]
     inner = innerExpr.exprHierarchy[-1]
     if operandsOnly:

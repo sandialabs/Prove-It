@@ -13,7 +13,7 @@ class Integrate(OperationOverInstances):
                  conditions=None):
         r'''
         Integrates integrand over indices over domain.
-        Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
+        Arguments serve analogous roles to Forall arguments (found in basiclogic.booleanss):
         index: single instance var
         integrand: instanceExpressions
         domains: conditions (except no longer optional)

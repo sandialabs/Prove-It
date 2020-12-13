@@ -1,0 +1,23 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.booleans.foldConditionedForallOverBool
+proveit.logic.booleans.foldForallOverBool
+proveit.logic.booleans.foldInBool
+proveit.logic.booleans.inBoolIfFalse
+proveit.logic.booleans.inBoolIfTrue
+proveit.logic.booleans.negation.closure
+proveit.logic.booleans.negation.doubleNegClosure
+proveit.logic.booleans.negation.doubleNegationElim
+proveit.logic.booleans.negation.doubleNegationIntro
+proveit.logic.booleans.negation.falsifiedNegationIntro
+proveit.logic.booleans.negation.negationIntro
+proveit.logic.booleans.negation.untrueFromNegation
+proveit.logic.equality.equalsReversal
+proveit.logic.equality.foldNotEquals
+proveit.logic.equality.notEqualsSymmetry
+proveit.logic.equality.subLeftSideInto
+proveit.logic.equality.substituteFalsehood
+proveit.logic.equality.substituteInFalse
+proveit.logic.equality.substituteInTrue
+proveit.logic.equality.substituteTruth
+proveit.logic.equality.unfoldNotEquals
+# THEOREMS AND THEORIES TO EXCLUDE:

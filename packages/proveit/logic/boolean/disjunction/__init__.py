@@ -1,1 +1,0 @@
-from proveit.logic.boolean.disjunction.or_op import Or

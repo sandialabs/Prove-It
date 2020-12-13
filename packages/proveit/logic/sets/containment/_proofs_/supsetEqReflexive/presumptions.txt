@@ -1,0 +1,3 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.sets.containment.foldSupsetEq
+# THEOREMS AND THEORIES TO EXCLUDE:

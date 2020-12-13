@@ -1740,7 +1740,7 @@ class TheoryFolderStorage:
         that package that should be visible externally.  Specifically, 
         this successively checks parent packages to see if the object is
         defined there with the same name.  For example, 
-        proveit.logic.boolean.conjunction.and_op will be abbreviated
+        proveit.logic.booleans.conjunction.and_op will be abbreviated
         to proveit.logic for the 'And' class.
         '''
         module = importlib.import_module(moduleName)
@@ -1967,13 +1967,13 @@ class TheoryFolderStorage:
                     # relative path will work.  This is needed to 
                     # resolve, for example, the issue that the 
                     # proveit.logic package imports from
-                    # proveit.logic.boolean._common_ but we need to be
+                    # proveit.logic.booleans._common_ but we need to be
                     # able to execute 
-                    # proveit.logic.boolean._common_.ipynb in
+                    # proveit.logic.booleans._common_.ipynb in
                     # the first place which requires imports within 
-                    # proveit.logic.boolean.  The solution is to use 
+                    # proveit.logic.booleans.  The solution is to use 
                     # relative imports when executing 
-                    # proveit.logic.boolean._common_.ipynb
+                    # proveit.logic.booleans._common_.ipynb
                     # the first time but afterwards use absolute paths. 
                     importFn(expr_class_rel_strs[expr_id])
                     # use the relative path
@@ -2848,7 +2848,11 @@ class StoredTheorem(StoredSpecialStmt):
         while len(toProcess) > 0:
             nextTheoremName = toProcess.pop()
             allUsedTheoremNames.add(nextTheoremName)
-            storedTheorem = Theory.getStoredTheorem(nextTheoremName)
+            try:
+                storedTheorem = Theory.getStoredTheorem(nextTheoremName)
+            except (KeyError, TheoryException):
+                # If it no longer exists, skip it.
+                continue
             if not storedTheorem.hasProof():
                 processed.add(nextTheoremName)
                 continue
