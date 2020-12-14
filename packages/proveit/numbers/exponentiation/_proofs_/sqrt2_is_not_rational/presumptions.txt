@@ -32,7 +32,7 @@ proveit.logic.booleans.negation.negationContradiction
 proveit.logic.booleans.negation.negationIntro
 proveit.logic.booleans.negation.notFalse
 proveit.logic.booleans.negation.untrueFromNegation
-proveit.logic.booleans.quantification.existential.skolemElim
+proveit.logic.booleans.quantification.existence.skolemElim
 proveit.logic.booleans.trueEqTrue
 proveit.logic.booleans.trueInBool
 proveit.logic.booleans.trueNotFalse

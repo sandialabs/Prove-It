@@ -1,2 +1,2 @@
-universal
-existential
+universality
+existence

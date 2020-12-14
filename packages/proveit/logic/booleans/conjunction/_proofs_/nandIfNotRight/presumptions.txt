@@ -19,8 +19,8 @@ proveit.logic.booleans.inBoolIfFalse
 proveit.logic.booleans.inBoolIfTrue
 proveit.logic.booleans.negation.negationIntro
 proveit.logic.booleans.negation.notFalse
-proveit.logic.booleans.quantification.universal.bundle
-proveit.logic.booleans.quantification.universal.bundling
+proveit.logic.booleans.quantification.universality.bundle
+proveit.logic.booleans.quantification.universality.bundling
 proveit.logic.booleans.trueEqTrue
 proveit.logic.booleans.trueInBool
 proveit.logic.booleans.trueNotFalse
