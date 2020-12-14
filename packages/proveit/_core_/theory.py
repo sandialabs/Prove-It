@@ -658,6 +658,12 @@ class UnsetCommonExpressionPlaceholder(object):
         self.theory = theory
         self.name = name
     
+    def __str__(self):
+        self.raise_attempted_use_error()
+    
+    def __repr__(self):
+        self.raise_attempted_use_error()
+    
     def raise_attempted_use_error(self):
         '''
         An error occurs when there is any attempt to use this

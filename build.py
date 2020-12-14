@@ -1029,6 +1029,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             # worker ranks; otherwise, it will be the rank itself.
             try:
                 return int(msg)
+                successful_execution_notification(finished_notebook)
             except TypeError:
                 # If we get anything other than an integer,
                 # it must be an exception message.
@@ -1039,10 +1040,10 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
                     print("Error while excecuting %s:"%failed_notebook)
                     print(msg[1])
                     comm.Abort()
+                return err_rank
         for notebook_path in generate_notebook_paths_with_retries():
             ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
             finished_notebook = assignments[ready_rank]
-            successful_execution_notification(finished_notebook)
             unfinished_ranks.add(ready_rank)
             comm.send(notebook_path, ready_rank)
             assignments[ready_rank] = notebook_path
