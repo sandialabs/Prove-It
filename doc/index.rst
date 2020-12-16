@@ -8,9 +8,13 @@ Welcome to Prove-It's documentation!
 
 .. automodapi:: proveit
    :no-inheritance-diagram:
+.. automodapi:: proveit.core_expr_types
+   :no-inheritance-diagram:
 .. automodapi:: proveit.logic
    :no-inheritance-diagram:
-.. automodapi:: proveit.number
+.. automodapi:: proveit.numbers
+   :no-inheritance-diagram:
+.. automodapi:: proveit.physics
    :no-inheritance-diagram:
 
 .. toctree::
