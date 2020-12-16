@@ -968,7 +968,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             return False
         theory = Theory(notebook_path)
         import_failure_filename = os.path.join(
-                theory._theory_folder_storage('common').path, 
+                theory._theoryFolderStorage('common').path, 
                 'import_failure.txt')
         if os.path.isfile(import_failure_filename):
             # There was a failure to import a common expression from
