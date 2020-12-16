@@ -3,7 +3,8 @@ Build the Prove-It common expression notebooks for the given theories,
 including sub-theories.
 '''
 
-from build import default_paths, notebook_path_generator, mpi_build
+from build import (default_paths, find_theory_paths, 
+                   notebook_path_generator, mpi_build)
 import os
 import argparse
 
@@ -33,6 +34,26 @@ if __name__ == '__main__':
                         help='paths to be processed; sub-theories will be included recursively (default: %s)'%' '.join(default_paths))
     args = parser.parse_args()    
     paths = args.path
+
+    try:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        nranks = comm.Get_size()
+    except:
+        rank, nranks = 0, 1
+    
+    if rank==0:
+        # First remove the __pv_it/common/name_to_hash.txt files to make
+        # sure we are using the correct version of the common expressions.
+        for path in paths:
+            for theory_path in find_theory_paths(path):
+                name_to_hash_filename = os.path.join(
+                    theory_path, '__pv_it', 'common', 'name_to_hash.txt')
+                if os.path.isfile(name_to_hash_filename):
+                    os.remove(name_to_hash_filename)
+    if nranks > 1:
+        comm.barrier()
     
     mpi_build(notebook_path_generator(paths, '_common_.ipynb'), 
               no_latex=args.nolatex, git_clear=not args.nogitclear, 

@@ -37,7 +37,7 @@ lt.use_breqn = False
 
 default_paths = ['packages/proveit', 'tutorial']#, 'tutorial/socks_demo']
 
-def findTheoryPaths(path):
+def find_theory_paths(path):
     if os.path.isfile(os.path.join(path, '_theory_.ipynb')):
         yield path
         sub_theories_txt = os.path.join(path, '_sub_theories_.txt')
@@ -45,7 +45,7 @@ def findTheoryPaths(path):
             for sub_theory in open(sub_theories_txt).readlines():
                 sub_theory = sub_theory.rstrip() # strip off the carriage return
                 sub_theory_path = os.path.join(path, sub_theory)
-                for theory_path in findTheoryPaths(sub_theory_path):
+                for theory_path in find_theory_paths(sub_theory_path):
                     yield theory_path
 
 # regular expression for finding 'a' html tags; trivially adapted from
@@ -178,7 +178,6 @@ class ProveItHTMLPreprocessor(Preprocessor):
         return new_text
         
     def preprocess(self, nb, resources):
-        import proveit
         proveit_path = os.path.split(proveit.__file__)[0]
         new_cells = []
         empty_cells = [] # skip empty cells at the end for a cleaner look
@@ -350,7 +349,7 @@ len(gc.get_objects()) # used to check for memory leaks
             #print('num gc objects', cell['outputs'][0]['data']['text/plain'])    
         return nb, resources
 
-    def executeNotebook(self, notebook_path, no_latex=False, git_clear=True):
+    def execute_notebook(self, notebook_path, no_latex=False, git_clear=True):
         '''
         Read, execute, and write out the notebook at the given path.
         Return the notebook object.
@@ -399,8 +398,9 @@ def generate_css_if_missing(path):
         # same name in the directory above it.
         with open(css_filename, 'wt') as f:
             f.write('@import url("../notebook.css")\n')
+        generate_css_if_missing(os.path.split(path)[0])
 
-def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=False):
+def export_notebook_to_html(notebook_path, nb=None, strip_links=False, make_images_inline=False):
     '''
     Export the notebook to html provided the notebook path.
     The notebook object (nb) may be provided, or it will be
@@ -428,21 +428,21 @@ def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=F
         html_exporter.preprocessors[0].make_images_inline = orig_make_images_inline # revert back to what it was
     print('Exported', notebook_path, 'to HTML in %0.2f seconds'%(time.time()-start_time))
 
-def executeAndExportNotebook(execute_processor, notebook_path, 
+def execute_and_export_notebook(execute_processor, notebook_path, 
                              no_execute=False, no_latex=False, git_clear=True):
     '''
     Read, execute, and rewrite a notebook and also export it
     to HTML. 
     '''
     if no_execute:
-        exportToHTML(notebook_path)
+        export_notebook_to_html(notebook_path)
     else:
-        nb = execute_processor.executeNotebook(notebook_path, 
+        nb = execute_processor.execute_notebook(notebook_path, 
                                                no_latex=no_latex, 
                                                git_clear=git_clear)
-        exportToHTML(notebook_path, nb)
+        export_notebook_to_html(notebook_path, nb)
 
-def executeAndMaybeExportNotebook(
+def execute_and_maybe_export_notebook(
         execute_processor, notebook_path, no_execute=False, no_latex=False, 
         git_clear=True, export_to_html=True):
     '''
@@ -458,11 +458,11 @@ def executeAndMaybeExportNotebook(
                   'wt') as f:
             f.write('interactive\n') 
     if export_to_html:
-        executeAndExportNotebook(execute_processor, notebook_path, 
+        execute_and_export_notebook(execute_processor, notebook_path, 
                                  no_latex=no_latex, no_execute=no_execute, 
                                  git_clear=git_clear)
     elif not no_execute:
-        execute_processor.executeNotebook(
+        execute_processor.execute_notebook(
                 notebook_path, no_latex=no_latex, git_clear=git_clear)
 
 """
@@ -494,12 +494,12 @@ def fix_theory(theory_path):
                 mode = line[6:].strip()
             else:
                 sub_theory_names.append(line.strip())
-        Theory(theory_path).setSubTheoryNames(sub_theory_names)
+        Theory(theory_path).set_sub_theory_names(sub_theory_names)
     if mode is not None:
         with open(os.path.join(theory_path, '_mode_.txt'), 'w') as fw:
             fw.write(mode + '\n')
 
-def recordPresumingInfo(theorem, proof_notebook_path):
+def record_presuming_info(theorem, proof_notebook_path):
     '''
     Given a Theorem object and corresponding proof notebook path,
     record the presuming information from information on the
@@ -538,7 +538,7 @@ def recordPresumingInfo(theorem, proof_notebook_path):
                     # Some of the presumptions are simply strings, but some are local variables
                     # we need to extract.  That is why we had to execute the previous lines.
                     __presumptions = [str(__locls[__presumption].proof()) if __presumption in __locls else __presumption for __presumption in __presumptions]
-                    __theorem.provenTruth.beginProof(__theorem, __presumptions, justRecordPresumingInfo=True)
+                    __theorem.proven_truth.begin_proof(__theorem, __presumptions, just_record_presuming_info=True)
                     return
                 elif __cellsource[0] != '%': # skip other magic commands (only the imports should really matter)
                     exec(__cellsource)
@@ -563,11 +563,11 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
         if not just_execute_essentials:
             # Generate html pages from index.ipynb and guide.ipynb in the packages folder:
             if no_execute:
-                exportToHTML('index.ipynb')
-                exportToHTML('guide.ipynb')
+                export_notebook_to_html('index.ipynb')
+                export_notebook_to_html('guide.ipynb')
             else:
-                executeAndExportNotebook(execute_processor, 'index.ipynb')
-                executeAndExportNotebook(execute_processor, 'guide.ipynb')
+                execute_and_export_notebook(execute_processor, 'index.ipynb')
+                execute_and_export_notebook(execute_processor, 'guide.ipynb')
         
         # Make sure there is a _common_.py, _axioms_.py, and _theorems_.py
         # in each theory directory.
@@ -576,7 +576,7 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
         # as avoiding import errors.
         for theory_path in theory_paths:
             for spec_expr_kind in ('common', 'axioms', 'theorems'):
-                Theory(theory_path).makeSpecialExprModule(spec_expr_kind)
+                Theory(theory_path).make_special_expr_module(spec_expr_kind)
         
         # Execute the _theory_ notebooks in each theory directory 
         # and generate _theory_.html.
@@ -586,7 +586,7 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
             with open(os.path.join(theory_path, '_mode_.txt'), 'wt') as f:
                 f.write('interactive\n') # when executed again, it will toggle to 'static' mode                
             # execute into static mode
-            executeAndExportNotebook(execute_processor, theory_notebook_path, 
+            execute_and_export_notebook(execute_processor, theory_notebook_path, 
                                      no_execute=no_execute, no_latex=no_latex)
         
         # Next, run the _common_.ipynb (common expression) notebooks for the theories.
@@ -610,7 +610,7 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
                 
             try:
                 revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                executeAndExportNotebook(os.path.join(theory_path, '_common_.ipynb'))
+                execute_and_export_notebook(os.path.join(theory_path, '_common_.ipynb'))
                 exececuted_common_nb.add(theory_path) # finished successfully
             except execute.CellExecutionError as e:            
                 retry = False
@@ -634,19 +634,19 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
         if no_execute:
             for theory_path in theory_paths:
                 #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                exportToHTML(os.path.join(theory_path, '_common_.ipynb'))
+                export_notebook_to_html(os.path.join(theory_path, '_common_.ipynb'))
         else:
             # execute the commons notebooks first, and do this twice to work out inter-dependencies
             for _ in range(2):
                 for theory_path in theory_paths:
                     #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                    execute_processor.executeNotebook(os.path.join(theory_path, '_common_.ipynb'), no_latex=no_latex)
+                    execute_processor.execute_notebook(os.path.join(theory_path, '_common_.ipynb'), no_latex=no_latex)
             # Unless 'no_latex' is True, execute one last time to 
             # eliminate "expression notebook ... updated" messages 
             # and we'll export to html.
             for theory_path in theory_paths:
                 #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                executeAndExportNotebook(execute_processor, os.path.join(theory_path, '_common_.ipynb'),
+                execute_and_export_notebook(execute_processor, os.path.join(theory_path, '_common_.ipynb'),
                                          no_execute=no_latex, no_latex=no_latex)
                     
         # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the theories.
@@ -656,22 +656,22 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
         # information about adding/removing from database
         if no_execute:
             for theory_path in theory_paths:
-                exportToHTML(os.path.join(theory_path, '_axioms_.ipynb'))
-                exportToHTML(os.path.join(theory_path, '_theorems_.ipynb'))    
+                export_notebook_to_html(os.path.join(theory_path, '_axioms_.ipynb'))
+                export_notebook_to_html(os.path.join(theory_path, '_theorems_.ipynb'))    
         else:
             for theory_path in theory_paths:
                 #revise_special_notebook(os.path.join(theory_path, '_axioms_.ipynb'))
                 #revise_special_notebook(os.path.join(theory_path, '_theorems_.ipynb'))
-                execute_processor.executeNotebook(os.path.join(theory_path, '_axioms_.ipynb'), no_latex=no_latex)
-                execute_processor.executeNotebook(os.path.join(theory_path, '_theorems_.ipynb'), no_latex=no_latex)    
+                execute_processor.execute_notebook(os.path.join(theory_path, '_axioms_.ipynb'), no_latex=no_latex)
+                execute_processor.execute_notebook(os.path.join(theory_path, '_theorems_.ipynb'), no_latex=no_latex)    
             # The second time we'll export to html.  Unless 'no_latex'
             # is True, we will execute again to clear extra information.
             for theory_path in theory_paths:
                 #revise_special_notebook(os.path.join(theory_path, '_axioms_.ipynb'))
                 #revise_special_notebook(os.path.join(theory_path, '_theorems_.ipynb'))
-                executeAndExportNotebook(execute_processor, os.path.join(theory_path, '_axioms_.ipynb'),
+                execute_and_export_notebook(execute_processor, os.path.join(theory_path, '_axioms_.ipynb'),
                                          no_execute=no_latex, no_latex=no_latex)
-                executeAndExportNotebook(execute_processor, os.path.join(theory_path, '_theorems_.ipynb'),
+                execute_and_export_notebook(execute_processor, os.path.join(theory_path, '_theorems_.ipynb'),
                                          no_execute=no_latex, no_latex=no_latex)    
     if not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the 
@@ -688,8 +688,8 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
             for theorem_name in theory.get_theorem_names():
                 start_time = time.time()
                 print("Loading", theorem_name, end='', flush=True)
-                theorem = theory.getTheorem(theorem_name)
-                proof_notebook_name = theory.thmProofNotebook(theorem_name, theorem.provenTruth.expr)
+                theorem = theory.get_theorem(theorem_name)
+                proof_notebook_name = theory.thm_proof_notebook(theorem_name, theorem.proven_truth.expr)
                 proof_notebook_theorems[proof_notebook_name] = theorem
                 theorem_proof_notebooks.append(proof_notebook_name)
                 print("; finished in %0.2f seconds"%(time.time()-start_time))
@@ -713,7 +713,7 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
             if not just_execute_essentials:
                 for proof_notebook in theorem_proof_notebooks:
                     #if not os.path.isfile(proof_notebook[-5:] + '.html'): # temporary
-                    exportToHTML(proof_notebook)
+                    export_notebook_to_html(proof_notebook)
         else:
             # Next, for each of the theorems, record the "presuming" information
             # of the proof notebooks in the _proofs_ folder.  Do this before executing
@@ -721,15 +721,15 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
             # (avoiding circular dependencies as intended).
             print("Recording theorem dependencies.")
             for proof_notebook in theorem_proof_notebooks:
-                recordPresumingInfo(proof_notebook_theorems[proof_notebook], proof_notebook)
+                record_presuming_info(proof_notebook_theorems[proof_notebook], proof_notebook)
 
             if not just_execute_essentials:
                 # Next, execute all of the proof notebooks twice
                 # to ensure there are no circular logic violations.
                 for proof_notebook in theorem_proof_notebooks:
-                    execute_processor.executeNotebook(proof_notebook, no_latex=no_latex)
+                    execute_processor.execute_notebook(proof_notebook, no_latex=no_latex)
                 for proof_notebook in theorem_proof_notebooks:
-                    executeAndExportNotebook(execute_processor, proof_notebook,
+                    execute_and_export_notebook(execute_processor, proof_notebook,
                                              no_latex=no_latex)
             
     if not just_execute_essentials and not just_execute_expression_nbs and not just_execute_proofs:
@@ -740,7 +740,7 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
                 full_path = os.path.join(path, sub)
                 if os.path.isfile(full_path) and os.path.splitext(full_path)[1] == '.ipynb':
                     if sub == '_demonstrations_.ipynb' or sub[0] != '_':
-                        executeAndExportNotebook(execute_processor, full_path, 
+                        execute_and_export_notebook(execute_processor, full_path, 
                                                  no_execute=no_execute,
                                                  no_latex=no_latex)
                         
@@ -768,12 +768,12 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
                                         notebook_path = os.path.join(hash_path, filebase+'.ipynb')
                                         if os.path.isfile(notebook_path):
                                             if no_execute:
-                                                exportToHTML(notebook_path)
+                                                export_notebook_to_html(notebook_path)
                                             else:
                                                 # if expr_html doesn't exist or is older than expr_notebook, generate it
                                                 if not os.path.isfile(html_path) or os.path.getmtime(html_path) < os.path.getmtime(notebook_path):
                                                     # execute the expr.ipynb notebook
-                                                    executeAndExportNotebook(
+                                                    execute_and_export_notebook(
                                                             execute_processor, 
                                                             notebook_path,
                                                             no_latex=no_latex, git_clear=False)
@@ -782,7 +782,7 @@ def build(execute_processor, theory_paths, all_paths, no_execute=False,
                                     dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
                                     if os.path.isfile(dependencies_notebook):
                                         # execute the dependencies.ipynb notebook
-                                        executeAndExportNotebook(
+                                        execute_and_export_notebook(
                                                 execute_processor, dependencies_notebook, 
                                                 no_execute=no_execute, no_latex=no_latex, 
                                                 git_clear=False)
@@ -830,7 +830,7 @@ if __name__ == '__main__':
     theory_paths = []
     theory_map = dict() # map Theory names to paths
     for path in paths:
-        for theory_path in findTheoryPaths(path):
+        for theory_path in find_theory_paths(path):
             theory_paths.append(theory_path)
             theory_map[Theory(theory_path).name] = theory_path
     
@@ -909,9 +909,9 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
     
     assert export_to_html or not no_execute, "Nothing to do, in that case??"
     
-    # List of notebooks that should be attempted after prerequisites
+    # Set of notebooks that should be attempted after prerequisites
     # have been satisfied (e.g., other common expression notebooks):
-    retry_notebooks = []
+    retry_notebooks = set()
     # Map notebooks, to be retried, to theory names:
     retry_notebook_to_theory_name = dict()
     # Map notebooks that need to be retried to their original error
@@ -922,6 +922,9 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
     retry_prerequisite = dict()
     # retry_prerequisite values that have not been satisfied:
     unmet_prerequisites = set()
+    # ranks that have been assigned to execute a notebook but
+    # haven't finished.
+    unfinished_ranks = set()
     
     # Inner functions to address retrying notebooks when executing
     # common expression notebooks and one imports from another that
@@ -933,39 +936,47 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
                 yield next(notebook_paths)
             except StopIteration:
                 break
-        # Retry some of the notebooks as needed.
-        while len(retry_notebooks) > 0:
-            print("# to retry:", len(retry_notebooks))
-            to_retry = retry_notebooks.pop()
-            retry_theory_name = retry_notebook_to_theory_name[to_retry]
-            prerequisite = retry_prerequisite[retry_theory_name]
-            if prerequisite in unmet_prerequisites:
-                if prerequisite not in retry_prerequisite.keys():
-                    # Unable to satisfy the prerequisite because
-                    # it isn't queued up.
-                    raise Exception(retry_orig_err_msg[to_retry])
-                # Not ready, so put it back.
-                retry_notebooks.insert(0, to_retry)
-            yield to_retry
+        # Retry some of the notebooks as needed and/or
+        # wait for unfinished notebooks.
+        while len(retry_notebooks) > 0 or len(unfinished_ranks) > 0:
+            #print(len(retry_notebooks), 'retries', len(unfinished_ranks), 
+            #      'unfinished', len(unmet_prerequisites), 'unmet_prerequisites')
+            yielded_retry = False
+            if len(retry_notebooks) > 0:
+                for to_retry in retry_notebooks:
+                    retry_theory_name = retry_notebook_to_theory_name[to_retry]
+                    prerequisite = retry_prerequisite[retry_theory_name]
+                    if prerequisite in unmet_prerequisites:
+                        if (prerequisite not in retry_prerequisite.keys() and
+                                len(unfinished_ranks)==0):
+                            # Unable to satisfy the prerequisite because
+                            # it isn't queued up.
+                            raise Exception("Error while executing %s\n%s"%(
+                                to_retry, retry_orig_err_msg[to_retry]))
+                    else:
+                        retry_notebooks.remove(to_retry)
+                        yield to_retry
+                        yielded_retry = True
+                        break
+            if not yielded_retry:
+                # We have to wait for unfinished notebooks.
+                yield None
     def should_retry_after_failed_execution(notebook_path, orig_err_msg):
         common_notebook_name = '_common_.ipynb'
-        print("should retry?", common_notebook_name)
         if notebook_path[-len(common_notebook_name):] != common_notebook_name:
             # Only retry for common expression notebooks.
             return False
         theory = Theory(notebook_path)
         import_failure_filename = os.path.join(
-                theory._theoryFolderStorage('common').path, 
+                theory._theory_folder_storage('common').path, 
                 'import_failure.txt')
-        print('import_failure_filename', import_failure_filename)
         if os.path.isfile(import_failure_filename):
             # There was a failure to import a common expression from
             # a different theory, so we should try again.
-            retry_notebooks.append(notebook_path)
+            retry_notebooks.add(notebook_path)
             retry_notebook_to_theory_name[notebook_path] = theory.name
             with open(import_failure_filename, 'r') as f:
                 failed_import = f.read().strip()
-            print("failed import", failed_import)
             retry_prerequisite[theory.name] = failed_import
             if (failed_import in retry_prerequisite and
                     retry_prerequisite[failed_import] == theory.name):
@@ -976,9 +987,11 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             unmet_prerequisites.add(failed_import)
             return True
         else:
-            print("No import file")
             return False
+    count = 0
     def successful_execution_notification(notebook_path):
+        nonlocal count
+        count += 1
         if len(unmet_prerequisites) > 0:
             theory = Theory(notebook_path)
             unmet_prerequisites.discard(theory.name)
@@ -988,29 +1001,30 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
         with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor: 
             for notebook_path in generate_notebook_paths_with_retries():
                 try:
-                    executeAndMaybeExportNotebook(
+                    execute_and_maybe_export_notebook(
                             execute_processor, notebook_path, no_latex=no_latex, 
-                            no_execute=no_execute, git_clear=True,
+                            no_execute=no_execute, git_clear=git_clear,
                             export_to_html=export_to_html)
+                    successful_execution_notification(notebook_path)
                 except Exception as e:
                     if not should_retry_after_failed_execution(notebook_path, 
                                                                str(e)):
                         raise e
-                successful_execution_notification(notebook_path)
     elif rank > 0:
         # These ranks will request assignments from rank 0
         try:
             with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor: 
+                comm.send(rank, dest=0)
                 while True:
-                    comm.send(rank, dest=0)
                     notebook_path = comm.recv(source=0)
                     if len(notebook_path)==0:
                         break # empty path is "done" signal
                     try:
-                        executeAndMaybeExportNotebook(
+                        execute_and_maybe_export_notebook(
                             execute_processor, notebook_path, no_latex=no_latex, 
                             no_execute=no_execute, git_clear=False,
                             export_to_html=export_to_html)
+                        comm.send(rank, dest=0)
                     except Exception as e:
                         comm.send((rank, str(e)), dest=0)
         except KernelStartFailure:
@@ -1022,14 +1036,11 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
     else:
         # Send out assignments as they are requested.
         assignments = [None]*nranks # remember the assigments of the ranks.
-        unfinished_ranks = set()
-        count = 0
         def process_response(msg):
             # Checks for an error message in the response from the
             # worker ranks; otherwise, it will be the rank itself.
             try:
-                return int(msg)
-                successful_execution_notification(finished_notebook)
+                ready_rank = int(msg)
             except TypeError:
                 # If we get anything other than an integer,
                 # it must be an exception message.
@@ -1037,60 +1048,64 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
                 failed_notebook = assignments[err_rank]
                 if not should_retry_after_failed_execution(failed_notebook, 
                                                            msg[1]):
-                    print("Error while excecuting %s:"%failed_notebook)
+                    print("Error while executing %s:"%failed_notebook)
                     print(msg[1])
                     comm.Abort()
+                else:
+                    print("\tFailure to execute %s, but we may retry "
+                          "after satisfying prerequisites"%failed_notebook)
                 return err_rank
-        for notebook_path in generate_notebook_paths_with_retries():
-            ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
             finished_notebook = assignments[ready_rank]
-            unfinished_ranks.add(ready_rank)
-            comm.send(notebook_path, ready_rank)
-            assignments[ready_rank] = notebook_path
-            count += 1
-            if git_clear:
-                git_clear_notebook(finished_notebook)
-        # Now wait for everybody to finish.
-        finished_ranks = set()
-        while len(unfinished_ranks) > 0:
-            ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
-            finished_notebook = assignments[ready_rank]
-            successful_execution_notification(finished_notebook)
-            unfinished_ranks.discard(ready_rank)
-            finished_ranks.add(ready_rank)
-            count += 1
-            if git_clear:
-                git_clear_notebook(finished_notebook)
+            if finished_notebook is not None:
+                successful_execution_notification(finished_notebook)
+                if git_clear:
+                    git_clear_notebook(finished_notebook)
+            return ready_rank
+        try:
+            idle_ranks = set()
+            for notebook_path in generate_notebook_paths_with_retries():
+                if notebook_path is not None and len(idle_ranks) > 0:
+                    # Send the job to a rank that was sitting idle.
+                    ready_rank = idle_ranks.pop()
+                else:
+                    # Wait for a request/response from one of the ranks.
+                    ready_rank = process_response(comm.recv(source=MPI.ANY_SOURCE))
+                if notebook_path is not None:
+                    unfinished_ranks.add(ready_rank)
+                    comm.send(notebook_path, ready_rank)
+                else:
+                    unfinished_ranks.discard(ready_rank)
+                    idle_ranks.add(ready_rank)
+                assignments[ready_rank] = notebook_path
+        except Exception as e:
+            print(str(e))
+            comm.Abort()
         # And now we are done
         for dest in range(1, nranks):
             comm.send("", dest)
+    if rank==0:
         print("Finished executing %d notebooks"%count) 
         
 def notebook_path_generator(top_level_paths, notebook_filename):
     for path in top_level_paths:
-        for theory_path in findTheoryPaths(path):
+        for theory_path in find_theory_paths(path):
             yield os.path.join(theory_path, notebook_filename)
 
 def theoremproof_path_generator(top_level_paths):
     for path in top_level_paths:
-        for theory_path in findTheoryPaths(path):
+        for theory_path in find_theory_paths(path):
             theory = Theory(theory_path)
             for theorem_name in theory.get_theorem_names():
                 yield os.path.join(theory._storage.directory, '_proofs_', theorem_name, 'thm_proof.ipynb')
-            proofs_path = os.path.join(theory._storage.directory, '_proofs_')
-            if os.path.isdir(proofs_path):
-                # add notebook.css if needed
-                generate_css_if_missing(proofs_path)
 
 def database_notebook_path_generator(top_level_paths, filebases):
     for path in top_level_paths:
-        for theory_path in findTheoryPaths(path):
+        for theory_path in find_theory_paths(path):
             pv_it_dir = os.path.join(theory_path, '__pv_it')
             if os.path.isdir(pv_it_dir):
                 for folder in os.listdir(pv_it_dir):
                     folder_dir = os.path.join(pv_it_dir, folder)
                     if os.path.isdir(folder_dir):
-                        generate_css_if_missing(folder_dir)
                         for hash_directory in os.listdir(folder_dir):
                             hash_path = os.path.join(folder_dir, hash_directory)
                             if os.path.isdir(hash_path):
@@ -1106,12 +1121,12 @@ def database_notebook_path_generator(top_level_paths, filebases):
                                         notebook_path = os.path.join(hash_path, filebase+'.ipynb')
                                         if os.path.isfile(notebook_path):
                                             if no_execute:
-                                                exportToHTML(notebook_path)
+                                                export_notebook_to_html(notebook_path)
                                             else:
                                                 # if expr_html doesn't exist or is older than expr_notebook, generate it
                                                 if not os.path.isfile(html_path) or os.path.getmtime(html_path) < os.path.getmtime(notebook_path):
                                                     # execute the expr.ipynb notebook
-                                                    executeAndExportNotebook(
+                                                    execute_and_export_notebook(
                                                             execute_processor, 
                                                             notebook_path,
                                                             no_latex=no_latex, git_clear=False)
@@ -1120,7 +1135,7 @@ def database_notebook_path_generator(top_level_paths, filebases):
                                     dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
                                     if os.path.isfile(dependencies_notebook):
                                         # execute the dependencies.ipynb notebook
-                                        executeAndExportNotebook(
+                                        execute_and_export_notebook(
                                                 execute_processor, dependencies_notebook, 
                                                 no_execute=no_execute, no_latex=no_latex, 
                                                 git_clear=False)
