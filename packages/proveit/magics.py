@@ -317,7 +317,7 @@ class ProveItMagicCommands:
             else:
                 # Write the notebook file which did not previously exist.
                 with open(notebook_name, 'w') as notebook_file:
-                    notebook_file.write(nb)
+                    notebook_file.write(generic_nb_str)
                     
         theory_interface = TheoryInterface()
         if theory_interface.mode == 'static':
