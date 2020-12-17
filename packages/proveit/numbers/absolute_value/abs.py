@@ -236,25 +236,38 @@ class Abs(Operation):
         set using the appropriate closure theorem.
         '''
         from proveit.numbers.absolute_value._theorems_ import (
+                  abs_rational_closure, abs_rational_non_zero_closure,
                   absComplexClosure, absNonzeroClosure,
                   absComplexClosureNonNegReal)
-        from proveit.numbers import Complex, Real, RealNonNeg, RealPos
+        from proveit.numbers import (
+                Rational, RationalNonZero, RationalPos, RationalNeg,
+                RationalNonNeg, Real, RealNonNeg, RealPos, Complex)
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
         assumptions = defaults.checkedAssumptions(assumptions)
-
-        if number_set == Real:
-            return absComplexClosure.instantiate({a:self.operand},
+        
+        thm = None
+        if number_set in (RationalPos, RationalNonZero):
+            thm = abs_rational_non_zero_closure       
+        elif number_set in (Rational, RationalNonNeg, RationalNeg):
+            thm = abs_rational_closure 
+        elif number_set == Real:
+            thm = absComplexClosure
+        elif number_set == RealPos:
+            thm = absNonzeroClosure
+        elif number_set == RealNonNeg:
+            thm = absComplexClosureNonNegReal
+            
+        if thm is not None:
+            in_set = thm.instantiate({a:self.operand},
                       assumptions=assumptions)
-
-        if number_set == RealPos:
-            return absNonzeroClosure.instantiate({a:self.operand},
-                      assumptions=assumptions)
-
-        if number_set == RealNonNeg:
-            return absComplexClosureNonNegReal.instantiate({a:self.operand},
-                      assumptions=assumptions)
+            if in_set.domain == number_set:
+                # Exactly the domain we were looking for.
+                return in_set
+            # We must have proven we were in a subset of the
+            # one we were looking for.
+            return InSet(self, number_set).prove(assumptions)
 
         # To be thorough and a little more general, we check if the
         # specified number_set is already proven to *contain* one of

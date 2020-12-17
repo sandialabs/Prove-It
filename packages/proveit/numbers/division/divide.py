@@ -288,23 +288,32 @@ class Div(Operation):
         Once established, these authorship notations can be deleted.
         '''
         from proveit._common_ import a, b
-        from proveit.numbers.division._theorems_ import (divRealClosure,
-                                                        divideRealPosClosure,
-                                                        divideComplexClosure)
-        from proveit.numbers import Real, RealPos, Complex
-
-        if number_set == Real:
-            return divRealClosure.instantiate(
-                {a:self.numerator, b:self.denominator},
-                assumptions=assumptions)
+        from proveit.numbers.division._theorems_ import (
+                div_rational_closure, div_rational_non_zero_closure,
+                div_rational_pos_closure, div_rational_non_neg_closure,
+                divRealClosure, divideRealPosClosure, divideComplexClosure)
+        from proveit.numbers import (
+                Rational, RationalNonZero, RationalPos, RationalNonNeg,
+                Real, RealPos, Complex)
+        
+        thm = None
+        if number_set == Rational:
+            thm = div_rational_closure
+        elif number_set == RationalNonZero:
+            thm = div_rational_non_zero_closure
+        elif number_set == RationalPos:
+            thm = div_rational_pos_closure
+        elif number_set == RationalNonNeg:
+            thm = div_rational_non_neg_closure
+        elif number_set == Real:
+            thm = divRealClosure
         elif number_set == RealPos:
-            return divideRealPosClosure.instantiate(
-                {a:self.numerator, b:self.denominator},
-                assumptions=assumptions)
+            thm = divideRealPosClosure
         elif number_set == Complex:
-            return divideComplexClosure.instantiate(
-                {a:self.numerator, b:self.denominator},
-                assumptions=assumptions)
+            thm = divideComplexClosure
+        if thm is not None:
+            return thm.instantiate({a:self.numerator, b:self.denominator},
+                                   assumptions=assumptions)
 
     """
     def factor(self,theFactor,pull="left", groupFactor=False, groupRemainder=None, assumptions=frozenset()):

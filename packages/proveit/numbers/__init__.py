@@ -1,11 +1,10 @@
 # Arithmetic and number theory concepts.
 
-from .number_sets import (Integer, Natural, NaturalPos,
-                   Rational, RationalPos, RationalNonNeg,
+from .number_sets import (Integer, Natural, NaturalPos, Rational, 
+                          RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
                    Real, RealNeg, RealPos, RealNonNeg, Complex)
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
-from .number_sets import Rational, RationalPos, RationalNeg, RationalNonNeg
 from .numerals import num, Numeral, DecimalSequence, Digits, DIGITS, isLiteralInt
 from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
 from .addition import (Add, subtract, dist_subtract, dist_add,

@@ -65,8 +65,9 @@ class Exp(Operation):
         simplified form. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
         '''
-        from proveit.logic import Equals
-        from proveit.numbers import one
+        from proveit.logic import Equals, InSet
+        from proveit.numbers import one, two, Rational, Real, Abs
+        from proveit.relation import TransRelUpdater
         from ._theorems_ import complexXToFirstPowerIsX
         if self.exponent == one:
             return complexXToFirstPowerIsX.instantiate({a:self.base})
@@ -78,8 +79,30 @@ class Exp(Operation):
             _n, _x = nth_power_of_nth_root.instanceParams
             return nth_power_of_nth_root.instantiate(
                 {_n:self.exponent, _x:self.base.base}, assumptions=assumptions)
+        
+        expr = self
+        # for convenience updating our equation:
+        eq = TransRelUpdater(expr, assumptions) 
+        if self.exponent == two and isinstance(self.base, Abs):
+            from ._theorems_ import (square_abs_rational_simp, 
+                                     square_abs_real_simp)
+            # |a|^2 = a if a is real
+            rational_base = InSet(self.base, Rational).proven(assumptions)
+            real_base = InSet(self.base, Real).proven(assumptions)
+            thm = None
+            if rational_base:
+                thm = square_abs_rational_simp
+            elif real_base:
+                thm = square_abs_real_simp
+            if thm is not None:
+                simp = thm.instantiate({a:self.base.operand}, 
+                                       assumptions=assumptions)
+                expr = eq.update(simp)
+                # A further simplification may be possible after
+                # eliminating the absolute value.
+                expr = eq.update(expr.simplification(assumptions))
 
-        return Equals(self, self).prove()
+        return eq.relation
 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
@@ -101,7 +124,24 @@ class Exp(Operation):
             raise EvaluationError('Only trivial evaluation is implemented '
                                   '(zero or one for the base or exponent).',
                                   assumptions)
-                
+    
+    def deduce_not_zero(self, assumptions=USE_DEFAULTS):
+        '''
+        Prove that this exponential is not zero given that
+        the base is not zero.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import RationalPos
+        from ._theorems_ import exp_rational_non_zero__not_zero, expNotEqZero
+        if (not expNotEqZero.isUsable() or (
+                InSet(self.base, RationalPos).proven(assumptions) and
+                InSet(self.exponent, RationalPos).proven(assumptions))):
+            # Special case where the base and exponent are RationalPos.
+            return exp_rational_non_zero__not_zero.instantiate(
+                    {a:self.base, b:self.exponent}, assumptions=assumptions)
+        return expNotEqZero.instantiate(
+                {a:self.base, b:self.exponent}, assumptions=assumptions)
+    
     def deduceInRealPosDirectly(self, assumptions=frozenset()):
         import real.theorems
         from number import two

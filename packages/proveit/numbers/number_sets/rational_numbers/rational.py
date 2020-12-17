@@ -29,6 +29,48 @@ class RationalSet(NumberSet):
         from proveit.numbers.number_sets.real_numbers._theorems_ import rationalInReal
         return rationalInReal.deriveSupersetMembership(member, assumptions)
 
+class RationalNonZeroSet(NumberSet):
+
+    def __init__(self):
+        NumberSet.__init__(self, 'RationalNonZero', r'\mathbb{Q}^{\neq 0}',
+                           theory=__file__)
+
+    def membershipSideEffects(self, judgment):
+        '''
+        Yield side-effects when proving 'q in RationalPos'
+        for a given q.
+        '''
+        member = judgment.element
+        yield lambda assumptions : self.deduceMemberInRational(member, 
+                                                               assumptions)
+    
+    def membershipObject(self, element):
+        return RationalMembership(element, self)
+    
+    def string(self, **kwargs):
+        inner_str = NumberSet.string(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        return maybeFencedString(inner_str, **kwargs)
+
+    def latex(self, **kwargs):
+        inner_str = NumberSet.latex(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        return maybeFencedString(inner_str, **kwargs)
+
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import rational_non_zero_membership_is_bool
+        from proveit._common_ import x
+        return rational_non_zero_membership_is_bool.instantiate(
+                {x:member}, assumptions=assumptions)
+
+    def deduceMemberInRational(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import rational_non_zero_in_rational
+        return rational_non_zero_in_rational.deriveSupersetMembership(member, assumptions)
+
 class RationalPosSet(NumberSet):
 
     def __init__(self):
@@ -160,16 +202,21 @@ class RationalMembership(NumberMembership):
         NumberMembership.__init__(self, element, number_set)
     
     def conclude(self, assumptions):
-        from proveit.logic import InSet
+        from proveit.logic import InSet, NotEquals
         from proveit.numbers import (
-                Rational, RationalPos, RationalNeg, RationalNonNeg,
-                Less, Greater, GreaterEq, zero)
+                Rational, RationalNonZero, RationalPos, RationalNeg, 
+                RationalNonNeg, Less, Greater, GreaterEq, zero)
         
         # If we known the element is in Q, we may be able to
-        # prove that is in RationalPos, RationalNeg, or 
+        # prove that is in RationalNonZero, RationalPos, RationalNeg, or 
         # RationalNonNeg if we know its relation to zero.
         if (self.number_set != Rational and 
                 InSet(self.element, Rational).proven(assumptions)):
+            if self.number_set == RationalNonZero:
+                if NotEquals(self.element, zero).proven(assumptions):
+                    from ._theorems_ import non_zero_rational_is_rational_non_zero
+                    return non_zero_rational_is_rational_non_zero.instantiate(
+                            {q:self.element}, assumptions=assumptions)
             if self.number_set == RationalPos:
                 if Greater(self.element, zero).proven(assumptions):
                     from ._theorems_ import positiveRationalInRationalPos
@@ -231,9 +278,15 @@ try:
     # Import some fundamental axioms and theorems without quantifiers.
     # Fails before running the _axioms_ and _theorems_ notebooks for
     # the first time, but fine after that.
-    from ._theorems_ import (rationalPosInRational,
+    from ._theorems_ import (natInRational, natInRationalNonNeg,
+                             nat_pos_in_rational_pos,
+                             nat_pos_in_rational_non_zero,
+                             rational_non_zero_in_rational,
+                             rationalPosInRational,
                              rationalNegInRational,
                              rationalNonNegInRational,
+                             rational_pos_in_rational_non_zero,
+                             rational_neg_in_rational_non_zero,
                              rationalPosInRationalNonNeg,
                              zeroInRational)
 except:
