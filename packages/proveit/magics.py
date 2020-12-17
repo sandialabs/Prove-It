@@ -353,11 +353,11 @@ class ProveItMagicCommands:
             #layout = widgets.Layout(float='bottom')
             display(widgets.VBox([special_notebook_links, sub_theories_label, theory_interface.widget, add_theory_widget]))       
         
-        display(HTML('<h3>Axioms contained (directly or indirectly) within this theory</h3>'))
+        display(HTML('<h3>Axioms contained within this theory and its descendents</h3>'))
         self.display_all_contained_axioms(theory)
 
-        display(HTML('<h3>Theorems (or conjectures) contained (directly or indirectly) within this theory</h3>'))
-        display(HTML('Also see list of all contained <a href="contain_theorems.ipynb">theorems (or conjectures)</a>.'))
+        #display(HTML('<h3>Theorems (or conjectures) contained (directly or indirectly) within this theory</h3>'))
+        #display(HTML('Also see list of all contained <a href="contain_theorems.ipynb">theorems (or conjectures)</a>.'))
     
     def display_all_contained_axioms(self, theory):
         count = 0
