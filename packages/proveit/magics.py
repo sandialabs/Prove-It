@@ -295,6 +295,7 @@ class ProveItMagicCommands:
         for sub-theories which may be edited.
         '''
         import proveit
+        proveit.defaults.automation = False # No need for automation.
         # create an '__init__.py' in the directory if there is not an existing one.
         if not os.path.isfile('__init__.py'):
             open('__init__.py', 'w').close() # create an empty __init__.py
