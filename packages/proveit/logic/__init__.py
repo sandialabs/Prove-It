@@ -9,13 +9,19 @@ from .sets import InSet, NotInSet, Membership, Nonmembership
 # StrictSubset and SubsetProper are aliases for ProperSubset.
 # StrictSuperset and SupersetProper are aliases for ProperSuperset.
 from .sets import (
-        SubsetEq, NotSubsetEq, ProperSubset, StrictSubset, SubsetProper,
-        NotProperSubset, SupersetEq, NotSupersetEq, ProperSuperset, 
-        StrictSuperset, SupersetProper, NotProperSuperset)
-from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference, 
+    SubsetEq, NotSubsetEq, ProperSubset, StrictSubset, SubsetProper,
+    NotProperSubset, SupersetEq, NotSupersetEq, ProperSuperset,
+    StrictSuperset, SupersetProper, NotProperSuperset)
+from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
                    SetOfAll, PowerSet, Disjoint, Distinct, Card)
-from .equality import (Equals, NotEquals, reduce_operands, default_simplification,
-                       evaluate_truth, SimplificationError, EvaluationError)
+from .equality import (
+    Equals,
+    NotEquals,
+    reduce_operands,
+    default_simplification,
+    evaluate_truth,
+    SimplificationError,
+    EvaluationError)
 from .irreducible_value import IrreducibleValue, is_irreducible_value
 
 #from mapping.mapping_ops import Domain, CoDomain
@@ -25,7 +31,8 @@ import proveit
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
-    # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+    # Fails before running the _axioms_ and _theorems_ notebooks for the first
+    # time, but fine after that.
     from .booleans.negation._axioms_ import not_f, not_t
     from .booleans.negation._theorems_ import not_false
     from .booleans.implication._theorems_ import true_implies_true, false_implies_true, false_implies_false

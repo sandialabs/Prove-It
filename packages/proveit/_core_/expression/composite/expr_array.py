@@ -9,13 +9,15 @@ class ExprArray(ExprTuple):
     The array is broken up into different rows after each ExprTuple
     or ExprRange. Each column MUST contain the same type of expression.
     '''
+
     def __init__(self, *expressions, styles=None):
         '''
         Initialize an ExprTuple from an iterable over Expression
         objects.
         '''
         from .expr_range import ExprRange
-        if styles is None: styles = dict()
+        if styles is None:
+            styles = dict()
         if 'orientation' not in styles:
             styles['orientation'] = 'horizontal'
         if 'justification' not in styles:
@@ -29,43 +31,46 @@ class ExprArray(ExprTuple):
                 # May be a range of ranges of ExprTuples, etc.
                 entry_or_body = entry_or_body.body
             if not isinstance(entry_or_body, ExprTuple):
-                raise ValueError("Each element of an ExprRange must represent a tuple, "
-                                 "entries being tuples or ranges of tuples.")
+                raise ValueError(
+                    "Each element of an ExprRange must represent a tuple, "
+                    "entries being tuples or ranges of tuples.")
 
         # check each column for same expression throughout
         self.check_range()
-    
+
     @classmethod
     def _make(sub_class, core_info, styles, sub_expressions):
-        if sub_class != ExprArray: 
+        if sub_class != ExprArray:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("An ExprArray is an ExprTuple of ExprTuples, "
                              "so the ExprArray core_info should contain "
                              "exactly one item: 'ExprTuple'")
-        return ExprArray(*sub_expressions).with_styles(**styles)      
-    
+        return ExprArray(*sub_expressions).with_styles(**styles)
+
     def style_options(self):
         options = StyleOptions(self)
-        options.add_option('justification',
-                          ("justify to the 'left', 'center', or 'right' in the array cells"))
-        options.add_option('orientation',
-                          ("to be read from left to right then top to bottom ('horizontal') "
-                           "or to be read top to bottom then left to right ('vertical')"))
         options.add_option(
-                'parameterization', 
-                ("'implicit' (default for LaTeX formatting) hides "
-                 "the parameter the ExprRange so the parameterization "
-                 "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
-                 "'explicit' (default for string formatting) reveals "
-                 "the parameterization "
-                 "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
+            'justification',
+            ("justify to the 'left', 'center', or 'right' in the array cells"))
+        options.add_option(
+            'orientation',
+            ("to be read from left to right then top to bottom ('horizontal') "
+             "or to be read top to bottom then left to right ('vertical')"))
+        options.add_option(
+            'parameterization',
+            ("'implicit' (default for LaTeX formatting) hides "
+             "the parameter the ExprRange so the parameterization "
+             "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
+             "'explicit' (default for string formatting) reveals "
+             "the parameterization "
+             "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
         return options
-    
+
     def remake_with_style_calls(self):
         '''
         In order to reconstruct this Expression to have the same styles,
-        what "with..." method calls are most appropriate?  Return a 
+        what "with..." method calls are most appropriate?  Return a
         tuple of strings with the calls to make.  The default for the
         Operation class is to include appropriate 'with_wrapping_at'
         and 'with_justification' calls.
@@ -84,22 +89,22 @@ class ExprArray(ExprTuple):
             if parameterization == 'implicit':
                 call_strs.append('with_implicit_parameterization()')
         return call_strs
-    
+
     def with_justification(self, justification):
         return self.with_styles(justification=justification)
-    
+
     def with_orientation(self, orientation):
         '''
         Wrap the expression according to the orientation: 'horizontal' or 'vertical'
         '''
-        if not orientation in ('horizontal', 'vertical'):
+        if orientation not in ('horizontal', 'vertical'):
             raise ValueError("'orientation' must be 'horizontal' or "
-                             "'vertical', not %s"%orientation)
+                             "'vertical', not %s" % orientation)
         return self.with_styles(orientation=orientation)
-    
+
     def with_explicit_parameterization(self):
         '''
-        The 'parameterization':'explicit' style shows the 
+        The 'parameterization':'explicit' style shows the
         parameterization of the ExprRange explicitly.  For example,
         x_{1+1}, ..x_{k+1}.., x_{n+1}).
         '''
@@ -109,7 +114,7 @@ class ExprArray(ExprTuple):
         '''
         The 'parameterization':'implicit' style does not show the
         parameterization of the ExprRange explicitly and such that the
-        parameterization may be ambiguous but is more compact.  
+        parameterization may be ambiguous but is more compact.
         For example, x_{1+1}, ..., x_{n+1} could be
         x_{1+1}, ..x_{k+1}.., x_{n+1}
         or could be
@@ -145,7 +150,7 @@ class ExprArray(ExprTuple):
                 output = output.__add__([entry])
 
         return output
-    
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -169,8 +174,13 @@ class ExprArray(ExprTuple):
                 for i, entry in enumerate(expr):
                     if isinstance(entry, ExprRange):
 
-                        if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
-                            # we break in this instance because we have a check in Circuit
+                        if isinstance(
+                                entry.first(),
+                                MultiQubitGate) or isinstance(
+                                entry.first(),
+                                Gate):
+                            # we break in this instance because we have a check
+                            # in Circuit
                             return
                         if m == 0:
                             placeholder = []
@@ -180,24 +190,30 @@ class ExprArray(ExprTuple):
                             pos.append(placeholder)
                         else:
                             if len(pos) == 0:
-                                raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
+                                raise ValueError(
+                                    'There is an invalid ExprRange in tuple number %s' % str(i))
                             for item in pos:
                                 if item[0] == i:
                                     if entry.start_index != item[1]:
-                                        raise ValueError('Columns containing ExprRanges '
-                                                         'must agree for every row. %s from %s is '
-                                                         'not equal to %s.' % (entry.start_index, entry, item[1]))
+                                        raise ValueError(
+                                            'Columns containing ExprRanges '
+                                            'must agree for every row. %s from %s is '
+                                            'not equal to %s.' %
+                                            (entry.start_index, entry, item[1]))
                                     if entry.end_index != item[2]:
-                                        raise ValueError('Columns containing ExprRanges '
-                                                         'must agree for every row. %s from %s is '
-                                                         'not equal to %s.' % (entry.end_index, entry, item[2]))
+                                        raise ValueError(
+                                            'Columns containing ExprRanges '
+                                            'must agree for every row. %s from %s is '
+                                            'not equal to %s.' %
+                                            (entry.end_index, entry, item[2]))
                                     k += 1
                         count += 3
                     else:
                         count += 1
 
                 if count != self.get_row_length():
-                    raise ValueError('One or more rows are a different length.  Please double check your entries.')
+                    raise ValueError(
+                        'One or more rows are a different length.  Please double check your entries.')
             elif isinstance(expr, ExprRange):
                 if isinstance(expr.first(), ExprTuple):
                     first = None
@@ -205,15 +221,22 @@ class ExprArray(ExprTuple):
                     for i, entry in enumerate(expr.first()):
 
                         if isinstance(entry, ExprTuple):
-                            raise ValueError('Nested ExprTuples are not supported. Fencing is an '
-                                             'extraneous feature for the ExprArray class.')
+                            raise ValueError(
+                                'Nested ExprTuples are not supported. Fencing is an '
+                                'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
-                            if isinstance(entry.first(), MultiQubitGate) or isinstance(entry.first(), Gate):
-                                # we break in this instance because we have a check in Circuit
+                            if isinstance(
+                                    entry.first(),
+                                    MultiQubitGate) or isinstance(
+                                    entry.first(),
+                                    Gate):
+                                # we break in this instance because we have a
+                                # check in Circuit
                                 return
 
                             if m == 0:
-                                # we are checking that i in Aij matches all the other i's
+                                # we are checking that i in Aij matches all the
+                                # other i's
                                 placeholder = []
                                 placeholder.append(i)
                                 placeholder.append(entry.first().indices[1])
@@ -222,50 +245,75 @@ class ExprArray(ExprTuple):
                             if first is None:
                                 first = entry.first().indices[0]
                             if first != entry.first().indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
-                                                 'is not equal to %s.' % (first, entry.first(),
-                                                                          entry.first().indices[0]))
+                                raise ValueError(
+                                    'Rows containing ExprRanges must agree for every column. %s from %s '
+                                    'is not equal to %s.' %
+                                    (first, entry.first(), entry.first().indices[0]))
 
                         else:
-                            if isinstance(entry, MultiQubitGate) or isinstance(entry, Gate):
-                                # we break in this instance because we have a check in Circuit
+                            if isinstance(
+                                    entry,
+                                    MultiQubitGate) or isinstance(
+                                    entry,
+                                    Gate):
+                                # we break in this instance because we have a
+                                # check in Circuit
                                 return
                             if first is None:
                                 first = entry.indices[0]
                             if first != entry.indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
-                                                 'is not equal to %s.' % (first, entry, entry.indices[0]))
+                                raise ValueError(
+                                    'Rows containing ExprRanges must agree for every column. %s from %s '
+                                    'is not equal to %s.' %
+                                    (first, entry, entry.indices[0]))
                     for entry in expr.last():
                         if isinstance(entry, ExprTuple):
-                            raise ValueError('Nested ExprTuples are not supported. Fencing is an '
-                                             'extraneous feature for the ExprArray class.')
+                            raise ValueError(
+                                'Nested ExprTuples are not supported. Fencing is an '
+                                'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
-                            if isinstance(entry.first(), MultiQubitGate) or isinstance(entry, Gate):
-                                # we break in this instance because we have a check in Circuit
+                            if isinstance(
+                                    entry.first(),
+                                    MultiQubitGate) or isinstance(
+                                    entry,
+                                    Gate):
+                                # we break in this instance because we have a
+                                # check in Circuit
                                 return
                             if last is None:
                                 last = entry.last().indices[0]
                             if last != entry.last().indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
-                                                 'is not equal to %s.' % (last, entry.last(), entry.last().indices[0]))
+                                raise ValueError(
+                                    'Rows containing ExprRanges must agree for every column. %s from %s '
+                                    'is not equal to %s.' %
+                                    (last, entry.last(), entry.last().indices[0]))
 
                         else:
-                            if isinstance(entry, MultiQubitGate) or isinstance(entry, Gate):
-                                # we break in this instance because we have a check in Circuit
+                            if isinstance(
+                                    entry,
+                                    MultiQubitGate) or isinstance(
+                                    entry,
+                                    Gate):
+                                # we break in this instance because we have a
+                                # check in Circuit
                                 return
                             if last is None:
                                 last = entry.indices[0]
                             if last != entry.indices[0]:
-                                raise ValueError('Rows containing ExprRanges must agree for every column. %s from %s '
-                                                 'is not equal to %s.' % (last, entry, entry.indices[0]))
+                                raise ValueError(
+                                    'Rows containing ExprRanges must agree for every column. %s from %s '
+                                    'is not equal to %s.' %
+                                    (last, entry, entry.indices[0]))
             n = m
 
         if k != len(pos):
             if n == 0:
                 pass
             else:
-                raise ValueError('The ExprRange in the first tuple is not in the same column '
-                                 'as the ExprRange in tuple number %s' % str(n))
+                raise ValueError(
+                    'The ExprRange in the first tuple is not in the same column '
+                    'as the ExprRange in tuple number %s' %
+                    str(n))
 
     def get_col_height(self, explicit=False):
         '''
@@ -306,13 +354,18 @@ class ExprArray(ExprTuple):
                     for value in expr.first():
                         if isinstance(value, ExprTuple):
                             for var in value:
-                                if isinstance(var, Variable) or isinstance(var, IndexedVar):
+                                if isinstance(
+                                        var, Variable) or isinstance(
+                                        var, IndexedVar):
                                     output += 1
                                 elif isinstance(value, ExprTuple):
                                     for operand in value:
-                                        if isinstance(operand, ExprRange) or isinstance(operand, ExprTuple):
-                                            raise ValueError('This expression is nested too many times to get an '
-                                                             'accurate row length. Please consolidate your ExprRange')
+                                        if isinstance(
+                                                operand, ExprRange) or isinstance(
+                                                operand, ExprTuple):
+                                            raise ValueError(
+                                                'This expression is nested too many times to get an '
+                                                'accurate row length. Please consolidate your ExprRange')
                                         else:
                                             output += 1
                         elif isinstance(value, ExprRange):
@@ -328,9 +381,12 @@ class ExprArray(ExprTuple):
                         for var in value:
                             if isinstance(var, ExprTuple):
                                 for operand in value:
-                                    if isinstance(operand, ExprRange) or isinstance(operand, ExprTuple):
-                                        raise ValueError('This expression is nested too many times to get an '
-                                                         'accurate row length. Please consolidate your ExprTuple')
+                                    if isinstance(
+                                            operand, ExprRange) or isinstance(
+                                            operand, ExprTuple):
+                                        raise ValueError(
+                                            'This expression is nested too many times to get an '
+                                            'accurate row length. Please consolidate your ExprTuple')
                                     else:
                                         output += 1
                             else:
@@ -345,7 +401,12 @@ class ExprArray(ExprTuple):
             break
         return output
 
-    def get_formatted_sub_expressions(self, format_type, orientation, default_style, operator_or_operators):
+    def get_formatted_sub_expressions(
+            self,
+            format_type,
+            orientation,
+            default_style,
+            operator_or_operators):
         '''
         Used to cycle through the ExprArray and format the output accordingly
         '''
@@ -373,26 +434,30 @@ class ExprArray(ExprTuple):
                 # ell will be used to store the vertical ellipses
                 # for the horizontal orientation while vell will store
                 # the horizontal ellipses for the vertical orientation
-                for i, expr in enumerate(sub_expr._formatted_checkpoints(format_type,
-                                                            fence=False, sub_fence=False,
-                                                            operator=operator_or_operators)):
-                    # if orientation is 'vertical' replace all \vdots with \cdots and vice versa.
+                for i, expr in enumerate(sub_expr._formatted_checkpoints(
+                        format_type, fence=False, sub_fence=False, operator=operator_or_operators)):
+                    # if orientation is 'vertical' replace all \vdots with
+                    # \cdots and vice versa.
                     if i == 0 and isinstance(sub_expr.first(), ExprTuple):
                         # only do this once, right away
                         for m, entry in enumerate(sub_expr.first().entries):
                             if m == 0:
-                                # for the first entry, don't include '&' for formatting purposes
+                                # for the first entry, don't include '&' for
+                                # formatting purposes
                                 if isinstance(entry, ExprTuple):
                                     for n, var in enumerate(entry):
                                         if n != 0:
                                             if orientation == 'horizontal':
                                                 yield '& ' + var.formatted(format_type, fence=False)
-                                                if self.get_style('parameterization', default_style) == 'explicit':
+                                                if self.get_style(
+                                                        'parameterization', default_style) == 'explicit':
                                                     ell.append(r'& \colon')
                                                 else:
                                                     ell.append(r'& \vdots')
                                             else:
-                                                # if the orientation is 'vertical', include the ellipses
+                                                # if the orientation is
+                                                # 'vertical', include the
+                                                # ellipses
                                                 if k == 0:
                                                     yield var.formatted(format_type, fence=False)
                                                     vell.append(r'& \cdots')
@@ -400,16 +465,21 @@ class ExprArray(ExprTuple):
                                                     yield '& ' + var.formatted(format_type, fence=False)
                                                     vell.append(r'& \cdots')
                                         else:
-                                            # for the first entry, don't include '&' for formatting purposes
+                                            # for the first entry, don't
+                                            # include '&' for formatting
+                                            # purposes
 
                                             if orientation == 'horizontal':
                                                 yield var.formatted(format_type, fence=False)
-                                                if self.get_style('parameterization', default_style) == 'explicit':
+                                                if self.get_style(
+                                                        'parameterization', default_style) == 'explicit':
                                                     ell.append(r'\colon')
                                                 else:
                                                     ell.append(r'\vdots')
                                             else:
-                                                # if the orientation is 'vertical', include the ellipses
+                                                # if the orientation is
+                                                # 'vertical', include the
+                                                # ellipses
                                                 if k == 0:
                                                     yield var.formatted(format_type, fence=False)
                                                     vell.append(r'& \cdots')
@@ -417,12 +487,14 @@ class ExprArray(ExprTuple):
                                                     yield '& ' + var.formatted(format_type, fence=False)
                                                     vell.append(r'& \cdots')
                                 elif isinstance(entry, ExprRange):
-                                    # this is first for both orientations so don't include the '&' for either
+                                    # this is first for both orientations so
+                                    # don't include the '&' for either
                                     using_explicit_parameterization.append(
                                         entry._use_explicit_parameterization(format_type))
                                     yield entry.first().formatted(format_type, fence=False)
                                     if orientation == 'horizontal':
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             yield '& ..' + entry.body.formatted(format_type, fence=False) + '..'
                                             ell.append(r'\colon')
                                             ell.append(r'& \colon')
@@ -430,33 +502,44 @@ class ExprArray(ExprTuple):
                                         else:
                                             yield r'& \cdots'
                                             ell.append(r'\vdots')
-                                            ell.append('& ' + sub_expr.body.entries[m].body.formatted(format_type,
-                                                                                                      fence=False))
+                                            ell.append(
+                                                '& ' +
+                                                sub_expr.body.entries[m].body.formatted(
+                                                    format_type,
+                                                    fence=False))
                                             ell.append(r'& \vdots')
 
                                         yield '& ' + entry.last().formatted(format_type, fence=False)
                                     else:
-                                        # we add an '&' after the \vdots because this is a range of a tuple of a range
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        # we add an '&' after the \vdots
+                                        # because this is a range of a tuple of
+                                        # a range
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             yield r'\colon'
                                             yield entry.body.formatted(format_type, fence=False)
                                             yield r'\colon'
                                         else:
                                             yield r'\vdots'
                                         vell.append(r'& \cdots')
-                                        vell.append('& ' + sub_expr.body.entries[m].body.formatted(format_type,
-                                                                                                   fence=False))
+                                        vell.append(
+                                            '& ' +
+                                            sub_expr.body.entries[m].body.formatted(
+                                                format_type,
+                                                fence=False))
                                         yield entry.last().formatted(format_type, fence=False)
                                         vell.append(r'& \cdots')
                                 else:
                                     if orientation == 'horizontal':
                                         yield entry.formatted(format_type, fence=False)
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             ell.append(r'\colon')
                                         else:
                                             ell.append(r'\vdots')
                                     else:
-                                        # if the orientation is 'vertical', include the ellipses
+                                        # if the orientation is 'vertical',
+                                        # include the ellipses
                                         if k == 0:
                                             yield entry.formatted(format_type, fence=False)
                                             vell.append(r'& \cdots')
@@ -467,16 +550,19 @@ class ExprArray(ExprTuple):
                                 if isinstance(entry, ExprTuple):
                                     for var in entry:
                                         if orientation == 'horizontal':
-                                            # this is not the first so we add '&'
+                                            # this is not the first so we add
+                                            # '&'
                                             yield '& ' + var.formatted(format_type, fence=False)
-                                            if self.get_style('parameterization', default_style) == 'explicit':
+                                            if self.get_style(
+                                                    'parameterization', default_style) == 'explicit':
                                                 ell.append(r'& \colon')
                                             else:
                                                 ell.append(r'& \vdots')
                                         else:
                                             if k == 0:
                                                 # this is still technically the first column so we don't include
-                                                # the '&' for formatting purposes
+                                                # the '&' for formatting
+                                                # purposes
                                                 yield var.formatted(format_type, fence=False)
                                                 vell.append(r'& \cdots')
                                             else:
@@ -487,15 +573,19 @@ class ExprArray(ExprTuple):
                                         entry._use_explicit_parameterization(format_type))
                                     if orientation == 'horizontal':
                                         yield '& ' + entry.first().formatted(format_type, fence=False)
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             ell.append(r'& \colon')
                                             ell.append(r'& \colon')
                                             ell.append(r'& \colon')
                                             yield '& ..' + entry.body.formatted(format_type, fence=False) + '..'
                                         else:
                                             ell.append(r'& \vdots')
-                                            ell.append(r'& ' + sub_expr.body.entries[m].body.formatted(format_type,
-                                                                                                       fence=False))
+                                            ell.append(
+                                                r'& ' +
+                                                sub_expr.body.entries[m].body.formatted(
+                                                    format_type,
+                                                    fence=False))
                                             ell.append(r'& \vdots')
                                             yield r'& \cdots'
                                         yield '& ' + entry.last().formatted(format_type, fence=False)
@@ -505,7 +595,8 @@ class ExprArray(ExprTuple):
                                         # the '&' for formatting purposes
                                         yield entry.first().formatted(format_type, fence=False)
 
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             yield r'\colon'
                                             yield entry.body.formatted(format_type, fence=False)
                                             yield r'\colon'
@@ -513,14 +604,18 @@ class ExprArray(ExprTuple):
                                             yield r'\vdots'
                                         yield entry.last().formatted(format_type, fence=False)
                                         vell.append(r'& \cdots ')
-                                        vell.append('& ' + sub_expr.body.entries[m].body.formatted(format_type,
-                                                                                                   fence=False))
+                                        vell.append(
+                                            '& ' +
+                                            sub_expr.body.entries[m].body.formatted(
+                                                format_type,
+                                                fence=False))
                                         vell.append(r'& \cdots ')
                                 else:
                                     if orientation == 'horizontal':
                                         # this is not the first so we add '&'
                                         yield '& ' + entry.formatted(format_type, fence=False)
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             ell.append(r'& \colon')
                                         else:
                                             ell.append(r'& \vdots')
@@ -544,37 +639,44 @@ class ExprArray(ExprTuple):
                                     n = 0
                                     for var in entry:
                                         if n != 0:
-                                            # regardless of orientation add the '&'
+                                            # regardless of orientation add the
+                                            # '&'
                                             yield '& ' + var.formatted(format_type, fence=False)
                                         else:
                                             if orientation == 'horizontal':
-                                                # if its the first one, omit '&' for formatting purposes
+                                                # if its the first one, omit
+                                                # '&' for formatting purposes
                                                 yield var.formatted(format_type, fence=False)
                                             else:
-                                                # add the '&' because this is technically the last column
+                                                # add the '&' because this is
+                                                # technically the last column
                                                 yield '& ' + var.formatted(format_type, fence=False)
                                         n += 1
                                 elif isinstance(sub_expr.last().entries[0], ExprRange):
                                     using_explicit_parameterization.append(
                                         entry._use_explicit_parameterization(format_type))
                                     if orientation == 'horizontal':
-                                        # this is the first of the last row so we omit the '&'
+                                        # this is the first of the last row so
+                                        # we omit the '&'
                                         yield entry.first().formatted(format_type, fence=False)
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             yield r'& ..' + entry.body.formatted(format_type, fence=False) + '..'
                                         else:
                                             yield r'& \cdots'
                                         yield '& ' + entry.last().formatted(format_type, fence=False)
                                     else:
-                                        # this is the last column so we include all '&'
+                                        # this is the last column so we include
+                                        # all '&'
                                         yield '& ' + entry.first().formatted(format_type, fence=False)
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             yield r'& \colon'
                                             yield '& ' + entry.body.formatted(format_type, fence=False)
                                             yield r'& \colon'
                                         else:
                                             yield r'& \vdots'
-                                        yield '& ' + entry.last().formatted(format_type,fence=False)
+                                        yield '& ' + entry.last().formatted(format_type, fence=False)
                                 else:
                                     if orientation == 'horizontal':
                                         yield entry.formatted(format_type, fence=False)
@@ -583,16 +685,20 @@ class ExprArray(ExprTuple):
                             else:
                                 if isinstance(entry, ExprTuple):
                                     for var in entry:
-                                        # this is not the first entry for either orientation so we include an '&'
+                                        # this is not the first entry for
+                                        # either orientation so we include an
+                                        # '&'
                                         yield '& ' + var.formatted(format_type, fence=False)
 
                                 elif isinstance(entry, ExprRange):
                                     using_explicit_parameterization.append(
                                         entry._use_explicit_parameterization(format_type))
-                                    # this is not the first entry for either orientation so we include an '&'
+                                    # this is not the first entry for either
+                                    # orientation so we include an '&'
                                     yield '& ' + entry.first().formatted(format_type, fence=False)
 
-                                    if self.get_style('parameterization', default_style) == 'explicit':
+                                    if self.get_style(
+                                            'parameterization', default_style) == 'explicit':
                                         if orientation == 'horizontal':
                                             yield r'& ..' + entry.body.formatted(format_type, fence=False) + '..'
                                         else:
@@ -606,10 +712,13 @@ class ExprArray(ExprTuple):
                                             yield r'& \vdots'
                                     yield '& ' + entry.last().formatted(format_type, fence=False)
                                 else:
-                                    # this is not the first entry for either orientation so we include an '&'
+                                    # this is not the first entry for either
+                                    # orientation so we include an '&'
                                     yield '& ' + entry.formatted(format_type, fence=False)
                     elif i == 1 and isinstance(sub_expr.first(), ExprTuple):
-                        if self.get_style('parameterization', default_style) == 'explicit':
+                        if self.get_style(
+                            'parameterization',
+                                default_style) == 'explicit':
                             if orientation == 'horizontal':
                                 yield r' \\ ' + '\n '
                                 for entry in ell:
@@ -661,10 +770,12 @@ class ExprArray(ExprTuple):
                                 # we just want to do this once
                                 ell = []
                                 vell = []
-                                for n, entry in enumerate(sub_expr.first().first()):
+                                for n, entry in enumerate(
+                                        sub_expr.first().first()):
                                     if n == 0:
                                         yield entry.formatted(format_type, fence=False)
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             vell.append(r'\colon')
                                         else:
                                             vell.append(r'\vdots')
@@ -675,7 +786,8 @@ class ExprArray(ExprTuple):
                                             yield '& ' + entry.formatted(format_type, fence=False)
                                         else:
                                             yield entry.formatted(format_type, fence=False)
-                                        if self.get_style('parameterization', default_style) == 'explicit':
+                                        if self.get_style(
+                                                'parameterization', default_style) == 'explicit':
                                             vell.append(r'& \colon')
                                         else:
                                             vell.append(r'& \vdots')
@@ -689,8 +801,10 @@ class ExprArray(ExprTuple):
                                     for item in ell:
                                         yield item
 
-                                if self.get_style('parameterization', default_style) == 'explicit':
-                                    for n, entry in enumerate(sub_expr.first().body):
+                                if self.get_style(
+                                        'parameterization', default_style) == 'explicit':
+                                    for n, entry in enumerate(
+                                            sub_expr.first().body):
                                         if n == 0 and orientation == 'horizontal':
                                             yield entry.formatted(format_type, fence=False)
                                         else:
@@ -706,7 +820,8 @@ class ExprArray(ExprTuple):
                                     else:
                                         for item in ell:
                                             yield item
-                                for n, entry in enumerate(sub_expr.first().last()):
+                                for n, entry in enumerate(
+                                        sub_expr.first().last()):
                                     if n == 0 and orientation == 'horizontal':
                                         yield entry.formatted(format_type, fence=False)
                                     else:
@@ -716,11 +831,13 @@ class ExprArray(ExprTuple):
                                     for entry in vell:
                                         yield entry
                                     yield r' \\ ' + '\n '
-                                    if self.get_style('parameterization', default_style) == 'explicit':
+                                    if self.get_style(
+                                            'parameterization', default_style) == 'explicit':
                                         for entry in vell:
                                             yield entry
                                         yield r' \\ ' + '\n '
-                                        for n, entry in enumerate(sub_expr.body.first()):
+                                        for n, entry in enumerate(
+                                                sub_expr.body.first()):
                                             if n == 0:
                                                 yield entry.formatted(format_type, fence=False)
                                             else:
@@ -729,7 +846,8 @@ class ExprArray(ExprTuple):
                                         for entry in vell:
                                             yield entry
                                         yield r' \\ ' + '\n '
-                                        for n, entry in enumerate(sub_expr.body.body):
+                                        for n, entry in enumerate(
+                                                sub_expr.body.body):
                                             if n == 0:
                                                 yield entry.formatted(format_type, fence=False)
                                             else:
@@ -738,7 +856,8 @@ class ExprArray(ExprTuple):
                                         for entry in vell:
                                             yield entry
                                         yield r' \\ ' + '\n '
-                                        for n, entry in enumerate(sub_expr.body.last()):
+                                        for n, entry in enumerate(
+                                                sub_expr.body.last()):
                                             if n == 0:
                                                 yield entry.formatted(format_type, fence=False)
                                             else:
@@ -752,8 +871,10 @@ class ExprArray(ExprTuple):
                                         yield entry
                                     yield r' \\ ' + '\n '
                                 else:
-                                    if self.get_style('parameterization', default_style) == 'explicit':
-                                        for n, entry in enumerate(sub_expr.body.first()):
+                                    if self.get_style(
+                                            'parameterization', default_style) == 'explicit':
+                                        for n, entry in enumerate(
+                                                sub_expr.body.first()):
                                             placeholder = ''
                                             placeholder += '& ....' + sub_expr.body.first().entries[n].formatted(
                                                 format_type, fence=False)
@@ -766,7 +887,8 @@ class ExprArray(ExprTuple):
                                         for item in ell:
                                             yield item
                                             yield item
-                                for n, entry in enumerate(sub_expr.last().first()):
+                                for n, entry in enumerate(
+                                        sub_expr.last().first()):
                                     if n == 0 and orientation == 'horizontal':
                                         yield entry.formatted(format_type, fence=False)
                                     else:
@@ -779,8 +901,10 @@ class ExprArray(ExprTuple):
                                 else:
                                     for item in ell:
                                         yield item
-                                if self.get_style('parameterization', default_style) == 'explicit':
-                                    for n, entry in enumerate(sub_expr.last().body):
+                                if self.get_style(
+                                        'parameterization', default_style) == 'explicit':
+                                    for n, entry in enumerate(
+                                            sub_expr.last().body):
                                         if n == 0 and orientation == 'horizontal':
                                             yield entry.formatted(format_type, fence=False)
                                         else:
@@ -796,36 +920,42 @@ class ExprArray(ExprTuple):
                                     else:
                                         for item in ell:
                                             yield item
-                                for n, entry in enumerate(sub_expr.last().last()):
+                                for n, entry in enumerate(
+                                        sub_expr.last().last()):
                                     if n == 0 and orientation == 'horizontal':
                                         yield entry.formatted(format_type, fence=False)
                                     else:
                                         yield '& ' + entry.formatted(format_type, fence=False)
                         else:
-                            raise ValueError('ExprArrays of ExprRanges of ExprRanges are one-dimensional and therefore '
-                                             'not valid ExprArrays.  Please wrap either the second ExprRange in an '
-                                             'ExprTuple or place an ExprTuple in the second ExprRange.')
+                            raise ValueError(
+                                'ExprArrays of ExprRanges of ExprRanges are one-dimensional and therefore '
+                                'not valid ExprArrays.  Please wrap either the second ExprRange in an '
+                                'ExprTuple or place an ExprTuple in the second ExprRange.')
                     i += 1
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists
                 for inc, expr in enumerate(sub_expr):
                     if inc == 0:
-                        # for the first instance, we don't include '&' for formatting purposes
+                        # for the first instance, we don't include '&' for
+                        # formatting purposes
                         if isinstance(expr, ExprRange):
                             using_explicit_parameterization.append(
                                 expr._use_explicit_parameterization(format_type))
                             if orientation == 'horizontal':
                                 yield expr.first().formatted(format_type, fence=False, sub_fence=False)
-                                if self.get_style('parameterization', default_style) == 'explicit':
+                                if self.get_style(
+                                        'parameterization', default_style) == 'explicit':
                                     yield r'& ..' + expr.body.formatted(format_type, fence=False, sub_fence=False) + '..'
                                 else:
                                     yield r'& \cdots'
                                 yield '& ' + expr.last().formatted(format_type, fence=False, sub_fence=False)
                             else:
                                 if k == 0:
-                                    # this is the first column so we don't include '&'
+                                    # this is the first column so we don't
+                                    # include '&'
                                     yield expr.first().formatted(format_type, fence=False, sub_fence=False)
-                                    if self.get_style('parameterization', default_style) == 'explicit':
+                                    if self.get_style(
+                                            'parameterization', default_style) == 'explicit':
                                         yield r'\colon'
                                         yield expr.body.formatted(format_type, fence=False, sub_fence=False)
                                         yield r'\colon'
@@ -834,7 +964,8 @@ class ExprArray(ExprTuple):
                                     yield expr.last().formatted(format_type, fence=False, sub_fence=False)
                                 else:
                                     yield '& ' + expr.first().formatted(format_type, fence=False, sub_fence=False)
-                                    if self.get_style('parameterization', default_style) == 'explicit':
+                                    if self.get_style(
+                                            'parameterization', default_style) == 'explicit':
                                         yield r'& \colon'
                                         yield r'& ' + expr.body.formatted(format_type, fence=False, sub_fence=False)
                                         yield r'& \colon'
@@ -843,7 +974,8 @@ class ExprArray(ExprTuple):
                                     yield '& ' + expr.last().formatted(format_type, fence=False, sub_fence=False)
                         else:
                             if orientation == 'horizontal':
-                                # this is the first item in the first row so we do not include the '&'
+                                # this is the first item in the first row so we
+                                # do not include the '&'
                                 yield expr.formatted(format_type, fence=False)
                             else:
                                 if k == 0:
@@ -857,18 +989,22 @@ class ExprArray(ExprTuple):
                             using_explicit_parameterization.append(
                                 expr._use_explicit_parameterization(format_type))
                             if orientation == 'horizontal':
-                                # for this orientation this is not the first so we add '&'
+                                # for this orientation this is not the first so
+                                # we add '&'
                                 yield '& ' + expr.first().formatted(format_type, fence=False, sub_fence=False)
-                                if self.get_style('parameterization', default_style) == 'explicit':
+                                if self.get_style(
+                                        'parameterization', default_style) == 'explicit':
                                     yield r'& ..' + expr.body.formatted(format_type, fence=False, sub_fence=False) + '..'
                                 else:
                                     yield r'& \cdots'
                                 yield '& ' + expr.last().formatted(format_type, fence=False, sub_fence=False)
                             else:
                                 if k == 0:
-                                    # this is still the first column so we don't add '&'
+                                    # this is still the first column so we
+                                    # don't add '&'
                                     yield expr.first().formatted(format_type, fence=False, sub_fence=False)
-                                    if self.get_style('parameterization', default_style) == 'explicit':
+                                    if self.get_style(
+                                            'parameterization', default_style) == 'explicit':
                                         yield r'\colon'
                                         yield expr.body.formatted(format_type, fence=False, sub_fence=False)
                                         yield r'\colon'
@@ -877,7 +1013,8 @@ class ExprArray(ExprTuple):
                                     yield expr.last().formatted(format_type, fence=False, sub_fence=False)
                                 else:
                                     yield '& ' + expr.first().formatted(format_type, fence=False, sub_fence=False)
-                                    if self.get_style('parameterization', default_style) == 'explicit':
+                                    if self.get_style(
+                                            'parameterization', default_style) == 'explicit':
                                         yield r'& \colon'
                                         yield '& ' + expr.body.formatted(format_type, fence=False, sub_fence=False)
                                         yield r'& \colon'
@@ -886,20 +1023,33 @@ class ExprArray(ExprTuple):
                                     yield '& ' + expr.last().formatted(format_type, fence=False, sub_fence=False)
                         else:
                             if orientation == 'horizontal':
-                                # this is following along the row so we include '&'
+                                # this is following along the row so we include
+                                # '&'
                                 yield '& ' + expr.formatted(format_type, fence=False)
                             else:
                                 if k == 0:
-                                    # this is the first column so we don't include '&'
+                                    # this is the first column so we don't
+                                    # include '&'
                                     yield expr.formatted(format_type, fence=False, sub_fence=False)
                                 else:
-                                    # this is not the first column so we do include '&'
+                                    # this is not the first column so we do
+                                    # include '&'
                                     yield '& ' + expr.formatted(format_type, fence=False, sub_fence=False)
             else:
-                raise ValueError("Expressions must be wrapped in either an ExprTuple or ExprRange")
+                raise ValueError(
+                    "Expressions must be wrapped in either an ExprTuple or ExprRange")
 
-    def formatted(self, format_type, fence=False, sub_fence=False, operator_or_operators=None, implicit_first_operator=False,
-                  wrap_positions=None, justification=None, orientation=None, **kwargs):
+    def formatted(
+            self,
+            format_type,
+            fence=False,
+            sub_fence=False,
+            operator_or_operators=None,
+            implicit_first_operator=False,
+            wrap_positions=None,
+            justification=None,
+            orientation=None,
+            **kwargs):
         from .expr_range import ExprRange
         default_style = ("explicit" if format_type == 'string' else 'implicit')
 
@@ -924,17 +1074,19 @@ class ExprArray(ExprTuple):
             else:
                 length = self.get_col_height()
         if format_type == 'latex':
-            out_str += r'\begin{array} {%s} ' % (justification[0] * length) + '\n '
+            out_str += r'\begin{array} {%s} ' % (
+                justification[0] * length) + '\n '
 
         formatted_sub_expressions = []
 
-        for entry in self.get_formatted_sub_expressions(format_type, orientation, default_style,
-                                                                    operator_or_operators):
+        for entry in self.get_formatted_sub_expressions(
+                format_type, orientation, default_style, operator_or_operators):
             formatted_sub_expressions.append(entry)
 
         if orientation == "vertical":
             # up until now, the formatted_sub_expression is still
-            # in the order of the horizontal orientation regardless of orientation type
+            # in the order of the horizontal orientation regardless of
+            # orientation type
             k = 1
             vert = []
             if self.get_style('parameterization', default_style) == 'explicit':
@@ -945,8 +1097,8 @@ class ExprArray(ExprTuple):
             while k <= self.get_row_length(ex):
                 i = 1
                 j = k
-                for var in self.get_formatted_sub_expressions(format_type, orientation, default_style,
-                                                              operator_or_operators):
+                for var in self.get_formatted_sub_expressions(
+                        format_type, orientation, default_style, operator_or_operators):
                     if i == j:
                         vert.append(var)
                         m -= 1
@@ -961,7 +1113,8 @@ class ExprArray(ExprTuple):
         if operator_or_operators is None:
             operator_or_operators = ','
         elif isinstance(operator_or_operators, Expression) and not isinstance(operator_or_operators, ExprTuple):
-            operator_or_operators = operator_or_operators.formatted(format_type, fence=False)
+            operator_or_operators = operator_or_operators.formatted(
+                format_type, fence=False)
         if isinstance(operator_or_operators, str):
             # single operator
             formatted_operator = operator_or_operators
@@ -970,7 +1123,8 @@ class ExprArray(ExprTuple):
                 out_str += (' ').join(formatted_sub_expressions)
             else:
                 # e.g.: a + b + c + d
-                out_str += (' '+formatted_operator+' ').join(formatted_sub_expressions)
+                out_str += (' ' + formatted_operator +
+                            ' ').join(formatted_sub_expressions)
         else:
             # assume all different operators
             formatted_operators = []
@@ -982,18 +1136,23 @@ class ExprArray(ExprTuple):
                     # using an 'explicit' style for 'parameterization').
                     # For the 'ellipses', we will just use a
                     # placeholder.
-                    be_explicit = self.get_style('parameterization', default_style)
+                    be_explicit = self.get_style(
+                        'parameterization', default_style)
                     formatted_operators += operator._formatted_checkpoints(
                         format_type, fence=False, sub_fence=False, ellipses='',
                         use_explicit_parameterization=be_explicit)
                 else:
-                    formatted_operators.append(operator.formatted(format_type, fence=False, sub_fence=False))
+                    formatted_operators.append(operator.formatted(
+                        format_type, fence=False, sub_fence=False))
             if len(formatted_sub_expressions) == len(formatted_operators):
                 # operator preceeds each operand
                 if implicit_first_operator:
-                    out_str = formatted_sub_expressions[0]  # first operator is implicit
+                    # first operator is implicit
+                    out_str = formatted_sub_expressions[0]
                 else:
-                    out_str = formatted_operators[0] + formatted_sub_expressions[0]  # no space after first operator
+                    # no space after first operator
+                    out_str = formatted_operators[0] + \
+                        formatted_sub_expressions[0]
                 out_str += ' '  # space before next operator
                 out_str += ' '.join(
                     formatted_operator + ' ' + formatted_operand for formatted_operator, formatted_operand in
@@ -1001,8 +1160,12 @@ class ExprArray(ExprTuple):
             elif len(formatted_sub_expressions) == len(formatted_operators) + 1:
                 # operator between each operand
                 out_str = ' '.join(
-                    formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in
-                    zip(formatted_sub_expressions, formatted_operators))
+                    formatted_operand +
+                    ' ' +
+                    formatted_operator for formatted_operand,
+                    formatted_operator in zip(
+                        formatted_sub_expressions,
+                        formatted_operators))
                 out_str += ' ' + formatted_sub_expressions[-1]
             elif len(formatted_sub_expressions) != len(formatted_operators):
                 raise ValueError(
@@ -1015,6 +1178,3 @@ class ExprArray(ExprTuple):
         if fence:
             out_str += ')' if format_type == 'string' else r'\right)'
         return out_str
-
-
-

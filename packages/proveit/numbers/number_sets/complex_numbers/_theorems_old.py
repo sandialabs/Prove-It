@@ -12,8 +12,8 @@ i_in_complex
 i_not_zero = NotEquals(i, zero)
 i_not_zero
 
-in_complex_sans_zero = Forall(a, InSet(a, ComplexSansZero), 
-                             domain=Complex, conditions=[NotEquals(a, zero)])
+in_complex_sans_zero = Forall(a, InSet(a, ComplexSansZero),
+                              domain=Complex, conditions=[NotEquals(a, zero)])
 in_complex_sans_zero
 
 end_theorems(locals(), __package__)

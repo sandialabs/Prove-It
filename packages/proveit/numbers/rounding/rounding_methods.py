@@ -1,7 +1,8 @@
 from proveit import defaults, TransRelUpdater, USE_DEFAULTS
 
+
 def apply_rounding_elimination(expr, rounding_elimination_thm,
-                              assumptions=USE_DEFAULTS):
+                               assumptions=USE_DEFAULTS):
     '''
     Let F(x) represent the relevant Ceil(x), Floor(x), or Round(x)
     fxn calling the apply_rounding_elimination() method from the
@@ -25,10 +26,14 @@ def apply_rounding_elimination(expr, rounding_elimination_thm,
     assumptions = defaults.checked_assumptions(assumptions)
 
     return rounding_elimination_thm.instantiate(
-                {x:expr.operand}, assumptions=assumptions)
+        {x: expr.operand}, assumptions=assumptions)
 
-def apply_rounding_extraction(expr, rounding_extraction_thm, idx_to_extract=None,
-                             assumptions=USE_DEFAULTS):
+
+def apply_rounding_extraction(
+        expr,
+        rounding_extraction_thm,
+        idx_to_extract=None,
+        assumptions=USE_DEFAULTS):
     '''
     Let F(x) represent the relevant Ceil(x), Floor(x), or Round(x)
     fxn calling the apply_rounding_extraction() method from the
@@ -70,29 +75,31 @@ def apply_rounding_extraction(expr, rounding_extraction_thm, idx_to_extract=None
     # first use Add.commutation to (re-)arrange operands to comform
     # to theorem format, using user-supplied idx_to_extract
     if isinstance(expr.operand, Add):
-        expr = eq.update(expr.inner_expr().operand.commutation(idx_to_extract,
-                len(expr.operand.operands)-1, assumptions=assumptions))
+        expr = eq.update(
+            expr.inner_expr().operand.commutation(
+                idx_to_extract, len(
+                    expr.operand.operands) - 1, assumptions=assumptions))
 
         # An association step -- because the later application of
-        # the round_of_real_plus_int thm produces a grouping of the 
+        # the round_of_real_plus_int thm produces a grouping of the
         # Round operands in the chain of equivalences.
         # BUT, only perform the association if multiple operands are
         # needing to be associated:
-        if len(expr.operand.operands)-1 > 1:
+        if len(expr.operand.operands) - 1 > 1:
             expr = eq.update(expr.inner_expr().operand.association(
-                    0, len(expr.operand.operands)-1, assumptions=assumptions))
-
+                0, len(expr.operand.operands) - 1, assumptions=assumptions))
 
         # then update by applying the round_of_real_plus_int thm
         x_sub = expr.operand.operands[0]
         n_sub = expr.operand.operands[1]
         expr = eq.update(rounding_extraction_thm.instantiate(
-                {x:x_sub, n:n_sub}, assumptions=assumptions))
+            {x: x_sub, n: n_sub}, assumptions=assumptions))
 
         return eq.relation
     else:
         raise ValueError("In attempting f(x).apply_rounding_extraction(), "
                          "the operand x is not of class 'Add'.")
+
 
 def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
     '''
@@ -130,7 +137,7 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
         return expr.rounding_elimination(assumptions)
 
     #-- -------------------------------------------------------- --#
-    #-- Case (2): F(x) where entire operand x is not yet known   --*
+    # -- Case (2): F(x) where entire operand x is not yet known   --*
     #--           to be an Integer but can EASILY be proven      --#
     #--           to be an Integer.                              --#
     #-- -------------------------------------------------------- --#
@@ -139,11 +146,10 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
         for kt in InSet.known_memberships[expr.operand]:
             if kt.is_sufficient(assumptions):
                 if (SubsetEq(kt.expr.operands[1], Integer).proven(assumptions)
-                    or 
-                    ProperSubset(kt.expr.operands[1], Integer).proven(assumptions)):
+                    or
+                        ProperSubset(kt.expr.operands[1], Integer).proven(assumptions)):
                     InSet(expr.operand, Integer).prove()
                     return expr.rounding_elimination(assumptions)
-
 
     # for updating our equivalence claim(s) for the
     # remaining possibilities
@@ -193,29 +199,29 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
                 # we categorize it as a non-integer
                 indices_of_non_ints.append(i)
 
-        if len(indices_of_known_ints)>0:
+        if len(indices_of_known_ints) > 0:
             # Then we have at least one known integer addend, so we
             # rearrange and group the addends, associating the non-ints
             # and associating the ints
             original_addends = list(subops)
             desired_order_by_index = list(
-                    indices_of_non_ints + indices_of_known_ints)
+                indices_of_non_ints + indices_of_known_ints)
             # commute to put reals first, followed by ints
             for i in range(len(original_addends)):
                 init_idx = expr.operand.operands.index(
-                        original_addends[desired_order_by_index[i]])
+                    original_addends[desired_order_by_index[i]])
                 expr = eq.update(
-                        expr.inner_expr().operand.commutation(
-                                init_idx, i, assumptions=assumptions))
+                    expr.inner_expr().operand.commutation(
+                        init_idx, i, assumptions=assumptions))
 
             # associate the non-integers (if more than 1)
             if len(indices_of_non_ints) > 1:
                 # associate those elements (already re-arranged to
                 # be at the front of the operand.operands):
                 expr = eq.update(
-                        expr.inner_expr().operand.association(
-                                0, len(indices_of_non_ints),
-                                assumptions=assumptions))
+                    expr.inner_expr().operand.association(
+                        0, len(indices_of_non_ints),
+                        assumptions=assumptions))
 
             # associate the known integers (if more than 1)
             if len(indices_of_known_ints) > 1:
@@ -226,12 +232,12 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
                 else:
                     start_idx = 0
                 expr = eq.update(
-                        expr.inner_expr().operand.association(
-                                start_idx,
-                                len(indices_of_known_ints),
-                                assumptions=assumptions))
+                    expr.inner_expr().operand.association(
+                        start_idx,
+                        len(indices_of_known_ints),
+                        assumptions=assumptions))
 
-            if len(indices_of_known_ints)==len(subops):
+            if len(indices_of_known_ints) == len(subops):
                 # all the addends were actually integers
                 # could probably short-circuit this earlier!
                 expr = eq.update(expr.rounding_elimination(assumptions))
@@ -253,35 +259,34 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
     # operands; instead of returning an error, though, simply return
     # the trivial equivalence of the original expression with itself
     return eq.relation
-        
+
 
 def rounding_deduce_in_number_set(expr, number_set, rounding_real_closure_thm,
-                               rounding_real_pos_closure_thm,
-                               assumptions=USE_DEFAULTS):
-        '''
-        Given a number set number_set, attempt to prove that the given
-        Ceil, Floor, or Round expression is in that number set using
-        the appropriate closure theorem.
-        '''
-        from proveit import ProofFailure
-        from proveit._common_ import x
-        from proveit.logic import InSet
-        from proveit.numbers import Integer, Natural
+                                  rounding_real_pos_closure_thm,
+                                  assumptions=USE_DEFAULTS):
+    '''
+    Given a number set number_set, attempt to prove that the given
+    Ceil, Floor, or Round expression is in that number set using
+    the appropriate closure theorem.
+    '''
+    from proveit import ProofFailure
+    from proveit._common_ import x
+    from proveit.logic import InSet
+    from proveit.numbers import Integer, Natural
 
-        # among other things, convert any assumptions=None
-        # to assumptions=()
-        assumptions = defaults.checked_assumptions(assumptions)
+    # among other things, convert any assumptions=None
+    # to assumptions=()
+    assumptions = defaults.checked_assumptions(assumptions)
 
-        if number_set == Integer:
-            return rounding_real_closure_thm.instantiate(
-                        {x:expr.operand}, assumptions=assumptions)
+    if number_set == Integer:
+        return rounding_real_closure_thm.instantiate(
+            {x: expr.operand}, assumptions=assumptions)
 
-        if number_set == Natural:
-            return rounding_real_pos_closure_thm.instantiate(
-                        {x:expr.operand}, assumptions=assumptions)
+    if number_set == Natural:
+        return rounding_real_pos_closure_thm.instantiate(
+            {x: expr.operand}, assumptions=assumptions)
 
-        msg = ("The rounding_methods.py function "
-               "'rounding_deduce_in_number_set()' is not implemented for the "
-               "%s set"%str(number_set))
-        raise ProofFailure(InSet(expr, number_set), assumptions, msg)
-
+    msg = ("The rounding_methods.py function "
+           "'rounding_deduce_in_number_set()' is not implemented for the "
+           "%s set" % str(number_set))
+    raise ProofFailure(InSet(expr, number_set), assumptions, msg)

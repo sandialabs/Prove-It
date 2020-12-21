@@ -11,4 +11,5 @@ double_negation_implied.deduce_in_bool().proven({in_bool(A)})
 # [Not(Not(A)) => A] in BOOLEANS if A in BOOLEANS
 implies_double_negation.deduce_in_bool().proven({in_bool(A)})
 # forall_{A} A = Not(Not(A))
-Iff(A, Not(Not(A))).conclude_via_composition().derive_equality().generalize(A, domain=BOOLEANS).qed(__file__)
+Iff(A, Not(Not(A))).conclude_via_composition().derive_equality(
+).generalize(A, domain=BOOLEANS).qed(__file__)

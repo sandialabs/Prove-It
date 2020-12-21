@@ -3,4 +3,3 @@ from .imaginary import ImaginaryLiteral
 
 Complex = ComplexSet()
 i = ImaginaryLiteral()
-

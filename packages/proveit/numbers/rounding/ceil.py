@@ -4,10 +4,11 @@ from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
     apply_reduced_simplification, rounding_deduce_in_number_set)
 
+
 class Ceil(Function):
     # operator of the Ceil operation.
     _operator_ = Literal(string_format='ceil', theory=__file__)
-    
+
     def __init__(self, A):
         Function.__init__(self, Ceil._operator_, A)
 
@@ -43,7 +44,10 @@ class Ceil(Function):
 
         return apply_rounding_elimination(self, ceil_of_integer, assumptions)
 
-    def rounding_extraction(self, idx_to_extract=None, assumptions=USE_DEFAULTS):
+    def rounding_extraction(
+            self,
+            idx_to_extract=None,
+            assumptions=USE_DEFAULTS):
         '''
         For the case of Ceil(x) where the operand x = x_real + x_int,
         derive and return Ceil(x) = Ceil(x_real) + int (thus
@@ -82,8 +86,9 @@ class Ceil(Function):
             self, number_set, ceil_is_an_int, ceil_real_pos_closure,
             assumptions)
 
+
 # Register these generic expression equivalence methods:
 InnerExpr.register_equivalence_method(
-        Ceil, 'rounding_elimination', 'rounding_eliminated', 'rounding_eliminate')
+    Ceil, 'rounding_elimination', 'rounding_eliminated', 'rounding_eliminate')
 InnerExpr.register_equivalence_method(
-        Ceil, 'rounding_extraction', 'rounding_extracted', 'rounding_extract')
+    Ceil, 'rounding_extraction', 'rounding_extracted', 'rounding_extract')

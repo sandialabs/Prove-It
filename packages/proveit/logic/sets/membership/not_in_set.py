@@ -1,6 +1,7 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit._common_ import x, S
 
+
 class NotInSet(Operation):
     # operator of the NotInSet operation
     _operator_ = Literal(string_format='not-in',
@@ -16,13 +17,13 @@ class NotInSet(Operation):
         self.element = self.operands[0]
         self.domain = self.operands[1]
         if hasattr(self.domain, 'nonmembership_object'):
-            self.nonmembership_object = self.domain.nonmembership_object(element)
+            self.nonmembership_object = self.domain.nonmembership_object(
+                element)
             if not isinstance(self.nonmembership_object, Nonmembership):
-                raise TypeError("The 'nonmembership_object' of %s is a %s which "
-                                "is not derived from %s as it should be."
-                                %(self.domain,
-                                  self.nonmembership_object.__class__,
-                                  Nonmembership))
+                raise TypeError(
+                    "The 'nonmembership_object' of %s is a %s which "
+                    "is not derived from %s as it should be." %
+                    (self.domain, self.nonmembership_object.__class__, Nonmembership))
 
     def __dir__(self):
         '''
@@ -31,7 +32,8 @@ class NotInSet(Operation):
         isn't defined in 'nonmembership_object').
         '''
         if 'nonmembership_object' in self.__dict__:
-            return sorted(set(list(self.__dict__.keys()) + dir(self.membership_object)))
+            return sorted(set(list(self.__dict__.keys()) +
+                              dir(self.membership_object)))
         else:
             return sorted(list(self.__dict__.keys()) + 'unfold')
 
@@ -43,8 +45,8 @@ class NotInSet(Operation):
         '''
         if 'nonmembership_object' in self.__dict__:
             return getattr(self.nonmembership_object, attr)
-        elif attr=='unfold':
-            return self.unfold_not_in # the default 'unfold' method
+        elif attr == 'unfold':
+            return self.unfold_not_in  # the default 'unfold' method
         raise AttributeError
 
     def side_effects(self, judgment):
@@ -54,10 +56,12 @@ class NotInSet(Operation):
         If the domain has a 'nonmembership_object' method, side effects
         will also be generated from the 'side_effects' object that it generates.
         '''
-        NotInSet.known_nonmemberships.setdefault(self.element, set()).add(judgment)
+        NotInSet.known_nonmemberships.setdefault(
+            self.element, set()).add(judgment)
         yield self.unfold_not_in
         if hasattr(self, 'nonmembership_object'):
-            for side_effect in self.nonmembership_object.side_effects(judgment):
+            for side_effect in self.nonmembership_object.side_effects(
+                    judgment):
                 yield side_effect
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
@@ -66,15 +70,16 @@ class NotInSet(Operation):
         '''
         from ._theorems_ import not_in_set_is_bool
         from proveit._common_ import x, S
-        return not_in_set_is_bool.instantiate({x:self.element, S:self.domain},
-                                         assumptions=assumptions)
+        return not_in_set_is_bool.instantiate(
+            {x: self.element, S: self.domain}, assumptions=assumptions)
 
     def unfold_not_in(self, assumptions=USE_DEFAULTS):
         r'''
         From (x \notin y), derive and return Not(x \in y).
         '''
         from ._theorems_ import unfold_not_in_set
-        return unfold_not_in_set.instantiate({x:self.element, S:self.domain}, assumptions=assumptions)
+        return unfold_not_in_set.instantiate(
+            {x: self.element, S: self.domain}, assumptions=assumptions)
 
     def conclude(self, assumptions):
         '''
@@ -93,7 +98,6 @@ class NotInSet(Operation):
         from proveit import ProofFailure
         from proveit.logic import SimplificationError
 
-
         # See if the membership is already known.
         if self.element in NotInSet.known_nonmemberships:
             for known_nonmembership in NotInSet.known_nonmemberships[self.element]:
@@ -101,18 +105,18 @@ class NotInSet(Operation):
                     # x not in R is a judgment; if we know that
                     # R supseteq S, we are done.
                     sup_rel = SupersetEq(known_nonmembership.domain,
-                                        self.domain)
+                                         self.domain)
                     if sup_rel.proven(assumptions):
                         # S is a subset of R, so now we can prove x not in S.
-                        return sup_rel.derive_subset_non_membership(self.element,
-                                                                assumptions)
+                        return sup_rel.derive_subset_non_membership(
+                            self.element, assumptions)
         # No known membership works.  Let's see if there is a known
         # simplification of the element before trying anything else.
         try:
             elem_simplification = self.element.simplification(assumptions,
                                                               automation=True)
             if elem_simplification.lhs == elem_simplification.rhs:
-                elem_simplification = None # reflection doesn't count
+                elem_simplification = None  # reflection doesn't count
         except SimplificationError:
             elem_simplification = None
 
@@ -120,9 +124,11 @@ class NotInSet(Operation):
         # via the simplified form of the element.
         if elem_simplification is not None:
             simple_elem = elem_simplification.rhs
-            simple_nonmembership = NotInSet(simple_elem, self.domain).prove(assumptions)
+            simple_nonmembership = NotInSet(
+                simple_elem, self.domain).prove(assumptions)
             inner_expr = simple_nonmembership.inner_expr().element
-            return elem_simplification.sub_left_side_into(inner_expr, assumptions)
+            return elem_simplification.sub_left_side_into(
+                inner_expr, assumptions)
         else:
             # If it has a 'nonmembership_object', try to conclude
             # nonmembership using that.
@@ -137,7 +143,8 @@ class NotInSet(Operation):
         Attempt to conclude x not in S via Not(x in S).
         '''
         from ._theorems_ import fold_not_in_set
-        return fold_not_in_set.instantiate({x:self.element, S:self.domain}, assumptions=assumptions)
+        return fold_not_in_set.instantiate(
+            {x: self.element, S: self.domain}, assumptions=assumptions)
 
     def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
@@ -159,27 +166,34 @@ class NotInSet(Operation):
             else:
                 in_domain = In(self.element, self.domain)
                 if hasattr(in_domain, 'membership_object'):
-                    in_domain.membership_object.conclude(assumptions=assumptions)
-        except:
+                    in_domain.membership_object.conclude(
+                        assumptions=assumptions)
+        except BaseException:
             pass
         return evaluation
+
 
 class Nonmembership:
     '''
     Base class for any 'nonmembership object' return by a domain's
     'nonmembership_object' method.
     '''
+
     def __init__(self, element):
         self.element = element
 
     def side_effects(self, judgment):
-        raise NotImplementedError("Nonmembership object has no 'side_effects' method implemented")
+        raise NotImplementedError(
+            "Nonmembership object has no 'side_effects' method implemented")
 
     def conclude(self, assumptions):
-        raise NotImplementedError("Nonmembership object has no 'conclude' method implemented")
+        raise NotImplementedError(
+            "Nonmembership object has no 'conclude' method implemented")
 
     def equivalence(self, assumptions=USE_DEFAULTS):
-        raise NotImplementedError("Nonmembership object has no 'equivalence' method implemented")
+        raise NotImplementedError(
+            "Nonmembership object has no 'equivalence' method implemented")
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        raise NotImplementedError("Nonmembership object has no 'deduce_in_bool' method implemented")
+        raise NotImplementedError(
+            "Nonmembership object has no 'deduce_in_bool' method implemented")

@@ -1,14 +1,15 @@
 import inspect
 from proveit._core_.expression.expr import (
-        Expression, MakeNotImplemented, free_vars)
+    Expression, MakeNotImplemented, free_vars)
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda, get_param_var
 from proveit._core_.expression.composite import (
-        ExprTuple, single_or_composite_expression, composite_expression,
-        ExprRange)
+    ExprTuple, single_or_composite_expression, composite_expression,
+    ExprRange)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.defaults import USE_DEFAULTS
 from .operation import Operation, OperationError
 from .function import Function
+
 
 def _extract_domain_from_condition(ivar, condition):
     '''
@@ -22,27 +23,26 @@ def _extract_domain_from_condition(ivar, condition):
         # matching the instance variable range.
         # For example, x_1, ..., x_n as the instance variable
         # range matching x_1 in S_1, ..., x_n in S_n.
-        if (isinstance(condition, ExprRange) 
+        if (isinstance(condition, ExprRange)
                 and isinstance(condition.body, InSet)
-                and condition.start_index==ivar.start_index
-                and condition.end_index==ivar.end_index):
+                and condition.start_index == ivar.start_index
+                and condition.end_index == ivar.end_index):
             # Replace the condition parameter with the ivar parameter
             # and see if the InSet element matches ivar.body.
             cond_body_elem_with_repl_param = condition.body.element.replaced(
-                    {condition.parameter:ivar.parameter})
-            if cond_body_elem_with_repl_param==ivar.body:
+                {condition.parameter: ivar.parameter})
+            if cond_body_elem_with_repl_param == ivar.body:
                 if condition.parameter in free_vars(condition.body.domain,
                                                     err_inclusively=True):
                     # There is a range of domains matching a range of
                     # parameters.
                     return ExprRange(
-                            condition.parameter, condition.body.domain,
-                            condition.start_index, condition.end_index)
+                        condition.parameter, condition.body.domain,
+                        condition.start_index, condition.end_index)
             return condition.body.domain
-    elif isinstance(condition, InSet) and condition.element==ivar:
+    elif isinstance(condition, InSet) and condition.element == ivar:
         return condition.domain
     return None
-
 
 
 class OperationOverInstances(Operation):
@@ -58,7 +58,12 @@ class OperationOverInstances(Operation):
     a simple way to make extract_my_init_arg_value function properly without
     overriding it.
     '''
-    _init_argname_mapping_ = {'instance_param_or_params':'instance_param_or_params', 'instance_expr':'instance_expr', 'domain':'domain', 'domains':'domains', 'conditions':'conditions'}
+    _init_argname_mapping_ = {
+        'instance_param_or_params': 'instance_param_or_params',
+        'instance_expr': 'instance_expr',
+        'domain': 'domain',
+        'domains': 'domains',
+        'conditions': 'conditions'}
 
     def __init__(self, operator, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None, conditions=None,
@@ -93,7 +98,8 @@ class OperationOverInstances(Operation):
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import get_param_var
 
-        if styles is None: styles=dict()
+        if styles is None:
+            styles = dict()
         if 'with_wrapping' not in styles:
             styles['with_wrapping'] = 'False'
         if 'wrap_params' not in styles:
@@ -119,9 +125,11 @@ class OperationOverInstances(Operation):
                 instance_expr = lambda_map.body.value
                 if (isinstance(lambda_map.body.condition, And) and
                         not lambda_map.body.condition.operands.is_singular()):
-                    conditions = composite_expression(lambda_map.body.condition.operands)
+                    conditions = composite_expression(
+                        lambda_map.body.condition.operands)
                 else:
-                    conditions = composite_expression(lambda_map.body.condition)
+                    conditions = composite_expression(
+                        lambda_map.body.condition)
             else:
                 # No conditions.
                 instance_expr = lambda_map.body
@@ -131,19 +139,22 @@ class OperationOverInstances(Operation):
             # Do some initial preparations w.r.t. instance_params, domain(s), and
             # conditions.
             instance_params = composite_expression(instance_param_or_params)
-            if len(instance_params)==0:
-                raise ValueError("Expecting at least one instance parameter when "
-                                 "constructing an OperationOverInstances")
+            if len(instance_params) == 0:
+                raise ValueError(
+                    "Expecting at least one instance parameter when "
+                    "constructing an OperationOverInstances")
 
             # Add appropriate conditions for the domains:
             if domain is not None:
                 # prepend domain conditions
                 if domains is not None:
-                    raise ValueError("Provide a single domain or multiple domains, "
-                                     "not both")
+                    raise ValueError(
+                        "Provide a single domain or multiple domains, "
+                        "not both")
                 if not isinstance(domain, Expression):
-                    raise TypeError("The domain should be an 'Expression' type")
-                domains = [domain]*len(instance_params)
+                    raise TypeError(
+                        "The domain should be an 'Expression' type")
+                domains = [domain] * len(instance_params)
 
             if domains is not None:
                 # Prepend domain conditions.  Note that although we start with
@@ -151,66 +162,68 @@ class OperationOverInstances(Operation):
                 # some may later get pushed back as "inner conditions"
                 # (see below),
                 if len(domains) != len(instance_params):
-                    raise ValueError("When specifying multiple domains, the number "
-                                     "should be the same as the number of instance "
-                                     "variables.")
+                    raise ValueError(
+                        "When specifying multiple domains, the number "
+                        "should be the same as the number of instance "
+                        "variables.")
                 for domain in domains:
                     if domain is None:
-                        raise ValueError("When specifying multiple domains, none "
-                                         "of them can be the None value")
+                        raise ValueError(
+                            "When specifying multiple domains, none "
+                            "of them can be the None value")
                 domain_conditions = []
                 for iparam, domain in zip(instance_params, domains):
                     if isinstance(iparam, ExprRange):
                         if isinstance(domain, ExprRange):
-                            if ((iparam.start_index != domain.start_index) or 
+                            if ((iparam.start_index != domain.start_index) or
                                     (iparam.end_index != domain.end_index)):
                                 raise ValueError(
-                                        "A range of parameters must match "
-                                        "in start and end indices with the "
-                                        "corresponding range of domains: "
-                                        "%s vs %s and %s vs %s"%
-                                        (iparam.start_index, 
-                                         domain.start_index,
-                                         iparam.end_index, domain.end_index))
+                                    "A range of parameters must match "
+                                    "in start and end indices with the "
+                                    "corresponding range of domains: "
+                                    "%s vs %s and %s vs %s" %
+                                    (iparam.start_index,
+                                     domain.start_index,
+                                     iparam.end_index, domain.end_index))
                             # Use the same parameter for the domain
                             # as the instance parameter.
                             domain_body_with_new_param = \
-                                domain.body.replaced({domain.parameter: 
+                                domain.body.replaced({domain.parameter:
                                                       iparam.parameter})
                             condition = ExprRange(
-                                    iparam.parameter, 
-                                    InSet(iparam.body, domain_body_with_new_param),
-                                    iparam.start_index, iparam.end_index)
+                                iparam.parameter,
+                                InSet(iparam.body, domain_body_with_new_param),
+                                iparam.start_index, iparam.end_index)
                         else:
                             condition = ExprRange(
-                                    iparam.parameter, InSet(iparam.body, domain),
-                                    iparam.start_index, iparam.end_index)
+                                iparam.parameter, InSet(iparam.body, domain),
+                                iparam.start_index, iparam.end_index)
                     else:
                         condition = InSet(iparam, domain)
                     domain_conditions.append(condition)
                 conditions = domain_conditions + list(conditions)
-            conditions = composite_expression(conditions)        
-                                   
-        # domain(s) may be implied via the conditions.  If domain(s) were 
-        # supplied, this should simply reproduce them from the conditions that 
+            conditions = composite_expression(conditions)
+
+        # domain(s) may be implied via the conditions.  If domain(s) were
+        # supplied, this should simply reproduce them from the conditions that
         # were prepended.
-        domain = domains = None # These may be reset below if there are ...
-        if (len(conditions)>=len(instance_params)):
+        domain = domains = None  # These may be reset below if there are ...
+        if (len(conditions) >= len(instance_params)):
             domains = [_extract_domain_from_condition(ivar, cond) for
                        ivar, cond in zip(instance_params, conditions)]
             if all(domain is not None for domain in domains):
                 # Used if we have a single instance variable
                 domain = domains[0]
-            else: domains=None
+            else:
+                domains = None
 
         if _lambda_map is None:
             # Now do the actual lambda_map creation
-            if len(instance_params)==1:
+            if len(instance_params) == 1:
                 instance_param_or_params = instance_params[0]
             # Generate the Lambda sub-expression.
-            lambda_map = OperationOverInstances._createOperand(instance_param_or_params,
-                                                               instance_expr,
-                                                               conditions)
+            lambda_map = OperationOverInstances._createOperand(
+                instance_param_or_params, instance_expr, conditions)
 
         self.instance_expr = instance_expr
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
@@ -220,17 +233,18 @@ class OperationOverInstances(Operation):
                 isinstance(instance_params[0], ExprRange)):
             '''Instance parameters of the OperationOverInstance.'''
             self.instance_vars = [get_param_var(parameter) for
-                                 parameter in instance_params]
+                                  parameter in instance_params]
             self.instance_param_or_params = self.instance_params
             self.instance_var_or_vars = self.instance_vars
             '''Instance parameter variables of the OperationOverInstance.'''
             if domains is not None:
-                self.domains = tuple(domains) # Domain for each instance variable
+                # Domain for each instance variable
+                self.domains = tuple(domains)
                 '''Domains of the instance parameters (may be None)'''
                 n_domains = len(self.domains)
-                if (not any (isinstance(entry, ExprRange) for entry
-                             in self.domains)
-                        and self.domains == tuple([self.domains[0]]*n_domains)):
+                if (not any(isinstance(entry, ExprRange) for entry
+                            in self.domains)
+                        and self.domains == tuple([self.domains[0]] * n_domains)):
                     # Multiple domains that are all the same.
                     self.domain = self.domains[0]
             else:
@@ -256,13 +270,13 @@ class OperationOverInstances(Operation):
     def remake_with_style_calls(self):
         '''
         In order to reconstruct this Expression to have the same styles,
-        what "with..." method calls are most appropriate?  Return a 
+        what "with..." method calls are most appropriate?  Return a
         tuple of strings with the calls to make.  The default for the
-        OperationOverInstances class is to include appropriate 
+        OperationOverInstances class is to include appropriate
         'with_wrapping', 'wrap_params', and 'with_justification' calls.
         '''
-        with_wrapping = (self.get_style('with_wrapping', 'False')=='True')
-        wrap_params = (self.get_style('wrap_params', 'False')=='True')
+        with_wrapping = (self.get_style('with_wrapping', 'False') == 'True')
+        wrap_params = (self.get_style('wrap_params', 'False') == 'True')
         justification = self.get_style('justification')
         call_strs = []
         if with_wrapping:
@@ -272,7 +286,7 @@ class OperationOverInstances(Operation):
         if justification != 'center':
             call_strs.append('with_justification("' + justification + '")')
         return call_strs
-    
+
     def effective_condition(self):
         '''
         Return the effective 'condition' of the OperationOverInstances.
@@ -300,7 +314,7 @@ class OperationOverInstances(Operation):
         if len(conditions) == 0:
             return Lambda(instance_param_or_params, instance_expr)
         else:
-            conditional =  Conditional(instance_expr, conditions)
+            conditional = Conditional(instance_expr, conditions)
             return Lambda(instance_param_or_params, conditional)
 
     def extract_my_init_arg_value(self, arg_name):
@@ -311,40 +325,43 @@ class OperationOverInstances(Operation):
         '''
         init_argname_mapping = self.__class__._init_argname_mapping_
         arg_name = init_argname_mapping.get(arg_name, arg_name)
-        if arg_name=='operator':
-            return self.operator # simply the operator
-        elif arg_name=='instance_param_or_params':
+        if arg_name == 'operator':
+            return self.operator  # simply the operator
+        elif arg_name == 'instance_param_or_params':
             # return the joined instance variables according to style.
             return single_or_composite_expression(
                 OperationOverInstances.explicit_instance_params(self))
-        elif arg_name=='instance_expr':
+        elif arg_name == 'instance_expr':
             # return the inner instance expression after joining the
             # instance variables according to the style
             return self.instance_expr
-        elif arg_name=='domain' or arg_name=='domains':
+        elif arg_name == 'domain' or arg_name == 'domains':
             # return the proper single domain or list of domains
             domains = OperationOverInstances.explicit_domains(self)
-            if not hasattr(self, 'domain') or domains != [self.domain]*len(domains):
-                if arg_name=='domains' and len(domains)>0:
+            if not hasattr(self, 'domain') or domains != [
+                    self.domain] * len(domains):
+                if arg_name == 'domains' and len(domains) > 0:
                     return ExprTuple(*domains)
                 else:
                     return None
-            if self.domain is None: return None
-            return self.domain if arg_name=='domain' else None
-        elif arg_name=='condition' or arg_name=='conditions':
+            if self.domain is None:
+                return None
+            return self.domain if arg_name == 'domain' else None
+        elif arg_name == 'condition' or arg_name == 'conditions':
             # return the joined conditions excluding domain conditions
             conditions = composite_expression(
                 OperationOverInstances.explicit_conditions(self))
-            if len(conditions)==1 and arg_name=='condition':
+            if len(conditions) == 1 and arg_name == 'condition':
                 return conditions[0]
-            elif len(conditions) > 1 and arg_name=='conditions':
+            elif len(conditions) > 1 and arg_name == 'conditions':
                 return conditions
             return None
 
     @classmethod
     def _make(cls, core_info, styles, sub_expressions):
         if len(core_info) != 1 or core_info[0] != 'Operation':
-            raise ValueError("Expecting Operation core_info to contain exactly one item: 'Operation'")
+            raise ValueError(
+                "Expecting Operation core_info to contain exactly one item: 'Operation'")
         if len(sub_expressions) != 2:
             raise ValueError("Expecting exactly two sub_expressions for an "
                              "OperationOverInstances object: an operator and "
@@ -352,9 +369,11 @@ class OperationOverInstances(Operation):
 
         implicit_operator = cls._implicitOperator()
         if implicit_operator is None:
-            raise OperationError("Expecting a '_operator_' attribute for class "
-                                 "%s for the default OperationOverInstances._make "
-                                 "method"%str(cls))
+            raise OperationError(
+                "Expecting a '_operator_' attribute for class "
+                "%s for the default OperationOverInstances._make "
+                "method" %
+                str(cls))
 
         operator = sub_expressions[0]
         lambda_map = sub_expressions[1]
@@ -365,14 +384,18 @@ class OperationOverInstances(Operation):
         args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
             inspect.getfullargspec(cls.__init__)
         if '_lambda_map' not in kwonlyargs:
-            raise OperationError("'_lambda_map' must be a keyword only argument "
-                                 "for a constructor of a class %s derived from "
-                                 "OperationOverInstances."%str(cls))
+            raise OperationError(
+                "'_lambda_map' must be a keyword only argument "
+                "for a constructor of a class %s derived from "
+                "OperationOverInstances." %
+                str(cls))
 
         # Subtract 'self' from the number of args and set
         # the rest to None.
-        num_remaining_args = len(args)-1
-        made_operation = cls(*[None]*num_remaining_args, _lambda_map=lambda_map)
+        num_remaining_args = len(args) - 1
+        made_operation = cls(
+            *[None] * num_remaining_args,
+            _lambda_map=lambda_map)
         if styles is not None:
             made_operation.with_styles(**styles)
         return made_operation
@@ -509,8 +532,8 @@ class OperationOverInstances(Operation):
             return self.domains
         elif self.domain is not None:
             return (self.domain,)
-        return tuple() # No explicitly displayed domains
-    
+        return tuple()  # No explicitly displayed domains
+
     def has_one_domain(self):
         '''
         Return True if and only if each instance parameter has
@@ -519,22 +542,25 @@ class OperationOverInstances(Operation):
         if hasattr(self, 'domain'):
             return True
         return False
-    
+
     def domain_conditions(self):
         '''
         Return the domain conditions of all instance variables that
         areg joined together at this level according to the style.
         '''
         if hasattr(self, 'domains'):
-            assert len(self.conditions) >= len(self.domains), 'expecting a condition for each domain'
+            assert len(
+                self.conditions) >= len(
+                self.domains), 'expecting a condition for each domain'
             for iparam, condition, domain in  \
                     zip(self.instance_params, self.conditions, self.domains):
-                assert domain == _extract_domain_from_condition(iparam, condition)
+                assert domain == _extract_domain_from_condition(
+                    iparam, condition)
             return self.conditions[:len(self.domains)]
         else:
             explicit_domains = self.explicit_domains()
-            if len(explicit_domains)==0:
-                return [] # no explicit domains
+            if len(explicit_domains) == 0:
+                return []  # no explicit domains
             domain_conditions = []
             assert (self.domain ==
                     _extract_domain_from_condition(self.instance_param,
@@ -550,21 +576,23 @@ class OperationOverInstances(Operation):
         implicit 'domain' conditions.
         '''
         if hasattr(self, 'domains'):
-            assert len(self.conditions) >= len(self.domains), ('expecting a condition'
-                                                               ' for each domain')
-            for iparam, condition, domain in zip(self.instance_params, self.conditions,
-                                                self.domains):
+            assert len(
+                self.conditions) >= len(
+                self.domains), ('expecting a condition'
+                                ' for each domain')
+            for iparam, condition, domain in zip(
+                    self.instance_params, self.conditions, self.domains):
                 cond_domain = _extract_domain_from_condition(iparam, condition)
                 assert cond_domain == domain
-            return self.conditions[len(self.domains):] # skip the domains
+            return self.conditions[len(self.domains):]  # skip the domains
         else:
             explicit_domains = self.explicit_domains()
             conditions = []
-            if len(explicit_domains)==0:
+            if len(explicit_domains) == 0:
                 conditions.extend(self.conditions)
             else:
-                cond_domain = _extract_domain_from_condition(self.instance_param,
-                                                             self.conditions[0])
+                cond_domain = _extract_domain_from_condition(
+                    self.instance_param, self.conditions[0])
                 assert cond_domain == self.domain
                 conditions.extend(self.conditions[1:])
             return conditions
@@ -578,7 +606,7 @@ class OperationOverInstances(Operation):
         expr = self
         while isinstance(expr, self.__class__):
             if hasattr(expr, 'instance_params'):
-                yield expr.instance_params # grouped together
+                yield expr.instance_params  # grouped together
             else:
                 yield [expr.instance_param]
             expr = expr.instance_expr
@@ -594,10 +622,16 @@ class OperationOverInstances(Operation):
     def style_options(self):
         from proveit._core_.expression.style_options import StyleOptions
         options = StyleOptions(self)
-        options.add_option('with_wrapping', 'Whether or not to wrap the Expression after the parameters, default is True')
-        options.add_option('wrap_params', 'Wraps every two parameters AND wraps the Expression after the parameters, '
-                                        'default is True')
-        options.add_option('justification', "justify to the 'left', 'center', or 'right' in the array cells")
+        options.add_option(
+            'with_wrapping',
+            'Whether or not to wrap the Expression after the parameters, default is True')
+        options.add_option(
+            'wrap_params',
+            'Wraps every two parameters AND wraps the Expression after the parameters, '
+            'default is True')
+        options.add_option(
+            'justification',
+            "justify to the 'left', 'center', or 'right' in the array cells")
         return options
 
     def with_justification(self, justification):
@@ -632,7 +666,13 @@ class OperationOverInstances(Operation):
     def latex(self, **kwargs):
         return self._formatted('latex', **kwargs)
 
-    def _formatted(self, format_type, with_wrapping=None, wrap_params=None, justification=None, fence=False):
+    def _formatted(
+            self,
+            format_type,
+            with_wrapping=None,
+            wrap_params=None,
+            justification=None,
+            fence=False):
         '''
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
@@ -654,59 +694,69 @@ class OperationOverInstances(Operation):
         has_explicit_iparams = (len(explicit_iparams) > 0)
         has_explicit_conditions = (len(explicit_conditions) > 0)
         has_multi_domain = not self.has_one_domain()
-        domain_conditions = ExprTuple(*self.domain_conditions())        
+        domain_conditions = ExprTuple(*self.domain_conditions())
         out_str = ''
         formatted_params = ', '.join([param.formatted(format_type, abbrev=True)
-                                     for param in explicit_iparams])
+                                      for param in explicit_iparams])
         if format_type == 'string':
-            if fence: out_str += '['
+            if fence:
+                out_str += '['
             out_str += self.operator.formatted(format_type) + '_{'
-            if has_explicit_iparams: 
+            if has_explicit_iparams:
                 if has_multi_domain:
-                    out_str += domain_conditions.formatted(format_type, operator_or_operators=',', fence=False)
+                    out_str += domain_conditions.formatted(
+                        format_type, operator_or_operators=',', fence=False)
                 else:
                     out_str += formatted_params
             if not has_multi_domain and self.domain is not None:
                 out_str += ' in '
                 if has_multi_domain:
-                    out_str += explicit_domains.formatted(format_type, operator_or_operators='*', fence=False)
+                    out_str += explicit_domains.formatted(
+                        format_type, operator_or_operators='*', fence=False)
                 else:
                     out_str += self.domain.formatted(format_type, fence=False)
             if has_explicit_conditions:
                 if has_explicit_iparams:
                     out_str += " | "
-                out_str += explicit_conditions.formatted(format_type, fence=False)                
+                out_str += explicit_conditions.formatted(
+                    format_type, fence=False)
                 # out_str += ', '.join(condition.formatted(format_type) for condition in self.conditions
                 # if condition not in implicit_conditions)
-            out_str += '} ' + instance_expr.formatted(format_type,fence=True)
+            out_str += '} ' + instance_expr.formatted(format_type, fence=True)
             if fence:
                 out_str += ']'
         if format_type == 'latex':
             if fence:
                 out_str += r'\left['
             if wrap_params == 'True':
-                out_str += self.operator.formatted(format_type) + r'_{ \scriptsize \begin{array}{' + justification[0] + \
-                          '}' + '\n'
+                out_str += self.operator.formatted(
+                    format_type) + r'_{ \scriptsize \begin{array}{' + justification[0] + '}' + '\n'
                 if has_explicit_iparams:
                     if has_multi_domain:
-                        out_str += self._wrap_params_formatted(format_type=format_type, params=domain_conditions,
-                                                              operator_or_operators=',', fence=False)
+                        out_str += self._wrap_params_formatted(
+                            format_type=format_type,
+                            params=domain_conditions,
+                            operator_or_operators=',',
+                            fence=False)
                     else:
-                        out_str += self._wrap_params_formatted(format_type=format_type, params=explicit_iparams,
-                                                              fence=False)
+                        out_str += self._wrap_params_formatted(
+                            format_type=format_type, params=explicit_iparams, fence=False)
                 if not has_multi_domain and self.domain is not None:
                     out_str += r' \in '
                     out_str += self.domain.formatted(format_type, fence=False)
                 if has_explicit_conditions:
                     if has_explicit_iparams:
                         out_str += "~|~"
-                    out_str += self._wrap_params_formatted(format_type=format_type, params=explicit_conditions, fence=False)
-                out_str += r'\end{array}' + '\n' + r'}~  \\' + '\n' + instance_expr.formatted(format_type, fence=True)
+                    out_str += self._wrap_params_formatted(
+                        format_type=format_type, params=explicit_conditions, fence=False)
+                out_str += r'\end{array}' + '\n' + r'}~  \\' + '\n' + \
+                    instance_expr.formatted(format_type, fence=True)
             else:
                 out_str += self.operator.formatted(format_type) + r'_{'
                 if has_explicit_iparams:
                     if has_multi_domain:
-                        out_str += domain_conditions.formatted(format_type, operator_or_operators=',', fence=False)
+                        out_str += domain_conditions.formatted(
+                            format_type, operator_or_operators=',', fence=False)
                     else:
                         out_str += formatted_params
                 if not has_multi_domain and self.domain is not None:
@@ -715,19 +765,28 @@ class OperationOverInstances(Operation):
                 if has_explicit_conditions:
                     if has_explicit_iparams:
                         out_str += "~|~"
-                    out_str += explicit_conditions.formatted(format_type, fence=False)
+                    out_str += explicit_conditions.formatted(
+                        format_type, fence=False)
                 # out_str += ', '.join(condition.formatted(format_type) for condition in self.conditions
                 # if condition not in implicit_conditions)
                 if with_wrapping == 'True':
                     print(instance_expr.formatted(format_type, fence=True))
-                    out_str += r'}~ ' + instance_expr.formatted(format_type, fence=True)
+                    out_str += r'}~ ' + \
+                        instance_expr.formatted(format_type, fence=True)
                 else:
-                    out_str += '}~' + instance_expr.formatted(format_type, fence=True)
-            if fence: out_str += r'\right]'
-        #print(out_str)
+                    out_str += '}~' + \
+                        instance_expr.formatted(format_type, fence=True)
+            if fence:
+                out_str += r'\right]'
+        # print(out_str)
         return out_str
 
-    def _wrap_params_formatted(self, format_type, params, fence, operator_or_operators=None):
+    def _wrap_params_formatted(
+            self,
+            format_type,
+            params,
+            fence,
+            operator_or_operators=None):
         '''
         Wraps the list of parameters depending on the type.
         '''
@@ -751,8 +810,12 @@ class OperationOverInstances(Operation):
                     count = 0
                     out_str += r'\\' + '\n'
                 if operator_or_operators is not None:
-                    out_str += entry.formatted(format_type, operator_or_operators=operator_or_operators,fence=fence)
-                    count += len(entry.formatted(format_type, operator_or_operators=operator_or_operators, fence=fence))
+                    out_str += entry.formatted(format_type,
+                                               operator_or_operators=operator_or_operators,
+                                               fence=fence)
+                    count += len(entry.formatted(format_type,
+                                                 operator_or_operators=operator_or_operators,
+                                                 fence=fence))
                 else:
                     out_str += entry.formatted(format_type, fence=fence)
                     count += len(entry.formatted(format_type, fence=fence))
@@ -809,6 +872,7 @@ class OperationOverInstances(Operation):
         return substitution.derive_right_via_equality(assumptions=assumptions)
     """
 
+
 def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
     '''
     Given a nested OperationOverInstances, derive or equate an
@@ -835,8 +899,10 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
     while num_levels >= 2:
         if (not isinstance(bundled, OperationOverInstances) or
                 not isinstance(bundled.instance_expr, OperationOverInstances)):
-            raise ValueError("May only 'bundle' nested OperationOverInstances, "
-                             "not %s"%bundled)
+            raise ValueError(
+                "May only 'bundle' nested OperationOverInstances, "
+                "not %s" %
+                bundled)
         _m = bundled.instance_params.length()
         _n = bundled.instance_expr.instance_params.length()
         _P = bundled.instance_expr.instance_expr
@@ -848,31 +914,32 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         if isinstance(correspondence, Implies):
             if (not isinstance(correspondence.antecedent,
                                OperationOverInstances)
-                    or not len(correspondence.consequent.instance_params)==2):
+                    or not len(correspondence.consequent.instance_params) == 2):
                 raise ValueError("'bundle_thm', %s, does not have the "
                                  "expected form with the bundled form as "
                                  "the consequent of the implication, %s"
-                                 %(bundle_thm, correspondence))
+                                 % (bundle_thm, correspondence))
             x_1_to_m, y_1_to_n = correspondence.consequent.instance_params
         elif isinstance(correspondence, Equals):
-            if not isinstance(correspondence.rhs, OperationOverInstances
-                    or not len(correspondence.antecedent.instance_params)==2):
+            if not isinstance(
+                correspondence.rhs, OperationOverInstances or not len(
+                    correspondence.antecedent.instance_params) == 2):
                 raise ValueError("'bundle_thm', %s, does not have the "
                                  "expected form with the bundled form on "
                                  "right of the an equality, %s"
-                                 %(bundle_thm, correspondence))
+                                 % (bundle_thm, correspondence))
             x_1_to_m, y_1_to_n = correspondence.rhs.instance_params
 
         all_params = bundled.instance_params + bundled.instance_expr.instance_params
         Pxy = Function(P, all_params)
         Qx = Function(Q, bundled.instance_params)
         Rxy = Function(R, all_params)
-        x_1_to_m = x_1_to_m.replaced({m:_m})
-        y_1_to_n = y_1_to_n.replaced({n:_n})
+        x_1_to_m = x_1_to_m.replaced({m: _m})
+        y_1_to_n = y_1_to_n.replaced({n: _n})
         instantiation = bundle_thm.instantiate(
-                {m:_m, n:_n, ExprTuple(x_1_to_m):bundled.instance_params,
-                 ExprTuple(y_1_to_n):bundled.instance_expr.instance_params ,
-                 Pxy:_P, Qx:_Q, Rxy:_R}, assumptions=assumptions)
+            {m: _m, n: _n, ExprTuple(x_1_to_m): bundled.instance_params,
+             ExprTuple(y_1_to_n): bundled.instance_expr.instance_params,
+             Pxy: _P, Qx: _Q, Rxy: _R}, assumptions=assumptions)
         if isinstance(instantiation.expr, Implies):
             bundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):
@@ -882,13 +949,13 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
                 bundled = eq.update(instantiation)
             except ValueError:
                 raise ValueError(
-                        "Instantiation of bundle_thm %s is %s but "
-                        "should match %s on one side of the equation."
-                        %(bundle_thm, instantiation, bundled))
+                    "Instantiation of bundle_thm %s is %s but "
+                    "should match %s on one side of the equation."
+                    % (bundle_thm, instantiation, bundled))
         else:
             raise ValueError("Instantiation of bundle_thm %s is %s but "
                              "should be an Implies or Equals expression."
-                             %(bundle_thm, instantiation))
+                             % (bundle_thm, instantiation))
         num_levels -= 1
     if eq is None:
         # Return the bundled result.
@@ -897,6 +964,7 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         # Return the equality between the original expression and
         # the bundled result.
         return eq.relation
+
 
 def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
              assumptions=USE_DEFAULTS):
@@ -929,15 +997,15 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
     for n in num_param_entries:
         if not isinstance(n, int) or n <= 0:
             raise ValueError(
-                    "Each of 'num_param_entries', must be an "
-                    "integer greater than 0.  %s fails this requirement."
-                    %(num_param_entries))
+                "Each of 'num_param_entries', must be an "
+                "integer greater than 0.  %s fails this requirement."
+                % (num_param_entries))
     if net_indicated_param_entries > num_actual_param_entries:
         raise ValueError("Sum of 'num_param_entries', %s=%d should not "
                          "be greater than the number of parameter entries "
                          "of %s for unbundling."
-                         %(num_param_entries, net_indicated_param_entries,
-                           expr))
+                         % (num_param_entries, net_indicated_param_entries,
+                            expr))
     if net_indicated_param_entries < num_actual_param_entries:
         diff = num_actual_param_entries - net_indicated_param_entries
         num_param_entries = list(num_param_entries) + [diff]
@@ -959,7 +1027,8 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
             _nQ = 0
             for cond in condition.operands:
                 cond_vars = free_vars(cond, err_inclusively=True)
-                if first_param_vars.isdisjoint(cond_vars): break
+                if first_param_vars.isdisjoint(cond_vars):
+                    break
                 _nQ += 1
             if _nQ == 0:
                 _Q = And()
@@ -987,35 +1056,36 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         if isinstance(correspondence, Implies):
             if (not isinstance(correspondence.antecedent,
                                OperationOverInstances)
-                    or not len(correspondence.antecedent.instance_params)==2):
+                    or not len(correspondence.antecedent.instance_params) == 2):
                 raise ValueError("'unbundle_thm', %s, does not have the "
                                  "expected form with the bundled form as "
                                  "the antecedent of the implication, %s"
-                                 %(unbundle_thm, correspondence))
+                                 % (unbundle_thm, correspondence))
             x_1_to_m, y_1_to_n = correspondence.antecedent.instance_params
         elif isinstance(correspondence, Equals):
-            if not isinstance(correspondence.rhs, OperationOverInstances
-                    or not len(correspondence.antecedent.instance_params)==2):
+            if not isinstance(
+                correspondence.rhs, OperationOverInstances or not len(
+                    correspondence.antecedent.instance_params) == 2):
                 raise ValueError("'unbundle_thm', %s, does not have the "
                                  "expected form with the bundled form on "
                                  "right of the an equality, %s"
-                                 %(unbundle_thm, correspondence))
+                                 % (unbundle_thm, correspondence))
             x_1_to_m, y_1_to_n = correspondence.rhs.instance_params
         else:
             raise ValueError("'unbundle_thm', %s, does not have the expected "
                              "form with an equality or implication  "
                              "correspondence, %s"
-                             %(unbundle_thm, correspondence))
+                             % (unbundle_thm, correspondence))
 
         Qx = Function(Q, first_params)
         Rxy = Function(R, unbundled.instance_params)
         Pxy = Function(P, unbundled.instance_params)
-        x_1_to_m = x_1_to_m.replaced({m:_m})
-        y_1_to_n = y_1_to_n.replaced({n:_n})
+        x_1_to_m = x_1_to_m.replaced({m: _m})
+        y_1_to_n = y_1_to_n.replaced({n: _n})
         instantiation = unbundle_thm.instantiate(
-                {m:_m, n:_n, ExprTuple(x_1_to_m):first_params,
-                 ExprTuple(y_1_to_n):remaining_params,
-                 Pxy:_P, Qx:_Q, Rxy:_R}, assumptions=assumptions)
+            {m: _m, n: _n, ExprTuple(x_1_to_m): first_params,
+             ExprTuple(y_1_to_n): remaining_params,
+             Pxy: _P, Qx: _Q, Rxy: _R}, assumptions=assumptions)
         if isinstance(instantiation.expr, Implies):
             unbundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):
@@ -1025,13 +1095,13 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
                 unbundled = eq.update(instantiation)
             except ValueError:
                 raise ValueError(
-                        "Instantiation of bundle_thm %s is %s but "
-                        "should match %s on one side of the equation."
-                        %(unbundle_thm, instantiation, unbundled))
+                    "Instantiation of bundle_thm %s is %s but "
+                    "should match %s on one side of the equation."
+                    % (unbundle_thm, instantiation, unbundled))
         else:
             raise ValueError("Instantiation of bundle_thm %s is %s but "
                              "should be an Implies or Equals expression."
-                             %(unbundle_thm, instantiation))
+                             % (unbundle_thm, instantiation))
     if eq is None:
         # Return the unbundled result.
         return unbundled
@@ -1040,10 +1110,13 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         # the unbundled result.
         return eq.relation
 
+
 class InstanceSubstitutionException(Exception):
     def __init__(self, msg, operation_over_instances, universality):
         self.msg = msg
         self.operation_over_instances = operation_over_instances
         self.universality = universality
+
     def __str__(self):
-        return self.msg + '.\n  operation_over_instances: ' + str(self.operation_over_instances) + '\n  universality: ' + str(self.universality)
+        return self.msg + '.\n  operation_over_instances: ' + \
+            str(self.operation_over_instances) + '\n  universality: ' + str(self.universality)

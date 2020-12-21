@@ -4,6 +4,7 @@ from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
 from proveit.numbers import Add, Mult
 
+
 class Abs(Operation):
     # operator of the Abs operation.
     _operator_ = Literal(string_format='Abs', theory=__file__)
@@ -12,10 +13,10 @@ class Abs(Operation):
         Operation.__init__(self, Abs._operator_, A)
 
     def string(self, **kwargs):
-        return '|'+self.operand.string()+'|'
+        return '|' + self.operand.string() + '|'
 
     def latex(self, **kwargs):
-        return r'\left|'+self.operand.latex()+r'\right|'
+        return r'\left|' + self.operand.latex() + r'\right|'
 
     def not_equal(self, rhs, assumptions=USE_DEFAULTS):
         # accessed from conclude() method in not_equals.py
@@ -23,14 +24,19 @@ class Abs(Operation):
         from proveit.numbers import zero
         if rhs == zero:
             return abs_not_eq_zero.instantiate(
-                    {a:self.operand}, assumptions=assumptions)
-        raise ProofFailure(Equals(self, zero), assumptions,
-                "'not_equal' only implemented for a right side of zero")
+                {a: self.operand}, assumptions=assumptions)
+        raise ProofFailure(
+            Equals(
+                self,
+                zero),
+            assumptions,
+            "'not_equal' only implemented for a right side of zero")
 
     def deduce_greater_than_equals_zero(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Complex
         from ._theorems_ import abs_is_non_neg
-        return abs_is_non_neg.instantiate({a:self.operand}, assumptions=assumptions)
+        return abs_is_non_neg.instantiate(
+            {a: self.operand}, assumptions=assumptions)
 
     def distribute(self, assumptions=USE_DEFAULTS):
         '''
@@ -48,19 +54,19 @@ class Abs(Operation):
         from proveit.numbers import num, Complex, Div, Mult
         if isinstance(self.operand, Div):
             return abs_frac.instantiate(
-                    {a:self.operand.numerator, b:self.operand.denominator},
-                    assumptions=assumptions)
+                {a: self.operand.numerator, b: self.operand.denominator},
+                assumptions=assumptions)
         elif isinstance(self.operand, Mult):
             the_operands = self.operand.operands
             return abs_prod.instantiate(
-                    {n:num(len(the_operands)), x:the_operands},
-                    assumptions=assumptions)
+                {n: num(len(the_operands)), x: the_operands},
+                assumptions=assumptions)
         else:
             raise ValueError(
                 'Unsupported operand type for Abs.distribute() '
                 'method: ', str(self.operand.__class__))
 
-    def abs_elimination(self, operand_type = None, assumptions=USE_DEFAULTS):
+    def abs_elimination(self, operand_type=None, assumptions=USE_DEFAULTS):
         '''
         For some |x| expression, deduce either |x| = x (the default) OR
         |x| = -x (for operand_type = 'negative'). Assumptions may be
@@ -70,12 +76,12 @@ class Abs(Operation):
         from proveit.numbers import Neg
         from ._theorems_ import abs_non_neg_elim, abs_neg_elim
         # deduce_non_neg(self.operand, assumptions) # NOT YET IMPLEMENTED
-        if operand_type == None or operand_type == 'non-negative':
-            return abs_non_neg_elim.instantiate({x:self.operand},
-                                            assumptions=assumptions)
+        if operand_type is None or operand_type == 'non-negative':
+            return abs_non_neg_elim.instantiate({x: self.operand},
+                                                assumptions=assumptions)
         elif operand_type == 'negative':
-            return abs_neg_elim.instantiate({x:self.operand},
-                                          assumptions=assumptions)
+            return abs_neg_elim.instantiate({x: self.operand},
+                                            assumptions=assumptions)
         else:
             raise ValueError(
                 "Unsupported operand type for Abs.abs_elimination() "
@@ -96,7 +102,7 @@ class Abs(Operation):
         '''
         from proveit.numbers import Greater, GreaterEq, Mult, Neg
         from proveit.numbers import (zero, Natural, NaturalPos, RealNeg,
-                                    RealNonNeg, RealPos)
+                                     RealNonNeg, RealPos)
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
         assumptions = defaults.checked_assumptions(assumptions)
@@ -109,7 +115,7 @@ class Abs(Operation):
             # Entire operand is known to be or assumed to be a
             # non-negative real, so we can return Abs(x) = x
             return self.abs_elimination(operand_type='non-negative',
-                                       assumptions=assumptions)
+                                        assumptions=assumptions)
 
         #-- -------------------------------------------------------- --#
         #-- Case (2): Abs(x) where entire operand x is known or      --#
@@ -119,31 +125,31 @@ class Abs(Operation):
             # Entire operand is known to be or assumed to be a
             # negative real, so we can return Abs(x) = -x
             return self.abs_elimination(operand_type='negative',
-                                       assumptions=assumptions)
+                                        assumptions=assumptions)
 
         #-- -------------------------------------------------------- --#
-        #-- Case (3): Abs(x) where entire operand x is not yet known --*
+        # -- Case (3): Abs(x) where entire operand x is not yet known --*
         #--           to be a non-negative Real, but can easily be   --#
         #--           proven to be a non-negative Real because it is --#
-        #--           (a) known or assumed to be ≥ 0 or
+        # --           (a) known or assumed to be ≥ 0 or
         #--           (b) known or assumed to be in a subset of the  --#
         #--               non-negative Real numbers, or              --#
         #--           (c) the addition or product of operands, all   --#
         #--               of which are known or assumed to be non-   --#
-        #--               negative real numbers. TBA!
+        # --               negative real numbers. TBA!
         #-- -------------------------------------------------------- --#
         if (Greater(self.operand, zero).proven(assumptions=assumptions) and
-            not GreaterEq(self.operand, zero).proven(assumptions=assumptions)):
+                not GreaterEq(self.operand, zero).proven(assumptions=assumptions)):
             GreaterEq(self.operand, zero).prove(assumptions=assumptions)
             # and then it will get picked up in the next if() below
 
         if GreaterEq(self.operand, zero).proven(assumptions=assumptions):
             from proveit.numbers.number_sets.real_numbers._theorems_ import (
-                    in_real_non_neg_if_greater_eq_zero)
+                in_real_non_neg_if_greater_eq_zero)
             in_real_non_neg_if_greater_eq_zero.instantiate(
                 {a: self.operand}, assumptions=assumptions)
             return self.abs_elimination(operand_type='non-negative',
-                                       assumptions=assumptions)
+                                        assumptions=assumptions)
 
         if self.operand in InSet.known_memberships.keys():
             for kt in InSet.known_memberships[self.operand]:
@@ -155,9 +161,9 @@ class Abs(Operation):
                             assumptions=assumptions):
 
                         InSet(self.operand, RealNonNeg).prove(
-                                assumptions=assumptions)
-                        return self.abs_elimination(operand_type='non-negative',
-                                                   assumptions=assumptions)
+                            assumptions=assumptions)
+                        return self.abs_elimination(
+                            operand_type='non-negative', assumptions=assumptions)
 
         if isinstance(self.operand, Add) or isinstance(self.operand, Mult):
             count_of_known_memberships = 0
@@ -171,11 +177,11 @@ class Abs(Operation):
                     for kt in op_temp_known_memberships:
                         if (kt.is_sufficient(assumptions)
                             and is_equal_to_or_subset_eq_of(
-                                        kt.expr.operands[1],
-                                        equal_sets=[RealNonNeg, RealPos],
-                                        subset_eq_sets=[Natural, NaturalPos,
-                                                RealPos, RealNonNeg],
-                                        assumptions=assumptions)):
+                            kt.expr.operands[1],
+                            equal_sets=[RealNonNeg, RealPos],
+                            subset_eq_sets=[Natural, NaturalPos,
+                                            RealPos, RealNonNeg],
+                                assumptions=assumptions)):
 
                             count_of_known_relevant_memberships += 1
                             break
@@ -188,7 +194,6 @@ class Abs(Operation):
                         InSet(op, RealNonNeg).prove(assumptions=assumptions)
                     return self.abs_elimination(assumptions=assumptions)
 
-
         #-- -------------------------------------------------------- --#
         #-- Case (4): Abs(x) where operand x can easily be proven    --#
         #--           to be a negative Real number because -x is     --#
@@ -200,11 +205,12 @@ class Abs(Operation):
             negated_op = self.operand.operand
         else:
             negated_op = Neg(self.operand)
-        negated_op_simp = negated_op.simplification(assumptions=assumptions).rhs
+        negated_op_simp = negated_op.simplification(
+            assumptions=assumptions).rhs
 
         if negated_op_simp in InSet.known_memberships.keys():
             from proveit.numbers.number_sets.real_numbers._theorems_ import (
-                    neg_is_real_neg_if_pos_is_real_pos)
+                neg_is_real_neg_if_pos_is_real_pos)
             for kt in InSet.known_memberships[negated_op_simp]:
                 if kt.is_sufficient(assumptions):
                     if is_equal_to_or_subset_eq_of(
@@ -215,19 +221,17 @@ class Abs(Operation):
                             assumptions=assumptions):
 
                         InSet(negated_op_simp, RealPos).prove(
-                                assumptions=assumptions)
+                            assumptions=assumptions)
                         neg_is_real_neg_if_pos_is_real_pos.instantiate(
-                            {a:negated_op_simp}, assumptions=assumptions)
+                            {a: negated_op_simp}, assumptions=assumptions)
                         return self.abs_elimination(operand_type='negative',
-                                                   assumptions=assumptions)
+                                                    assumptions=assumptions)
 
         # for updating our equivalence claim(s) for the
         # remaining possibilities
         from proveit import TransRelUpdater
         eq = TransRelUpdater(self, assumptions)
         return eq.relation
-
-
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -236,32 +240,32 @@ class Abs(Operation):
         set using the appropriate closure theorem.
         '''
         from proveit.numbers.absolute_value._theorems_ import (
-                  abs_rational_closure, abs_rational_non_zero_closure,
-                  abs_complex_closure, abs_nonzero_closure,
-                  abs_complex_closure_non_neg_real)
+            abs_rational_closure, abs_rational_non_zero_closure,
+            abs_complex_closure, abs_nonzero_closure,
+            abs_complex_closure_non_neg_real)
         from proveit.numbers import (
-                Rational, RationalNonZero, RationalPos, RationalNeg,
-                RationalNonNeg, Real, RealNonNeg, RealPos, Complex)
+            Rational, RationalNonZero, RationalPos, RationalNeg,
+            RationalNonNeg, Real, RealNonNeg, RealPos, Complex)
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
         assumptions = defaults.checked_assumptions(assumptions)
-        
+
         thm = None
         if number_set in (RationalPos, RationalNonZero):
-            thm = abs_rational_non_zero_closure       
+            thm = abs_rational_non_zero_closure
         elif number_set in (Rational, RationalNonNeg, RationalNeg):
-            thm = abs_rational_closure 
+            thm = abs_rational_closure
         elif number_set == Real:
             thm = abs_complex_closure
         elif number_set == RealPos:
             thm = abs_nonzero_closure
         elif number_set == RealNonNeg:
             thm = abs_complex_closure_non_neg_real
-            
+
         if thm is not None:
-            in_set = thm.instantiate({a:self.operand},
-                      assumptions=assumptions)
+            in_set = thm.instantiate({a: self.operand},
+                                     assumptions=assumptions)
             if in_set.domain == number_set:
                 # Exactly the domain we were looking for.
                 return in_set
@@ -278,23 +282,23 @@ class Abs(Operation):
         # If so, use the appropiate thm to determine that self is in X,
         # then prove that self must also be in Y since Y contains X.
         if SubsetEq(Real, number_set).proven(assumptions=assumptions):
-            abs_complex_closure.instantiate({a:self.operand},
-                      assumptions=assumptions)
+            abs_complex_closure.instantiate({a: self.operand},
+                                            assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
         if SubsetEq(RealPos, number_set).proven(assumptions=assumptions):
-            abs_nonzero_closure.instantiate({a:self.operand},
-                      assumptions=assumptions)
+            abs_nonzero_closure.instantiate({a: self.operand},
+                                            assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
         if SubsetEq(RealNonNeg, number_set).proven(assumptions=assumptions):
-            abs_complex_closure_non_neg_real.instantiate({a:self.operand},
-                      assumptions=assumptions)
+            abs_complex_closure_non_neg_real.instantiate(
+                {a: self.operand}, assumptions=assumptions)
             return InSet(self, number_set).prove(assumptions=assumptions)
-
 
         # otherwise, we just don't have the right thm to make it work
         msg = ("'Abs.deduce_in_number_set()' not implemented for "
-               "the %s set"%str(number_set))
+               "the %s set" % str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
+
 
 def is_equal_to_or_subset_eq_of(
         number_set, equal_sets=None, subset_sets=None, subset_eq_sets=None,
@@ -315,15 +319,15 @@ def is_equal_to_or_subset_eq_of(
     # to assumptions=() (thus averting len(None) errors)
     assumptions = defaults.checked_assumptions(assumptions)
 
-    if not equal_sets == None:
+    if equal_sets is not None:
         for temp_set in equal_sets:
             if number_set == temp_set:
                 return True
-    if not subset_eq_sets == None:
+    if subset_eq_sets is not None:
         for temp_set in subset_eq_sets:
             if SubsetEq(number_set, temp_set).proven(assumptions):
                 return True
-    if not subset_sets == None:
+    if subset_sets is not None:
         for temp_set in subset_sets:
             if ProperSubset(number_set, temp_set).proven(assumptions):
                 return True

@@ -3,13 +3,14 @@ from proveit import (defaults, Function, InnerExpr, Literal, ProofFailure,
 from proveit.logic import InSet
 from proveit.numbers.number_sets import Integer, Natural, Real
 from proveit.numbers.rounding.rounding_methods import (
-        apply_rounding_elimination, apply_rounding_extraction,
-        apply_reduced_simplification, rounding_deduce_in_number_set)
+    apply_rounding_elimination, apply_rounding_extraction,
+    apply_reduced_simplification, rounding_deduce_in_number_set)
+
 
 class Round(Function):
     # operator of the Round operation.
     _operator_ = Literal(string_format='round', theory=__file__)
-    
+
     def __init__(self, A):
         Function.__init__(self, Round._operator_, A)
 
@@ -43,7 +44,10 @@ class Round(Function):
 
         return apply_rounding_elimination(self, round_of_integer, assumptions)
 
-    def rounding_extraction(self, idx_to_extract=None, assumptions=USE_DEFAULTS):
+    def rounding_extraction(
+            self,
+            idx_to_extract=None,
+            assumptions=USE_DEFAULTS):
         '''
         For the case of Round(x) where the operand x = x_real + x_int,
         derive and return Round(x) = Round(x_real) + x_int (thus
@@ -67,7 +71,7 @@ class Round(Function):
         '''
         from ._theorems_ import round_of_real_plus_int
         return apply_rounding_extraction(
-                self, round_of_real_plus_int, idx_to_extract, assumptions)
+            self, round_of_real_plus_int, idx_to_extract, assumptions)
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -79,13 +83,12 @@ class Round(Function):
         from proveit.numbers.rounding._theorems_ import round_real_pos_closure
 
         return rounding_deduce_in_number_set(
-                self, number_set, round_is_an_int, round_real_pos_closure,
-                assumptions)
+            self, number_set, round_is_an_int, round_real_pos_closure,
+            assumptions)
 
 
 # Register these generic expression equivalence methods:
 InnerExpr.register_equivalence_method(
-        Round, 'rounding_elimination', 'rounding_eliminated', 'rounding_eliminate')
+    Round, 'rounding_elimination', 'rounding_eliminated', 'rounding_eliminate')
 InnerExpr.register_equivalence_method(
-        Round, 'rounding_extraction', 'rounding_extracted', 'rounding_extract')
-            
+    Round, 'rounding_extraction', 'rounding_extracted', 'rounding_extract')

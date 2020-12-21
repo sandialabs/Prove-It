@@ -2,4 +2,3 @@ from .greater_than import Greater, GreaterEq, GreaterSequence, GreaterOnlySeq, G
 from .less_than import Less, LessEq, LesserSequence, LessOnlySeq, LessEqOnlySeq, lesser_sequence
 from .max import Max
 from .min import Min
-

@@ -4,6 +4,7 @@ from .set_equiv import SetEquiv
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit._common_ import A, B
 
+
 class SetNotEquiv(Operation):
     '''
     Class to capture the LACK of membership equivalence of 2 sets
@@ -18,12 +19,12 @@ class SetNotEquiv(Operation):
     _operator_ = Literal(string_format='not_equiv',
                          latex_format=r'\ncong',
                          theory=__file__)
-    
+
     def __init__(self, a, b):
         Operation.__init__(self, SetNotEquiv._operator_, (a, b))
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
-            
+
     def side_effects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for
@@ -31,11 +32,11 @@ class SetNotEquiv(Operation):
         '''
         from proveit.logic.booleans._common_ import FALSE
         # automatically derive the reversed form which is equivalent
-        yield self.derive_reversed # B not_equiv A from A not_equiv B
+        yield self.derive_reversed  # B not_equiv A from A not_equiv B
         # if self.rhs==FALSE:
         #     yield self.derive_via_double_negation # A from A != False and A in Boolean
         # yield self.unfold # Not(x=y) from x != y
-    
+
     # def conclude(self, assumptions):
     #     from proveit.logic import FALSE
     #     if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
@@ -55,17 +56,16 @@ class SetNotEquiv(Operation):
     #     try:
     #         return self.conclude_as_folded(assumptions)
     #     except:
-    #         return Operation.conclude(assumptions) # try the default (reduction)
-    
+    # return Operation.conclude(assumptions) # try the default (reduction)
+
     def derive_reversed(self, assumptions=USE_DEFAULTS):
         '''
         From A not_equiv B derive B not_equiv A.
         Derived automatically as a side-effect in side_effects() method.
         '''
         from ._theorems_ import set_not_equiv_reversal
-        return set_not_equiv_reversal.instantiate({A:self.lhs, B:self.rhs},
-                                              assumptions=assumptions)
-        
+        return set_not_equiv_reversal.instantiate({A: self.lhs, B: self.rhs},
+                                                  assumptions=assumptions)
 
     # Later consider a form of double negation like
     # Not(SetNotEquiv(A, B)) giving SetEquiv(A, B)
@@ -93,7 +93,8 @@ class SetNotEquiv(Operation):
     #         NotEquals(self.rhs, self.lhs).prove(assumptions)
     #         return self.prove()
     #     if self.rhs == FALSE:
-    #         return not_equals_false.instantiate({A:self.lhs}, assumptions=assumptions)
+    # return not_equals_false.instantiate({A:self.lhs},
+    # assumptions=assumptions)
 
     def definition(self):
         '''
@@ -101,7 +102,7 @@ class SetNotEquiv(Operation):
         (A not_equiv B).
         '''
         from ._axioms_ import set_not_equiv_def
-        return set_not_equiv_def.instantiate({A:self.lhs, B:self.rhs})
+        return set_not_equiv_def.instantiate({A: self.lhs, B: self.rhs})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -109,16 +110,16 @@ class SetNotEquiv(Operation):
         '''
         from ._theorems_ import unfold_set_not_equiv
         return unfold_set_not_equiv.instantiate(
-            {A:self.lhs, B:self.rhs}, assumptions=assumptions)
-    
+            {A: self.lhs, B: self.rhs}, assumptions=assumptions)
+
     def conclude_as_folded(self, assumptions=USE_DEFAULTS):
         '''
         Conclude (A not_equiv B) from Not(A equiv B).
         '''
         from ._theorems_ import fold_set_not_equiv
         return fold_set_not_equiv.instantiate(
-                {A:self.lhs, B:self.rhs}, assumptions=assumptions)
-        
+            {A: self.lhs, B: self.rhs}, assumptions=assumptions)
+
     # def evaluation(self, assumptions=USE_DEFAULTS):
     #     '''
     #     Given operands that may be evaluated to irreducible values that
@@ -127,7 +128,7 @@ class SetNotEquiv(Operation):
     #     TRUE or FALSE.
     #     '''
     #     definition_equality = self.definition()
-    #     unfolded_evaluation = definition_equality.rhs.evaluation(assumptions)        
+    #     unfolded_evaluation = definition_equality.rhs.evaluation(assumptions)
     #     return Equals(self, unfolded_evaluation.rhs).prove(assumptions)
 
     def derive_contradiction(self, assumptions=USE_DEFAULTS):
@@ -137,8 +138,8 @@ class SetNotEquiv(Operation):
         '''
         from ._theorems_ import set_not_equiv_contradiction
         return set_not_equiv_contradiction.instantiate(
-                {A:self.lhs, B:self.rhs}, assumptions=assumptions)
-    
+            {A: self.lhs, B: self.rhs}, assumptions=assumptions)
+
     # def affirm_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
     #     '''
     #     From A not_equiv B, derive the conclusion, provided that
@@ -156,11 +157,11 @@ class SetNotEquiv(Operation):
     #     '''
     #     from proveit.logic.booleans.implication import deny_via_contradiction
     #     return deny_via_contradiction(self, conclusion, assumptions)
-                        
+
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this 'not equiv' statement is in
         the set of BOOLEANS.
         '''
         from ._theorems_ import set_not_equiv_is_bool
-        return set_not_equiv_is_bool.instantiate({A:self.lhs, B:self.rhs})
+        return set_not_equiv_is_bool.instantiate({A: self.lhs, B: self.rhs})

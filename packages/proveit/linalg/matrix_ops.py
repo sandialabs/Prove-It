@@ -1,9 +1,10 @@
-from proveit import Literal, Operation #, STRING, LATEX
+from proveit import Literal, Operation  # , STRING, LATEX
 # from proveit.logic import Equation
 # from proveit.logic.generic_ops import AssociativeOperation, BinaryOperation
 from proveit._common_ import x, alpha, beta
 
 pkg = __package__
+
 
 class MatrixProd(Operation):
     '''
@@ -13,7 +14,7 @@ class MatrixProd(Operation):
     # the literal operator of the MatrixProd operation
     # perhaps use MATRIX_PROD for string?
     # latex_format try using \; in place of a blank space
-    _operator_ = Literal(string_format=r'.', latex_format = r'\thinspace',
+    _operator_ = Literal(string_format=r'.', latex_format=r'\thinspace',
                          theory=__file__)
 
     def __init__(self, *operands):
@@ -21,16 +22,32 @@ class MatrixProd(Operation):
         Matrix dot product of any number of operands.
         '''
         Operation.__init__(self, MatrixProd._operator_, operands)
-    
+
     def formatted(self, format_type, fence=False, sub_fence=True):
         # Temporary hack to get quantum bra and ket products to display properly.
         # This should eventually be done differently because we shouldn't need to
         # know anything about the quantum application here.
         from proveit.physics.quantum import Bra, Ket, RegisterBra, RegisterKet
-        if len(self.operands) == 2 and (isinstance(self.operands[0], Bra) or isinstance(self.operands[0], RegisterBra)) and (isinstance(self.operands[1], Ket) or isinstance(self.operands[1], RegisterKet)):
-            return self.operands[0].formatted(format_type) + self.operands[1].formatted(format_type, no_lvert=True)
+        if len(
+            self.operands) == 2 and (
+            isinstance(
+                self.operands[0],
+                Bra) or isinstance(
+                self.operands[0],
+                RegisterBra)) and (
+                    isinstance(
+                        self.operands[1],
+                        Ket) or isinstance(
+                            self.operands[1],
+                        RegisterKet)):
+            return self.operands[0].formatted(
+                format_type) + self.operands[1].formatted(format_type, no_lvert=True)
         # return Operation.formatted(self, format_type, fence, sub_fence)
-        return Operation._formatted(self, format_type=format_type, fence=fence, sub_fence=sub_fence)
+        return Operation._formatted(
+            self,
+            format_type=format_type,
+            fence=fence,
+            sub_fence=sub_fence)
 
 
 class ScalarProd(Operation):
@@ -42,7 +59,7 @@ class ScalarProd(Operation):
     # the literal operator of the MatrixProd operation
     # perhaps use SCALAR_PROD for string?
     # latex_format try using \; in place of a blank space
-    _operator_ = Literal(string_format=r'*', latex_format = r'\thinspace',
+    _operator_ = Literal(string_format=r'*', latex_format=r'\thinspace',
                          theory=__file__)
 
     def __init__(self, scalar, scaled):

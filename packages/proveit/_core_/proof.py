@@ -14,6 +14,7 @@ from proveit._core_._unique_data import meaning_data, style_data
 from .defaults import defaults
 from .theory import Theory
 
+
 class Proof:
 
     # Map each Proof to the first instantiation of it that was created (noting that
@@ -34,7 +35,6 @@ class Proof:
 
     def __init__(self, proven_truth, required_truths,
                  marked_required_truth_indices=None):
-
         '''
         # Uncomment to print useful debugging information when tracking side-effects.
         if not isinstance(self, Theorem) and not isinstance(self, Axiom):
@@ -44,7 +44,8 @@ class Proof:
         assert isinstance(proven_truth, Judgment)
         for required_truth in required_truths:
             assert isinstance(required_truth, Judgment)
-        # note: the contained Judgment and Proofs are subject to style changes on a Proof instance basis.
+        # note: the contained Judgment and Proofs are subject to style changes
+        # on a Proof instance basis.
         self.proven_truth = proven_truth
         self.required_truths = tuple(required_truths)
         if marked_required_truth_indices is None:
@@ -53,41 +54,52 @@ class Proof:
             self.marked_required_truth_indices = \
                 set(marked_required_truth_indices)
         for idx in self.marked_required_truth_indices:
-            if not isinstance(idx, int) or idx < 0 or idx > len(required_truths):
+            if not isinstance(idx, int) or idx < 0 or idx > len(
+                    required_truths):
                 raise ValueError("marked_required_truth_indices must be a set "
                                  "of integers indexing required_truths")
 
-        # The meaning data is shared among Proofs with the same 
+        # The meaning data is shared among Proofs with the same
         # structure disregarding style
         def meaning_hexid_fn(obj):
             if hasattr(obj, '_meaning_id'):
                 return hex(obj._meaning_id)
             return hex(obj._establish_and_get_meaning_id())
         self._meaning_data = meaning_data(self._generate_unique_rep(
-                meaning_hexid_fn))
+            meaning_hexid_fn))
         if not hasattr(self._meaning_data, 'required_proofs'):
-            self._meaning_data.required_proofs = [required_truth.proof() for required_truth in required_truths]
-            self._meaning_data._dependents = set() # meanng data of proofs that directly require this one
+            self._meaning_data.required_proofs = [
+                required_truth.proof() for required_truth in required_truths]
+            # meanng data of proofs that directly require this one
+            self._meaning_data._dependents = set()
 
             # Is this a usable Proof?  An unusable proof occurs when trying to prove a Theorem
             # that must explicitly presume Theorems that are not fully known in order to
-            # avoid circular logic.  They can also be manually introduced via Proof.disable().
-            self._meaning_data._unusable_proof = None # When unusable, this will point to the unusable theorem
-                                           # being applied directly or indirectly.
+            # avoid circular logic.  They can also be manually introduced via
+            # Proof.disable().
+            # When unusable, this will point to the unusable theorem
+            self._meaning_data._unusable_proof = None
+            # being applied directly or indirectly.
 
-        # The style data is shared among Proofs with the same structure and style.
-        self._style_data = style_data(self._generate_unique_rep(lambda obj : hex(obj._style_id)))
+        # The style data is shared among Proofs with the same structure and
+        # style.
+        self._style_data = style_data(
+            self._generate_unique_rep(
+                lambda obj: hex(
+                    obj._style_id)))
 
         # reference this unchanging data of the unique 'meaning' data
         self._meaning_id = self._meaning_data._unique_id
 
         # reference this data of the unique 'meaning' data, but note that these
-        # are subject to change (as proofs are disabled and as new dependencies are added).
+        # are subject to change (as proofs are disabled and as new dependencies
+        # are added).
         self.required_proofs = self._meaning_data.required_proofs
         self._dependents = self._meaning_data._dependents
 
         all_required_proofs = self.all_required_proofs()
-        all_required_truths = {required_proof.proven_truth for required_proof in all_required_proofs if required_proof is not self}
+        all_required_truths = {
+            required_proof.proven_truth for required_proof in all_required_proofs if required_proof is not self}
         original_proof = self.proven_truth not in all_required_truths
 
         if original_proof:
@@ -102,7 +114,8 @@ class Proof:
             # determine the number of unique steps required for this proof
             self._meaning_data.num_steps = len(all_required_proofs)
 
-        # establish some parent-child relationships (important in case styles are updated)
+        # establish some parent-child relationships (important in case styles
+        # are updated)
         self._style_data.add_child(self, self.proven_truth)
         for required_truth in self.required_truths:
             self._style_data.add_child(self, required_truth)
@@ -110,7 +123,7 @@ class Proof:
         self._style_id = self._style_data._unique_id
 
         if not original_proof:
-            self._meaning_data._unusable_proof = self # not usable because it is not useful
+            self._meaning_data._unusable_proof = self  # not usable because it is not useful
             assert proven_truth.proof() is not None, "There should have been an 'original' proof"
             return
 
@@ -125,7 +138,7 @@ class Proof:
                 # Raise an UnusableProof expection below (after calling _recordBestProof
                 # to indicate the proof is unusable).
                 requiring_unusable_proof = True
-                break # it only take one
+                break  # it only take one
 
         # if it is a Theorem, set its "usability", avoiding circular logic
         if self.is_usable():
@@ -136,8 +149,11 @@ class Proof:
         if requiring_unusable_proof:
             # Raise an UnusableProof exception when an attempt is made
             # to use an "unusable" theorem directly or indirectly.
-            raise UnusableProof(Judgment.theorem_being_proven, self._meaning_data._unusable_proof)
-        if proven_truth.proof()==self and self.is_usable(): # don't bother with side effects if this proof was born obsolete or unusable
+            raise UnusableProof(
+                Judgment.theorem_being_proven,
+                self._meaning_data._unusable_proof)
+        if proven_truth.proof() == self and self.is_usable(
+        ):  # don't bother with side effects if this proof was born obsolete or unusable
             # May derive any side-effects that are obvious consequences arising from this truth
             # (if it has not already been processed):
             proven_truth.derive_side_effects(defaults.assumptions)
@@ -160,13 +176,16 @@ class Proof:
                 pass
             assert revised_dependent, "Incorrect dependency relationship"
             newproof._dependents.add(dependent)
-            if all(required_proof.is_usable() for required_proof in dependent.required_proofs):
-                dependent._meaning_data._unusable_proof = None # it is usable again
-                dependent._meaning_data.num_steps = len(dependent.all_required_proofs())
-                dependent.proven_truth._addProof(dependent) # add it back as an option
+            if all(required_proof.is_usable()
+                   for required_proof in dependent.required_proofs):
+                dependent._meaning_data._unusable_proof = None  # it is usable again
+                dependent._meaning_data.num_steps = len(
+                    dependent.all_required_proofs())
+                dependent.proven_truth._addProof(
+                    dependent)  # add it back as an option
 
     def _setUsability(self):
-        pass # overloaded for the Theorem type Proof
+        pass  # overloaded for the Theorem type Proof
 
     def _generate_unique_rep(self, object_rep_fn):
         '''
@@ -174,17 +193,19 @@ class Proof:
         '''
         # Internally, for self._meaning_rep and self._style_rep, we will use self.required_truths in the unique representation
         # and the proofs are subject to change (if anything is disabled).
-        # For external storage (see _theory_storage.py), we will use self.required_proofs, locking the mapping from KnonwTruths of self.required_truths to Proofs.
+        # For external storage (see _theory_storage.py), we will use
+        # self.required_proofs, locking the mapping from KnonwTruths of
+        # self.required_truths to Proofs.
         required_objs = (self.required_proofs
                          if hasattr(self, 'required_proofs')
                          else self.required_truths)
         required_obj_marks = [('*' if k in self.marked_required_truth_indices
-                             else '') for k in range(len(required_objs))]
-        required_objs_str = ','.join(object_rep_fn(obj)+mark for obj, mark
+                               else '') for k in range(len(required_objs))]
+        required_objs_str = ','.join(object_rep_fn(obj) + mark for obj, mark
                                      in zip(required_objs, required_obj_marks))
         return (self._generate_step_info(object_rep_fn) +
                 '[%s];[%s]'
-                %(object_rep_fn(self.proven_truth), required_objs_str))
+                % (object_rep_fn(self.proven_truth), required_objs_str))
 
     def _generate_step_info(self, object_rep_fn):
         '''
@@ -205,7 +226,7 @@ class Proof:
         remaining = unique_rep.split(':', 1)[-1]
         # Everything else coming between the punctuation,
         # ';', ':', ',', '{', '}', '[', ']', is a represented object.
-        obj_ids = re.split("\{|\[|,|:|;|\]|\}",remaining)
+        obj_ids = re.split(r"\{|\[|,|:|;|\]|\}", remaining)
         # Remove the '*' marks, marking the "equality replacement
         # requirements".
         return [obj_id.rstrip('*') for obj_id in obj_ids if len(obj_id) > 0]
@@ -213,12 +234,12 @@ class Proof:
     @staticmethod
     def _extractKindAndName(unique_rep):
         '''
-        Given a 'unique_rep' for an Axiom or Theorem, return 
+        Given a 'unique_rep' for an Axiom or Theorem, return
         'axiom' or 'theorem' and its full name.  Raise a ValueError
         if it isn't an Axiom or Theorem.
         '''
         if unique_rep[:6] != 'Proof:':
-            raise ValueError("Invalid 'unique_rep' for Proof: %s"%unique_rep)
+            raise ValueError("Invalid 'unique_rep' for Proof: %s" % unique_rep)
         step_info, remaining = unique_rep[6:].split(':', 1)
         kind, full_name = step_info.split('_', 1)
         return (kind, full_name)
@@ -233,25 +254,26 @@ class Proof:
         # Skip the step type (and axiom/theorem name if it is either of
         # those types) which is in the beginning and followed by a ':'
         if unique_rep[:6] != 'Proof:':
-            raise ValueError("Invalid 'unique_rep' for Proof: %s"%unique_rep)
+            raise ValueError("Invalid 'unique_rep' for Proof: %s" % unique_rep)
         step_info, remaining = unique_rep[6:].split(':', 1)
         # extract groups each wrapped in braces, either '{..}' or '[..]'
         group_strs = []
         while len(remaining) > 0:
-            if remaining[0]==';':
-                remaining=remaining[1:]
+            if remaining[0] == ';':
+                remaining = remaining[1:]
             start_brace = remaining[0]
             if start_brace not in ('{', '['):
-                raise ValueError("Invalid starting brace of 'unique_rep': %s"%remaining[0])
-            end_brace = '}' if start_brace=='{' else ']'
-            remaining=remaining[1:]
+                raise ValueError(
+                    "Invalid starting brace of 'unique_rep': %s" % remaining[0])
+            end_brace = '}' if start_brace == '{' else ']'
+            remaining = remaining[1:]
             group_str, remaining = remaining.split(end_brace, 1)
             group_strs.append(group_str)
         # The id's of each group come between the punctuation:
         # ';', ':', ','.
         groups = []
         for group_str in group_strs:
-            obj_ids = re.split(",|:|;",group_str)
+            obj_ids = re.split(",|:|;", group_str)
             groups.append([obj_id for obj_id in obj_ids if len(obj_id) > 0])
         if proof_id in _ShowProof.show_proof_by_id:
             return _ShowProof.show_proof_by_id[proof_id]
@@ -280,7 +302,8 @@ class Proof:
             if dependent_proof not in all_dependents:
                 all_dependents.add(dependent_proof)
                 if dependent_proof.proven_truth.proof() == dependent_proof:
-                    # include the sub-dependents iff this dependent is actually in use
+                    # include the sub-dependents iff this dependent is actually
+                    # in use
                     to_process.extend(dependent_proof._dependents)
 
         # Disable all dependents
@@ -289,7 +312,8 @@ class Proof:
             dependent_proof.proven_truth._discardProof(dependent_proof)
 
         # Check if alternate usable proofs are available for the proofs that we disabled.
-        # Make multiple passes to ensure new possibilities and best options fully propagate.
+        # Make multiple passes to ensure new possibilities and best options
+        # fully propagate.
         continue_revisions = True
         while continue_revisions:
             continue_revisions = False
@@ -302,7 +326,8 @@ class Proof:
     def __eq__(self, other):
         if isinstance(other, Proof):
             return self._meaning_id == other._meaning_id
-        else: return False # other must be an Expression to be equal to self
+        else:
+            return False  # other must be an Expression to be equal to self
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -320,13 +345,15 @@ class Proof:
         '''
         Returns the set of names of axioms that are used directly (not via other theorems) in this proof.
         '''
-        return set().union(*[required_proof.used_axioms() for required_proof in self.required_proofs])
+        return set().union(*[required_proof.used_axioms()
+                             for required_proof in self.required_proofs])
 
     def used_theorems(self):
         '''
         Returns the set of names of axioms that are used directly (not via other theorems) in this proof.
         '''
-        return set().union(*[required_proof.used_theorems() for required_proof in self.required_proofs])
+        return set().union(*[required_proof.used_theorems()
+                             for required_proof in self.required_proofs])
 
     def assumptions(self):
         return self.proven_truth.assumptions
@@ -359,24 +386,26 @@ class Proof:
         acyclic by making sure requirements come after dependents.
         '''
         from ._dependency_graph import ordered_dependency_nodes
-        return ordered_dependency_nodes(self, lambda proof : proof.required_proofs)
+        return ordered_dependency_nodes(
+            self, lambda proof: proof.required_proofs)
 
     def all_required_proofs(self):
         '''
         Returns the set of directly or indirectly required proofs.
         '''
-        sub_proof_sets = [required_proof.all_required_proofs() for required_proof in self.required_proofs]
+        sub_proof_sets = [required_proof.all_required_proofs()
+                          for required_proof in self.required_proofs]
         return set([self]).union(*sub_proof_sets)
 
     def _repr_html_(self):
         if not defaults.display_latex:
-            return None # No LaTeX display at this time.
+            return None  # No LaTeX display at this time.
         proof_steps = self.enumerated_proof_steps()
         html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
         first_requirements = None
         # If this is a _ShowProof object, _style_id will be a str.
         proof_id = self._style_id if isinstance(self._style_id, str) \
-                    else hex(self._style_id)
+            else hex(self._style_id)
 
         # For convenience, we will reference all of the first (top-level)
         # requirements at the top even if it is a simple reference.
@@ -399,36 +428,42 @@ class Proof:
         proof_steps = amended_proof_steps
 
         any_marked = False
+
         def req_link(proof, req_idx, n):
             nonlocal any_marked
             is_marked = (req_idx in proof.marked_required_truth_indices)
-            if is_marked: any_marked=True
+            if is_marked:
+                any_marked = True
             mark_str = r'<sup>*</sup>' if is_marked else ''
             return ('<a href="#%s_step%d">%d</a>%s'
-                    %(proof_id, n, n, mark_str))
-        proof_num_map = {proof:k for k, proof in enumerate(proof_steps)}
+                    % (proof_id, n, n, mark_str))
+        proof_num_map = {proof: k for k, proof in enumerate(proof_steps)}
         for k, proof in enumerate(proof_steps):
-            html += '<tr><td><a name="%s_step%d">%d</a></td>'%(proof_id,k,k)
-            if k==0:
+            html += '<tr><td><a name="%s_step%d">%d</a></td>' % (
+                proof_id, k, k)
+            if k == 0:
                 # The first (top-level) proof has requirements at the
                 # top by design (though some of these may be references to
                 # later steps).
                 required_proof_nums = \
-                    ', '.join(req_link(proof, k, k+1) for k, _
+                    ', '.join(req_link(proof, k, k + 1) for k, _
                               in enumerate(proof.required_proofs))
             else:
                 required_proof_nums = \
                     ', '.join(req_link(proof, k, proof_num_map[required_proof])
                               for k, required_proof
                               in enumerate(proof.required_proofs))
-            html += '<td>%s</td><td>%s</td>'%(proof.step_type(), required_proof_nums)
-            html += '<td>%s</td>'%proof.proven_truth._repr_html_()
+            html += '<td>%s</td><td>%s</td>' % (
+                proof.step_type(), required_proof_nums)
+            html += '<td>%s</td>' % proof.proven_truth._repr_html_()
             html += '</tr>\n'
-            if proof.step_type()=='instantiation':
-                html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
+            if proof.step_type() == 'instantiation':
+                html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + \
+                    proof._mapping('HTML') + '</td></tr>'
             if proof.step_type() in {'axiom', 'theorem', 'conjecture'}:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
-                html += '<a class="ProveItLink" href="%s">'%proof.get_link() + str(proof.theory) + '.' + proof.name + '</a>'
+                html += '<a class="ProveItLink" href="%s">' % proof.get_link() + str(proof.theory) + \
+                    '.' + proof.name + '</a>'
                 html += '</td></tr>'
         if any_marked:
             html += ('<tr><td colspan=4 style="text-align:left">'
@@ -439,15 +474,17 @@ class Proof:
 
     def __repr__(self):
         proof_steps = self.enumerated_proof_steps()
-        proof_num_map = {proof:k for k, proof in enumerate(proof_steps)}
+        proof_num_map = {proof: k for k, proof in enumerate(proof_steps)}
         any_marked = False
+
         def req_ref(proof, req_idx):
             global any_marked
             req = proof.required_proofs[req_idx]
             is_marked = (req_idx in proof.marked_required_truth_indices)
-            if is_marked: any_marked=True
+            if is_marked:
+                any_marked = True
             mark_str = r'*' if is_marked else ''
-            return ('%d%s'%(proof_num_map[req], mark_str))
+            return ('%d%s' % (proof_num_map[req], mark_str))
         out_str = '\tstep type\trequirements\tstatement\n'
         for k, proof in enumerate(proof_steps):
             out_str += str(k) + '\t'
@@ -457,13 +494,14 @@ class Proof:
             out_str += proof.step_type() + '\t' + required_proof_refs + '\t'
             out_str += proof.proven_truth.string(perform_usability_check=False)
             out_str += '\n'
-            if proof.step_type()=='instantiation':
+            if proof.step_type() == 'instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
-            if proof.step_type()=='axiom' or proof.step_type()=='theorem':
+            if proof.step_type() == 'axiom' or proof.step_type() == 'theorem':
                 out_str += '\t' + str(proof.theory) + '.' + proof.name + '\n'
         if any_marked:
             out_str += ('* equality replacement requirements\n')
         return out_str
+
 
 class _ProofReference:
     '''
@@ -475,11 +513,12 @@ class _ProofReference:
     def __init__(self, ref):
         self.required_proofs = [ref]
         self.proven_truth = ref.proven_truth
-        self.marked_required_truth_indices = set() # nothing marked
+        self.marked_required_truth_indices = set()  # nothing marked
 
     def step_type(self):
         # only used in the HTML version
         return '<i>reference</i>'
+
 
 class Assumption(Proof):
     # Map expressions to corresponding assumption objects.
@@ -533,6 +572,7 @@ class Assumption(Proof):
     def step_type(self):
         return 'assumption'
 
+
 class Axiom(Proof):
     def __init__(self, expr, theory, name):
         if not isinstance(theory, Theory):
@@ -573,6 +613,7 @@ class Axiom(Proof):
 
     def __str__(self):
         return self.theory.name + '.' + self.name
+
 
 class Theorem(Proof):
     all_theorems = []
@@ -634,7 +675,7 @@ class Theorem(Proof):
         Return the HTML link to the theorem proof file.
         '''
         return self._stored_theorem().get_proof_link()
-    
+
     """
     def record_presumed_theories(self, presumed_theory_names):
         '''
@@ -671,7 +712,7 @@ class Theorem(Proof):
         '''
         return self._stored_theorem().get_all_presumed_theorem_names()
     """
-    
+
     def get_presumptions_and_exclusions(self):
         '''
         Return the set of theorems and theories that are explicitly
@@ -680,7 +721,7 @@ class Theorem(Proof):
         proveit.logic.equality).
         '''
         return self._stored_theorem().get_presumptions_and_exclusions()
-    
+
     def _recordProof(self, proof):
         '''
         Record the given proof as the proof of this theorem.  Updates
@@ -710,7 +751,7 @@ class Theorem(Proof):
         proven, all the way to axioms which don't require proofs).
         '''
         return self._stored_theorem().is_complete()
-    
+
     def is_conjecture(self):
         '''
         A "Theorem" that is not fully proven is a "conjecture".
@@ -762,24 +803,27 @@ class Theorem(Proof):
         '''
         #from proveit.certify import is_fully_proven
         if Judgment.theorem_being_proven is None:
-            self._meaning_data._unusable_proof = None # Nothing being proven, so all Theorems are usable
+            # Nothing being proven, so all Theorems are usable
+            self._meaning_data._unusable_proof = None
             return
         legitimately_presumed = False
         stored_theorem = self._stored_theorem()
         theorem_being_proven_str = str(Judgment.theorem_being_proven)
-        if self.proven_truth==Judgment.theorem_being_proven.proven_truth:
+        if self.proven_truth == Judgment.theorem_being_proven.proven_truth:
             # Note that two differently-named theorems for the same thing may exists in
             # order to show an alternate proof.  In that case, we want to disable
-            # the other alternates as well so we will be sure to generate the new proof.
+            # the other alternates as well so we will be sure to generate the
+            # new proof.
             self.disable()
             return
         else:
             name_and_containing_theories = list(
-                    self.theorem_name_and_containing_theories())
+                self.theorem_name_and_containing_theories())
             exclusions = Judgment.presuming_theorem_and_theory_exclusions
             if exclusions.isdisjoint(name_and_containing_theories):
                 presumptions = Judgment.presumed_theorems_and_theories
-                presumed = not presumptions.isdisjoint(name_and_containing_theories)
+                presumed = not presumptions.isdisjoint(
+                    name_and_containing_theories)
             else:
                 presumed = False
             if presumed:
@@ -789,29 +833,34 @@ class Theorem(Proof):
                 # that presume T or, if proven, depend upon T).
                 # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
                 # is being proven.
-                # check the "presuming information, recursively, for circular logic.
+                # check the "presuming information, recursively, for circular
+                # logic.
                 my_possible_dependents, _ = stored_theorem.get_presumptions_and_exclusions()
                 # If this theorem has a proof, include all dependent theorems as
                 # presumed (this may have been presumed via theory, so this can contain
                 # more information than the specifically presumed theorems).
                 if stored_theorem.has_proof():
-                    my_possible_dependents.update(stored_theorem.all_used_theorem_names())
+                    my_possible_dependents.update(
+                        stored_theorem.all_used_theorem_names())
                 if theorem_being_proven_str in my_possible_dependents:
                     if str(self) in Judgment.presumed_theorems_and_theories:
                         # Theorem-specific presumption or dependency is
                         # mutual.  Raise a CircularLogic error.
-                        raise CircularLogic(Judgment.theorem_being_proven, self)
-                    # We must exclude this theorem implicitly to 
+                        raise CircularLogic(
+                            Judgment.theorem_being_proven, self)
+                    # We must exclude this theorem implicitly to
                     # avoid a circular dependency.
                     print("%s is being implicitly excluded as a "
                           "presumption to avoid a Circular dependency."
-                          %str(self))
+                          % str(self))
                 else:
                     legitimately_presumed = True
         if not legitimately_presumed:
             # This Theorem is not usable during the proof (if it is needed, it must be
-            # presumed or fully proven).  Propagate this fact to all dependents.
+            # presumed or fully proven).  Propagate this fact to all
+            # dependents.
             self.disable()
+
 
 def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
     '''
@@ -819,45 +868,71 @@ def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
     antecedent_expr as the antecedent and consequent_expr as the consequent.
     '''
     from proveit.logic import Implies
-    assert isinstance(implication_expr, Implies),  'The result of deduction must be an Implies operation'
-    assert len(implication_expr.operands)==2, 'Implications are expected to have two operands'
-    assert antecedent_expr==implication_expr.operands[0], 'The result of deduction must be an Implies operation with the proper antecedent'
-    assert consequent_expr==implication_expr.operands[1], 'The result of deduction must be an Implies operation with the proper consequent'
+    assert isinstance(
+        implication_expr, Implies), 'The result of deduction must be an Implies operation'
+    assert len(
+        implication_expr.operands) == 2, 'Implications are expected to have two operands'
+    assert antecedent_expr == implication_expr.operands[
+        0], 'The result of deduction must be an Implies operation with the proper antecedent'
+    assert consequent_expr == implication_expr.operands[
+        1], 'The result of deduction must be an Implies operation with the proper consequent'
+
 
 class ModusPonens(Proof):
     def __init__(self, implication_expr, assumptions=None):
         from proveit.logic import Implies
         assumptions = defaults.checked_assumptions(assumptions)
         prev_default_assumptions = defaults.assumptions
-        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        # these assumptions will be used for deriving any side-effects
+        defaults.assumptions = assumptions
         try:
             # obtain the implication and antecedent Judgments
-            assert isinstance(implication_expr, Implies) and len(implication_expr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
+            assert isinstance(
+                implication_expr, Implies) and len(
+                implication_expr.operands) == 2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
             try:
                 # Must prove the implication under the given assumptions.
                 implication_truth = implication_expr.prove(assumptions)
             except ProofFailure:
-                raise ModusPonensFailure(implication_expr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implication_expr))
+                raise ModusPonensFailure(
+                    implication_expr.operands[1],
+                    assumptions,
+                    'Implication, %s, is not proven' %
+                    str(implication_expr))
             try:
                 # Must prove the antecedent under the given assumptions.
-                antecedent_truth = implication_expr.operands[0].prove(assumptions)
+                antecedent_truth = implication_expr.operands[0].prove(
+                    assumptions)
             except ProofFailure:
-                raise ModusPonensFailure(implication_expr.operands[1], assumptions, 'Antecedent of %s is not proven'%str(implication_expr))
-            # remove any unnecessary assumptions (but keep the order that was provided)
+                raise ModusPonensFailure(
+                    implication_expr.operands[1],
+                    assumptions,
+                    'Antecedent of %s is not proven' %
+                    str(implication_expr))
+            # remove any unnecessary assumptions (but keep the order that was
+            # provided)
             assumptions_set = implication_truth.assumptions_set | antecedent_truth.assumptions_set
-            assumptions = [assumption for assumption in assumptions if assumption in assumptions_set]
+            assumptions = [
+                assumption for assumption in assumptions if assumption in assumptions_set]
             # we have what we need; set up the ModusPonens Proof
-            consequent_truth = Judgment(implication_expr.operands[1], assumptions)
-            _checkImplication(implication_truth.expr, antecedent_truth.expr, consequent_truth.expr)
+            consequent_truth = Judgment(
+                implication_expr.operands[1], assumptions)
+            _checkImplication(
+                implication_truth.expr,
+                antecedent_truth.expr,
+                consequent_truth.expr)
             self.implication_truth = implication_truth
             self.antecedent_truth = antecedent_truth
-            Proof.__init__(self, consequent_truth, [self.implication_truth, self.antecedent_truth])
+            Proof.__init__(
+                self, consequent_truth, [
+                    self.implication_truth, self.antecedent_truth])
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
 
     def step_type(self):
         return 'modus ponens'
+
 
 class Deduction(Proof):
     def __init__(self, consequent_truth, antecedent_expr):
@@ -873,7 +948,7 @@ class Deduction(Proof):
         assumptions = [assumption for assumption in consequent_truth.assumptions
                        if assumption != elim_assumption]
         prev_default_assumptions = defaults.assumptions
-         # These assumptions will be used for deriving any side-effects
+        # These assumptions will be used for deriving any side-effects
         defaults.assumptions = assumptions
         try:
             implication_expr = Implies(antecedent_expr, consequent_truth.expr)
@@ -886,6 +961,7 @@ class Deduction(Proof):
 
     def step_type(self):
         return 'deduction'
+
 
 class Instantiation(Proof):
     def __init__(self, orig_judgment, num_forall_eliminations,
@@ -901,7 +977,7 @@ class Instantiation(Proof):
 
         See Expression.substituted for details regarding the replacement rules.
         '''
-        from proveit import (Expression, Function, Lambda, ExprRange, 
+        from proveit import (Expression, Function, Lambda, ExprRange,
                              ExprTuple, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var, LambdaApplicationError)
@@ -918,10 +994,10 @@ class Instantiation(Proof):
             if not isinstance(repl, Expression):
                 raise TypeError("Replacement %s is of type %s and not "
                                 "an 'Expression' object"
-                                %(repl, repl.__class__))
+                                % (repl, repl.__class__))
             if isinstance(key, ExprTuple):
                 # If the key is an ExprTuple, it must either be a
-                # range (or range of ranges, etc.) of an indexed variable 
+                # range (or range of ranges, etc.) of an indexed variable
                 # for a full expansion, or it is an "equivalent alternative
                 # expansion".
                 # Should already have been checked in
@@ -931,7 +1007,7 @@ class Instantiation(Proof):
                         get_param_var(param_entry)
                 except TypeError as e:
                     assert False, ("Should have been checked in 'instantiate' "
-                                   "method:\n%s"%str(e))
+                                   "method:\n%s" % str(e))
                 parameters.append(key[0])
             else:
                 parameters.append(key)
@@ -965,11 +1041,11 @@ class Instantiation(Proof):
                     operands.append(repl_map[parameter])
             for assumption in orig_judgment.assumptions:
                 subbed_assumption = Lambda._apply(
-                        parameters, assumption, *operands,
-                        allow_relabeling=False,
-                        equiv_alt_expansions=equiv_alt_expansions,
-                        assumptions=assumptions, requirements=requirements,
-                        equality_repl_requirements=equality_repl_requirements)
+                    parameters, assumption, *operands,
+                    allow_relabeling=False,
+                    equiv_alt_expansions=equiv_alt_expansions,
+                    assumptions=assumptions, requirements=requirements,
+                    equality_repl_requirements=equality_repl_requirements)
                 if isinstance(assumption, ExprRange):
                     # An iteration of assumptions to expand.
                     orig_subbed_assumptions.extend(subbed_assumption)
@@ -987,10 +1063,10 @@ class Instantiation(Proof):
 
             instantiated_expr = \
                 Instantiation._instantiated_expr(
-                        orig_judgment, num_forall_eliminations,
-                        parameters, repl_map, equiv_alt_expansions,
-                        assumptions, requirements,
-                        equality_repl_requirements)
+                    orig_judgment, num_forall_eliminations,
+                    parameters, repl_map, equiv_alt_expansions,
+                    assumptions, requirements,
+                    equality_repl_requirements)
 
             # Remove duplicates in the requirements.
             requirements = list(OrderedDict.fromkeys(requirements))
@@ -1012,10 +1088,10 @@ class Instantiation(Proof):
             # in the original Judgment.
             def get_key_var(key):
                 if isinstance(key, ExprTuple):
-                    assert len(key)>=1
+                    assert len(key) >= 1
                     return get_param_var(key[0])
                 return get_param_var(key)
-            repl_var_keys = {get_key_var(key):key for key in repl_map.keys()}
+            repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
             repl_vars = repl_var_keys.keys()
             repl_vars = list(orig_judgment.order_of_appearance(repl_vars))
             # And remove duplicates.
@@ -1036,6 +1112,7 @@ class Instantiation(Proof):
             # the original Judgment:
             mapping = dict()
             mapping_key_order = []
+
             def var_range_form_sort(var_tuple):
                 # For sorting equivalent ExprTuples of indexed
                 # variables (e.g., {(x_1, ..., x_{n+1}),
@@ -1050,7 +1127,8 @@ class Instantiation(Proof):
                     if isinstance(replacement, Lambda):
                         # If the replacement is a Lambda, convert it
                         # to a Function mapping form.
-                        key = Function(var, replacement.parameter_or_parameters)
+                        key = Function(
+                            var, replacement.parameter_or_parameters)
                         replacement = replacement.body
                     else:
                         key = var
@@ -1091,24 +1169,30 @@ class Instantiation(Proof):
         information for this instantiation.
         '''
         mapping = self.mapping
-        mapping_info = ','.join(object_rep_fn(key) + ':' + object_rep_fn(mapping[key])
-                               for key in self.mapping_key_order)
+        mapping_info = ','.join(
+            object_rep_fn(key) +
+            ':' +
+            object_rep_fn(
+                mapping[key]) for key in self.mapping_key_order)
         return self.step_type() + ':{' + mapping_info + '}'
 
     def step_type(self):
         return 'instantiation'
 
     def _single_mapping(self, key, replacement, format_type):
-        formatted = lambda expr : expr._repr_html_() if format_type=='HTML' else str(expr)
+        def formatted(expr): return expr._repr_html_(
+        ) if format_type == 'HTML' else str(expr)
         return formatted(key) + ' : ' + formatted(replacement)
 
     def _mapping(self, format_type='HTML'):
-        if format_type=='HTML':
+        if format_type == 'HTML':
             out = '<span style="font-size:20px;">'
-        else: out = ''
-        out += ', '.join(self._single_mapping(key, self.mapping[key], format_type)
-                         for key in self.mapping_key_order)
-        if format_type=='HTML':
+        else:
+            out = ''
+        out += ', '.join(self._single_mapping(key,
+                                              self.mapping[key],
+                                              format_type) for key in self.mapping_key_order)
+        if format_type == 'HTML':
             out += '</span>'
         return out
 
@@ -1126,13 +1210,13 @@ class Instantiation(Proof):
         for _ in range(num_nested_foralls):
             if not isinstance(expr, Forall):
                 raise ValueError(
-                        "Improper 'num_forall_eliminations': "
-                        "%s does not have %d nested Forall expressions."
-                        %(orig_expr, num_nested_foralls))
+                    "Improper 'num_forall_eliminations': "
+                    "%s does not have %d nested Forall expressions."
+                    % (orig_expr, num_nested_foralls))
             lambda_expr = expr.operand
             if not isinstance(lambda_expr, Lambda):
                 raise TypeError(
-                        "Forall Operation 'operand' must be a Lambda")
+                    "Forall Operation 'operand' must be a Lambda")
             parameters.extend(lambda_expr.parameters)
             expr = lambda_expr.body
             if isinstance(expr, Conditional):
@@ -1162,6 +1246,7 @@ class Instantiation(Proof):
         # Eliminate the desired number of Forall operations and extract
         # appropriately mapped conditions.
         expr = original_judgment.expr
+
         def raise_failure(msg):
             raise InstantiationFailure(original_judgment, repl_map,
                                        assumptions, msg)
@@ -1184,8 +1269,8 @@ class Instantiation(Proof):
             operands = []
             for param, param_var in zip(instantiation_params,
                                         instantiation_param_vars):
-                if param_var==exclusion:
-                    continue # skip the 'exclusion'
+                if param_var == exclusion:
+                    continue  # skip the 'exclusion'
                 if isinstance(param, ExprRange):
                     # An ExprRange parameter should have a tuple
                     # replacement for its tuple form.
@@ -1207,16 +1292,16 @@ class Instantiation(Proof):
                 else:
                     operands.append(repl_map[param])
                 params.append(param)
-            if len(params)==0:
+            if len(params) == 0:
                 return expr
             return Lambda._apply(
-                    params, expr, *operands, allow_relabeling=True,
-                    equiv_alt_expansions=equiv_alt_expansions,
-                    assumptions=assumptions, requirements=requirements,
-                    equality_repl_requirements=equality_repl_requirements)
+                params, expr, *operands, allow_relabeling=True,
+                equiv_alt_expansions=equiv_alt_expansions,
+                assumptions=assumptions, requirements=requirements,
+                equality_repl_requirements=equality_repl_requirements)
 
         remaining_forall_eliminations = num_forall_eliminations
-        while remaining_forall_eliminations>0:
+        while remaining_forall_eliminations > 0:
             remaining_forall_eliminations -= 1
             assert isinstance(expr, Forall)
             lambda_expr = expr.operand
@@ -1244,13 +1329,13 @@ class Instantiation(Proof):
                             subbed_param_tuple = ExprTuple(subbed_param)
                             if (subbed_param_tuple in repl_map and
                                     repl_map[subbed_param_tuple] !=
-                                        param_var_repl):
+                                    param_var_repl):
                                 raise_failure("Inconsistent assignment of "
-                                             "%s: %s, from instantiation of "
-                                             "%s, versus %s."
-                                             %(subbed_param_tuple,
-                                               param_var_repl, param_var,
-                                               repl_map[subbed_param_tuple]))
+                                              "%s: %s, from instantiation of "
+                                              "%s, versus %s."
+                                              % (subbed_param_tuple,
+                                                 param_var_repl, param_var,
+                                                 repl_map[subbed_param_tuple]))
                             explicit_ranges[param_var] = subbed_param
                             repl_map[subbed_param_tuple] = param_var_repl
 
@@ -1295,15 +1380,20 @@ class Instantiation(Proof):
                         requirements.append(subbed_cond.prove(assumptions))
                     except ProofFailure:
                         raise_failure('Unsatisfied condition: %s'
-                                     %str(subbed_cond))
+                                      % str(subbed_cond))
 
         # Make final instantiations in the inner instance expression.
         # Add to the lambda-application parameters anything that has
         # not yet been used
         return instantiate(expr)
 
+
 class Generalization(Proof):
-    def __init__(self, instance_truth, new_forall_param_lists, new_conditions=tuple()):
+    def __init__(
+            self,
+            instance_truth,
+            new_forall_param_lists,
+            new_conditions=tuple()):
         '''
         A Generalization step wraps a Judgment (instance_truth) in one or more Forall operations.
         The number of Forall operations introduced is the number of lists in new_forall_var_lists.
@@ -1317,24 +1407,28 @@ class Generalization(Proof):
             (get_param_var, _guaranteed_to_be_independent)
         from proveit.logic import Forall
         if not isinstance(instance_truth, Judgment):
-            raise GeneralizationFailure(None, [], 'May only generalize a Judgment instance')
+            raise GeneralizationFailure(
+                None, [], 'May only generalize a Judgment instance')
         # the assumptions required for the generalization are the assumptions of
         # the original Judgment minus the all of the new conditions (including those
         # implied by the new domain).
         assumptions = set(instance_truth.assumptions)
         prev_default_assumptions = defaults.assumptions
-        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        # these assumptions will be used for deriving any side-effects
+        defaults.assumptions = assumptions
         try:
             remaining_conditions = list(new_conditions)
             expr = instance_truth.expr
             introduced_forall_vars = set()
-            for k, new_forall_params in enumerate(reversed(new_forall_param_lists)):
+            for k, new_forall_params in enumerate(
+                    reversed(new_forall_param_lists)):
                 new_forall_vars = [get_param_var(parameter)
-                                 for parameter in new_forall_params]
+                                   for parameter in new_forall_params]
                 introduced_forall_vars |= set(new_forall_vars)
                 new_conditions = []
-                if k == len(new_forall_param_lists)-1:
-                    # the final introduced Forall operation must use all of the remaining conditions
+                if k == len(new_forall_param_lists) - 1:
+                    # the final introduced Forall operation must use all of the
+                    # remaining conditions
                     new_conditions = remaining_conditions
                 else:
                     # use all applicable conditions in the supplied order
@@ -1354,14 +1448,19 @@ class Generalization(Proof):
                 assumptions -= set(new_conditions)
                 # create the new generalized expression
                 generalized_expr = Forall(
-                        instance_param_or_params=new_forall_params,
-                        instance_expr=expr, conditions=new_conditions)
-                # make sure this is a proper generalization that doesn't break the logic:
+                    instance_param_or_params=new_forall_params,
+                    instance_expr=expr, conditions=new_conditions)
+                # make sure this is a proper generalization that doesn't break
+                # the logic:
                 Generalization._checkGeneralization(generalized_expr, expr)
                 expr = generalized_expr
             for assumption in assumptions:
-                if not _guaranteed_to_be_independent(assumption, introduced_forall_vars):
-                    raise GeneralizationFailure(generalized_expr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
+                if not _guaranteed_to_be_independent(
+                        assumption, introduced_forall_vars):
+                    raise GeneralizationFailure(
+                        generalized_expr,
+                        assumptions,
+                        'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
             generalized_truth = Judgment(generalized_expr, assumptions)
             self.instance_truth = instance_truth
             self.new_forall_vars = new_forall_vars
@@ -1382,9 +1481,11 @@ class Generalization(Proof):
         '''
         from proveit import Lambda, Conditional
         from proveit.logic import Forall
-        assert isinstance(generalized_expr, Forall), 'The result of a generalization must be a Forall operation'
+        assert isinstance(
+            generalized_expr, Forall), 'The result of a generalization must be a Forall operation'
         lambda_expr = generalized_expr.operand
-        assert isinstance(lambda_expr, Lambda), 'A Forall Expression must be in the proper form'
+        assert isinstance(
+            lambda_expr, Lambda), 'A Forall Expression must be in the proper form'
         expr = lambda_expr.body
         while expr != instance_expr:
             if isinstance(expr, Conditional):
@@ -1392,10 +1493,14 @@ class Generalization(Proof):
                 # weakens the statement, so it doesn't matter what
                 # the conditions are.
                 expr = expr.value
-                if expr == instance_expr: break
-            if not isinstance(expr, Forall): break
-            expr = expr.instance_expr # take it another nested level if necessary
-        assert expr == instance_expr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instance_expr)
+                if expr == instance_expr:
+                    break
+            if not isinstance(expr, Forall):
+                break
+            expr = expr.instance_expr  # take it another nested level if necessary
+        assert expr == instance_expr, 'Generalization not consistent with the original expression: ' + \
+            str(expr) + ' vs ' + str(instance_expr)
+
 
 class _ShowProof:
     '''
@@ -1416,19 +1521,19 @@ class _ShowProof:
             assert self.step_type_str in ('axiom', 'theorem')
             full_name_segments = full_name.split('.')
             theory_name = '.'.join(full_name_segments[:-1])
-            self.theory =  Theory.get_theory(theory_name)
+            self.theory = Theory.get_theory(theory_name)
             self.name = full_name_segments[-1]
         else:
             self.theory = theory
             self.step_type_str = step_info
         self.theory_folder_storage = theory_folder_storage = \
             self.theory._theory_folder_storage(folder)
-        if self.step_type_str=='instantiation':
+        if self.step_type_str == 'instantiation':
             # Extract the mapping information.
             group = ref_obj_id_groups[0]
             key_mapping_pairs = \
                 [(theory_folder_storage.make_expression(group[i]),
-                  theory_folder_storage.make_expression(group[i+1])) 
+                  theory_folder_storage.make_expression(group[i + 1]))
                     for i in range(0, len(group), 2)]
             self.mapping_key_order = [key for key, value in key_mapping_pairs]
             self.mapping = dict(key_mapping_pairs)
@@ -1441,12 +1546,12 @@ class _ShowProof:
              in ref_obj_id_groups[-1]]
         self.marked_required_truth_indices = \
             {k for k, obj_id in enumerate(ref_obj_id_groups[-1])
-             if obj_id[-1]=='*'}
+             if obj_id[-1] == '*'}
         _ShowProof.show_proof_by_id[proof_id] = self
 
     def _repr_html_(self):
         if not defaults.display_latex:
-            return None # No LaTeX display at this time.
+            return None  # No LaTeX display at this time.
         return Proof._repr_html_(self)
 
     def step_type(self):
@@ -1454,7 +1559,7 @@ class _ShowProof:
 
     def get_link(self):
         from ._theory_storage import StoredAxiom, StoredTheorem
-        if self.step_type_str=='axiom':
+        if self.step_type_str == 'axiom':
             return StoredAxiom(self.theory, self.name).get_def_link()
         elif self.step_type_str in ('theorem', 'conjecture'):
             return StoredTheorem(self.theory, self.name).get_proof_link()
@@ -1473,6 +1578,7 @@ class _ShowProof:
     def is_usable(self):
         return True
 
+
 class ProofFailure(Exception):
     def __init__(self, expr, assumptions, message):
         self.expr = expr
@@ -1483,58 +1589,87 @@ class ProofFailure(Exception):
         if len(self.assumptions) == 0:
             assumptions_str = ""
         else:
-            assumptions_str = " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}"
+            assumptions_str = " assuming {" + ", ".join(
+                str(assumption) for assumption in self.assumptions) + "}"
         if self.expr is not None:
-            return "Unable to prove " + str(self.expr) + assumptions_str + ":\n" + self.message
+            return "Unable to prove " + \
+                str(self.expr) + assumptions_str + ":\n" + self.message
         else:
             return "Proof step failed" + assumptions_str + ":\n" + self.message
+
 
 class ModusPonensFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
 
+
 class InstantiationFailure(ProofFailure):
     def __init__(self, original_judgment, repl_map, assumptions, message):
-        message = "Attempting to instantiate %s with %s:\n%s"%(original_judgment,
-                                                        repl_map, message)
+        message = "Attempting to instantiate %s with %s:\n%s" % (
+            original_judgment, repl_map, message)
         ProofFailure.__init__(self, None, assumptions, message)
+
 
 class GeneralizationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
 
+
 class UnusableProof(ProofFailure):
     def __init__(self, proving_theorem, unusable_proof, extra_msg=''):
-        ProofFailure.__init__(self, unusable_proof.proven_truth.expr, [], "Unusable Proof")
+        ProofFailure.__init__(
+            self,
+            unusable_proof.proven_truth.expr,
+            [],
+            "Unusable Proof")
         self.proving_theorem = proving_theorem
         self.unusable_proof = unusable_proof
         self.extra_msg = '; ' + extra_msg
 
     def __str__(self):
         if self.proving_theorem == self.unusable_proof:
-            return "Cannot use %s to prove itself"%str(self.proving_theorem)
-        if isinstance(self.unusable_proof, Theorem) or isinstance(self.unusable_proof, Axiom):
+            return "Cannot use %s to prove itself" % str(self.proving_theorem)
+        if isinstance(
+                self.unusable_proof,
+                Theorem) or isinstance(
+                self.unusable_proof,
+                Axiom):
             unusuable_proof_str = str(self.unusable_proof)
         else:
             unusuable_proof_str = str(self.unusable_proof.proven_truth)
         if self.proving_theorem is not None:
-            return unusuable_proof_str + ' is not usable while proving ' + str(self.proving_theorem) + ' (it has not been presumed)' + self.extra_msg
+            return unusuable_proof_str + ' is not usable while proving ' + \
+                str(self.proving_theorem) + ' (it has not been presumed)' + self.extra_msg
         else:
             return 'Cannot use disabled proof for ' + self.unusable_item_str
 
+
 class CircularLogic(ProofFailure):
     def __init__(self, proving_theorem, presumed_theorem):
-        ProofFailure.__init__(self, presumed_theorem.proven_truth.expr, [], "Circular Logic")
+        ProofFailure.__init__(
+            self,
+            presumed_theorem.proven_truth.expr,
+            [],
+            "Circular Logic")
         self.proving_theorem = proving_theorem
         self.presumed_theorem = presumed_theorem
+
     def __str__(self):
-        return str(self.presumed_theorem) + ' cannot be presumed while proving ' + str(self.proving_theorem) + ' due to a circular dependence'
+        return str(self.presumed_theorem) + ' cannot be presumed while proving ' + \
+            str(self.proving_theorem) + ' due to a circular dependence'
+
 
 class CircularLogicLoop(ProofFailure):
     def __init__(self, presumption_loop, presumed_theorem):
         assert presumption_loop[0] == presumption_loop[-1], "expecting a loop"
-        assert str(presumed_theorem) == presumption_loop[0], "expecting presumed_theorem to match the ends of the presumption_loop"
-        CircularLogic.__init__(self, Judgment.theorem_being_proven, presumed_theorem)
+        assert str(
+            presumed_theorem) == presumption_loop[0], "expecting presumed_theorem to match the ends of the presumption_loop"
+        CircularLogic.__init__(
+            self,
+            Judgment.theorem_being_proven,
+            presumed_theorem)
         self.presumption_loop = presumption_loop
+
     def __str__(self):
-        return "Circular presumption dependency detected: %s"%str(self.presumption_loop)
+        return "Circular presumption dependency detected: %s" % str(
+            self.presumption_loop)

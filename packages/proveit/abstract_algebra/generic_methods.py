@@ -20,12 +20,14 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
                              "either supply both 'init_idx' and "
                              "'final_idx' or supply neither (allowed "
                              "when there are only 2 elements)")
-        init_idx, final_idx = 0, 1 # defaults when there are 2 operands
+        init_idx, final_idx = 0, 1  # defaults when there are 2 operands
 
     # transform any wrap-around indexing for simplicity
     # this needs work actually …
-    if init_idx < 0: init_idx = len(expr.operands)+init_idx
-    if final_idx < 0: final_idx = len(expr.operands)+final_idx
+    if init_idx < 0:
+        init_idx = len(expr.operands) + init_idx
+    if final_idx < 0:
+        final_idx = len(expr.operands) + final_idx
 
     # check validity of supplied index values
     if init_idx >= len(expr.operands):
@@ -38,14 +40,14 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
                          format(final_idx, len(expr.operands) - 1))
 
     # trivial commutation (i.e. non-commutation)
-    if init_idx==final_idx:
+    if init_idx == final_idx:
         return Equals(expr, expr).prove()
 
     # number of operands or elements = 2
-    if len(expr.operands)==2 and set([init_idx, final_idx]) == {0, 1}:
+    if len(expr.operands) == 2 and set([init_idx, final_idx]) == {0, 1}:
         A, B = binary_thm.all_instance_vars()
-        return binary_thm.instantiate({A:expr.operands[0], B:expr.operands[1]},
-                                    assumptions=assumptions)
+        return binary_thm.instantiate(
+            {A: expr.operands[0], B: expr.operands[1]}, assumptions=assumptions)
 
     # number of operands is ≥ 3
     if init_idx < final_idx:
@@ -53,31 +55,38 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
         l, m, n, A, B, C, D = thm.all_instance_vars()
         Asub, Bsub, Csub, Dsub = (
             expr.operands[:init_idx], expr.operands[init_idx],
-            expr.operands[init_idx+1:final_idx+1], expr.operands[final_idx+1:])
+            expr.operands[init_idx + 1:final_idx + 1], expr.operands[final_idx + 1:])
         l_sub, m_sub, n_sub = num(len(Asub)), num(len(Csub)), num(len(Dsub))
     else:
         thm = leftward_thm
         l, m, n, A, B, C, D = thm.all_instance_vars()
         Asub, Bsub, Csub, Dsub = (
             expr.operands[:final_idx], expr.operands[final_idx:init_idx],
-            expr.operands[init_idx], expr.operands[init_idx+1:])
+            expr.operands[init_idx], expr.operands[init_idx + 1:])
         l_sub, m_sub, n_sub = num(len(Asub)), num(len(Bsub)), num(len(Dsub))
     return thm.instantiate(
-        {l:l_sub, m:m_sub, n:n_sub, A:Asub, B:Bsub, C:Csub, D:Dsub},
+        {l: l_sub, m: m_sub, n: n_sub, A: Asub, B: Bsub, C: Csub, D: Dsub},
         assumptions=assumptions)
 
-def apply_association_thm(expr, start_idx, length, thm, assumptions=USE_DEFAULTS):
+
+def apply_association_thm(
+        expr,
+        start_idx,
+        length,
+        thm,
+        assumptions=USE_DEFAULTS):
     from proveit import ExprTuple
     from proveit.logic import Equals
     beg = start_idx
-    if beg < 0: beg = len(expr.operands)+beg # use wrap-around indexing
-    end = beg+length
+    if beg < 0:
+        beg = len(expr.operands) + beg  # use wrap-around indexing
+    end = beg + length
     if end > len(expr.operands):
-        raise IndexError("'start_idx+length' out of bounds: %d > %d."%(
+        raise IndexError("'start_idx+length' out of bounds: %d > %d." % (
                          end, len(expr.operands)))
-    if beg==0 and end==len(expr.operands):
+    if beg == 0 and end == len(expr.operands):
         # association over the entire range is trivial:
-        return Equals(expr, expr).prove() # simply the self equality
+        return Equals(expr, expr).prove()  # simply the self equality
     i, j, k, A, B, C = thm.all_instance_vars()
     _A = ExprTuple(*expr.operands[:beg])
     _B = ExprTuple(*expr.operands[beg:end])
@@ -85,27 +94,38 @@ def apply_association_thm(expr, start_idx, length, thm, assumptions=USE_DEFAULTS
     _i = _A.length(assumptions)
     _j = _B.length(assumptions)
     _k = _C.length(assumptions)
-    return thm.instantiate({i:_i, j:_j, k:_k, A:_A, B:_B, C:_C},
-                          assumptions=assumptions)
+    return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C},
+                           assumptions=assumptions)
+
 
 def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     from proveit import ExprTuple
-    if idx < 0: idx = len(expr.operands)+idx # use wrap-around indexing
+    if idx < 0:
+        idx = len(expr.operands) + idx  # use wrap-around indexing
     if idx >= len(expr.operands):
         raise IndexError("'idx' out of range for disassociation")
     if not isinstance(expr.operands[idx], expr.__class__):
-        raise ValueError("Expecting %d index of %s to be grouped (i.e., a nested expression of the same type)"%(idx, str(expr)))
+        raise ValueError(
+            "Expecting %d index of %s to be grouped (i.e., a nested expression of the same type)" %
+            (idx, str(expr)))
     i, j, k, A, B, C = thm.all_instance_vars()
     _A = ExprTuple(*expr.operands[:idx])
     _B = expr.operands[idx].operands
-    _C = ExprTuple(*expr.operands[idx+1:])
+    _C = ExprTuple(*expr.operands[idx + 1:])
     _i = _A.length(assumptions)
     _j = _B.length(assumptions)
     _k = _C.length(assumptions)
-    return thm.instantiate({i:_i, j:_j, k:_k, A:_A, B:_B, C:_C},
-                          assumptions=assumptions)
+    return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C},
+                           assumptions=assumptions)
 
-def group_commutation(expr, init_idx, final_idx, length, disassociate=True, assumptions=USE_DEFAULTS):
+
+def group_commutation(
+        expr,
+        init_idx,
+        final_idx,
+        length,
+        disassociate=True,
+        assumptions=USE_DEFAULTS):
     '''
     Derive a commutation equivalence on a group of multiple operands by
     associating them together first.  If 'dissassociate' is true, the
@@ -125,31 +145,43 @@ def group_commutation(expr, init_idx, final_idx, length, disassociate=True, assu
     from proveit import TransRelUpdater
 
     # use the following to allow/acknowledge wrap-around indexing
-    if init_idx < 0: init_idx = len(expr.operands)+init_idx     # wrap
-    if final_idx < 0: final_idx = len(expr.operands)+final_idx  # wrap
-    if length==1:
+    if init_idx < 0:
+        init_idx = len(expr.operands) + init_idx     # wrap
+    if final_idx < 0:
+        final_idx = len(expr.operands) + final_idx  # wrap
+    if length == 1:
         return expr.commutation(init_idx, final_idx, assumptions=assumptions)
 
     # for convenience while updating our equation:
     eq = TransRelUpdater(expr, assumptions)
-    expr = eq.update(expr.association(init_idx, length, assumptions=assumptions))
+    expr = eq.update(
+        expr.association(
+            init_idx,
+            length,
+            assumptions=assumptions))
     expr = eq.update(expr.commutation(init_idx, final_idx,
                                       assumptions=assumptions))
     if disassociate:
-        expr = eq.update(expr.disassociation(final_idx, assumptions=assumptions))
+        expr = eq.update(
+            expr.disassociation(
+                final_idx,
+                assumptions=assumptions))
     return eq.relation
 
+
 def group_commute(expr, init_idx, final_idx, length, disassociate=True,
-                 assumptions=USE_DEFAULTS):
+                  assumptions=USE_DEFAULTS):
     '''
     Derive a commuted form of the given expr expression on a group of
     multiple operands by associating them together first.
     If 'dissassociate' is true, the group will be disassociated at end.
     '''
     # use the following to allow/acknowledge wrap-around indexing
-    if init_idx < 0: init_idx = len(expr.operands)+init_idx     # wrap
-    if final_idx < 0: final_idx = len(expr.operands)+final_idx  # wrap
-    if length==1:
+    if init_idx < 0:
+        init_idx = len(expr.operands) + init_idx     # wrap
+    if final_idx < 0:
+        final_idx = len(expr.operands) + final_idx  # wrap
+    if length == 1:
         return expr.commute(init_idx, final_idx, assumptions=assumptions)
 
     expr = expr.associate(init_idx, length, assumptions=assumptions)
@@ -157,6 +189,7 @@ def group_commute(expr, init_idx, final_idx, length, disassociate=True,
     if disassociate:
         expr = expr.disassociate(final_idx, assumptions=assumptions)
     return expr
+
 
 def pairwise_evaluation(expr, assumptions):
     '''
@@ -170,14 +203,19 @@ def pairwise_evaluation(expr, assumptions):
     # for convenience while updating our equation:
     eq = TransRelUpdater(expr, assumptions)
 
-    if len(expr.operands)==2:
+    if len(expr.operands) == 2:
         raise ValueError("pairwise_evaluation may only be used when there "
                          "are more than 2 operands.")
     while len(expr.operands) > 2:
-        expr = eq.update(expr.association(0, length=2, assumptions=assumptions))
+        expr = eq.update(
+            expr.association(
+                0,
+                length=2,
+                assumptions=assumptions))
         expr = eq.update(expr.inner_expr().operands[0].evaluation(assumptions))
     eq.update(expr.evaluation(assumptions=assumptions))
     return eq.relation
+
 
 def generic_permutation(expr, new_order=None, cycles=None,
                         assumptions=USE_DEFAULTS):
@@ -201,7 +239,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
         raise ValueError("Need to specify either a new ordering in "
                          "the form of new_order = list OR "
                          "cycles = list of tuples.")
-    if not new_order is None and not cycles is None:
+    if new_order is not None and cycles is not None:
         raise ValueError("Need to specify EITHER new_order OR cycles, "
                          "but not both.")
 
@@ -268,7 +306,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
         for cycle in cycles:
             temp_cycle_length = len(cycle)
             for i in range(0, temp_cycle_length):
-                new_order[cycle[i]] = cycle[(i + 1)%temp_cycle_length]
+                new_order[cycle[i]] = cycle[(i + 1) % temp_cycle_length]
         # quick check for duplicates in new_order (can't check it
         # earlier because there might be legitimate duplicates during
         # the cycles-to-new_order construction process):
@@ -283,7 +321,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
     from proveit import TransRelUpdater
 
     current_order = list(range(0, expected_number_of_indices))
-    desired_order = new_order # notice this isn't a deep copy
+    desired_order = new_order  # notice this isn't a deep copy
 
     # No need to explicitly check for a trivial (non)-permutation;
     # the eq.relation will hold this for us
@@ -297,13 +335,13 @@ def generic_permutation(expr, new_order=None, cycles=None,
         # current_order and desired_order lists differ and determine
         # the desired_order value at that location
         temp_order_diff_info = next(
-                (idx, x, y) for idx, (x, y) in enumerate(
+            (idx, x, y) for idx, (x, y) in enumerate(
                 zip(current_order, desired_order)) if x != y)
         # extract the init and final indices for the permutation
         init_idx = current_order.index(temp_order_diff_info[2])
         final_idx = temp_order_diff_info[0]
         expr = eq.update(expr.permutation_move(
-                init_idx, final_idx, assumptions=assumptions))
+            init_idx, final_idx, assumptions=assumptions))
         # update current_order to reflect step-wise change
         current_order.remove(temp_order_diff_info[2])
         current_order.insert(final_idx, temp_order_diff_info[2])

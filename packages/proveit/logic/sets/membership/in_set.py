@@ -1,5 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 
+
 class InSet(Operation):
     # operator of the InSet operation
     _operator_ = Literal(string_format='in',
@@ -17,10 +18,10 @@ class InSet(Operation):
         if hasattr(self.domain, 'membership_object'):
             self.membership_object = self.domain.membership_object(element)
             if not isinstance(self.membership_object, Membership):
-                raise TypeError("The 'membership_object' of %s is a %s which "
-                                "is not derived from %s as it should be."
-                                %(self.domain, self.membership_object.__class__,
-                                  Membership))
+                raise TypeError(
+                    "The 'membership_object' of %s is a %s which "
+                    "is not derived from %s as it should be." %
+                    (self.domain, self.membership_object.__class__, Membership))
 
     def __dir__(self):
         '''
@@ -28,7 +29,8 @@ class InSet(Operation):
         object it generates.
         '''
         if 'membership_object' in self.__dict__:
-            return sorted(set(list(self.__dict__.keys()) + dir(self.membership_object)))
+            return sorted(set(list(self.__dict__.keys()) +
+                              dir(self.membership_object)))
         else:
             return sorted(self.__dict__.keys())
 
@@ -98,12 +100,13 @@ class InSet(Operation):
                     # or R = S we are done.
                     eq_rel = Equals(known_membership.domain, self.domain)
                     if eq_rel.proven(assumptions):
-                        return eq_rel.sub_right_side_into(known_membership.inner_expr().domain)
+                        return eq_rel.sub_right_side_into(
+                            known_membership.inner_expr().domain)
                     sub_rel = SubsetEq(known_membership.domain, self.domain)
                     if sub_rel.proven(assumptions):
                         # S is a superset of R, so now we can prove x in S.
                         return sub_rel.derive_superset_membership(self.element,
-                                                                assumptions)
+                                                                  assumptions)
 
         # No known membership works.  Let's see if there is a known
         # simplification of the element before trying anything else.
@@ -111,7 +114,7 @@ class InSet(Operation):
             elem_simplification = self.element.simplification(assumptions,
                                                               automation=False)
             if elem_simplification.lhs == elem_simplification.rhs:
-                elem_simplification = None # reflection doesn't count
+                elem_simplification = None  # reflection doesn't count
         except SimplificationError:
             elem_simplification = None
 
@@ -120,7 +123,7 @@ class InSet(Operation):
             try:
                 elem_simplification = self.element.simplification(assumptions)
                 if elem_simplification.lhs == elem_simplification.rhs:
-                    elem_simplification = None # reflection doesn't count
+                    elem_simplification = None  # reflection doesn't count
             except SimplificationError:
                 pass
 
@@ -128,9 +131,11 @@ class InSet(Operation):
         # via the simplified form of the element.
         if elem_simplification is not None:
             simple_elem = elem_simplification.rhs
-            simple_membership = InSet(simple_elem, self.domain).prove(assumptions)
+            simple_membership = InSet(
+                simple_elem, self.domain).prove(assumptions)
             inner_expr = simple_membership.inner_expr().element
-            return elem_simplification.sub_left_side_into(inner_expr, assumptions)
+            return elem_simplification.sub_left_side_into(
+                inner_expr, assumptions)
         else:
             # Unable to simplify the element.  Try to conclude via
             # the 'membership_object' if there is one.
@@ -141,7 +146,7 @@ class InSet(Operation):
                                "Unable to conclude automatically; "
                                "the domain, %s, has no 'membership_object' "
                                "method with a strategy for proving "
-                               "membership."%self.domain)
+                               "membership." % self.domain)
 
     def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
@@ -153,7 +158,8 @@ class InSet(Operation):
         # try an 'equivalence' method (via the membership object)
         equiv = self.membership_object.equivalence(assumptions)
         rhs_eval = equiv.rhs.evaluation(assumptions=assumptions)
-        evaluation = equiv.apply_transitivity(rhs_eval, assumptions=assumptions)
+        evaluation = equiv.apply_transitivity(
+            rhs_eval, assumptions=assumptions)
         # try also to evaluate this by deducing membership
         # or non-membership in case it generates a shorter proof.
         try:
@@ -163,10 +169,12 @@ class InSet(Operation):
             else:
                 not_in_domain = NotInSet(self.element, self.domain)
                 if hasattr(not_in_domain, 'nonmembership_object'):
-                    not_in_domain.nonmembership_object.conclude(assumptions=assumptions)
-        except:
+                    not_in_domain.nonmembership_object.conclude(
+                        assumptions=assumptions)
+        except BaseException:
             pass
         return evaluation
+
 
 class Membership:
     def __init__(self, element):
@@ -177,13 +185,21 @@ class Membership:
         self.element = element
 
     def side_effects(self, judgment):
-        raise NotImplementedError("Membership object, %s, has no 'side_effects' method implemented"%str(self.__class__))
+        raise NotImplementedError(
+            "Membership object, %s, has no 'side_effects' method implemented" % str(
+                self.__class__))
 
     def conclude(self, assumptions):
-        raise NotImplementedError("Membership object, %s, has no 'conclude' method implemented"%str(self.__class__))
+        raise NotImplementedError(
+            "Membership object, %s, has no 'conclude' method implemented" % str(
+                self.__class__))
 
     def equivalence(self, assumptions=USE_DEFAULTS):
-        raise NotImplementedError("Membership object, %s, has no 'equivalence' method implemented"%str(self.__class__))
+        raise NotImplementedError(
+            "Membership object, %s, has no 'equivalence' method implemented" % str(
+                self.__class__))
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        raise NotImplementedError("Membership object, %s, has no 'deduce_in_bool' method implemented"%str(self.__class__))
+        raise NotImplementedError(
+            "Membership object, %s, has no 'deduce_in_bool' method implemented" % str(
+                self.__class__))

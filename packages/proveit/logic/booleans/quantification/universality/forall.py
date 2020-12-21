@@ -22,10 +22,10 @@ class Forall(OperationOverInstances):
         may be singular or plural (iterable).
         '''
         OperationOverInstances.__init__(
-                self, Forall._operator_, instance_param_or_params,
-                instance_expr, domain=domain, domains=domains,
-                condition=condition, conditions=conditions,
-                _lambda_map=_lambda_map)
+            self, Forall._operator_, instance_param_or_params,
+            instance_expr, domain=domain, domains=domains,
+            condition=condition, conditions=conditions,
+            _lambda_map=_lambda_map)
 
     def side_effects(self, judgment):
         '''
@@ -94,7 +94,7 @@ class Forall(OperationOverInstances):
             try:
                 conditions = list(self.conditions)
                 proven_inst_expr = self.instance_expr.prove(
-                        assumptions=assumptions + tuple(conditions))
+                    assumptions=assumptions + tuple(conditions))
                 instance_param_lists = [list(self.explicit_instance_params())]
                 # see if we can generalize multiple levels
                 # simultaneously for a shorter proof
@@ -103,7 +103,7 @@ class Forall(OperationOverInstances):
                     instance_param_lists.append(list(new_params))
                     conditions += proven_inst_expr.conditions
                     proven_inst_expr = (
-                            proven_inst_expr.proof().required_truths[0])
+                        proven_inst_expr.proof().required_truths[0])
                 return proven_inst_expr.generalize(instance_param_lists,
                                                    conditions=conditions)
             except ProofFailure:
@@ -127,7 +127,7 @@ class Forall(OperationOverInstances):
         derives P(TRUE) and P(FALSE).
         '''
         assert self.has_domain(), (
-                "Cannot unfold a forall statement with no domain")
+            "Cannot unfold a forall statement with no domain")
         return self.domain.unfold_forall(self, assumptions)
 
     """
@@ -168,7 +168,7 @@ class Forall(OperationOverInstances):
         forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
         '''
         assert self.has_domain(), (
-                "Cannot fold a forall statement with no domain")
+            "Cannot fold a forall statement with no domain")
         if len(self.instance_params) > 1:
             # When there are more than one instance variables, we
             # must conclude the unbundled form first and the
@@ -249,8 +249,8 @@ class Forall(OperationOverInstances):
         from proveit import unbundle  # generic for Op..OverInstances
         from ._theorems_ import bundling
         return unbundle(
-                self, bundling, num_param_entries=num_param_entries,
-                assumptions=assumptions)
+            self, bundling, num_param_entries=num_param_entries,
+            assumptions=assumptions)
 
     def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
         '''
@@ -258,14 +258,14 @@ class Forall(OperationOverInstances):
         the assumptions, and then call instantiate on the Judgment.
         '''
         return self.prove(assumptions).instantiate(
-                repl_map, assumptions=assumptions)
+            repl_map, assumptions=assumptions)
 
     def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
         '''
         TEMPORARY FOR BACKWARD COMPATIBILITY
         '''
         return self.prove(assumptions).instantiate(
-                repl_map, assumptions=assumptions)
+            repl_map, assumptions=assumptions)
 
     def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
@@ -273,7 +273,7 @@ class Forall(OperationOverInstances):
         possible by calling the condition's forall_evaluation method
         '''
         assert self.has_domain(), ("Cannot automatically evaluate a forall "
-                                  "statement with no domain")
+                                   "statement with no domain")
 
         if len(list(self.instance_param_lists())) == 1:
             if hasattr(self.domain, 'forall_evaluation'):
@@ -282,7 +282,7 @@ class Forall(OperationOverInstances):
         else:
             # Evaluate an unravelled version
             unravelled_equiv = self.derive_unraveled_equiv(
-                    [var for var in (list(self.instance_var_lists()))])
+                [var for var in (list(self.instance_var_lists()))])
             return unravelled_equiv.rhs.evaluation(assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
@@ -298,5 +298,5 @@ class Forall(OperationOverInstances):
         _n = _x.length(assumptions)
         x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
         return forall_in_bool.instantiate(
-                {n: _n, P_op: _P_op, x_1_to_n: _x},
-                assumptions=assumptions)
+            {n: _n, P_op: _P_op, x_1_to_n: _x},
+            assumptions=assumptions)

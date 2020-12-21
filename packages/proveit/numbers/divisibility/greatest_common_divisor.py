@@ -2,10 +2,11 @@ from proveit import Theory, Function, Literal, USE_DEFAULTS
 from proveit.logic import Equals
 from proveit.numbers import one
 
+
 class GCD(Function):
 
     _operator_ = Literal('gcd', theory=__file__)
-    
+
     def __init__(self, a, b):
         Function.__init__(self, GCD._operator_, [a, b])
 
@@ -19,5 +20,5 @@ class GCD(Function):
         from ._theorems_ import GCD_one_def
         _a, _b = GCD_one_def.instance_params
         return GCD_one_def.instantiate(
-        	{_a:self.operands[0], _b:self.operands[1]},
-        	assumptions=assumptions)
+            {_a: self.operands[0], _b: self.operands[1]},
+            assumptions=assumptions)

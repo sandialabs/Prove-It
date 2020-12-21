@@ -8,4 +8,5 @@ FimplF = implies_f_f.derive_via_boolean_equality()
 # (FALSE => FALSE) and (FALSE => FALSE) = TRUE
 FimplFandFimplF_eq_T = derive_stmt_eq_true(compose(FimplF, FimplF))
 # (FALSE <=> FALSE) = TRUE
-iff_def.instantiate({A:FALSE, B:FALSE}).apply_transitivity(FimplFandFimplF_eq_T).qed(__file__)
+iff_def.instantiate({A: FALSE, B: FALSE}).apply_transitivity(
+    FimplFandFimplF_eq_T).qed(__file__)

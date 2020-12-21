@@ -1,10 +1,14 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit._common_ import n, x
-        
+
+
 class Union(Operation):
     # operator of the Intersect operation
-    _operator_ = Literal(string_format='union', latex_format=r'\cup', theory=__file__)    
-    
+    _operator_ = Literal(
+        string_format='union',
+        latex_format=r'\cup',
+        theory=__file__)
+
     def __init__(self, *operands):
         '''
         Union any number of sets: A union B union C

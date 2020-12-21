@@ -6,9 +6,8 @@ from proveit import begin_axioms, end_axioms
 
 begin_axioms(locals())
 
-floor_def = Forall(x, And(InSet(Floor(x), Integer), InSet(Sub(x, Floor(x)), IntervalCO(zero, one))), domain=Real)
+floor_def = Forall(x, And(InSet(Floor(x), Integer), InSet(
+    Sub(x, Floor(x)), IntervalCO(zero, one))), domain=Real)
 floor_def
 
 end_axioms(locals(), __package__)
-
-

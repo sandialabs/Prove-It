@@ -3,9 +3,9 @@ from .enumeration import Set
 # StrictSubset and SubsetProper are aliases for ProperSubset.
 # StrictSuperset and SupersetProper are aliases for ProperSuperset.
 from .inclusion import (
-        SubsetEq, NotSubsetEq, ProperSubset, StrictSubset, SubsetProper,
-        NotProperSubset, SupersetEq, NotSupersetEq, ProperSuperset, 
-        StrictSuperset, SupersetProper, NotProperSuperset)
+    SubsetEq, NotSubsetEq, ProperSubset, StrictSubset, SubsetProper,
+    NotProperSubset, SupersetEq, NotSupersetEq, ProperSuperset,
+    StrictSuperset, SupersetProper, NotProperSuperset)
 from .equivalence import SetEquiv, SetNotEquiv
 from .unification import Union, UnionAll
 from .intersection import Intersect, IntersectAll

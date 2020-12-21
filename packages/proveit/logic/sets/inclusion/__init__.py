@@ -1,4 +1,4 @@
-from .subset import SubsetEq, NotSubsetEq 
+from .subset import SubsetEq, NotSubsetEq
 # StrictSubset and SubsetProper are aliased for ProperSubset
 from .subset import ProperSubset, StrictSubset, SubsetProper
 from .subset import NotProperSubset

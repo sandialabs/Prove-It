@@ -1,13 +1,14 @@
 from proveit import Literal, ProofFailure, defaults, USE_DEFAULTS
 from proveit.logic import Equals, InSet, Membership
 
+
 class NumberSet(Literal):
     def __init__(self, string, latex, theory):
         Literal.__init__(self, string, latex, theory=theory)
-    
+
     def membership_object(self, element):
         return NumberMembership(element, self)
-    
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects for when the given member is in this number
@@ -16,7 +17,7 @@ class NumberSet(Literal):
         '''
         return
         yield
-        
+
 
 class NumberMembership(Membership):
     def __init__(self, element, number_set):
@@ -30,38 +31,39 @@ class NumberMembership(Membership):
         '''
         number_set, element = self.number_set, self.element
         if not isinstance(judgment.expr, InSet):
-            raise ValueError("Expecting the judgment of a NumberMembership "
-                               "side_effects call to be for an InSet expression.")
+            raise ValueError(
+                "Expecting the judgment of a NumberMembership "
+                "side_effects call to be for an InSet expression.")
         if judgment.element != element:
             raise ValueError("NumberMembership.side_effects called with a "
-                               "judgment that is inconsistent w.r.t. the "
-                               "element.")
+                             "judgment that is inconsistent w.r.t. the "
+                             "element.")
         if judgment.domain != number_set:
             raise ValueError("NumberMembership.side_effects called with a "
-                               "judgment that is inconsistent w.r.t. the "
-                               "domain.")
+                             "judgment that is inconsistent w.r.t. the "
+                             "domain.")
         for side_effect in number_set.membership_side_effects(judgment):
             yield side_effect
-        
+
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
-        Try to deduce that the given element is in the number set under 
+        Try to deduce that the given element is in the number set under
         the given assumptions.
         '''
         element = self.element
-        
+
         # See if the element is known to be equal with something
         # that is known to be in the number set.
         assumptions_set = set(defaults.checked_assumptions(assumptions))
-        for eq, equiv_elem in Equals.known_relations_from_left(element, 
-                                                             assumptions_set):
+        for eq, equiv_elem in Equals.known_relations_from_left(
+                element, assumptions_set):
             try:
                 equiv_elem_in_set = InSet(equiv_elem, self.number_set)
                 equiv_elem_in_set.prove(assumptions, automation=False)
                 return eq.sub_left_side_into(equiv_elem_in_set, assumptions)
             except ProofFailure:
                 pass
-        
+
         '''
         # Maybe let's not simplify first.  If
         # See if we can simplify the element first.
@@ -74,17 +76,16 @@ class NumberMembership(Membership):
                 # Substitute into the original.
                 return simplification.sub_left_side_into(elem_in_set, assumptions)
         '''
-        
+
         # Try the 'deduce_in_number_set' method.
         if hasattr(element, 'deduce_in_number_set'):
-            return element.deduce_in_number_set(self.number_set, 
-                                             assumptions=assumptions)
+            return element.deduce_in_number_set(self.number_set,
+                                                assumptions=assumptions)
         else:
             msg = str(element) + " has no 'deduce_in_number_set' method."
-            raise ProofFailure(InSet(self.element, self.number_set), 
-                                assumptions, msg)
+            raise ProofFailure(InSet(self.element, self.number_set),
+                               assumptions, msg)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        return self.number_set.deduce_membership_in_bool(self.element,
-                                                      assumptions=assumptions)
-
+        return self.number_set.deduce_membership_in_bool(
+            self.element, assumptions=assumptions)

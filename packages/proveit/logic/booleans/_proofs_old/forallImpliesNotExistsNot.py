@@ -11,6 +11,8 @@ exists_not_implies_not_forall_spec.hypothesis.deduce_in_bool()
 # forall_{..x.. in S | ..Q(..x..)..} P(..x..) in BOOLEANS
 exists_not_implies_not_forall_spec.conclusion.operand.deduce_in_bool()
 # NotExists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))
-conclusion = exists_not_implies_not_forall_spec.transpose().derive_conclusion().derive_not_exists().proven({hypothesis})
-# forall_{P, ..Q.., S} NotExists_{..x.. in S | ..Q(..x..)..} Not(P(..x..)) => forall_{..x.. in S | ..Q(..x..)..} P(..x..)
+conclusion = exists_not_implies_not_forall_spec.transpose(
+).derive_conclusion().derive_not_exists().proven({hypothesis})
+# forall_{P, ..Q.., S} NotExists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))
+# => forall_{..x.. in S | ..Q(..x..)..} P(..x..)
 Implies(hypothesis, conclusion).generalize((P, Qetc, S)).qed(__file__)

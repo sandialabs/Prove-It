@@ -2,11 +2,12 @@ from proveit import (Literal, OperationOverInstances, Operation, ExprTuple,
                      single_or_composite_expression, USE_DEFAULTS)
 from proveit._common_ import x, y, f, P, Q, S
 
+
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
     _operator_ = Literal(string_format='SetOfAll',
                          latex_format=r'\textrm{SetOfAll}', theory=__file__)
-    _init_argname_mapping_ = {'instance_element':'instance_expr'}
+    _init_argname_mapping_ = {'instance_element': 'instance_expr'}
 
     def __init__(self, instance_param_or_params, instance_element,
                  domain=None, *, domains=None, condition=None,
@@ -18,9 +19,15 @@ class SetOfAll(OperationOverInstances):
         {instance_element | conditions}_{instance_param_or_params \in S}
         '''
         OperationOverInstances.__init__(
-                self, SetOfAll._operator_, instance_param_or_params,
-                instance_element, domain=domain, domains=domains,
-                condition=condition, conditions=conditions, _lambda_map=_lambda_map)
+            self,
+            SetOfAll._operator_,
+            instance_param_or_params,
+            instance_element,
+            domain=domain,
+            domains=domains,
+            condition=condition,
+            conditions=conditions,
+            _lambda_map=_lambda_map)
         self.instance_element = self.instance_expr
         if hasattr(self, 'instance_param'):
             if not hasattr(self, 'domain'):
@@ -38,34 +45,39 @@ class SetOfAll(OperationOverInstances):
         explicit_conditions = ExprTuple(*self.explicit_conditions())
         inner_fence = (len(explicit_conditions) > 0)
         formatted_instance_element = self.instance_element.formatted(
-                format_type, fence=inner_fence)
+            format_type, fence=inner_fence)
         explicit_domains = self.explicit_domains()
         domain_conditions = ExprTuple(*self.domain_conditions())
-        if format_type == 'latex': out_str += r"\left\{"
-        else: out_str += "{"
+        if format_type == 'latex':
+            out_str += r"\left\{"
+        else:
+            out_str += "{"
         out_str += formatted_instance_element
         if len(explicit_conditions) > 0:
             formatted_conditions = explicit_conditions.formatted(
-                    format_type, fence=False)
-            if format_type == 'latex': out_str += r'~|~'
-            else: out_str += ' s.t. ' # such that
+                format_type, fence=False)
+            if format_type == 'latex':
+                out_str += r'~|~'
+            else:
+                out_str += ' s.t. '  # such that
             out_str += formatted_conditions
-        if format_type == 'latex': out_str += r"\right\}"
-        else: out_str += "}"
+        if format_type == 'latex':
+            out_str += r"\right\}"
+        else:
+            out_str += "}"
         out_str += '_{'
         instance_param_or_params = self.instance_param_or_params
-        if (not any (isinstance(entry, ExprRange) for entry in explicit_domains)
-                and explicit_domains == [explicit_domains[0]]*len(explicit_domains)):
+        if (not any(isinstance(entry, ExprRange) for entry in explicit_domains)
+                and explicit_domains == [explicit_domains[0]] * len(explicit_domains)):
             # all in the same domain
-            out_str += instance_param_or_params.formatted(format_type,
-                                                         operator_or_operators=',',
-                                                         fence=False)
-            out_str += r' \in ' if format_type=='latex' else ' in '
+            out_str += instance_param_or_params.formatted(
+                format_type, operator_or_operators=',', fence=False)
+            out_str += r' \in ' if format_type == 'latex' else ' in '
             out_str += explicit_domains[0].formatted(format_type)
         else:
             out_str += domain_conditions.formatted(format_type,
-                                                operator_or_operators=',',
-                                                fence=False)
+                                                   operator_or_operators=',',
+                                                   fence=False)
         out_str += '}'
         return out_str
 

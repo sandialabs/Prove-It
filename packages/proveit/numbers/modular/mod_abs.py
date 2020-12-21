@@ -1,6 +1,7 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit.numbers.number_sets import Real
 
+
 class ModAbs(Operation):
     # operator of the ModAbs operation.
     _operator_ = Literal(string_format='ModAbs', theory=__file__)
@@ -11,13 +12,13 @@ class ModAbs(Operation):
         self.divisor = divisor
 
     def string(self, **kwargs):
-        return ('|'+self.value.string(fence=False)+'|_{mod ' +
+        return ('|' + self.value.string(fence=False) + '|_{mod ' +
                 self.divisor.string(fence=False) + '}')
 
     def latex(self, **kwargs):
-        return (  r'\left|'+self.value.latex(fence=False)
+        return (r'\left|' + self.value.latex(fence=False)
                 + r'\right|_{\textup{mod}\thinspace '
-                + self.divisor.latex(fence=False) + r'}')
+                  + self.divisor.latex(fence=False) + r'}')
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -28,7 +29,7 @@ class ModAbs(Operation):
         from proveit._common_ import a, b
         from proveit.logic import InSet
         from proveit.numbers.modular._theorems_ import (
-                mod_abs_int_closure, mod_abs_real_closure)
+            mod_abs_int_closure, mod_abs_real_closure)
         from proveit.numbers import Integer, Real
 
         # among other things, make sure non-existent assumptions
@@ -37,12 +38,12 @@ class ModAbs(Operation):
 
         if number_set == Integer:
             return mod_abs_int_closure.instantiate(
-                    {a:self.value, b:self.divisor}, assumptions=assumptions)
+                {a: self.value, b: self.divisor}, assumptions=assumptions)
 
         if number_set == Real:
             return mod_abs_real_closure.instantiate(
-                    {a:self.value, b:self.divisor}, assumptions=assumptions)
+                {a: self.value, b: self.divisor}, assumptions=assumptions)
 
         msg = ("'ModAbs.deduce_in_number_set()' not implemented for "
-               "the %s set"%str(number_set))
+               "the %s set" % str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)

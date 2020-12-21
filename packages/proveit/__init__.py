@@ -3,31 +3,34 @@ if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
 
 from ._core_ import (
-        defaults, USE_DEFAULTS, InvalidAssumptions, Theory, 
-        TheoryException,
-        Expression, traverse_inner_expressions, used_vars, 
-        possibly_free_var_ranges, free_vars, attempt_to_simplify,
-        InnerExpr, expression_depth,
-        Operation, IndexedVar, Function, OperationSequence, 
-        OperationOverInstances, bundle, unbundle, OperationError,
-        Conditional, ConditionalSet,
-        Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
-        LambdaApplicationError, ArgumentExtractionError, 
-        Label, Variable, Literal, DuplicateLiteralError,
-        safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var, 
-        MakeNotImplemented, ImproperReplacement, 
-        ProofFailure,
-        Composite, composite_expression, single_or_composite_expression,
-        ExprTuple, ExprTupleError, extract_var_tuple_indices, 
-        ExprArray, NamedExprs, ExprRange, 
-        var_range, RangeInstanceError,
-        Judgment, as_expression, as_expressions,
-        Proof, Assumption, Axiom, Theorem, ModusPonens, 
-        Deduction, Instantiation, Generalization,
-        ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
-        StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
-from .relation import (TransitiveRelation, TransitiveSequence, TransitivityException, 
-                       TransRelUpdater)
+    defaults, USE_DEFAULTS, InvalidAssumptions, Theory,
+    TheoryException,
+    Expression, traverse_inner_expressions, used_vars,
+    possibly_free_var_ranges, free_vars, attempt_to_simplify,
+    InnerExpr, expression_depth,
+    Operation, IndexedVar, Function, OperationSequence,
+    OperationOverInstances, bundle, unbundle, OperationError,
+    Conditional, ConditionalSet,
+    Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
+    LambdaApplicationError, ArgumentExtractionError,
+    Label, Variable, Literal, DuplicateLiteralError,
+    safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var,
+    MakeNotImplemented, ImproperReplacement,
+    ProofFailure,
+    Composite, composite_expression, single_or_composite_expression,
+    ExprTuple, ExprTupleError, extract_var_tuple_indices,
+    ExprArray, NamedExprs, ExprRange,
+    var_range, RangeInstanceError,
+    Judgment, as_expression, as_expressions,
+    Proof, Assumption, Axiom, Theorem, ModusPonens,
+    Deduction, Instantiation, Generalization,
+    ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
+    StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
+from .relation import (
+    TransitiveRelation,
+    TransitiveSequence,
+    TransitivityException,
+    TransRelUpdater)
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet
@@ -41,8 +44,9 @@ from .relation import (TransitiveRelation, TransitiveSequence, TransitivityExcep
 
 # register Prove-It specific IPython magic:
 # %begin_axioms, %end_axioms, %begin_theorems, %end_theorems, %begin_proof, and %display_assignment
-#from . import _core_.magics
+# from . import _core_.magics
 from . import magics
+
 
 def reset():
     '''

@@ -10,19 +10,22 @@ from proveit.physics.quantum.quantum_ops import Ket
 
 pkg = __package__
 
-I = Literal(pkg, 'I') # Single qubit identity
-X = Literal(pkg, 'X') # Pauli-X
-Y = Literal(pkg, 'Y') # Pauli-Y
-Z = Literal(pkg, 'Z') # Pauli-Z
-H = Literal(pkg, 'H') # Hadamard
+I = Literal(pkg, 'I')  # Single qubit identity
+X = Literal(pkg, 'X')  # Pauli-X
+Y = Literal(pkg, 'Y')  # Pauli-Y
+Z = Literal(pkg, 'Z')  # Pauli-Z
+H = Literal(pkg, 'H')  # Hadamard
 
 # PASS: either a blank spot or continuation of a wire in a quantum circuit.
 # Can be used when initializing the circuit with a list of lists -- these PASS elements
-# are subsequently removed and turned into empty spots of the quantum circuit tensor.
-PASS = Literal(pkg, 'PASS') 
+# are subsequently removed and turned into empty spots of the quantum
+# circuit tensor.
+PASS = Literal(pkg, 'PASS')
 
-PLUS = Literal(pkg, 'PLUS', {LATEX:'+', STRING:'+'}) # For positive X eigenstate
-MINUS = Literal(pkg, 'MINUS', {LATEX:'-', STRING:'-'}) # For negative X eigenstate
+# For positive X eigenstate
+PLUS = Literal(pkg, 'PLUS', {LATEX: '+', STRING: '+'})
+# For negative X eigenstate
+MINUS = Literal(pkg, 'MINUS', {LATEX: '-', STRING: '-'})
 
 ket0 = Ket(zero)
 ket1 = Ket(one)
@@ -38,13 +41,15 @@ CTRL_UP = Literal(pkg, 'CTRL_UP')
 CTRL_DN = Literal(pkg, 'CTRL_DN')
 CTRL_UPDN = Literal(pkg, 'CTRL_UPDN')
 
-WIRE_UP = Literal(pkg, 'WIRE_UP') # wire goes up to link with another wire
-WIRE_DN = Literal(pkg, 'WIRE_DN') # wire goes down to link with another wire
-WIRE_LINK = Literal(pkg, 'WIRE_LINK') # link destination for WIRE_UP or WIRE_DN
+WIRE_UP = Literal(pkg, 'WIRE_UP')  # wire goes up to link with another wire
+WIRE_DN = Literal(pkg, 'WIRE_DN')  # wire goes down to link with another wire
+# link destination for WIRE_UP or WIRE_DN
+WIRE_LINK = Literal(pkg, 'WIRE_LINK')
 
 QubitSpace = Exp(Complex, two)
-QubitRegisterSpace = lambda n : TensorExp(Exp(Complex, two), n) 
-RegisterSU = lambda n : SU(Exp(two, n))
+def QubitRegisterSpace(n): return TensorExp(Exp(Complex, two), n)
+def RegisterSU(n): return SU(Exp(two, n))
+
 
 inv_root2 = frac(one, sqrt(two))
 
@@ -72,7 +77,7 @@ Dblock = Block(D)
 
 '''
 # for implicit identity gates
-Is = ImplicitIdentities(I) 
-IsB = ImplicitIdentities(IB) 
-IsC = ImplicitIdentities(IC) 
+Is = ImplicitIdentities(I)
+IsB = ImplicitIdentities(IB)
+IsC = ImplicitIdentities(IC)
 '''

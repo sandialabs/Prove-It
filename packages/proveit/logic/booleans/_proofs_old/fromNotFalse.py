@@ -13,6 +13,7 @@ compose(not_aeq_f, AeqT_or_AeqF).proven({Anot_f, AeqT_or_AeqF})
 # in_bool(A=TRUE)
 AeqT.deduce_in_bool()
 # A assuming in_bool(A), Not(A=FALSE)
-AeqT_or_AeqF.derive_left_if_not_right().derive_via_boolean_equality().proven({in_bool(A), Anot_f})
+AeqT_or_AeqF.derive_left_if_not_right().derive_via_boolean_equality().proven({
+    in_bool(A), Anot_f})
 # forall_{A in BOOLEANS} Not(A=FALSE) => A
 Implies(Anot_f, A).generalize(A, domain=BOOLEANS).qed(__file__)

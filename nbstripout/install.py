@@ -1,11 +1,12 @@
 '''
 Perform the git configuration and attribute changes needed to filter
-the output of jupyter notebooks.  This is taken from 
+the output of jupyter notebooks.  This is taken from
 https://github.com/kynan/nbstripout/blob/master/nbstripout/_nbstripout.py
 with minimal changes.
 '''
 
 import sys
+
 
 def install_nbstripout(git_config, attrfile=None):
     """Install the git filter and set the git attributes."""
@@ -20,7 +21,10 @@ def install_nbstripout(git_config, attrfile=None):
         print('Installation failed: not a git repository!', file=sys.stderr)
         sys.exit(1)
     dir = path.abspath(path.dirname(__file__))
-    filepath = '"{}" "{}"'.format(sys.executable, path.join(dir, 'nbstripout.py')).replace('\\', '/')
+    filepath = '"{}" "{}"'.format(
+        sys.executable, path.join(
+            dir, 'nbstripout.py')).replace(
+        '\\', '/')
     check_call(git_config + ['filter.nbstripout.clean', filepath])
     check_call(git_config + ['filter.nbstripout.smudge', 'cat'])
     check_call(git_config + ['diff.ipynb.textconv', filepath + ' -t'])
@@ -48,6 +52,7 @@ def install_nbstripout(git_config, attrfile=None):
             print('*.ipynb filter=nbstripout', file=f)
         if not diff_exists:
             print('*.ipynb diff=ipynb', file=f)
+
 
 if __name__ == '__main__':
     install_nbstripout(['git', 'config'], '.gitattributes')
