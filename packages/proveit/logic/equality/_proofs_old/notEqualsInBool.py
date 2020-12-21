@@ -1,8 +1,10 @@
-from proveit.basiclogic.equality.axioms import notEqualsDef
-from proveit.basiclogic import Not, Equals, inBool
+from proveit.basiclogic.equality.axioms import not_equals_def
+from proveit.basiclogic import Not, Equals, in_bool
 from proveit.common import x, y, X
 
 # Not(x = y) in BOOLEANS
-Not(Equals(x, y)).deduceInBool().proven()
+Not(Equals(x, y)).deduce_in_bool().proven()
 # forall_{x, y} (x != y) in BOOLEANS
-notEqualsDef.instantiate().subLeftSideInto(inBool(X), X).generalize((x, y)).qed(__file__)
+not_equals_def.instantiate().sub_left_side_into(
+    in_bool(X), X).generalize(
+        (x, y)).qed(__file__)

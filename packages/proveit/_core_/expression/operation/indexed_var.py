@@ -5,12 +5,13 @@ from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
 
+
 class IndexedVar(Operation):
     '''
-    An IndexedVar Expression expresses a Variable or nested IndexedVar, 
+    An IndexedVar Expression expresses a Variable or nested IndexedVar,
     representing an ExprTuple (or ExprArray which is really just an ExprTuple
     of ExprTuples), being indexed to yield an element.  The indices are
-    typically parameters of containing ExprRanges, or additively shifted 
+    typically parameters of containing ExprRanges, or additively shifted
     versions of such parameters.  For example,
         (x_{1, 1+1} + ... + x_{1, j+1} + ... + x_{1, n+1}) * ... *
         (x_{i, 1+1} + ... + x_{i, j+1} + ... + x_{i, n+1}) * ... *
@@ -18,19 +19,17 @@ class IndexedVar(Operation):
     is represented by a doubly-nested ExprRange using the IndexedVar
     x_{i, j+1}.
     '''
-    
+
     def __init__(self, var, index_or_indices):
         '''
         Initialize an IndexedVar to represent the given 'var' being indexed
-        via 'index_or_indices'.  The 'var' must be a Variable.  
+        via 'index_or_indices'.  The 'var' must be a Variable.
         '''
-        from proveit._core_.expression.composite import compositeExpression
-        from proveit._core_.expression.label.label import TemporaryLabel
+        from proveit._core_.expression.composite import composite_expression
         if not isinstance(var, Variable):
-            if not isinstance(var, TemporaryLabel):
-                raise TypeError("'var' being indexed should be a Variable "
-                                "or IndexedVar itself; got %s"%str(var))
-        self.indices = compositeExpression(index_or_indices)
+            raise TypeError("'var' being indexed should be a Variable "
+                            "or IndexedVar itself; got %s" % str(var))
+        self.indices = composite_expression(index_or_indices)
         if len(self.indices) == 1:
             # has a single index
             self.index = self.indices[0]
@@ -39,40 +38,41 @@ class IndexedVar(Operation):
             self.index_or_indices = self.indices
         Operation.__init__(self, var, self.index_or_indices)
         self.var = var
-        
-    @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
-        if subClass != IndexedVar: 
-            MakeNotImplemented(subClass)
-        if len(coreInfo) != 1 or coreInfo[0] != 'IndexedVar':
-            raise ValueError("Expecting IndexedVar coreInfo to contain exactly"
-                             " one item: 'IndexedVar'")
-        return IndexedVar(*subExpressions).withStyles(**styles)       
 
-    def remakeArguments(self):
+    @classmethod
+    def _make(sub_class, core_info, styles, sub_expressions):
+        if sub_class != IndexedVar:
+            MakeNotImplemented(sub_class)
+        if len(core_info) != 1 or core_info[0] != 'IndexedVar':
+            raise ValueError(
+                "Expecting IndexedVar core_info to contain exactly"
+                " one item: 'IndexedVar'")
+        return IndexedVar(*sub_expressions).with_styles(**styles)
+
+    def remake_arguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Indexed.
         '''
         yield self.var
         yield self.index_or_indices
-    
+
     def _replaced(self, repl_map, allow_relabeling,
                   assumptions, requirements,
                   equality_repl_requirements):
         '''
-        Returns this expression with sub-expressions substituted 
+        Returns this expression with sub-expressions substituted
         according to the replacement map (repl_map) dictionary.
         '''
-        if len(repl_map)>0 and (self in repl_map):
+        if len(repl_map) > 0 and (self in repl_map):
             return repl_map[self]
-        # First do a replacement after temporarily removing the base 
+        # First do a replacement after temporarily removing the base
         # variable from the repl_map so we can see if the result of
         # that is in the repl_map.
         base_var = self.var
         base_var_sub = repl_map.pop(base_var, None)
         replaced_sans_base_var_sub = \
-            Expression._replaced(self, repl_map, allow_relabeling, 
+            Expression._replaced(self, repl_map, allow_relabeling,
                                  assumptions, requirements,
                                  equality_repl_requirements)
         if base_var_sub is None:
@@ -86,19 +86,20 @@ class IndexedVar(Operation):
             repl_map[base_var] = base_var_sub
         # As the last resort, do the replacement with the
         # base_var in the repl_map.
-        return Expression._replaced(self, repl_map, allow_relabeling, 
+        return Expression._replaced(self, repl_map, allow_relabeling,
                                     assumptions, requirements,
                                     equality_repl_requirements)
-    
-    def _formatted(self, formatType, **kwargs):
-        indices_str = self.index_or_indices.formatted(formatType, fence=False)
-        result = self.var.formatted(formatType) + '_{' + indices_str + '}'
-        if kwargs.get('forceFence', False) == True:
-            if formatType=='latex':
+
+    def _formatted(self, format_type, **kwargs):
+        indices_str = self.index_or_indices.formatted(format_type, fence=False)
+        result = self.var.formatted(format_type) + '_{' + indices_str + '}'
+        if kwargs.get('force_fence', False):
+            if format_type == 'latex':
                 return r'\left(' + result + r'\right)'
-            else: return '(' + result + ')'
+            else:
+                return '(' + result + ')'
         return result
-    
+
     """
     def _free_var_indices(self):
         '''
@@ -110,17 +111,17 @@ class IndexedVar(Operation):
         each end_base + end_shift plus the range going from
         start_base + max(start_shifts) .. end_base + min(end_shifts).
         '''
-        from proveit.number import const_shift_decomposition
+        from proveit.numbers import const_shift_decomposition
         index_base, index_shift = const_shift_decomposition(self.index)
         # The start and end are the same so we have repetition below.
-        return {self.var:(index_base, {index_shift}, 
+        return {self.var:(index_base, {index_shift},
                           index_base, {index_shift})}
     """
 
     def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
-        of indices (or solo) in which the variable occurs as free or 
+        of indices (or solo) in which the variable occurs as free or
         not explicitly and completely masked.  Examples of "forms":
             x
             x_i
@@ -128,15 +129,14 @@ class IndexedVar(Operation):
             x_{i, 1}, ..., x_{i, n_i}
             x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
         '''
-        if exclusions is not None and self in exclusions: 
-            return dict() # this is excluded
+        if exclusions is not None and self in exclusions:
+            return dict()  # this is excluded
         forms_dict = dict()
         forms_dict.update(
-                self.indices._possibly_free_var_ranges(exclusions=exclusions))
-        forms_dict.update({self.var:{self}})
+            self.indices._possibly_free_var_ranges(exclusions=exclusions))
+        forms_dict.update({self.var: {self}})
         return forms_dict
-    
-    
+
     """
     def _indexed_var_shifts(self, var, range_param, shifts):
         if self.var==var:
@@ -153,11 +153,9 @@ class IndexedVar(Operation):
         For "const-shifted", use the convention that the constant
         shift comes after (e.g., "k+1" rather than "1+k").
         '''
-        from proveit.number import const_shift_decomposition
+        from proveit.numbers import const_shift_decomposition
         index_base, shift = const_shift_decomposition(self.index)
         if index_base == range_param:
             return shift
         return None
     """
-
- 

@@ -1,0 +1,6 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.inclusion.unfold_proper_subset
+proveit.logic.sets.inclusion.unfold_subset_eq
+# THEOREMS AND THEORIES TO EXCLUDE:

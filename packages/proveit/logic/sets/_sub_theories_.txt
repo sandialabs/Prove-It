@@ -1,0 +1,11 @@
+membership
+equivalence
+enumeration
+inclusion
+unification
+intersection
+subtraction
+comprehension
+power_set
+disjointness
+cardinality

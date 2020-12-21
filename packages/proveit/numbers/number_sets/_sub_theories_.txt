@@ -1,0 +1,5 @@
+natural_numbers
+integers
+rational_numbers
+real_numbers
+complex_numbers

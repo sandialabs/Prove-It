@@ -1,5 +1,6 @@
 from proveit.basiclogic import *
-from proveit.numbers import *
+from proveit.numberss import *
 
-QubitRegisterSpace = lambda n : TensorExp(Exp(Complexes, two), n)
-RegisterSU = lambda n : SU(Exp(two, n))
+
+def QubitRegisterSpace(n): return TensorExp(Exp(Complex, two), n)
+def RegisterSU(n): return SU(Exp(two, n))

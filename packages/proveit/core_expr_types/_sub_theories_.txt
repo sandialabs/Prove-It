@@ -3,4 +3,4 @@ conditionals
 lambda_maps
 tuples
 indexed_vars
-expr_array
+expr_arrays

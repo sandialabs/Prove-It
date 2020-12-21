@@ -1,0 +1,10 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.booleans.negation.falsified_negation_intro
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.not_false
+proveit.logic.booleans.negation.untrue_from_negation
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.sub_left_side_into
+proveit.logic.equality.substitute_in_true
+proveit.logic.equality.substitute_truth
+# THEOREMS AND THEORIES TO EXCLUDE:
