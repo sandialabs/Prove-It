@@ -2,5 +2,5 @@ from proveit import Lambda
 from proveit.common import X
 from .not_op import Not
 
-negationMap = Lambda(X, Not(X))
-doubleNegationMap = Lambda(X, Not(Not(X)))
+negation_map = Lambda(X, Not(X))
+double_negation_map = Lambda(X, Not(Not(X)))

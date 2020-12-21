@@ -1,24 +1,24 @@
-from proveit.basiclogic.booleans.axioms import existsDef
-from proveit.basiclogic import Exists, Forall, Not, NotEquals, Implies, In, TRUE, deriveStmtEqTrue
-from proveit.common import P, S, X, xEtc, PxEtc, etc_QxEtc, Qetc
+from proveit.basiclogic.booleans.axioms import exists_def
+from proveit.basiclogic import Exists, Forall, Not, NotEquals, Implies, In, TRUE, derive_stmt_eq_true
+from proveit.common import P, S, X, x_etc, Px_etc, etc_Qx_etc, Qetc
 
-inDomain = In(xEtc, S) # ..x.. in S
-# existsNot = [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))]
-existsNot = Exists(xEtc, Not(PxEtc), S, etc_QxEtc)
-# [Not(forall_{..x.. in S | ..Q(..x..)..} Not(P(..x..)) != TRUE] assuming existsNot
-existsDef.instantiate({PxEtc:Not(PxEtc)}).deriveRightViaEquality().proven({existsNot})
+in_domain = In(x_etc, S) # ..x.. in S
+# exists_not = [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))]
+exists_not = Exists(x_etc, Not(Px_etc), S, etc_Qx_etc)
+# [Not(forall_{..x.. in S | ..Q(..x..)..} Not(P(..x..)) != TRUE] assuming exists_not
+exists_def.instantiate({Px_etc:Not(Px_etc)}).derive_right_via_equality().proven({exists_not})
 # forall_{..x.. in S | ..Q(..x..)..} P(..x..)
-forallPx = Forall(xEtc, PxEtc, S, etc_QxEtc)
+forall_px = Forall(x_etc, Px_etc, S, etc_Qx_etc)
 # forall_{..x.. in S | ..Q(..x..)..} Not(P(..x..)) != TRUE
-forallNotPxNotTrue = Forall(xEtc, NotEquals(Not(PxEtc), TRUE), S, etc_QxEtc)
-# forallPx in BOOLEANS, forallNotPxNotTrue in BOOLEANS
-for expr in (forallPx, forallNotPxNotTrue):
-    expr.deduceInBool().proven()
+forall_not_px_not_true = Forall(x_etc, NotEquals(Not(Px_etc), TRUE), S, etc_Qx_etc)
+# forall_px in BOOLEANS, forall_not_px_not_true in BOOLEANS
+for expr in (forall_px, forall_not_px_not_true):
+    expr.deduce_in_bool().proven()
 # Not(TRUE) != TRUE
-NotEquals(Not(TRUE), TRUE).proveByEval()
-# forallNotPxNotTrue assuming forallPx, ..Q(..x..).., In(..x.., S)
-deriveStmtEqTrue(forallPx.instantiate()).lhsStatementSubstitution(NotEquals(Not(X), TRUE), X).deriveConclusion().generalize(xEtc, domain=S, conditions=etc_QxEtc).proven({forallPx, inDomain})
-# Not(forallNotPxNotTrue) => Not(forallPx)
-Implies(forallPx, forallNotPxNotTrue).transpose().proven()
+NotEquals(Not(TRUE), TRUE).prove_by_eval()
+# forall_not_px_not_true assuming forall_px, ..Q(..x..).., In(..x.., S)
+derive_stmt_eq_true(forall_px.instantiate()).lhs_statement_substitution(NotEquals(Not(X), TRUE), X).derive_conclusion().generalize(x_etc, domain=S, conditions=etc_Qx_etc).proven({forall_px, in_domain})
+# Not(forall_not_px_not_true) => Not(forall_px)
+Implies(forall_px, forall_not_px_not_true).transpose().proven()
 # forall_{P, ..Q.., S} [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))] => [Not(forall_{..x.. in S | ..Q(..x..)..} P(..x..)]
-Implies(existsNot, Not(forallPx)).generalize((P, Qetc, S)).qed(__file__)
+Implies(exists_not, Not(forall_px)).generalize((P, Qetc, S)).qed(__file__)

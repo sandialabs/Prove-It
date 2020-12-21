@@ -1,6 +1,6 @@
 from proveit.expression import Literal, Operation, STRING, LATEX
-from proveit.basiclogic.genericOps import BinaryOperation
-from proveit.numbers.numberSets import NumberOp, Integer
+from proveit.basiclogic.generic_ops import BinaryOperation
+from proveit.numbers.number_sets import NumberOp, Integer
 
 pkg = __package__
 
@@ -14,7 +14,7 @@ class QPE(Operation):
         '''
         Operation.__init__(self, QUANTUM_PHASE_ESTIMATION, (U, t))
         
-QUANTUM_PHASE_ESTIMATION  = Literal(pkg, 'QPE', {LATEX:r'{\rm QPE}'}, operationMaker = lambda operands : QPE(*operands))
+QUANTUM_PHASE_ESTIMATION  = Literal(pkg, 'QPE', {LATEX:r'{\rm QPE}'}, operation_maker = lambda operands : QPE(*operands))
 
 class PhaseEst(Operation):
     '''
@@ -28,7 +28,7 @@ class PhaseEst(Operation):
         '''
         Operation.__init__(self, PHASE_ESTIMATION, (U, t))
         
-PHASE_ESTIMATION  = Literal(pkg, 'PHASE_EST', {LATEX:r'{\rm PHASE_EST}'}, operationMaker = lambda operands : PhaseEst(*operands))
+PHASE_ESTIMATION  = Literal(pkg, 'PHASE_EST', {LATEX:r'{\rm PHASE_EST}'}, operation_maker = lambda operands : PhaseEst(*operands))
 
 class Psuccess(Operation):
     '''
@@ -41,7 +41,7 @@ class Psuccess(Operation):
         '''
         Operation.__init__(self, P_SUCCESS, eps)
         
-P_SUCCESS = Literal(pkg, 'Psuccess', {LATEX:r'P_{\rm success}'}, operationMaker = lambda operands : Psuccess(*operands))
+P_SUCCESS = Literal(pkg, 'Psuccess', {LATEX:r'P_{\rm success}'}, operation_maker = lambda operands : Psuccess(*operands))
 
 class Pfail(Operation):
     '''
@@ -54,7 +54,7 @@ class Pfail(Operation):
         '''
         Operation.__init__(self, P_FAIL, eps)
         
-P_FAIL = Literal(pkg, 'Pfail', {LATEX:r'P_{\rm fail}'}, operationMaker = lambda operands : Pfail(*operands))
+P_FAIL = Literal(pkg, 'Pfail', {LATEX:r'P_{\rm fail}'}, operation_maker = lambda operands : Pfail(*operands))
 
 class ModAdd(BinaryOperation, NumberOp):
     '''
@@ -63,12 +63,12 @@ class ModAdd(BinaryOperation, NumberOp):
     def __init__(self, a, b):
         BinaryOperation.__init__(self, MOD_ADD, a, b)
 
-    def _closureTheorem(self, numberSet):
-        from .theorems import modAddClosure
-        if numberSet == Integer:
-            return modAddClosure
+    def _closureTheorem(self, number_set):
+        from .theorems import mod_add_closure
+        if number_set == Integer:
+            return mod_add_closure
     
-MOD_ADD = Literal(pkg, 'MOD_ADD', {LATEX:r'\oplus'}, operationMaker = lambda operands : ModAdd(*operands))
+MOD_ADD = Literal(pkg, 'MOD_ADD', {LATEX:r'\oplus'}, operation_maker = lambda operands : ModAdd(*operands))
 
 class SubIndexed(Operation):
     '''
@@ -82,10 +82,10 @@ class SubIndexed(Operation):
         self.label = label
         self.index = index
     
-    def formatted(self, formatType, fence=False):
-        formattedLabel = self.label.formatted(formatType, fence=True)
-        formattedIndex = self.index.formatted(formatType, fence=False)
-        return formattedLabel + '_{' + formattedIndex + '}'
+    def formatted(self, format_type, fence=False):
+        formatted_label = self.label.formatted(format_type, fence=True)
+        formatted_index = self.index.formatted(format_type, fence=False)
+        return formatted_label + '_{' + formatted_index + '}'
 
-SUB_INDEXED = Literal(pkg, 'SUB_INDEXED', operationMaker = lambda operands : SubIndexed(*operands))
+SUB_INDEXED = Literal(pkg, 'SUB_INDEXED', operation_maker = lambda operands : SubIndexed(*operands))
 

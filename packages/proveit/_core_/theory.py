@@ -50,7 +50,7 @@ class Theory:
     # mapped by the absolute path.
     storages = dict()
 
-    specialExprKindToModuleName = {'common':'_common_', 'axiom':'_axioms_', 'theorem':'_theorems_'}
+    special_expr_kind_to_module_name = {'common':'_common_', 'axiom':'_axioms_', 'theorem':'_theorems_'}
     
     @staticmethod
     def _clear_():
@@ -122,20 +122,20 @@ class Theory:
         # the name of the theory is based upon the directory, going
         # up the tree as long as there is an __init__.py file.
         name = ''
-        remainingPath = path
-        while os.path.isfile(os.path.join(remainingPath, '__init__.py')):
-            remainingPath, tail = os.path.split(remainingPath)
+        remaining_path = path
+        while os.path.isfile(os.path.join(remaining_path, '__init__.py')):
+            remaining_path, tail = os.path.split(remaining_path)
             name = tail if name=='' else (tail + '.' + name)
         # the root theory tracks paths to external packages
         if name == '':
             name = path
             raise TheoryException('%s theory directory must have an __init__.py file'%path)
-        rootDirectory = None
+        root_directory = None
         if '.' in name:
-            rootDirectory = os.path.join(remainingPath, name.split('.')[0])
+            root_directory = os.path.join(remaining_path, name.split('.')[0])
         # Create the Storage object for this Theory
         if normpath not in Theory.storages:
-            Theory.storages[normpath] = TheoryStorage(self, name, path, rootDirectory)
+            Theory.storages[normpath] = TheoryStorage(self, name, path, root_directory)
             # if the _sub_theories_.txt file has not been created, make an empty one
             sub_theories_path = os.path.join(path, '_sub_theories_.txt')
             if not os.path.isfile(sub_theories_path):
@@ -159,7 +159,7 @@ class Theory:
         self.active_folder = active_folder
         if active_folder is not None:
             TheoryFolderStorage.active_theory_folder_storage = \
-                self._theoryFolderStorage(active_folder)
+                self._theory_folder_storage(active_folder)
         else:
             TheoryFolderStorage.active_theory_folder_storage = None
             assert owns_active_folder==False
@@ -174,62 +174,62 @@ class Theory:
             theory_html_segments.append(r'<a class=\"ProveItLink\" href=\"%s\">%s</a>'%(json.dumps(url_link).strip('"'), theory_name_segment))
         return '.'.join(theory_html_segments)
     
-    def isRoot(self):
+    def is_root(self):
         '''
         Return True iff this Theory is a "root" Theory (no parent
         directory with an __init__.py file).
         '''
-        return self._storage.isRoot()
+        return self._storage.is_root()
     
-    def getPath(self):
+    def get_path(self):
         '''
         Return the directory associated with the theory
         '''
         return self._storage.directory
 
     @staticmethod
-    def _setRootTheoryPath(theoryName, path):
+    def _setRootTheoryPath(theory_name, path):
         path = os.path.normpath(os.path.abspath(path))
-        if theoryName in Theory._rootTheoryPaths:
-            storedPath = Theory._rootTheoryPaths[theoryName]
-            if os.path.normcase(storedPath) != os.path.normcase(path):
-                raise TheoryException("Conflicting directory references to theory '%s': %s vs %s"%(theoryName, path, storedPath))
-        Theory._rootTheoryPaths[theoryName] = path 
+        if theory_name in Theory._rootTheoryPaths:
+            stored_path = Theory._rootTheoryPaths[theory_name]
+            if os.path.normcase(stored_path) != os.path.normcase(path):
+                raise TheoryException("Conflicting directory references to theory '%s': %s vs %s"%(theory_name, path, stored_path))
+        Theory._rootTheoryPaths[theory_name] = path 
     
     @staticmethod
-    def getTheory(theoryName):
+    def get_theory(theory_name):
         '''
         Return the Theory with the given name.
         '''
-        splitTheoryName = theoryName.split('.')
-        rootName = splitTheoryName[0]
-        if rootName not in Theory._rootTheoryPaths:
-            raise TheoryException("Theory root '%s' is unknown (%s)"%(rootName, Theory._rootTheoryPaths))
-        rootDirectory = Theory._rootTheoryPaths[rootName]
-        return Theory(os.path.join(*([rootDirectory]+splitTheoryName[1:])))        
+        split_theory_name = theory_name.split('.')
+        root_name = split_theory_name[0]
+        if root_name not in Theory._rootTheoryPaths:
+            raise TheoryException("Theory root '%s' is unknown (%s)"%(root_name, Theory._rootTheoryPaths))
+        root_directory = Theory._rootTheoryPaths[root_name]
+        return Theory(os.path.join(*([root_directory]+split_theory_name[1:])))        
         
-    def getSubTheoryNames(self):
-        return self._storage.getSubTheoryNames()
+    def get_sub_theory_names(self):
+        return self._storage.get_sub_theory_names()
 
     def generate_sub_theories(self):
         '''
         Yield the Theory objects for the sub-theories.
         '''
-        for sub_theory_name in self._storage.getSubTheoryNames():
+        for sub_theory_name in self._storage.get_sub_theory_names():
             yield Theory(os.path.join(self._storage.directory, sub_theory_name))
 
-    def setSubTheoryNames(self, subTheoryNames):
-        return self._storage.setSubTheoryNames(subTheoryNames)
+    def set_sub_theory_names(self, sub_theory_names):
+        return self._storage.set_sub_theory_names(sub_theory_names)
 
-    def appendSubTheoryName(self, subTheoryName):
-        return self._storage.appendSubTheoryName(subTheoryName)
+    def append_sub_theory_name(self, sub_theory_name):
+        return self._storage.append_sub_theory_name(sub_theory_name)
                 
-    def _setAxioms(self, axiomNames, axiomDefinitions):
-        self._storage.setSpecialExpressions(axiomNames, axiomDefinitions, 
+    def _setAxioms(self, axiom_names, axiom_definitions):
+        self._storage.set_special_expressions(axiom_names, axiom_definitions, 
                                             'axiom')
     
-    def _setTheorems(self, theoremNames, theoremDefinitions):
-        self._storage.setSpecialExpressions(theoremNames, theoremDefinitions, 
+    def _setTheorems(self, theorem_names, theorem_definitions):
+        self._storage.set_special_expressions(theorem_names, theorem_definitions, 
                                             'theorem')
     
     def _clearAxioms(self):
@@ -240,21 +240,21 @@ class Theory:
     
             
     def _clearCommonExressions(self):
-        self._setCommonExpressions([], dict(), clear=True)
+        self._set_common_expressions([], dict(), clear=True)
         
-    def _setCommonExpressions(self, exprNames, exprDefinitions):
-        self._storage.setCommonExpressions(exprNames, exprDefinitions)
+    def _set_common_expressions(self, expr_names, expr_definitions):
+        self._storage.set_common_expressions(expr_names, expr_definitions)
     
-    def makeSpecialExprModule(self, kind):
+    def make_special_expr_module(self, kind):
         '''
         Make a _common_.py, _axioms_.py, or _theorems_.py file for importing
         expressions from the certified database.
         '''
-        specialStatementsClassName = kind[0].upper() + kind[1:]
-        if kind=='common': specialStatementsClassName = 'CommonExpressions'        
+        special_statements_class_name = kind[0].upper() + kind[1:]
+        if kind=='common': special_statements_class_name = 'CommonExpressions'        
         output = "import sys\n"
-        output += "from proveit._core_.theory import %s\n"%specialStatementsClassName
-        output += "sys.modules[__name__] = %s(__name__, __file__)\n"%(specialStatementsClassName)        
+        output += "from proveit._core_.theory import %s\n"%special_statements_class_name
+        output += "sys.modules[__name__] = %s(__name__, __file__)\n"%(special_statements_class_name)        
         filename = os.path.join(self._storage.directory, '_%s_.py'%kind)
         if os.path.isfile(filename):
             with open(filename, 'r') as f:
@@ -270,17 +270,17 @@ class Theory:
     def get_theorem_names(self):
         return self._storage.get_theorem_names()
     
-    def commonExpressionNames(self):
-        return self._storage.commonExpressionNames()
+    def common_expression_names(self):
+        return self._storage.common_expression_names()
 
-    def storedCommonExprDependencies(self):
+    def stored_common_expr_dependencies(self):
         '''
         Return the stored set of theory names of common expressions
         referenced by the common expressions of this theory.
         '''
-        return self._storage.storedCommonExprDependencies()    
+        return self._storage.stored_common_expr_dependencies()    
     
-    def referenceHyperlinkedObjects(self, name, clear=False):
+    def reference_hyperlinked_objects(self, name, clear=False):
         '''
         Reference displayed expressions, recorded under the given name
         in the __pv_it directory.  If the same name is reused,
@@ -289,19 +289,19 @@ class Theory:
         If clear is True, remove all of the references and the
         file that stores these references.
         '''
-        self._storage.referenceHyperlinkedObjects(name, clear)
+        self._storage.reference_hyperlinked_objects(name, clear)
                             
-    def getAxiom(self, name):
+    def get_axiom(self, name):
         '''
         Return the Axiom of the given name in this theory.
         '''
-        return self._storage.getAxiom(name)
+        return self._storage.get_axiom(name)
                 
-    def getTheorem(self, name):
+    def get_theorem(self, name):
         '''
         Return the Theorem of the given name in this theory.
         '''
-        return self._storage.getTheorem(name)
+        return self._storage.get_theorem(name)
 
     def generate_local_axioms(self):
         '''
@@ -309,7 +309,7 @@ class Theory:
         of this theory.
         '''
         for name in self.get_axiom_names():
-            yield self.getAxiom(name)
+            yield self.get_axiom(name)
     
     def generate_all_contained_axioms(self):
         '''
@@ -324,28 +324,28 @@ class Theory:
                 yield axiom
     
     @staticmethod
-    def findAxiom(fullName):
+    def find_axiom(full_name):
         '''
         Given the full name of an axiom that includes the theory
         name, return the Axiom obtained the proper Theory.
         '''
-        return Theory._findStmt(fullName, 'axiom')
+        return Theory._findStmt(full_name, 'axiom')
 
     @staticmethod
-    def findTheorem(fullName):
+    def find_theorem(full_name):
         '''
         Given the full name of an theorem that includes the theory
         name, return the Theorem obtained the proper Theory.
         '''
-        return Theory._findStmt(fullName, 'theorem')
+        return Theory._findStmt(full_name, 'theorem')
 
     @staticmethod
-    def _findStmt(fullName, kind):
-        split_name = fullName.split('.')
+    def _findStmt(full_name, kind):
+        split_name = full_name.split('.')
         theory_name, stmt_name = '.'.join(split_name[:-1]), split_name[-1]
-        theory = Theory.getTheory(theory_name)
-        if kind == 'axiom': return theory.getAxiom(stmt_name)
-        if kind == 'theorem': return theory.getTheorem(stmt_name)
+        theory = Theory.get_theory(theory_name)
+        if kind == 'axiom': return theory.get_axiom(stmt_name)
+        if kind == 'theorem': return theory.get_theorem(stmt_name)
 
     @staticmethod
     def extract_markdowntitle_of_notebook(nb_str, replace_str=None):
@@ -402,7 +402,33 @@ class Theory:
                     _f.write(nb_str)
         return nb_str
 
-    def proofNotebook(self, proof):
+    @staticmethod
+    def update_proving_name_if_needed(filename, theorem_name):
+        '''
+        Check if the notebook stored in 'filename' has the 
+        correct name following %proving.  If not, fix it.
+        Return the possibly updated notebook string, or None
+        if it file was not in an expected format to be able 
+        to extract the title.
+        '''
+        with open(filename, 'r') as _f:
+            nb_str = _f.read()
+        proving_str = '"%proving '
+        proving_str_idx = nb_str.find(proving_str)
+        if proving_str_idx == -1: return None
+        end_quote_idx = nb_str.find('"', proving_str_idx+1)
+        if end_quote_idx == -1: return None
+        existing_name = nb_str[proving_str_idx + len(proving_str)
+                               :end_quote_idx]
+        if existing_name != theorem_name:
+            # Replace the name with the appropriate name.
+            nb_str = (nb_str[:proving_str_idx] + proving_str +
+                      theorem_name + nb_str[end_quote_idx:])
+            with open(filename, 'w') as _f:
+                _f.write(nb_str)
+        return nb_str
+
+    def proof_notebook(self, proof):
         '''
         Return the "basic" proof notebook corresponding to the given 
         proof_id.  Note, this is different than a "theorem" proof
@@ -411,56 +437,56 @@ class Theory:
         '''
         theory_folder_storage = \
             TheoryFolderStorage.active_theory_folder_storage
-        return theory_folder_storage.proofNotebook(proof)    
+        return theory_folder_storage.proof_notebook(proof)    
     
-    def thmProofNotebook(self, theoremName, expr, num_duplicates=0):
+    def thm_proof_notebook(self, theorem_name, expr, num_duplicates=0):
         '''
         Return the path of the proof notebook for a theorem with the 
         given name and expression, creating it if it does not already 
         exist.  num_duplicates is the number of previous instances
         of the expression that we have encountered.
         '''
-        return self._storage.thmProofNotebook(theoremName, expr,
+        return self._storage.thm_proof_notebook(theorem_name, expr,
                                               num_duplicates)
 
-    def stashExtraneousThmProofNotebooks(self):
+    def stash_extraneous_thm_proof_notebooks(self):
         '''
         For any proof notebooks for theorem names not included in the 
         theory, stash them or remove them if they are generic notebooks.
         '''
-        self._storage.stashExtraneousThmProofNotebooks(
+        self._storage.stash_extraneous_thm_proof_notebooks(
                 self.get_theorem_names())
     
     @staticmethod
-    def expressionNotebook(expr, nameKindTheory=None,
-                           completeSpecialExprNotebook=False):
+    def expression_notebook(expr, name_kind_theory=None,
+                           complete_special_expr_notebook=False):
         '''
         Return the path of the expression notebook, creating it if it
-        does not already exist.  If 'nameKindTheory' is
+        does not already exist.  If 'name_kind_theory' is
         provided, it should be the (name, kind, theory) for a special 
         expression that may or may not be complete/official
         (%end_[common/axioms/theorems] has not been
         called yet in the special expressions notebook).
         '''
         # use the Storage object to generate/grab the expression notebook.
-        return TheoryFolderStorage.expressionNotebook(
-                expr, nameKindTheory, completeSpecialExprNotebook)
+        return TheoryFolderStorage.expression_notebook(
+                expr, name_kind_theory, complete_special_expr_notebook)
                  
     @staticmethod
-    def getStoredAxiom(fullname):
-        return Theory.getStoredStmt(fullname, 'axiom')
+    def get_stored_axiom(fullname):
+        return Theory.get_stored_stmt(fullname, 'axiom')
 
     @staticmethod
-    def getStoredTheorem(fullname):
-        return Theory.getStoredStmt(fullname, 'theorem')
+    def get_stored_theorem(fullname):
+        return Theory.get_stored_stmt(fullname, 'theorem')
                 
     @staticmethod
-    def getStoredStmt(fullname, kind):
+    def get_stored_stmt(fullname, kind):
         from ._theory_storage import StoredAxiom, StoredTheorem
         split_name = fullname.split('.')
         theory_name = '.'.join(split_name[:-1])
         stmt_name = split_name[-1]
-        theory = Theory.getTheory(theory_name)
+        theory = Theory.get_theory(theory_name)
         if kind == 'axiom':
             return StoredAxiom(theory, stmt_name)
         elif kind == 'theorem':
@@ -468,49 +494,49 @@ class Theory:
         else:
             raise TheoryException("Expecting 'kind' to be 'axiom' or 'theorem' not '%s'"%kind)
 
-    def getCommonExpr(self, name):
+    def get_common_expr(self, name):
         '''
         Return the Expression of the common expression in this theory
         with the given name.
         '''
-        return self._storage.getCommonExpr(name)
+        return self._storage.get_common_expr(name)
     
-    def getStoredExpr(self, expr_id, folder=None):
+    def get_stored_expr(self, expr_id, folder=None):
         '''
         Return the stored Expression with the given id (hash string).
         Use the "active folder" as the default folder.
         '''
-        theory_folder_storage = self._theoryFolderStorage(folder)
-        return theory_folder_storage.makeExpression(expr_id)
+        theory_folder_storage = self._theory_folder_storage(folder)
+        return theory_folder_storage.make_expression(expr_id)
     
-    def getStoredJudgmentOrProof(self, storage_id, folder=None):
+    def get_stored_judgment_or_proof(self, storage_id, folder=None):
         '''
         Return the stored Judgment or Proof with the given id 
         (hash string).  Use the "active folder" as the default folder.
         '''
-        theory_folder_storage = self._theoryFolderStorage(folder)
-        return theory_folder_storage.makeJudgmentOrProof(storage_id)
+        theory_folder_storage = self._theory_folder_storage(folder)
+        return theory_folder_storage.make_judgment_or_proof(storage_id)
     
-    def getShowProof(self, proof_id, folder=None):
+    def get_show_proof(self, proof_id, folder=None):
         '''
         Return the _ShowProof representing the proof with the 
         given id (hash string) for display purposes.
         Use the "active folder" as the default folder.
         '''
-        theory_folder_storage = self._theoryFolderStorage(folder)
-        return theory_folder_storage.makeShowProof(proof_id)
+        theory_folder_storage = self._theory_folder_storage(folder)
+        return theory_folder_storage.make_show_proof(proof_id)
     
     @staticmethod
-    def _stored_png(expr, latex, configLatexToolFn):
+    def _stored_png(expr, latex, config_latex_tool_fn):
         '''
         Find the .png file for the stored Expression.
         Create it if it did not previously exist.
         Return the png data and path where the png is stored as a tuple.
         '''
         return TheoryFolderStorage.retrieve_png(
-                expr, latex, configLatexToolFn)        
+                expr, latex, config_latex_tool_fn)        
 
-    def _theoryFolderStorage(self, folder=None):
+    def _theory_folder_storage(self, folder=None):
         '''
         Return the TheoryFolderStorage object associated with this
         theory and the folder.  The default folder is the
@@ -520,29 +546,29 @@ class Theory:
             folder = self.active_folder
         if folder is None:
             raise ValueError("A 'folder' must be specified")        
-        return self._storage.theoryFolderStorage(folder)
+        return self._storage.theory_folder_storage(folder)
     
     def _common_storage(self):
-        return self._theoryFolderStorage('common')
+        return self._theory_folder_storage('common')
         
     def clean_active_folder(self, clear=False):
         '''
         Clean the corresponding __pv_it directory of any stored expressions
         or proofs that have a reference count of zero.
         '''
-        theory_folder_storage = self._theoryFolderStorage(self.active_folder)
+        theory_folder_storage = self._theory_folder_storage(self.active_folder)
         if theory_folder_storage is not None:
             return theory_folder_storage.clean(clear)
     
-    def containsAnyExpression(self):
+    def contains_any_expression(self):
         '''
         Return True if this theory and all of its sub-theories
         contain no expressions.
         '''
-        if self._storage.containsAnyExpression():
+        if self._storage.contains_any_expression():
             return True
         for sub_theory in self.generate_sub_theories():
-            if sub_theory.containsAnyExpression():
+            if sub_theory.contains_any_expression():
                 return True
         return False                    
 
@@ -563,12 +589,12 @@ class Axioms(ModuleType):
         if name[0:2]=='__': 
             raise AttributeError # don't handle internal Python attributes
         try:
-            axiom_truth = self._theory.getAxiom(name).provenTruth
+            axiom_truth = self._theory.get_axiom(name).proven_truth
         except KeyError:
             raise AttributeError("'" + name + "' axiom not found in '" + self._theory.name + "'\n(make sure to execute the appropriate '_axioms_.ipynb' notebook after any changes)")
         """
         try:
-            axiom_truth.deriveSideEffects()
+            axiom_truth.derive_side_effects()
         except Exception as e:
             print "Failure to derive side effects of axiom", name
             traceback.print_exc()
@@ -593,12 +619,12 @@ class Theorems(ModuleType):
         if name[0:2]=='__': 
             raise AttributeError # don't handle internal Python attributes
         try:
-            theorem_truth = self._theory.getTheorem(name).provenTruth
+            theorem_truth = self._theory.get_theorem(name).proven_truth
         except KeyError:
             raise AttributeError("'" + name + "' theorem not found in '" + self._theory.name +  "'\n(make sure to execute the appropriate '_theorems_.ipynb' notebook after any changes)")
         """
         try:
-            theorem_truth.deriveSideEffects()
+            theorem_truth.derive_side_effects()
         except Exception as e:
             print "Failure to derive side effects of theorem", name
             traceback.print_exc()
@@ -617,7 +643,7 @@ class CommonExpressions(ModuleType):
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(list(self.__dict__.keys()) + list(self._theory.commonExpressionNames()))
+        return sorted(list(self.__dict__.keys()) + list(self._theory.common_expression_names()))
 
     def __getattr__(self, name):
         import proveit
@@ -626,7 +652,7 @@ class CommonExpressions(ModuleType):
             raise AttributeError # don't handle internal Python attributes
         
         try:
-            expr = self._theory.getCommonExpr(name)
+            expr = self._theory.get_common_expr(name)
             return expr
         except (KeyError, OSError, TheoryException):
             if proveit.defaults._running_proveit_notebook is not None:

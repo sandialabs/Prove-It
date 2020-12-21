@@ -1,12 +1,12 @@
 from proveit.common import A, B, C, D
 from proveit.expression import Variable, Literal, LATEX, STRING
-from proveit.multiExpression import Block
+from proveit.multi_expression import Block
 from proveit.numbers import Exp, frac, sqrt
 from proveit.numbers.common import zero, one, two
-from proveit.numbers.numberSets import Complex
+from proveit.numbers.number_sets import Complex
 from proveit.linalg import TensorExp, SU
 from proveit.physics.quantum.circuit import Gate
-from proveit.physics.quantum.quantumOps import Ket
+from proveit.physics.quantum.quantum_ops import Ket
 
 pkg = __package__
 
@@ -26,8 +26,8 @@ MINUS = Literal(pkg, 'MINUS', {LATEX:'-', STRING:'-'}) # For negative X eigensta
 
 ket0 = Ket(zero)
 ket1 = Ket(one)
-ketPlus = Ket(PLUS)
-ketMinus = Ket(MINUS)
+ket_plus = Ket(PLUS)
+ket_minus = Ket(MINUS)
 
 Xgate = Gate(X)
 Ygate = Gate(Y)
@@ -46,7 +46,7 @@ QubitSpace = Exp(Complex, two)
 QubitRegisterSpace = lambda n : TensorExp(Exp(Complex, two), n) 
 RegisterSU = lambda n : SU(Exp(two, n))
 
-invRoot2 = frac(one, sqrt(two))
+inv_root2 = frac(one, sqrt(two))
 
 B1 = Variable('B1')
 B2 = Variable('B2')

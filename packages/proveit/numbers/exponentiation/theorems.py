@@ -2,244 +2,244 @@ from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
 from proveit.numbers import Integer, Natural, NaturalPos, Real, RealPos, Complex
 from proveit.numbers import Exp, sqrt, Add, Mult, Sub, Neg, frac, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
-from proveit.common import a, b, c, d, n, x, y, z, xEtc, xMulti
+from proveit.common import a, b, c, d, n, x, y, z, x_etc, x_multi
 from proveit.numbers.common import zero, one, two
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
+begin_theorems(locals())
 
-expNatClosure = Forall((a, b), InSet(Exp(a, b), NaturalPos), domain=Natural, conditions=[NotEquals(a, zero)])
-expNatClosure
+exp_nat_closure = Forall((a, b), InSet(Exp(a, b), NaturalPos), domain=Natural, conditions=[NotEquals(a, zero)])
+exp_nat_closure
 
-expRealClosure = Forall([a, b], InSet(Exp(a, b), Real), domain=Real,
+exp_real_closure = Forall([a, b], InSet(Exp(a, b), Real), domain=Real,
                        conditions=[GreaterThanEquals(a, zero), GreaterThan(b, zero)])
-expRealClosure
+exp_real_closure
 
-expRealPosClosure = Forall([a, b], InSet(Exp(a, b), RealPos), domain=Real,
+exp_real_pos_closure = Forall([a, b], InSet(Exp(a, b), RealPos), domain=Real,
                        conditions=[GreaterThan(a, zero)])
-expRealPosClosure
+exp_real_pos_closure
 
-expComplexClosure = Forall([a, b], InSet(Exp(a, b), Complex), domain=Complex, 
+exp_complex_closure = Forall([a, b], InSet(Exp(a, b), Complex), domain=Complex, 
                     conditions=[NotEquals(a, zero)])
-expComplexClosure
+exp_complex_closure
 
-sqrtRealClosure = Forall([a], InSet(sqrt(a), Real), domain=Real,
+sqrt_real_closure = Forall([a], InSet(sqrt(a), Real), domain=Real,
                          conditions=[GreaterThanEquals(a, zero)])
-sqrtRealClosure
+sqrt_real_closure
 
-sqrtRealPosClosure = Forall([a], InSet(sqrt(a), RealPos), domain=RealPos)
-sqrtRealPosClosure
+sqrt_real_pos_closure = Forall([a], InSet(sqrt(a), RealPos), domain=RealPos)
+sqrt_real_pos_closure
 
-sqrtComplexClosure = Forall([a], InSet(sqrt(a), Complex), domain=Complex)
-sqrtComplexClosure
+sqrt_complex_closure = Forall([a], InSet(sqrt(a), Complex), domain=Complex)
+sqrt_complex_closure
 
 # Should generalize to even power closure, but need to define and implement evens set to do this.
-sqrdPosClosure = Forall(a, InSet(Exp(a, two), RealPos), 
+sqrd_pos_closure = Forall(a, InSet(Exp(a, two), RealPos), 
                         domain=Real, conditions=[NotEquals(a, zero)])
-sqrdPosClosure
+sqrd_pos_closure
 
-squarePosIneq = Forall([a,b],
+square_pos_ineq = Forall([a,b],
                         LessThanEquals(Exp(Abs(a),two),Exp(b,two)),
                         domain = Real,
                         conditions = (LessThanEquals(Abs(a),b),))
-squarePosIneq
+square_pos_ineq
 
-squarePosEq = Forall(a,
+square_pos_eq = Forall(a,
                      Equals(Exp(Abs(a),two),Exp(a,two)),
                      domain = Real)
-squarePosEq
+square_pos_eq
 
-expNotEqZero = Forall([a, b], NotEquals(Exp(a,b), zero), domain=Complex, conditions=[NotEquals(a, zero)])
-expNotEqZero
+exp_not_eq_zero = Forall([a, b], NotEquals(Exp(a,b), zero), domain=Complex, conditions=[NotEquals(a, zero)])
+exp_not_eq_zero
 
-expZeroEqOne = Forall([a], Equals(Exp(a, zero), one), domain=Complex, conditions=[NotEquals(a, zero)])
-expZeroEqOne
+exp_zero_eq_one = Forall([a], Equals(Exp(a, zero), one), domain=Complex, conditions=[NotEquals(a, zero)])
+exp_zero_eq_one
 
-exponentiatedZero = Forall([x], Equals(Exp(zero, x), zero), domain=Complex, conditions=[NotEquals(x, zero)])
-exponentiatedZero
+exponentiated_zero = Forall([x], Equals(Exp(zero, x), zero), domain=Complex, conditions=[NotEquals(x, zero)])
+exponentiated_zero
 
-exponentiatedOne = Forall([x], Equals(Exp(one, x), one), domain=Complex)
-exponentiatedOne
+exponentiated_one = Forall([x], Equals(Exp(one, x), one), domain=Complex)
+exponentiated_one
 
-sumInExp = Forall([a,b,c],
+sum_in_exp = Forall([a,b,c],
                 Equals(Exp(a,Add(b,c)),
                        Mult(Exp(a,b),Exp(a,c))),
                 domain = Complex, conditions=[NotEquals(a, zero)])
-sumInExp
+sum_in_exp
 
-sumInExpRev = Forall([a,b,c],
+sum_in_exp_rev = Forall([a,b,c],
                 Equals(Mult(Exp(a,b),Exp(a,c)),
                        Exp(a,Add(b,c))),
                 domain = Complex, conditions=[NotEquals(a, zero)])
-sumInExpRev
+sum_in_exp_rev
 
-addOneRightInExp = Forall([a,b],
+add_one_right_in_exp = Forall([a,b],
                 Equals(Exp(a,Add(b,one)),
                        Mult(Exp(a,b),a)),
                 domain = Complex, conditions=[NotEquals(a, zero)])
-addOneRightInExp
+add_one_right_in_exp
 
-addOneRightInExpRev = Forall([a,b],
+add_one_right_in_exp_rev = Forall([a,b],
                 Equals(Mult(Exp(a,b),a),
                        Exp(a,Add(b,one))),
                 domain = Complex, conditions=[NotEquals(a, zero)])
-addOneRightInExpRev
+add_one_right_in_exp_rev
 
 
-addOneLeftInExp = Forall([a,b],
+add_one_left_in_exp = Forall([a,b],
                 Equals(Exp(a,Add(one, b)),
                        Mult(a, Exp(a,b))),
                 domain = Complex, conditions=[NotEquals(a, zero)])
-addOneLeftInExp
+add_one_left_in_exp
 
-addOneLeftInExpRev = Forall([a,b],
+add_one_left_in_exp_rev = Forall([a,b],
                 Equals(Mult(a, Exp(a,b)),
                        Exp(a,Add(one, b))),
                 domain = Complex, conditions=[NotEquals(a, zero)])
-addOneLeftInExpRev
+add_one_left_in_exp_rev
 
 
-diffInExp = Forall([a,b,c],
+diff_in_exp = Forall([a,b,c],
                 Equals(Exp(a,Sub(b,c)),
                        Mult(Exp(a,b),Exp(a,Neg(c)))),
                 domain = Complex, conditions=[NotEquals(a, zero)])
-diffInExp
+diff_in_exp
 
 
-diffInExpRev = Forall([a,b,c],
+diff_in_exp_rev = Forall([a,b,c],
                 Equals(Mult(Exp(a,b),Exp(a,Neg(c))),
                        Exp(a,Sub(b,c))),
                 domain = Complex, conditions=[NotEquals(a, zero)])
-diffInExpRev
+diff_in_exp_rev
 
-diffFracInExp = Forall([a,b,c,d],
+diff_frac_in_exp = Forall([a,b,c,d],
                 Equals(Exp(a,Sub(b,frac(c, d))),
                        Mult(Exp(a,b),Exp(a,frac(Neg(c), d)))),
                 domain = Complex, conditions=[NotEquals(a, zero), NotEquals(d, zero)])
-diffFracInExp
+diff_frac_in_exp
 
 
-diffFracInExpRev = Forall([a,b,c,d],
+diff_frac_in_exp_rev = Forall([a,b,c,d],
                 Equals(Mult(Exp(a,b),Exp(a,frac(Neg(c), d))),
                        Exp(a,Sub(b,frac(c, d)))),
                 domain = Complex, conditions=[NotEquals(a, zero), NotEquals(d, zero)])
-diffFracInExpRev
+diff_frac_in_exp_rev
 
 # works because log[a^c b^c] = c log a + c log b
-expOfPositivesProd = Forall(c, Forall((a, b),
+exp_of_positives_prod = Forall(c, Forall((a, b),
                              Equals(Exp(Mult(a,b),c),
                                     Mult(Exp(a,c),Exp(b,c))),
                              domain=RealPos),
                 domain=Complex)
-expOfPositivesProd
+exp_of_positives_prod
 
-expOfPositivesProdRev = Forall(c, Forall((a, b),
+exp_of_positives_prod_rev = Forall(c, Forall((a, b),
                              Equals(Mult(Exp(a,c),Exp(b,c)),
                                    Exp(Mult(a,b),c)),
                              domain=RealPos),
                 domain=Complex)
-expOfPositivesProdRev
+exp_of_positives_prod_rev
 
 # Works for integers powers by the commutivity of complex numbers (or their inverses when n < 0).
 # Does not work for fractional powers.  Consider sqrt(-1)*sqrt(-1) = -1 not sqrt((-1)*(-1)) = 1.
-intExpOfProd = Forall(n, Forall((a, b),
+int_exp_of_prod = Forall(n, Forall((a, b),
                                 Equals(Exp(Mult(a,b),n),
                                        Mult(Exp(a,n),Exp(b,n))),
                                 domain=Complex, conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
                       domain=Integer)
-intExpOfProd
+int_exp_of_prod
 
 
-intExpOfProdRev = Forall(n, Forall((a, b),
+int_exp_of_prod_rev = Forall(n, Forall((a, b),
                                    Equals(Mult(Exp(a,n),Exp(b,n)),
                                           Exp(Mult(a,b),n)),
                                    domain=Complex, conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
                          domain=Integer)
-intExpOfProdRev
+int_exp_of_prod_rev
 
-natsPosExpOfProd = Forall(n, Forall((a, b),
+nats_pos_exp_of_prod = Forall(n, Forall((a, b),
                                     Equals(Exp(Mult(a,b),n),
                                            Mult(Exp(a,n),Exp(b,n))),
                                     domain=Complex),
                           domain=NaturalPos)
-natsPosExpOfProd
+nats_pos_exp_of_prod
 
-natsPosExpOfProdRev = Forall(n, Forall((a, b),
+nats_pos_exp_of_prod_rev = Forall(n, Forall((a, b),
                                        Equals(Mult(Exp(a,n),Exp(b,n)),
                                               Exp(Mult(a,b),n)),
                                        domain=Complex),
                              domain=NaturalPos)
-natsPosExpOfProdRev
+nats_pos_exp_of_prod_rev
 
 # Works for integers powers through repetition of a^b (or a^{-b}) and adding exponents.
 # Does not work for fractional powers.  Consider sqrt[(-1)^2] = 1 not (-1)^{2*(1/2)} = -1.
-intExpOfExp = Forall(n, Forall((a, b), 
+int_exp_of_exp = Forall(n, Forall((a, b), 
                             Equals(Exp(Exp(a, b), n), 
                                    Exp(a, Mult(b, n))), 
                             domain=Complex, conditions=[NotEquals(a, zero)]), 
                   domain=Integer)
-intExpOfExp
+int_exp_of_exp
 
-intExpOfNegExp = Forall(n, Forall((a, b), 
+int_exp_of_neg_exp = Forall(n, Forall((a, b), 
                                Equals(Exp(Exp(a, Neg(b)), n), 
                                       Exp(a, Neg(Mult(b, n)))),
                                domain=Complex, conditions=[NotEquals(a, zero)]), 
                         domain=Integer)
-intExpOfNegExp
+int_exp_of_neg_exp
 
-negIntExpOfExp = Forall(n, Forall((a, b),
+neg_int_exp_of_exp = Forall(n, Forall((a, b),
                             Equals(Exp(Exp(a, b), Neg(n)), 
                                    Exp(a, Neg(Mult(b, n)))), 
                                domain=Complex, conditions=[NotEquals(a, zero)]),
                         domain=Integer)
 
-negIntExpOfExp
+neg_int_exp_of_exp
 
-negIntExpOfNegExp = Forall(n, Forall((a, b),
+neg_int_exp_of_neg_exp = Forall(n, Forall((a, b),
                                      Equals(Exp(Exp(a, Neg(b)), Neg(n)), 
                                             Exp(a, Mult(b, n))), 
                                domain=Complex, conditions=[NotEquals(a, zero)]),
                            domain=Integer)
 
-negIntExpOfNegExp
+neg_int_exp_of_neg_exp
 
-diffSquareComm = Forall([a,b],
+diff_square_comm = Forall([a,b],
                         Equals(
                             Exp(Sub(a,b),two),
                             Exp(Sub(b,a),two)),
                         domain = Complex)
-diffSquareComm
+diff_square_comm
 
-oneExp = Forall([x],
+one_exp = Forall([x],
                Equals(Exp(x,one),
                       x),
                domain = Complex)
-oneExp
+one_exp
 
-expOne = Forall([x],
+exp_one = Forall([x],
                Equals(Exp(one,x),
                      one),
                domain = Complex)
-expOne
+exp_one
 
-sameExpDistribute = Forall([x,y,z],
+same_exp_distribute = Forall([x,y,z],
                             Equals(Mult(Exp(x,y),Exp(z,y)),
                                  Exp(Mult(x,z),y)),
                             domain = Complex)
-sameExpDistribute
+same_exp_distribute
 
-sqrtOfProd = Forall(xEtc, Equals(sqrt(Mult(xEtc)),
-                              Mult(Etcetera(sqrt(xMulti)))),
+sqrt_of_prod = Forall(x_etc, Equals(sqrt(Mult(x_etc)),
+                              Mult(Etcetera(sqrt(x_multi)))),
                   domain=RealPos)
-sqrtOfProd
+sqrt_of_prod
 
-prodOfSqrts = Forall(xEtc, Equals(Mult(Etcetera(sqrt(xMulti))),
-                                  sqrt(Mult(xEtc))),
+prod_of_sqrts = Forall(x_etc, Equals(Mult(Etcetera(sqrt(x_multi))),
+                                  sqrt(Mult(x_etc))),
                      domain=RealPos)
-prodOfSqrts
+prod_of_sqrts
 
-sqrtTimesItself = Forall(x, Equals(Mult(sqrt(x), sqrt(x)), x),
+sqrt_times_itself = Forall(x, Equals(Mult(sqrt(x), sqrt(x)), x),
                          domain=Real, conditions=[GreaterThanEquals(x, zero)])
-sqrtTimesItself
+sqrt_times_itself
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

@@ -1,3 +1,3 @@
 from proveit.basiclogic import Equals, FALSE
 
-Equals(FALSE, FALSE).concludeViaReflexivity().qed(__file__)
+Equals(FALSE, FALSE).conclude_via_reflexivity().qed(__file__)

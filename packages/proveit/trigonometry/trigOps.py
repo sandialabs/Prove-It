@@ -8,4 +8,4 @@ class AngDiff(Operation):
         self.angle1 = angle1
         self.angle2 = angle2
 
-ANGULAR_DIFFERENCE = Literal(pkg, 'AngDiff', {LATEX:r'{\rm AngDiff}'}, operationMaker = lambda operands : AngDiff(*operands))
+ANGULAR_DIFFERENCE = Literal(pkg, 'AngDiff', {LATEX:r'{\rm AngDiff}'}, operation_maker = lambda operands : AngDiff(*operands))

@@ -1,0 +1,12 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.tuples.range_from1_len_typical_eq
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.not_false
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
+proveit.numbers.number_sets.natural_numbers.natural_lower_bound
+proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
+proveit.numbers.number_sets.natural_numbers.non_zero_if_is_nat_pos
+# THEOREMS AND THEORIES TO EXCLUDE:

@@ -3,56 +3,56 @@
 
 # In[1]:
 
-from proveit.logic import Forall, Exists, NotExists, Boolean, TRUE, FALSE, inBool, Not, And, Or, Implies, Iff, Equals, NotEquals
-from proveit.common import A, B, C, P, Q, R, S, x, y, PofA, Qetc, Retc, xEtc, yEtc, zEtc, PxEtc, PyEtc, PxyEtc, etc_QxEtc, etc_QyEtc, etc_RyEtc
+from proveit.logic import Forall, Exists, NotExists, Boolean, TRUE, FALSE, in_bool, Not, And, Or, Implies, Iff, Equals, NotEquals
+from proveit.common import A, B, C, P, Q, R, S, x, y, PofA, Qetc, Retc, x_etc, y_etc, z_etc, Px_etc, Py_etc, Pxy_etc, etc_Qx_etc, etc_Qy_etc, etc_Ry_etc
 from proveit.logic.common import PofTrue, PofFalse
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
 
-beginTheorems(locals())
+begin_theorems(locals())
 
-trueEqTrue = Equals(TRUE, TRUE)
+true_eq_true = Equals(TRUE, TRUE)
 
-trueEqTrueEval = Equals(Equals(TRUE, TRUE), TRUE)
+true_eq_true_eval = Equals(Equals(TRUE, TRUE), TRUE)
 
-falseEqFalse = Equals(FALSE, FALSE)
+false_eq_false = Equals(FALSE, FALSE)
 
-falseEqFalseEval = Equals(Equals(FALSE, FALSE), TRUE)
+false_eq_false_eval = Equals(Equals(FALSE, FALSE), TRUE)
 
-trueNotFalse = NotEquals(TRUE, FALSE)
+true_not_false = NotEquals(TRUE, FALSE)
 
-notEqualsFalse = Forall(A, NotEquals(A, FALSE), conditions=[A])
+not_equals_false = Forall(A, NotEquals(A, FALSE), conditions=[A])
 
-trueEqFalseEval = Equals(Equals(TRUE, FALSE), FALSE)
+true_eq_false_eval = Equals(Equals(TRUE, FALSE), FALSE)
 
-falseEqTrueEval = Equals(Equals(FALSE, TRUE), FALSE)
+false_eq_true_eval = Equals(Equals(FALSE, TRUE), FALSE)
 
-trueConclusion = Forall(A, Implies(A, TRUE))
+true_conclusion = Forall(A, Implies(A, TRUE))
 
-inBoolEquiv = Forall(A, Equals(inBool(A), Or(Equals(A, TRUE), Equals(A, FALSE))))
+in_bool_equiv = Forall(A, Equals(in_bool(A), Or(Equals(A, TRUE), Equals(A, FALSE))))
 
-trueInBool = inBool(TRUE)
+true_is_bool = in_bool(TRUE)
 
-falseInBool = inBool(FALSE)
+false_is_bool = in_bool(FALSE)
 
-unfoldForallOverBool = Forall(P, Implies(Forall(A, PofA, domain=Boolean), And(PofTrue, PofFalse)))
+unfold_forall_over_bool = Forall(P, Implies(Forall(A, PofA, domain=Boolean), And(PofTrue, PofFalse)))
 
-inBoolIfTrue = Forall(A, inBool(A), conditions=[A])
+in_bool_if_true = Forall(A, in_bool(A), conditions=[A])
 
-inBoolIfFalse = Forall(A, inBool(A), conditions=[Not(A)])
+in_bool_if_false = Forall(A, in_bool(A), conditions=[Not(A)])
 
 # This weak form requires B to be a Boolean
-byCasesWeak = Forall((A, B), B, domain=Boolean, conditions=[Implies(A, B), Implies(Not(A), B)])
+by_cases_weak = Forall((A, B), B, domain=Boolean, conditions=[Implies(A, B), Implies(Not(A), B)])
 
 # This is a stronger form that does not require B to be a Boolean
-byCases = Forall(A, Forall(B, B, conditions=[Implies(A, B), Implies(Not(A), B)]), domain=Boolean)
+by_cases = Forall(A, Forall(B, B, conditions=[Implies(A, B), Implies(Not(A), B)]), domain=Boolean)
 
-foldForallOverBool = Forall(P, Forall(A, PofA, domain = Boolean), conditions=[PofTrue, PofFalse])
+fold_forall_over_bool = Forall(P, Forall(A, PofA, domain = Boolean), conditions=[PofTrue, PofFalse])
 
-forallBoolEvalTrue = Forall(P, Equals(Forall(A, PofA, domain=Boolean), TRUE),  conditions=[PofTrue, PofFalse])
+forall_bool_eval_true = Forall(P, Equals(Forall(A, PofA, domain=Boolean), TRUE),  conditions=[PofTrue, PofFalse])
 
 # uses constructive dilemma
-unfoldInBool = Forall(A, Or(A, Not(A)), domain=Boolean)
+unfold_is_bool = Forall(A, Or(A, Not(A)), domain=Boolean)
 
 
 
@@ -60,14 +60,14 @@ unfoldInBool = Forall(A, Or(A, Not(A)), domain=Boolean)
 
 
 
-fromNotFalse = Forall(A, A, domain=Boolean, conditions=[NotEquals(A, FALSE)])
+from_not_false = Forall(A, A, domain=Boolean, conditions=[NotEquals(A, FALSE)])
 
 
-notInBoolEquiv = Forall(A, Equals(inBool(A), And(NotEquals(A, TRUE), NotEquals(A, FALSE))))
+not_in_bool_equiv = Forall(A, Equals(in_bool(A), And(NotEquals(A, TRUE), NotEquals(A, FALSE))))
 
 
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)
 
 
 

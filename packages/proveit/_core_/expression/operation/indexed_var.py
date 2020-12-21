@@ -24,11 +24,11 @@ class IndexedVar(Operation):
         Initialize an IndexedVar to represent the given 'var' being indexed
         via 'index_or_indices'.  The 'var' must be a Variable.  
         '''
-        from proveit._core_.expression.composite import compositeExpression
+        from proveit._core_.expression.composite import composite_expression
         if not isinstance(var, Variable):
             raise TypeError("'var' being indexed should be a Variable "
                             "or IndexedVar itself; got %s"%str(var))
-        self.indices = compositeExpression(index_or_indices)
+        self.indices = composite_expression(index_or_indices)
         if len(self.indices) == 1:
             # has a single index
             self.index = self.indices[0]
@@ -39,15 +39,15 @@ class IndexedVar(Operation):
         self.var = var
         
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
-        if subClass != IndexedVar: 
-            MakeNotImplemented(subClass)
-        if len(coreInfo) != 1 or coreInfo[0] != 'IndexedVar':
-            raise ValueError("Expecting IndexedVar coreInfo to contain exactly"
+    def _make(sub_class, core_info, styles, sub_expressions):
+        if sub_class != IndexedVar: 
+            MakeNotImplemented(sub_class)
+        if len(core_info) != 1 or core_info[0] != 'IndexedVar':
+            raise ValueError("Expecting IndexedVar core_info to contain exactly"
                              " one item: 'IndexedVar'")
-        return IndexedVar(*subExpressions).withStyles(**styles)       
+        return IndexedVar(*sub_expressions).with_styles(**styles)       
 
-    def remakeArguments(self):
+    def remake_arguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Indexed.
@@ -88,11 +88,11 @@ class IndexedVar(Operation):
                                     assumptions, requirements,
                                     equality_repl_requirements)
     
-    def _formatted(self, formatType, **kwargs):
-        indices_str = self.index_or_indices.formatted(formatType, fence=False)
-        result = self.var.formatted(formatType) + '_{' + indices_str + '}'
-        if kwargs.get('forceFence', False) == True:
-            if formatType=='latex':
+    def _formatted(self, format_type, **kwargs):
+        indices_str = self.index_or_indices.formatted(format_type, fence=False)
+        result = self.var.formatted(format_type) + '_{' + indices_str + '}'
+        if kwargs.get('force_fence', False) == True:
+            if format_type=='latex':
                 return r'\left(' + result + r'\right)'
             else: return '(' + result + ')'
         return result

@@ -1,3 +1,3 @@
-from proveit.basiclogic.booleans.axioms import andTT
+from proveit.basiclogic.booleans.axioms import and_t_t
 
-andTT.deriveViaBooleanEquality().qed(__file__)
+and_t_t.derive_via_boolean_equality().qed(__file__)

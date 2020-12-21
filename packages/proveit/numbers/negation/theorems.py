@@ -1,74 +1,74 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
 from proveit.numbers import Neg, Integer, Real, Complex, Add, Sub, Mult, LessThan, GreaterThan
-from proveit.common import a, b, x, y, xEtc, xMulti
+from proveit.common import a, b, x, y, x_etc, x_multi
 from proveit.numbers.common import zero
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
+begin_theorems(locals())
 
-negIntClosure = Forall(a, InSet(Neg(a), Integer), domain=Integer)
-negIntClosure
+neg_int_closure = Forall(a, InSet(Neg(a), Integer), domain=Integer)
+neg_int_closure
 
-negRealClosure = Forall(a, InSet(Neg(a), Real), domain=Real)
-negRealClosure
+neg_real_closure = Forall(a, InSet(Neg(a), Real), domain=Real)
+neg_real_closure
 
-negComplexClosure = Forall(a, InSet(Neg(a), Complex), domain=Complex)
-negComplexClosure
+neg_complex_closure = Forall(a, InSet(Neg(a), Complex), domain=Complex)
+neg_complex_closure
 
-negatedPositiveIsNegative = Forall(a, LessThan(Neg(a), zero), domain=Real, conditions=[GreaterThan(a, zero)])
-negatedPositiveIsNegative
+negated_positive_is_negative = Forall(a, LessThan(Neg(a), zero), domain=Real, conditions=[GreaterThan(a, zero)])
+negated_positive_is_negative
 
-negatedNegativeIsPositive = Forall(a, GreaterThan(Neg(a), zero), domain=Real, conditions=[LessThan(a, zero)])
-negatedNegativeIsPositive
+negated_negative_is_positive = Forall(a, GreaterThan(Neg(a), zero), domain=Real, conditions=[LessThan(a, zero)])
+negated_negative_is_positive
 
-negNotEqZero = Forall(a, NotEquals(Neg(a), zero), domain=Complex, conditions=[NotEquals(a, zero)])
-negNotEqZero
+neg_not_eq_zero = Forall(a, NotEquals(Neg(a), zero), domain=Complex, conditions=[NotEquals(a, zero)])
+neg_not_eq_zero
 
-distributeNegThroughSum = Forall([xEtc], Equals(Neg(Add(xEtc)),
-                                               Add(Etcetera(Neg(xMulti)))),
+distribute_neg_through_sum = Forall([x_etc], Equals(Neg(Add(x_etc)),
+                                               Add(Etcetera(Neg(x_multi)))),
                                  domain=Complex)
-distributeNegThroughSum
+distribute_neg_through_sum
 
 
-distributeNegThroughSumRev = Forall([xEtc], 
-                                    Equals(Add(Etcetera(Neg(xMulti))),
-                                           Neg(Add(xEtc))),
+distribute_neg_through_sum_rev = Forall([x_etc], 
+                                    Equals(Add(Etcetera(Neg(x_multi))),
+                                           Neg(Add(x_etc))),
                                  domain=Complex)
-distributeNegThroughSumRev
+distribute_neg_through_sum_rev
 
-distributeNegThroughSubtract = Forall([x, y], Equals(Neg(Sub(x, y)),
+distribute_neg_through_subtract = Forall([x, y], Equals(Neg(Sub(x, y)),
                                                Add(Neg(x), y)),
                                  domain=Complex)
-distributeNegThroughSubtract
+distribute_neg_through_subtract
 
-negTimesPos = Forall([x, y], Equals(Mult(Neg(x), y), Neg(Mult(x, y))), domain=Complex)
-negTimesPos
+neg_times_pos = Forall([x, y], Equals(Mult(Neg(x), y), Neg(Mult(x, y))), domain=Complex)
+neg_times_pos
 
-negTimesPosRev = Forall([x, y], Equals(Neg(Mult(x, y)), Mult(Neg(x), y)), domain=Complex)
-negTimesPosRev
+neg_times_pos_rev = Forall([x, y], Equals(Neg(Mult(x, y)), Mult(Neg(x), y)), domain=Complex)
+neg_times_pos_rev
 
-posTimesNeg = Forall([x, y], Equals(Mult(x, Neg(y)), Neg(Mult(x, y))), domain=Complex)
-posTimesNeg
+pos_times_neg = Forall([x, y], Equals(Mult(x, Neg(y)), Neg(Mult(x, y))), domain=Complex)
+pos_times_neg
 
-posTimesNegRev = Forall([x, y], Equals(Neg(Mult(x, y)), Mult(x, Neg(y))), domain=Complex)
-posTimesNegRev
+pos_times_neg_rev = Forall([x, y], Equals(Neg(Mult(x, y)), Mult(x, Neg(y))), domain=Complex)
+pos_times_neg_rev
 
-negTimesNeg = Forall([x, y], Equals(Mult(Neg(x), Neg(y)), Mult(x, y)), domain=Complex)
-negTimesNeg
+neg_times_neg = Forall([x, y], Equals(Mult(Neg(x), Neg(y)), Mult(x, y)), domain=Complex)
+neg_times_neg
 
-negNeg = Forall([a],
+neg_neg = Forall([a],
                  Equals(Neg(Neg(a)), a),
                 domain=Complex)
-negNeg
+neg_neg
 
-negZero = Equals(Neg(zero), zero)
-negZero
+neg_zero = Equals(Neg(zero), zero)
+neg_zero
 
-cancelAddNeg = Forall([a,b],
+cancel_add_neg = Forall([a,b],
                       Equals(Add(Add(a,b),Neg(b)), a),
                       domain=Complex)
-cancelAddNeg
+cancel_add_neg
 
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

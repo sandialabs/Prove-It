@@ -1,7 +1,7 @@
 '''
 ExpressionInfo is an Expression wrapper for displaying the information
 of an Expression as a directed acyclic graph.  It is obtained by calling
-the exprInfo() method of an Expression object.
+the expr_info() method of an Expression object.
 '''
 
 import re
@@ -25,8 +25,8 @@ class ExpressionInfo:
         Overriding the default parameter values can change the top-level
         expression or the function used to obtain sub-expressions.
         '''
-        from proveit._core_._dependency_graph import orderedDependencyNodes
-        return orderedDependencyNodes(self.expr, lambda expr : expr._subExpressions)
+        from proveit._core_._dependency_graph import ordered_dependency_nodes
+        return ordered_dependency_nodes(self.expr, lambda expr : expr._sub_expressions)
 
     def __repr__(self):
         from .composite import NamedExprs, ExprRange
@@ -34,55 +34,55 @@ class ExpressionInfo:
         from .lambda_expr import Lambda
         from .label import Label, Literal
         from .conditional import Conditional
-        enumeratedExpressions = self._getEnumeratedExpressions()
-        expr_num_map = {expr:k for k, expr in enumerate(enumeratedExpressions)}
-        outStr = ''
-        for k, expr in enumerate(enumeratedExpressions):
-            outStr += str(k) + '. ' + str(expr) + '\n'
+        enumerated_expressions = self._getEnumeratedExpressions()
+        expr_num_map = {expr:k for k, expr in enumerate(enumerated_expressions)}
+        out_str = ''
+        for k, expr in enumerate(enumerated_expressions):
+            out_str += str(k) + '. ' + str(expr) + '\n'
             indent = ' ' * (len(str(k)) + 2)
-            outStr += indent + 'core type: ' + expr._coreInfo[0] + '\n'
+            out_str += indent + 'core type: ' + expr._core_info[0] + '\n'
             if self.show_details:
                 if isinstance(expr, Label):
-                    outStr += indent + 'latexFormat: ' + expr.latexFormat + '\n'
-                if len(expr._coreInfo)>4:
-                    outStr += indent + 'extraCoreInfo: ' + str(expr._coreInfo[4:]) + '\n'                    
+                    out_str += indent + 'latex_format: ' + expr.latex_format + '\n'
+                if len(expr._core_info)>4:
+                    out_str += indent + 'extra_core_info: ' + str(expr._core_info[4:]) + '\n'                    
                 if isinstance(expr, Literal):
-                    outStr += indent + 'theory: ' + expr.theory.name + '\n'
-                outStr += indent + 'class: ' + str(expr.__class__) + '\n'
+                    out_str += indent + 'theory: ' + expr.theory.name + '\n'
+                out_str += indent + 'class: ' + str(expr.__class__) + '\n'
             if isinstance(expr, NamedExprs):
                 for key in list(expr.keys()):
-                    outStr += indent + key + ': ' + str(expr_num_map[expr[key]]) + '\n'
+                    out_str += indent + key + ': ' + str(expr_num_map[expr[key]]) + '\n'
             elif isinstance(expr, IndexedVar):
-                outStr +=  r'variable: ' + str(expr_num_map[expr.var]) + '\n'
+                out_str +=  r'variable: ' + str(expr_num_map[expr.var]) + '\n'
                 if hasattr(expr, 'index'):
-                    outStr +=  r'index: ' + str(expr_num_map[expr.index])   + '\n'        
+                    out_str +=  r'index: ' + str(expr_num_map[expr.index])   + '\n'        
                 else:
-                    outStr +=  r'indices: ' + str(expr_num_map[expr.indices])   + '\n'                            
+                    out_str +=  r'indices: ' + str(expr_num_map[expr.indices])   + '\n'                            
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
-                    outStr += indent + r'operator: ' + str(expr_num_map[expr.operator]) + '\n'
+                    out_str += indent + r'operator: ' + str(expr_num_map[expr.operator]) + '\n'
                 else: # has multiple operators
-                    outStr += indent + r'operators: ' + str(expr_num_map[expr.operators]) + '\n'
+                    out_str += indent + r'operators: ' + str(expr_num_map[expr.operators]) + '\n'
                 if hasattr(expr, 'operand'): # has a single operand
-                    outStr += indent + r'operand: ' + str(expr_num_map[expr.operand]) + '\n'
+                    out_str += indent + r'operand: ' + str(expr_num_map[expr.operand]) + '\n'
                 else: # has multiple operands
-                    outStr += indent + r'operands: ' + str(expr_num_map[expr.operands]) + '\n'                    
+                    out_str += indent + r'operands: ' + str(expr_num_map[expr.operands]) + '\n'                    
             elif isinstance(expr, Conditional):
-                outStr += indent + r'value: ' + str(expr_num_map[expr.value]) + '\n'
-                outStr += indent + r'condition: ' + str(expr_num_map[expr.condition]) + '\n'
+                out_str += indent + r'value: ' + str(expr_num_map[expr.value]) + '\n'
+                out_str += indent + r'condition: ' + str(expr_num_map[expr.condition]) + '\n'
             elif isinstance(expr, Lambda):
                 if hasattr(expr, 'parameter'): # has a single parameter
-                    outStr += indent + 'parameter: %s\n'%(expr_num_map[expr.parameter])
+                    out_str += indent + 'parameter: %s\n'%(expr_num_map[expr.parameter])
                 else:        
-                    outStr += indent + r'parameters: %s\n'%(expr_num_map[expr.parameters])
-                outStr += indent + r'body: ' + str(expr_num_map[expr.body]) + '\n'
+                    out_str += indent + r'parameters: %s\n'%(expr_num_map[expr.parameters])
+                out_str += indent + r'body: ' + str(expr_num_map[expr.body]) + '\n'
             elif isinstance(expr, ExprRange):
-                outStr += indent + 'lambda_map: %d\n'%(expr_num_map[expr.lambda_map])
-                outStr += indent + 'start_index: %d\n'%(expr_num_map[expr.start_index])
-                outStr += indent + 'end_index: %d\n'%(expr_num_map[expr.end_index])
+                out_str += indent + 'lambda_map: %d\n'%(expr_num_map[expr.lambda_map])
+                out_str += indent + 'start_index: %d\n'%(expr_num_map[expr.start_index])
+                out_str += indent + 'end_index: %d\n'%(expr_num_map[expr.end_index])
             else:
-                outStr += indent + r'sub-expressions: ' + ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions) + '\n'
-        return outStr
+                out_str += indent + r'sub-expressions: ' + ', '.join(str(expr_num_map[sub_expr]) for sub_expr in expr._sub_expressions) + '\n'
+        return out_str
     
     def __str__(self):
         return repr(self)
@@ -141,8 +141,8 @@ class ExpressionInfo:
                 sub_expressions += 'start_index:&nbsp;%d<br>'%(expr_num_map[expr.start_index])
                 sub_expressions += 'end_index:&nbsp;%d<br>'%(expr_num_map[expr.end_index])
             else:
-                sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
-            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_())
+                sub_expressions = ', '.join(str(expr_num_map[sub_expr]) for sub_expr in expr._sub_expressions)
+            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._core_info[0], sub_expressions, expr._repr_html_())
             if self.show_details and expr.__class__ not in \
                     (Variable, Literal, Operation, Lambda, IndexedVar, 
                      NamedExprs, ExprTuple, ExprArray, ExprRange):
@@ -150,8 +150,8 @@ class ExpressionInfo:
                 html += '<tr><td colspan=4 style="text-align:left"><strong>class:</strong> %s</td></tr>\n'%expr._class_path()
             if self.show_details and isinstance(expr, Literal):
                 html += '<tr><td colspan=4 style="text-align:left"><strong>theory:</strong> %s</td></tr>\n'%expr.theory.name
-                if len(expr._coreInfo)>4:
-                    html += '<tr><td colspan=4 style="text-align:left"><strong>extraCoreInfo:</strong> %s</td></tr>\n'%str(expr._coreInfo[4:])
+                if len(expr._core_info)>4:
+                    html += '<tr><td colspan=4 style="text-align:left"><strong>extra_core_info:</strong> %s</td></tr>\n'%str(expr._core_info[4:])
         html += '</table>\n'
         return html
                 

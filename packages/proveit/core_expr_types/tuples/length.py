@@ -1,11 +1,11 @@
-from proveit import (Expression, Lambda, Operation, Literal, safeDummyVar,
-                     singleOrCompositeExpression, ExprTuple,
+from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
+                     single_or_composite_expression, ExprTuple,
                      ExprRange, InnerExpr, defaults, USE_DEFAULTS)
 from proveit._common_ import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
 class Len(Operation):
     # operator of the Length operation.
-    _operator_ = Literal(stringFormat='length', theory=__file__)   
+    _operator_ = Literal(string_format='length', theory=__file__)   
     
     def __init__(self, operand):
         '''
@@ -13,7 +13,7 @@ class Len(Operation):
         ExprTuple or an expression (such as a variable) that
         represents a tuple.
         '''
-        operand = singleOrCompositeExpression(operand)
+        operand = single_or_composite_expression(operand)
         if isinstance(operand, ExprTuple):
             # Nest an ExprTuple operand in an extra ExprTuple as
             # a clear indication that Len has a single operand
@@ -24,8 +24,8 @@ class Len(Operation):
         Operation.__init__(self, Len._operator_, operand)
     
     @staticmethod
-    def extractInitArgValue(argName, operator_or_operators, operand_or_operands):
-        if argName=='operand':
+    def extract_init_arg_value(arg_name, operator_or_operators, operand_or_operands):
+        if arg_name=='operand':
             if isinstance(operand_or_operands, ExprTuple):
                 return operand_or_operands[0]
             else:
@@ -110,7 +110,7 @@ class Len(Operation):
                 len_thm = proveit.numbers.numerals.decimals._theorems_\
                             .__getattr__('tuple_len_%d'%_n)
                 repl_map = dict()
-                for param, entry in zip(len_thm.explicitInstanceParams(),
+                for param, entry in zip(len_thm.explicit_instance_params(),
                                         entries):
                     repl_map[param] = entry
                 return len_thm.instantiate(repl_map)
@@ -126,7 +126,7 @@ class Len(Operation):
 
                 rhs_simp = eq.rhs._integerBinaryEval(assumptions=assumptions)
 
-                return rhs_simp.subRightSideInto(eq, assumptions=assumptions)
+                return rhs_simp.sub_right_side_into(eq, assumptions=assumptions)
                 #return Equals(eq.lhs, eq.rhs._integerBinaryEval(assumptions=assumptions).rhs).prove(assumptions=assumptions)
                 #raise NotImplementedError("Can't handle length computation "
                  #                         ">= 10 for %s"%self)
@@ -158,7 +158,7 @@ class Len(Operation):
                     general_len, len_of_ranges_with_repeated_indices,
                     len_of_ranges_with_repeated_indices_from_1,
                     len_of_empty_range_of_ranges)
-            _x = safeDummyVar(self)
+            _x = safe_dummy_var(self)
 
             def entry_map(entry):
                 if isinstance(entry, ExprRange):
@@ -203,14 +203,14 @@ class Len(Operation):
                 # If the start and end are literal ints and form an
                 # empty range, then it should be straightforward to
                 # prove that the range is empty.
-                from proveit.numbers import isLiteralInt, Add
+                from proveit.numbers import is_literal_int, Add
                 from proveit.logic import Equals
                 from proveit._common_ import m
                 _m = entries[0].start_index
                 _n = entries[0].end_index
                 empty_req = Equals(Add(_n, one), _m)
-                if isLiteralInt(_m) and isLiteralInt(_n):
-                    if _n.asInt() + 1 == _m.asInt():
+                if is_literal_int(_m) and is_literal_int(_n):
+                    if _n.as_int() + 1 == _m.as_int():
                         empty_req.prove()
                 if empty_req.proven(assumptions):
                     _f = Lambda((entries[0].parameter, entries[0].body.parameter), entries[0].body.body)
@@ -224,10 +224,10 @@ class Len(Operation):
             _j = [entry_end(entry) for entry in entries]
             _n = Len(_i).computed(assumptions=assumptions, simplify=False)
 
-            from proveit.numbers import isLiteralInt
+            from proveit.numbers import is_literal_int
             if len(entries)==1 and isinstance(entries[0], ExprRange):
-                if isLiteralInt(entries[0].start_index) and isLiteralInt(entries[0].end_index):
-                    if entries[0].end_index.asInt() + 1 == entries[0].start_index.asInt():
+                if is_literal_int(entries[0].start_index) and is_literal_int(entries[0].end_index):
+                    if entries[0].end_index.as_int() + 1 == entries[0].start_index.as_int():
                         return empty_range(_i, _j, _f, assumptions)
 
             if all(_==_i[0] for _ in _i) and all(_==_j[0] for _ in _j):
@@ -262,7 +262,7 @@ class Len(Operation):
         '''
         Attempt to prove that this Len expression is equal to
         something of the form |(i, ..., j)|.
-        More generally, use "deduceEquality" (which calls this
+        More generally, use "deduce_equality" (which calls this
         method when it can).
         Examples of handled cases:
             |(a, b, c)| = |(1, ..., 3)|
@@ -315,7 +315,7 @@ class Len(Operation):
                 eq_thm = proveit.numbers.numerals.decimals._theorems_\
                                 .__getattr__('tuple_len_%d_typical_eq'%n)
                 repl_map = dict()
-                for param, entry in zip(eq_thm.explicitInstanceParams(),
+                for param, entry in zip(eq_thm.explicit_instance_params(),
                                         entries):
                     repl_map[param] = entry
                 return eq_thm.instantiate(repl_map)
@@ -340,7 +340,7 @@ class Len(Operation):
                          i:range_start, j:range_end},
                         assumptions=assumptions)                    
         raise NotImplementedError("Len.typical_eq not implemented for "
-                                  "this case: %s.  Try Len.deduceEquality "
+                                  "this case: %s.  Try Len.deduce_equality "
                                   "instead."%self)
 
     def _tested_equality(self, eq_fn, assumptions=USE_DEFAULTS,
@@ -369,13 +369,13 @@ class Len(Operation):
             if disable_range_reduction and not was_range_reduction_disabled:
                 defaults.disabled_auto_reduction_types.remove(ExprRange)
         if simplify:
-            eq = eq.innerExpr().rhs.simplify(assumptions=assumptions)
+            eq = eq.inner_expr().rhs.simplify(assumptions=assumptions)
         assert isinstance(eq, Judgment)
         assert isinstance(eq.expr, Equals)
         assert eq.lhs==self, ("%s differs from %s"%(eq.lhs, self))
         return eq
     
-    def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
+    def deduce_equality(self, equality, assumptions=USE_DEFAULTS, 
                        minimal_automation=False):
         from proveit.logic import Equals
         if not isinstance(equality, Equals):
@@ -409,7 +409,7 @@ class Len(Operation):
                 eq = eq.prove()
             else:
                 eq = eq.prove(assumptions, automation=not minimal_automation)
-            return Equals.applyTransitivities(
+            return Equals.apply_transitivities(
                     [lhs_computation, eq, rhs_computation],
                     assumptions=assumptions)
         else:
@@ -421,7 +421,7 @@ class Len(Operation):
                 eq = eq.prove()
             else:
                 eq = eq.prove(assumptions, automation=not minimal_automation)
-            return lhs_computation.applyTransitivity(
+            return lhs_computation.apply_transitivity(
                     eq, assumptions=assumptions)
     
     def simplification(self, assumptions=USE_DEFAULTS, automation=True):
@@ -433,9 +433,9 @@ class Len(Operation):
         expr = eq.update(expr.simplification(assumptions))
         return eq.relation
     
-    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.core_expr_types.tuples._theorems_ import (
-                range_len_in_nat, range_from1_len_in_nat)
+                range_len_is_nat, range_from1_len_is_nat)
         from proveit.numbers import Natural, one
         operand = self.operand
         if number_set == Natural:
@@ -446,15 +446,15 @@ class Len(Operation):
                 range_end = operand[0].end_index   
                 range_lambda = operand[0].lambda_map
                 if range_start == one:
-                    return range_from1_len_in_nat.instantiate(
+                    return range_from1_len_is_nat.instantiate(
                             {f:range_lambda, i:range_end},
                             assumptions=assumptions)
                 else:
-                    return range_len_in_nat.instantiate(
+                    return range_len_is_nat.instantiate(
                             {f:range_lambda, i:range_start, j:range_end},
                             assumptions=assumptions)
     
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
+    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         A simplification of a Len operation computes the length as a sum
         of the lengths of each item of the ExprTuple operand, returning
@@ -464,7 +464,7 @@ class Len(Operation):
         '''
         return self._computation(must_evaluate=False, assumptions=assumptions)
     
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Return the evaluation of the length which equates that Len expression
         to an irreducible result.

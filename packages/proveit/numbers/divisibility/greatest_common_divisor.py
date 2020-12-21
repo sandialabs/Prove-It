@@ -17,7 +17,7 @@ class GCD(Function):
         numbers p > 1 we have Not(p|a AND p|b).
         '''
         from ._theorems_ import GCD_one_def
-        _a, _b = GCD_one_def.instanceParams
+        _a, _b = GCD_one_def.instance_params
         return GCD_one_def.instantiate(
         	{_a:self.operands[0], _b:self.operands[1]},
         	assumptions=assumptions)

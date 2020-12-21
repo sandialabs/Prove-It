@@ -3,7 +3,7 @@ from proveit._common_ import n, x
 
 class Intersect(Operation):
     # operator of the Intersect operation
-    _operator_ = Literal(stringFormat='intersect', latexFormat=r'\cap', theory=__file__)    
+    _operator_ = Literal(string_format='intersect', latex_format=r'\cap', theory=__file__)    
     
     def __init__(self, *operands):
         '''
@@ -11,10 +11,10 @@ class Intersect(Operation):
         '''
         Operation.__init__(self, Intersect._operator_, operands)
     
-    def membershipObject(self, element):
+    def membership_object(self, element):
         from .intersect_membership import IntersectMembership
         return IntersectMembership(element, self)
 
-    def nonmembershipObject(self, element):
+    def nonmembership_object(self, element):
         from .intersect_membership import IntersectNonmembership
         return IntersectNonmembership(element, self)

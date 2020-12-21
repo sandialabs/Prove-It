@@ -28,7 +28,7 @@ class TransitivitySorter:
         '''
         #print("sorting items", items)
     
-        self.assumptions = defaults.checkedAssumptions(assumptions)
+        self.assumptions = defaults.checked_assumptions(assumptions)
         self.assumptions_set = set(self.assumptions)
         self.relation_class = relation_class
         self.strong_relation_class = \
@@ -421,8 +421,8 @@ class TransitivitySorter:
             lr_frontier_chains = (self.frontier_left_chains, 
                                   self.frontier_right_chains)
             lr_reachables = (self.left_reachables, self.right_reachables)
-            lr_relations = (relation_class.knownRelationsFromRight, 
-                            relation_class.knownRelationsFromLeft)
+            lr_relations = (relation_class.known_relations_from_right, 
+                            relation_class.known_relations_from_left)
             lr_same_endpoint_chains = (self.left_endpoint_chains, 
                                        self.right_endpoint_chains)
             lr_opposite_endpoint_chains = (self.right_endpoint_chains,
@@ -630,5 +630,5 @@ class TransitivitySorter:
         if (item1, item2) in item_pair_chains:
             chain = item_pair_chains[(item1, item2)]
             #print("prove direct relationship via", chain)
-            self.relation_class.applyTransitivities(chain, assumptions)
+            self.relation_class.apply_transitivities(chain, assumptions)
 

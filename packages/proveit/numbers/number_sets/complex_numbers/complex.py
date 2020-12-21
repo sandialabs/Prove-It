@@ -7,18 +7,18 @@ class ComplexSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Complex', r'\mathbb{C}', theory=__file__)
 
-    def deduceInSetIsBool(self, element, assumptions=USE_DEFAULTS):
-        from .theorems import inComplexIsBool
-        return inComplexIsBool.instantiate({a:element}, assumptions)
+    def deduce_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
+        from .theorems import in_complex_is_bool
+        return in_complex_is_bool.instantiate({a:element}, assumptions)
     
-    def deduceNotInSetIsBool(self, element, assumptions=USE_DEFAULTS):
-        from .theorems import notInComplexIsBool
-        return notInComplexIsBool.instantiate({a:element}, assumptions)
+    def deduce_not_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
+        from .theorems import not_in_complex_is_bool
+        return not_in_complex_is_bool.instantiate({a:element}, assumptions)
 
-    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import xInComplexInBool
+    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import complex_membership_is_bool
         from proveit._common_ import x
-        return xInComplexInBool.instantiate({x:member}, assumptions=assumptions)
+        return complex_membership_is_bool.instantiate({x:member}, assumptions=assumptions)
     
     @staticmethod
     def left_mult_both_sides_of_equals(relation, multiplier,
@@ -225,8 +225,8 @@ class ComplexSet(NumberSet):
         from proveit.numbers import frac, one, two
         new_rel = ComplexSet.exponentiate_both_sides_of_equals(relation,
                 frac(one, two), assumptions=assumptions)
-        new_rel = new_rel.innerExpr().lhs.withStyles(exponent='radical')
-        new_rel = new_rel.innerExpr().rhs.withStyles(exponent='radical')
+        new_rel = new_rel.inner_expr().lhs.with_styles(exponent='radical')
+        new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
         return new_rel
     
     @staticmethod
@@ -238,19 +238,19 @@ class ComplexSet(NumberSet):
         from proveit.numbers import frac, one, two
         new_rel = ComplexSet.exponentiate_both_sides_of_notequals(relation,
                 frac(one, two), assumptions=assumptions)
-        new_rel = new_rel.innerExpr().lhs.withStyles(exponent='radical')
-        new_rel = new_rel.innerExpr().rhs.withStyles(exponent='radical')
+        new_rel = new_rel.inner_expr().lhs.with_styles(exponent='radical')
+        new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
         return new_rel
     
     
 # if proveit.defaults.automation:
 #     # Import some fundamental theorems without quantifiers that are
 #     # imported when automation is used.
-#     from ._theorems_ import realInComplex, realPosInComplex, realNegInComplex, intInComplex, natInComplex
+#     from ._theorems_ import real_within_complex, real_pos_within_complex, real_neg_within_complex, int_within_complex, nat_within_complex
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-    from ._theorems_ import realInComplex, intInComplex, natInComplex
+    from ._theorems_ import real_within_complex, int_within_complex, nat_within_complex
     

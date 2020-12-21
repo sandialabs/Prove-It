@@ -3,7 +3,7 @@ from proveit._common_ import n, x
         
 class PowerSet(Function):
     # operator of the Intersect operation
-    _operator_ = Literal(stringFormat='power_set', latexFormat=r'\mathbb{P}', theory=__file__)    
+    _operator_ = Literal(string_format='power_set', latex_format=r'\mathbb{P}', theory=__file__)    
     
     def __init__(self, operand):
         '''
@@ -14,11 +14,11 @@ class PowerSet(Function):
     """
     # Needs implementation
     
-    def membershipObject(self, element):
+    def membership_object(self, element):
         from .powerset_membership import PowerSetMembership
         return PowerSetMembership(element, self)
 
-    def nonmembershipObject(self, element):
+    def nonmembership_object(self, element):
         from .powerset_membership import PowerSetNonmembership
         return PowerSetNonmembership(element, self)
     """

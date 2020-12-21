@@ -5,7 +5,7 @@ from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
                                             free_vars)
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
-from proveit._core_.expression.composite import singularExpression, ExprTuple
+from proveit._core_.expression.composite import singular_expression, ExprTuple
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -72,8 +72,8 @@ class ExprRange(Expression):
         Expression.__init__(self, ['ExprRange'], 
                             [lambda_map, start_index, end_index],
                             styles=styles)
-        self.start_index = singularExpression(start_index)
-        self.end_index = singularExpression(end_index)
+        self.start_index = singular_expression(start_index)
+        self.end_index = singular_expression(end_index)
         self.lambda_map = lambda_map
         # The body of the Lambda map is a Conditional that conditions the 
         # mapping according to the parameter being in the [start, end] 
@@ -86,16 +86,16 @@ class ExprRange(Expression):
                 free_vars(self.body, err_inclusively=True))
     
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
-        if subClass != ExprRange: 
-            MakeNotImplemented(subClass)
-        if len(coreInfo) != 1 or coreInfo[0] != 'ExprRange':
-            raise ValueError("Expecting ExprRange coreInfo to contain "
+    def _make(sub_class, core_info, styles, sub_expressions):
+        if sub_class != ExprRange: 
+            MakeNotImplemented(sub_class)
+        if len(core_info) != 1 or core_info[0] != 'ExprRange':
+            raise ValueError("Expecting ExprRange core_info to contain "
                              "exactly one item: 'ExprRange'")
-        lambda_map, start_index, end_index = subExpressions
+        lambda_map, start_index, end_index = sub_expressions
         return ExprRange(None, None, start_index, end_index, 
                          lambda_map=lambda_map) \
-                .withStyles(**styles)
+                .with_styles(**styles)
     
     def literal_int_extent(self):
         '''
@@ -107,9 +107,9 @@ class ExprRange(Expression):
             a_{1,1}, ..., a_{1,3}, ......, a_{4,1}, ..., a_{4,3}
         has a literal_int_extent of 12.
         '''
-        from proveit.numbers import isLiteralInt
-        if (isLiteralInt(self.start_index) and isLiteralInt(self.end_index)):
-            toplevel_extent = (self.end_index.asInt() - self.start_index.asInt() + 1)
+        from proveit.numbers import is_literal_int
+        if (is_literal_int(self.start_index) and is_literal_int(self.end_index)):
+            toplevel_extent = (self.end_index.as_int() - self.start_index.as_int() + 1)
             if isinstance(self.body, ExprRange):
                 return toplevel_extent*self.body.literal_int_extent()
             else:
@@ -118,7 +118,7 @@ class ExprRange(Expression):
                          "with start and end indices that are literal integers")
         
             
-    def remakeArguments(self):
+    def remake_arguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the ExprRange.
@@ -128,26 +128,26 @@ class ExprRange(Expression):
         yield self.start_index
         yield self.end_index
 
-    def remakeWithStyleCalls(self):
+    def remake_with_style_calls(self):
         '''
         In order to reconstruct this Expression to have the same styles,
         what "with..." method calls are most appropriate?  Return a 
         tuple of strings with the calls to make.  The default for the
-        Operation class is to include appropriate 'withWrappingAt'
-        and 'withJustification' calls.
+        Operation class is to include appropriate 'with_wrapping_at'
+        and 'with_justification' calls.
         '''
         call_strs = []
-        parameterization = self.getStyle('parameterization', 'default')
+        parameterization = self.get_style('parameterization', 'default')
         if parameterization != 'default':
             if parameterization == 'explicit':
-                call_strs.append('withExplicitParameterization()')
+                call_strs.append('with_explicit_parameterization()')
             if parameterization == 'implicit':
-                call_strs.append('withImplicitParameterization()')
+                call_strs.append('with_implicit_parameterization()')
         return call_strs
     
-    def styleOptions(self):
+    def style_options(self):
         options = StyleOptions(self)
-        options.addOption(
+        options.add_option(
                 'parameterization', 
                 ("'implicit' (default for LaTeX formatting) hides "
                  "the parameter the ExprRange so the parameterization "
@@ -157,15 +157,15 @@ class ExprRange(Expression):
                  "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
         return options
     
-    def withExplicitParameterization(self):
+    def with_explicit_parameterization(self):
         '''
         The 'parameterization':'explicit' style shows the 
         parameterization of the ExprRange explicitly.  For example,
         x_{1+1}, ..x_{k+1}.., x_{n+1}).
         '''
-        return self.withStyles(parameterization='explicit')
+        return self.with_styles(parameterization='explicit')
 
-    def withImplicitParameterization(self):
+    def with_implicit_parameterization(self):
         '''
         The 'parameterization':'implicit' style does not show the
         parameterization of the ExprRange explicitly and such that the
@@ -175,16 +175,16 @@ class ExprRange(Expression):
         or could be
         x_{1+1}, ..x_{k}.., x_{n+1}.
         '''
-        return self.withStyles(parameterization='implicit')
+        return self.with_styles(parameterization='implicit')
 
-    def withDefaultParameterizationStyle(self):
+    def with_default_parameterization_style(self):
         '''
         The default is to use an 'implicit' parameterization for
-        string formatting (see 'withImplicitParameterization') and
+        string formatting (see 'with_implicit_parameterization') and
         and 'explicit' parameterization for LaTeX formatting
-        (see 'withExplicitParameterization').
+        (see 'with_explicit_parameterization').
         '''
-        return self.withoutStyle('parameterization')
+        return self.without_style('parameterization')
         
     def first(self):
         '''
@@ -226,49 +226,49 @@ class ExprRange(Expression):
             expr = expr.body
         return depth
     
-    def _use_explicit_parameterization(self, formatType):
+    def _use_explicit_parameterization(self, format_type):
         '''
         Return True iff explicit parameterization should be used
         for the given format type given the 'style' settings.
         The default using 'explicit' for 'string' format and 'implicit'
         for 'latex' format.
         '''
-        default_style = ("explicit" if formatType=='string' else 'implicit')
-        if (self.getStyle("parameterization", default_style) == "explicit"):
+        default_style = ("explicit" if format_type=='string' else 'implicit')
+        if (self.get_style("parameterization", default_style) == "explicit"):
             return True
         return False
     
-    def _formatted_checkpoints(self, formatType, *, 
+    def _formatted_checkpoints(self, format_type, *, 
                                use_explicit_parameterization=None,
                                ellipses=None, operator=None,
                                **kwargs):
         if use_explicit_parameterization is None:
             use_explicit_parameterization = (
-                    self._use_explicit_parameterization(formatType))
+                    self._use_explicit_parameterization(format_type))
         check_points = [self.first(), self.last()]
         if use_explicit_parameterization and not self.is_parameter_independent:
             check_points.insert(1, self.body)
         formatted_sub_expressions = \
-            [subExpr.formatted(formatType, operator=operator,
+            [sub_expr.formatted(format_type, operator=operator,
                                **kwargs) 
-             for subExpr in check_points]
+             for sub_expr in check_points]
         if self.is_parameter_independent:
             from proveit.numbers import one
-            repeats_str = (r'\textrm{ repeats}' if formatType=='latex' 
+            repeats_str = (r'\textrm{ repeats}' if format_type=='latex' 
                            else 'repeats')
             if self.start_index==one:
                 formatted_sub_expressions.insert(
-                        1, '%s %s'%(self.end_index.formatted(formatType),
+                        1, '%s %s'%(self.end_index.formatted(format_type),
                                     repeats_str))
             else:
-                to_str = (r'\textrm{ to }' if formatType=='latex' else 'to')
-                from_str = (r'\textrm{from }' if formatType=='latex' 
+                to_str = (r'\textrm{ to }' if format_type=='latex' else 'to')
+                from_str = (r'\textrm{from }' if format_type=='latex' 
                             else 'from')          
                 formatted_sub_expressions.insert(
                         1, ('%s %s %s %s'
                             %(from_str,
-                              self.start_index.formatted(formatType), to_str,
-                              self.end_index.formatted(formatType))))
+                              self.start_index.formatted(format_type), to_str,
+                              self.end_index.formatted(format_type))))
         if ellipses is None:
             if use_explicit_parameterization or self.is_parameter_independent:
                 # Use the format:
@@ -279,7 +279,7 @@ class ExprRange(Expression):
                 # x_{m,1}, ..x_{m,k}.., x_{m,n}
                 ellipsis = '..'
             else:
-                ellipsis = ('\ldots' if formatType=='latex' 
+                ellipsis = ('\ldots' if format_type=='latex' 
                             else '...')
             # When ranges are nested, double-up (or triple-up, etc)
             # the ellipsis to make the nested structure clear.
@@ -294,7 +294,7 @@ class ExprRange(Expression):
             formatted_sub_expressions.insert(1, ellipses)
         return formatted_sub_expressions
         
-    def formatted(self, formatType, fence=False, subFence=True, 
+    def formatted(self, format_type, fence=False, sub_fence=True, 
                   operator=None, **kwargs):
         if operator is None:
              # comma is the default formatted operator
@@ -302,16 +302,16 @@ class ExprRange(Expression):
         elif isinstance(operator, str):
             formatted_operator = operator
         else:
-            formatted_operator = operator.formatted(formatType)
+            formatted_operator = operator.formatted(format_type)
         formatted_sub_expressions = self._formatted_checkpoints(
-                formatType, fence=subFence, with_ellipses=True,
+                format_type, fence=sub_fence, with_ellipses=True,
                 operator=operator)
         # Normally the range will be wrapped in an ExprTuple and 
         # fencing will be handled externally.  When it isn't, we don't 
         # want to fence it  anyway.
         return formatted_operator.join(formatted_sub_expressions)
     
-    def getInstance(self, index, assumptions=USE_DEFAULTS, 
+    def get_instance(self, index, assumptions=USE_DEFAULTS, 
                     requirements=None, equality_repl_requirements=None):
         '''
         Return the range instance with the given Lambda map
@@ -364,7 +364,7 @@ class ExprRange(Expression):
         then 'a' will be the only free variable reported.
         '''
         from proveit._core_.expression.lambda_expr.lambda_expr import \
-            getParamVar        
+            get_param_var        
         if exclusions is not None:
             if self in exclusions:
                 return dict() # this is excluded
@@ -396,7 +396,7 @@ class ExprRange(Expression):
             forms_dict[param].discard(param)
             if len(forms_dict[param])==0:
                 forms_dict.pop(param)        
-        for expr in self._subExpressions[1:]:
+        for expr in self._sub_expressions[1:]:
             # Skip the first sub-expression. We've already treated that.
             for var, forms in \
                     expr._possibly_free_var_ranges(exclusions=exclusions).items():
@@ -408,7 +408,7 @@ class ExprRange(Expression):
         # by x_1, ..., x_n.
         for parameterized_var_range in self._parameterized_var_ranges(
                 body_forms_dict):
-            var = getParamVar(parameterized_var_range)
+            var = get_param_var(parameterized_var_range)
             assert var in forms_dict
             forms_dict[var].remove(parameterized_var_range)
             forms_dict[var].add(ExprRange(param, parameterized_var_range,
@@ -489,10 +489,10 @@ class ExprRange(Expression):
             # If the start and end are literal integers and form an
             # empty range, then it should be straightforward to
             # prove that the range is empty.
-            from proveit.numbers import isLiteralInt
+            from proveit.numbers import is_literal_int
             empty_req = Equals(Add(end_index, one), start_index)
-            if isLiteralInt(start_index) and isLiteralInt(end_index):
-                if end_index.asInt()+1 == start_index.asInt():
+            if is_literal_int(start_index) and is_literal_int(end_index):
+                if end_index.as_int()+1 == start_index.as_int():
                     empty_req.prove()
             if empty_req.proven(assumptions):
                 # We can do an empty range reduction
@@ -535,10 +535,10 @@ class ExprRange(Expression):
                 # If the start and end of the inner range are literal 
                 # integers and form an empty range, then it should be 
                 # straightforward to prove that the entire range is empty.
-                from proveit.numbers import isLiteralInt
+                from proveit.numbers import is_literal_int
                 empty_req = Equals(Add(expr_range.first().end_index, one), expr_range.first().start_index)
-                if isLiteralInt(expr_range.first().start_index) and isLiteralInt(expr_range.first().end_index):
-                    if expr_range.first().end_index.asInt() + 1 == expr_range.first().start_index.asInt():
+                if is_literal_int(expr_range.first().start_index) and is_literal_int(expr_range.first().end_index):
+                    if expr_range.first().end_index.as_int() + 1 == expr_range.first().start_index.as_int():
                         empty_req.prove()
                 if empty_req.proven(assumptions):
                     # We can do an empty range reduction on the entire expression
@@ -631,8 +631,8 @@ class ExprRange(Expression):
         '''
         from proveit._core_.expression.expr import attempt_to_simplify
         from proveit._core_.expression.lambda_expr.lambda_expr import \
-            getParamVar, extract_param_replacements
-        from proveit._core_.expression.label.var import safeDummyVar
+            get_param_var, extract_param_replacements
+        from proveit._core_.expression.label.var import safe_dummy_var
         from proveit.logic import Equals#, InSet
         from proveit.numbers import Add, one#, Interval
                         
@@ -641,7 +641,7 @@ class ExprRange(Expression):
             return repl_map[self]
 
         if requirements is None: requirements = []
-        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions = defaults.checked_assumptions(assumptions)
         # We will turn on the `indices_must_match` flag when the
         # replacement index ranges must match the original range of
         # indices and not just match in length:
@@ -663,7 +663,7 @@ class ExprRange(Expression):
             # If repl_map maps `x` to a set, in this example, 
             # then it has an expansion for any of the forms that
             # are contained in the set.
-            var = getParamVar(occurrence)
+            var = get_param_var(occurrence)
             if var in var_range_forms: 
                 expanding_occurrences.add(occurrence)
                 # Already added this `var` to `var_expansion_forms` and 
@@ -727,7 +727,7 @@ class ExprRange(Expression):
         
         assert len(new_params)==1
         new_param = new_params[0]
-        safe_dummy_var = safeDummyVar(self.body, self.parameter)
+        safe_dummy_var = safe_dummy_var(self.body, self.parameter)
         # Restore the repl_map, adding back in what was temporarily
         # popped out.
         repl_map.update(repl_map_stash)
@@ -821,11 +821,11 @@ class ExprRange(Expression):
             # Now wrap this "variable range" in an ExprTuple and see
             # if it has a known expansion.
             var_tuple = ExprTuple(var_range)
-            var = getParamVar(occurrence)
+            var = get_param_var(occurrence)
             if var_tuple not in inner_repl_map:
-                key_var = lambda key : (getParamVar(key[0]) if 
+                key_var = lambda key : (get_param_var(key[0]) if 
                                         isinstance(key, ExprTuple) 
-                                        else getParamVar(key))
+                                        else get_param_var(key))
                 var_replacements = \
                     {key:value for key, value in inner_repl_map.items() if 
                      key_var(key)==var}
@@ -879,7 +879,7 @@ class ExprRange(Expression):
         first_expansion_entry_ranges = None
         for indexed_var_or_range, expansion in expansions_dict.items():
             parameters = [indexed_var_or_range]
-            parameter_vars = [getParamVar(indexed_var_or_range)]
+            parameter_vars = [get_param_var(indexed_var_or_range)]
             expansion_iter = iter(expansion)
             # Replacement maps corresponding with this
             # 'indexed_var_or_range' and 'expansion'.
@@ -1133,7 +1133,7 @@ class ExprRange(Expression):
         parameters = extract_parameters(self)
         start_indices = extract_start_indices(self)
         end_indices = extract_end_indices(self)
-        return nestedRange(parameters, new_inner_body, start_indices,
+        return nested_range(parameters, new_inner_body, start_indices,
                            end_indices)
         
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
@@ -1190,7 +1190,7 @@ class ExprRange(Expression):
         '''
         from proveit._common_ import a, b, f, i, j, k, l
         from proveit.numbers import Add, Neg, subtract
-        from proveit._core_.expression.label.var import safeDummyVar
+        from proveit._core_.expression.label.var import safe_dummy_var
         from proveit.core_expr_types.tuples._theorems_ import (
                 shift_equivalence, shift_equivalence_both)
         
@@ -1198,7 +1198,7 @@ class ExprRange(Expression):
             _f = self.lambda_map
         else:
             old_shifted_param = Add(self.parameter, old_shift)
-            safe_var = safeDummyVar(self.body)
+            safe_var = safe_dummy_var(self.body)
             shifted_body = self.body.replaced({old_shifted_param:safe_var})
             if self.parameter in free_vars(shifted_body, err_inclusively=True):
                 raise ValueError("The given 'old_shift' of %s does apply "
@@ -1287,8 +1287,8 @@ def _has_expansion(var_form, repl_map):
     an expansion in the given replacement map.
     '''
     from proveit._core_.expression.lambda_expr.lambda_expr import \
-        getParamVar
-    var_repl = repl_map.get(getParamVar(var_form), None)
+        get_param_var
+    var_repl = repl_map.get(get_param_var(var_form), None)
     # When being expanded, a set of equivalent tuples of 
     # indexed variables is used as the direct variable 
     # replacement (e.g. x : {(x_1, ..., x_{n+1}), 
@@ -1370,11 +1370,11 @@ def is_at_same_nested_range_level(expr1, expr2):
         expr1 = expr1.body
         expr2 = expr2.body
 
-def nestedRange(parameters, body, start_indices, end_indices):
+def nested_range(parameters, body, start_indices, end_indices):
     if len(parameters) > 1:
         # multiple levels
         return ExprRange(parameters[0], 
-                         nestedRange(parameters[1:], body,
+                         nested_range(parameters[1:], body,
                                      start_indices[1:], end_indices[1:]),
                          start_indices[0], end_indices[0])
     else:
@@ -1385,14 +1385,14 @@ def nestedRange(parameters, body, start_indices, end_indices):
         return ExprRange(param, body, start_index, end_index)
 
     
-def varRange(var, start_index_or_indices, end_index_or_indices):
-    from proveit import (safeDummyVars, compositeExpression,
+def var_range(var, start_index_or_indices, end_index_or_indices):
+    from proveit import (safe_dummy_vars, composite_expression,
                          IndexedVar)
-    start_indices = compositeExpression(start_index_or_indices)
-    end_indices = compositeExpression(end_index_or_indices)
-    parameters = safeDummyVars(len(start_indices), var, start_indices, 
+    start_indices = composite_expression(start_index_or_indices)
+    end_indices = composite_expression(end_index_or_indices)
+    parameters = safe_dummy_vars(len(start_indices), var, start_indices, 
                                end_indices)
-    return nestedRange(parameters, IndexedVar(var, parameters),
+    return nested_range(parameters, IndexedVar(var, parameters),
                        start_indices, end_indices)
 
 class RangeInstanceError(Exception):

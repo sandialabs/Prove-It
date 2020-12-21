@@ -1,4 +1,4 @@
-from proveit.basiclogic.booleans.axioms import notExistsDef
+from proveit.basiclogic.booleans.axioms import not_exists_def
 from proveit.common import P, S, Qetc
 
-notExistsDef.instantiate().rightImplViaEquivalence().generalize((P, Qetc, S)).qed(__file__)
+not_exists_def.instantiate().right_impl_via_equivalence().generalize((P, Qetc, S)).qed(__file__)

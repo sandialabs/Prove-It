@@ -1,5 +1,5 @@
-from proveit.basiclogic.booleans.theorems import trueConclusion
-from proveit.basiclogic import deriveStmtEqTrue, FALSE
+from proveit.basiclogic.booleans.theorems import true_conclusion
+from proveit.basiclogic import derive_stmt_eq_true, FALSE
 from proveit.common import A
 
-deriveStmtEqTrue(trueConclusion.instantiate({A:FALSE})).qed(__file__)
+derive_stmt_eq_true(true_conclusion.instantiate({A:FALSE})).qed(__file__)

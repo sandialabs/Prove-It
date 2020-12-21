@@ -1,4 +1,4 @@
-from .composite import Composite, singleOrCompositeExpression
+from .composite import Composite, single_or_composite_expression
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 #import re
 
@@ -25,7 +25,7 @@ class NamedExprs(Composite, Expression):
             if isinstance(val, Judgment):
                 val = val.expr # extract the Expression from the Judgment
             try:
-                val = singleOrCompositeExpression(val)
+                val = single_or_composite_expression(val)
             except TypeError:
                 raise TypeError("Values of NamedExprs must be Expressions")
             assert isinstance(val, Expression)
@@ -60,7 +60,7 @@ class NamedExprs(Composite, Expression):
     def values(self):
         return self.elems.values()
 
-    def remakeArguments(self):
+    def remake_arguments(self):
         '''
         Yield the argument (name, value) pairs that could be used to 
         recreate the NamedExprs.  Wrap the names in quotation marks
@@ -69,27 +69,27 @@ class NamedExprs(Composite, Expression):
             yield ('"' + str(name) + '"', expr)
             
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
-        if subClass != NamedExprs: 
-            MakeNotImplemented(subClass) 
-        if coreInfo[0] != 'NamedExprs':
-            raise ValueError("Expecting NamedExprs coreInfo[0] to be 'NamedExprs'")
-        keys = [key.replace(':', ',') for key in coreInfo[1:]]
-        if len(subExpressions) != len(keys):
-            raise ValueError("The number of sub-expressions, " + str(len(subExpressions)), ", expected to match the number of the NamedExprs' keys, ", str(len(keys)))
-        return NamedExprs([(key,subExpression) for key, subExpression in zip(keys, subExpressions)]).withStyles(**styles)   
+    def _make(sub_class, core_info, styles, sub_expressions):
+        if sub_class != NamedExprs: 
+            MakeNotImplemented(sub_class) 
+        if core_info[0] != 'NamedExprs':
+            raise ValueError("Expecting NamedExprs core_info[0] to be 'NamedExprs'")
+        keys = [key.replace(':', ',') for key in core_info[1:]]
+        if len(sub_expressions) != len(keys):
+            raise ValueError("The number of sub-expressions, " + str(len(sub_expressions)), ", expected to match the number of the NamedExprs' keys, ", str(len(keys)))
+        return NamedExprs([(key,sub_expression) for key, sub_expression in zip(keys, sub_expressions)]).with_styles(**styles)   
         
     def string(self, **kwargs):
         return '{' + ', '.join(key + ':' + self[key].string(fence=True) for key in list(self.keys())) + '}'
 
     def latex(self, **kwargs):
-        outStr = r'\left\{ \begin{array}{l}' + '\n'
+        out_str = r'\left\{ \begin{array}{l}' + '\n'
         for key in list(self.keys()):
             if key[0] == '$':
                 # format as latex
                 formatted_key = key[1:-1]
             else:
                 formatted_key = r'{\rm ' + key.replace('_', r'\_') + r'}'
-            outStr += formatted_key + ': ' + self[key].latex(fence=True) + r'\\' + '\n'
-        outStr += r'\end{array} \right\}' + '\n'
-        return outStr            
+            out_str += formatted_key + ': ' + self[key].latex(fence=True) + r'\\' + '\n'
+        out_str += r'\end{array} \right\}' + '\n'
+        return out_str            

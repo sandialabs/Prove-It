@@ -4,5 +4,5 @@ variables defined in this module through some Python trickery.
 '''
 
 import sys
-from proveit.specialStatementRetrieval import SpecialStatementRetrieval
+from proveit.special_statement_retrieval import SpecialStatementRetrieval
 sys.modules[__name__] = SpecialStatementRetrieval(__file__)

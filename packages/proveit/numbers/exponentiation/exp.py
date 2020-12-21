@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, ExprTuple, InnerExpr, ProofFailure,
-                     maybeFencedString, USE_DEFAULTS, StyleOptions)
+                     maybe_fenced_string, USE_DEFAULTS, StyleOptions)
 from proveit.logic import Membership
 import proveit._common_
 from proveit._common_ import a, b, c, k, m, n, x, S
@@ -7,7 +7,7 @@ from proveit.numbers import one, two, Div, frac, num
 
 class Exp(Operation):
     # operator of the Exp operation.
-    _operator_ = Literal(stringFormat='Exp', theory=__file__)    
+    _operator_ = Literal(string_format='Exp', theory=__file__)    
     
     def __init__(self, base, exponent):
         r'''
@@ -18,47 +18,47 @@ class Exp(Operation):
         self.base = base
         self.exponent = exponent
 
-    def remakeConstructor(self):
-        if self.getStyle('exponent') == 'radical':
+    def remake_constructor(self):
+        if self.get_style('exponent') == 'radical':
             # Use a different constructor if using the 'radical' style.
             if self.exponent == frac(one, two):
                 return 'sqrt' 
             else:
                 raise ValueError("Unkown radical type, exponentiating to the power "
                                  "of %s"%str(self.exponent))
-        return Operation.remakeConstructor(self)
+        return Operation.remake_constructor(self)
     
-    def remakeArguments(self):
+    def remake_arguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Operation.
         '''
-        if self.getStyle('exponent') == 'radical':
+        if self.get_style('exponent') == 'radical':
             yield self.base
         else:
             yield self.base
             yield self.exponent
     
-    def membershipObject(self, element):
+    def membership_object(self, element):
         return ExpSetMembership(element, self)
     
-    def _closureTheorem(self, numberSet):
+    def _closureTheorem(self, number_set):
         import natural.theorems
         import real.theorems
         import complex.theorems
         from proveit.numbers import two
-        if numberSet == NaturalPos:
-            return natural.theorems.powClosure
-        elif numberSet == Real:
-            return real.theorems.powClosure
-        elif numberSet == RealPos:
+        if number_set == NaturalPos:
+            return natural.theorems.pow_closure
+        elif number_set == Real:
+            return real.theorems.pow_closure
+        elif number_set == RealPos:
             if self.exponent != two: # otherwise, use
-                                     # deduceInRealPosDirectly(..)
-                return real.theorems.powPosClosure            
-        elif numberSet == Complex:
-            return complex.theorems.powClosure
+                                     # deduce_in_real_pos_directly(..)
+                return real.theorems.pow_pos_closure            
+        elif number_set == Complex:
+            return complex.theorems.pow_closure
     
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one exponent or zero or one base,
         derive and return this exponential expression equated with a
@@ -68,15 +68,15 @@ class Exp(Operation):
         from proveit.logic import Equals, InSet
         from proveit.numbers import one, two, Rational, Real, Abs
         from proveit.relation import TransRelUpdater
-        from ._theorems_ import complexXToFirstPowerIsX
+        from ._theorems_ import complex_x_to_first_power_is_x
         if self.exponent == one:
-            return complexXToFirstPowerIsX.instantiate({a:self.base})
+            return complex_x_to_first_power_is_x.instantiate({a:self.base})
         if (isinstance(self.base, Exp) and
             isinstance(self.base.exponent, Div) and
             self.base.exponent.numerator==one and
             self.base.exponent.denominator == self.exponent):
             from ._theorems_ import nth_power_of_nth_root
-            _n, _x = nth_power_of_nth_root.instanceParams
+            _n, _x = nth_power_of_nth_root.instance_params
             return nth_power_of_nth_root.instantiate(
                 {_n:self.exponent, _x:self.base.base}, assumptions=assumptions)
         
@@ -104,7 +104,7 @@ class Exp(Operation):
 
         return eq.relation
 
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one exponent or zero or one base,
         derive and return this exponential expression equated with a
@@ -113,13 +113,13 @@ class Exp(Operation):
         '''
         from proveit.logic import EvaluationError
         from proveit.numbers import zero, one
-        from ._theorems_ import expZeroEqOne, exponentiatedZero, exponentiatedOne
+        from ._theorems_ import exp_zero_eq_one, exponentiated_zero, exponentiated_one
         if self.exponent == zero:
-            return expZeroEqOne.instantiate({a:self.base}) # =1
+            return exp_zero_eq_one.instantiate({a:self.base}) # =1
         elif self.base == zero:
-            return exponentiatedZero.instantiate({x:self.exponent}) # =0
+            return exponentiated_zero.instantiate({x:self.exponent}) # =0
         elif self.base == one:
-            return exponentiatedOne.instantiate({x:self.exponent}) # =1
+            return exponentiated_one.instantiate({x:self.exponent}) # =1
         else:
             raise EvaluationError('Only trivial evaluation is implemented '
                                   '(zero or one for the base or exponent).',
@@ -132,23 +132,23 @@ class Exp(Operation):
         '''
         from proveit.logic import InSet
         from proveit.numbers import RationalPos
-        from ._theorems_ import exp_rational_non_zero__not_zero, expNotEqZero
-        if (not expNotEqZero.isUsable() or (
+        from ._theorems_ import exp_rational_non_zero__not_zero, exp_not_eq_zero
+        if (not exp_not_eq_zero.is_usable() or (
                 InSet(self.base, RationalPos).proven(assumptions) and
                 InSet(self.exponent, RationalPos).proven(assumptions))):
             # Special case where the base and exponent are RationalPos.
             return exp_rational_non_zero__not_zero.instantiate(
                     {a:self.base, b:self.exponent}, assumptions=assumptions)
-        return expNotEqZero.instantiate(
+        return exp_not_eq_zero.instantiate(
                 {a:self.base, b:self.exponent}, assumptions=assumptions)
     
-    def deduceInRealPosDirectly(self, assumptions=frozenset()):
+    def deduce_in_real_pos_directly(self, assumptions=frozenset()):
         import real.theorems
         from number import two
         if self.exponent == two:
-            deduceInReal(self.base, assumptions)
-            deduceNotZero(self.base, assumptions)
-            return real.theorems.sqrdClosure.instantiate(
+            deduce_in_real(self.base, assumptions)
+            deduce_not_zero(self.base, assumptions)
+            return real.theorems.sqrd_closure.instantiate(
                 {a:self.base}).checked(assumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealPos, assumptions)
@@ -163,13 +163,13 @@ class Exp(Operation):
         exponent = self.exponent
         if exponent == num(2):
             from ._theorems_ import square_expansion
-            _x = square_expansion.instanceParam
+            _x = square_expansion.instance_param
             return square_expansion.instantiate(
                     {_x:self.base}, assumptions=assumptions)
 
         if exponent == 3:
             from ._theorems_ import  cube_expansion
-            _x = cube_expansion.instanceParam
+            _x = cube_expansion.instance_param
             return cube_expansion.instantiate(
                     {_x:self.base}, assumptions=assumptions)
 
@@ -177,11 +177,11 @@ class Exp(Operation):
                          "powers n=2 or n=3, but received an exponential "
                          "power of {0}.".format(exponent))
 
-    def _notEqZeroTheorem(self):
+    def _not_eqZeroTheorem(self):
         import complex.theorems
-        return complex.theorems.powNotEqZero
+        return complex.theorems.pow_not_eq_zero
 
-    def styleOptions(self):
+    def style_options(self):
         options = StyleOptions(self)
         options.add('exponent',
                     "'raised': exponent as a superscript; "
@@ -195,37 +195,37 @@ class Exp(Operation):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
             
-    def formatted(self, formatType, **kwargs):
+    def formatted(self, format_type, **kwargs):
         # begin building the inner_str
-        inner_str = self.base.formatted(formatType, fence=True, forceFence=True)
-        if self.getStyle('exponent') == 'raised':
+        inner_str = self.base.formatted(format_type, fence=True, force_fence=True)
+        if self.get_style('exponent') == 'raised':
             inner_str = (
                     inner_str
-                    + r'^{'+self.exponent.formatted(formatType, fence=False)
+                    + r'^{'+self.exponent.formatted(format_type, fence=False)
                     + '}')
-        elif self.getStyle('exponent') == 'radical':
+        elif self.get_style('exponent') == 'radical':
             if self.exponent == frac(one, two):
-                if formatType == 'string':
+                if format_type == 'string':
                     inner_str = (
                             r'sqrt('
-                            + self.base.formatted(formatType, fence=True,
-                                                  forceFence=True)
+                            + self.base.formatted(format_type, fence=True,
+                                                  force_fence=True)
                             + ')')
-                elif formatType == 'latex':
+                elif format_type == 'latex':
                     inner_str = (
                             r'\sqrt{'
-                            + self.base.formatted(formatType, fence=True,
-                                                  forceFence=True)
+                            + self.base.formatted(format_type, fence=True,
+                                                  force_fence=True)
                             + '}')
             else:
                 raise ValueError("Unkown radical type, exponentiating to the power "
                                  "of %s"%str(self.exponent))
                 
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
         kwargs['fence'] = (
-            kwargs['forceFence'] if 'forceFence' in kwargs else False)
-        return maybeFencedString(inner_str, **kwargs)
+            kwargs['force_fence'] if 'force_fence' in kwargs else False)
+        return maybe_fenced_string(inner_str, **kwargs)
     
     def distribution(self, assumptions=USE_DEFAULTS):
         '''
@@ -320,92 +320,92 @@ class Exp(Operation):
                              "product or fraction.")
         
     """
-    def distributeExponent(self, assumptions=frozenset()):
+    def distribute_exponent(self, assumptions=frozenset()):
         from proveit.numbers import Div
         from proveit.numbers.division.theorems import (
-                fracIntExpRev, fracNatPosExpRev)
+                frac_int_exp_rev, frac_nat_pos_exp_rev)
         if isinstance(self.base, Div):
             exponent = self.exponent
             try:
-                deduceInNaturalPos(exponent, assumptions)
-                deduceInComplex([self.base.numerator, self.base.denominator],
+                deduce_in_natural_pos(exponent, assumptions)
+                deduce_in_complex([self.base.numerator, self.base.denominator],
                                   assumptions)
-                deduceNotZero(self.base.denominator, assumptions)
-                return fracNatPosExpRev.instantiate(
+                deduce_not_zero(self.base.denominator, assumptions)
+                return frac_nat_pos_exp_rev.instantiate(
                         {n:exponent}).instantiate(
                             {a:self.numerator.base, b:self.denominator.base})
             except:
-                deduceInInteger(exponent, assumptions)
-                deduceInComplex([self.base.numerator, self.base.denominator],
+                deduce_in_integer(exponent, assumptions)
+                deduce_in_complex([self.base.numerator, self.base.denominator],
                                   assumptions)
-                deduceNotZero(self.base.numerator, assumptions)
-                deduceNotZero(self.base.denominator, assumptions)
-                return fracIntExpRev.instantiate(
+                deduce_not_zero(self.base.numerator, assumptions)
+                deduce_not_zero(self.base.denominator, assumptions)
+                return frac_int_exp_rev.instantiate(
                         {n:exponent}).instantiate(
                             {a:self.base.numerator, b:self.base.denominator})
-        raise Exception('distributeExponent currently only implemented for a '
+        raise Exception('distribute_exponent currently only implemented for a '
                         'fraction base')
     """
         
-    def raiseExpFactor(self, expFactor, assumptions=USE_DEFAULTS):
+    def raise_exp_factor(self, exp_factor, assumptions=USE_DEFAULTS):
         # Note: this is out-of-date.  Distribution handles this now,
         # except it doesn't deal with the negation part
         # (do we need it to?)
         from proveit.numbers import Neg
-        from .theorems import intExpOfExp, intExpOfNegExp
+        from .theorems import int_exp_of_exp, int_exp_of_neg_exp
         if isinstance(self.exponent, Neg):
             b_times_c = self.exponent.operand
-            thm = intExpOfNegExp
+            thm = int_exp_of_neg_exp
         else:
             b_times_c = self.exponent
-            thm = intExpOfExp
+            thm = int_exp_of_exp
         if not hasattr(b_times_c, 'factor'):
             raise ValueError('Exponent not factorable, may not raise the '
                              'exponent factor.')
-        factorEq = b_times_c.factor(expFactor, pull='right',
-                                    groupRemainder=True,
+        factor_eq = b_times_c.factor(exp_factor, pull='right',
+                                    group_remainder=True,
                                     assumptions=assumptions)
-        if factorEq.lhs != factorEq.rhs:
+        if factor_eq.lhs != factor_eq.rhs:
             # factor the exponent first, then raise this exponent factor
-            factoredExpEq = factorEq.substitution(self)
-            return factoredExpEq.applyTransitivity(
-                    factoredExpEq.rhs.raiseExpFactor(expFactor,
+            factored_exp_eq = factor_eq.substitution(self)
+            return factored_exp_eq.apply_transitivity(
+                    factored_exp_eq.rhs.raise_exp_factor(exp_factor,
                                                      assumptions=assumptions))
-        nSub = b_times_c.operands[1]
-        aSub = self.base
-        bSub = b_times_c.operands[0]
-        deduceNotZero(aSub, assumptions)
-        deduceInInteger(nSub, assumptions)
-        deduceInComplex([aSub, bSub], assumptions)
-        return thm.instantiate({n:nSub}).instantiate({a:aSub, b:bSub}).deriveReversed()
+        n_sub = b_times_c.operands[1]
+        a_sub = self.base
+        b_sub = b_times_c.operands[0]
+        deduce_not_zero(a_sub, assumptions)
+        deduce_in_integer(n_sub, assumptions)
+        deduce_in_complex([a_sub, b_sub], assumptions)
+        return thm.instantiate({n:n_sub}).instantiate({a:a_sub, b:b_sub}).derive_reversed()
 
-    def lowerOuterExp(self, assumptions=frozenset()):
+    def lower_outer_exp(self, assumptions=frozenset()):
         # 
         from proveit.numbers import Neg
         from .theorems import (
-                intExpOfExp, intExpOfNegExp, negIntExpOfExp, negIntExpOfNegExp)
+                int_exp_of_exp, int_exp_of_neg_exp, neg_int_exp_of_exp, neg_int_exp_of_neg_exp)
         if not isinstance(self.base, Exp):
-            raise Exception('May only apply lowerOuterExp to nested '
+            raise Exception('May only apply lower_outer_exp to nested '
                             'Exp operations')
         if isinstance(self.base.exponent, Neg) and isinstance(self.exponent, Neg):
             b_, n_ = self.base.exponent.operand, self.exponent.operand
-            thm = negIntExpOfNegExp
+            thm = neg_int_exp_of_neg_exp
         elif isinstance(self.base.exponent, Neg):
             b_, n_ = self.base.exponent.operand, self.exponent
-            thm = intExpOfNegExp
+            thm = int_exp_of_neg_exp
         elif isinstance(self.exponent, Neg):
             b_, n_ = self.base.exponent, self.exponent.operand
-            thm = negIntExpOfExp
+            thm = neg_int_exp_of_exp
         else:
             b_, n_ = self.base.exponent, self.exponent
-            thm = intExpOfExp
+            thm = int_exp_of_exp
         a_ = self.base.base
-        deduceNotZero(self.base.base, assumptions)
-        deduceInInteger(n_, assumptions)
-        deduceInComplex([a_, b_], assumptions)
+        deduce_not_zero(self.base.base, assumptions)
+        deduce_in_integer(n_, assumptions)
+        deduce_in_complex([a_, b_], assumptions)
         return thm.instantiate({n:n_}).instantiate({a:a_, b:b_})
 
-    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
         Given a number set number_set, attempt to prove that the given
         expression is in that number set using the appropriate closure
@@ -419,15 +419,15 @@ class Exp(Operation):
         '''
         from proveit.logic import InSet
         from proveit.numbers.exponentiation._theorems_ import (
-                  expComplexClosure, expNatClosure, expRealClosure,
-                  expRealClosureExpNonZero,expRealClosureBasePos,
-                  expRealPosClosure, sqrtComplexClosure, sqrtRealClosure,
-                  sqrtRealPosClosure)
+                  exp_complex_closure, exp_nat_closure, exp_real_closure,
+                  exp_real_closure_exp_non_zero,exp_real_closure_base_pos,
+                  exp_real_pos_closure, sqrt_complex_closure, sqrt_real_closure,
+                  sqrt_real_pos_closure)
         from proveit.numbers import (
                 Complex, NaturalPos, RationalPos, Real, RealPos)
 
         if number_set == NaturalPos:
-            return expNatClosure.instantiate({a:self.base, b:self.exponent},
+            return exp_nat_closure.instantiate({a:self.base, b:self.exponent},
                       assumptions=assumptions)
 
         if number_set == RationalPos:
@@ -445,7 +445,7 @@ class Exp(Operation):
         # closure theorems, once we get the system to deal
         # effectively with the Or(A, And(B, C)) conditions
         # if number_set == Real:
-        #     return expRealClosure.instantiate(
+        #     return exp_real_closure.instantiate(
         #                     {a:self.base, b:self.exponent},
         #                     assumptions=assumptions)
 
@@ -455,18 +455,18 @@ class Exp(Operation):
             # if base is positive real, exp can be any real;
             # if base is real ≥ 0, exp must be non-zero
             if self.exponent==frac(one, two):
-                return sqrtRealClosure.instantiate(
+                return sqrt_real_closure.instantiate(
                         {a:self.base},assumptions=assumptions)
             else:
                 err_string = ''
                 try:
-                    return expRealClosureBasePos.instantiate(
+                    return exp_real_closure_base_pos.instantiate(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
                 except:
                     err_string = 'Positive base condition failed '
                     try:
-                        return expRealClosureExpNonZero.instantiate(
+                        return exp_real_closure_exp_non_zero.instantiate(
                                 {a:self.base, b:self.exponent},
                                 assumptions=assumptions)
                     except:
@@ -477,22 +477,22 @@ class Exp(Operation):
 
         if number_set == RealPos:
             if self.exponent==frac(one, two):
-                return sqrtRealPosClosure.instantiate(
+                return sqrt_real_pos_closure.instantiate(
                         {a:self.base},assumptions=assumptions)
             else:
-                return expRealPosClosure.instantiate(
+                return exp_real_pos_closure.instantiate(
                         {a:self.base, b:self.exponent},assumptions=assumptions)
 
         if number_set == Complex:
             if self.exponent==frac(one, two):
-                return sqrtComplexClosure.instantiate(
+                return sqrt_complex_closure.instantiate(
                         {a:self.base}, assumptions=assumptions)
             else:
-                return expComplexClosure.instantiate(
+                return exp_complex_closure.instantiate(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
 
-        msg = "'deduceInNumberSet' not implemented for the %s set"%str(number_set)
+        msg = "'deduce_in_number_set' not implemented for the %s set"%str(number_set)
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
 
     
@@ -513,7 +513,7 @@ class ExpSetMembership(Membership):
         from proveit.logic.sets.membership._theorems_ import (
             exp_set_0, exp_set_1, exp_set_2, exp_set_3, exp_set_4, exp_set_5,
             exp_set_6, exp_set_7, exp_set_8, exp_set_9)
-        from proveit.numbers import zero, isLiteralInt, DIGITS
+        from proveit.numbers import zero, is_literal_int, DIGITS
         element = self.element
         domain = self.domain
         elem_in_set = InSet(element, domain)
@@ -525,18 +525,18 @@ class ExpSetMembership(Membership):
         exponent_eval = domain.exponent.evaluation(assumptions=assumptions)
         exponent = exponent_eval.rhs
         base = domain.base
-        #print(exponent, base, exponent.asInt(),element, domain, len(element))
-        if isLiteralInt(exponent):
+        #print(exponent, base, exponent.as_int(),element, domain, len(element))
+        if is_literal_int(exponent):
             if exponent == zero:
                 return exp_set_0.instantiate({S:base}, assumptions=assumptions)
-            if len(element) != exponent.asInt():
+            if len(element) != exponent.as_int():
                 raise ProofFailure(
                     elem_in_set, assumptions,
                     "Element not a member of the exponentiated set; "
                     "incorrect list length")
             elif exponent in DIGITS:
                 # thm = forall_S forall_{a, b... in S} (a, b, ...) in S^n
-                thm = locals()['exp_set_%d'%exponent.asInt()]
+                thm = locals()['exp_set_%d'%exponent.as_int()]
                 expr_map = {S:base} # S is the base
                 # map a, b, ... to the elements of element.
                 expr_map.update({proveit._common_.__getattr__(chr(ord('a')+k)):elem_k for k, elem_k in enumerate(element)})
@@ -555,11 +555,11 @@ class ExpSetMembership(Membership):
             # after proving that the element is in the set taken to
             # the evaluation of the exponent, substitute back in the
             # original exponent.
-            return exponent_eval.subLeftSideInto(elem_in_set,
+            return exponent_eval.sub_left_side_into(elem_in_set,
                                                  assumptions=assumptions)
         return elem_in_set
 
-    def sideEffects(self, judgment):
+    def side_effects(self, judgment):
         return
         yield
 
@@ -568,7 +568,7 @@ class ExpSetMembership(Membership):
 def sqrt(base):
     '''
     Special function for square root version of an exponential.
-    Formatting depends on the argument supplied to the withStyles()
+    Formatting depends on the argument supplied to the with_styles()
     method called on the Expression superclass, which then sets
     things up so the Exp latex() method will display the expression
     using a traditional square root radical. If you want a square
@@ -576,7 +576,7 @@ def sqrt(base):
     use Exp(_, frac(1/2)) directly.
     Could later generalize this to cube roots or general nth roots.
     '''
-    return Exp(base, frac(one, two)).withStyles(exponent='radical')
+    return Exp(base, frac(one, two)).with_styles(exponent='radical')
 
 # Register these expression equivalence methods:
 InnerExpr.register_equivalence_method(Exp, 'distribution', 'distributed', 'distribute')

@@ -2,10 +2,10 @@ from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
                                             ImproperReplacement, 
                                             free_vars, used_vars,
                                             traverse_inner_expressions)
-from proveit._core_.expression.label.var import safeDummyVar, safeDummyVars
+from proveit._core_.expression.label.var import safe_dummy_var, safe_dummy_vars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
-def getParamVar(parameter, *, _required_indices=None):
+def get_param_var(parameter, *, _required_indices=None):
     '''
     Parameters may be variables, indexed variables, ranges over indexed
     variables, or even nested ranges (ranges of ranges, etc) of indexed
@@ -26,7 +26,7 @@ def getParamVar(parameter, *, _required_indices=None):
         if _required_indices is None: _required_indices = set()
         _required_indices.add(parameter.parameter)
         # recurse to get the parameter variable
-        var = getParamVar(parameter.body, _required_indices=_required_indices)
+        var = get_param_var(parameter.body, _required_indices=_required_indices)
         if len(_required_indices) > 0:
             raise ValueError(
                     "Parameter may be an ExprRange over IndexedVar "
@@ -60,7 +60,7 @@ def valid_params(expr_tuple):
     # See if this is an allowed expansion of a 
     # range of parameters.
     try:
-        expanded_vars = {getParamVar(expanded_param)
+        expanded_vars = {get_param_var(expanded_param)
                          for expanded_param in expr_tuple.entries}
         if len(expanded_vars)!=len(expr_tuple.entries):
             # Parameter variables must be unique to be valid.
@@ -92,20 +92,20 @@ class Lambda(Expression):
         Expression.  The body may be singular or a composite.
         '''
         from proveit._core_.expression.composite import (
-                compositeExpression, singleOrCompositeExpression)
-        self.parameters = compositeExpression(parameter_or_parameters)
-        parameterVars = [getParamVar(parameter) for parameter in self.parameters]
+                composite_expression, single_or_composite_expression)
+        self.parameters = composite_expression(parameter_or_parameters)
+        parameter_vars = [get_param_var(parameter) for parameter in self.parameters]
         if self.parameters.is_singular():
             # has a single parameter
             self.parameter = self.parameters[0]
             self.parameter_or_parameters = self.parameter
         else:
             self.parameter_or_parameters = self.parameters
-        self.parameterVars = tuple(parameterVars)
-        self.parameterVarSet = frozenset(parameterVars)
+        self.parameter_vars = tuple(parameter_vars)
+        self.parameter_var_set = frozenset(parameter_vars)
         
         # Parameter variables may not occur multiple times.
-        if len(self.parameterVarSet) != len(self.parameters):
+        if len(self.parameter_var_set) != len(self.parameters):
             raise ParameterCollisionError(
                     self.parameters, "Parameter variables must be unique")
         
@@ -113,7 +113,7 @@ class Lambda(Expression):
         # any of the parameter indexes.
         free_vars_of_param_indices = \
             self._possibly_free_vars_of_parameter_indices()
-        if not free_vars_of_param_indices.isdisjoint(self.parameterVarSet):
+        if not free_vars_of_param_indices.isdisjoint(self.parameter_var_set):
             raise ParameterCollisionError(
                     self.parameters, ("Parameter variables may not occur as "
                                       "free variables in parameter indices"))         
@@ -126,9 +126,9 @@ class Lambda(Expression):
         # to prove that
         # |f_1(i_1), ..., f_1(j_1), ......, f_n(i_n), ..., f_n(j_n)| = n
         # WHICH WOULD BE WRONG, IN GENERAL!
-        body = singleOrCompositeExpression(body, 
+        body = single_or_composite_expression(body, 
                                            wrap_expr_range_in_tuple=False)
-        # After the singleOrCompositeExpression, this assertion should
+        # After the single_or_composite_expression, this assertion should
         # not fail.
         assert isinstance(body, Expression)
         self.body = body
@@ -138,25 +138,25 @@ class Lambda(Expression):
         # cannot be relabeled.
         free_var_ranges = \
             Lambda._possibly_free_var_ranges_static(
-                    self.parameters, self.parameterVars, self.body)
+                    self.parameters, self.parameter_vars, self.body)
         self.nonrelabelable_param_vars = \
             {var for var, var_form in free_var_ranges.items()
-            if var in self.parameterVarSet}
+            if var in self.parameter_var_set}
         
         sub_exprs = (self.parameter_or_parameters, self.body)
         Expression.__init__(self, ['Lambda'], sub_exprs)
     
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
-        if len(coreInfo) != 1 or coreInfo[0] != 'Lambda':
-            raise ValueError("Expecting Lambda coreInfo to contain exactly one "
+    def _make(sub_class, core_info, styles, sub_expressions):
+        if len(core_info) != 1 or core_info[0] != 'Lambda':
+            raise ValueError("Expecting Lambda core_info to contain exactly one "
                              "item: 'Lambda'")
-        if subClass != Lambda: 
-            raise MakeNotImplemented(subClass)
-        if len(subExpressions)!=2:
+        if sub_class != Lambda: 
+            raise MakeNotImplemented(sub_class)
+        if len(sub_expressions)!=2:
             raise ValueError("Expected Lambda to have two sub-expressions")
-        parameters, body = subExpressions
-        return Lambda(parameters, body).withStyles(**styles)
+        parameters, body = sub_expressions
+        return Lambda(parameters, body).with_styles(**styles)
     
     def _possibly_free_vars_of_parameter_indices(self):
         '''
@@ -199,11 +199,11 @@ class Lambda(Expression):
         # (as opposed to a range of indexed variables) that are 
         # relabelable, replace them with the variable being indexed 
         # in the canonical version
-        parameterVars = self.parameterVars
+        parameter_vars = self.parameter_vars
         parameters = self.parameters
         bound_parameter_vars = \
             [param_var if isinstance(param, ExprRange) else param
-             for param_var, param in zip(parameterVars, parameters)
+             for param_var, param in zip(parameter_vars, parameters)
              if param_var not in self.nonrelabelable_param_vars] 
         
         # Assign canonical labels to the parameters using the first
@@ -223,12 +223,12 @@ class Lambda(Expression):
         start_index = len(internally_bound_vars)
         dummy_index = 0
         while dummy_index < start_index:
-            dummy_var = safeDummyVar(start_index=dummy_index)
+            dummy_var = safe_dummy_var(start_index=dummy_index)
             if dummy_var in lambda_free_vars:
                 start_index += 1
             dummy_index += 1
         canonical_param_vars = list(reversed(
-                safeDummyVars(len(bound_parameter_vars), *lambda_free_vars,
+                safe_dummy_vars(len(bound_parameter_vars), *lambda_free_vars,
                               start_index=start_index)))
         
         orig_auto_reduce = defaults.auto_reduce
@@ -260,19 +260,19 @@ class Lambda(Expression):
         self._canonical_expr = canonical_expr
         return canonical_expr
     
-    def extractArgument(self, mappedExpr):
+    def extract_argument(self, mapped_expr):
         '''
         Given a mapped expression, return the argument that will transform
         this Lambda expression into the mapped expression.  For example,
         if the Lambda expression is x -> x + 1 and the mapped expression
         is 2 + 1, this will return 2.  If there is more than one parameter
-        in this Lambda expression, use extractArguments instead.
+        in this Lambda expression, use extract_arguments instead.
         '''
-        assert len(self.parameters) == 1, ("Use the 'extractArguments' method "
+        assert len(self.parameters) == 1, ("Use the 'extract_arguments' method "
                                            "when there is more than one parameter")
-        return self.extractArguments(mappedExpr)[0]
+        return self.extract_arguments(mapped_expr)[0]
 
-    def extractArguments(self, mappedExpr):
+    def extract_arguments(self, mapped_expr):
         '''
         Given a mapped expression, return the arguments that will transform
         this Lambda expression into the mapped expression.  For example,
@@ -283,26 +283,26 @@ class Lambda(Expression):
         # of the lambda map and corresponding values from the mapped_expr.
         parameters = self.parameters
         lambda_sub_expr = self.body
-        mapped_sub_expr = mappedExpr
+        mapped_sub_expr = mapped_expr
         if len(self.parameters)==1 and self.body==self.parameter:
-            # Simple case of x -> x.  Just return the mappedExpr as the
+            # Simple case of x -> x.  Just return the mapped_expr as the
             # one argument.
-            return [mappedExpr]
+            return [mapped_expr]
         param_values = [None]*len(parameters)
-        if lambda_sub_expr.numSubExpr() != mapped_sub_expr.numSubExpr():
+        if lambda_sub_expr.num_sub_expr() != mapped_sub_expr.num_sub_expr():
             raise ArgumentExtractionError("# of sub-expressions, %d vs %d"
-                                          %(lambda_sub_expr.numSubExpr(), 
-                                            mapped_sub_expr.numSubExpr()))
+                                          %(lambda_sub_expr.num_sub_expr(), 
+                                            mapped_sub_expr.num_sub_expr()))
         if lambda_sub_expr.__class__ != mapped_sub_expr.__class__:
             raise ArgumentExtractionError("Expression class, %s vs %s"
                                           %(str(lambda_sub_expr.__class__), 
                                             str(mapped_sub_expr.__class__)))
-        if lambda_sub_expr._coreInfo != mapped_sub_expr._coreInfo:
+        if lambda_sub_expr._core_info != mapped_sub_expr._core_info:
             raise ArgumentExtractionError("core information, %s vs %s"
-                                          %(str(lambda_sub_expr._coreInfo), 
-                                            str(mapped_sub_expr._coreInfo)))
-        lambda_sub_expr_iters = [lambda_sub_expr.subExprIter()]
-        mapped_sub_expr_iters = [mapped_sub_expr.subExprIter()]
+                                          %(str(lambda_sub_expr._core_info), 
+                                            str(mapped_sub_expr._core_info)))
+        lambda_sub_expr_iters = [lambda_sub_expr.sub_expr_iter()]
+        mapped_sub_expr_iters = [mapped_sub_expr.sub_expr_iter()]
         while len(lambda_sub_expr_iters) > 0:
             try:
                 lambda_sub_expr = next(lambda_sub_expr_iters[-1])
@@ -319,29 +319,29 @@ class Lambda(Expression):
                                                str(mapped_sub_expr)))
                     param_values[param_idx] = mapped_sub_expr
                 else:
-                    if lambda_sub_expr.numSubExpr() != mapped_sub_expr.numSubExpr():
+                    if lambda_sub_expr.num_sub_expr() != mapped_sub_expr.num_sub_expr():
                         raise extraction_err("# of sub-expressions, %d vs %d"
-                                             %(lambda_sub_expr.numSubExpr(), 
-                                               mapped_sub_expr.numSubExpr()))
+                                             %(lambda_sub_expr.num_sub_expr(), 
+                                               mapped_sub_expr.num_sub_expr()))
                     if lambda_sub_expr.__class__ != mapped_sub_expr.__class__:
                         raise extraction_err("Expression class, %s vs %s"
                                              %(str(lambda_sub_expr.__class__), 
                                                str(mapped_sub_expr.__class__)))
-                    if lambda_sub_expr._coreInfo != mapped_sub_expr._coreInfo:
+                    if lambda_sub_expr._core_info != mapped_sub_expr._core_info:
                         raise extraction_err("core information, %s vs %s"
-                                             %(str(lambda_sub_expr._coreInfo), 
-                                               str(mapped_sub_expr._coreInfo)))
-                    if lambda_sub_expr.numSubExpr() > 0:
+                                             %(str(lambda_sub_expr._core_info), 
+                                               str(mapped_sub_expr._core_info)))
+                    if lambda_sub_expr.num_sub_expr() > 0:
                         # going deeper
-                        lambda_sub_expr_iters.append(lambda_sub_expr.subExprIter())
-                        mapped_sub_expr_iters.append(mapped_sub_expr.subExprIter())
+                        lambda_sub_expr_iters.append(lambda_sub_expr.sub_expr_iter())
+                        mapped_sub_expr_iters.append(mapped_sub_expr.sub_expr_iter())
             except StopIteration:
                 # exhausted the "deepest" of the sub-expressions
                 lambda_sub_expr_iters.pop(-1) # pop back out to a shallower level
                 mapped_sub_expr_iters.pop(-1)
         return param_values
 
-    def remakeArguments(self):
+    def remake_arguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Lambda expression.
@@ -355,29 +355,29 @@ class Lambda(Expression):
     @staticmethod
     def _string(parameters, body, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
-        outStr = '[' if fence else ''
-        parameterListStr = ', '.join([parameter.string(abbrev=True) for parameter 
+        out_str = '[' if fence else ''
+        parameter_list_str = ', '.join([parameter.string(abbrev=True) for parameter 
                                       in parameters])
         if parameters.is_singular():
-            outStr += parameterListStr + ' -> '
+            out_str += parameter_list_str + ' -> '
         else:
-            outStr += '(' + parameterListStr + ') -> '
-        outStr += body.string(fence=True)
-        if fence: outStr += ']'
-        return outStr
+            out_str += '(' + parameter_list_str + ') -> '
+        out_str += body.string(fence=True)
+        if fence: out_str += ']'
+        return out_str
     
     def latex(self, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
-        outStr = r'\left[' if fence else ''
-        parameterListStr = ', '.join([parameter.latex(abbrev=True) for parameter 
+        out_str = r'\left[' if fence else ''
+        parameter_list_str = ', '.join([parameter.latex(abbrev=True) for parameter 
                                       in self.parameters])
         if self.parameters.is_singular():
-            outStr +=  parameterListStr + r' \mapsto '
+            out_str +=  parameter_list_str + r' \mapsto '
         else:
-            outStr += r'\left(' + parameterListStr + r'\right) \mapsto '
-        outStr += self.body.latex(fence=True)
-        if fence: outStr += r'\right]'
-        return outStr
+            out_str += r'\left(' + parameter_list_str + r'\right) \mapsto '
+        out_str += self.body.latex(fence=True)
+        if fence: out_str += r'\right]'
+        return out_str
     
     def apply(self, *operands, equiv_alt_expansions=None,
               allow_relabeling=False, assumptions=USE_DEFAULTS, 
@@ -458,7 +458,7 @@ class Lambda(Expression):
                 allow_relabeling=allow_relabeling,
                 assumptions=assumptions, requirements=requirements,
                 equality_repl_requirements=equality_repl_requirements,
-                parameter_vars=self.parameterVars)
+                parameter_vars=self.parameter_vars)
     
     @staticmethod 
     def _apply(parameters, body, *operands, equiv_alt_expansions=None,
@@ -479,7 +479,7 @@ class Lambda(Expression):
         try:
             if parameter_vars is None:
                 parameter_vars = \
-                    [getParamVar(parameter) for parameter in parameters]
+                    [get_param_var(parameter) for parameter in parameters]
         except TypeError as e:
             raise TypeError("Invalid ad-hoc Lambda parameters, %s:\n%s"
                             %(parameters, str(e)))
@@ -487,7 +487,7 @@ class Lambda(Expression):
         # We will be appending to the requirements list if it is given
         # (or a throw-away list if it is not).
         if requirements is None: requirements = []
-        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions = defaults.checked_assumptions(assumptions)
         
         # We will be matching operands with parameters in the proper 
         # order and adding corresponding entries to the replacement map.
@@ -521,9 +521,9 @@ class Lambda(Expression):
                 for var_tuple_entry in var_tuple:
                     try:
                         if param_var is None:
-                            param_var = getParamVar(var_tuple_entry)
+                            param_var = get_param_var(var_tuple_entry)
                         else:
-                            if getParamVar(var_tuple_entry) != param_var:
+                            if get_param_var(var_tuple_entry) != param_var:
                                 raise ValueError
                     except (TypeError, ValueError):
                         raise ValueError(
@@ -627,7 +627,7 @@ class Lambda(Expression):
             # The full expression is to be replaced.
             return repl_map[self]
         
-        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions = defaults.checked_assumptions(assumptions)
         
         # Use a helper method to handle some inner scope transformations.
         new_params, inner_repl_map, inner_assumptions \
@@ -674,7 +674,7 @@ class Lambda(Expression):
         # disallowing such substitutions.
         inner_repl_map = dict()
         for key, value in repl_map.items():
-            if not _guaranteed_to_be_independent(key, self.parameterVarSet):
+            if not _guaranteed_to_be_independent(key, self.parameter_var_set):
                 # If any of the free variables of the key occur as
                 # parameter variables, either that replacement is
                 # masked within this scope, or there is an allowed
@@ -694,7 +694,7 @@ class Lambda(Expression):
                     assert isinstance(var, Variable)
                     param_of_var = None
                     for param, param_var in zip(self.parameters, 
-                                                self.parameterVars):
+                                                self.parameter_vars):
                         if param_var==var:
                             param_of_var = param
                     if param_of_var is None:
@@ -771,13 +771,13 @@ class Lambda(Expression):
         # we can ignore those for this purpose as the real replacements 
         # will be what the members of this set map to.
         non_param_body_free_vars = (free_vars(self.body, err_inclusively=True)
-                                    - self.parameterVarSet)
+                                    - self.parameter_var_set)
         restricted_vars = non_param_body_free_vars.union(
                 *[free_vars(value, err_inclusively=True) for key, value 
                   in inner_repl_map.items()
-                  if (key not in self.parameterVarSet 
+                  if (key not in self.parameter_var_set 
                       and not isinstance(value, set))])
-        for param_var in self.parameterVarSet:
+        for param_var in self.parameter_var_set:
             param_var_repl = inner_repl_map.get(param_var, param_var)
             if param_var_repl in restricted_vars:
                 # Avoid this collision by relabeling to a safe dummy 
@@ -788,7 +788,7 @@ class Lambda(Expression):
                             " Thus, a collision of variable names induced "
                             "by the following replacement map could not be "
                             "avoided: %s."%inner_repl_map)
-                dummy_var = safeDummyVar(*restricted_vars)
+                dummy_var = safe_dummy_var(*restricted_vars)
                 inner_repl_map[param_var] = dummy_var
                 restricted_vars.add(dummy_var)
             else:
@@ -811,7 +811,7 @@ class Lambda(Expression):
         #       x_1 with n:1
         #       or empty with n:0
         new_params = []
-        for parameter, param_var in zip(self.parameters, self.parameterVars):
+        for parameter, param_var in zip(self.parameters, self.parameter_vars):
             if isinstance(parameter, ExprRange):
                 for subbed_param in parameter._replaced_entries(
                         inner_repl_map, allow_relabeling, 
@@ -825,12 +825,12 @@ class Lambda(Expression):
                         equality_repl_requirements)
                 new_params.append(subbed_param)
         
-        if len({getParamVar(param) for param in new_params}) != len(new_params):
+        if len({get_param_var(param) for param in new_params}) != len(new_params):
             raise ParameterCollisionError(
                     new_params, "Parameter variables must be unique")
 
         # Can't use assumptions involving lambda parameter variables
-        new_param_vars = [getParamVar(new_param) for new_param in new_params]
+        new_param_vars = [get_param_var(new_param) for new_param in new_params]
         inner_assumptions = \
             [assumption for assumption in assumptions if
              free_vars(assumption, err_inclusively=True).isdisjoint(
@@ -860,8 +860,8 @@ class Lambda(Expression):
                                 "to Variables/IndexedVars; "
                                 "may not relabel to %s"%key)
         relabeled = self.replaced(relabel_map, allow_relabeling=True)
-        for orig_param_var, new_param_var in zip(self.parameterVars,
-                                                 relabeled.parameterVars):
+        for orig_param_var, new_param_var in zip(self.parameter_vars,
+                                                 relabeled.parameter_vars):
             # Presume that if one of the parameters did not actually
             # get relabeled, that it was because the relabeling was
             # not allowed.
@@ -888,25 +888,25 @@ class Lambda(Expression):
             if len(lambda2.parameters) != 1:
                 raise TypeError("lambda2 may only take 1 parameter if lambda1 takes only 1 parameter")
             # g(x)
-            relabeledExpr2 = lambda2.body.replaced({lambda2.parameters[0]:lambda1.parameters[0]})
+            relabeled_expr2 = lambda2.body.replaced({lambda2.parameters[0]:lambda1.parameters[0]})
             # x -> f(g(x))
-            return Lambda(lambda1.parameters[0], lambda1.body.replaced({lambda1.parameters[0]:relabeledExpr2}))
+            return Lambda(lambda1.parameters[0], lambda1.body.replaced({lambda1.parameters[0]:relabeled_expr2}))
         else:
             if len(lambda2) != len(lambda1.parameters):
                 raise TypeError("Must supply a list of lambda2s with the same length as the number of lambda1 parameters")
-            relabeledExpr2s = []
+            relabeled_expr2s = []
             for lambda2elem in lambda2:
                 if len(lambda2elem.parameters) != len(lambda1.parameters):
                     raise TypeError("Each lambda2 must have the same number of parameters as lambda1")
                 # gi(x1, x2, ..., xn)
-                paramReplMap = {param2:param1 for param1, param2 in zip(lambda1.parameters, lambda2elem.parameters)}
-                relabeledExpr2s.append(lambda2elem.body.replaced(paramReplMap))
+                param_repl_map = {param2:param1 for param1, param2 in zip(lambda1.parameters, lambda2elem.parameters)}
+                relabeled_expr2s.append(lambda2elem.body.replaced(param_repl_map))
             # x1, x2, ..., xn -> f(g1(x1, x2, ..., xn), g2(x1, x2, ..., xn), ..., gn(x1, x2, ..., xn)).
-            lambda1ExprSubMap = {param1:relabeledExpr2 for param1, relabeledExpr2 in zip(lambda1.parameters, relabeledExpr2s)}
-            return Lambda(lambda1.parameters, lambda1.body.replaced(lambda1ExprSubMap))
+            lambda1_expr_sub_map = {param1:relabeled_expr2 for param1, relabeled_expr2 in zip(lambda1.parameters, relabeled_expr2s)}
+            return Lambda(lambda1.parameters, lambda1.body.replaced(lambda1_expr_sub_map))
     
     @staticmethod
-    def globalRepl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
+    def global_repl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
         '''
         Returns the Lambda map for replacing the given sub-Expression
         everywhere that it occurs in the master Expression.
@@ -934,24 +934,24 @@ class Lambda(Expression):
                 if (isinstance(inner_expr, Operation) and 
                         inner_expr.operands == sub_expr):
                     # We should use a multi-parameter map
-                    from proveit import safeDummyVar, varRange
+                    from proveit import safe_dummy_var, var_range
                     from proveit.core_expr_types import Len
                     from proveit.numbers import one
                     n = Len(sub_expr).computed(assumptions)
-                    parameters = varRange(safeDummyVar(master_expr),
+                    parameters = var_range(safe_dummy_var(master_expr),
                                           one, n)
                     body = master_expr.replaced({sub_expr:parameters},
                                                 assumptions=assumptions)
                     return Lambda(parameters, body)
         
         # Just make a single parameter replacement map.
-        lambda_param = master_expr.safeDummyVar()
+        lambda_param = master_expr.safe_dummy_var()
         return Lambda(lambda_param, master_expr.replaced(
                 {sub_expr:lambda_param}))
         
     
     @staticmethod
-    def _possibly_free_var_ranges_static(parameters, parameterVars, body,
+    def _possibly_free_var_ranges_static(parameters, parameter_vars, body,
                                          exclusions=None):
         '''
         Static method version of _possibly_free_var_ranges.
@@ -960,7 +960,7 @@ class Lambda(Expression):
         for expr in (parameters, body):
             forms_dict.update(expr._possibly_free_var_ranges(
                     exclusions=exclusions))
-        for param, param_var in zip(parameters, parameterVars):
+        for param, param_var in zip(parameters, parameter_vars):
             if param_var in forms_dict.keys():
                 forms_dict[param_var].discard(param)
                 # Note: If you have a parameter of x_1 or a parameter of
@@ -987,7 +987,7 @@ class Lambda(Expression):
         if exclusions is not None and self in exclusions: 
             return forms_dict # this is excluded    
         return Lambda._possibly_free_var_ranges_static(
-                self.parameters, self.parameterVars, self.body, 
+                self.parameters, self.parameter_vars, self.body, 
                 exclusions=exclusions)
 
 def _guaranteed_to_be_independent(expr, parameter_vars):
@@ -1055,7 +1055,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
     try:
         for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
-                from proveit.numbers import zero, one, isLiteralInt
+                from proveit.numbers import zero, one, is_literal_int
                 # This is a parameter range which corresponds with
                 # one or more operand entries in order to match the
                 # element-wise length.
@@ -1113,7 +1113,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
                                     # this is the right match or if we 
                                     # need to go further with more 
                                     # operands.
-                                    len_req.lhs.deduceEquality(
+                                    len_req.lhs.deduce_equality(
                                             len_req, assumptions, 
                                             minimal_automation=True)
                                     assert len_req.proven(assumptions)
@@ -1233,7 +1233,7 @@ def _mask_var_range(
     carve out the masked region.
     '''
     from proveit import (IndexedVar, ExprTuple, ExprRange,
-                         singleOrCompositeExpression)
+                         single_or_composite_expression)
     from proveit._core_.expression.composite.expr_range import \
         extract_start_indices, extract_end_indices
     valid_var_range_forms = set()
@@ -1280,7 +1280,7 @@ def _mask_var_range(
             inner_repl_map[var_range_form] = expansion
             if len(masked_entries)==1:
                 fully_masking_var_range = \
-                    singleOrCompositeExpression(masked_entries[0])
+                    single_or_composite_expression(masked_entries[0])
             masked_region_repl = []
             for masked_entry in masked_entries:
                 if isinstance(masked_entry, ExprRange): 
@@ -1327,7 +1327,7 @@ def _mask_var_range(
     # to effect proper masking.
     for masked_var_range in masked_region_repl_map.keys():
         for masked_entry in masked_var_range:
-            masked_entry_key = singleOrCompositeExpression(masked_entry)
+            masked_entry_key = single_or_composite_expression(masked_entry)
             inner_repl_map[masked_entry_key] = masked_entry_key
     return True
 
@@ -1355,8 +1355,8 @@ class LambdaApplicationError(Exception):
     def __init__(self, parameters, body, operands, assumptions, 
                  equiv_alt_expansions, extra_msg):
         from proveit._core_.expression.composite.composite import \
-            compositeExpression
-        self.parameters = compositeExpression(parameters)
+            composite_expression
+        self.parameters = composite_expression(parameters)
         self.body = body
         self.operands = operands
         self.assumptions = assumptions
@@ -1381,5 +1381,5 @@ class ArgumentExtractionError(Exception):
     def __init__(self, specifics):
         self.specifics = specifics
     def __str__(self):
-        return ("Cannot extract argument(s); mappedExpr does not match this Lambda "
+        return ("Cannot extract argument(s); mapped_expr does not match this Lambda "
                 "expression: " + self.specifics)

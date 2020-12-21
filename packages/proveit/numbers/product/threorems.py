@@ -1,6 +1,6 @@
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
+begin_theorems(locals())
 
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

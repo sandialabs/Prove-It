@@ -1,36 +1,36 @@
-from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex, InnerExpr, USE_DEFAULTS, ProofFailure
-from proveit.logic import isIrreducibleValue
+from proveit import Literal, Operation, maybe_fenced_string, maybe_fenced_latex, InnerExpr, USE_DEFAULTS, ProofFailure
+from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import Integer, Real, Complex
 from proveit._common_ import a, b, m, n, x, y, B
 
 class Neg(Operation):
     # operator of the Neg operation.
-    _operator_ = Literal(stringFormat='-', theory=__file__)
+    _operator_ = Literal(string_format='-', theory=__file__)
 
     def __init__(self,A):
         Operation.__init__(self, Neg._operator_, A)
 
-    def irreducibleValue(self):
+    def irreducible_value(self):
         from proveit.numbers import zero
-        return isIrreducibleValue(self.operand) and self.operand != zero
+        return is_irreducible_value(self.operand) and self.operand != zero
 
-    def deduceInNumberSet(self, NumberSet, assumptions=USE_DEFAULTS):
+    def deduce_in_number_set(self, NumberSet, assumptions=USE_DEFAULTS):
         '''
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
         '''
-        from ._theorems_ import intClosure, realClosure, complexClosure
+        from ._theorems_ import int_closure, real_closure, complex_closure
         from proveit.logic import InSet
         if NumberSet == Integer:
-            return intClosure.instantiate({a:self.operand})
+            return int_closure.instantiate({a:self.operand})
         elif NumberSet == Real:
-            return realClosure.instantiate({a:self.operand})
+            return real_closure.instantiate({a:self.operand})
         elif NumberSet == Complex:
-            return complexClosure.instantiate({a:self.operand})
+            return complex_closure.instantiate({a:self.operand})
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
 
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
+    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this negation expression equated with a simpler form.
         Deals with double negation specifically.
@@ -43,74 +43,74 @@ class Neg(Operation):
         # Handle double negation:
         if isinstance(self.operand, Neg):
             # simplify double negation
-            expr = eq.update(self.doubleNegSimplification(assumptions))
+            expr = eq.update(self.double_neg_simplification(assumptions))
             # simplify what is inside the double-negation.
             expr = eq.update(expr.simplification(assumptions))
         return eq.relation
 
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Only handles -0 = 0 or double negation.
         '''
         from proveit.logic import EvaluationError
-        from ._theorems_ import negatedZero
+        from ._theorems_ import negated_zero
         from proveit.numbers import zero
         if self.operand == zero:
-            return negatedZero
-        if isinstance(self.operand, Neg) and isIrreducibleValue(self.operand.operand):
-            return self.doubleNegSimplification(assumptions)
+            return negated_zero
+        if isinstance(self.operand, Neg) and is_irreducible_value(self.operand.operand):
+            return self.double_neg_simplification(assumptions)
         raise EvaluationError(self, assumptions)
 
-    def doubleNegSimplification(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import doubleNegation
+    def double_neg_simplification(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import double_negation
         assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)
-        return doubleNegation.instantiate({x:self.operand.operand},
+        return double_negation.instantiate({x:self.operand.operand},
                                          assumptions=assumptions)
 
 
     """
-    def _closureTheorem(self, numberSet):
+    def _closureTheorem(self, number_set):
         import _theorems_
-        if numberSet == Complex:
-            return _theorems_.negComplexClosure
-        elif numberSet == Real:
-            return _theorems_.negRealClosure
-        elif numberSet == Integer:
-            return _theorems_.negIntClosure
+        if number_set == Complex:
+            return _theorems_.neg_complex_closure
+        elif number_set == Real:
+            return _theorems_.neg_real_closure
+        elif number_set == Integer:
+            return _theorems_.neg_int_closure
 
     def _negativeTheorem(self):
         import _theorems_
-        return _theorems_.negatedPositiveIsNegative
+        return _theorems_.negated_positive_is_negative
 
     def _positiveTheorem(self):
         import _theorems_
-        return _theorems_.negatedNegativeIsPositive
+        return _theorems_.negated_negative_is_positive
 
-    def _notEqZeroTheorem(self):
+    def _not_eqZeroTheorem(self):
         import _theorems_
-        return _theorems_.negNotEqZero
+        return _theorems_.neg_not_eq_zero
     """
 
-    def asInt(self):
+    def as_int(self):
         '''
         Convert a literal integer into a Python int.  This
         only works if the operand is a literal int.
         '''
-        return -self.operand.asInt()
+        return -self.operand.as_int()
 
     def string(self, **kwargs):
-        return maybeFencedString('-'+self.operand.string(fence=True), **kwargs)
+        return maybe_fenced_string('-'+self.operand.string(fence=True), **kwargs)
 
     def latex(self, **kwargs):
-        return maybeFencedLatex('-'+self.operand.latex(fence=True), **kwargs)
+        return maybe_fenced_latex('-'+self.operand.latex(fence=True), **kwargs)
 
     def distribution(self, assumptions=USE_DEFAULTS):
         '''
         Distribute negation through a sum, deducing and returning
         the equality between the original and distributed forms.
         '''
-        from ._theorems_ import distributeNegThroughBinarySum
-        from ._theorems_ import distributeNegThroughSubtract, distributeNegThroughSum
+        from ._theorems_ import distribute_neg_through_binary_sum
+        from ._theorems_ import distribute_neg_through_subtract, distribute_neg_through_sum
         from proveit.numbers import Add, num
         from proveit.relation import TransRelUpdater
         expr = self
@@ -122,66 +122,66 @@ class Neg(Operation):
             if len(add_expr.operands)==2:
                 # special case of 2 operands
                 if isinstance(add_expr.operands[1], Neg):
-                    expr = eq.update(distributeNegThroughSubtract.instantiate({a:add_expr.operands[0], b:add_expr.operands[1].operand}, assumptions=assumptions))
+                    expr = eq.update(distribute_neg_through_subtract.instantiate({a:add_expr.operands[0], b:add_expr.operands[1].operand}, assumptions=assumptions))
                 else:
-                    expr = eq.update(distributeNegThroughBinarySum.instantiate({a:add_expr.operands[0], b:add_expr.operands[1]}, assumptions=assumptions))
+                    expr = eq.update(distribute_neg_through_binary_sum.instantiate({a:add_expr.operands[0], b:add_expr.operands[1]}, assumptions=assumptions))
             else:
                 # distribute the negation over the sum
-                expr = eq.update(distributeNegThroughSum.instantiate({n:num(len(add_expr.operands)), xx:add_expr.operands}), assumptions=assumptions)
-            assert isinstance(expr, Add), "distributeNeg theorems are expected to yield an Add expression"
+                expr = eq.update(distribute_neg_through_sum.instantiate({n:num(len(add_expr.operands)), xx:add_expr.operands}), assumptions=assumptions)
+            assert isinstance(expr, Add), "distribute_neg theorems are expected to yield an Add expression"
             # check for double negation
             for k, operand in enumerate(expr.operands):
-                assert isinstance(operand, Neg), "Each term from distributeNegThroughSum is expected to be negated"
+                assert isinstance(operand, Neg), "Each term from distribute_neg_through_sum is expected to be negated"
                 if isinstance(operand.operand, Neg):
-                    expr = eq.update(expr.innerExpr().operands[k].doubleNegSimplification())
+                    expr = eq.update(expr.inner_expr().operands[k].double_neg_simplification())
             return eq.relation
         else:
             raise Exception('Only negation distribution through a sum or subtract is implemented')
 
-    def factorization(self, theFactor, pull="left", groupFactor=None, groupRemainder=None, assumptions=USE_DEFAULTS):
+    def factorization(self, the_factor, pull="left", group_factor=None, group_remainder=None, assumptions=USE_DEFAULTS):
         '''
         Pull out a factor from a negated expression, pulling it either to the "left" or "right".
-        groupFactor and groupRemainder are not relevant but kept for compatibility with
+        group_factor and group_remainder are not relevant but kept for compatibility with
         other factor methods.
         Returns the equality that equates self to this new version.
         Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''
-        from ._theorems_ import negTimesPos, posTimesNeg, multNegOneLeft, multNegOneRight
-        if isinstance(theFactor, Neg):
+        from ._theorems_ import neg_times_pos, pos_times_neg, mult_neg_one_left, mult_neg_one_right
+        if isinstance(the_factor, Neg):
             if pull == 'left':
-                thm = negTimesPos
+                thm = neg_times_pos
             else:
-                thm = posTimesNeg
-            theFactor = theFactor.operand
+                thm = pos_times_neg
+            the_factor = the_factor.operand
         else:
             if pull == 'left':
-                thm = posTimesNeg
+                thm = pos_times_neg
             else:
-                thm = negTimesPos
+                thm = neg_times_pos
         if hasattr(self.operand, 'factor'):
-            operandFactorEqn = self.operand.factor(theFactor, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
-            eqn1 = operandFactorEqn.substitution(self.innerExpr().operand)
-            new_operand = operandFactorEqn.rhs
-            eqn2 = thm.instantiate({x:new_operand.operands[0], y:new_operand.operands[1]}, assumptions=assumptions).deriveReversed(assumptions)
-            return eqn1.applyTransitivity(eqn2)
+            operand_factor_eqn = self.operand.factor(the_factor, pull, group_factor=True, group_remainder=True, assumptions=assumptions)
+            eqn1 = operand_factor_eqn.substitution(self.inner_expr().operand)
+            new_operand = operand_factor_eqn.rhs
+            eqn2 = thm.instantiate({x:new_operand.operands[0], y:new_operand.operands[1]}, assumptions=assumptions).derive_reversed(assumptions)
+            return eqn1.apply_transitivity(eqn2)
         else:
-            if self.operand != theFactor:
-                raise ValueError("%s is a factor in %s!"%(theFactor, self))
-            if thm==negTimesPos: thm=multNegOneLeft
-            if thm==posTimesNeg: thm=multNegOneRight
-            return thm.instantiate({x:self.operand}, assumptions=assumptions).deriveReversed(assumptions)
+            if self.operand != the_factor:
+                raise ValueError("%s is a factor in %s!"%(the_factor, self))
+            if thm==neg_times_pos: thm=mult_neg_one_left
+            if thm==pos_times_neg: thm=mult_neg_one_right
+            return thm.instantiate({x:self.operand}, assumptions=assumptions).derive_reversed(assumptions)
 
-    def innerNegMultSimplification(self, idx, assumptions=USE_DEFAULTS):
+    def inner_neg_mult_simplification(self, idx, assumptions=USE_DEFAULTS):
         '''
         Equivalence method to derive a simplification when negating
         a multiplication with a negated factor.  For example,
         -(a*b*(-c)*d) = a*b*c*d.
-        See Mult.negSimplification where this may be used indirectly.
+        See Mult.neg_simplification where this may be used indirectly.
         '''
         from proveit.numbers import Mult, num
-        from ._theorems_ import multNegLeftDouble, multNegRightDouble, multNegAnyDouble
+        from ._theorems_ import mult_neg_left_double, mult_neg_right_double, mult_neg_any_double
 
         mult_expr = self.operand
         if not isinstance(mult_expr, Mult):
@@ -191,18 +191,18 @@ class Neg(Operation):
 
         if len(mult_expr.operands)==2:
             if idx==0:
-                return multNegLeftDouble.instantiate({a:mult_expr.operands[1]}, assumptions=assumptions)
+                return mult_neg_left_double.instantiate({a:mult_expr.operands[1]}, assumptions=assumptions)
             else:
-                return multNegRightDouble.instantiate({a:mult_expr.operands[0]}, assumptions=assumptions)
-        aVal = mult_expr.operands[:idx]
-        bVal = mult_expr.operands[idx]
-        cVal = mult_expr.operands[idx+1:]
-        mVal = num(len(aVal))
-        nVal = num(len(cVal))
-        return multNegAnyDouble.instantiate({m:mVal, n:nVal, AA:aVal, B:bVal, CC:cVal}, assumptions=assumptions)
+                return mult_neg_right_double.instantiate({a:mult_expr.operands[0]}, assumptions=assumptions)
+        a_val = mult_expr.operands[:idx]
+        b_val = mult_expr.operands[idx]
+        c_val = mult_expr.operands[idx+1:]
+        m_val = num(len(a_val))
+        n_val = num(len(c_val))
+        return mult_neg_any_double.instantiate({m:m_val, n:n_val, AA:a_val, B:b_val, CC:c_val}, assumptions=assumptions)
 
 # Register these expression equivalence methods:
-InnerExpr.register_equivalence_method(Neg, 'doubleNegSimplification', 'doubleNegSimplified', 'doubleNegSimplify')
+InnerExpr.register_equivalence_method(Neg, 'double_neg_simplification', 'double_neg_simplified', 'double_neg_simplify')
 InnerExpr.register_equivalence_method(Neg, 'distribution', 'distributed', 'distribute')
 InnerExpr.register_equivalence_method(Neg, 'factorization', 'factorized', 'factor')
-InnerExpr.register_equivalence_method(Neg, 'innerNegMultSimplification', 'innerNegMultSimplified', 'innerNegMultSimplify')
+InnerExpr.register_equivalence_method(Neg, 'inner_neg_mult_simplification', 'inner_neg_mult_simplified', 'inner_neg_mult_simplify')

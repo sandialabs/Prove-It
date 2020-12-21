@@ -3,7 +3,7 @@ from proveit.numbers.number_sets import Real
 
 class ModAbs(Operation):
     # operator of the ModAbs operation.
-    _operator_ = Literal(stringFormat='ModAbs', theory=__file__)
+    _operator_ = Literal(string_format='ModAbs', theory=__file__)
 
     def __init__(self, value, divisor):
         Operation.__init__(self, ModAbs._operator_, (value, divisor))
@@ -19,7 +19,7 @@ class ModAbs(Operation):
                 + r'\right|_{\textup{mod}\thinspace '
                 + self.divisor.latex(fence=False) + r'}')
 
-    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
         Given a number set number_set (such as Integer, Real, etc),
         attempt to prove that the given ModAbs expression is in that
@@ -28,21 +28,21 @@ class ModAbs(Operation):
         from proveit._common_ import a, b
         from proveit.logic import InSet
         from proveit.numbers.modular._theorems_ import (
-                modAbsIntClosure, modAbsRealClosure)
+                mod_abs_int_closure, mod_abs_real_closure)
         from proveit.numbers import Integer, Real
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
-        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions = defaults.checked_assumptions(assumptions)
 
         if number_set == Integer:
-            return modAbsIntClosure.instantiate(
+            return mod_abs_int_closure.instantiate(
                     {a:self.value, b:self.divisor}, assumptions=assumptions)
 
         if number_set == Real:
-            return modAbsRealClosure.instantiate(
+            return mod_abs_real_closure.instantiate(
                     {a:self.value, b:self.divisor}, assumptions=assumptions)
 
-        msg = ("'ModAbs.deduceInNumberSet()' not implemented for "
+        msg = ("'ModAbs.deduce_in_number_set()' not implemented for "
                "the %s set"%str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)

@@ -2,18 +2,18 @@ from proveit.logic import Forall, InSet, NotEquals
 from proveit.numbers import Complex
 from proveit.common import a
 from proveit.numbers.common import zero, i, ComplexSansZero
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
+begin_theorems(locals())
 
-iInComplex = InSet(i, Complex)
-iInComplex
+i_in_complex = InSet(i, Complex)
+i_in_complex
 
-iNotZero = NotEquals(i, zero)
-iNotZero
+i_not_zero = NotEquals(i, zero)
+i_not_zero
 
-inComplexSansZero = Forall(a, InSet(a, ComplexSansZero), 
+in_complex_sans_zero = Forall(a, InSet(a, ComplexSansZero), 
                              domain=Complex, conditions=[NotEquals(a, zero)])
-inComplexSansZero
+in_complex_sans_zero
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

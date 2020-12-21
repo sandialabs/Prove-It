@@ -1,5 +1,5 @@
 '''
-compositeExpression.py
+composite_expression.py
 
 The core of Prove-It knows about a few special types of expr classes
 that contain multiple Expressions: NamedExprs, ExprTuple, and ExprArray.
@@ -25,7 +25,7 @@ class Composite:
     pass
 
 
-def singularExpression(expression):
+def singular_expression(expression):
     from .expr_range import ExprRange
     from proveit._core_.judgment import Judgment
     if isinstance(expression, Judgment):
@@ -39,7 +39,7 @@ def singularExpression(expression):
     assert isinstance(expression, Expression)
     return expression
 
-def compositeExpression(expressions):
+def composite_expression(expressions):
     '''
     Put the appropriate CompositeExpression wrapper around expressions.  
     Dictionaries with string keys will be wrapped in an NamedExpressions.  
@@ -72,7 +72,7 @@ def compositeExpression(expressions):
             # See if we can build an ExprTuple.
             return ExprTuple(*expressions)
 
-def singleOrCompositeExpression(expr_or_exprs, 
+def single_or_composite_expression(expr_or_exprs, 
                                 wrap_expr_range_in_tuple=True,
                                 do_singular_reduction=False):
     '''
@@ -96,7 +96,7 @@ def singleOrCompositeExpression(expr_or_exprs,
         # situations when either a single or composite are allowed.
         return ExprTuple(expr_or_exprs)
     if not isinstance(expr_or_exprs, Expression):
-        expr_or_exprs = compositeExpression(expr_or_exprs)
+        expr_or_exprs = composite_expression(expr_or_exprs)
     if (do_singular_reduction and isinstance(expr_or_exprs, ExprTuple)
             and len(expr_or_exprs)==1):
         if (not isinstance(expr_or_exprs[0], ExprTuple) and

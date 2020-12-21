@@ -31,7 +31,7 @@ class TransRelUpdater:
         return 'c' as the new internal expression.
         '''
         if assumptions is None: assumptions=self.assumptions
-        self.relation = self.relation.applyTransitivity(relation, assumptions)
+        self.relation = self.relation.apply_transitivity(relation, assumptions)
         if relation.lhs == self.expr:
             self.expr = relation.rhs
         elif relation.rhs == self.expr:

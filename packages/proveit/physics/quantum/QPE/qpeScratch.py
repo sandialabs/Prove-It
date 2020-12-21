@@ -12,7 +12,7 @@ pi = Variable('pi',{LATEX:r'\pi'})
 i = Variable('i')
 one = Variable('1')
 two = Variable('2')
-minusOne = Variable('minusOne',{LATEX:r'-1'})
+minus_one = Variable('minus_one',{LATEX:r'-1'})
 
 Zp  = Variable('Z^+',{LATEX:r'\mathbb{Z}^+'})
 U   = Variable('U')
@@ -22,10 +22,10 @@ C2m = Variable('C^(2^m)',{LATEX:r'C^{2^m}'})
 u = Variable('ket_u',{LATEX:r'|u\rangle'})
 #u = Variable('ket_u')
 
-zeroToOne = Variable('zeroToOne',{LATEX:r'[0,1]'})
+zero_to_one = Variable('zero_to_one',{LATEX:r'[0,1]'})
 
-tFunc = Variable('tFunc')
-tFunc_n_eps = Operation(tFunc, (n, eps))
+t_func = Variable('t_func')
+t_func_n_eps = Operation(t_func, (n, eps))
 
 QPE = Variable('QPE')
 QPEfunc = Operation(QPE,(U,u,t))

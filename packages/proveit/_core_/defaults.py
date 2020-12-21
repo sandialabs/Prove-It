@@ -1,7 +1,7 @@
 import hashlib, os
 
 class Defaults:
-    consideredAssumptionSets = set() # used to avoid infinite recursion and extra work
+    considered_assumption_sets = set() # used to avoid infinite recursion and extra work
     
     def __init__(self):
         self.reset()
@@ -10,7 +10,7 @@ class Defaults:
         self.assumptions = tuple()
         
         # Enable/disable `automation` by performing automatic
-        # side-effects (via `sideEffects` methods) when proving 
+        # side-effects (via `side_effects` methods) when proving 
         # statements as well as automatically concluding 
         # statements (via `conclude` methods) when possible.
         self.automation = True
@@ -40,9 +40,9 @@ class Defaults:
         # imports of other common expressions.
         self._common_import_failure_filename = None
         
-        Defaults.consideredAssumptionSets.clear()
+        Defaults.considered_assumption_sets.clear()
     
-    def checkedAssumptions(self, assumptions):
+    def checked_assumptions(self, assumptions):
         '''
         If the given assumptions is None, return the default;
         otherwise return the given assumptions after
@@ -57,16 +57,16 @@ class Defaults:
         sorted_assumptions = tuple(sorted(assumptions,  key=lambda expr : hash(expr)))
         
         # avoid infinite recursion and extra work
-        if sorted_assumptions not in Defaults.consideredAssumptionSets: 
-            Defaults.consideredAssumptionSets.add(sorted_assumptions) 
+        if sorted_assumptions not in Defaults.considered_assumption_sets: 
+            Defaults.considered_assumption_sets.add(sorted_assumptions) 
             #print("consider assumptions", assumptions)
             for assumption in assumptions:
                 # Prove each assumption, by assumption, to deduce any side-effects.
                 # Note that while we only need THE assumption to prove itself, 
-                Assumption.makeAssumption(assumption, assumptions) # having the other assumptions around can be useful for deriving side-effects.
+                Assumption.make_assumption(assumption, assumptions) # having the other assumptions around can be useful for deriving side-effects.
             if not self.automation:
                 # consideration doesn't fully count if automation is off
-                Defaults.consideredAssumptionSets.remove(sorted_assumptions) 
+                Defaults.considered_assumption_sets.remove(sorted_assumptions) 
             #print("considered assumptions")
         return assumptions
     
@@ -76,19 +76,19 @@ class Defaults:
         collection of Expressions, and skip any repeats.
         '''
         from .expression.expr import Expression
-        assumptionsSet = set()
+        assumptions_set = set()
         try:
             assumptions = list(assumptions)
         except TypeError:
             raise TypeError('The assumptions must be an iterable collection of '
                             'Expression objects')
         for assumption in list(assumptions):
-            if assumption not in assumptionsSet:
+            if assumption not in assumptions_set:
                 if not isinstance(assumption, Expression):
                     raise TypeError("The assumptions must be an iterable "
                                     "collection of Expression objects")
                 yield assumption
-                assumptionsSet.add(assumption)
+                assumptions_set.add(assumption)
         
     def __setattr__(self, attr, value):
         '''
@@ -96,7 +96,7 @@ class Defaults:
         and derive their side-effects.
         '''
         if attr == 'assumptions' and hasattr(self, attr):
-            value = tuple(self.checkedAssumptions(value))
+            value = tuple(self.checked_assumptions(value))
         self.__dict__[attr] = value         
 
 class DisabledAutoReductionTypes(set):

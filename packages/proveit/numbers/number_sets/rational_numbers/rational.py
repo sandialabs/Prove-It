@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS, maybeFencedString
+from proveit import USE_DEFAULTS, maybe_fenced_string
 from proveit._common_ import q
 from proveit.logic import Membership
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
@@ -9,25 +9,25 @@ class RationalSet(NumberSet):
         NumberSet.__init__(self, 'Rational', r'\mathbb{Q}',
                            theory=__file__)
 
-    def membershipSideEffects(self, judgment):
+    def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'q in Rational' for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions : self.deduceMemberInReal(member, assumptions)
+        yield lambda assumptions : self.deduce_member_in_real(member, assumptions)
     
-    def membershipObject(self, element):
+    def membership_object(self, element):
         return RationalMembership(element, self)
 
-    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import xInRationalInBool
+    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import rational_membership_is_bool
         from proveit._common_ import x
-        return xInRationalInBool.instantiate(
+        return rational_membership_is_bool.instantiate(
                 {x:member}, assumptions=assumptions)
 
-    def deduceMemberInReal(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.real_numbers._theorems_ import rationalInReal
-        return rationalInReal.deriveSupersetMembership(member, assumptions)
+    def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.real_numbers._theorems_ import rational_within_real
+        return rational_within_real.derive_superset_membership(member, assumptions)
 
 class RationalNonZeroSet(NumberSet):
 
@@ -35,41 +35,41 @@ class RationalNonZeroSet(NumberSet):
         NumberSet.__init__(self, 'RationalNonZero', r'\mathbb{Q}^{\neq 0}',
                            theory=__file__)
 
-    def membershipSideEffects(self, judgment):
+    def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalPos'
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions : self.deduceMemberInRational(member, 
+        yield lambda assumptions : self.deduce_member_in_rational(member, 
                                                                assumptions)
     
-    def membershipObject(self, element):
+    def membership_object(self, element):
         return RationalMembership(element, self)
     
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-        return maybeFencedString(inner_str, **kwargs)
+        kwargs['fence'] = kwargs['force_fence'] if 'force_fence' in kwargs else False
+        return maybe_fenced_string(inner_str, **kwargs)
 
     def latex(self, **kwargs):
         inner_str = NumberSet.latex(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-        return maybeFencedString(inner_str, **kwargs)
+        kwargs['fence'] = kwargs['force_fence'] if 'force_fence' in kwargs else False
+        return maybe_fenced_string(inner_str, **kwargs)
 
-    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
+    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import rational_non_zero_membership_is_bool
         from proveit._common_ import x
         return rational_non_zero_membership_is_bool.instantiate(
                 {x:member}, assumptions=assumptions)
 
-    def deduceMemberInRational(self, member, assumptions=USE_DEFAULTS):
+    def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import rational_non_zero_in_rational
-        return rational_non_zero_in_rational.deriveSupersetMembership(member, assumptions)
+        return rational_non_zero_in_rational.derive_superset_membership(member, assumptions)
 
 class RationalPosSet(NumberSet):
 
@@ -77,40 +77,40 @@ class RationalPosSet(NumberSet):
         NumberSet.__init__(self, 'RationalPos', r'\mathbb{Q}^+',
                            theory=__file__)
 
-    def membershipSideEffects(self, judgment):
+    def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalPos'
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions : self.deduceMemberInRational(member, 
+        yield lambda assumptions : self.deduce_member_in_rational(member, 
                                                                 assumptions)
     
-    def membershipObject(self, element):
+    def membership_object(self, element):
         return RationalMembership(element, self)
     
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-        return maybeFencedString(inner_str, **kwargs)
+        kwargs['fence'] = kwargs['force_fence'] if 'force_fence' in kwargs else False
+        return maybe_fenced_string(inner_str, **kwargs)
 
     def latex(self, **kwargs):
         inner_str = NumberSet.latex(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-        return maybeFencedString(inner_str, **kwargs)
+        kwargs['fence'] = kwargs['force_fence'] if 'force_fence' in kwargs else False
+        return maybe_fenced_string(inner_str, **kwargs)
 
-    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import xInRationalPosInBool
+    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import rational_pos_membership_is_bool
         from proveit._common_ import x
-        return xInRationalPosInBool.instantiate(
+        return rational_pos_membership_is_bool.instantiate(
                 {x:member}, assumptions=assumptions)
 
-    def deduceMemberInRational(self, member, assumptions=USE_DEFAULTS):
-        return rationalPosInRational.deriveSupersetMembership(member, assumptions)
+    def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
+        return rational_pos_within_rational.derive_superset_membership(member, assumptions)
 
 class RationalNegSet(NumberSet):
 
@@ -118,40 +118,40 @@ class RationalNegSet(NumberSet):
         NumberSet.__init__(self, 'RationalNeg', r'\mathbb{Q}^-',
                            theory=__file__)
 
-    def membershipSideEffects(self, judgment):
+    def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalNeg' 
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions : self.deduceMemberInRational(member, 
+        yield lambda assumptions : self.deduce_member_in_rational(member, 
                                                                 assumptions)
     
-    def membershipObject(self, element):
+    def membership_object(self, element):
         return RationalMembership(element, self)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-        return maybeFencedString(inner_str, **kwargs)
+        kwargs['fence'] = kwargs['force_fence'] if 'force_fence' in kwargs else False
+        return maybe_fenced_string(inner_str, **kwargs)
 
     def latex(self, **kwargs):
         inner_str = NumberSet.latex(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-        return maybeFencedString(inner_str, **kwargs)
+        kwargs['fence'] = kwargs['force_fence'] if 'force_fence' in kwargs else False
+        return maybe_fenced_string(inner_str, **kwargs)
 
-    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import xInRationalNegInBool
+    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import rational_neg_membership_is_bool
         from proveit._common_ import x
-        return xInRationalNegInBool.instantiate(
+        return rational_neg_membership_is_bool.instantiate(
                 {x:member}, assumptions=assumptions)
 
-    def deduceMemberInRational(self, member, assumptions=USE_DEFAULTS):
-        return rationalNegInRational.deriveSupersetMembership(
+    def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
+        return rational_neg_within_rational.derive_superset_membership(
                 member, assumptions)
 
 class RationalNonNegSet(NumberSet):
@@ -160,40 +160,40 @@ class RationalNonNegSet(NumberSet):
         NumberSet.__init__(self, 'RationalNonNeg', r'\mathbb{Q}^{\geq 0}',
                            theory=__file__)
 
-    def membershipSideEffects(self, judgment):
+    def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalNonNeg' 
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions : self.deduceMemberInRational(member, 
+        yield lambda assumptions : self.deduce_member_in_rational(member, 
                                                                 assumptions)
     
-    def membershipObject(self, element):
+    def membership_object(self, element):
         return RationalMembership(element, self)
         
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-        return maybeFencedString(inner_str, **kwargs)
+        kwargs['fence'] = kwargs['force_fence'] if 'force_fence' in kwargs else False
+        return maybe_fenced_string(inner_str, **kwargs)
 
     def latex(self, **kwargs):
         inner_str = NumberSet.latex(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an
+        # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-        return maybeFencedString(inner_str, **kwargs)
+        kwargs['fence'] = kwargs['force_fence'] if 'force_fence' in kwargs else False
+        return maybe_fenced_string(inner_str, **kwargs)
 
-    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import xInRationalNonNegInBool
+    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import rational_non_neg_membership_is_bool
         from proveit._common_ import x
-        return xInRationalNonNegInBool.instantiate(
+        return rational_non_neg_membership_is_bool.instantiate(
                 {x:member}, assumptions=assumptions)
     
-    def deduceMemberInRational(self, member, assumptions=USE_DEFAULTS):
-        return rationalNonNegInRational.deriveSupersetMembership(
+    def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
+        return rational_non_neg_within_rational.derive_superset_membership(
                 member, assumptions)
 
 
@@ -219,18 +219,18 @@ class RationalMembership(NumberMembership):
                             {q:self.element}, assumptions=assumptions)
             if self.number_set == RationalPos:
                 if Greater(self.element, zero).proven(assumptions):
-                    from ._theorems_ import positiveRationalInRationalPos
-                    return positiveRationalInRationalPos.instantiate(
+                    from ._theorems_ import positive_rational_is_rational_pos
+                    return positive_rational_is_rational_pos.instantiate(
                             {q:self.element}, assumptions=assumptions)
             if self.number_set == RationalNeg:
                 if Less(self.element, zero).proven():
-                    from ._theorems_ import negativeRationalInRationalNeg
-                    return negativeRationalInRationalNeg.instantiate(
+                    from ._theorems_ import negative_rational_is_rational_neg
+                    return negative_rational_is_rational_neg.instantiate(
                             {q:self.element}, assumptions=assumptions)                
             if self.number_set == RationalNonNeg:
                 if GreaterEq(self.element, zero).proven():
-                    from ._theorems_ import nonNegRationalInRationalNeg
-                    return nonNegRationalInRationalNeg.instantiate(
+                    from ._theorems_ import non_neg_rational_in_rational_neg
+                    return non_neg_rational_in_rational_neg.instantiate(
                             {q:self.element}, assumptions=assumptions)   
 
         # Resort to the default NumberMembership.conclude strategies.
@@ -261,10 +261,10 @@ class RationalMembership(NumberMembership):
         Call "eliminate" to finish the Skolemization proof.
         '''
         from proveit.numbers import RationalPos
-        from ._theorems_ import reducedNatPosRatio
+        from ._theorems_ import reduced_nat_pos_ratio
 
         if self.number_set == RationalPos:
-            return reducedNatPosRatio.instantiate(
+            return reduced_nat_pos_ratio.instantiate(
                     {q:self.element}, assumptions=assumptions).choose(
                         numerator_var, denominator_var)
         else:
@@ -278,16 +278,16 @@ try:
     # Import some fundamental axioms and theorems without quantifiers.
     # Fails before running the _axioms_ and _theorems_ notebooks for
     # the first time, but fine after that.
-    from ._theorems_ import (natInRational, natInRationalNonNeg,
+    from ._theorems_ import (nat_within_rational, nat_within_rational_non_neg,
                              nat_pos_in_rational_pos,
                              nat_pos_in_rational_non_zero,
                              rational_non_zero_in_rational,
-                             rationalPosInRational,
-                             rationalNegInRational,
-                             rationalNonNegInRational,
+                             rational_pos_within_rational,
+                             rational_neg_within_rational,
+                             rational_non_neg_within_rational,
                              rational_pos_in_rational_non_zero,
                              rational_neg_in_rational_non_zero,
-                             rationalPosInRationalNonNeg,
-                             zeroInRational)
+                             rational_pos_within_rational_non_neg,
+                             zero_is_rational)
 except:
     pass

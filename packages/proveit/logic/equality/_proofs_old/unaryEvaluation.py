@@ -6,6 +6,6 @@ hypothesis = Equals(x, a)
 # [f(x) = f(a)] assuming x=a
 fx_eq_fa = hypothesis.substitution(fx, x).proven({hypothesis})
 # [f(a)=c] => [f(x)=c] assuming x=a
-conclusion = fx_eq_fa.transitivityImpl(Equals(fa, c)).proven({hypothesis})
+conclusion = fx_eq_fa.transitivity_impl(Equals(fa, c)).proven({hypothesis})
 # forall_{f, x, a, c} (x=a) => {[f(a)=c] => [f(x)=c]}
 Implies(hypothesis, conclusion).generalize((f, x, a, c)).qed(__file__)

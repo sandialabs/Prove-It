@@ -2,10 +2,10 @@ from proveit import Literal, OperationOverInstances
 
 class Prod(OperationOverInstances):
     # operator of the Prod operation.
-    _operator_ = Literal(stringFormat='Prod', latexFormat=r'prod', theory=__file__)
+    _operator_ = Literal(string_format='Prod', latex_format=r'prod', theory=__file__)
     
-#    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
-#    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
+#    def __init__(self, summand-instance_expression, indices-instance_vars, domains):
+#    def __init__(self, instance_vars, instance_expr, conditions = tuple(), domain=EVERYTHING):
 #
     def __init__(self, indices, summand, domain, *, condition=None, 
                  conditions=None):
@@ -13,7 +13,7 @@ class Prod(OperationOverInstances):
         Sum summand over indices over domains.
         Arguments serve analogous roles to Forall arguments (found in basiclogic.booleanss):
         indices: instance vars
-        summand: instanceExpressions
+        summand: instance_expressions
         domains: conditions (except no longer optional)
         '''
         OperationOverInstances.__init__(

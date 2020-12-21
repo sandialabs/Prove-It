@@ -1,5 +1,5 @@
-from proveit.basiclogic.set.axioms import subsetDef
+from proveit.basiclogic.set.axioms import subset_def
 from proveit.common import A, B
 
 # forall_{A, B} [(A subseteq B) => (forall_{x in A} x in B)]
-subsetDef.instantiate().deriveRightImplication().generalize((A, B)).qed(__file__)
+subset_def.instantiate().derive_right_implication().generalize((A, B)).qed(__file__)

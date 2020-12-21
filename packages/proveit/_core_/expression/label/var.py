@@ -9,11 +9,11 @@ class Variable(Label):
     over one or more Variables, those Variables may each be replaced 
     with a general Expression.
     """    
-    def __init__(self, stringFormat, latexFormat=None, fence_when_forced=False):
+    def __init__(self, string_format, latex_format=None, fence_when_forced=False):
         '''
-        Create a Variable.  If latexFormat is not supplied, the stringFormat is used for both.
+        Create a Variable.  If latex_format is not supplied, the string_format is used for both.
         '''
-        Label.__init__(self, stringFormat, latexFormat, 'Variable', 
+        Label.__init__(self, string_format, latex_format, 'Variable', 
                        fence_when_forced=fence_when_forced)
                                         
     def _replaced(self, repl_map, allow_relabeling=False,
@@ -83,7 +83,7 @@ class Variable(Label):
             raise ValueError("Invalid occurrence of the parameter variable")
     """
 
-def dummyVar(n):
+def dummy_var(n):
     '''
     Given an integer n, produce a "dummy" Variable that is the (n+1) element
     in the list: _X_, _Y_, _Z_, _XX_, _XY_, _XZ_, _YX_, _YY_, _YZ_, etc.
@@ -101,7 +101,7 @@ def dummyVar(n):
         k = int(m / pow_of_3)
         letters += chr(ord('x') + k)
         m -= k*pow_of_3
-    return Variable('_' + letters + '_', latexFormat = r'{_{-}' + letters + r'_{-}}')
+    return Variable('_' + letters + '_', latex_format = r'{_{-}' + letters + r'_{-}}')
     '''
     m = n
     powers_of_26 = [1, 26] # for 26 letters in the alphabet
@@ -115,24 +115,24 @@ def dummyVar(n):
         k = int(m / pow_of_26)
         letters += chr(ord('a') + k)
         m -= k*pow_of_26
-    return Variable('_' + letters, latexFormat = r'{_{-}' + letters + r'}')
+    return Variable('_' + letters, latex_format = r'{_{-}' + letters + r'}')
 
-def safeDummyVar(*expressions, start_index=0):
-    usedVs = frozenset().union(*[expr._used_vars() for expr in expressions])
+def safe_dummy_var(*expressions, start_index=0):
+    used_vs = frozenset().union(*[expr._used_vars() for expr in expressions])
     i = start_index
-    while dummyVar(i) in usedVs:
+    while dummy_var(i) in used_vs:
         i += 1
-    return dummyVar(i)
+    return dummy_var(i)
 
-def safeDummyVars(n, *expressions, start_index=0):
-    dummyVars = []
+def safe_dummy_vars(n, *expressions, start_index=0):
+    dummy_vars = []
     for _ in range (n):
-        dummyVars.append(safeDummyVar(*(list(expressions)+list(dummyVars)),
+        dummy_vars.append(safe_dummy_var(*(list(expressions)+list(dummy_vars)),
                                       start_index=start_index))
-    return dummyVars
+    return dummy_vars
             
-def safeDefaultOrDummyVar(defaultVar, *expressions):
-    usedVs = frozenset().union(*[expr._used_vars() for expr in expressions])
-    if defaultVar not in usedVs:
-        return defaultVar
-    return safeDummyVar(*expressions)
+def safe_default_or_dummy_var(default_var, *expressions):
+    used_vs = frozenset().union(*[expr._used_vars() for expr in expressions])
+    if default_var not in used_vs:
+        return default_var
+    return safe_dummy_var(*expressions)

@@ -3,8 +3,8 @@ from proveit._core_.expression.operation import Operation
 
 class ConditionalSet(Operation):
     # operator of the ConditionalSet operation
-    _operator_ = Literal(stringFormat='CondSet', 
-                         latexFormat=r'\textrm{CondSet}', theory=__file__)   
+    _operator_ = Literal(string_format='CondSet', 
+                         latex_format=r'\textrm{CondSet}', theory=__file__)   
     
     def __init__(self, conditionals):
         Operation.__init__(ConditionalSet._operator_, conditionals)

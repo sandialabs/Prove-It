@@ -4,5 +4,5 @@ from proveit.common import A
 # FeqA := (F=A)
 FeqA = Equals(FALSE, A)
 # Not(A) assuming FeqA
-notA = FeqA.deriveReversed().deriveViaBooleanEquality().proven({FeqA})
-Implies(FeqA, notA).generalize(A).qed(__file__)
+not_a = FeqA.derive_reversed().derive_via_boolean_equality().proven({FeqA})
+Implies(FeqA, not_a).generalize(A).qed(__file__)

@@ -2,7 +2,7 @@ from proveit.expression import Literal, STRING, LATEX
 from proveit.numbers import Exp, Abs, Add, Sub, Neg, Mult, frac, Interval
 from proveit.numbers.common import one, two
 from proveit.common import k, l, eps
-from proveit.physics.quantum.QPE.phaseEstOps import SubIndexed
+from proveit.physics.quantum.QPE.phase_est_ops import SubIndexed
 
 pkg = __package__
 
@@ -59,8 +59,8 @@ alpha_l_sqrd = Exp(Abs(alpha_l), two)
 # delta: difference between the phase and the best phase_m
 delta_ = Literal(pkg, 'delta', {LATEX:r'\delta'})
 
-fullDomain = Interval(Add(Neg(Exp(two, Sub(t_, one))), one),
+full_domain = Interval(Add(Neg(Exp(two, Sub(t_, one))), one),
                                                          Exp(two, Sub(t_, one)))
-negDomain = Interval(Add(Neg(two_pow_t_minus_one), one), Neg(Add(eps, one)))
-posDomain = Interval(Add(eps, one), two_pow_t_minus_one)
-epsDomain = Interval(one, Sub(two_pow_t_minus_one, two))
+neg_domain = Interval(Add(Neg(two_pow_t_minus_one), one), Neg(Add(eps, one)))
+pos_domain = Interval(Add(eps, one), two_pow_t_minus_one)
+eps_domain = Interval(one, Sub(two_pow_t_minus_one, two))

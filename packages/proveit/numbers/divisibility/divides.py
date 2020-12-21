@@ -1,4 +1,4 @@
-from proveit import (asExpression, Theory, defaults, Literal, Operation,
+from proveit import (as_expression, Theory, defaults, Literal, Operation,
                      ProofFailure, TransitiveRelation, USE_DEFAULTS)
 from proveit.logic import Equals, InSet, NotEquals
 from proveit.numbers import Exp, Mult, num
@@ -11,16 +11,16 @@ class DividesRelation(TransitiveRelation):
         self.divisor = self.lhs
         self.dividend = self.rhs
 
-    def sideEffects(self, judgment):
+    def side_effects(self, judgment):
         '''
         In addition to the TransitiveRelation side-effects, also
-        attempt (where applicable) eliminateDividenExponent,
+        attempt (where applicable) eliminate_dividen_exponent,
         eliminate_common_exponent, and eliminate_common_factor.
         '''
         from proveit.numbers import two
         
-        for sideEffect in TransitiveRelation.sideEffects(self, judgment):
-            yield sideEffect
+        for side_effect in TransitiveRelation.side_effects(self, judgment):
+            yield side_effect
         
         # For each of the following, use the default assumptions to
         # verify some conditions before yielding the side effect method
@@ -32,7 +32,7 @@ class DividesRelation(TransitiveRelation):
                 self.lhs == two and
                 InSet(self.rhs.base, Integer).proven() and
                 InSet(self.rhs.exponent, Integer).proven()):
-            yield self.eliminateDividendExponent
+            yield self.eliminate_dividend_exponent
 
         # for (a^n)|(b^n)
         if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp) and
@@ -72,20 +72,20 @@ class Divides(DividesRelation):
     DividesRelation allows us to have not only this weak relation
     class but also a strong relation class, DividesProper, the pair
     combined then allowing the calling of
-    Divides.concludeViaTransitivity()
-    utilizing the TransitiveRelation.concludeViaTransitivity() method.
+    Divides.conclude_via_transitivity()
+    utilizing the TransitiveRelation.conclude_via_transitivity() method.
     '''
 
     _operator_ = Literal(
-    	  stringFormat='|', latexFormat=r'\rvert', theory=__file__
+    	  string_format='|', latex_format=r'\rvert', theory=__file__
     	  )
 
     # map left-hand-sides to "Divides" Judgments
-    #   (populated in TransitivityRelation.sideEffects)
-    knownLeftSides = dict()
+    #   (populated in TransitivityRelation.side_effects)
+    known_left_sides = dict()
     # map right-hand-sides to "Divides" Judgments
-    #   (populated in TransitivityRelation.sideEffects)
-    knownRightSides = dict()
+    #   (populated in TransitivityRelation.side_effects)
+    known_right_sides = dict()
 
     def __init__(self, a, b):
         DividesRelation.__init__(self, Divides._operator_, a, b)
@@ -102,7 +102,7 @@ class Divides(DividesRelation):
         '''
         # Check validity of assumptions (and convert assumptions=None
         # to assumptions=(), thus averting len(None) errors).
-        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions = defaults.checked_assumptions(assumptions)
 
         #-- -------------------------------------------------------- --#
         #-- Case (1): x|x with x != 0 known or assumed               --#
@@ -114,7 +114,7 @@ class Divides(DividesRelation):
             if (NotEquals(self.lhs, zero).proven(assumptions=assumptions) and
                 InSet(self.lhs, Complex).proven(assumptions=assumptions)):
                 # Trivial x|x with complex x ≠ 0
-                return self.concludeViaReflexivity(assumptions)
+                return self.conclude_via_reflexivity(assumptions)
             else:
                 err_str =  err_str + (
                         "Case: lhs = rhs. "
@@ -131,7 +131,7 @@ class Divides(DividesRelation):
             if (NotEquals(self.lhs, zero).proven(assumptions=assumptions) and
                 InSet(self.lhs, Complex).proven(assumptions=assumptions)):
                 # We have 0/x with complex x ≠ 0
-                return self.concludeViaZeroFactor(assumptions)
+                return self.conclude_via_zero_factor(assumptions)
             else:
                 err_str = err_str + (
                         "Case: rhs = 0. "
@@ -143,9 +143,9 @@ class Divides(DividesRelation):
         #-- -------------------------------------------------------- --#
         #-- Case (3): very simple version of x|xy or x|yx            --#
         #-- -------------------------------------------------------- --#
-        # return self.concludeViaFactor(assumptions)
+        # return self.conclude_via_factor(assumptions)
         try:
-            return self.concludeViaFactor(assumptions)
+            return self.conclude_via_factor(assumptions)
         except Exception as e:
             err_str = err_str + (
                     "Case: x|xy. This possible case returned the following "
@@ -203,40 +203,40 @@ class Divides(DividesRelation):
         #-- Case (6): x|z with x|y and y|z known or assumed          --#
         #-- -------------------------------------------------------- --#
         # Seek out the appropriate x|y and y|z and use transitivity
-        # to get x|z, utilizing the concludeViaTransitivity() method
+        # to get x|z, utilizing the conclude_via_transitivity() method
         # available for instances of TransitiveRelation
         try:
-            return self.concludeViaTransitivity(assumptions)
+            return self.conclude_via_transitivity(assumptions)
         except Exception as e:
             err_str = err_str + (
                     "Case: transitivity search. In attempting to use "
-                    "concludeViaTransitivity(), obtained the following "
+                    "conclude_via_transitivity(), obtained the following "
                     "error message: {0}.".format(e))
             pass
 
         raise ProofFailure(self, assumptions, err_str)
 
 
-    def concludeViaReflexivity(self, assumptions=USE_DEFAULTS):
+    def conclude_via_reflexivity(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form x|x with x ≠ 0.
         '''
-        from ._theorems_ import dividesReflexivity
-        _x = dividesReflexivity.instanceVar
+        from ._theorems_ import divides_reflexivity
+        _x = divides_reflexivity.instance_var
         assert self.lhs == self.rhs
-        return dividesReflexivity.instantiate(
+        return divides_reflexivity.instantiate(
                 {_x:self.lhs}, assumptions=assumptions)
 
-    def concludeViaZeroFactor(self, assumptions=USE_DEFAULTS):
+    def conclude_via_zero_factor(self, assumptions=USE_DEFAULTS):
        '''
        Prove and return self of the form x|0 for x ≠ 0
        '''
-       from ._theorems_ import nonZeroDividesZero
-       _x = nonZeroDividesZero.instanceVar
-       return nonZeroDividesZero.instantiate(
+       from ._theorems_ import non_zero_divides_zero
+       _x = non_zero_divides_zero.instance_var
+       return non_zero_divides_zero.instantiate(
                 {_x:self.lhs}, assumptions=assumptions)
 
-    def concludeViaFactor(self, assumptions=USE_DEFAULTS):
+    def conclude_via_factor(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form x|xy for x ≠ 0 and y in Ints
         '''
@@ -247,54 +247,54 @@ class Divides(DividesRelation):
                 # are actually ExprRanges (later!)
                 if self.lhs == self.rhs.operands[0]:
                     # apply left version
-                    from ._theorems_ import leftFactorDivisibility
-                    _x, _y = leftFactorDivisibility.instanceParams
-                    return leftFactorDivisibility.instantiate(
+                    from ._theorems_ import left_factor_divisibility
+                    _x, _y = left_factor_divisibility.instance_params
+                    return left_factor_divisibility.instantiate(
                             {_x:self.lhs, _y:self.rhs.operands[1]},
                             assumptions=assumptions)
                 elif self.lhs == self.rhs.operands[1]:
                     # apply right version
-                    from ._theorems_ import rightFactorDivisibility
-                    _x, _y = rightFactorDivisibility.instanceParams
-                    return rightFactorDivisibility.instantiate(
+                    from ._theorems_ import right_factor_divisibility
+                    _x, _y = right_factor_divisibility.instance_params
+                    return right_factor_divisibility.instantiate(
                             {_x:self.lhs, _y:self.rhs.operands[0]},
                             assumptions=assumptions)
                 else:
                     raise ValueError(
-                        "concludeViaFactor only applies for an explicit "
+                        "conclude_via_factor only applies for an explicit "
                         "factor appearing on both sides of the Divides. "
                         "{0} does not appear in {1} as an explicit factor.".
                         format(self.lhs, self.rhs))
             else:
                 raise NotImplementedError(
-                    "concludeViaFactor implemented only for binary "
+                    "conclude_via_factor implemented only for binary "
                     "multiplication.")
         else:
             raise ValueError(
-                    "concludeViaFactor only applies for an explicit "
+                    "conclude_via_factor only applies for an explicit "
                     "Mult expression on the rhs of the Divides, "
                     "but received {0} on the right side.".
                     format(self.rhs))
 
-    def eliminateDividendExponent(self, assumptions=USE_DEFAULTS):
+    def eliminate_dividend_exponent(self, assumptions=USE_DEFAULTS):
         '''
         From k|a^n (self), derive and return k|a if k is prime
         and a and n are integers.  Currently, this is only implement
         for k=2.  This method is called from the 
-        DividesRelation.sideEffects() method.
+        DividesRelation.side_effects() method.
         '''
         from proveit.numbers import two
         from ._theorems_ import even__if__power_is_even
         if not isinstance(self.rhs, Exp):
             raise ValueError(
-                    "'eliminateDividendExponent' is only applicable "
+                    "'eliminate_dividend_exponent' is only applicable "
                     "when the dividend is raised to an integer power.")
         if self.lhs != two:
             raise NotImplementedError(
-                    "'eliminateDividendExponent' currently only implemented "
+                    "'eliminate_dividend_exponent' currently only implemented "
                     "for a divisor of 2, but should eventually be "
                     "generalized for any prime divisor.")
-        a_, n_ = even__if__power_is_even.instanceParams
+        a_, n_ = even__if__power_is_even.instance_params
         return even__if__power_is_even.instantiate(
             {a_:self.rhs.base, n_:self.rhs.exponent},
             assumptions=assumptions)
@@ -303,7 +303,7 @@ class Divides(DividesRelation):
         '''
         From self of the form (k^n)|(a^n), derive and return k|a.
         k, a, must be integers, with n a positive integer. This method
-        is called from the DividesRelation sideEffects() method.
+        is called from the DividesRelation side_effects() method.
         '''
         if (isinstance(self.lhs, Exp) and
             isinstance(self.rhs, Exp) and
@@ -318,7 +318,7 @@ class Divides(DividesRelation):
                 InSet(n, NaturalPos).proven(assumptions)):
 
                 from ._theorems_ import common_exponent_elimination
-                _k, _a, _n = common_exponent_elimination.instanceParams
+                _k, _a, _n = common_exponent_elimination.instance_params
                 return common_exponent_elimination.instantiate(
                         {_k:k, _a:a, _n:n}, assumptions=assumptions)
             else:
@@ -340,7 +340,7 @@ class Divides(DividesRelation):
         and return k^n|a^n where n = exponent is a positive natural.
         '''
         from ._theorems_ import common_exponent_introduction
-        _k, _a, _n = common_exponent_introduction.instanceParams
+        _k, _a, _n = common_exponent_introduction.instance_params
         return common_exponent_introduction.instantiate(
                         {_k:self.lhs, _a:self.rhs, _n:exponent},
                         assumptions=assumptions)
@@ -349,7 +349,7 @@ class Divides(DividesRelation):
         '''
         From self of the form (k a)|(k b), derive and return a|b.
         k must be a non-zero complex number. This method
-        is called from the DividesRelation sideEffects() method.
+        is called from the DividesRelation side_effects() method.
         Need to generalize this later for more than two operands on
         each side! Could use sets for detecting common factors.
         '''
@@ -386,27 +386,27 @@ class Divides(DividesRelation):
         raise ValueError(err_msg)
 
 
-    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
+    def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         From x|y (self) and y|z (other) derive and return x|z.
         Will also check for y|z (self) and x|y (other) to return x|z.
         '''
-        from ._theorems_ import dividesTransitivity
-        _x, _y, _z = dividesTransitivity.instanceParams
-        other = asExpression(other)
+        from ._theorems_ import divides_transitivity
+        _x, _y, _z = divides_transitivity.instance_params
+        other = as_expression(other)
         if not isinstance(other, Divides):
             raise ValueError(
-                "Unsupported transitivity operand: Divides.applyTransitivity() "
+                "Unsupported transitivity operand: Divides.apply_transitivity() "
                 "method requires another Divides expression for transitivity "
                 "to be applied. Instead, received the following input: {0}.".
                 format(other))
 
         if self.rhs == other.lhs:
-            return dividesTransitivity.instantiate(
+            return divides_transitivity.instantiate(
                     {_x:self.lhs, _y:self.rhs, _z:other.rhs},
                     assumptions=assumptions)
         if self.lhs == other.rhs:
-            return dividesTransitivity.instantiate(
+            return divides_transitivity.instantiate(
                     {_x:other.lhs, _y:other.rhs, _z:self.rhs},
                     assumptions=assumptions)
         else:
@@ -417,14 +417,14 @@ class Divides(DividesRelation):
                 'Divides expression. Instead we have: {0} vs {1}'.
                 format(self, other))
 
-    def deduceInBool(self, assumptions=USE_DEFAULTS):
+    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this 'Divides' expression is in
         the Boolean set.
         '''
-        from ._theorems_ import dividesInBool
-        _x, _y = dividesInBool.instanceParams
-        return dividesInBool.instantiate(
+        from ._theorems_ import divides_is_bool
+        _x, _y = divides_is_bool.instance_params
+        return divides_is_bool.instantiate(
         	  {_x:self.operands[0], _y:self.operands[1]},
               assumptions=assumptions)
 
@@ -436,20 +436,20 @@ class DividesProper(DividesRelation):
     This class is still under development, with the class stub located
     here so that we have a 'strong relation' class version of Divides
     that can be called from the DividesRelation class, which in turn
-    allows us to use the TransitiveRelation.concudeViaTransitivity()
+    allows us to use the TransitiveRelation.concude_via_transitivity()
     method.
     '''
 
     _operator_ = Literal(
-          stringFormat='|', latexFormat=r'{\rvert_{P}}', theory=__file__
+          string_format='|', latex_format=r'{\rvert_{P}}', theory=__file__
           )
 
     # map left-hand-sides to "Divides" Judgments
-    #   (populated in TransitivityRelation.sideEffects)
-    knownLeftSides = dict()
+    #   (populated in TransitivityRelation.side_effects)
+    known_left_sides = dict()
     # map right-hand-sides to "Divides" Judgments
-    #   (populated in TransitivityRelation.sideEffects)
-    knownRightSides = dict()
+    #   (populated in TransitivityRelation.side_effects)
+    known_right_sides = dict()
 
     def __init__(self, a, b):
         DividesRelation.__init__(self, DividesProper._operator_, a, b)

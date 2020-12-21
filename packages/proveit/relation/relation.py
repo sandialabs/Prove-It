@@ -28,8 +28,8 @@ class Relation(Operation):
         and return the new relation.
         '''
         relation = self
-        relation = relation.innerExpr().lhs.simplify(assumptions)
-        relation = relation.innerExpr().rhs.simplify(assumptions)
+        relation = relation.inner_expr().lhs.simplify(assumptions)
+        relation = relation.inner_expr().rhs.simplify(assumptions)
         return relation
     
     def do_something_on_both_sides(self, assumptions=USE_DEFAULTS):
@@ -67,10 +67,10 @@ class Relation(Operation):
         if name[-len(both_sides_str):] == both_sides_str:
             from proveit.logic import InSet
             known_memberships = set()
-            if self.lhs in InSet.knownMemberships:
-                known_memberships.update(InSet.knownMemberships[self.lhs])
-            elif self.rhs in InSet.knownMemberships:
-                known_memberships.update(InSet.knownMemberships[self.rhs])
+            if self.lhs in InSet.known_memberships:
+                known_memberships.update(InSet.known_memberships[self.lhs])
+            elif self.rhs in InSet.known_memberships:
+                known_memberships.update(InSet.known_memberships[self.rhs])
             domain_methods = []
             # Append the class name for the domain method name.
             domain_method_name = name + '_of_' + self.__class__.__name__.lower()
@@ -83,7 +83,7 @@ class Relation(Operation):
                     # is proven under the default assumptions, but
                     # we will try those ones first (the ones at the
                     # end will be popped off first).
-                    if known_membership.isSufficient(defaults.assumptions):
+                    if known_membership.is_sufficient(defaults.assumptions):
                         domain_methods.append((domain, domain_attr))
                     else:
                         domain_methods.insert(0, (domain, domain_attr))
@@ -101,9 +101,9 @@ class Relation(Operation):
                             raise e
                         # otherwise, there are other methods to try.
                 if simplify:
-                    relation = relation.innerExpr().lhs.simplify(
+                    relation = relation.inner_expr().lhs.simplify(
                             assumptions)
-                    relation = relation.innerExpr().rhs.simplify(
+                    relation = relation.inner_expr().rhs.simplify(
                             assumptions)
                 # After doing the transformation, prove that one of
                 # the sides (the left side, arbitrarily) is still in 
@@ -135,10 +135,10 @@ class Relation(Operation):
         both_sides_methods = []
         from proveit.logic import InSet
         known_memberships = set()
-        if self.lhs in InSet.knownMemberships:
-            known_memberships.update(InSet.knownMemberships[self.lhs])
-        elif self.rhs in InSet.knownMemberships:
-            known_memberships.update(InSet.knownMemberships[self.rhs])
+        if self.lhs in InSet.known_memberships:
+            known_memberships.update(InSet.known_memberships[self.lhs])
+        elif self.rhs in InSet.known_memberships:
+            known_memberships.update(InSet.known_memberships[self.rhs])
         for known_membership in known_memberships:
             for name in dir(known_membership.domain):
                 if name[-len(method_end_str):] == method_end_str:

@@ -3,24 +3,24 @@
 from .expression import (
         Expression, traverse_inner_expressions, used_vars, 
         possibly_free_var_ranges, free_vars, attempt_to_simplify,
-        expressionDepth, MakeNotImplemented, 
+        expression_depth, MakeNotImplemented, 
         ImproperReplacement, 
         InnerExpr,
         Label, Literal, Variable, DuplicateLiteralError,
-        safeDummyVar, safeDummyVars, safeDefaultOrDummyVar,
+        safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var,
         Operation, IndexedVar, Function, OperationSequence, 
         OperationOverInstances, bundle, unbundle, OperationError, 
         Conditional, ConditionalSet,
         Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError, 
-        Composite, compositeExpression, 
-        singleOrCompositeExpression, 
+        Composite, composite_expression, 
+        single_or_composite_expression, 
         ExprTuple, ExprTupleError, extract_var_tuple_indices,
         ExprArray, NamedExprs, ExprRange, 
-        varRange, RangeInstanceError,
-        StyleOptions, maybeFencedString, 
-        maybeFencedLatex, maybeFenced)
-from .judgment import Judgment, asExpression, asExpressions
+        var_range, RangeInstanceError,
+        StyleOptions, maybe_fenced_string, 
+        maybe_fenced_latex, maybe_fenced)
+from .judgment import Judgment, as_expression, as_expressions
 from .defaults import defaults, USE_DEFAULTS, InvalidAssumptions
 from .theory import Theory, TheoryException
 from .proof import (Proof, Assumption, Axiom, Theorem, ModusPonens, 

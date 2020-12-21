@@ -19,7 +19,7 @@ Operating System :: MacOS :: MacOS X
 Operating System :: Unix
 """
 
-descriptionTxt = """\
+description_txt = """\
 Prove-It uses a powerful yet simple approach to theorem-proving.  
 It is not designed with automation as the primary goal.  The primary goal is 
 flexibility in order to be able to follow, ideally, any valid and complete 
@@ -44,7 +44,7 @@ database is used to prevent circular logic.
 dist = setup(name='Prove-It',
       version=__version__,
       description='General theorem prover in python.',
-      long_description=descriptionTxt,
+      long_description=description_txt,
       author='Wayne Witzel, Kenneth Ruddinger, Mohan Sarover, Robert Carr',
       author_email='wwitzel@sandia.gov',
       packages=['proveit'],
@@ -56,5 +56,5 @@ dist = setup(name='Prove-It',
      )
 
 if "develop" in sys.argv:
-    print("\nConfiguring git locally to filter jupyter notebook 'output' so only 'input' changes will be tracked.")
+    print("\n_configuring git locally to filter jupyter notebook 'output' so only 'input' changes will be tracked.")
     install_nbstripout(['git', 'config'])

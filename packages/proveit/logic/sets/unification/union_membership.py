@@ -12,7 +12,7 @@ class UnionMembership(Membership):
         Membership.__init__(self, element)
         self.domain = domain
     
-    def sideEffects(self, judgment):
+    def side_effects(self, judgment):
         '''
         Unfold the enumerated set membership as a side-effect.
         '''
@@ -23,32 +23,32 @@ class UnionMembership(Membership):
         Deduce and return and [element in (A union B ...)] = [(element in A) or (element in B) ...]
         where self = (A union B ...).
         '''
-        from ._axioms_ import unionDef
+        from ._axioms_ import union_def
         element = self.element
         operands = self.domain.operands
-        return unionDef.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return union_def.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From [element in (A union B ...)], derive and return [(element in A) or (element in B) ...],
         where self represents (A union B ...). 
         '''
-        from ._theorems_ import membershipUnfolding
+        from ._theorems_ import membership_unfolding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
-        return membershipUnfolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return membership_unfolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         From either [element in A] or [element in B] ..., derive and return [element in (A union B ...)],
         where self represents (A union B ...). 
         '''
-        from ._theorems_ import membershipFolding
+        from ._theorems_ import membership_folding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
-        return membershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return membership_folding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
                         
 class UnionNonmembership(Nonmembership):
     '''
@@ -59,7 +59,7 @@ class UnionNonmembership(Nonmembership):
         Nonmembership.__init__(self, element)
         self.domain = domain
 
-    def sideEffects(self, judgment):
+    def side_effects(self, judgment):
         '''
         Currently non side-effects for union nonmembership.
         '''
@@ -71,19 +71,19 @@ class UnionNonmembership(Nonmembership):
         Deduce and return and [element not in (A union B ...)] = [(element not in A) and (element not in B) ...]
         where self = (A union B ...).
         '''
-        from ._theorems_ import nonmembershipEquiv
+        from ._theorems_ import nonmembership_equiv
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipEquiv.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return nonmembership_equiv.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         From [element not in A] and [element not in B] ..., derive and return [element not in (A union B ...)],
         where self represents (A union B ...). 
         '''
-        from ._theorems_ import nonmembershipFolding
+        from ._theorems_ import nonmembership_folding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return nonmembership_folding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)

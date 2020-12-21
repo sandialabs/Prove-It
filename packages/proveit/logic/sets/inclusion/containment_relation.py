@@ -1,6 +1,6 @@
 from proveit import USE_DEFAULTS
 from proveit.relation import (
-    TransitiveRelation, TransitiveSequence, makeSequenceOrRelation)
+    TransitiveRelation, TransitiveSequence, make_sequence_or_relation)
 
 class ContainmentRelation(TransitiveRelation):
     r'''
@@ -12,30 +12,30 @@ class ContainmentRelation(TransitiveRelation):
     def __init__(self, operator, lhs, rhs):
         TransitiveRelation.__init__(self, operator, lhs, rhs)
 
-    def sideEffects(self, judgment):
+    def side_effects(self, judgment):
         '''
         In addition to the TransitiveRelation side-effects, also
-        attempt deriveRelaxed (if applicable) and deriveReversed.
+        attempt derive_relaxed (if applicable) and derive_reversed.
         '''
-        for sideEffect in TransitiveRelation.sideEffects(self, judgment):
-            yield sideEffect
-        if hasattr(self, 'deriveRelaxed'):
-            yield self.deriveRelaxed
-        yield self.deriveReversed
+        for side_effect in TransitiveRelation.side_effects(self, judgment):
+            yield side_effect
+        if hasattr(self, 'derive_relaxed'):
+            yield self.derive_relaxed
+        yield self.derive_reversed
 
     @staticmethod
-    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
+    def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
         '''
-        applyTransitivity(Subset(A,B), Equals(B,C)) returns Subset(A,C)
+        apply_transitivity(Subset(A,B), Equals(B,C)) returns Subset(A,C)
         '''
         from proveit.logic import Equals
         if isinstance(other, Equals):
             if (self.proven(assumptions=assumptions) and
                 other.proven(assumptions=assumptions)):
                 if other.lhs == self.rhs:
-                    return other.subRightSideInto(self, assumptions=assumptions)
+                    return other.sub_right_side_into(self, assumptions=assumptions)
                 elif other.rhs == self.rhs:
-                    return other.subLeftSideInto(self, assumptions=assumptions)
+                    return other.sub_left_side_into(self, assumptions=assumptions)
 
 
 

@@ -24,74 +24,74 @@ class ExprTuple(Composite, Expression):
         objects.
         '''
         from proveit._core_ import Judgment
-        from .composite import singleOrCompositeExpression
+        from .composite import single_or_composite_expression
         entries = []
         for entry in expressions:
             if isinstance(entry, Judgment):
                 # Extract the Expression from the Judgment:
                 entry = entry.expr 
             if not isinstance(entry, Expression):
-                entry = singleOrCompositeExpression(entry)
+                entry = single_or_composite_expression(entry)
             assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
         
         if styles is None: styles = dict()
-        if 'wrapPositions' not in styles:
-            styles['wrapPositions'] = '()' # no wrapping by default
+        if 'wrap_positions' not in styles:
+            styles['wrap_positions'] = '()' # no wrapping by default
         if 'justification' not in styles:
             styles['justification'] = 'left'
 
         Expression.__init__(self, ['ExprTuple'], self.entries, styles=styles)
 
-    def styleOptions(self):
+    def style_options(self):
         options = StyleOptions(self)
-        options.addOption('wrapPositions', 
+        options.add_option('wrap_positions', 
                           ("position(s) at which wrapping is to occur; 'n' "
                            "is after the nth comma."))
-        options.addOption('justification', 
+        options.add_option('justification', 
                           ("if any wrap positions are set, justify to the 'left', "
                            "'center', or 'right'"))
         return options
 
-    def withWrappingAt(self, *wrapPositions):
-        return self.withStyles(wrapPositions='(' + ' '.join(str(pos) for pos in wrapPositions) + ')')
+    def with_wrapping_at(self, *wrap_positions):
+        return self.with_styles(wrap_positions='(' + ' '.join(str(pos) for pos in wrap_positions) + ')')
     
-    def withJustification(self, justification):
-        return self.withStyles(justification=justification)
+    def with_justification(self, justification):
+        return self.with_styles(justification=justification)
     
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
-        if subClass != ExprTuple: 
-            MakeNotImplemented(subClass)
-        if len(coreInfo) != 1 or coreInfo[0] != 'ExprTuple':
-            raise ValueError("Expecting ExprTuple coreInfo to contain "
+    def _make(sub_class, core_info, styles, sub_expressions):
+        if sub_class != ExprTuple: 
+            MakeNotImplemented(sub_class)
+        if len(core_info) != 1 or core_info[0] != 'ExprTuple':
+            raise ValueError("Expecting ExprTuple core_info to contain "
                                "exactly one item: 'ExprTuple'")
-        return ExprTuple(*subExpressions).withStyles(**styles)      
+        return ExprTuple(*sub_expressions).with_styles(**styles)      
 
-    def remakeArguments(self):
+    def remake_arguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the ExprTuple.
         '''
-        for subExpr in self.subExprIter():
-            yield subExpr
+        for sub_expr in self.sub_expr_iter():
+            yield sub_expr
 
-    def remakeWithStyleCalls(self):
+    def remake_with_style_calls(self):
         '''
         In order to reconstruct this Expression to have the same styles,
         what "with..." method calls are most appropriate?  Return a 
         tuple of strings with the calls to make.  The default for the
-        Operation class is to include appropriate 'withWrappingAt'
-        and 'withJustification' calls.
+        Operation class is to include appropriate 'with_wrapping_at'
+        and 'with_justification' calls.
         '''
-        wrap_positions = self.wrapPositions()
+        wrap_positions = self.wrap_positions()
         call_strs = []
         if len(wrap_positions) > 0:
-            call_strs.append('withWrappingAt(' + ','.join(str(pos) for pos in wrap_positions) + ')')
-        justification = self.getStyle('justification')
+            call_strs.append('with_wrapping_at(' + ','.join(str(pos) for pos in wrap_positions) + ')')
+        justification = self.get_style('justification')
         if justification != 'left':
-            call_strs.append('withJustification("' + justification + '")')
+            call_strs.append('with_justification("' + justification + '")')
         return call_strs
                                         
     def __iter__(self):
@@ -156,12 +156,12 @@ class ExprTuple(Composite, Expression):
         else:
             return self.entries.index(entry, start, stop)
 
-    def wrapPositions(self):
+    def wrap_positions(self):
         '''
         Return a list of wrap positions according to the current style setting.
         Position 'n' is after the nth comma.
         '''
-        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
+        return [int(pos_str) for pos_str in self.get_style('wrap_positions').strip('()').split(' ') if pos_str != '']
     
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -169,26 +169,26 @@ class ExprTuple(Composite, Expression):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=True, subFence=False, operatorOrOperators=None, implicitFirstOperator=False, 
-                  wrapPositions=None, justification=None, **kwargs):
+    def formatted(self, format_type, fence=True, sub_fence=False, operator_or_operators=None, implicit_first_operator=False, 
+                  wrap_positions=None, justification=None, **kwargs):
         from .expr_range import ExprRange
 
-        outStr = ''
+        out_str = ''
         if len(self) == 0 and fence: 
             # for an empty list, show the parenthesis to show something.            
             return '()'
         
-        if wrapPositions is None:
+        if wrap_positions is None:
             # Convert from a convention where position 'n' is after the nth comma to one in which the position '2n' is 
             # after the nth operator (which also allow for position before operators).
-            wrapPositions = [2*pos for pos in self.wrapPositions()]
+            wrap_positions = [2*pos for pos in self.wrap_positions()]
         if justification is None:
-            justification = self.getStyle('justification', 'left')
+            justification = self.get_style('justification', 'left')
         
-        do_wrapping = len(wrapPositions)>0
-        if fence: outStr = '(' if formatType=='string' else  r'\left('
-        if do_wrapping and formatType=='latex': 
-            outStr += r'\begin{array}{%s} '%justification[0]
+        do_wrapping = len(wrap_positions)>0
+        if fence: out_str = '(' if format_type=='string' else  r'\left('
+        if do_wrapping and format_type=='latex': 
+            out_str += r'\begin{array}{%s} '%justification[0]
         
         formatted_sub_expressions = []
         # Track whether or not ExprRange operands are using
@@ -203,45 +203,45 @@ class ExprTuple(Composite, Expression):
                 # an 'explicit' style for 'parameterization) as well as
                 # ellipses between the checkpoints..
                 using_explicit_parameterization.append(
-                        sub_expr._use_explicit_parameterization(formatType))
+                        sub_expr._use_explicit_parameterization(format_type))
                 if isinstance(sub_expr.body, ExprTuple):
                     _fence=True
                 else:
-                    _fence=subFence
+                    _fence=sub_fence
                 formatted_sub_expressions += sub_expr._formatted_checkpoints(
-                        formatType, fence=_fence, with_ellipses=True,
-                        operator=operatorOrOperators)
+                        format_type, fence=_fence, with_ellipses=True,
+                        operator=operator_or_operators)
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists                
-                formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=True))
+                formatted_sub_expressions.append(sub_expr.formatted(format_type, fence=True))
             else:
-                formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=subFence))
+                formatted_sub_expressions.append(sub_expr.formatted(format_type, fence=sub_fence))
         
-        # put the formatted operator between each of formattedSubExpressions
-        for wrap_position in wrapPositions:
+        # put the formatted operator between each of formatted_sub_expressions
+        for wrap_position in wrap_positions:
             if wrap_position%2==1:
                 # wrap after operand (before next operation)
                 formatted_sub_expressions[(wrap_position-1)//2] += r' \\ '
             else:
                 # wrap after operation (before next operand)
                 formatted_sub_expressions[wrap_position//2] = r' \\ ' + formatted_sub_expressions[wrap_position//2]
-        if operatorOrOperators is None:
-            operatorOrOperators = ','
-        elif isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
-            operatorOrOperators = operatorOrOperators.formatted(formatType)
-        if isinstance(operatorOrOperators, str):
+        if operator_or_operators is None:
+            operator_or_operators = ','
+        elif isinstance(operator_or_operators, Expression) and not isinstance(operator_or_operators, ExprTuple):
+            operator_or_operators = operator_or_operators.formatted(format_type)
+        if isinstance(operator_or_operators, str):
             # single operator
-            formatted_operator = operatorOrOperators
-            if operatorOrOperators == ',':
+            formatted_operator = operator_or_operators
+            if operator_or_operators == ',':
                 # e.g.: a, b, c, d
-                outStr += (formatted_operator+' ').join(formatted_sub_expressions)
+                out_str += (formatted_operator+' ').join(formatted_sub_expressions)
             else:
                 # e.g.: a + b + c + d
-                outStr += (' '+formatted_operator+' ').join(formatted_sub_expressions)
+                out_str += (' '+formatted_operator+' ').join(formatted_sub_expressions)
         else:
             # assume all different operators
             formatted_operators = []
-            for operator in operatorOrOperators:
+            for operator in operator_or_operators:
                 if isinstance(operator, ExprRange):
                     # Handle an ExprRange entry; here the "operators"
                     # are really ExprRange "checkpoints" (first, last, 
@@ -251,30 +251,30 @@ class ExprTuple(Composite, Expression):
                     # placeholder.
                     be_explicit = using_explicit_parameterization.pop(0)
                     formatted_operators += operator._formatted_checkpoints(
-                        formatType, fence=subFence, ellipses='',
+                        format_type, fence=sub_fence, ellipses='',
                         use_explicit_parameterization=be_explicit)
                 else:
-                    formatted_operators.append(operator.formatted(formatType))
+                    formatted_operators.append(operator.formatted(format_type))
             if len(formatted_sub_expressions) == len(formatted_operators):
                 # operator preceeds each operand
-                if implicitFirstOperator:
-                    outStr = formatted_sub_expressions[0] # first operator is implicit
+                if implicit_first_operator:
+                    out_str = formatted_sub_expressions[0] # first operator is implicit
                 else:
-                    outStr = formatted_operators[0] + formatted_sub_expressions[0] # no space after first operator
-                outStr += ' ' # space before next operator
-                outStr += ' '.join(formatted_operator + ' ' + formatted_operand for formatted_operator, formatted_operand in zip(formatted_operators[1:], formatted_sub_expressions[1:]))
+                    out_str = formatted_operators[0] + formatted_sub_expressions[0] # no space after first operator
+                out_str += ' ' # space before next operator
+                out_str += ' '.join(formatted_operator + ' ' + formatted_operand for formatted_operator, formatted_operand in zip(formatted_operators[1:], formatted_sub_expressions[1:]))
             elif len(formatted_sub_expressions) == len(formatted_operators)+1:
                 # operator between each operand
-                outStr = ' '.join(formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in zip(formatted_sub_expressions, formatted_operators))
-                outStr += ' ' + formatted_sub_expressions[-1]
+                out_str = ' '.join(formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in zip(formatted_sub_expressions, formatted_operators))
+                out_str += ' ' + formatted_sub_expressions[-1]
             elif len(formatted_sub_expressions) != len(formatted_operators):
                 raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator ranges must be in correpsondence with operand ranges.")
 
-        if do_wrapping and formatType=='latex': 
-            outStr += r' \end{array}'
-        if fence: outStr += ')' if formatType=='string' else  r'\right)'
+        if do_wrapping and format_type=='latex': 
+            out_str += r' \end{array}'
+        if fence: out_str += ')' if format_type=='string' else  r'\right)'
         
-        return outStr
+        return out_str
     
     def length(self, assumptions=USE_DEFAULTS):
         '''
@@ -290,9 +290,9 @@ class ExprTuple(Composite, Expression):
         with respect to which entries are ExprRanges and, where they
         are, the start and end indices of the ExprRanges match.
         '''
-        from proveit import ExprRange, compositeExpression
+        from proveit import ExprRange, composite_expression
         if not isinstance(other_tuple, ExprTuple):
-            other_tuple = compositeExpression(other_tuple)
+            other_tuple = composite_expression(other_tuple)
         if len(self) != len(other_tuple):
             return False # don't have the same number of entries
         for entry, other_entry in zip(self, other_tuple):
@@ -343,7 +343,7 @@ class ExprTuple(Composite, Expression):
                 subbed_exprs.append(subbed_expr)
 
         return self.__class__._checked_make(
-                    self._coreInfo, dict(self._styleData.styles),
+                    self._core_info, dict(self._style_data.styles),
                     subbed_exprs)
     
     def merger(self, assumptions=USE_DEFAULTS):
@@ -385,8 +385,8 @@ class ExprTuple(Composite, Expression):
                 pass # need the lambda map
             # Collapse singular items at the beginning.
             front_singles = ExprTuple(eq.expr[:first_range_pos])
-            i_sub = lambda_map.extractArgument(front_singles[0])
-            j_sub = lambda_map.extractArgument(front_singles[-1])
+            i_sub = lambda_map.extract_argument(front_singles[0])
+            j_sub = lambda_map.extract_argument(front_singles[-1])
             if len(front_singles)==2:
                 # Merge a pair of singular items.
                 front_merger = merge_pair.instantiate(
@@ -397,7 +397,7 @@ class ExprTuple(Composite, Expression):
                 front_merger = merge_series.instantiate(
                         {f:lambda_map, x:front_singles, i:i_sub, j:j_sub}, 
                         assumptions=assumptions)
-            eq.update(front_merger.substitution(self.innerExpr()[:first_range_pos], 
+            eq.update(front_merger.substitution(self.inner_expr()[:first_range_pos], 
                                                 assumptions=assumptions))
             
         if len(eq.expr) == 1:
@@ -424,7 +424,7 @@ class ExprTuple(Composite, Expression):
                 else:
                     # Merge an ExprRange and a singular item.
                     _i, _j = eq.expr[0].start_index, eq.expr[0].end_index    
-                    _k = lambda_map.extractArgument(eq.expr[1])
+                    _k = lambda_map.extract_argument(eq.expr[1])
                     if _k == Add(_j, one):
                         merger = merge_extension.instantiate(
                                 {f:lambda_map, i:_i, j:_j}, 
@@ -435,22 +435,22 @@ class ExprTuple(Composite, Expression):
                                 assumptions=assumptions)                    
             else:
                 # Merge a singular item and ExprRange.
-                iSub = lambda_map.extractArgument(eq.expr[0])
-                jSub, kSub = eq.expr[1].start_index, eq.expr[1].end_index
+                i_sub = lambda_map.extract_argument(eq.expr[0])
+                j_sub, k_sub = eq.expr[1].start_index, eq.expr[1].end_index
                 merger = \
-                    merge_front.instantiate({f:lambda_map, i:iSub, j:jSub,
-                                            k:kSub}, assumptions=assumptions)
+                    merge_front.instantiate({f:lambda_map, i:i_sub, j:j_sub,
+                                            k:k_sub}, assumptions=assumptions)
             eq.update(merger)
             return eq.relation
         
         while len(eq.expr) > 1:
             front_merger = ExprTuple(*eq.expr[:2]).merger(assumptions)
             eq.update(front_merger.substitution(
-                    eq.expr.innerExpr(assumptions)[:2], 
+                    eq.expr.inner_expr(assumptions)[:2], 
                     assumptions=assumptions))
         return eq.relation
     
-    def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
+    def deduce_equality(self, equality, assumptions=USE_DEFAULTS, 
                        minimal_automation=False):
         from proveit import ExprRange
         from proveit.logic import Equals
@@ -479,7 +479,7 @@ class ExprTuple(Composite, Expression):
                     equiv_thm = proveit.numbers.numerals.decimals._theorems_\
                                 .__getattr__('count_to_%d_range'%_n)
                     return equiv_thm
-        raise NotImplementedError("ExprTuple.deduceEquality not implemented "
+        raise NotImplementedError("ExprTuple.deduce_equality not implemented "
                                   "for this case: %s."%self)
         
         

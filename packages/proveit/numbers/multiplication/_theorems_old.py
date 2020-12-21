@@ -1,116 +1,116 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals, Implies
 from proveit.numbers import Mult, Natural, NaturalPos, Integer, Real, RealPos, Complex, Add, Sub, Sum
-from proveit.common import a, b, x, y, P, S, yMulti, vEtc, wEtc, xEtc, yEtc, zEtc, PyEtc
+from proveit.common import a, b, x, y, P, S, y_multi, v_etc, w_etc, x_etc, y_etc, z_etc, Py_etc
 from proveit.numbers.common import zero, one, ComplexSansZero
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
+begin_theorems(locals())
 
-multAssoc = Forall([xEtc,yEtc,zEtc],
+mult_assoc = Forall([x_etc,y_etc,z_etc],
                   Equals(
                         Mult(
-                                xEtc,yEtc,zEtc),
+                                x_etc,y_etc,z_etc),
                         Mult(
-                                xEtc,Mult(yEtc),zEtc)
+                                x_etc,Mult(y_etc),z_etc)
                         )
                   )
-multAssoc
+mult_assoc
 
-multNatClosure = Forall((a, b), InSet(Mult(a, b), Natural), domain=Natural)
-multNatClosure
+mult_nat_closure = Forall((a, b), InSet(Mult(a, b), Natural), domain=Natural)
+mult_nat_closure
 
-multNatPosClosure = Forall((a, b), InSet(Mult(a, b), NaturalPos), domain=NaturalPos)
-multNatPosClosure
+mult_nat_pos_closure = Forall((a, b), InSet(Mult(a, b), NaturalPos), domain=NaturalPos)
+mult_nat_pos_closure
 
-multIntClosure = Forall([xEtc], InSet(Mult(xEtc), Integer), domain=Integer)
-multIntClosure
+mult_int_closure = Forall([x_etc], InSet(Mult(x_etc), Integer), domain=Integer)
+mult_int_closure
 
-multRealClosure = Forall([xEtc], InSet(Mult(xEtc), Real), domain=Real)
-multRealClosure
+mult_real_closure = Forall([x_etc], InSet(Mult(x_etc), Real), domain=Real)
+mult_real_closure
 
-multRealPosClosure = Forall([xEtc], InSet(Mult(xEtc), RealPos), domain=RealPos)
-multRealPosClosure
+mult_real_pos_closure = Forall([x_etc], InSet(Mult(x_etc), RealPos), domain=RealPos)
+mult_real_pos_closure
 
-multComplexClosure = Forall([xEtc], InSet(Mult(xEtc),Complex), domain=Complex)
-multComplexClosure
+mult_complex_closure = Forall([x_etc], InSet(Mult(x_etc),Complex), domain=Complex)
+mult_complex_closure
 
-multNotEqZero = Forall([xEtc], NotEquals(Mult(xEtc), zero), domain=ComplexSansZero)
-multNotEqZero
+mult_not_eq_zero = Forall([x_etc], NotEquals(Mult(x_etc), zero), domain=ComplexSansZero)
+mult_not_eq_zero
 
-multOne = Forall(x, Equals(Mult(one, x), x), domain=Complex)
-multOne
+mult_one = Forall(x, Equals(Mult(one, x), x), domain=Complex)
+mult_one
 
-multZero = Forall(x, Equals(Mult(zero, x), zero), domain=Complex)
-multZero
+mult_zero = Forall(x, Equals(Mult(zero, x), zero), domain=Complex)
+mult_zero
 
-multComm = Forall([vEtc,wEtc,xEtc,yEtc,zEtc],
+mult_comm = Forall([v_etc,w_etc,x_etc,y_etc,z_etc],
                  Equals(
-                        Mult(vEtc,wEtc,xEtc,yEtc,zEtc),
-                        Mult(vEtc,yEtc,xEtc,wEtc,zEtc)
+                        Mult(v_etc,w_etc,x_etc,y_etc,z_etc),
+                        Mult(v_etc,y_etc,x_etc,w_etc,z_etc)
     ),
                  domain = Complex
                  )
-multComm
+mult_comm
 
-multAssocRev = Forall([xEtc,yEtc,zEtc],
+mult_assoc_rev = Forall([x_etc,y_etc,z_etc],
                   Equals(
                         Mult(
-                                xEtc,Mult(yEtc),zEtc),
+                                x_etc,Mult(y_etc),z_etc),
                         Mult(
-                                xEtc,yEtc,zEtc)
+                                x_etc,y_etc,z_etc)
                         )
                   )
-multAssocRev
+mult_assoc_rev
 
-distributeThroughSum =  Forall([xEtc, yEtc, zEtc],
+distribute_through_sum =  Forall([x_etc, y_etc, z_etc],
                   Equals(
-                        Mult(xEtc, Add(yEtc), zEtc),
-                        Add(Etcetera(Mult(xEtc, yMulti, zEtc)))
+                        Mult(x_etc, Add(y_etc), z_etc),
+                        Add(Etcetera(Mult(x_etc, y_multi, z_etc)))
                         ),
                   domain = Complex
                   )
-distributeThroughSum
+distribute_through_sum
 
-distributeThroughSumRev =  Forall([xEtc, yEtc, zEtc],
-                                  Equals(Add(Etcetera(Mult(xEtc, yMulti, zEtc))),
-                                         Mult(xEtc, Add(yEtc), zEtc)),
+distribute_through_sum_rev =  Forall([x_etc, y_etc, z_etc],
+                                  Equals(Add(Etcetera(Mult(x_etc, y_multi, z_etc))),
+                                         Mult(x_etc, Add(y_etc), z_etc)),
                                   domain = Complex)
-distributeThroughSumRev
+distribute_through_sum_rev
 
-distributeThroughSubtract =  Forall([wEtc, x, y, zEtc],
+distribute_through_subtract =  Forall([w_etc, x, y, z_etc],
                   Equals(
-                        Mult(wEtc, Sub(x, y), zEtc),
-                        Sub(Mult(wEtc, x, zEtc), Mult(wEtc, y, zEtc))
+                        Mult(w_etc, Sub(x, y), z_etc),
+                        Sub(Mult(w_etc, x, z_etc), Mult(w_etc, y, z_etc))
                         ),
                   domain = Complex
                   )
-distributeThroughSubtract
+distribute_through_subtract
 
-distributeThroughSubtractRev =  Forall([wEtc, x, y, zEtc],
+distribute_through_subtract_rev =  Forall([w_etc, x, y, z_etc],
                   Equals(
-                        Sub(Mult(wEtc, x, zEtc), Mult(wEtc, y, zEtc)),
-                        Mult(wEtc, Sub(x, y), zEtc)
+                        Sub(Mult(w_etc, x, z_etc), Mult(w_etc, y, z_etc)),
+                        Mult(w_etc, Sub(x, y), z_etc)
                         ),
                   domain = Complex
                   )
-distributeThroughSubtractRev
+distribute_through_subtract_rev
 
-distributeThroughSummation = Forall([P, S],
-                                    Implies(Forall(yEtc, InSet(PyEtc, Complex), domain=S),
-                                            Forall([xEtc, zEtc],
-                                                   Equals(Mult(xEtc, Sum(yEtc, PyEtc, domain=S), zEtc),
-                                                          Sum(yEtc, Mult(xEtc, PyEtc, zEtc), domain=S)),
+distribute_through_summation = Forall([P, S],
+                                    Implies(Forall(y_etc, InSet(Py_etc, Complex), domain=S),
+                                            Forall([x_etc, z_etc],
+                                                   Equals(Mult(x_etc, Sum(y_etc, Py_etc, domain=S), z_etc),
+                                                          Sum(y_etc, Mult(x_etc, Py_etc, z_etc), domain=S)),
                                                   domain=Complex)))
-distributeThroughSummation
+distribute_through_summation
 
 
-distributeThroughSummationRev = Forall([P, S],
-                                    Implies(Forall(yEtc, InSet(PyEtc, Complex), domain=S),
-                                            Forall([xEtc, zEtc],
-                                                   Equals(Sum(yEtc, Mult(xEtc, PyEtc, zEtc), domain=S),
-                                                         Mult(xEtc, Sum(yEtc, PyEtc, domain=S), zEtc)),
+distribute_through_summation_rev = Forall([P, S],
+                                    Implies(Forall(y_etc, InSet(Py_etc, Complex), domain=S),
+                                            Forall([x_etc, z_etc],
+                                                   Equals(Sum(y_etc, Mult(x_etc, Py_etc, z_etc), domain=S),
+                                                         Mult(x_etc, Sum(y_etc, Py_etc, domain=S), z_etc)),
                                                   domain=Complex)))
-distributeThroughSummationRev
+distribute_through_summation_rev
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

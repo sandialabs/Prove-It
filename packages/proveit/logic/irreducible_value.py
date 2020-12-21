@@ -13,7 +13,7 @@ class IrreducibleValue:
     def __init__(self):
         pass
     
-    def irreducibleValue(self):
+    def irreducible_value(self):
         return True
     
     def evaluation(self):
@@ -23,21 +23,21 @@ class IrreducibleValue:
         from proveit.logic import Equals
         return Equals(self, self).prove()
     
-    def evalEquality(self, otherIrreducible, assumptions=USE_DEFAULTS):
+    def eval_equality(self, other_irreducible, assumptions=USE_DEFAULTS):
         '''
         Returns the evaluation of the equality between this irreducible
         value and the other irreducible value, if it is well-defined.
         '''
-        raise NotImplementedError("evalEquality method must be implemented by IrreducibleValue objects")
+        raise NotImplementedError("eval_equality method must be implemented by IrreducibleValue objects")
 
-    def notEqual(self, otherIrreducible, assumptions=USE_DEFAULTS):
+    def not_equal(self, other_irreducible, assumptions=USE_DEFAULTS):
         '''
         Attempt to prove that this irreducible values is not equal to
         the other irreducible value, returning the Judgment.
         '''
-        raise NotImplementedError("notEqual method must be implemented by IrreducibleValue objects")
+        raise NotImplementedError("not_equal method must be implemented by IrreducibleValue objects")
 
-def isIrreducibleValue(expr):
-    if hasattr(expr, 'irreducibleValue'):
-        return expr.irreducibleValue()
+def is_irreducible_value(expr):
+    if hasattr(expr, 'irreducible_value'):
+        return expr.irreducible_value()
     return False

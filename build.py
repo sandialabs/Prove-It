@@ -244,7 +244,7 @@ def git_clear_notebook(notebook_path):
         # repository.  In that case, don't worry about it.
         pass
 
-class KernelStartFailure(Exception):
+class KernelStart_failure(Exception):
     def __init__(self):
         pass
 
@@ -256,7 +256,7 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
         try:
             self.km, self.kc = self.start_new_kernel()
         except RuntimeError:
-            raise KernelStartFailure()
+            raise KernelStart_failure()
         return self
     
     def __exit__(self, exception_type, exception_value, traceback):
@@ -383,7 +383,7 @@ len(gc.get_objects()) # used to check for memory leaks
             # Write it out if it has changed.
             with open(notebook_path, 'wt', encoding='utf8') as f:
                 f.write(new_nb_str)
-        print("\tFinished %s in %0.2f seconds"%(notebook_path, time.time()-start_time))
+        print("\t_finished %s in %0.2f seconds"%(notebook_path, time.time()-start_time))
         
         if git_clear:
             git_clear_notebook(notebook_path)
@@ -968,7 +968,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
             return False
         theory = Theory(notebook_path)
         import_failure_filename = os.path.join(
-                theory._theoryFolderStorage('common').path, 
+                theory._theory_folder_storage('common').path, 
                 'import_failure.txt')
         if os.path.isfile(import_failure_filename):
             # There was a failure to import a common expression from
@@ -1027,7 +1027,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
                         comm.send(rank, dest=0)
                     except Exception as e:
                         comm.send((rank, str(e)), dest=0)
-        except KernelStartFailure:
+        except KernelStart_failure:
             # Occassionally there is an error getting a Jupyter notebook
             # engine started.  If that happens, just this this one out
             # and let the other cores keep going.
@@ -1052,7 +1052,7 @@ def mpi_build(notebook_paths, no_latex=False, git_clear=True, no_execute=False, 
                     print(msg[1])
                     comm.Abort()
                 else:
-                    print("\tFailure to execute %s, but we may retry "
+                    print("\t_failure to execute %s, but we may retry "
                           "after satisfying prerequisites"%failed_notebook)
                 return err_rank
             finished_notebook = assignments[ready_rank]

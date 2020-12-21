@@ -31,16 +31,16 @@ class Conditional(Expression):
         delimited fashion if it is within a conjunction.
         '''
         from proveit._core_.expression.composite import \
-            singleOrCompositeExpression, Composite, ExprTuple, ExprRange
+            single_or_composite_expression, Composite, ExprTuple, ExprRange
         styles = {'condition_delimiter' : 
                   'comma' if comma_delimited_conditions else 'and'}
         
-        value = singleOrCompositeExpression(value)
+        value = single_or_composite_expression(value)
         assert (isinstance(value, Expression) 
                 and not isinstance(value, ExprRange))
             
         condition_or_conditions = \
-            singleOrCompositeExpression(condition_or_conditions)
+            single_or_composite_expression(condition_or_conditions)
         
         if isinstance(condition_or_conditions, ExprTuple):
             if (len(condition_or_conditions) == 1 and
@@ -61,26 +61,26 @@ class Conditional(Expression):
         self.value = value
         self.condition = condition
     
-    def styleOptions(self):
+    def style_options(self):
         from proveit import StyleOptions
         options = StyleOptions(self)
-        options.addOption('condition_delimiter', ("'comma' or 'and'"))
+        options.add_option('condition_delimiter', ("'comma' or 'and'"))
         return options
     
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
-        if len(coreInfo) != 1 or coreInfo[0] != 'Conditional':
-            raise ValueError("Expecting Conditional coreInfo to contain exactly "
+    def _make(sub_class, core_info, styles, sub_expressions):
+        if len(core_info) != 1 or core_info[0] != 'Conditional':
+            raise ValueError("Expecting Conditional core_info to contain exactly "
                              ":one item: 'Conditional'")
-        if subClass != Conditional: 
-            raise MakeNotImplemented(subClass)
-        if len(subExpressions) != 2:
+        if sub_class != Conditional: 
+            raise MakeNotImplemented(sub_class)
+        if len(sub_expressions) != 2:
             raise ValueError("Expecting Conditional to have two sub-expressions.")
-        value, condition = subExpressions
+        value, condition = sub_expressions
         return Conditional(value, condition) \
-                .withStyles(**styles)
+                .with_styles(**styles)
     
-    def remakeArguments(self):
+    def remake_arguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Indexed.
@@ -88,15 +88,15 @@ class Conditional(Expression):
         yield self.value
         yield self.condition
     
-    def _formatted_condition(self, formatType):
+    def _formatted_condition(self, format_type):
         from proveit.logic import And
-        if self.getStyle('condition_delimiter') == 'comma':
+        if self.get_style('condition_delimiter') == 'comma':
             if (isinstance(self.condition, And) 
                     and len(self.condition.operands) > 1):
                 return self.condition.operands.formatted(
-                        formatType, fence=False, subFence=False, 
-                        operatorOrOperators=', ')
-        return self.condition.formatted(formatType)
+                        format_type, fence=False, sub_fence=False, 
+                        operator_or_operators=', ')
+        return self.condition.formatted(format_type)
     
     def string(self, **kwargs):
         formatted_condition = self._formatted_condition('string')
@@ -114,7 +114,7 @@ class Conditional(Expression):
         return inner_str
     
     '''
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         from proveit.logic import EvaluationError, TRUE
         for condition in self.conditions:
             if condition == TRUE:

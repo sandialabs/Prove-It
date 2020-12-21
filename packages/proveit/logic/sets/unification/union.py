@@ -3,7 +3,7 @@ from proveit._common_ import n, x
         
 class Union(Operation):
     # operator of the Intersect operation
-    _operator_ = Literal(stringFormat='union', latexFormat=r'\cup', theory=__file__)    
+    _operator_ = Literal(string_format='union', latex_format=r'\cup', theory=__file__)    
     
     def __init__(self, *operands):
         '''
@@ -11,10 +11,10 @@ class Union(Operation):
         '''
         Operation.__init__(self, Union._operator_, operands)
 
-    def membershipObject(self, element):
+    def membership_object(self, element):
         from .union_membership import UnionMembership
         return UnionMembership(element, self)
 
-    def nonmembershipObject(self, element):
+    def nonmembership_object(self, element):
         from .union_membership import UnionNonmembership
         return UnionNonmembership(element, self)
