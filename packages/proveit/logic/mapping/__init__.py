@@ -1,1 +1,1 @@
-from .mappingOps import Domain, CoDomain
+from .mapping_ops import Domain, CoDomain

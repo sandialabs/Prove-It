@@ -3,63 +3,68 @@ from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
 from proveit._common_ import m, x, A
 
+
 class IntersectMembership(Membership):
     '''
-    Defines methods that apply to membership in an intersection of sets. 
+    Defines methods that apply to membership in an intersection of sets.
     '''
-    
+
     def __init__(self, element, domain):
         Membership.__init__(self, element)
         self.domain = domain
-    
-    def sideEffects(self, judgment):
+
+    def side_effects(self, judgment):
         '''
         Unfold the enumerated set membership as a side-effect.
         '''
         yield self.unfold
-    
+
     def equivalence(self, element, assumptions=USE_DEFAULTS):
         '''
         Deduce and return [element in (A intersect B ...)] = [(element in A) and (element in B) ...]
         where self = (A intersect B ...).
         '''
-        from ._axioms_ import intersectionDef
+        from ._axioms_ import intersection_def
         element = self.element
         operands = self.domain.operands
-        return intersectionDef.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
-    
+        return intersection_def.instantiate(
+            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
+
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From [element in (A intersection B ...)], derive and return [(element in A) and (element in B) ...],
-        where self represents (A intersection B ...). 
+        where self represents (A intersection B ...).
         '''
-        from ._theorems_ import membershipUnfolding
+        from ._theorems_ import membership_unfolding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
-        return membershipUnfolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return membership_unfolding.instantiate(
+            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         From [element in A], [element in B] ..., derive and return [element in (A intersection B ...)],
-        where self represents (A intersection B ...). 
+        where self represents (A intersection B ...).
         '''
-        from ._theorems_ import membershipFolding
+        from ._theorems_ import membership_folding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
-        return membershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
-                        
+        return membership_folding.instantiate(
+            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
+
+
 class IntersectNonmembership(Nonmembership):
     '''
-    Defines methods that apply to non-membership in an intersection of sets. 
+    Defines methods that apply to non-membership in an intersection of sets.
     '''
-    
+
     def __init__(self, element, domain):
         Nonmembership.__init__(self, element)
         self.domain = domain
-    
-    def sideEffects(self, judgment):
+
+    def side_effects(self, judgment):
         '''
         Currently non side-effects for intersection nonmembership.
         '''
@@ -71,19 +76,21 @@ class IntersectNonmembership(Nonmembership):
         Deduce and return [element not in (A intersect B ...)] = [(element not in A) or (element not in B) ...]
         where self = (A intersect B ...).
         '''
-        from ._theorems_ import nonmembershipEquiv
+        from ._theorems_ import nonmembership_equiv
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipEquiv.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return nonmembership_equiv.instantiate(
+            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         From either [element not in A] or [element not in B] ..., derive and return [element not in (A intersection B ...)],
-        where self represents (A intersection B ...). 
+        where self represents (A intersection B ...).
         '''
-        from ._theorems_ import nonmembershipFolding
+        from ._theorems_ import nonmembership_folding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
-        return nonmembershipFolding.instantiate({m:num(len(operands)), x:element, A:operands}, assumptions=assumptions)
+        return nonmembership_folding.instantiate(
+            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)

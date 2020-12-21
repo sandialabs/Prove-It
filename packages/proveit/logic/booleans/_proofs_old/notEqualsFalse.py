@@ -1,12 +1,12 @@
-from proveit.basiclogic.booleans.theorems import trueNotFalse
-from proveit.basiclogic import FALSE, Implies, deriveStmtEqTrue, NotEquals
+from proveit.basiclogic.booleans.theorems import true_not_false
+from proveit.basiclogic import FALSE, Implies, derive_stmt_eq_true, NotEquals
 from proveit.common import A, X
 
 # A=TRUE assuming A
-AeqT = deriveStmtEqTrue(A)
+AeqT = derive_stmt_eq_true(A)
 # TRUE != FALSE
-trueNotFalse
+true_not_false
 # (A != FALSE) assuming A
-AnotF = AeqT.subLeftSideInto(NotEquals(X, FALSE), X).proven({A})
+Anot_f = AeqT.sub_left_side_into(NotEquals(X, FALSE), X).proven({A})
 # forall_{A} A => (A != FALSE)
-Implies(A, AnotF).generalize(A).qed(__file__)
+Implies(A, Anot_f).generalize(A).qed(__file__)

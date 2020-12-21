@@ -1,7 +1,7 @@
 from .reals import RealSet, RealPosSet, RealNegSet
 from .irrational import IrrationalLiteral
 
-Real = RealSet()   
+Real = RealSet()
 RealPos = RealPosSet()
 RealNeg = RealNegSet()
 

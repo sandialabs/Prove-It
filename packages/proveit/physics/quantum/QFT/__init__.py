@@ -1,1 +1,1 @@
-from .fourierTransformOps import InverseFourierTransform
+from .fourier_transform_ops import InverseFourierTransform

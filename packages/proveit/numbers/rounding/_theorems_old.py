@@ -2,26 +2,26 @@ from proveit.logic import Forall, InSet
 from proveit.numbers import Integer, Natural, NaturalPos, Real, RealPos
 from proveit.numbers import Round, Ceil, Floor
 from proveit.common import a
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
+begin_theorems(locals())
 
-roundRealClosure = Forall(a, InSet(Round(a), Integer), domain=Real)
-roundRealClosure
+round_real_closure = Forall(a, InSet(Round(a), Integer), domain=Real)
+round_real_closure
 
-roundRealPosClosure = Forall(a, InSet(Round(a), Natural), domain=RealPos)
-roundRealPosClosure
+round_real_pos_closure = Forall(a, InSet(Round(a), Natural), domain=RealPos)
+round_real_pos_closure
 
-ceilRealClosure = Forall(a, InSet(Ceil(a), Integer), domain=Real)
-ceilRealClosure
+ceil_real_closure = Forall(a, InSet(Ceil(a), Integer), domain=Real)
+ceil_real_closure
 
-ceilRealPosClosure = Forall(a, InSet(Ceil(a), NaturalPos), domain=RealPos)
-ceilRealPosClosure
+ceil_real_pos_closure = Forall(a, InSet(Ceil(a), NaturalPos), domain=RealPos)
+ceil_real_pos_closure
 
-floorRealClosure = Forall(a, InSet(Floor(a), Integer), domain=Real)
-floorRealClosure
+floor_real_closure = Forall(a, InSet(Floor(a), Integer), domain=Real)
+floor_real_closure
 
-floorRealPosClosure = Forall(a, InSet(Floor(a), Natural), domain=RealPos)
-floorRealPosClosure
+floor_real_pos_closure = Forall(a, InSet(Floor(a), Natural), domain=RealPos)
+floor_real_pos_closure
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

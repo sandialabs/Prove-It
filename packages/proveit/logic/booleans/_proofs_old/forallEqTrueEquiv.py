@@ -1,18 +1,27 @@
-from proveit.basiclogic import Forall, Iff, Equals, TRUE, deriveStmtEqTrue
-from proveit.common import P, S, xEtc, PxEtc, Qetc, etc_QxEtc
+from proveit.basiclogic import Forall, Iff, Equals, TRUE, derive_stmt_eq_true
+from proveit.common import P, S, x_etc, Px_etc, Qetc, etc_Qx_etc
 
-# forallPx = [forall_{..x.. in S | ..Q(..x..)..} P(..x..)]
-forallPx = Forall(xEtc, PxEtc, S, etc_QxEtc)
-# forallPxEqT = [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
-forallPxEqT = Forall(xEtc, Equals(PxEtc, TRUE), S, etc_QxEtc)
-# forallPxEqT assuming forallPx
-deriveStmtEqTrue(forallPx.instantiate()).generalize(xEtc, S, etc_QxEtc).proven({forallPx})
-# forallPx assuming forallPxEqT
-forallPxEqT.instantiate().deriveViaBooleanEquality().generalize(xEtc, S, etc_QxEtc).proven({forallPxEqT})
+# forall_px = [forall_{..x.. in S | ..Q(..x..)..} P(..x..)]
+forall_px = Forall(x_etc, Px_etc, S, etc_Qx_etc)
+# forall_px_eq_t = [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
+forall_px_eq_t = Forall(x_etc, Equals(Px_etc, TRUE), S, etc_Qx_etc)
+# forall_px_eq_t assuming forall_px
+derive_stmt_eq_true(
+    forall_px.instantiate()).generalize(
+        x_etc,
+        S,
+        etc_Qx_etc).proven(
+            {forall_px})
+# forall_px assuming forall_px_eq_t
+forall_px_eq_t.instantiate().derive_via_boolean_equality().generalize(
+    x_etc, S, etc_Qx_etc).proven({forall_px_eq_t})
 # [forall_{..x.. in S | ..Q(..x..)..} P(..x..)] <=> [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
-iffForalls = Iff(forallPx, forallPxEqT).concludeViaComposition().proven()
-# forallPx in BOOLEANS, forallPxEqT in BOOLEANS
-for expr in (forallPx, forallPxEqT):
-    expr.deduceInBool()
-# forall_{P, ..Q.., S} [forall_{..x.. in S | ..Q(..x..)..} P(..x..)] = [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
-iffForalls.deriveEquality().generalize((P, Qetc, S)).qed(__file__)
+iff_foralls = Iff(
+    forall_px,
+    forall_px_eq_t).conclude_via_composition().proven()
+# forall_px in BOOLEANS, forall_px_eq_t in BOOLEANS
+for expr in (forall_px, forall_px_eq_t):
+    expr.deduce_in_bool()
+# forall_{P, ..Q.., S} [forall_{..x.. in S | ..Q(..x..)..} P(..x..)] =
+# [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
+iff_foralls.derive_equality().generalize((P, Qetc, S)).qed(__file__)

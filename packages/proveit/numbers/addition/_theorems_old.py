@@ -1,78 +1,83 @@
 from proveit.logic import Forall, InSet, Equals
 from proveit.numbers import Integer, Natural, NaturalPos, Real, RealPos, RealNeg, Complex
 from proveit.numbers import Add, GreaterThan, LessThan
-from proveit.common import a, b, x, aEtc, cEtc, xEtc, yEtc, zEtc, vEtc, wEtc
+from proveit.common import a, b, x, a_etc, c_etc, x_etc, y_etc, z_etc, v_etc, w_etc
 from proveit.numbers.common import zero
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
+begin_theorems(locals())
 
-addIntClosure = Forall([xEtc], InSet(Add(xEtc),Integer), domain = Integer)
-addIntClosure
+add_int_closure = Forall([x_etc], InSet(Add(x_etc), Integer), domain=Integer)
+add_int_closure
 
-addNatClosure = Forall((a, b), InSet(Add(a, b), Natural), domain=Natural)
-addNatClosure
+add_nat_closure = Forall((a, b), InSet(Add(a, b), Natural), domain=Natural)
+add_nat_closure
 
-addRealClosure = Forall([xEtc], InSet(Add(xEtc),Real), domain=Real)
-addRealClosure
+add_real_closure = Forall([x_etc], InSet(Add(x_etc), Real), domain=Real)
+add_real_closure
 
-addComplexClosure = Forall([xEtc], InSet(Add(xEtc),Complex), domain = Complex)
-addComplexClosure
+add_complex_closure = Forall(
+    [x_etc],
+    InSet(
+        Add(x_etc),
+        Complex),
+    domain=Complex)
+add_complex_closure
 
-addNatPosClosure = Forall((aEtc, b, cEtc), InSet(Add(aEtc, b, cEtc), NaturalPos), domain=Natural, conditions=[GreaterThan(b, zero)])
-addNatPosClosure
+add_nat_pos_closure = Forall((a_etc, b, c_etc), InSet(Add(
+    a_etc, b, c_etc), NaturalPos), domain=Natural, conditions=[GreaterThan(b, zero)])
+add_nat_pos_closure
 
-addZero = Forall(x, Equals(Add(zero, x), x), domain=Complex)
-addZero
+add_zero = Forall(x, Equals(Add(zero, x), x), domain=Complex)
+add_zero
 
-addComm = Forall([vEtc,wEtc,xEtc,yEtc,zEtc],
-                 Equals(
-                        Add(vEtc,wEtc,xEtc,yEtc,zEtc),
-                        Add(vEtc,yEtc,xEtc,wEtc,zEtc)
-                        ),
-                 domain = Complex
-                 )
-addComm
-
-addAssoc = Forall([xEtc,yEtc,zEtc],
+add_comm = Forall([v_etc, w_etc, x_etc, y_etc, z_etc],
                   Equals(
-                        Add(
-                                xEtc,yEtc,zEtc),
-                        Add(
-                                xEtc,Add(yEtc),zEtc)
-                        ),
-                  )
-addAssoc
+    Add(v_etc, w_etc, x_etc, y_etc, z_etc),
+    Add(v_etc, y_etc, x_etc, w_etc, z_etc)
+),
+    domain=Complex
+)
+add_comm
 
-addAssocRev = Forall([xEtc,yEtc,zEtc],
-                  Equals(
-                        Add(
-                                xEtc,Add(yEtc),zEtc),
-                        Add(
-                                xEtc,yEtc,zEtc)
-                        )
-                  )
-addAssocRev
+add_assoc = Forall([x_etc, y_etc, z_etc],
+                   Equals(
+    Add(
+        x_etc, y_etc, z_etc),
+    Add(
+        x_etc, Add(y_etc), z_etc)
+),
+)
+add_assoc
 
-# One issue with this is that it only applies when |aEtc|+|bEtc| > 0.  This isn't an issue
+add_assoc_rev = Forall([x_etc, y_etc, z_etc],
+                       Equals(
+    Add(
+        x_etc, Add(y_etc), z_etc),
+    Add(
+        x_etc, y_etc, z_etc)
+)
+)
+add_assoc_rev
+
+# One issue with this is that it only applies when |a_etc|+|b_etc| > 0.  This isn't an issue
 # for applying the theorem because there will be an error if b is left alone with Add, but
-# it will be an issue when deriving this.  Probably need to include |aEtc|+|bEtc| > 0 as a condition.
-strictlyIncreasingAdditions = Forall((aEtc, cEtc), Forall(b, GreaterThan(Add(aEtc, b, cEtc), b),
-                                                          domain=Real),
-                                     domain=RealPos)
-strictlyIncreasingAdditions
+# it will be an issue when deriving this.  Probably need to include
+# |a_etc|+|b_etc| > 0 as a condition.
+strictly_increasing_additions = Forall((a_etc, c_etc), Forall(
+    b, GreaterThan(Add(a_etc, b, c_etc), b), domain=Real), domain=RealPos)
+strictly_increasing_additions
 
 
 # In[80]:
 
-# One issue with this is that it only applies when |aEtc|+|bEtc| > 0.  This isn't an issue
+# One issue with this is that it only applies when |a_etc|+|b_etc| > 0.  This isn't an issue
 # for applying the theorem because there will be an error if b is left alone with Add, but
-# it will be an issue when deriving this.  Probably need to include |aEtc|+|bEtc| > 0 as a condition.
-strictlyDecreasingAdditions = Forall((aEtc, cEtc), Forall(b, LessThan(Add(aEtc, b, cEtc), b),
-                                                          domain=Real),
-                                     domain=RealNeg)
-strictlyDecreasingAdditions
+# it will be an issue when deriving this.  Probably need to include
+# |a_etc|+|b_etc| > 0 as a condition.
+strictly_decreasing_additions = Forall((a_etc, c_etc), Forall(
+    b, LessThan(Add(a_etc, b, c_etc), b), domain=Real), domain=RealNeg)
+strictly_decreasing_additions
 
 
-
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

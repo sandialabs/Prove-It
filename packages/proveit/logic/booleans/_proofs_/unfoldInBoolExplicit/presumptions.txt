@@ -1,6 +1,0 @@
-# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.equality.subRightSideInto
-proveit.logic.sets.enumeration.unfold
-proveit.numbers.numerals.decimals.nat2
-proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
-# THEOREMS AND THEORIES TO EXCLUDE:

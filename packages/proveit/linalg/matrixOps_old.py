@@ -1,9 +1,10 @@
 from proveit.expression import Literal, STRING, LATEX
 from proveit.basiclogic import Equation
-from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation
+from proveit.basiclogic.generic_ops import AssociativeOperation, BinaryOperation
 from proveit.common import x, alpha, beta
 
 pkg = __package__
+
 
 class MatrixProd(AssociativeOperation):
     def __init__(self, *operands):
@@ -11,17 +12,35 @@ class MatrixProd(AssociativeOperation):
         Matrix dot product of any number of operands.
         '''
         AssociativeOperation.__init__(self, MATRIX_PROD, *operands)
-    
-    def formatted(self, formatType, fence=False, subFence=True):
+
+    def formatted(self, format_type, fence=False, sub_fence=True):
         # Temporary hack to get quantum bra and ket products to display properly.
         # This should eventually be done differently because we shouldn't need to
         # know anything about the quantum application here.
         from proveit.physics.quantum import Bra, Ket, RegisterBra, RegisterKet
-        if len(self.operands) == 2 and (isinstance(self.operands[0], Bra) or isinstance(self.operands[0], RegisterBra)) and (isinstance(self.operands[1], Ket) or isinstance(self.operands[1], RegisterKet)):
-            return self.operands[0].formatted(formatType) + self.operands[1].formatted(formatType, no_lvert=True)
-        return AssociativeOperation.formatted(self, formatType, fence, subFence)
+        if len(
+            self.operands) == 2 and (
+            isinstance(
+                self.operands[0],
+                Bra) or isinstance(
+                self.operands[0],
+                RegisterBra)) and (
+                    isinstance(
+                        self.operands[1],
+                        Ket) or isinstance(
+                            self.operands[1],
+                        RegisterKet)):
+            return self.operands[0].formatted(
+                format_type) + self.operands[1].formatted(format_type, no_lvert=True)
+        return AssociativeOperation.formatted(
+            self, format_type, fence, sub_fence)
 
-MATRIX_PROD = Literal(pkg, 'MATRIX_PROD', {STRING: r'.', LATEX: r' '}, operationMaker = lambda operands : MatrixProd(*operands))
+
+MATRIX_PROD = Literal(
+    pkg, 'MATRIX_PROD', {
+        STRING: r'.', LATEX: r' '}, operation_maker=lambda operands: MatrixProd(
+            *operands))
+
 
 class ScalarProd(BinaryOperation):
     def __init__(self, *operands):
@@ -32,29 +51,31 @@ class ScalarProd(BinaryOperation):
         self.scalar = operands[0]
         self.scaled = operands[1]
 
-    def doReducedSimplification(self):
+    def do_reduced_simplification(self):
         '''
         For the trivial case a nested scalar product, derive and return this scalar product
         expression equated with a simplified form.
         '''
-        from theorems import doublyScaledAsSinglyScaled
+        from theorems import doubly_scaled_as_singly_scaled
         if isinstance(self.scaled, ScalarProd):
             eq = Equation()
             expr = self
             '''
             try:
                 # try to simplify it more with recursion
-                innerSimpl = self.scaled.simplication()
-                dummyVar = self.safeDummyVar()
-                eq.update(innerSimpl.substitution(ScalarProd(self.scalar, dummyVar), dummyVar))
-                expr = eq.eqExpr.rhs
+                inner_simpl = self.scaled.simplication()
+                dummy_var = self.safe_dummy_var()
+                eq.update(inner_simpl.substitution(ScalarProd(self.scalar, dummy_var), dummy_var))
+                expr = eq.eq_expr.rhs
             except:
                 pass
             '''
-            eq.update(doublyScaledAsSinglyScaled.instantiate({x:expr.scaled.scaled}).instantiate({alpha:expr.scalar, beta:expr.scaled.scalar}))
-            return eq.eqExpr
+            eq.update(doubly_scaled_as_singly_scaled.instantiate(
+                {x: expr.scaled.scaled}).instantiate({alpha: expr.scalar, beta: expr.scaled.scalar}))
+            return eq.eq_expr
         else:
-            raise ValueError('Only trivial simplification is implemented (nested scalar products)')
+            raise ValueError(
+                'Only trivial simplification is implemented (nested scalar products)')
 
     def factor(self, scalar):
         '''
@@ -62,12 +83,22 @@ class ScalarProd(BinaryOperation):
         '''
         eq = Equation()
         # pull the factor from the "scaled" quantity
-        scaledFactoring = self.scaled.factor(scalar)
-        dummyVar = self.safeDummyVar()
-        eq.update(scaledFactoring.substitution(ScalarProd(self.scalar, dummyVar), dummyVar))
+        scaled_factoring = self.scaled.factor(scalar)
+        dummy_var = self.safe_dummy_var()
+        eq.update(
+            scaled_factoring.substitution(
+                ScalarProd(
+                    self.scalar,
+                    dummy_var),
+                dummy_var))
         # simplify the nested ScaledProd
-        expr = eq.eqExpr.rhs
+        expr = eq.eq_expr.rhs
         eq.update(expr.simplification())
-        return eq.eqExpr
+        return eq.eq_expr
 
-SCALAR_PROD = Literal(pkg, 'SCALAR_PROD', {STRING: r'*', LATEX: r' '}, operationMaker = lambda operands : ScalarProd(*operands))
+
+SCALAR_PROD = Literal(pkg,
+                      'SCALAR_PROD',
+                      {STRING: r'*',
+                       LATEX: r' '},
+                      operation_maker=lambda operands: ScalarProd(*operands))

@@ -2,108 +2,165 @@ from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals, Iff, And, SetOfAll
 from proveit.numbers import Integer, Interval, Real, RealPos, Complex
 from proveit.numbers import Abs, Mod, ModAbs, GreaterThanEquals, LessThanEquals, Add, Sub, Neg, Mult, frac, IntervalCO
-from proveit.common import a, b, c, x, y, N, xEtc, xMulti
+from proveit.common import a, b, c, x, y, N, x_etc, x_multi
 from proveit.numbers.common import zero, one
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
-
-# transferred by wdc 3/11/2020
-modIntClosure = Forall((a, b), InSet(Mod(a, b), Integer), domain=Integer)
-modIntClosure
+begin_theorems(locals())
 
 # transferred by wdc 3/11/2020
-modInInterval = Forall((a, b), InSet(Mod(a, b), Interval(zero, Sub(b, one))), domain=Integer)
-modInInterval
+mod_int_closure = Forall((a, b), InSet(Mod(a, b), Integer), domain=Integer)
+mod_int_closure
 
 # transferred by wdc 3/11/2020
-modRealClosure = Forall((a, b), InSet(Mod(a, b), Real), domain=Real)
-modRealClosure
+mod_in_interval = Forall((a, b), InSet(
+    Mod(a, b), Interval(zero, Sub(b, one))), domain=Integer)
+mod_in_interval
 
 # transferred by wdc 3/11/2020
-modAbsRealClosure = Forall((a, b), InSet(ModAbs(a, b), Real), domain=Real)
-modAbsRealClosure
+mod_real_closure = Forall((a, b), InSet(Mod(a, b), Real), domain=Real)
+mod_real_closure
 
 # transferred by wdc 3/11/2020
-absComplexClosure = Forall([a], InSet(Abs(a), Real), domain=Complex)
-absComplexClosure
+mod_abs_real_closure = Forall((a, b), InSet(ModAbs(a, b), Real), domain=Real)
+mod_abs_real_closure
 
 # transferred by wdc 3/11/2020
-absNonzeroClosure = Forall([a], InSet(Abs(a), RealPos), domain=Complex, conditions=[NotEquals(a, zero)])
-absNonzeroClosure
+abs_complex_closure = Forall([a], InSet(Abs(a), Real), domain=Complex)
+abs_complex_closure
 
 # transferred by wdc 3/11/2020
-modInIntervalCO = Forall((a, b), InSet(Mod(a, b), IntervalCO(zero, b)), domain=Real)
-modInIntervalCO
+abs_nonzero_closure = Forall(
+    [a],
+    InSet(
+        Abs(a),
+        RealPos),
+    domain=Complex,
+    conditions=[
+        NotEquals(
+            a,
+            zero)])
+abs_nonzero_closure
 
 # transferred by wdc 3/11/2020
-absIsNonNeg = Forall(a, GreaterThanEquals(Abs(a), zero), domain=Complex)
-absIsNonNeg
+mod_in_interval_c_o = Forall((a, b), InSet(
+    Mod(a, b), IntervalCO(zero, b)), domain=Real)
+mod_in_interval_c_o
 
 # transferred by wdc 3/11/2020
-absNotEqZero = Forall([a], NotEquals(Abs(a), zero), domain=Complex, conditions=[NotEquals(a, zero)])
-absNotEqZero
+abs_is_non_neg = Forall(a, GreaterThanEquals(Abs(a), zero), domain=Complex)
+abs_is_non_neg
 
 # transferred by wdc 3/11/2020
-absElim = Forall(x, Equals(Abs(x), x),
-                domain = RealPos)
-absElim
+abs_not_eq_zero = Forall(
+    [a],
+    NotEquals(
+        Abs(a),
+        zero),
+    domain=Complex,
+    conditions=[
+        NotEquals(
+            a,
+            zero)])
+abs_not_eq_zero
 
 # transferred by wdc 3/11/2020
-absIneq = Forall((x, y), Iff(LessThanEquals(Abs(x), y), 
-                             And(LessThanEquals(Neg(y), x), LessThanEquals(x, y))),
-                 domain = Real, conditions=[GreaterThanEquals(y, zero)])
-absIneq
+abs_elim = Forall(x, Equals(Abs(x), x),
+                  domain=RealPos)
+abs_elim
 
 # transferred by wdc 3/11/2020
-triangleInequality = Forall([a,b],
-                        LessThanEquals(Abs(Add(a,b)),Add(Abs(a),Abs(b))),
-                        domain=Complex)
-triangleInequality
+abs_ineq = Forall(
+    (x, y), Iff(
+        LessThanEquals(
+            Abs(x), y), And(
+                LessThanEquals(
+                    Neg(y), x), LessThanEquals(
+                        x, y))), domain=Real, conditions=[
+                            GreaterThanEquals(
+                                y, zero)])
+abs_ineq
 
 # transferred by wdc 3/11/2020
-absProd = Forall(xEtc,
-                 Equals(Abs(Mult(xEtc)),
-                        Mult(Etcetera(Abs(xMulti)))),
-                 domain = Complex)
-absProd
+triangle_inequality = Forall([a, b], LessThanEquals(
+    Abs(Add(a, b)), Add(Abs(a), Abs(b))), domain=Complex)
+triangle_inequality
 
 # transferred by wdc 3/11/2020
-absFrac = Forall([a,b],
-                 Equals(Abs(frac(a,b)),frac(Abs(a),Abs(b))),
-                 domain = Complex)
-absFrac
+abs_prod = Forall(x_etc,
+                  Equals(Abs(Mult(x_etc)),
+                         Mult(Etcetera(Abs(x_multi)))),
+                  domain=Complex)
+abs_prod
 
 # transferred by wdc 3/11/2020
-modAbsScaled = Forall((a, b, c), Equals(Mult(a, ModAbs(b, c)), ModAbs(Mult(a, b), Mult(a, c))), domain=Real)
-modAbsScaled
+abs_frac = Forall([a, b],
+                  Equals(Abs(frac(a, b)), frac(Abs(a), Abs(b))),
+                  domain=Complex)
+abs_frac
 
 # transferred by wdc 3/11/2020
-modAbsSubtractCancel = Forall((a, b, c), LessThanEquals(ModAbs(Sub(Mod(Add(b, a), c), b), c), 
-                                                        Abs(a)),
-                              domain=Real)
-modAbsSubtractCancel
+mod_abs_scaled = Forall(
+    (a, b, c), Equals(
+        Mult(
+            a, ModAbs(
+                b, c)), ModAbs(
+                    Mult(
+                        a, b), Mult(
+                            a, c))), domain=Real)
+mod_abs_scaled
 
 # transferred by wdc 3/11/2020
-fullModularRangeEquiv = Forall((N, a, b), 
-                               Equals(SetOfAll(x, Mod(x, N), domain=Interval(a, b)), 
-                                      Interval(zero, Sub(N, one))),
-                               domain=Integer, conditions=[Equals(Sub(b, a), Sub(N, one))])
-fullModularRangeEquiv
+mod_abs_subtract_cancel = Forall((a, b, c), LessThanEquals(
+    ModAbs(Sub(Mod(Add(b, a), c), b), c), Abs(a)), domain=Real)
+mod_abs_subtract_cancel
 
 # transferred by wdc 3/11/2020
-fullModularRangeEquivLeftShift = Forall((N, a, b, c), 
-                               Equals(SetOfAll(x, Mod(Add(c, x), N), domain=Interval(a, b)), 
-                                      Interval(zero, Sub(N, one))),
-                               domain=Integer, conditions=[Equals(Sub(b, a), Sub(N, one))])
-fullModularRangeEquivLeftShift
+full_modular_range_equiv = Forall(
+    (N, a, b), Equals(
+        SetOfAll(
+            x, Mod(
+                x, N), domain=Interval(
+                    a, b)), Interval(
+                        zero, Sub(
+                            N, one))), domain=Integer, conditions=[
+                                Equals(
+                                    Sub(
+                                        b, a), Sub(
+                                            N, one))])
+full_modular_range_equiv
 
 # transferred by wdc 3/11/2020
-fullModularRangeEquivRightShift = Forall((N, a, b, c), 
-                               Equals(SetOfAll(x, Mod(Add(x, c), N), domain=Interval(a, b)), 
-                                      Interval(zero, Sub(N, one))),
-                               domain=Integer, conditions=[Equals(Sub(b, a), Sub(N, one))])
-fullModularRangeEquivRightShift
+full_modular_range_equiv_left_shift = Forall(
+    (N, a, b, c), Equals(
+        SetOfAll(
+            x, Mod(
+                Add(
+                    c, x), N), domain=Interval(
+                        a, b)), Interval(
+                            zero, Sub(
+                                N, one))), domain=Integer, conditions=[
+                                    Equals(
+                                        Sub(
+                                            b, a), Sub(
+                                                N, one))])
+full_modular_range_equiv_left_shift
+
+# transferred by wdc 3/11/2020
+full_modular_range_equiv_right_shift = Forall(
+    (N, a, b, c), Equals(
+        SetOfAll(
+            x, Mod(
+                Add(
+                    x, c), N), domain=Interval(
+                        a, b)), Interval(
+                            zero, Sub(
+                                N, one))), domain=Integer, conditions=[
+                                    Equals(
+                                        Sub(
+                                            b, a), Sub(
+                                                N, one))])
+full_modular_range_equiv_right_shift
 
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

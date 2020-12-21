@@ -1,6 +1,0 @@
-# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.equality.equalsReversal
-proveit.logic.equality.lhsViaEquality
-proveit.logic.equality.subLeftSideInto
-proveit.logic.sets.membership.unfoldNotInSet
-# THEOREMS AND THEORIES TO EXCLUDE:

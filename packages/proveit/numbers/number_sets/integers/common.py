@@ -18,5 +18,4 @@ seven = DigitLiteral(7)
 eight = DigitLiteral(8)
 nine = DigitLiteral(9)
 
-infinity = Literal('infinity',r'\infty', __file__)
-
+infinity = Literal('infinity', r'\infty', __file__)

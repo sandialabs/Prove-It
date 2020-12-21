@@ -3,32 +3,35 @@ from proveit.logic import IrreducibleValue, Equals
 
 
 class IrrationalLiteral(IrreducibleValue, Literal):
-    _inRealPosStmts = None # initializes when needed
-    _notZeroStmts = None # initializes when needed
-    _positiveStmts = None # initializes when needed
-    
-    def __init__(self, stringFormat, latexFormat = None):
-        Literal.__init__(self, stringFormat, latexFormat, theory=__file__)
+    _in_real_posStmts = None  # initializes when needed
+    _notZeroStmts = None  # initializes when needed
+    _positiveStmts = None  # initializes when needed
 
-    def evalEquality(self, other, assumptions=USE_DEFAULTS):
-        if other==self:
+    def __init__(self, string_format, latex_format=None):
+        Literal.__init__(self, string_format, latex_format, theory=__file__)
+
+    def eval_equality(self, other, assumptions=USE_DEFAULTS):
+        if other == self:
             return Equals(self, self).prove()
-        pass # need axioms/theorems to prove inequality amongst different numerals
-        
-    def deduceInRealPos(self):
-        if IrrationalLiteral._inRealPosStmts is None:
-            from real.theorems import eInRealPos, piInRealPos
-            IrrationalLiteral._inRealPosStmts = {'e':eInRealPos, 'pi':piInRealPos}
-        return IrrationalLiteral._inRealPosStmts[self.name]
+        pass  # need axioms/theorems to prove inequality amongst different numerals
 
-    def deduceNotZero(self):
+    def deduce_in_real_pos(self):
+        if IrrationalLiteral._in_real_posStmts is None:
+            from real.theorems import e_in_real_pos, pi_in_real_pos
+            IrrationalLiteral._in_real_posStmts = {
+                'e': e_in_real_pos, 'pi': pi_in_real_pos}
+        return IrrationalLiteral._in_real_posStmts[self.name]
+
+    def deduce_not_zero(self):
         if IrrationalLiteral._notZeroStmts is None:
-            from real.theorems import eNotZero, piNotZero
-            IrrationalLiteral._notZeroStmts = {'e':eNotZero, 'pi':piNotZero}
+            from real.theorems import e_not_zero, pi_not_zero
+            IrrationalLiteral._notZeroStmts = {
+                'e': e_not_zero, 'pi': pi_not_zero}
         return IrrationalLiteral._notZeroStmts[self.name]
-    
-    def deducePositive(self):
+
+    def deduce_positive(self):
         if IrrationalLiteral._positiveStmts is None:
-            from real.theorems import eIsPositive, piIsPositive
-            IrrationalLiteral._positiveStmts = {'e':eIsPositive, 'pi':piIsPositive}
+            from real.theorems import e_is_positive, pi_is_positive
+            IrrationalLiteral._positiveStmts = {
+                'e': e_is_positive, 'pi': pi_is_positive}
         return IrrationalLiteral._positiveStmts[self.name]

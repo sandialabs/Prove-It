@@ -2,132 +2,178 @@ from proveit.logic import Forall, Or, Equals, Implies
 from proveit.numbers import Real
 from proveit.numbers import Less, LessEq, Greater, GreaterEq
 from proveit.common import x, y, z
-from proveit import beginAxioms, endAxioms
+from proveit import begin_axioms, end_axioms
 
-beginAxioms(locals())
+begin_axioms(locals())
 
-lessThanEqualsDef = Forall([x, y], Or(Less(x, y), Equals(x, y)), domain=Real, conditions=LessEq(x, y))
-lessThanEqualsDef
+less_than_equals_def = Forall([x, y], Or(
+    Less(x, y), Equals(x, y)), domain=Real, conditions=LessEq(x, y))
+less_than_equals_def
 
-greaterThanEqualsDef = Forall([x, y], Or(Greater(x, y), Equals(x, y)), domain=Real, conditions=GreaterEq(x, y))
-greaterThanEqualsDef
+greater_than_equals_def = Forall([x, y], Or(
+    Greater(x, y), Equals(x, y)), domain=Real, conditions=GreaterEq(x, y))
+greater_than_equals_def
 
-reverseGreaterThanEquals = Forall((x, y), Implies(GreaterEq(x, y), LessEq(y, x)))
-reverseGreaterThanEquals
+reverse_greater_than_equals = Forall(
+    (x, y), Implies(
+        GreaterEq(
+            x, y), LessEq(
+                y, x)))
+reverse_greater_than_equals
 
-reverseLessThanEquals = Forall((x, y), Implies(LessEq(x, y), GreaterEq(y, x)))
-reverseLessThanEquals
+reverse_less_than_equals = Forall(
+    (x, y), Implies(
+        LessEq(
+            x, y), GreaterEq(
+                y, x)))
+reverse_less_than_equals
 
-reverseGreaterThan = Forall((x, y), Implies(Greater(x, y), Less(y, x)))
-reverseGreaterThan
+reverse_greater_than = Forall((x, y), Implies(Greater(x, y), Less(y, x)))
+reverse_greater_than
 
-reverseLessThan = Forall((x, y), Implies(Less(x, y), Greater(y, x)))
-reverseLessThan
+reverse_less_than = Forall((x, y), Implies(Less(x, y), Greater(y, x)))
+reverse_less_than
 
-greaterThanEqualsDef = Forall((x,y), Implies(GreaterEq(x,y), Or(Greater(x,y),Equals(x,y))))
-greaterThanEqualsDef
+greater_than_equals_def = Forall(
+    (x, y), Implies(
+        GreaterEq(
+            x, y), Or(
+                Greater(
+                    x, y), Equals(
+                        x, y))))
+greater_than_equals_def
 
-lessThanEqualsDef = Forall((x,y), Implies(LessEq(x,y), Or(Less(x,y),Equals(x,y))))
-lessThanEqualsDef
+less_than_equals_def = Forall(
+    (x, y), Implies(
+        LessEq(
+            x, y), Or(
+                Less(
+                    x, y), Equals(
+                        x, y))))
+less_than_equals_def
 
-lessThanTransLessThanRight = Forall((x,y,z),
-                               Implies(Less(x,y),
-                                      Implies(Less(y,z),
-                                             Less(x,z))))
-lessThanTransLessThanRight
+less_than_trans_less_than_right = Forall((x, y, z),
+                                         Implies(Less(x, y),
+                                                 Implies(Less(y, z),
+                                                         Less(x, z))))
+less_than_trans_less_than_right
 
-lessThanTransLessThanEqualsRight = Forall((x,y,z),
-                               Implies(Less(x,y),
-                                      Implies(LessEq(y,z),
-                                             Less(x,z))))
-lessThanTransLessThanEqualsRight
+less_than_trans_less_than_equals_right = Forall((x, y, z),
+                                                Implies(Less(x, y),
+                                                        Implies(LessEq(y, z),
+                                                                Less(x, z))))
+less_than_trans_less_than_equals_right
 
-lessThanTransLessThanLeft = Forall((x,y,z),
-                               Implies(Less(x,y),
-                                      Implies(Less(z,x),
-                                             Less(z,y))))
-lessThanTransLessThanLeft
+less_than_trans_less_than_left = Forall((x, y, z),
+                                        Implies(Less(x, y),
+                                                Implies(Less(z, x),
+                                                        Less(z, y))))
+less_than_trans_less_than_left
 
-lessThanTransLessThanEqualsLeft = Forall((x,y,z),
-                               Implies(Less(x,y),
-                                      Implies(LessEq(z,x),
-                                             Less(z,y))))
-lessThanTransLessThanEqualsLeft
+less_than_trans_less_than_equals_left = Forall((x, y, z),
+                                               Implies(Less(x, y),
+                                                       Implies(LessEq(z, x),
+                                                               Less(z, y))))
+less_than_trans_less_than_equals_left
 
-lessThanEqualsTransLessThanRight = Forall((x,y,z),
-                               Implies(LessEq(x,y),
-                                      Implies(Less(y,z),
-                                             Less(x,z))))
-lessThanEqualsTransLessThanRight
+less_than_equals_trans_less_than_right = Forall((x, y, z),
+                                                Implies(LessEq(x, y),
+                                                        Implies(Less(y, z),
+                                                                Less(x, z))))
+less_than_equals_trans_less_than_right
 
-lessThanEqualsTransLessThanEqualsRight = Forall((x,y,z),
-                               Implies(LessEq(x,y),
-                                      Implies(LessEq(y,z),
-                                             LessEq(x,z))))
-lessThanEqualsTransLessThanEqualsRight
+less_than_equals_trans_less_than_equals_right = Forall(
+    (x, y, z), Implies(
+        LessEq(
+            x, y), Implies(
+                LessEq(
+                    y, z), LessEq(
+                        x, z))))
+less_than_equals_trans_less_than_equals_right
 
-lessThanEqualsTransLessThanLeft = Forall((x,y,z),
-                               Implies(LessEq(x,y),
-                                      Implies(Less(z,x),
-                                             Less(z,y))))
-lessThanEqualsTransLessThanLeft
+less_than_equals_trans_less_than_left = Forall((x, y, z),
+                                               Implies(LessEq(x, y),
+                                                       Implies(Less(z, x),
+                                                               Less(z, y))))
+less_than_equals_trans_less_than_left
 
-lessThanEqualsTransLessThanEqualsLeft = Forall((x,y,z),
-                               Implies(LessEq(x,y),
-                                      Implies(LessEq(z,x),
-                                             LessEq(z,y))))
-lessThanEqualsTransLessThanEqualsLeft
+less_than_equals_trans_less_than_equals_left = Forall(
+    (x, y, z), Implies(
+        LessEq(
+            x, y), Implies(
+                LessEq(
+                    z, x), LessEq(
+                        z, y))))
+less_than_equals_trans_less_than_equals_left
 
-greaterThanTransGreaterThanRight = Forall((x,y,z),
-                                    Implies(Greater(x,y),
-                                           Implies(Greater(y,z),
-                                                  Greater(x,z))))
-greaterThanTransGreaterThanRight
+greater_than_trans_greater_than_right = Forall((x, y, z),
+                                               Implies(Greater(x, y),
+                                                       Implies(Greater(y, z),
+                                                               Greater(x, z))))
+greater_than_trans_greater_than_right
 
-greaterThanTransGreaterThanEqualsRight = Forall((x,y,z),
-                                    Implies(Greater(x,y),
-                                           Implies(GreaterEq(y,z),
-                                                  Greater(x,z))))
-greaterThanTransGreaterThanEqualsRight
+greater_than_trans_greater_than_equals_right = Forall(
+    (x, y, z), Implies(
+        Greater(
+            x, y), Implies(
+                GreaterEq(
+                    y, z), Greater(
+                        x, z))))
+greater_than_trans_greater_than_equals_right
 
-greaterThanTransGreaterThanLeft = Forall((x,y,z),
-                                    Implies(Greater(x,y),
-                                           Implies(Greater(z,x),
-                                                  Greater(z,y))))
-greaterThanTransGreaterThanLeft
+greater_than_trans_greater_than_left = Forall((x, y, z),
+                                              Implies(Greater(x, y),
+                                                      Implies(Greater(z, x),
+                                                              Greater(z, y))))
+greater_than_trans_greater_than_left
 
-greaterThanTransGreaterThanEqualsLeft = Forall((x,y,z),
-                                    Implies(Greater(x,y),
-                                           Implies(GreaterEq(z,x),
-                                                  Greater(z,y))))
-greaterThanTransGreaterThanEqualsLeft
-
-
-greaterThanEqualsTransGreaterThanRight = Forall((x,y,z),
-                                               Implies(GreaterEq(x,y),
-                                                      Implies(Greater(y,z),
-                                                             Greater(x,z))))
-greaterThanEqualsTransGreaterThanRight
-
-
-greaterThanEqualsTransGreaterThanEqualsRight = Forall((x,y,z),
-                                               Implies(GreaterEq(x,y),
-                                                      Implies(GreaterEq(y,z),
-                                                             GreaterEq(x,z))))
-greaterThanEqualsTransGreaterThanEqualsRight
-
-
-greaterThanEqualsTransGreaterThanLeft = Forall((x,y,z),
-                                               Implies(GreaterEq(x,y),
-                                                      Implies(Greater(z,x),
-                                                             Greater(z,y))))
-greaterThanEqualsTransGreaterThanLeft
-
-greaterThanEqualsTransGreaterThanEqualsLeft = Forall((x,y,z),
-                                               Implies(GreaterEq(x,y),
-                                                      Implies(GreaterEq(z,x),
-                                                             GreaterEq(z,y))))
-greaterThanEqualsTransGreaterThanEqualsLeft
+greater_than_trans_greater_than_equals_left = Forall(
+    (x, y, z), Implies(
+        Greater(
+            x, y), Implies(
+                GreaterEq(
+                    z, x), Greater(
+                        z, y))))
+greater_than_trans_greater_than_equals_left
 
 
-endAxioms(locals(), __package__)
+greater_than_equals_trans_greater_than_right = Forall(
+    (x, y, z), Implies(
+        GreaterEq(
+            x, y), Implies(
+                Greater(
+                    y, z), Greater(
+                        x, z))))
+greater_than_equals_trans_greater_than_right
+
+
+greater_than_equals_trans_greater_than_equals_right = Forall(
+    (x, y, z), Implies(
+        GreaterEq(
+            x, y), Implies(
+                GreaterEq(
+                    y, z), GreaterEq(
+                        x, z))))
+greater_than_equals_trans_greater_than_equals_right
+
+
+greater_than_equals_trans_greater_than_left = Forall(
+    (x, y, z), Implies(
+        GreaterEq(
+            x, y), Implies(
+                Greater(
+                    z, x), Greater(
+                        z, y))))
+greater_than_equals_trans_greater_than_left
+
+greater_than_equals_trans_greater_than_equals_left = Forall(
+    (x, y, z), Implies(
+        GreaterEq(
+            x, y), Implies(
+                GreaterEq(
+                    z, x), GreaterEq(
+                        z, y))))
+greater_than_equals_trans_greater_than_equals_left
+
+
+end_axioms(locals(), __package__)

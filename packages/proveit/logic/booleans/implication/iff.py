@@ -5,173 +5,195 @@ from proveit._common_ import A, B, C
 from proveit import TransitiveRelation
 
 # if and only if: A => B and B => A
+
+
 class Iff(TransitiveRelation):
     # The operator of the Iff operation
-    _operator_ = Literal(stringFormat='<=>', latexFormat=r'\Leftrightarrow', theory=__file__)
+    _operator_ = Literal(
+        string_format='<=>',
+        latex_format=r'\Leftrightarrow',
+        theory=__file__)
 
     # map left-hand-sides to Subset Judgments
-    #   (populated in TransitivityRelation.deriveSideEffects)
-    knownLeftSides = dict()    
+    #   (populated in TransitivityRelation.derive_side_effects)
+    known_left_sides = dict()
     # map right-hand-sides to Subset Judgments
-    #   (populated in TransitivityRelation.deriveSideEffects)
-    knownRightSides = dict()        
-        
+    #   (populated in TransitivityRelation.derive_side_effects)
+    known_right_sides = dict()
+
     def __init__(self, A, B):
         TransitiveRelation.__init__(self, Iff._operator_, A, B)
         self.A = A
         self.B = B
 
-    
-    def sideEffects(self, judgment):
+    def side_effects(self, judgment):
         '''
-        Yield the TransitiveRelation side-effects (which also records knownLeftSides
-        and knownRightSides).  Also derive the left and right implications,
+        Yield the TransitiveRelation side-effects (which also records known_left_sides
+        and known_right_sides).  Also derive the left and right implications,
         derive the reversed version and attempt to derive equality.
         '''
-        for sideEffect in TransitiveRelation.sideEffects(self, judgment):
-            yield sideEffect
-        yield self.deriveLeftImplication # B=>A given A<=>B
-        yield self.deriveRightImplication # A=>B given A<=>B
-        yield self.deriveReversed # B<=>A given A<=>B
-        yield self.deriveEquality # A=B given A<=>B (assuming A and B are in booleans)
-            
+        for side_effect in TransitiveRelation.side_effects(self, judgment):
+            yield side_effect
+        yield self.derive_left_implication  # B=>A given A<=>B
+        yield self.derive_right_implication  # A=>B given A<=>B
+        yield self.derive_reversed  # B<=>A given A<=>B
+        # A=B given A<=>B (assuming A and B are in booleans)
+        yield self.derive_equality
+
     def conclude(self, assumptions):
         '''
-        Try to automatically conclude this bi-directional implication by 
+        Try to automatically conclude this bi-directional implication by
         reducing its operands to true/false.
         '''
-        from ._theorems_ import  iffTT, iffTF, iffFT, iffFF, trueIffTrue, falseIffFalse
-        if self in {trueIffTrue, falseIffFalse}:
-            # should be proven via one of the imported theorems as a simple special case
+        from ._theorems_ import iff_t_t, iff_t_f, iff_f_t, iff_f_f, true_iff_true, false_iff_false
+        if self in {true_iff_true, false_iff_false}:
+            # should be proven via one of the imported theorems as a simple
+            # special case
             try:
                 self.evaluation(assumptions)
-            except:
+            except BaseException:
                 return self.prove()
         try:
             # try to prove the bi-directional implication via evaluation reduction.
-            # if that is possible, it is a relatively straightforward thing to do.
+            # if that is possible, it is a relatively straightforward thing to
+            # do.
             return Operation.conclude(assumptions)
-        except:
+        except BaseException:
             pass
         try:
             # Use a breadth-first search approach to find the shortest
             # path to get from one end-point to the other.
-            return TransitiveRelation.conclude(self, assumptions)            
-        except:
-            pass            
-            
+            return TransitiveRelation.conclude(self, assumptions)
+        except BaseException:
+            pass
+
         # the last attempt is to introduce the Iff via implications each way, an
         # essentially direct consequence of the definition.
-        return self.concludeByDefinition(assumptions)
+        return self.conclude_by_definition(assumptions)
 
-    def concludeNegation(self, assumptions=USE_DEFAULTS):
+    def conclude_negation(self, assumptions=USE_DEFAULTS):
         # implemented by Joaquin on 6/17/19
         from proveit.logic.booleans._common_ import FALSE, TRUE
         try:
             if self.A == TRUE and self.B == FALSE:
-                from ._theorems_ import trueIffFalseNegated, falseIffTrueNegated
+                from ._theorems_ import true_iff_false_negated, false_iff_true_negated
             elif self.B == TRUE and self.A == FALSE:
-                from ._theorems_ import trueIffFalseNegated, falseIffTrueNegated
-        except:
+                from ._theorems_ import true_iff_false_negated, false_iff_true_negated
+        except BaseException:
             pass
 
-    def deriveLeftImplication(self, assumptions=USE_DEFAULTS):
+    def derive_left_implication(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return B=>A.
         '''
-        from ._theorems_ import iffImpliesLeft
-        return iffImpliesLeft.instantiate({A: self.A, B: self.B}, assumptions=assumptions)
-        
-    def deriveLeft(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import iff_implies_left
+        return iff_implies_left.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)
+
+    def derive_left(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return A assuming B.
         '''
-        from ._theorems_ import leftFromIff
-        return leftFromIff.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
+        from ._theorems_ import left_from_iff
+        return left_from_iff.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)
 
-    def deriveRightImplication(self, assumptions=USE_DEFAULTS):
+    def derive_right_implication(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return A=>B.
         '''
-        from ._theorems_ import iffImpliesRight
-        return iffImpliesRight.instantiate({A: self.A, B: self.B}, assumptions=assumptions)
+        from ._theorems_ import iff_implies_right
+        return iff_implies_right.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)
 
-    def deriveRight(self, assumptions=USE_DEFAULTS):
+    def derive_right(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return B assuming A.
         '''
-        from ._theorems_ import rightFromIff
-        return rightFromIff.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
-    
-    def deriveReversed(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import right_from_iff
+        return right_from_iff.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)
+
+    def derive_reversed(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return (B<=>A).
         '''
-        from ._theorems_ import iffSymmetry
-        return iffSymmetry.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
-    
-    def applyTransitivity(self, otherIff, assumptions=USE_DEFAULTS):
+        from ._theorems_ import iff_symmetry
+        return iff_symmetry.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)
+
+    def apply_transitivity(self, other_iff, assumptions=USE_DEFAULTS):
         '''
-        From A <=> B (self) and the given B <=> C (otherIff) derive and return 
-        (A <=> C) assuming self and otherIff.
+        From A <=> B (self) and the given B <=> C (other_iff) derive and return
+        (A <=> C) assuming self and other_iff.
         Also works more generally as long as there is a common side to the equations.
         '''
-        from ._theorems_ import iffTransitivity
-        assert isinstance(otherIff, Iff)
-        if self.B == otherIff.A:
+        from ._theorems_ import iff_transitivity
+        assert isinstance(other_iff, Iff)
+        if self.B == other_iff.A:
             # from A <=> B, B <=> C, derive A <=> C
-            return iffTransitivity.instantiate({A:self.A, B:self.B, C:otherIff.B}, assumptions=assumptions)
-        elif self.A == otherIff.A:
+            return iff_transitivity.instantiate(
+                {A: self.A, B: self.B, C: other_iff.B}, assumptions=assumptions)
+        elif self.A == other_iff.A:
             # from y = x and y = z, derive x = z
-            return self.deriveReversed(assumptions).applyTransitivity(otherIff, assumptions)
-        elif self.A == otherIff.B:
+            return self.derive_reversed(
+                assumptions).apply_transitivity(other_iff, assumptions)
+        elif self.A == other_iff.B:
             # from y = x and z = y, derive x = z
-            return self.deriveReversed(assumptions).applyTransitivity(otherIff.deriveReversed(assumptions))
-        elif self.B == otherIff.B:
+            return self.derive_reversed(assumptions).apply_transitivity(
+                other_iff.derive_reversed(assumptions))
+        elif self.B == other_iff.B:
             # from x = y and z = y, derive x = z
-            return self.applyTransitivity(otherIff.deriveReversed(assumptions))
+            return self.apply_transitivity(
+                other_iff.derive_reversed(assumptions))
         else:
             assert False, 'transitivity cannot be applied unless there is something in common in the equalities'
-        
+
     def definition(self):
         '''
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
         '''
-        from ._axioms_ import iffDef
-        return iffDef.instantiate({A:self.A, B:self.B})
-    
-    def concludeByDefinition(self, assumptions=USE_DEFAULTS):
+        from ._axioms_ import iff_def
+        return iff_def.instantiate({A: self.A, B: self.B})
+
+    def conclude_by_definition(self, assumptions=USE_DEFAULTS):
         '''
         Conclude (A <=> B) assuming both (A => B), (B => A).
         '''
-        from ._theorems_ import iffIntro
-        return iffIntro.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
-    
+        from ._theorems_ import iff_intro
+        return iff_intro.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)
+
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
-        return the equality of this expression with TRUE or FALSE. 
+        return the equality of this expression with TRUE or FALSE.
         '''
-        from ._theorems_ import iffTT, iffTF, iffFT, iffFF # IMPORTANT: load in truth-table evaluations
+        from ._theorems_ import iff_t_t, iff_t_f, iff_f_t, iff_f_f  # IMPORTANT: load in truth-table evaluations
         return Operation.evaluation(self, assumptions, automation)
 
-    def deduceInBool(self, assumptions=USE_DEFAULTS):
+    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.
         '''
-        from ._theorems_ import iffClosure
-        return iffClosure.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
-    
-    def deriveEquality(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import iff_closure
+        return iff_closure.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)
+
+    def derive_equality(self, assumptions=USE_DEFAULTS):
         '''
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
-        from ._theorems_ import eqFromIff, eqFromMutualImpl
+        from ._theorems_ import eq_from_iff, eq_from_mutual_impl
         # We must be able to prove this Iff to do this derivation --
-        # then either eqFromIff or eqFromMutualImpl can be used.
-        self.prove(assumptions=assumptions) 
-        # eqFromMutualImpl may make for a shorter proof; do it both ways (if both are usable)
-        if not eqFromIff.isUsable():
-            return eqFromMutualImpl.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
-        eqFromMutualImpl.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
-        return eqFromIff.instantiate({A:self.A, B:self.B}, assumptions=assumptions)
+        # then either eq_from_iff or eq_from_mutual_impl can be used.
+        self.prove(assumptions=assumptions)
+        # eq_from_mutual_impl may make for a shorter proof; do it both ways (if
+        # both are usable)
+        if not eq_from_iff.is_usable():
+            return eq_from_mutual_impl.instantiate(
+                {A: self.A, B: self.B}, assumptions=assumptions)
+        eq_from_mutual_impl.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)
+        return eq_from_iff.instantiate(
+            {A: self.A, B: self.B}, assumptions=assumptions)

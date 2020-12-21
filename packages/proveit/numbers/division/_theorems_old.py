@@ -2,174 +2,179 @@ from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals, Implies
 from proveit.numbers import Integer, NaturalPos, Real, RealPos, Complex
 from proveit.numbers import Divide, frac, Add, Sub, Sum, Mult, Exp
-from proveit.common import a, b, c, n, w, x, y, z, P, S, xMulti, wEtc, xEtc, yEtc, zEtc, PyEtc
+from proveit.common import a, b, c, n, w, x, y, z, P, S, x_multi, w_etc, x_etc, y_etc, z_etc, Py_etc
 from proveit.numbers.common import zero, one, ComplexSansZero
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
 
-beginTheorems(locals())
+begin_theorems(locals())
 
-divideRealClosure = Forall([a, b], InSet(Divide(a, b), Real), domain=Real, conditions=[NotEquals(b, zero)])
-divideRealClosure       
+divide_real_closure = Forall([a, b], InSet(
+    Divide(a, b), Real), domain=Real, conditions=[NotEquals(b, zero)])
+divide_real_closure
 
-divideRealPosClosure = Forall([a, b], InSet(Divide(a, b), RealPos), domain=RealPos, conditions=[NotEquals(b, zero)])
-divideRealPosClosure
+divide_real_pos_closure = Forall([a, b], InSet(
+    Divide(a, b), RealPos), domain=RealPos, conditions=[NotEquals(b, zero)])
+divide_real_pos_closure
 
-fractionRealClosure = Forall([a, b], InSet(frac(a, b), Real), domain=Real, conditions=[NotEquals(b, zero)])
-fractionRealClosure   
+fraction_real_closure = Forall([a, b], InSet(
+    frac(a, b), Real), domain=Real, conditions=[NotEquals(b, zero)])
+fraction_real_closure
 
-fractionPosClosure = Forall([a, b], InSet(frac(a, b), RealPos), domain=RealPos, conditions=[NotEquals(b, zero)])
-fractionPosClosure
+fraction_pos_closure = Forall([a, b], InSet(
+    frac(a, b), RealPos), domain=RealPos, conditions=[NotEquals(b, zero)])
+fraction_pos_closure
 
-divideComplexClosure = Forall([a, b], InSet(Divide(a, b), Complex), domain=Complex, conditions=[NotEquals(b, zero)])
-divideComplexClosure       
+divide_complex_closure = Forall([a, b], InSet(
+    Divide(a, b), Complex), domain=Complex, conditions=[NotEquals(b, zero)])
+divide_complex_closure
 
-fractionComplexClosure = Forall([a, b], InSet(frac(a, b), Complex), domain=Complex, conditions=[NotEquals(b, zero)])
-fractionComplexClosure          
+fraction_complex_closure = Forall([a, b], InSet(
+    frac(a, b), Complex), domain=Complex, conditions=[NotEquals(b, zero)])
+fraction_complex_closure
 
-divideNotEqZero = Forall([a, b], NotEquals(Divide(a,b), zero), domain=ComplexSansZero)
-divideNotEqZero
+divide_not_eq_zero = Forall([a, b], NotEquals(
+    Divide(a, b), zero), domain=ComplexSansZero)
+divide_not_eq_zero
 
-fractionNotEqZero = Forall([a, b], NotEquals(frac(a,b), zero), domain=ComplexSansZero)
-fractionNotEqZero
+fraction_not_eq_zero = Forall([a, b], NotEquals(
+    frac(a, b), zero), domain=ComplexSansZero)
+fraction_not_eq_zero
 
-fracZeroNumer = Forall(x, Equals(frac(zero, x), zero), domain=Complex)
-fracZeroNumer
+frac_zero_numer = Forall(x, Equals(frac(zero, x), zero), domain=Complex)
+frac_zero_numer
 
-fracOneDenom = Forall(x, Equals(frac(x, one), x), domain=Complex)
-fracOneDenom
+frac_one_denom = Forall(x, Equals(frac(x, one), x), domain=Complex)
+frac_one_denom
 
-distributefracThroughSum = Forall([xEtc, y], 
-                                      Equals(frac(Add(xEtc), y),
-                                             Add(Etcetera(frac(xMulti, y)))), 
-                                      domain=Complex, conditions=[NotEquals(y, zero)])
-distributefracThroughSum
+distributefrac_through_sum = Forall([x_etc, y], Equals(frac(Add(x_etc), y), Add(
+    Etcetera(frac(x_multi, y)))), domain=Complex, conditions=[NotEquals(y, zero)])
+distributefrac_through_sum
 
-distributefracThroughSumRev = Forall([xEtc, y], 
-                                      Equals(Add(Etcetera(frac(xMulti, y))),
-                                             frac(Add(xEtc), y)), 
-                                      domain=Complex, conditions=[NotEquals(y, zero)])
-distributefracThroughSumRev
+distributefrac_through_sum_rev = Forall([x_etc, y],
+                                        Equals(Add(Etcetera(frac(x_multi, y))),
+                                               frac(Add(x_etc), y)),
+                                        domain=Complex, conditions=[NotEquals(y, zero)])
+distributefrac_through_sum_rev
 
-distributefracThroughSubtract = Forall([x, y, z], 
-                                          Equals(frac(Sub(x, y), z),
-                                                 Sub(frac(x, z), frac(y, z))), 
-                                          domain=Complex, conditions=[NotEquals(z, zero)])
-distributefracThroughSubtract
+distributefrac_through_subtract = Forall([x, y, z], Equals(frac(Sub(x, y), z), Sub(
+    frac(x, z), frac(y, z))), domain=Complex, conditions=[NotEquals(z, zero)])
+distributefrac_through_subtract
 
-distributefracThroughSubtractRev = Forall([x, y, z], 
-                                              Equals(Sub(frac(x, z), frac(y, z)),
-                                                     frac(Sub(x, y), z)), 
-                                              domain=Complex, conditions=[NotEquals(z, zero)])
-distributefracThroughSubtractRev
+distributefrac_through_subtract_rev = Forall([x, y, z], Equals(Sub(frac(x, z), frac(
+    y, z)), frac(Sub(x, y), z)), domain=Complex, conditions=[NotEquals(z, zero)])
+distributefrac_through_subtract_rev
 
-distributefracThroughSummation = Forall([P, S],
-                                    Implies(Forall(yEtc, InSet(PyEtc, Complex), domain=S),
-                                            Forall(z,
-                                                   Equals(frac(Sum(yEtc, PyEtc, domain=S), z),
-                                                          Sum(yEtc, frac(PyEtc, z), domain=S)),
-                                                  domain=Complex)))
-distributefracThroughSummation
+distributefrac_through_summation = Forall([P, S],
+                                          Implies(Forall(y_etc, InSet(Py_etc, Complex), domain=S),
+                                                  Forall(z,
+                                                         Equals(frac(Sum(y_etc, Py_etc, domain=S), z),
+                                                                Sum(y_etc, frac(Py_etc, z), domain=S)),
+                                                         domain=Complex)))
+distributefrac_through_summation
 
-distributefracThroughSummationRev = Forall([P, S],
-                                    Implies(Forall(yEtc, InSet(PyEtc, Complex), domain=S),
-                                            Forall(z,
-                                                   Equals(Sum(yEtc, frac(PyEtc, z), domain=S),
-                                                         frac(Sum(yEtc, PyEtc, domain=S), z)),
-                                                  domain=Complex)))
-distributefracThroughSummationRev
+distributefrac_through_summation_rev = Forall([P, S],
+                                              Implies(Forall(y_etc, InSet(Py_etc, Complex), domain=S),
+                                                      Forall(z,
+                                                             Equals(Sum(y_etc, frac(Py_etc, z), domain=S),
+                                                                    frac(Sum(y_etc, Py_etc, domain=S), z)),
+                                                             domain=Complex)))
+distributefrac_through_summation_rev
 
-fracInProd = Forall([wEtc, x, y, zEtc], Equals(Mult(wEtc, frac(x, y), zEtc),
-                                        frac(Mult(wEtc, x, zEtc), y)), domain=Complex)
-fracInProd
+frac_in_prod = Forall([w_etc, x, y, z_etc], Equals(
+    Mult(w_etc, frac(x, y), z_etc), frac(Mult(w_etc, x, z_etc), y)), domain=Complex)
+frac_in_prod
 
-fracInProdRev = Forall([wEtc, x, y, zEtc], 
-                       Equals(frac(Mult(wEtc, x, zEtc), y),
-                             Mult(wEtc, frac(x, y), zEtc)), domain=Complex)
-fracInProdRev
+frac_in_prod_rev = Forall([w_etc, x, y, z_etc],
+                          Equals(frac(Mult(w_etc, x, z_etc), y),
+                                 Mult(w_etc, frac(x, y), z_etc)), domain=Complex)
+frac_in_prod_rev
 
-prodOfFracs = Forall([x, y, z, w], Equals(Mult(frac(x, z), frac(y, w)),
-                                           frac(Mult(x, y), Mult(z, w))), domain=Complex)
-prodOfFracs
+prod_of_fracs = Forall([x, y, z, w], Equals(
+    Mult(frac(x, z), frac(y, w)), frac(Mult(x, y), Mult(z, w))), domain=Complex)
+prod_of_fracs
 
-prodOfFracsRev = Forall([x, y, z, w], Equals(frac(Mult(x, y), Mult(z, w)),
-                                          Mult(frac(x, z), frac(y, w))), domain=Complex)
-prodOfFracsRev
+prod_of_fracs_rev = Forall([x, y, z, w], Equals(
+    frac(Mult(x, y), Mult(z, w)), Mult(frac(x, z), frac(y, w))), domain=Complex)
+prod_of_fracs_rev
 
-prodOfFracsLeftNumerOne = Forall([x, y, z], Equals(Mult(frac(one, y), frac(x, z)),
-                                                 frac(x, Mult(y, z))), domain=Complex)
-prodOfFracsLeftNumerOne
+prod_of_fracs_left_numer_one = Forall([x, y, z], Equals(
+    Mult(frac(one, y), frac(x, z)), frac(x, Mult(y, z))), domain=Complex)
+prod_of_fracs_left_numer_one
 
-prodOfFracsLeftNumerOneRev = Forall([x, y, z], Equals(frac(x, Mult(y, z)),
-                                                   Mult(frac(one, y), frac(x, z))), domain=Complex)
-prodOfFracsLeftNumerOneRev
+prod_of_fracs_left_numer_one_rev = Forall([x, y, z], Equals(
+    frac(x, Mult(y, z)), Mult(frac(one, y), frac(x, z))), domain=Complex)
+prod_of_fracs_left_numer_one_rev
 
-prodOfFracsRightNumerOne = Forall([x, y, z], Equals(Mult(frac(x, y), frac(one, z)),
-                                                 frac(x, Mult(y, z))), domain=Complex)
-prodOfFracsRightNumerOne
+prod_of_fracs_right_numer_one = Forall([x, y, z], Equals(
+    Mult(frac(x, y), frac(one, z)), frac(x, Mult(y, z))), domain=Complex)
+prod_of_fracs_right_numer_one
 
-prodOfFracsRightNumerOneRev = Forall([x, y, z], Equals(frac(x, Mult(y, z)),
-                                                    Mult(frac(x, y), frac(one, z))), domain=Complex)
-prodOfFracsRightNumerOneRev
+prod_of_fracs_right_numer_one_rev = Forall([x, y, z], Equals(
+    frac(x, Mult(y, z)), Mult(frac(x, y), frac(one, z))), domain=Complex)
+prod_of_fracs_right_numer_one_rev
 
-fracCancelLeft = Forall([x,y,z],
-                   Equals(frac(Mult(x,y),Mult(x,z)),
-                         frac(y,z)),domain=Complex, conditions=[NotEquals(x, zero)])
-fracCancelLeft
+frac_cancel_left = Forall([x, y, z], Equals(frac(Mult(x, y), Mult(x, z)), frac(
+    y, z)), domain=Complex, conditions=[NotEquals(x, zero)])
+frac_cancel_left
 
-fracCancelDenomLeft = Forall([x,y],
-                             Equals(frac(Mult(x,y),x),
-                                    y),domain=Complex, conditions=[NotEquals(x, zero)])
-fracCancelDenomLeft
+frac_cancel_denom_left = Forall([x, y], Equals(
+    frac(Mult(x, y), x), y), domain=Complex, conditions=[NotEquals(x, zero)])
+frac_cancel_denom_left
 
-fracCancelNumerLeft = Forall([x,y],
-                             Equals(frac(x,Mult(x,y)),
-                                    frac(one,y)),domain=Complex, conditions=[NotEquals(x, zero)])
-fracCancelNumerLeft
+frac_cancel_numer_left = Forall([x, y], Equals(frac(x, Mult(x, y)), frac(
+    one, y)), domain=Complex, conditions=[NotEquals(x, zero)])
+frac_cancel_numer_left
 
-multFracLeftCancel = Forall([x,y],
-                      Equals(Mult(frac(x,y),y),x),
-                      domain = Complex, conditions = [NotEquals(y, zero)])
-multFracLeftCancel
+mult_frac_left_cancel = Forall([x, y],
+                               Equals(Mult(frac(x, y), y), x),
+                               domain=Complex, conditions=[NotEquals(y, zero)])
+mult_frac_left_cancel
 
-multFracRightCancel = Forall([x,y],
-                             Equals(Mult(x, frac(y, x)),y),
-                             domain = Complex, conditions = [NotEquals(x, zero)])
-multFracRightCancel
+mult_frac_right_cancel = Forall([x, y], Equals(
+    Mult(x, frac(y, x)), y), domain=Complex, conditions=[NotEquals(x, zero)])
+mult_frac_right_cancel
 
-fracCancelComplete = Forall(x, Equals(frac(x, x), one), 
-                            domain=Complex, conditions = [NotEquals(x, zero)])
-fracCancelComplete
+frac_cancel_complete = Forall(x, Equals(frac(x, x), one),
+                              domain=Complex, conditions=[NotEquals(x, zero)])
+frac_cancel_complete
 
-reversefracOfSubtractions = Forall([w, x, y, z], Equals(frac(Sub(w, x), Sub(y, z)),
-                                                           frac(Sub(x, w), Sub(z, y))), domain=Complex)
-reversefracOfSubtractions
+reversefrac_of_subtractions = Forall([w, x, y, z], Equals(
+    frac(Sub(w, x), Sub(y, z)), frac(Sub(x, w), Sub(z, y))), domain=Complex)
+reversefrac_of_subtractions
 
-fracIntExp = Forall(n, Forall((a, b), 
-                              Equals(frac(Exp(a, n), Exp(b, n)),
-                                     Exp(frac(a, b), n)),
-                             conditions = [NotEquals(a, zero), NotEquals(b, zero)]),
-                    domain=Integer)
-fracIntExp
+frac_int_exp = Forall(
+    n, Forall(
+        (a, b), Equals(
+            frac(
+                Exp(
+                    a, n), Exp(
+                        b, n)), Exp(
+                            frac(
+                                a, b), n)), conditions=[
+                                    NotEquals(
+                                        a, zero), NotEquals(
+                                            b, zero)]), domain=Integer)
+frac_int_exp
 
-fracIntExpRev = Forall(n, Forall((a, b), 
-                                 Equals(Exp(frac(a, b), n),
-                                        frac(Exp(a, n), Exp(b, n))),
-                             conditions = [NotEquals(a, zero), NotEquals(b, zero)]),
-                    domain=Integer)
-fracIntExpRev
+frac_int_exp_rev = Forall(n, Forall((a, b),
+                                    Equals(Exp(frac(a, b), n),
+                                           frac(Exp(a, n), Exp(b, n))),
+                                    conditions=[NotEquals(a, zero), NotEquals(b, zero)]),
+                          domain=Integer)
+frac_int_exp_rev
 
-fracNatPosExp = Forall(n, Forall((a, b), 
-                              Equals(frac(Exp(a, n), Exp(b, n)),
-                                     Exp(frac(a, b), n)),
-                             conditions = [NotEquals(b, zero)]),
-                    domain=NaturalPos)
-fracNatPosExp
+frac_nat_pos_exp = Forall(n, Forall((a, b),
+                                    Equals(frac(Exp(a, n), Exp(b, n)),
+                                           Exp(frac(a, b), n)),
+                                    conditions=[NotEquals(b, zero)]),
+                          domain=NaturalPos)
+frac_nat_pos_exp
 
-fracNatPosExpRev = Forall(n, Forall((a, b), 
-                              Equals(Exp(frac(a, b), n),
-                                     frac(Exp(a, n), Exp(b, n))),
-                             conditions = [NotEquals(b, zero)]),
-                    domain=NaturalPos)
-fracNatPosExpRev
+frac_nat_pos_exp_rev = Forall(n, Forall((a, b),
+                                        Equals(Exp(frac(a, b), n),
+                                               frac(Exp(a, n), Exp(b, n))),
+                                        conditions=[NotEquals(b, zero)]),
+                              domain=NaturalPos)
+frac_nat_pos_exp_rev
 
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

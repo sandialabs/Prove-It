@@ -1,1 +1,1 @@
-from .trigOps import AngDiff
+from .trig_ops import AngDiff

@@ -1,19 +1,20 @@
-from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
+from proveit import as_expression, defaults, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
 from proveit import TransitiveRelation, TransitivityException
-from proveit.logic.irreducible_value import isIrreducibleValue
+from proveit.logic.irreducible_value import is_irreducible_value
 from proveit._common_ import A, B, P, Q, f, n, x, y, z
+
 
 class Equals(TransitiveRelation):
     # operator of the Equals operation
-    _operator_ = Literal(stringFormat='=', theory=__file__)        
-    
+    _operator_ = Literal(string_format='=', theory=__file__)
+
     # Map Expressions to sets of Judgments of equalities that involve
     # the Expression on the left hand or right hand side.
-    knownEqualities = dict()
+    known_equalities = dict()
 
     # Map each Expression/Assumptions combination to a single
-    # knownEquality deemed to effect a simplification of the inner
+    # known_equality deemed to effect a simplification of the inner
     # expression on the rhs according to some canonical method of
     # simplification determined by each operation. For example, the
     # Expression expr = Floor(Add(x, two)) under the assumption that x
@@ -21,16 +22,16 @@ class Equals(TransitiveRelation):
     # an eventual value of something like |- expr = Floor(x) + two.
     known_simplifications = dict()
 
-    # Specific simplifications that simplify the inner expression to 
+    # Specific simplifications that simplify the inner expression to
     # IrreducibleValue objects.
     known_evaluation_sets = dict()
-        
+
     # Record found inversions.  See the invert method.
     # Maps (lambda_map, rhs) pairs to a list of
     # (known_equality, inversion) pairs, recording previous results
     # of the invert method for future reference.
     inversions = dict()
-    
+
     # Record the Equals objects being initialized (to avoid infinite
     # recursion while automatically deducing an equality is in Boolean).
     initializing = set()
@@ -43,24 +44,24 @@ class Equals(TransitiveRelation):
         if self not in Equals.initializing:
             Equals.initializing.add(self)
             try:
-                self.deduceInBool() # proactively prove (a=b) in Boolean.
+                self.deduce_in_bool() # proactively prove (a=b) in Boolean.
             except:
                 # may fail before the relevent _axioms_ have been generated
-                pass # and that's okay            
+                pass # and that's okay
             Equals.initializing.remove(self)
         '''
-    
-    def sideEffects(self, judgment):
+
+    def side_effects(self, judgment):
         '''
-        Record the judgment in Equals.knownEqualities, associated from
+        Record the judgment in Equals.known_equalities, associated from
         the left hand side and the right hand side.  This information
-        may be useful for concluding new equations via transitivity. 
-        If the right hand side is an "irreducible value" (see 
-        isIrreducibleValue), also record it in
+        may be useful for concluding new equations via transitivity.
+        If the right hand side is an "irreducible value" (see
+        is_irreducible_value), also record it in
         Equals.known_evaluation_sets for use when the evaluation
         method is called.   Some side-effects derivations are also
         attempted depending upon the form of this equality.
-        If the rhs is an "irreducible value" (see isIrreducibleValue),
+        If the rhs is an "irreducible value" (see is_irreducible_value),
         also record the judgment in the Equals.known_simplifications
         and Equals.known_evaluation_sets dictionaries, for use when the
         simplification or evaluation method is called. The key for the
@@ -73,108 +74,114 @@ class Equals(TransitiveRelation):
         equality.
         '''
         from proveit.logic.booleans._common_ import TRUE, FALSE
-        Equals.knownEqualities.setdefault(self.lhs, set()).add(judgment)
-        Equals.knownEqualities.setdefault(self.rhs, set()).add(judgment)
+        Equals.known_equalities.setdefault(self.lhs, set()).add(judgment)
+        Equals.known_equalities.setdefault(self.rhs, set()).add(judgment)
 
-        if isIrreducibleValue(self.rhs):
+        if is_irreducible_value(self.rhs):
             assumptions_sorted = sorted(judgment.assumptions,
-                                        key=lambda expr : hash(expr))
-            lhsKey = (self.lhs, tuple(assumptions_sorted))
+                                        key=lambda expr: hash(expr))
+            lhs_key = (self.lhs, tuple(assumptions_sorted))
             # n.b.: the values in the known_simplifications
             # dictionary consist of single Judgments not sets
-            Equals.known_simplifications[lhsKey]=judgment
+            Equals.known_simplifications[lhs_key] = judgment
             Equals.known_evaluation_sets.setdefault(
-                    self.lhs, set()).add(judgment)
+                self.lhs, set()).add(judgment)
 
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
-            yield self.deriveReversed
+            yield self.derive_reversed
         if self.rhs == FALSE:
             try:
                 self.lhs.prove(automation=False)
                 # derive FALSE given lhs=FALSE and lhs.
-                yield self.deriveContradiction
+                yield self.derive_contradiction
             except ProofFailure:
                 pass
             # Use this form after merging in 'Expression.proven' commite:
-            #if self.lhs.proven(): # If lhs is proven using default assumptions.
+            # if self.lhs.proven(): # If lhs is proven using default assumptions.
             #    # derive FALSE given lhs=FALSE and lhs.
-            #    yield self.deriveContradiction
+            #    yield self.derive_contradiction
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
-            yield self.deriveViaBooleanEquality
-        if hasattr(self.lhs, 'equalitySideEffects'):
-            for sideEffect in self.lhs.equalitySideEffects(judgment):
-                yield sideEffect
-        
-    def negationSideEffects(self, judgment):
+            yield self.derive_via_boolean_equality
+        if hasattr(self.lhs, 'equality_side_effects'):
+            for side_effect in self.lhs.equality_side_effects(judgment):
+                yield side_effect
+
+    def negation_side_effects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a negated
-        equation.        
+        equation.
         '''
-        yield self.deduceNotEquals # A != B from not(A=B)
-                
+        yield self.deduce_not_equals  # A != B from not(A=B)
+
     def conclude(self, assumptions):
         '''
         Attempt to conclude the equality various ways:
         simple reflexivity (x=x), via an evaluation (if one side is an
-        irreducible). Use concludeViaTransitivity for transitivity cases.
+        irreducible). Use conclude_via_transitivity for transitivity cases.
         '''
-        from proveit.logic import TRUE, FALSE, Implies, Iff, inBool
-        if self.lhs==self.rhs:
+        from proveit.logic import TRUE, FALSE, Implies, Iff, in_bool
+        if self.lhs == self.rhs:
             # Trivial x=x
-            return self.concludeViaReflexivity()
+            return self.conclude_via_reflexivity()
         if self.lhs or self.rhs in (TRUE, FALSE):
             try:
                 # Try to conclude as TRUE or FALSE.
-                return self.concludeBooleanEquality(assumptions)
+                return self.conclude_boolean_equality(assumptions)
             except ProofFailure:
                 pass
-        if isIrreducibleValue(self.rhs):
+        if is_irreducible_value(self.rhs):
             try:
                 evaluation = self.lhs.evaluation(assumptions)
                 if evaluation.rhs != self.rhs:
-                    raise ProofFailure(self, assumptions,
-                        "Does not match with evaluation: %s"%str(evaluation))
+                    raise ProofFailure(
+                        self,
+                        assumptions,
+                        "Does not match with evaluation: %s" %
+                        str(evaluation))
                 return evaluation
             except EvaluationError as e:
-                raise ProofFailure(self, assumptions, 
-                                   "Evaluation error: %s"%e.message)
-        elif isIrreducibleValue(self.lhs):
+                raise ProofFailure(self, assumptions,
+                                   "Evaluation error: %s" % e.message)
+        elif is_irreducible_value(self.lhs):
             try:
                 evaluation = self.rhs.evaluation(assumptions)
                 if evaluation.rhs != self.lhs:
-                    raise ProofFailure(self, assumptions,
-                        "Does not match with evaluation: %s"%str(evaluation))
-                return evaluation.deriveReversed()
+                    raise ProofFailure(
+                        self,
+                        assumptions,
+                        "Does not match with evaluation: %s" %
+                        str(evaluation))
+                return evaluation.derive_reversed()
             except EvaluationError as e:
-                raise ProofFailure(self, assumptions, 
-                                   "Evaluation error: %s"%e.message)
-        
-        if (Implies(self.lhs, self.rhs).proven(assumptions) and 
+                raise ProofFailure(self, assumptions,
+                                   "Evaluation error: %s" % e.message)
+
+        if (Implies(self.lhs, self.rhs).proven(assumptions) and
                 Implies(self.rhs, self.lhs).proven(assumptions) and
-                inBool(self.lhs).proven(assumptions) and
-                inBool(self.rhs).proven(assumptions)):
+                in_bool(self.lhs).proven(assumptions) and
+                in_bool(self.rhs).proven(assumptions)):
             # There is mutual implication both sides are known to be
             # boolean.  Conclude equality via mutual implication.
-            return Iff(self.lhs, self.rhs).deriveEquality(assumptions)
-        
-        if hasattr(self.lhs, 'deduceEquality'):
-            # If there is a 'deduceEquality' method, use that.
+            return Iff(self.lhs, self.rhs).derive_equality(assumptions)
+
+        if hasattr(self.lhs, 'deduce_equality'):
+            # If there is a 'deduce_equality' method, use that.
             # The responsibility then shifts to that method for
             # determining what strategies should be attempted
             # (with the recommendation that it should not attempt
             # multiple non-trivial automation strategies).
-            eq = self.lhs.deduceEquality(self, assumptions)
+            eq = self.lhs.deduce_equality(self, assumptions)
             if eq.expr != self:
-                raise ValueError("'deduceEquality' not implemented "
+                raise ValueError("'deduce_equality' not implemented "
                                  "correctly; must deduce the 'equality' "
                                  "that it is given if it can: "
-                                 "'%s' != '%s'"%(eq.expr, self))
+                                 "'%s' != '%s'" % (eq.expr, self))
             return eq
         else:
             '''
-            If there is no 'deduceEquality' method, we'll try
+            If there is no 'deduce_equality' method, we'll try
             simplifying each side to see if they are equal.
             '''
             # Try to prove equality via simplifying both sides.
@@ -184,212 +191,243 @@ class Equals(TransitiveRelation):
             simplified_rhs = rhs_simplification.rhs
             try:
                 if simplified_lhs != self.lhs or simplified_rhs != self.rhs:
-                    simplified_eq = Equals(simplified_lhs, simplified_rhs).prove(assumptions)
-                    return Equals.applyTransitivities(
-                            [lhs_simplification, simplified_eq, rhs_simplification],
-                            assumptions)
+                    simplified_eq = Equals(
+                        simplified_lhs, simplified_rhs).prove(assumptions)
+                    return Equals.apply_transitivities(
+                        [lhs_simplification, simplified_eq, rhs_simplification],
+                        assumptions)
             except ProofFailure:
                 pass
-        raise ProofFailure(self, assumptions, 
+        raise ProofFailure(self, assumptions,
                            "Unable to automatically conclude by "
                            "standard means.  To try to prove this via "
                            "transitive implication relations, try "
-                           "'concludeViaTransitivity'.")
-    
+                           "'conclude_via_transitivity'.")
+
     @staticmethod
     def WeakRelationClass():
-        return Equals # = is the strong and weak form of equality,
+        return Equals  # = is the strong and weak form of equality,
+
     @staticmethod
     def StrongRelationClass():
-        return Equals # = is the strong and weak form of equality,
-    
-    def knownRelationsFromLeft(expr, assumptionsSet):
+        return Equals  # = is the strong and weak form of equality,
+
+    def known_relations_from_left(expr, assumptions_set):
         '''
         For each Judgment that is an Equals involving the given expression on
         the left hand side, yield the Judgment and the right hand side.
         '''
-        for judgment in Equals.knownEqualities.get(expr, frozenset()):
+        for judgment in Equals.known_equalities.get(expr, frozenset()):
             if judgment.lhs == expr:
-                if judgment.isSufficient(assumptionsSet):
+                if judgment.is_sufficient(assumptions_set):
                     yield (judgment, judgment.rhs)
-    
+
     @staticmethod
-    def knownRelationsFromRight(expr, assumptionsSet):
+    def known_relations_from_right(expr, assumptions_set):
         '''
         For each Judgment that is an Equals involving the given expression on
         the right hand side, yield the Judgment and the left hand side.
         '''
-        for judgment in Equals.knownEqualities.get(expr, frozenset()):
+        for judgment in Equals.known_equalities.get(expr, frozenset()):
             if judgment.rhs == expr:
-                if judgment.isSufficient(assumptionsSet):
+                if judgment.is_sufficient(assumptions_set):
                     yield (judgment, judgment.lhs)
-            
-    def concludeViaReflexivity(self, assumptions=USE_DEFAULTS):
+
+    def conclude_via_reflexivity(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form x = x.
         '''
-        from ._axioms_ import equalsReflexivity
+        from ._axioms_ import equals_reflexivity
         assert self.lhs == self.rhs
-        return equalsReflexivity.instantiate({x:self.lhs})
-                
-    def deriveReversed(self, assumptions=USE_DEFAULTS):
+        return equals_reflexivity.instantiate({x: self.lhs})
+
+    def derive_reversed(self, assumptions=USE_DEFAULTS):
         '''
         From x = y derive y = x.  This derivation is an automatic side-effect.
         '''
-        from ._theorems_ import equalsReversal
-        return equalsReversal.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
-    
+        from ._theorems_ import equals_reversal
+        return equals_reversal.instantiate(
+            {x: self.lhs, y: self.rhs}, assumptions=assumptions)
+
     def reversed(self):
         '''
         Return an Equals expression with the right side and left side reversed
-        from this one.  This is not a derivation: see deriveReversed().
+        from this one.  This is not a derivation: see derive_reversed().
         '''
         return Equals(self.rhs, self.lhs)
-    
-    def deduceNotEquals(self, assumptions=USE_DEFAULTS):
+
+    def deduce_not_equals(self, assumptions=USE_DEFAULTS):
         r'''
         Deduce x != y assuming not(x = y), where self is x=y.
         '''
         from .not_equals import NotEquals
-        return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
+        return NotEquals(self.lhs, self.rhs).conclude_as_folded(assumptions)
 
-    def deduceNegated(self, i, assumptions=USE_DEFAULTS):
-        from proveit.logic.booleans.conjunction._theorems_ import falsifiedAndIfNotRight, falsifiedAndIfNotLeft, falsifiedAndIfNeither
+    def deduce_negated(self, i, assumptions=USE_DEFAULTS):
+        from proveit.logic.booleans.conjunction._theorems_ import falsified_and_if_not_right, falsified_and_if_not_left, falsified_and_if_neither
         if i == 0:
             # Deduce Not(A and B) from Not(A).
-            return falsifiedAndIfNotRight.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+            return falsified_and_if_not_right.instantiate(
+                {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         if i == 1:
-            return falsifiedAndIfNotLeft.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+            return falsified_and_if_not_left.instantiate(
+                {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         else:
-            return falsifiedAndIfNeither.instantiate({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-                        
-    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
+            return falsified_and_if_neither.instantiate(
+                {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+
+    def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         From x = y (self) and y = z (other) derive and return x = z.
         Also works more generally as long as there is a common side to the equations.
-        If "other" is not an equality, reverse roles and call 'applyTransitivity'
+        If "other" is not an equality, reverse roles and call 'apply_transitivity'
         from the "other" side.
         '''
-        from ._axioms_ import equalsTransitivity
-        other = asExpression(other)
+        from ._axioms_ import equals_transitivity
+        other = as_expression(other)
         if not isinstance(other, Equals):
-            # If the other relation is not "Equals", call from the "other" side.
-            return other.applyTransitivity(self, assumptions)
-        otherEquality = other
-        # We can assume that y=x will be a Judgment if x=y is a Judgment because it is derived as a side-effect.
-        if self.rhs == otherEquality.lhs:
-            return equalsTransitivity.instantiate({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions=assumptions)
-        elif self.rhs == otherEquality.rhs:
-            return equalsTransitivity.instantiate({x:self.lhs, y:self.rhs, z:otherEquality.lhs}, assumptions=assumptions)
-        elif self.lhs == otherEquality.lhs:
-            return equalsTransitivity.instantiate({x:self.rhs, y:self.lhs, z:otherEquality.rhs}, assumptions=assumptions)
-        elif self.lhs == otherEquality.rhs:
-            return equalsTransitivity.instantiate({x:self.rhs, y:self.lhs, z:otherEquality.lhs}, assumptions=assumptions)
+            # If the other relation is not "Equals", call from the "other"
+            # side.
+            return other.apply_transitivity(self, assumptions)
+        other_equality = other
+        # We can assume that y=x will be a Judgment if x=y is a Judgment
+        # because it is derived as a side-effect.
+        if self.rhs == other_equality.lhs:
+            return equals_transitivity.instantiate(
+                {x: self.lhs, y: self.rhs, z: other_equality.rhs}, assumptions=assumptions)
+        elif self.rhs == other_equality.rhs:
+            return equals_transitivity.instantiate(
+                {x: self.lhs, y: self.rhs, z: other_equality.lhs}, assumptions=assumptions)
+        elif self.lhs == other_equality.lhs:
+            return equals_transitivity.instantiate(
+                {x: self.rhs, y: self.lhs, z: other_equality.rhs}, assumptions=assumptions)
+        elif self.lhs == other_equality.rhs:
+            return equals_transitivity.instantiate(
+                {x: self.rhs, y: self.lhs, z: other_equality.lhs}, assumptions=assumptions)
         else:
-            raise TransitivityException(self, assumptions, 'Transitivity cannot be applied unless there is something in common in the equalities: %s vs %s'%(str(self), str(other)))
-        
-    def deriveViaBooleanEquality(self, assumptions=USE_DEFAULTS):
+            raise TransitivityException(
+                self,
+                assumptions,
+                'Transitivity cannot be applied unless there is something in common in the equalities: %s vs %s' %
+                (str(self),
+                 str(other)))
+
+    def derive_via_boolean_equality(self, assumptions=USE_DEFAULTS):
         '''
         From A = TRUE derive A, or from A = FALSE derive Not(A).  This derivation
         is an automatic side-effect.
-        Note, see deriveStmtEqTrue or Not.equateNegatedToFalse for the reverse process.
+        Note, see derive_stmt_eq_true or Not.equate_negated_to_false for the reverse process.
         '''
-        from proveit.logic import TRUE, FALSE        
-        from proveit.logic.booleans._axioms_ import eqTrueElim
+        from proveit.logic import TRUE, FALSE
+        from proveit.logic.booleans._axioms_ import eq_true_elim
         from proveit.logic import Not
         if self.rhs == TRUE:
-            return eqTrueElim.instantiate({A:self.lhs}, assumptions=assumptions) # A
+            return eq_true_elim.instantiate(
+                {A: self.lhs}, assumptions=assumptions)  # A
         elif self.rhs == FALSE:
-            return Not(self.lhs).concludeViaFalsifiedNegation(assumptions=assumptions) # Not(A)
-        
-    def deriveContradiction(self, assumptions=USE_DEFAULTS):
+            return Not(
+                self.lhs).conclude_via_falsified_negation(
+                assumptions=assumptions)  # Not(A)
+
+    def derive_contradiction(self, assumptions=USE_DEFAULTS):
         '''
         From A=FALSE, and assuming A, derive FALSE.
         '''
-        from proveit.logic import FALSE        
-        from ._theorems_ import contradictionViaFalsification
+        from proveit.logic import FALSE
+        from ._theorems_ import contradiction_via_falsification
         if self.rhs == FALSE:
-            return contradictionViaFalsification.instantiate({A:self.lhs}, assumptions=assumptions)
-        raise ValueError('Equals.deriveContradiction is only applicable if the right-hand-side is FALSE')
-    
-    def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+            return contradiction_via_falsification.instantiate(
+                {A: self.lhs}, assumptions=assumptions)
+        raise ValueError(
+            'Equals.derive_contradiction is only applicable if the right-hand-side is FALSE')
+
+    def affirm_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A=FALSE), derive the conclusion provided that the negated conclusion
         implies both (A=FALSE) as well as A, and the conclusion is a Boolean.
         '''
-        from proveit.logic.booleans.implication import affirmViaContradiction
-        return affirmViaContradiction(self, conclusion, assumptions)
+        from proveit.logic.booleans.implication import affirm_via_contradiction
+        return affirm_via_contradiction(self, conclusion, assumptions)
 
-    def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+    def deny_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A=FALSE), derive the negated conclusion provided that the conclusion
         implies both (A=FALSE) as well as A, and the conclusion is a Boolean.
         '''
-        from proveit.logic.booleans.implication import denyViaContradiction
-        return denyViaContradiction(self, conclusion, assumptions)
-    
-    def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
+        from proveit.logic.booleans.implication import deny_via_contradiction
+        return deny_via_contradiction(self, conclusion, assumptions)
+
+    def conclude_boolean_equality(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.
         '''
-        from proveit.logic import TRUE, FALSE, Not        
-        from proveit.logic.booleans._axioms_ import eqTrueIntro
+        from proveit.logic import TRUE, FALSE, Not
+        from proveit.logic.booleans._axioms_ import eq_true_intro
         if self.rhs == TRUE:
-            return eqTrueIntro.instantiate({A:self.lhs}, assumptions=assumptions)
+            return eq_true_intro.instantiate(
+                {A: self.lhs}, assumptions=assumptions)
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
                 evaluation = self.lhs.evaluation(assumptions=assumptions)
                 if evaluation.rhs == self.rhs:
                     return evaluation
             else:
-                return Not(self.lhs).equateNegatedToFalse(assumptions)
+                return Not(self.lhs).equate_negated_to_false(assumptions)
         elif self.lhs == TRUE or self.lhs == FALSE:
-            return Equals(self.rhs, self.lhs).concludeBooleanEquality(assumptions).deriveReversed(assumptions)
-        raise ProofFailure(self, assumptions, "May only conclude via boolean equality if one side of the equality is TRUE or FALSE")
-    
-    def deriveIsInSingleton(self, assumptions=USE_DEFAULTS):
+            return Equals(self.rhs, self.lhs).conclude_boolean_equality(
+                assumptions).derive_reversed(assumptions)
+        raise ProofFailure(
+            self,
+            assumptions,
+            "May only conclude via boolean equality if one side of the equality is TRUE or FALSE")
+
+    def derive_is_in_singleton(self, assumptions=USE_DEFAULTS):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from proveit.logic.sets.enumeration._theorems_ import foldSingleton
-        return foldSingleton.instantiate({x:self.lhs, y:self.rhs}, assumptions=assumptions)
-    
+        from proveit.logic.sets.enumeration._theorems_ import fold_singleton
+        return fold_singleton.instantiate(
+            {x: self.lhs, y: self.rhs}, assumptions=assumptions)
+
     @staticmethod
-    def _lambdaExpr(lambda_map, expr_being_replaced, assumptions=USE_DEFAULTS):
+    def _lambda_expr(
+            lambda_map,
+            expr_being_replaced,
+            assumptions=USE_DEFAULTS):
         from proveit import ExprRange, InnerExpr
         if isinstance(lambda_map, InnerExpr):
             lambda_map = lambda_map.repl_lambda()
         if not isinstance(lambda_map, Lambda):
             # as a default, do a global replacement
-            lambda_map = Lambda.globalRepl(lambda_map, expr_being_replaced)
+            lambda_map = Lambda.global_repl(lambda_map, expr_being_replaced)
         if len(lambda_map.parameters) != 1:
             raise ValueError("When substituting, expecting a single "
                              "'lambda_map' parameter entry which may "
                              "be a single parameter or a range; got "
-                             "%s as 'lambda_map'"%lambda_map)
+                             "%s as 'lambda_map'" % lambda_map)
         if isinstance(lambda_map.parameters[0], ExprRange):
             from proveit.numbers import one
             if lambda_map.parameters[0].start_index != one:
                 raise ValueError("When substituting a range, expecting "
                                  "the 'lambda_map' parameter range to "
                                  "have a starting index of 1; got "
-                                 "%s as 'lambda_map'"%lambda_map)                      
+                                 "%s as 'lambda_map'" % lambda_map)
         return lambda_map
-    
+
     def substitution(self, lambda_map, assumptions=USE_DEFAULTS):
         '''
         From x = y, and given f(x), derive f(x)=f(y).
-        f(x) is provided via lambdaMap as a Lambda expression or an 
-        object that returns a Lambda expression when calling lambdaMap()
+        f(x) is provided via lambda_map as a Lambda expression or an
+        object that returns a Lambda expression when calling lambda_map()
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
         '''
         from proveit import ExprRange
         from ._axioms_ import substitution
-        
-        lambda_map = Equals._lambdaExpr(lambda_map, self.lhs, assumptions)
-        
+
+        lambda_map = Equals._lambda_expr(lambda_map, self.lhs, assumptions)
+
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use operands_substitution for ExprTuple
             # substitution.
@@ -399,27 +437,27 @@ class Equals(TransitiveRelation):
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return operands_substitution.instantiate(
-                    {n:n_sub, f:lambda_map, x:self.lhs, y:self.rhs}, 
-                    assumptions=assumptions)
+                {n: n_sub, f: lambda_map, x: self.lhs, y: self.rhs},
+                assumptions=assumptions)
         # Regular single-operand substitution:
-        return substitution.instantiate({f:lambda_map, x:self.lhs, y:self.rhs}, 
-                                        assumptions=assumptions)
-        
-    def subLeftSideInto(self, lambda_map, assumptions=USE_DEFAULTS):
+        return substitution.instantiate(
+            {f: lambda_map, x: self.lhs, y: self.rhs}, assumptions=assumptions)
+
+    def sub_left_side_into(self, lambda_map, assumptions=USE_DEFAULTS):
         '''
-        From x = y, and given P(y), derive P(x) assuming P(y).  
-        P(x) is provided via lambdaMap as a Lambda expression or an 
-        object that returns a Lambda expression when calling lambdaMap()
+        From x = y, and given P(y), derive P(x) assuming P(y).
+        P(x) is provided via lambda_map as a Lambda expression or an
+        object that returns a Lambda expression when calling lambda_map()
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.rhs.
         '''
         from proveit import ExprRange
-        from ._theorems_ import subLeftSideInto
-        from ._theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
+        from ._theorems_ import sub_left_side_into
+        from ._theorems_ import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
         from proveit.logic import TRUE, FALSE
-        lambda_map = Equals._lambdaExpr(lambda_map, self.rhs)
-        
+        lambda_map = Equals._lambda_expr(lambda_map, self.rhs)
+
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use sub_in_left_operands for ExprTuple
             # substitution.
@@ -429,49 +467,49 @@ class Equals(TransitiveRelation):
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return sub_in_left_operands.instantiate(
-                    {n:n_sub, P:lambda_map, x:self.lhs, y:self.rhs}, 
-                    assumptions=assumptions)
-        
-        try:
-            # try some alternative proofs that may be shorter, if they 
-            # are usable
-            if self.rhs == TRUE: 
-                # substituteTruth may provide a shorter proof option
-                substituteTruth.instantiate({x:self.lhs, P:lambda_map}, 
-                                           assumptions=assumptions)
-            elif self.lhs == TRUE: 
-                # substituteInTrue may provide a shorter proof option
-                substituteInTrue.instantiate({x:self.rhs, P:lambda_map}, 
-                                            assumptions=assumptions)            
-            elif self.rhs == FALSE: 
-                # substituteFalsehood may provide a shorter proof option
-                substituteFalsehood.instantiate({x:self.lhs, P:lambda_map}, 
-                                               assumptions=assumptions)            
-            elif self.lhs == FALSE: 
-                # substituteInFalse may provide a shorter proof option
-                substituteInFalse.instantiate({x:self.rhs, P:lambda_map}, 
-                                             assumptions=assumptions)           
-        except:
-            pass 
-        return subLeftSideInto.instantiate(
-                {x:self.lhs, y:self.rhs, P:lambda_map}, 
+                {n: n_sub, P: lambda_map, x: self.lhs, y: self.rhs},
                 assumptions=assumptions)
-        
-    def subRightSideInto(self, lambda_map, assumptions=USE_DEFAULTS):
+
+        try:
+            # try some alternative proofs that may be shorter, if they
+            # are usable
+            if self.rhs == TRUE:
+                # substitute_truth may provide a shorter proof option
+                substitute_truth.instantiate({x: self.lhs, P: lambda_map},
+                                             assumptions=assumptions)
+            elif self.lhs == TRUE:
+                # substitute_in_true may provide a shorter proof option
+                substitute_in_true.instantiate({x: self.rhs, P: lambda_map},
+                                               assumptions=assumptions)
+            elif self.rhs == FALSE:
+                # substitute_falsehood may provide a shorter proof option
+                substitute_falsehood.instantiate({x: self.lhs, P: lambda_map},
+                                                 assumptions=assumptions)
+            elif self.lhs == FALSE:
+                # substitute_in_false may provide a shorter proof option
+                substitute_in_false.instantiate({x: self.rhs, P: lambda_map},
+                                                assumptions=assumptions)
+        except BaseException:
+            pass
+        return sub_left_side_into.instantiate(
+            {x: self.lhs, y: self.rhs, P: lambda_map},
+            assumptions=assumptions)
+
+    def sub_right_side_into(self, lambda_map, assumptions=USE_DEFAULTS):
         '''
-        From x = y, and given P(x), derive P(y) assuming P(x).  
-        P(x) is provided via lambdaMap as a Lambda expression or an 
-        object that returns a Lambda expression when calling lambdaMap()
+        From x = y, and given P(x), derive P(y) assuming P(x).
+        P(x) is provided via lambda_map as a Lambda expression or an
+        object that returns a Lambda expression when calling lambda_map()
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
         '''
         from proveit import ExprRange
-        from ._theorems_ import subRightSideInto
-        from ._theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
+        from ._theorems_ import sub_right_side_into
+        from ._theorems_ import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
         from proveit.logic import TRUE, FALSE
-        lambda_map = Equals._lambdaExpr(lambda_map, self.lhs)
-        
+        lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
+
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use sub_in_right_operands for ExprTuple
             # substitution.
@@ -481,48 +519,51 @@ class Equals(TransitiveRelation):
             assert lambda_map.parameters[0].start_index == one
             n_sub = lambda_map.parameters[0].end_index
             return sub_in_right_operands.instantiate(
-                    {n:n_sub, P:lambda_map, x:self.lhs, y:self.rhs}, 
-                    assumptions=assumptions)        
-        
-        try:
-            # try some alternative proofs that may be shorter, if they are usable
-            if self.lhs == TRUE: 
-                # substituteTruth may provide a shorter proof options
-                substituteTruth.instantiate({x:self.rhs, P:lambda_map}, 
-                                           assumptions=assumptions)
-            elif self.rhs == TRUE: 
-                # substituteInTrue may provide a shorter proof options
-                substituteInTrue.instantiate({x:self.lhs, P:lambda_map}, 
-                                            assumptions=assumptions)            
-            elif self.lhs == FALSE: 
-                # substituteFalsehood may provide a shorter proof options
-                substituteFalsehood.instantiate({x:self.rhs, P:lambda_map}, 
-                                               assumptions=assumptions)            
-            elif self.rhs == FALSE: 
-                # substituteInFalse may provide a shorter proof options
-                substituteInFalse.instantiate({x:self.lhs, P:lambda_map}, 
-                                             assumptions=assumptions)            
-        except:
-            pass
-        return subRightSideInto.instantiate(
-                {x:self.lhs, y:self.rhs, P:lambda_map}, 
+                {n: n_sub, P: lambda_map, x: self.lhs, y: self.rhs},
                 assumptions=assumptions)
-        
-    def deriveRightViaEquality(self, assumptions=USE_DEFAULTS):
+
+        try:
+            # try some alternative proofs that may be shorter, if they are
+            # usable
+            if self.lhs == TRUE:
+                # substitute_truth may provide a shorter proof options
+                substitute_truth.instantiate({x: self.rhs, P: lambda_map},
+                                             assumptions=assumptions)
+            elif self.rhs == TRUE:
+                # substitute_in_true may provide a shorter proof options
+                substitute_in_true.instantiate({x: self.lhs, P: lambda_map},
+                                               assumptions=assumptions)
+            elif self.lhs == FALSE:
+                # substitute_falsehood may provide a shorter proof options
+                substitute_falsehood.instantiate({x: self.rhs, P: lambda_map},
+                                                 assumptions=assumptions)
+            elif self.rhs == FALSE:
+                # substitute_in_false may provide a shorter proof options
+                substitute_in_false.instantiate({x: self.lhs, P: lambda_map},
+                                                assumptions=assumptions)
+        except BaseException:
+            pass
+        return sub_right_side_into.instantiate(
+            {x: self.lhs, y: self.rhs, P: lambda_map},
+            assumptions=assumptions)
+
+    def derive_right_via_equality(self, assumptions=USE_DEFAULTS):
         '''
         From A = B, derive B (the Right-Hand-Side) assuming A.
         '''
-        from ._theorems_ import rhsViaEquality
-        return rhsViaEquality.instantiate({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
+        from ._theorems_ import rhs_via_equality
+        return rhs_via_equality.instantiate(
+            {P: self.lhs, Q: self.rhs}, assumptions=assumptions)
 
-    def deriveLeftViaEquality(self, assumptions=USE_DEFAULTS):
+    def derive_left_via_equality(self, assumptions=USE_DEFAULTS):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.
         '''
-        from ._theorems_ import lhsViaEquality
-        return lhsViaEquality.instantiate({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
-    
-    def otherSide(self, expr):
+        from ._theorems_ import lhs_via_equality
+        return lhs_via_equality.instantiate(
+            {P: self.lhs, Q: self.rhs}, assumptions=assumptions)
+
+    def other_side(self, expr):
         '''
         Returns the 'other' side of the of the equation if the given expr is on one side.
         '''
@@ -530,15 +571,16 @@ class Equals(TransitiveRelation):
             return self.rhs
         elif expr == self.rhs:
             return self.lhs
-        raise ValueError('The given expression is expected to be one of the sides of the equation')
-        
-    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        raise ValueError(
+            'The given expression is expected to be one of the sides of the equation')
+
+    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this equality statement is in the Boolean set.
         '''
-        from ._axioms_ import equalityInBool
-        return equalityInBool.instantiate({x:self.lhs, y:self.rhs})
-        
+        from ._axioms_ import equality_in_bool
+        return equality_in_bool.instantiate({x: self.lhs, y: self.rhs})
+
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given operands that may be evaluated to irreducible values that
@@ -549,15 +591,16 @@ class Equals(TransitiveRelation):
         if automation:
             if self.lhs == self.rhs:
                 # prove equality is true by reflexivity
-                return evaluateTruth(self.prove().expr, assumptions=[])
-            if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
+                return evaluate_truth(self.prove().expr, assumptions=[])
+            if is_irreducible_value(
+                    self.lhs) and is_irreducible_value(
+                    self.rhs):
                 # Irreducible values must know how to evaluate the equality
                 # between each other, where appropriate.
-                return self.lhs.evalEquality(self.rhs)
+                return self.lhs.eval_equality(self.rhs)
             return TransitiveRelation.evaluation(self, assumptions)
         return Operation.evaluation(self, assumptions, automation)
 
-    
     @staticmethod
     def invert(lambda_map, rhs, assumptions=USE_DEFAULTS):
         '''
@@ -566,93 +609,113 @@ class Equals(TransitiveRelation):
         given assumptions.  Return this x if one is found; return
         None otherwise.
         '''
-        assumptionsSet = set(defaults.checkedAssumptions(assumptions)) 
+        assumptions_set = set(defaults.checked_assumptions(assumptions))
         if (lambda_map, rhs) in Equals.inversions:
-            # Previous solution(s) exist.  Use one if the assumptions are sufficient.
-            for known_equality, inversion in Equals.inversions[(lambda_map, rhs)]:
-                if known_equality.isSufficient(assumptionsSet):
+            # Previous solution(s) exist.  Use one if the assumptions are
+            # sufficient.
+            for known_equality, inversion in Equals.inversions[(
+                    lambda_map, rhs)]:
+                if known_equality.is_sufficient(assumptions_set):
                     return inversion
         # The mapping may be a trivial identity: f(x) = f(x)
         try:
-            x = lambda_map.extractArgument(rhs)
+            x = lambda_map.extract_argument(rhs)
             # Found a trivial inversion.  Store it for future reference.
             known_equality = Equals(rhs, rhs).prove()
-            Equals.inversions.setdefault((lambda_map, rhs), []).append((known_equality, x))
-            return x # Return the found inversion.
+            Equals.inversions.setdefault(
+                (lambda_map, rhs), []).append(
+                (known_equality, x))
+            return x  # Return the found inversion.
         except ArgumentExtractionError:
-            pass # well, it was worth a try
+            pass  # well, it was worth a try
         # Search among known relations for a solution.
-        for known_equality, lhs in Equals.knownRelationsFromRight(rhs, assumptionsSet):
+        for known_equality, lhs in Equals.known_relations_from_right(
+                rhs, assumptions_set):
             try:
-                x = lambda_map.extractArgument(lhs)
+                x = lambda_map.extract_argument(lhs)
                 # Found an inversion.  Store it for future reference.
-                Equals.inversions.setdefault((lambda_map, rhs), []).append((known_equality, x))
-                return x # Return the found inversion.
+                Equals.inversions.setdefault(
+                    (lambda_map, rhs), []).append(
+                    (known_equality, x))
+                return x  # Return the found inversion.
             except ArgumentExtractionError:
-                pass # not a match.  keep looking.
-        raise InversionError("No inversion found to map %s onto %s"%(str(lambda_map), str(rhs)))
-    
-def reduceOperands(innerExpr, inPlace=True, mustEvaluate=False, assumptions=USE_DEFAULTS):
+                pass  # not a match.  keep looking.
+        raise InversionError(
+            "No inversion found to map %s onto %s" %
+            (str(lambda_map), str(rhs)))
+
+
+def reduce_operands(
+        inner_expr,
+        in_place=True,
+        must_evaluate=False,
+        assumptions=USE_DEFAULTS):
     '''
     Attempt to return an InnerExpr object that is provably equivalent to
-    the given innerExpr but with simplified operands at the 
-    inner-expression level. 
-    If inPlace is True, the top-level expression must be a Judgment
+    the given inner_expr but with simplified operands at the
+    inner-expression level.
+    If in_place is True, the top-level expression must be a Judgment
     and the simplified Judgment is derived instead of an equivalence
     relation.
-    If mustEvaluate is True, the simplified
-    operands must be irreducible values (see isIrreducibleValue).
+    If must_evaluate is True, the simplified
+    operands must be irreducible values (see is_irreducible_value).
     '''
-    # Any of the operands that can be simplified must be replaced with 
+    # Any of the operands that can be simplified must be replaced with
     # their simplification.
     from proveit import InnerExpr, ExprRange
-    assert isinstance(innerExpr, InnerExpr), \
-        "Expecting 'innerExpr' to be of type 'InnerExpr'"
-    inner = innerExpr.exprHierarchy[-1]
+    assert isinstance(inner_expr, InnerExpr), \
+        "Expecting 'inner_expr' to be of type 'InnerExpr'"
+    inner = inner_expr.expr_hierarchy[-1]
     substitutions = []
     while True:
-        allReduced = True
+        all_reduced = True
         for operand in inner.operands:
-            if (not isIrreducibleValue(operand) and 
+            if (not is_irreducible_value(operand) and
                     not isinstance(operand, ExprRange)):
                 # The operand isn't already irreducible, so try to
                 # simplify it.
-                if mustEvaluate:
-                    operandEval = operand.evaluation(assumptions=assumptions)
+                if must_evaluate:
+                    operand_eval = operand.evaluation(assumptions=assumptions)
                 else:
-                    operandEval = operand.simplification(assumptions=assumptions)
-                if mustEvaluate and not isIrreducibleValue(operandEval.rhs):
+                    operand_eval = operand.simplification(
+                        assumptions=assumptions)
+                if must_evaluate and not is_irreducible_value(
+                        operand_eval.rhs):
                     msg = 'Evaluations expected to be irreducible values'
                     raise EvaluationError(msg, assumptions)
-                if operandEval.lhs != operandEval.rhs:
-                    # Compose map to replace all instances of the 
+                if operand_eval.lhs != operand_eval.rhs:
+                    # Compose map to replace all instances of the
                     # operand within the inner expression.
-                    global_repl = Lambda.globalRepl(inner, operand)
-                    lambdaMap = innerExpr.repl_lambda().compose(global_repl)
+                    global_repl = Lambda.global_repl(inner, operand)
+                    lambda_map = inner_expr.repl_lambda().compose(global_repl)
                     # substitute in the evaluated value
-                    if inPlace:
-                        subbed = operandEval.subRightSideInto(lambdaMap)
-                        innerExpr = InnerExpr(subbed, innerExpr.innerExprPath)
+                    if in_place:
+                        subbed = operand_eval.sub_right_side_into(lambda_map)
+                        inner_expr = InnerExpr(
+                            subbed, inner_expr.inner_expr_path)
                     else:
-                        sub = operandEval.substitution(lambdaMap)
-                        innerExpr = InnerExpr(sub.rhs, innerExpr.innerExprPath)
+                        sub = operand_eval.substitution(lambda_map)
+                        inner_expr = InnerExpr(
+                            sub.rhs, inner_expr.inner_expr_path)
                         substitutions.append(sub)
-                    allReduced = False
-                    # Start over since there may have been multiple 
+                    all_reduced = False
+                    # Start over since there may have been multiple
                     # substitutions:
                     break
-        if allReduced: break # done!
-        inner = innerExpr.exprHierarchy[-1]
-    
-    if not inPlace and len(substitutions)>1:
+        if all_reduced:
+            break  # done!
+        inner = inner_expr.expr_hierarchy[-1]
+
+    if not in_place and len(substitutions) > 1:
         # When there have been multiple substitutions, apply
         # transtivity over the chain of substitutions to equate the
         # end-points.
-        Equals.applyTransitivities(substitutions, assumptions)
-    return innerExpr
+        Equals.apply_transitivities(substitutions, assumptions)
+    return inner_expr
+
 
 """
-def concludeViaReduction(expr, assumptions):
+def conclude_via_reduction(expr, assumptions):
     '''
     Attempts to prove that the given expression is TRUE under the
     given assumptions via evaluating that the expression is equal to true.
@@ -665,94 +728,99 @@ def concludeViaReduction(expr, assumptions):
         expr.evaluation(assumptions)
         return expr.prove(assumptions)
     # reduce the operands
-    reducedExpr = reduceOperands(expr, assumptions)
+    reduced_expr = reduce_operands(expr, assumptions)
     # prove the reduced version
-    judgment = reducedExpr.prove(assumptions)
-    # now rebuild the original via subLeftSideInto (for a shorter proof than substitutions)
+    judgment = reduced_expr.prove(assumptions)
+    # now rebuild the original via sub_left_side_into (for a shorter proof than substitutions)
     for k, operand in enumerate(expr.operands):
         # for each operand, replace it with the original
-        subExprRepl = SubExprRepl(judgment).operands[k]
-        judgment = operand.evaluation(assumptions=assumptions).subLeftSideInto(subExprRepl, assumptions)
+        sub_expr_repl = SubExprRepl(judgment).operands[k]
+        judgment = operand.evaluation(assumptions=assumptions).sub_left_side_into(sub_expr_repl, assumptions)
     assert judgment.expr == expr, 'Equivalence substitutions did not work out as they should have'
     return judgment
 """
-            
-def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
-                          operandsOnly=False, assumptions=USE_DEFAULTS, 
-                          automation=True):
+
+
+def default_simplification(inner_expr, in_place=False, must_evaluate=False,
+                           operands_only=False, assumptions=USE_DEFAULTS,
+                           automation=True):
     '''
-    Default attempt to simplify the given inner expression under the 
-    given assumptions.  If successful, returns a Judgment (using a 
-    subset of the given assumptions) that expresses an equality between 
-    the expression (on the left) and one with a simplified form for the 
+    Default attempt to simplify the given inner expression under the
+    given assumptions.  If successful, returns a Judgment (using a
+    subset of the given assumptions) that expresses an equality between
+    the expression (on the left) and one with a simplified form for the
     "inner" part (in some canonical sense determined by the Operation).
-    If inPlace is True, the top-level expression must be a Judgment
+    If in_place is True, the top-level expression must be a Judgment
     and the simplified Judgment is derived instead of an equivalence
     relation.
-    If mustEvaluate=True, the simplified form must be an irreducible 
-    value (see isIrreducibleValue).  Specifically, this method checks to
-    see if an appropriate simplification/evaluation has already been 
-    proven.  If not, but if it is an Operation, call the 
-    simplification/evaluation method on all operands, make these 
-    substitions, then call simplification/evaluation on the expression 
-    with operands substituted for simplified forms.  It also treats, 
-    as a special case, evaluating the expression to be true if it is in 
-    the set of assumptions [also see Judgment.evaluation and 
-    evaluateTruth].  If operandsOnly = True, only simplify the operands
+    If must_evaluate=True, the simplified form must be an irreducible
+    value (see is_irreducible_value).  Specifically, this method checks to
+    see if an appropriate simplification/evaluation has already been
+    proven.  If not, but if it is an Operation, call the
+    simplification/evaluation method on all operands, make these
+    substitions, then call simplification/evaluation on the expression
+    with operands substituted for simplified forms.  It also treats,
+    as a special case, evaluating the expression to be true if it is in
+    the set of assumptions [also see Judgment.evaluation and
+    evaluate_truth].  If operands_only = True, only simplify the operands
     of the inner expression.
     '''
     # among other things, convert any assumptions=None
     # to assumptions=() to avoid len(None) errors
-    assumptions = defaults.checkedAssumptions(assumptions)
+    assumptions = defaults.checked_assumptions(assumptions)
 
     from proveit.logic import TRUE, FALSE
-    from proveit.logic.booleans._axioms_ import trueAxiom
-    topLevel = innerExpr.exprHierarchy[0]
-    inner = innerExpr.exprHierarchy[-1]
-    if operandsOnly:
-        # Just do the reduction of the operands at the level below the 
+    from proveit.logic.booleans._axioms_ import true_axiom
+    top_level = inner_expr.expr_hierarchy[0]
+    inner = inner_expr.expr_hierarchy[-1]
+    if operands_only:
+        # Just do the reduction of the operands at the level below the
         # "inner expression"
-        reducedInnerExpr = reduceOperands(innerExpr, inPlace, mustEvaluate, 
-                                          assumptions)
-        if inPlace:
+        reduced_inner_expr = reduce_operands(
+            inner_expr, in_place, must_evaluate, assumptions)
+        if in_place:
             try:
-                return reducedInnerExpr.exprHierarchy[0].prove(assumptions, 
-                                                               automation=False)
-            except:
+                return reduced_inner_expr.expr_hierarchy[0].prove(
+                    assumptions, automation=False)
+            except BaseException:
                 assert False
         try:
-            eq = Equals(topLevel, reducedInnerExpr.exprHierarchy[0])
+            eq = Equals(top_level, reduced_inner_expr.expr_hierarchy[0])
             return eq.prove(assumptions, automation=False)
-        except:
+        except BaseException:
             assert False
-    def innerSimplification(innerEquivalence):
-        if inPlace:
-            return innerEquivalence.subRightSideInto(innerExpr, 
-                                                      assumptions=assumptions)
-        return innerEquivalence.substitution(innerExpr, 
+
+    def inner_simplification(inner_equivalence):
+        if in_place:
+            return inner_equivalence.sub_right_side_into(
+                inner_expr, assumptions=assumptions)
+        return inner_equivalence.substitution(inner_expr,
                                               assumptions=assumptions)
-    if isIrreducibleValue(inner):
+    if is_irreducible_value(inner):
         return Equals(inner, inner).prove()
-    assumptionsSet = set(defaults.checkedAssumptions(assumptions))
-    
+    assumptions_set = set(defaults.checked_assumptions(assumptions))
+
     # See if the expression is already known to be true as a special
     # case.
     try:
-        inner.prove(assumptionsSet, automation=False)
-        trueEval = evaluateTruth(inner, assumptionsSet) # A=TRUE given A
-        if inner==topLevel:
-            if inPlace: return trueAxiom
-            else: return trueEval
-        return innerSimplification(trueEval)
-    except:
+        inner.prove(assumptions_set, automation=False)
+        true_eval = evaluate_truth(inner, assumptions_set)  # A=TRUE given A
+        if inner == top_level:
+            if in_place:
+                return true_axiom
+            else:
+                return true_eval
+        return inner_simplification(true_eval)
+    except BaseException:
         pass
-    # See if the negation of the expression is already known to be true 
+    # See if the negation of the expression is already known to be true
     # as a special case.
     try:
-        inner.disprove(assumptionsSet, automation=False)
-        falseEval = evaluateFalsehood(inner, assumptionsSet) # A=FALSE given Not(A)
-        return innerSimplification(falseEval)
-    except:
+        inner.disprove(assumptions_set, automation=False)
+        false_eval = evaluate_falsehood(
+            inner, assumptions_set)  # A=FALSE given Not(A)
+        return inner_simplification(false_eval)
+    except BaseException:
         pass
 
     # ================================================================ #
@@ -760,132 +828,136 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     # ================================================================ #
 
     # construct the key for the known_simplifications dictionary
-    assumptions_sorted = sorted(assumptions, key=lambda expr : hash(expr))
+    assumptions_sorted = sorted(assumptions, key=lambda expr: hash(expr))
     known_simplifications_key = (inner, tuple(assumptions_sorted))
 
-    if (mustEvaluate and inner in Equals.known_evaluation_sets):
+    if (must_evaluate and inner in Equals.known_evaluation_sets):
         evaluations = Equals.known_evaluation_sets[inner]
         candidates = []
         for judgment in evaluations:
-            if judgment.isSufficient(assumptionsSet):
+            if judgment.is_sufficient(assumptions_set):
                 # Found existing evaluation suitable for the assumptions
                 candidates.append(judgment)
         if len(candidates) >= 1:
             # Return the "best" candidate with respect to fewest number
             # of steps.
-            min_key = lambda judgment: judgment.proof().numSteps()
+            def min_key(judgment): return judgment.proof().num_steps()
             simplification = min(candidates, key=min_key)
-            return innerSimplification(simplification)
+            return inner_simplification(simplification)
 
-    elif (not mustEvaluate and
+    elif (not must_evaluate and
           known_simplifications_key in Equals.known_simplifications):
         simplification = Equals.known_simplifications[known_simplifications_key]
-        if simplification.isUsable():
-            return innerSimplification(simplification)
+        if simplification.is_usable():
+            return inner_simplification(simplification)
 
     # ================================================================ #
-    
+
     if not automation:
         msg = 'Unknown evaluation (without automation): ' + str(inner)
         raise SimplificationError(msg)
-                
+
     # See if the expression is equal to something that has an evaluation
     # or is already known to be true.
-    if inner in Equals.knownEqualities:
-        for knownEq in Equals.knownEqualities[inner]:
+    if inner in Equals.known_equalities:
+        for known_eq in Equals.known_equalities[inner]:
             try:
-                if knownEq.isSufficient(assumptionsSet):
-                    if inPlace: 
-                        # Should first substitute in the known 
+                if known_eq.is_sufficient(assumptions_set):
+                    if in_place:
+                        # Should first substitute in the known
                         # equivalence then simplify that.
-                        if inner == knownEq.lhs:
-                            knownEq.subRightSideInto(innerExpr, assumptions)
-                        elif inner == knownEq.rhs:
-                            knownEq.subLeftSideInto(innerExpr, assumptions)
-                    # Use mustEvaluate=True.  Simply being equal to 
-                    # something simplified isn't necessarily the 
+                        if inner == known_eq.lhs:
+                            known_eq.sub_right_side_into(
+                                inner_expr, assumptions)
+                        elif inner == known_eq.rhs:
+                            known_eq.sub_left_side_into(
+                                inner_expr, assumptions)
+                    # Use must_evaluate=True.  Simply being equal to
+                    # something simplified isn't necessarily the
                     # appropriate simplification for "inner" itself.
-                    alt_inner = knownEq.otherSide(inner).innerExpr()
-                    equivSimp = \
-                        defaultSimplification(alt_inner,  inPlace=inPlace, 
-                                            mustEvaluate=True, 
-                                            assumptions=assumptions, 
-                                            automation=False)
-                    if inPlace:
+                    alt_inner = known_eq.other_side(inner).inner_expr()
+                    equiv_simp = \
+                        default_simplification(alt_inner, in_place=in_place,
+                                               must_evaluate=True,
+                                               assumptions=assumptions,
+                                               automation=False)
+                    if in_place:
                         # Returns Judgment with simplification:
-                        return equivSimp 
-                    innerEquiv = knownEq.applyTransitivity(equivSimp, 
-                                                           assumptions)
-                    if inner == topLevel: return innerEquiv
-                    return innerEquiv.substitution(innerExpr, 
+                        return equiv_simp
+                    inner_equiv = known_eq.apply_transitivity(equiv_simp,
+                                                              assumptions)
+                    if inner == top_level:
+                        return inner_equiv
+                    return inner_equiv.substitution(inner_expr,
                                                     assumptions=assumptions)
             except SimplificationError:
-                pass     
+                pass
     # try to simplify via reduction
     if not isinstance(inner, Operation):
-        if mustEvaluate:
+        if must_evaluate:
             raise EvaluationError('Unknown evaluation: ' + str(inner),
                                   assumptions)
         else:
             # don't know how to simplify, so keep it the same
-            return innerSimplification(Equals(inner, inner).prove())
-    reducedInnerExpr = reduceOperands(innerExpr, inPlace, mustEvaluate, 
-                                      assumptions)
-    if reducedInnerExpr == innerExpr:
-        if mustEvaluate:
-            # Since it wasn't irreducible to begin with, it must change 
+            return inner_simplification(Equals(inner, inner).prove())
+    reduced_inner_expr = reduce_operands(inner_expr, in_place, must_evaluate,
+                                         assumptions)
+    if reduced_inner_expr == inner_expr:
+        if must_evaluate:
+            # Since it wasn't irreducible to begin with, it must change
             # in order to evaluate.
             raise SimplificationError('Unable to evaluate: ' + str(inner))
         else:
             raise SimplificationError('Unable to simplify: ' + str(inner))
     # evaluate/simplify the reduced inner expression
-    inner = reducedInnerExpr.exprHierarchy[-1]
-    if mustEvaluate:
-        innerEquiv = inner.evaluation(assumptions)
+    inner = reduced_inner_expr.expr_hierarchy[-1]
+    if must_evaluate:
+        inner_equiv = inner.evaluation(assumptions)
     else:
-        innerEquiv = inner.simplification(assumptions)
-    value = innerEquiv.rhs
+        inner_equiv = inner.simplification(assumptions)
+    value = inner_equiv.rhs
     if value == TRUE:
         # Attempt to evaluate via proving the expression;
         # This should result in a shorter proof if allowed
         # (e.g., if theorems are usable).
         try:
-            evaluateTruth(inner, assumptions)
-        except:
+            evaluate_truth(inner, assumptions)
+        except BaseException:
             pass
     if value == FALSE:
         # Attempt to evaluate via disproving the expression;
         # This should result in a shorter proof if allowed
         # (e.g., if theorems are usable).
         try:
-            evaluateFalsehood(inner, assumptions)
-        except:
+            evaluate_falsehood(inner, assumptions)
+        except BaseException:
             pass
-    reducedSimplification = innerSimplification(innerEquiv)
-    if inPlace:
-        simplification = reducedSimplification
+    reduced_simplification = inner_simplification(inner_equiv)
+    if in_place:
+        simplification = reduced_simplification
     else:
-        # Via transitivity, go from the original expression to the 
-        # reduced expression (simplified inner operands) and then the 
+        # Via transitivity, go from the original expression to the
+        # reduced expression (simplified inner operands) and then the
         # final simplification (simplified inner expression).
-        reduced_top_level = reducedInnerExpr.exprHierarchy[0]
-        eq1 = Equals(topLevel, reduced_top_level)
+        reduced_top_level = reduced_inner_expr.expr_hierarchy[0]
+        eq1 = Equals(top_level, reduced_top_level)
         eq1.prove(assumptions, automation=False)
-        eq2 = Equals(reduced_top_level, reducedSimplification.rhs)
+        eq2 = Equals(reduced_top_level, reduced_simplification.rhs)
         eq2.prove(assumptions, automation=False)
-        simplification = eq1.applyTransitivity(eq2, assumptions)
-    if not inPlace and topLevel==inner:
+        simplification = eq1.apply_transitivity(eq2, assumptions)
+    if not in_place and top_level == inner:
         # Store direct simplifications in the known_simplifications
         # dictionary for next time.
         Equals.known_simplifications[known_simplifications_key] = simplification
-        if isIrreducibleValue(value):
+        if is_irreducible_value(value):
             # also store it in the known_evaluation_sets dictionary for
             # next time, since it evaluated to an irreducible value.
             Equals.known_evaluation_sets.setdefault(
-                    topLevel, set()).add(simplification)
+                top_level, set()).add(simplification)
     return simplification
 
-def evaluateTruth(expr, assumptions):
+
+def evaluate_truth(expr, assumptions):
     '''
     Attempts to prove that the given expression equals TRUE under
     the given assumptions via proving the expression.
@@ -894,7 +966,8 @@ def evaluateTruth(expr, assumptions):
     from proveit.logic import TRUE
     return Equals(expr, TRUE).prove(assumptions)
 
-def evaluateFalsehood(expr, assumptions):
+
+def evaluate_falsehood(expr, assumptions):
     '''
     Attempts to prove that the given expression equals FALSE under
     the given assumptions via disproving the expression.
@@ -903,21 +976,27 @@ def evaluateFalsehood(expr, assumptions):
     from proveit.logic import FALSE
     return Equals(expr, FALSE).prove(assumptions)
 
+
 class SimplificationError(Exception):
     def __init__(self, message):
         self.message = message
+
     def __str__(self):
         return self.message
+
 
 class EvaluationError(SimplificationError):
     def __init__(self, expr, assumptions):
         self.message = ("Evaluation of %s under assumptions %s is not known"
-                        %(expr, assumptions))
+                        % (expr, assumptions))
+
     def __str__(self):
         return self.message
+
 
 class InversionError(Exception):
     def __init__(self, message):
         self.message = message
+
     def __str__(self):
         return self.message

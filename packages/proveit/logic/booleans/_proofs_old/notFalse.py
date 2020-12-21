@@ -1,3 +1,3 @@
-from proveit.basiclogic.booleans.axioms import notF
+from proveit.basiclogic.booleans.axioms import not_f
 
-notF.deriveViaBooleanEquality().qed(__file__)
+not_f.derive_via_boolean_equality().qed(__file__)

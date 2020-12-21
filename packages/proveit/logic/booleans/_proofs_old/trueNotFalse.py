@@ -1,4 +1,4 @@
-from proveit.basiclogic.booleans.axioms import falseNotTrue
+from proveit.basiclogic.booleans.axioms import false_not_true
 
 # TRUE != FALSE
-falseNotTrue.deriveReversed().qed(__file__)
+false_not_true.derive_reversed().qed(__file__)

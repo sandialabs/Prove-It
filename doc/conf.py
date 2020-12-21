@@ -42,7 +42,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'numpydoc',
-#    'sphinx.ext.coverage',
+    #    'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
@@ -159,8 +159,12 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Prove-It', u'Prove-It Documentation',
-     author, 'Prove-It', 'A tool for proving and organizing general theorems using Python.',
+    (master_doc,
+     'Prove-It',
+     u'Prove-It Documentation',
+     author,
+     'Prove-It',
+     'A tool for proving and organizing general theorems using Python.',
      'Miscellaneous'),
 ]
 

@@ -3,215 +3,294 @@ from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, Equa
 from proveit.numbers import Integer, Natural, NaturalPos, Interval, Real, RealPos, Complex
 from proveit.numbers import Add, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.numbers import Len
-from proveit.common import a, b, n, m, x, y, P, S, xMulti, xEtc, PxEtc
+from proveit.common import a, b, n, m, x, y, P, S, x_multi, x_etc, Px_etc
 from proveit.numbers import zero, one, two, three, four, five, six, seven, eight, nine
 from proveit.numbers.common import Pzero, Pm, P_mAddOne, Pn
-from proveit import beginTheorems, endTheorems
+from proveit import begin_theorems, end_theorems
+
+begin_theorems(locals())
+
+zero_in_nats = InSet(zero, Natural)
+
+successive_nats = Forall(n, InSet(Add(n, one), Natural), domain=Natural)
+
+induction_lemma = Forall(n, Forall(S, Implies(And(InSet(zero, S), Forall(
+    x, InSet(Add(x, one), S), domain=S)), InSet(n, S))), domain=Natural)
+
+induction = Forall(P, Implies(And(Pzero, Forall(
+    m, P_mAddOne, domain=Natural, conditions=[Pm])), Forall(n, Pn, Natural)))
+
+zero_len_expr_tuple = Equals(Len(), zero)
+
+multi_var_induction = Forall(P, Implies(Forall((x_multi, y), Implies(
+    Px_etc, Operation(P, [x_etc, y]))), Forall(x_multi, Px_etc)))
+
+in_ints_is_bool = Forall(a, InSet(InSet(a, Integer), Boolean))
+in_ints_is_bool
+
+not_in_ints_is_bool = Forall(a, InSet(NotInSet(a, Integer), Boolean))
+not_in_ints_is_bool
+
+int_within_real = Forall(a, InSet(a, Real), domain=Integer)
+int_within_real
+
+int_within_complex = Forall(a, InSet(a, Complex), domain=Integer)
+int_within_complex
+
+in_natural_if_non_neg = Forall(
+    a,
+    InSet(
+        a,
+        Natural),
+    domain=Integer,
+    conditions=[
+        GreaterThanEquals(
+            a,
+            zero)])
+in_natural_if_non_neg
+
+in_natural_pos_if_pos = Forall(
+    a,
+    InSet(
+        a,
+        NaturalPos),
+    domain=Integer,
+    conditions=[
+        GreaterThan(
+            a,
+            zero)])
+in_natural_pos_if_pos
+
+interval_is_int = Forall(
+    (a, b), Forall(
+        n, InSet(
+            n, Integer), domain=Interval(
+                a, b)), domain=Integer)
+interval_is_int
+
+interval_is_nat = Forall(
+    (a, b), Forall(
+        n, InSet(
+            n, Natural), domain=Interval(
+                a, b)), domain=Natural)
+interval_is_nat
+
+interval_in_nat_pos = Forall(
+    (a, b), Forall(
+        n, InSet(
+            n, NaturalPos), domain=Interval(
+                a, b)), domain=Integer, conditions=[
+                    GreaterThan(
+                        a, zero)])
+interval_in_nat_pos
+
+all_in_negative_interval_are_negative = Forall(
+    (a, b), Forall(
+        n, LessThan(
+            n, zero), domain=Interval(
+                a, b)), domain=Integer, conditions=[
+                    LessThan(
+                        b, zero)])
+all_in_negative_interval_are_negative
+
+all_in_positive_interval_are_positive = Forall(
+    (a, b), Forall(
+        n, GreaterThan(
+            n, zero), domain=Interval(
+                a, b)), domain=Integer, conditions=[
+                    GreaterThan(
+                        a, zero)])
+all_in_positive_interval_are_positive
+
+interval_lower_bound = Forall(
+    (a, b), Forall(
+        n, LessThanEquals(
+            a, n), domain=Interval(
+                a, b)), domain=Integer)
+interval_lower_bound
 
-beginTheorems(locals())
+interval_upper_bound = Forall(
+    (a, b), Forall(
+        n, LessThanEquals(
+            n, b), domain=Interval(
+                a, b)), domain=Integer)
+interval_upper_bound
 
-zeroInNats = InSet(zero, Natural)
+in_interval = Forall(
+    (a, b, n), InSet(
+        n, Interval(
+            a, b)), domain=Integer, conditions=[
+                LessThanEquals(
+                    a, n), LessThanEquals(
+                        n, b)])
+in_interval
 
-successiveNats = Forall(n, InSet(Add(n, one), Natural), domain=Natural)
+nat_within_int = Forall(a, InSet(a, Integer), domain=Natural)
+nat_within_int
 
-inductionLemma = Forall(n, Forall(S, Implies(And(InSet(zero, S), Forall(x, InSet(Add(x,one), S), domain=S)), InSet(n, S))), domain=Natural)
+nat_within_real = Forall(a, InSet(a, Real), domain=Natural)
+nat_within_real
 
-induction = Forall(P, Implies(And(Pzero, Forall(m, P_mAddOne, domain=Natural, conditions=[Pm])), Forall(n, Pn, Natural)))
+nat_within_complex = Forall(a, InSet(a, Complex), domain=Natural)
+nat_within_complex
 
-zeroLenExprTuple = Equals(Len(), zero)
+nats_pos_in_natural = Forall(a, InSet(a, Natural), domain=NaturalPos)
+nats_pos_in_natural
 
-multiVarInduction = Forall(P, Implies(Forall((xMulti, y), Implies(PxEtc, Operation(P, [xEtc, y]))), Forall(xMulti, PxEtc)))
+nats_pos_in_integer = Forall(a, InSet(a, Integer), domain=NaturalPos)
+nats_pos_in_integer
 
-inIntsIsBool = Forall(a, InSet(InSet(a, Integer), Boolean))
-inIntsIsBool
+nat_pos_within_real_pos = Forall(a, InSet(a, RealPos), domain=NaturalPos)
+nat_pos_within_real_pos
 
-notInIntsIsBool = Forall(a, InSet(NotInSet(a, Integer), Boolean))
-notInIntsIsBool
+nat_pos_within_real = Forall(a, InSet(a, Real), domain=NaturalPos)
+nat_pos_within_real
 
-intInReal = Forall(a, InSet(a, Real), domain=Integer)
-intInReal
+nat_pos_within_complex = Forall(a, InSet(a, Complex), domain=NaturalPos)
+nat_pos_within_complex
 
-intInComplex = Forall(a, InSet(a, Complex), domain=Integer)
-intInComplex
+natural_lower_bound = Forall(n, GreaterThanEquals(n, zero), domain=Natural)
+natural_lower_bound
 
-inNaturalIfNonNeg = Forall(a, InSet(a,Natural), domain=Integer, conditions=[GreaterThanEquals(a, zero)])
-inNaturalIfNonNeg
+natural_pos_lower_bound = Forall(
+    n, GreaterThanEquals(
+        n, one), domain=NaturalPos)
+natural_pos_lower_bound
 
-inNaturalPosIfPos = Forall(a, InSet(a,NaturalPos), domain=Integer, conditions=[GreaterThan(a, zero)])
-inNaturalPosIfPos
+one_in_natural = InSet(one, Natural)
+one_in_natural
 
-intervalInInt = Forall((a, b), Forall(n, InSet(n, Integer), domain=Interval(a, b)), domain=Integer)
-intervalInInt          
+two_in_natural = InSet(two, Natural)
+two_in_natural
 
-intervalInNat = Forall((a, b), Forall(n, InSet(n, Natural), domain=Interval(a, b)), domain=Natural)
-intervalInNat  
+three_in_natural = InSet(three, Natural)
+three_in_natural
 
-intervalInNatPos = Forall((a, b), Forall(n, InSet(n, NaturalPos), domain=Interval(a, b)), domain=Integer, conditions=[GreaterThan(a, zero)])
-intervalInNatPos
+four_in_natural = InSet(four, Natural)
+four_in_natural
 
-allInNegativeIntervalAreNegative = Forall((a, b), Forall(n, LessThan(n, zero), domain=Interval(a, b)), domain=Integer, conditions=[LessThan(b, zero)])
-allInNegativeIntervalAreNegative
+five_in_natural = InSet(five, Natural)
+five_in_natural
 
-allInPositiveIntervalArePositive = Forall((a, b), Forall(n, GreaterThan(n, zero), domain=Interval(a, b)), domain=Integer, conditions=[GreaterThan(a, zero)])
-allInPositiveIntervalArePositive
+six_in_natural = InSet(six, Natural)
+six_in_natural
 
-intervalLowerBound = Forall((a, b), Forall(n, LessThanEquals(a, n), domain=Interval(a, b)), domain=Integer)
-intervalLowerBound
+seven_in_natural = InSet(seven, Natural)
+seven_in_natural
 
-intervalUpperBound = Forall((a, b), Forall(n, LessThanEquals(n, b), domain=Interval(a, b)), domain=Integer)
-intervalUpperBound
+eight_in_natural = InSet(eight, Natural)
+eight_in_natural
 
-inInterval = Forall((a, b, n), InSet(n, Interval(a, b)), domain=Integer, conditions=[LessThanEquals(a, n), LessThanEquals(n, b)])
-inInterval
+nine_in_natural = InSet(nine, Natural)
+nine_in_natural
 
-natInInt = Forall(a,InSet(a,Integer),domain = Natural)
-natInInt
+one_not_zero = NotEquals(one, zero)
+one_not_zero
 
-natInReal = Forall(a,InSet(a,Real),domain = Natural)
-natInReal
+two_not_zero = NotEquals(two, zero)
+two_not_zero
 
-natInComplex = Forall(a,InSet(a,Complex),domain = Natural)
-natInComplex
+three_not_zero = NotEquals(three, zero)
+three_not_zero
 
-natsPosInNatural = Forall(a,InSet(a,Natural),domain = NaturalPos)
-natsPosInNatural
+four_not_zero = NotEquals(four, zero)
+four_not_zero
 
-natsPosInInteger = Forall(a,InSet(a,Integer),domain = NaturalPos)
-natsPosInInteger
+five_not_zero = NotEquals(five, zero)
+five_not_zero
 
-natPosInRealPos = Forall(a,InSet(a,RealPos),domain = NaturalPos)
-natPosInRealPos
+six_not_zero = NotEquals(six, zero)
+six_not_zero
 
-natPosInReal = Forall(a,InSet(a,Real),domain = NaturalPos)
-natPosInReal
+seven_not_zero = NotEquals(seven, zero)
+seven_not_zero
 
-natPosInComplex = Forall(a,InSet(a,Complex),domain = NaturalPos)
-natPosInComplex
+eight_not_zero = NotEquals(eight, zero)
+eight_not_zero
 
-naturalLowerBound = Forall(n, GreaterThanEquals(n, zero), domain=Natural)
-naturalLowerBound
+nine_not_zero = NotEquals(nine, zero)
+nine_not_zero
 
-naturalPosLowerBound = Forall(n, GreaterThanEquals(n, one), domain=NaturalPos)
-naturalPosLowerBound
+one_is_positive = GreaterThan(one, zero)
+one_is_positive
 
-oneInNatural = InSet(one,Natural)
-oneInNatural
+two_is_positive = GreaterThan(two, zero)
+two_is_positive
 
-twoInNatural = InSet(two,Natural)
-twoInNatural
+three_is_positive = GreaterThan(three, zero)
+three_is_positive
 
-threeInNatural = InSet(three,Natural)
-threeInNatural
+four_is_positive = GreaterThan(four, zero)
+four_is_positive
 
-fourInNatural = InSet(four,Natural)
-fourInNatural
+five_is_positive = GreaterThan(five, zero)
+five_is_positive
 
-fiveInNatural = InSet(five,Natural)
-fiveInNatural
+six_is_positive = GreaterThan(six, zero)
+six_is_positive
 
-sixInNatural = InSet(six,Natural)
-sixInNatural
+seven_is_positive = GreaterThan(seven, zero)
+seven_is_positive
 
-sevenInNatural = InSet(seven,Natural)
-sevenInNatural
+eight_is_positive = GreaterThan(eight, zero)
+eight_is_positive
 
-eightInNatural = InSet(eight,Natural)
-eightInNatural
+nine_is_positive = GreaterThan(nine, zero)
+nine_is_positive
 
-nineInNatural = InSet(nine,Natural)
-nineInNatural
+one_in_natural_pos = InSet(one, NaturalPos)
+one_in_natural_pos
 
-oneNotZero = NotEquals(one, zero)
-oneNotZero
+two_in_natural_pos = InSet(two, NaturalPos)
+two_in_natural_pos
 
-twoNotZero = NotEquals(two, zero)
-twoNotZero
+three_in_natural_pos = InSet(three, NaturalPos)
+three_in_natural_pos
 
-threeNotZero = NotEquals(three, zero)
-threeNotZero
+four_in_natural_pos = InSet(four, NaturalPos)
+four_in_natural_pos
 
-fourNotZero = NotEquals(four, zero)
-fourNotZero
+five_in_natural_pos = InSet(five, NaturalPos)
+five_in_natural_pos
 
-fiveNotZero = NotEquals(five, zero)
-fiveNotZero
+six_in_natural_pos = InSet(six, NaturalPos)
+six_in_natural_pos
 
-sixNotZero = NotEquals(six, zero)
-sixNotZero
+seven_in_natural_pos = InSet(seven, NaturalPos)
+seven_in_natural_pos
 
-sevenNotZero = NotEquals(seven, zero)
-sevenNotZero
+eight_in_natural_pos = InSet(eight, NaturalPos)
+eight_in_natural_pos
 
-eightNotZero = NotEquals(eight, zero)
-eightNotZero
+nine_in_natural_pos = InSet(nine, NaturalPos)
+nine_in_natural_pos
 
-nineNotZero = NotEquals(nine, zero)
-nineNotZero
+naturals_induction = Forall(
+    P, Implies(
+        And(
+            Operation(
+                P, zero), Forall(
+                    n, Implies(
+                        Operation(
+                            P, n), Operation(
+                                P, Add(
+                                    n, one))), domain=Natural)), Forall(
+                                        n, Operation(
+                                            P, n), domain=Natural)))
+naturals_induction
 
-oneIsPositive = GreaterThan(one,zero)
-oneIsPositive
+naturals_pos_induction = Forall(
+    P, Implies(
+        And(
+            Operation(
+                P, one), Forall(
+                    n, Implies(
+                        Operation(
+                            P, n), Operation(
+                                P, Add(
+                                    n, one))), domain=NaturalPos)), Forall(
+                                        n, Operation(
+                                            P, n), domain=NaturalPos)))
+naturals_pos_induction
 
-twoIsPositive = GreaterThan(two,zero)
-twoIsPositive
-
-threeIsPositive = GreaterThan(three,zero)
-threeIsPositive
-
-fourIsPositive = GreaterThan(four,zero)
-fourIsPositive
-
-fiveIsPositive = GreaterThan(five,zero)
-fiveIsPositive
-
-sixIsPositive = GreaterThan(six,zero)
-sixIsPositive
-
-sevenIsPositive = GreaterThan(seven,zero)
-sevenIsPositive
-
-eightIsPositive = GreaterThan(eight,zero)
-eightIsPositive
-
-nineIsPositive = GreaterThan(nine,zero)
-nineIsPositive
-
-oneInNaturalPos = InSet(one, NaturalPos)
-oneInNaturalPos
-
-twoInNaturalPos = InSet(two, NaturalPos)
-twoInNaturalPos
-
-threeInNaturalPos = InSet(three, NaturalPos)
-threeInNaturalPos
-
-fourInNaturalPos = InSet(four, NaturalPos)
-fourInNaturalPos
-
-fiveInNaturalPos = InSet(five, NaturalPos)
-fiveInNaturalPos
-
-sixInNaturalPos = InSet(six, NaturalPos)
-sixInNaturalPos
-
-sevenInNaturalPos = InSet(seven, NaturalPos)
-sevenInNaturalPos
-
-eightInNaturalPos = InSet(eight, NaturalPos)
-eightInNaturalPos
-
-nineInNaturalPos = InSet(nine, NaturalPos)
-nineInNaturalPos
-
-naturalsInduction = Forall(P, Implies(And(Operation(P, zero), 
-                                          Forall(n, Implies(Operation(P, n), Operation(P, Add(n, one))),
-                                                 domain=Natural)),
-                                      Forall(n, Operation(P, n), domain=Natural)))
-naturalsInduction      
-
-naturalsPosInduction = Forall(P, Implies(And(Operation(P, one), 
-                                             Forall(n, Implies(Operation(P, n), Operation(P, Add(n, one))),
-                                                    domain=NaturalPos)),
-                                         Forall(n, Operation(P, n), domain=NaturalPos)))
-naturalsPosInduction 
-
-endTheorems(locals(), __package__)
+end_theorems(locals(), __package__)

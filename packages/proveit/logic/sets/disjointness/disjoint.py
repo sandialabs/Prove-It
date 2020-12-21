@@ -1,5 +1,6 @@
 from proveit import Function, Literal
 
+
 class Disjoint(Function):
     '''
     The Disjoint operation defines a property for a collection of sets.
@@ -9,8 +10,6 @@ class Disjoint(Function):
     (there are no pairs of sets, so all pairs are vacuously disjoint).
     '''
     _operator_ = Literal('disjoint', r'\textrm{disjoint}', theory=__file__)
-    
+
     def __init__(self, *sets):
         Function.__init__(self, Disjoint._operator_, sets)
-
-    
