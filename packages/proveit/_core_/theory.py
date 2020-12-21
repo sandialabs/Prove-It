@@ -291,13 +291,37 @@ class Theory:
                 f.write(output)
 
     def get_axiom_names(self):
+        '''
+        Return the names of the axioms in this Theory.
+        '''
         return self._storage.get_axiom_names()
 
     def get_theorem_names(self):
+        '''
+        Return the names of the theorems in this Theory.
+        '''
         return self._storage.get_theorem_names()
 
-    def common_expression_names(self):
-        return self._storage.common_expression_names()
+    def get_common_expression_names(self):
+        '''
+        Return the names of the common expression in this Theory.
+        '''        
+        return self._storage.get_common_expression_names()
+
+    def get_expression_axiom_and_theorem_names(self):
+        '''
+        Return the names of the common expressions, axioms, theorems 
+        in this Theory.
+        '''        
+        return  self._storage.get_expression_axiom_and_theorem_names()
+
+    def get_expression_axiom_or_theorem_kind(self, name):
+        '''
+        Return 'common', 'axiom', or 'theorem' if the given name
+        is the name of a common expression, axiom, or theorem of this
+        Theory respectively.
+        '''
+        return  self._storage.get_expression_axiom_or_theorem_kind(name)
 
     def stored_common_expr_dependencies(self):
         '''
@@ -731,33 +755,36 @@ class TheoryPackage(ModuleType):
     common expressions, axioms, and theorems of the package.
     '''
     
-    def __init__(self, name, filename):
+    def __init__(self, name, filename, attr_dict):
         ModuleType.__init__(self, name)
         self._theory = Theory(filename)
         self.__file__ = filename
+        self.__dict__.update(attr_dict)
     
     def __dir__(self):
+        expression_axiom_and_theorems_names = \
+            self._theory.get_expression_axiom_and_theorem_names()
         return sorted(list(self.__dict__.keys()) + 
-                      list(self._theory.get_expression_and_truth_names()))
-
+                      list(expression_axiom_and_theorems_names))
+    
     def __getattr__(self, name):
+        import importlib
         if name[0:2]=='__': 
             # don't handle internal Python attributes
             raise AttributeError 
-        self.get_expression_and_truth_names()
         try:
-            kind = self.get_expression_and_truth_names(name)
+            kind = self._theory.get_expression_axiom_or_theorem_kind(name)
         except KeyError:
             # By default, we'll assume it is a common expression
             # so we can deal with unset common expressions 
             # appropriately via UnsetCommonExpressionPlaceholder.
             kind = 'common'
         if kind == 'common':
-            module = self._common_
+            module = importlib.import_module(self.__name__ + '._common_')
         elif kind == 'axiom':
-            module = self._axioms_
+            module = importlib.import_module(self.__name__ + '._axioms_')
         elif kind == 'theorem':
-            module = self._theorems
+            module = importlib.import_module(self.__name__ + '._theorems_')
         return getattr(module, name)
 
 class UnsetCommonExpressionPlaceholder(object):
