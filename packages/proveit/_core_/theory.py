@@ -136,11 +136,6 @@ class Theory:
         # Create the Storage object for this Theory
         if normpath not in Theory.storages:
             Theory.storages[normpath] = TheoryStorage(self, name, path, rootDirectory)
-            # if the _sub_theories_.txt file has not been created, make an empty one
-            sub_theories_path = os.path.join(path, '_sub_theories_.txt')
-            if not os.path.isfile(sub_theories_path):
-                assert False
-                open(sub_theories_path, 'wt').close()
         self._storage = Theory.storages[normpath]
         if active_folder is not None:
             self.set_active_folder(active_folder, owns_active_folder)
@@ -643,7 +638,46 @@ class CommonExpressions(ModuleType):
                     # expression notebook first.
                     return UnsetCommonExpressionPlaceholder(
                             self._theory,  name)
-            raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self._theory.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
+            raise AttributeError(
+                    "'%s' not found in the list of common expressions of "
+                    "'%s'\n(make sure o execute the appropriate "
+                    "'_common_.ipynb' notebook after any changes)"
+                    %(name, self._theory.name))
+
+class TheoryPackage(ModuleType):
+    '''
+    Used in __init__.py modules of theory packages for accessing 
+    common expressions, axioms, and theorems of the package.
+    '''
+    
+    def __init__(self, name, filename):
+        ModuleType.__init__(self, name)
+        self._theory = Theory(filename)
+        self.__file__ = filename
+    
+    def __dir__(self):
+        return sorted(list(self.__dict__.keys()) + list(self._theory.get_expression_and_truth_names()))
+
+    def __getattr__(self, name):
+        if name[0:2]=='__': 
+            # don't handle internal Python attributes
+            raise AttributeError 
+        self.get_expression_and_truth_names()
+        try:
+            kind = self.get_expression_and_truth_names(name)
+        except KeyError:
+            # By default, we'll assume it is a common expression
+            # so we can deal with unset common expressions 
+            # appropriately via UnsetCommonExpressionPlaceholder.
+            kind = 'common'
+        if kind == 'common':
+            module = self._common_
+        elif kind == 'axiom':
+            module = self._axioms_
+        elif kind == 'theorem':
+            module = self._theorems
+        return getattr(module, name)
+
 
 class UnsetCommonExpressionPlaceholder(object):
     '''
