@@ -67,7 +67,8 @@ Installation instructions
    to download and extract the Prove-It "database" files distributed in
    `__pv_it` folders throughout the Prove-It sub-folders.  The `--clean`
    option will erase anything that may have been added to your local
-   database before extracting the downloaded version.
+   database before extracting the downloaded version.  THIS FEATURE IS
+   NOT CURRENTLY WORKING.  WE HOPE TO RE-ENABLE IT SOON.
 
 4) It is intended that theory packages continue to be added and updated 
    to cover an ever-expanding range of mathematical knowledge.  Theory 
