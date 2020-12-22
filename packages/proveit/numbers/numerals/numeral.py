@@ -1,6 +1,6 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit.logic import IrreducibleValue, Equals
-from proveit._common_ import a, b
+from proveit import a, b
 
 
 class Numeral(Literal, IrreducibleValue):
@@ -27,7 +27,7 @@ class Numeral(Literal, IrreducibleValue):
 
     def not_equal(self, other, assumptions=USE_DEFAULTS):
         from proveit.numbers import Less
-        from proveit.numbers.ordering._theorems_ import less_is_not_eq, gtr_is_not_eq
+        from proveit.numbers.ordering import less_is_not_eq, gtr_is_not_eq
         _a, _b = Less.sorted_items([self, other], assumptions=assumptions)
         if self == _a:
             return less_is_not_eq.instantiate(
@@ -91,8 +91,8 @@ class Numeral(Literal, IrreducibleValue):
 
     def deduce_in_natural(self, assumptions=USE_DEFAULTS):
         if Numeral._inNaturalStmts is None:
-            from proveit.numbers.number_sets.natural_numbers._axioms_ import zero_in_nats
-            from .decimals._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
+            from proveit.numbers.number_sets.natural_numbers import zero_in_nats
+            from .decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
             Numeral._inNaturalStmts = {0: zero_in_nats, 1: nat1, 2: nat2,
                                        3: nat3, 4: nat4, 5: nat5, 6: nat6,
                                        7: nat7, 8: nat8, 9: nat9}
@@ -101,16 +101,16 @@ class Numeral(Literal, IrreducibleValue):
     '''
     def deduce_not_zero(self):
         if Numeral._notZeroStmts is None:
-            from .decimals._theorems_ import one_not_zero, two_not_zero, three_not_zero, four_not_zero, five_not_zero
-            from .decimals._theorems_ import six_not_zero, seven_not_zero, eight_not_zero, nine_not_zero
+            from .decimals import one_not_zero, two_not_zero, three_not_zero, four_not_zero, five_not_zero
+            from .decimals import six_not_zero, seven_not_zero, eight_not_zero, nine_not_zero
             Numeral._notZeroStmts = {1:one_not_zero, 2:two_not_zero, 3:three_not_zero, 4:four_not_zero, 5:five_not_zero, 6:six_not_zero, 7:seven_not_zero, 8:eight_not_zero, 9:nine_not_zero}
         return Numeral._notZeroStmts[self.n]
     '''
 
     def deduce_in_natural_pos(self, assumptions=USE_DEFAULTS):
         if Numeral._inNaturalPosStmts is None:
-            from .decimals._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
-            from .decimals._theorems_ import posnat6, posnat7, posnat8, posnat9
+            from .decimals import posnat1, posnat2, posnat3, posnat4, posnat5
+            from .decimals import posnat6, posnat7, posnat8, posnat9
             Numeral._inNaturalPosStmts = {
                 1: posnat1,
                 2: posnat2,
@@ -128,8 +128,8 @@ class Numeral(Literal, IrreducibleValue):
 
     def deduce_in_digits(self, assumptions=USE_DEFAULTS):
         if Numeral._inDigitsStmts is None:
-            from .decimals._theorems_ import digit0, digit1, digit2, digit3, digit4, digit5
-            from .decimals._theorems_ import digit6, digit7, digit8, digit9
+            from .decimals import digit0, digit1, digit2, digit3, digit4, digit5
+            from .decimals import digit6, digit7, digit8, digit9
             Numeral._inDigitsStmts = {
                 0: digit0,
                 1: digit1,
@@ -148,8 +148,8 @@ class Numeral(Literal, IrreducibleValue):
 
     def deduce_positive(self, assumptions=USE_DEFAULTS):
         if Numeral._positiveStmts is None:
-            from .decimals._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
-            from .decimals._theorems_ import posnat6, posnat7, posnat8, posnat9
+            from .decimals import posnat1, posnat2, posnat3, posnat4, posnat5
+            from .decimals import posnat6, posnat7, posnat8, posnat9
             Numeral._positiveStmts = {
                 1: posnat1,
                 2: posnat2,

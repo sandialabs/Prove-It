@@ -26,9 +26,9 @@ class ModAbs(Operation):
         attempt to prove that the given ModAbs expression is in that
         number set using the appropriate closure theorem.
         '''
-        from proveit._common_ import a, b
+        from proveit import a, b
         from proveit.logic import InSet
-        from proveit.numbers.modular._theorems_ import (
+        from proveit.numbers.modular import (
             mod_abs_int_closure, mod_abs_real_closure)
         from proveit.numbers import Integer, Real
 

@@ -48,10 +48,10 @@ class Set(Operation):
         addresses the case where we have
         Forall_{x in S | Q(x) ^ Q(x) => P(x)} P(x).
         '''
-        from proveit._common_ import a, n, x, P, Q
+        from proveit import a, n, x, P, Q
         from proveit.logic import And, Forall, InSet
         from proveit.numbers import one
-        from ._theorems_ import true_for_each_then_true_for_all
+        from . import true_for_each_then_true_for_all
         assert(isinstance(forall_stmt, Forall)), (
             "May only call the prove_by_cases method of the enumerated "
             "Set class using a Forall (universally quantified) expression "
@@ -70,7 +70,7 @@ class Set(Operation):
             "of the conditions you specify.")
 
         if (len(forall_stmt.conditions) > 1):
-            from ._theorems_ import true_for_each_then_true_for_all_conditioned
+            from . import true_for_each_then_true_for_all_conditioned
             if len(forall_stmt.conditions) == 2:
                 # Note that when a Forall expression is created, if the
                 # domain was defined separately using the domain=
@@ -145,7 +145,7 @@ class Set(Operation):
         (init_idx, init_idx+1, ..., final_idx) where
         0 ≤ init_idx ≤ final_idx ≤ n - 1 for a set of size n.
         '''
-        from ._theorems_ import (binary_permutation, leftward_permutation,
+        from . import (binary_permutation, leftward_permutation,
                                  rightward_permutation)
         return apply_commutation_thm(
             self, init_idx, final_idx, binary_permutation,
@@ -338,8 +338,8 @@ class Set(Operation):
 
         # Organize info for theorem instantiation
         # then instantiate.
-        from ._theorems_ import subset_eq_of_superset
-        # from proveit._common_ import m, n, aa, bb
+        from . import subset_eq_of_superset
+        # from proveit import m, n, aa, bb
         from proveit.numbers import num
         m, n, a, b = subset_eq_of_superset.all_instance_vars()
         a_sub, b_sub = (desired_subset_list, desired_complement_list)
@@ -614,7 +614,7 @@ class Set(Operation):
 
         # Organize info for theorem instantiation
         # then instantiate.
-        from ._theorems_ import proper_subset_of_superset
+        from . import proper_subset_of_superset
         from proveit.numbers import num
         m, n, a, b, c = proper_subset_of_superset.all_instance_vars()
         a_sub = desired_subset_list
@@ -761,8 +761,8 @@ class Set(Operation):
             idx_to_keep = idxs_of_elems[1]
 
         # Now ready to apply the single-elem reduction theorem
-        from ._theorems_ import reduction_right, reduction_left
-        from proveit._common_ import l, m, n, x
+        from . import reduction_right, reduction_left
+        from proveit import l, m, n, x
         from proveit.numbers import num
         l, m, n, aa, x, bb, cc = reduction_right.all_instance_vars()
 
@@ -874,7 +874,7 @@ class Set(Operation):
 
         # We deduce the desired equality by instantiating the
         # equal_element_equality theorem from the enumeration theory
-        from ._theorems_ import equal_element_equality
+        from . import equal_element_equality
         # --- Organize the instantiation mapping info.
         from proveit.numbers import num
         m, n, aa, b, cc, d = equal_element_equality.all_instance_vars()

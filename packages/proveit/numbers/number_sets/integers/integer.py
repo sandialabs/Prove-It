@@ -1,5 +1,5 @@
 from proveit import USE_DEFAULTS
-from proveit._common_ import a
+from proveit import a
 from proveit.numbers.number_sets.number_set import NumberSet
 
 
@@ -15,22 +15,22 @@ class IntegerSet(NumberSet):
         yield lambda assumptions: self.deduce_member_in_rational(member, assumptions)
 
     def deduce_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_ints_is_bool
+        from . import in_ints_is_bool
         return in_ints_is_bool.instantiate(
             {a: element}, assumptions=assumptions)
 
     def deduce_not_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
-        from ._theorems_ import not_in_ints_is_bool
+        from . import not_in_ints_is_bool
         return not_in_ints_is_bool.instantiate(
             {a: element}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import int_membership_is_bool
-        from proveit._common_ import x
+        from . import int_membership_is_bool
+        from proveit import x
         return int_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.rational_numbers._theorems_ import int_within_rational
+        from proveit.numbers.number_sets.rational_numbers import int_within_rational
         return int_within_rational.derive_superset_membership(
             member, assumptions)

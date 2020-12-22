@@ -1,7 +1,7 @@
 from proveit import Literal, USE_DEFAULTS, as_expression
 from proveit.logic import Equals
 from .ordering_relation import OrderingRelation, OrderingSequence, make_sequence_or_relation
-from proveit._common_ import a, b, c, d, x, y, z
+from proveit import a, b, c, d, x, y, z
 
 
 class LesserRelation(OrderingRelation):
@@ -61,7 +61,7 @@ class LesserSequence(OrderingSequence):
         # Containment in the {<, <=, =} set is relevant when dealing with a LesserSequence,
         # so let's go ahead and import these unquantified theorems.
         try:
-            from ._theorems_ import less__in__less_eq_relations, less_eq__in__less_eq_relations, eq__in__less_eq_relations
+            from . import less__in__less_eq_relations, less_eq__in__less_eq_relations, eq__in__less_eq_relations
         except BaseException:
             # may fail before the relevent _theorems_ have been generated
             pass  # and that's okay
@@ -103,7 +103,7 @@ class Less(LesserRelation):
 
     def conclude_via_increase(self, assumptions):
         from proveit.numbers import Add, one
-        from proveit.numbers.ordering._theorems_ import less_than_successor, less_than_an_increase
+        from proveit.numbers.ordering import less_than_successor, less_than_an_increase
         bad_form_msg = ("Not the right form for "
                         "'Less.conclude_via_increase': %s" % self)
         if not isinstance(self.rhs, Add):
@@ -130,12 +130,12 @@ class Less(LesserRelation):
         '''
         From x < y derive y > x.
         '''
-        from ._theorems_ import reverse_less
+        from . import reverse_less
         return reverse_less.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import less_than_is_bool
+        from . import less_than_is_bool
         return less_than_is_bool.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -144,7 +144,7 @@ class Less(LesserRelation):
         Relax a < b to a <= b, deducing the latter from the former (self) and returning the latter.
         Assumptions may be required to deduce that a and b are in Real.
         '''
-        from ._theorems_ import relax_less
+        from . import relax_less
         return relax_less.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -166,8 +166,8 @@ class Less(LesserRelation):
         and something of the form y<z, y<=z, z>y, z>=y, or y=z to
         obtain x<z.
         '''
-        from ._axioms_ import transitivity_less_less
-        from ._theorems_ import transitivity_less_less_eq
+        from . import transitivity_less_less
+        from . import transitivity_less_less_eq
         from .greater_than import Greater, GreaterEq
         other = as_expression(other)
         if isinstance(other, Equals):
@@ -200,7 +200,7 @@ class Less(LesserRelation):
         From :math:`a < b`, derive and return :math:`-a > -b`.
         Assumptions may be required to prove that a, and b are in Real.
         '''
-        from ._theorems_ import negated_less_than
+        from . import negated_less_than
         return negated_less_than.instantiate({a:self.lhs, b:self.rhs})
     """
 
@@ -215,7 +215,7 @@ class Less(LesserRelation):
         Assumptions may be required to prove that a, b, and c are in
         Real.
         '''
-        from ._theorems_ import less_shift_add_right, less_shift_add_left  # , less_than_subtract
+        from . import less_shift_add_right, less_shift_add_left  # , less_than_subtract
         if addend_side == 'right':
             return less_shift_add_right.instantiate(
                 {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
@@ -232,7 +232,7 @@ class Less(LesserRelation):
         From a < b, derive and return a + c < b given c <= 0 (and a, b, c
         are all Real) where c is the given 'addend'.
         '''
-        from ._theorems_ import less_add_left
+        from . import less_add_left
         return less_add_left.instantiate({a: self.lhs, b: self.rhs, c: addend},
                                          assumptions=assumptions)
 
@@ -241,7 +241,7 @@ class Less(LesserRelation):
         From a < b, derive and return a < b + c given 0 <= c (and a, b, c
         are all Real) where c is the given 'addend'.
         '''
-        from ._theorems_ import less_add_right
+        from . import less_add_right
         return less_add_right.instantiate(
             {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
 
@@ -252,7 +252,7 @@ class Less(LesserRelation):
         given 'relation'.
         '''
         from .greater_than import Greater, GreaterEq
-        from ._theorems_ import less_add_both
+        from . import less_add_both
         if isinstance(relation, Less) or isinstance(relation, LessEq):
             c_val = relation.lhs
             d_val = relation.rhs
@@ -274,7 +274,7 @@ class Less(LesserRelation):
         on the left.
         '''
         from proveit.numbers import Less, LessEq, Greater, GreaterEq, zero
-        from proveit.numbers.multiplication._theorems_ import (
+        from proveit.numbers.multiplication import (
             left_mult_pos_less, left_mult_nonneg_less,
             left_mult_neg_less, left_mult_nonpos_less)
         if Greater(multiplier, zero).proven(assumptions):
@@ -309,7 +309,7 @@ class Less(LesserRelation):
         on the right.
         '''
         from proveit.numbers import Less, LessEq, Greater, GreaterEq, zero
-        from proveit.numbers.multiplication._theorems_ import (
+        from proveit.numbers.multiplication import (
             right_mult_pos_less, right_mult_nonneg_less,
             right_mult_neg_less, right_mult_nonpos_less)
         if Greater(multiplier, zero).proven(assumptions):
@@ -343,7 +343,7 @@ class Less(LesserRelation):
         Divide both sides of the relation by the 'divisor'.
         '''
         from proveit.numbers import Less, Greater, zero
-        from proveit.numbers.division._theorems_ import (
+        from proveit.numbers.division import (
             div_pos_less, div_neg_less)
         if Greater(divisor, zero).proven(assumptions):
             return div_pos_less.instantiate(
@@ -365,7 +365,7 @@ class Less(LesserRelation):
         '''
         Add to both sides of the relation by the 'addend' on the left.
         '''
-        from proveit.numbers.addition._theorems_ import left_add_less
+        from proveit.numbers.addition import left_add_less
         return left_add_less.instantiate(
             {a: addend, x: self.lhs, y: self.rhs},
             assumptions=assumptions)._simplify_both_sides(
@@ -376,7 +376,7 @@ class Less(LesserRelation):
         '''
         Add to both sides of the relation by the 'addend' on the right.
         '''
-        from proveit.numbers.addition._theorems_ import right_add_less
+        from proveit.numbers.addition import right_add_less
         return right_add_less.instantiate(
             {a: addend, x: self.lhs, y: self.rhs},
             assumptions=assumptions)._simplify_both_sides(
@@ -388,7 +388,7 @@ class Less(LesserRelation):
         Exponentiate both sides of the relation by the 'exponent'.
         '''
         from proveit.numbers import Less, LessEq, Greater, GreaterEq, zero
-        from proveit.numbers.exponentiation._theorems_ import (
+        from proveit.numbers.exponentiation import (
             exp_pos_less, exp_nonneg_less, exp_neg_less, exp_nonpos_less)
         if Greater(exponent, zero).proven(assumptions):
             return exp_pos_less.instantiate(
@@ -446,17 +446,17 @@ class LessEq(LesserRelation):
         '''
         From, e.g., x <= y derive y >= x etc.
         '''
-        from ._theorems_ import reverse_less_eq
+        from . import reverse_less_eq
         return reverse_less_eq.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=frozenset()):
-        from ._theorems_ import less_than_equals_is_bool
+        from . import less_than_equals_is_bool
         return less_than_equals_is_bool.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
     def unfold(self, assumptions=frozenset()):
-        from ._axioms_ import less_than_equals_def
+        from . import less_than_equals_def
         return less_than_equals_def.instantiate({x: self.lhs, y: self.rhs})
 
     def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
@@ -466,7 +466,7 @@ class LessEq(LesserRelation):
         obtain x<z or x<=z as appropriate.  In the special case
         of x<=y and y<=x (or x>=y), derive x=z.
         '''
-        from ._theorems_ import transitivity_less_eq_less, transitivity_less_eq_less_eq, symmetric_less_eq
+        from . import transitivity_less_eq_less, transitivity_less_eq_less_eq, symmetric_less_eq
         from .greater_than import Greater, GreaterEq
         other = as_expression(other)
         if isinstance(other, Equals):
@@ -502,7 +502,7 @@ class LessEq(LesserRelation):
         From :math:`a \leq b`, derive and return :math:`-a \geq -b`.
         Assumptions may be required to prove that a, and b are in Real.
         '''
-        from ._theorems_ import negated_less_than_equals
+        from . import negated_less_than_equals
         return negated_less_than_equals.instantiate({a: self.lhs, b: self.rhs})
 
     def derive_shifted(
@@ -516,7 +516,7 @@ class LessEq(LesserRelation):
         Assumptions may be required to prove that a, b, and c are in
         Real.
         '''
-        from ._theorems_ import less_eq_shift_add_right, less_eq_shift_add_left  # , less_than_subtract
+        from . import less_eq_shift_add_right, less_eq_shift_add_left  # , less_than_subtract
         if addend_side == 'right':
             return less_eq_shift_add_right.instantiate(
                 {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
@@ -533,7 +533,7 @@ class LessEq(LesserRelation):
         From a <= b, derive and return a + c <= b given c <= 0 (and a, b, c
         are all Real) where c is the given 'addend'.
         '''
-        from ._theorems_ import less_eq_add_left
+        from . import less_eq_add_left
         return less_eq_add_left.instantiate(
             {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
 
@@ -542,7 +542,7 @@ class LessEq(LesserRelation):
         From a <- b, derive and return a <= b + c given 0 <= c (and a, b, c
         are all Real) where c is the given 'addend'.
         '''
-        from ._theorems_ import less_eq_add_right
+        from . import less_eq_add_right
         return less_eq_add_right.instantiate(
             {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
 
@@ -553,7 +553,7 @@ class LessEq(LesserRelation):
         given 'relation'.
         '''
         from .greater_than import Greater, GreaterEq
-        from ._theorems_ import less_eq_add_both
+        from . import less_eq_add_both
         if isinstance(relation, Less) or isinstance(relation, LessEq):
             c_val = relation.lhs
             d_val = relation.rhs
@@ -569,7 +569,7 @@ class LessEq(LesserRelation):
                                             assumptions=assumptions)
 
     def conclude_via_equality(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import relax_equal_to_less_eq
+        from . import relax_equal_to_less_eq
         return relax_equal_to_less_eq.instantiate(
             {x: self.operands[0], y: self.operands[1]},
             assumptions=assumptions)
@@ -581,7 +581,7 @@ class LessEq(LesserRelation):
         on the left.
         '''
         from proveit.numbers import GreaterEq, zero
-        from proveit.numbers.multiplication._theorems_ import (
+        from proveit.numbers.multiplication import (
             left_mult_pos_lesseq, left_mult_neg_lesseq)
         if GreaterEq(multiplier, zero).proven(assumptions):
             return left_mult_pos_lesseq.instantiate(
@@ -605,7 +605,7 @@ class LessEq(LesserRelation):
         on the right.
         '''
         from proveit.numbers import GreaterEq, zero
-        from proveit.numbers.multiplication._theorems_ import (
+        from proveit.numbers.multiplication import (
             right_mult_pos_lesseq, right_mult_neg_lesseq)
         if GreaterEq(multiplier, zero).proven(assumptions):
             return right_mult_pos_lesseq.instantiate(
@@ -628,7 +628,7 @@ class LessEq(LesserRelation):
         Divide both sides of the relation by the 'divisor'.
         '''
         from proveit.numbers import Greater, zero
-        from proveit.numbers.division._theorems_ import (
+        from proveit.numbers.division import (
             div_pos_lesseq, div_neg_lesseq)
         if Greater(divisor, zero).proven(assumptions):
             return div_pos_lesseq.instantiate(
@@ -650,7 +650,7 @@ class LessEq(LesserRelation):
         '''
         Add to both sides of the relation by the 'addend' on the left.
         '''
-        from proveit.numbers.addition._theorems_ import left_add_lesseq
+        from proveit.numbers.addition import left_add_lesseq
         return left_add_lesseq.instantiate(
             {a: addend, x: self.lhs, y: self.rhs},
             assumptions=assumptions)._simplify_both_sides(
@@ -661,7 +661,7 @@ class LessEq(LesserRelation):
         '''
         Add to both sides of the relation by the 'addend' on the right.
         '''
-        from proveit.numbers.addition._theorems_ import right_add_lesseq
+        from proveit.numbers.addition import right_add_lesseq
         return right_add_lesseq.instantiate(
             {a: addend, x: self.lhs, y: self.rhs},
             assumptions=assumptions)._simplify_both_sides(
@@ -673,7 +673,7 @@ class LessEq(LesserRelation):
         Exponentiate both sides of the relation by the 'exponent'.
         '''
         from proveit.numbers import Greater, GreaterEq, zero
-        from proveit.numbers.exponentiation._theorems_ import (
+        from proveit.numbers.exponentiation import (
             exp_pos_lesseq, exp_nonneg_lesseq,
             exp_neg_lesseq, exp_nonpos_lesseq)
         if Greater(exponent, zero).proven(assumptions):

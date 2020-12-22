@@ -1,7 +1,7 @@
 import proveit
 from proveit.logic import Equals, NotEquals
 from proveit import USE_DEFAULTS, maybe_fenced_string
-from proveit._common_ import a, x, y
+from proveit import a, x, y
 from proveit.numbers.number_sets.number_set import NumberSet
 
 
@@ -18,12 +18,12 @@ class RealSet(NumberSet):
                                                                 assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import real_membership_is_bool
+        from . import real_membership_is_bool
         return real_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_complex(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.complex_numbers._theorems_ import real_within_complex
+        from proveit.numbers.number_sets.complex_numbers import real_within_complex
         return real_within_complex.derive_superset_membership(
             member, assumptions)
 
@@ -40,7 +40,7 @@ class RealPosSet(NumberSet):
         yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_real_pos_iff_positive
+        from . import in_real_pos_iff_positive
         return in_real_pos_iff_positive.instantiate(
             {a: member}, assumptions=assumptions).derive_right_implication(
             assumptions)
@@ -62,13 +62,13 @@ class RealPosSet(NumberSet):
         return maybe_fenced_string(inner_str, **kwargs)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import real_pos_membership_is_bool
-        from proveit._common_ import x
+        from . import real_pos_membership_is_bool
+        from proveit import x
         return real_pos_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import real_pos_within_real
+        from . import real_pos_within_real
         return real_pos_within_real.derive_superset_membership(
             member, assumptions)
 
@@ -85,7 +85,7 @@ class RealNegSet(NumberSet):
         yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_real_neg_iff_negative
+        from . import in_real_neg_iff_negative
         return in_real_neg_iff_negative.instantiate(
             {a: member}, assumptions=assumptions).derive_right_implication(
             assumptions)
@@ -107,13 +107,13 @@ class RealNegSet(NumberSet):
         return maybe_fenced_string(inner_str, **kwargs)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import real_neg_membership_is_bool
-        from proveit._common_ import x
+        from . import real_neg_membership_is_bool
+        from proveit import x
         return real_neg_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import real_neg_within_real
+        from . import real_neg_within_real
         return real_neg_within_real.derive_superset_membership(
             member, assumptions)
 
@@ -131,7 +131,7 @@ class RealNonNegSet(NumberSet):
         yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_real_non_neg_iff_non_negative
+        from . import in_real_non_neg_iff_non_negative
         return in_real_non_neg_iff_non_negative.instantiate(
             {a: member}, assumptions=assumptions).derive_right_implication(
             assumptions)
@@ -153,20 +153,20 @@ class RealNonNegSet(NumberSet):
         return maybe_fenced_string(inner_str, **kwargs)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import real_non_neg_membership_is_bool
-        from proveit._common_ import x
+        from . import real_non_neg_membership_is_bool
+        from proveit import x
         return real_non_neg_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import real_non_neg_within_real
+        from . import real_non_neg_within_real
         return real_non_neg_within_real.derive_superset_membership(
             member, assumptions)
 
 # if proveit.defaults.automation:
 #     # Import some fundamental theorems without quantifiers that are
 #     # imported when automation is used.
-#     from ._theorems_ import (
+#     from . import (
 #         real_pos_within_real, real_neg_within_real, real_non_neg_within_real, int_within_real,
 #         nat_within_real, nat_pos_within_real, nat_pos_within_real_pos)
 
@@ -177,7 +177,7 @@ if proveit.defaults.automation:
     try:
         # This can fails before running the _axioms_ and _theorems_
         # notebooks for the first time, but fine after that.
-        from ._theorems_ import (
+        from . import (
             real_pos_within_real,
             real_neg_within_real,
             real_non_neg_within_real,

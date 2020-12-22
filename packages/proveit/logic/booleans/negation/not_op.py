@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
 from proveit.logic.booleans.booleans import in_bool
-from proveit._common_ import A, x, y, S
+from proveit import A, x, y, S
 
 
 class Not(Operation):
@@ -98,9 +98,9 @@ class Not(Operation):
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
         '''
-        from ._axioms_ import not_t, not_f  # load in truth-table evaluations
-        from proveit.logic.booleans._common_ import TRUE
-        from proveit.logic.booleans.negation._theorems_ import falsified_negation_intro
+        from . import not_t, not_f  # load in truth-table evaluations
+        from proveit.logic.booleans import TRUE
+        from proveit.logic.booleans.negation import falsified_negation_intro
         if self.operand.proven(assumptions) and self.operand != TRUE:
             # evaluate to FALSE via falsified_negation_intro
             return falsified_negation_intro.instantiate(
@@ -111,9 +111,9 @@ class Not(Operation):
         '''
         Given not(A), derive P(False) from P(A).
         '''
-        from proveit.logic.equality._theorems_ import substitute_in_false
+        from proveit.logic.equality import substitute_in_false
         from proveit.logic import Equals
-        from proveit._common_ import P
+        from proveit import P
         Plambda = Equals._lambda_expr(lambda_map, self.operand)
         return substitute_in_false.instantiate(
             {x: self.operand, P: Plambda}, assumptions=assumptions)
@@ -122,7 +122,7 @@ class Not(Operation):
         '''
         Given not(A), derive P(A) from P(False).
         '''
-        from proveit.logic.equality._theorems_ import substitute_falsehood
+        from proveit.logic.equality import substitute_falsehood
         from proveit.logic import Equals
         from proveit.common import P
         Plambda = Equals._lambda_expr(lambda_map, self.operand)
@@ -133,7 +133,7 @@ class Not(Operation):
         '''
         Attempt to deduce, then return, that this 'not' expression is in the set of BOOLEANS.
         '''
-        from ._theorems_ import closure, double_neg_closure
+        from . import closure, double_neg_closure
         if isinstance(self.operand, Not):
             return double_neg_closure.instantiate(
                 {A: self.operand.operand}, assumptions=assumptions)
@@ -143,7 +143,7 @@ class Not(Operation):
         '''
         Attempt to deduce, then return, that the negated operand is in the set of BOOLEANS.
         '''
-        from ._axioms_ import operand_is_bool
+        from . import operand_is_bool
         return operand_is_bool.instantiate(
             {A: self.operand}, assumptions=assumptions)
 
@@ -152,7 +152,7 @@ class Not(Operation):
         From not(A), derive and return A = FALSE.
         Note, see Equals.derive_via_boolean_equality for the reverse process.
         '''
-        from ._axioms_ import negation_elim
+        from . import negation_elim
         return negation_elim.instantiate(
             {A: self.operand}, assumptions=assumptions)
 
@@ -160,7 +160,7 @@ class Not(Operation):
         r'''
         From not(A), derive and return A != TRUE.
         '''
-        from ._theorems_ import untrue_from_negation
+        from . import untrue_from_negation
         return untrue_from_negation.instantiate(
             {A: self.operand}, assumptions=assumptions)
 
@@ -168,7 +168,7 @@ class Not(Operation):
         r'''
         Given not(not(A)), deduce and return not(not(A)) = A.
         '''
-        from ._theorems_ import double_negation_equiv
+        from . import double_negation_equiv
         if isinstance(self.operand, Not):
             return double_negation_equiv.instantiate(
                 {A: self.operand.operand}, assumptions=assumptions)
@@ -182,7 +182,7 @@ class Not(Operation):
         From not(not(A)), derive and return A.
         Note, see Equals.derive_via_boolean_equality for the reverse process.
         '''
-        from ._theorems_ import double_negation_elim
+        from . import double_negation_elim
         if isinstance(self.operand, Not):
             return double_negation_elim.instantiate(
                 {A: self.operand.operand}, assumptions=assumptions)
@@ -196,7 +196,7 @@ class Not(Operation):
         Prove and return self of the form not(not(A)) assuming A.
         Also see version in NotEquals for A != FALSE.
         '''
-        from ._theorems_ import double_negation_intro
+        from . import double_negation_intro
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
             return double_negation_intro.instantiate(
@@ -206,7 +206,7 @@ class Not(Operation):
         r'''
         Prove and return self of the form not(A) assuming A=FALSE.
         '''
-        from ._theorems_ import negation_intro
+        from . import negation_intro
         return negation_intro.instantiate(
             {A: self.operand}, assumptions=assumptions)
 
@@ -214,7 +214,7 @@ class Not(Operation):
         r'''
         From not(A), and assuming A, derive and return FALSE.
         '''
-        from ._theorems_ import negation_contradiction
+        from . import negation_contradiction
         return negation_contradiction.instantiate(
             {A: self.operand}, assumptions=assumptions)
 
@@ -238,7 +238,7 @@ class Not(Operation):
         '''
         For some not(not(A)), derive and return A = not(not(A)) assuming A in Boolean.
         '''
-        from ._theorems_ import double_negation_equiv
+        from . import double_negation_equiv
         if isinstance(self.operand, Not):
             Asub = self.operand.operand
             return double_negation_equiv.instantiate(

@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import x, S
+from proveit import x, S
 
 
 class NotInSet(Operation):
@@ -68,8 +68,8 @@ class NotInSet(Operation):
         '''
         Deduce and return that this 'not in' statement is in the set of BOOLEANS.
         '''
-        from ._theorems_ import not_in_set_is_bool
-        from proveit._common_ import x, S
+        from . import not_in_set_is_bool
+        from proveit import x, S
         return not_in_set_is_bool.instantiate(
             {x: self.element, S: self.domain}, assumptions=assumptions)
 
@@ -77,7 +77,7 @@ class NotInSet(Operation):
         r'''
         From (x \notin y), derive and return Not(x \in y).
         '''
-        from ._theorems_ import unfold_not_in_set
+        from . import unfold_not_in_set
         return unfold_not_in_set.instantiate(
             {x: self.element, S: self.domain}, assumptions=assumptions)
 
@@ -142,7 +142,7 @@ class NotInSet(Operation):
         '''
         Attempt to conclude x not in S via Not(x in S).
         '''
-        from ._theorems_ import fold_not_in_set
+        from . import fold_not_in_set
         return fold_not_in_set.instantiate(
             {x: self.element, S: self.domain}, assumptions=assumptions)
 

@@ -223,9 +223,14 @@ class TheoryInterface:
         import proveit
         notebook_name = os.path.join(sub_theory_name, '_theory_.ipynb')
         if not os.path.isdir(sub_theory_name):
+            import shutil
             os.mkdir(sub_theory_name)
             init_name = os.path.join(sub_theory_name, '__init__.py')
-            open(init_name, 'w')
+            proveit_path = os.path.split(proveit.__file__)[0]
+            # Create an '__init__.py' file from the template.
+            template_filename = os.path.join(proveit_path, '..', 
+                                             '__init__template.py')
+            shutil.copyfile(template_filename, init_name)
         # Create the generic version from the template
         # (even if we have an existing version so we can update the
         # markdown title if we need to.)
@@ -519,7 +524,7 @@ class ProveItMagicCommands:
             if os.path.isfile(import_failure_filename):
                 # Start with a clean slate
                 os.remove(import_failure_filename)
-            proveit.defaults._common_import_failure_filename = \
+            proveit.defaultsimport_failure_filename = \
                 import_failure_filename
         proveit.defaults._running_proveit_notebook = (theory, kind)
 

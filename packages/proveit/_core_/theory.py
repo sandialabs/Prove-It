@@ -150,12 +150,6 @@ class Theory:
         if normpath not in Theory.storages:
             Theory.storages[normpath] = TheoryStorage(
                 self, name, path, root_directory)
-            # if the _sub_theories_.txt file has not been created, make an
-            # empty one
-            sub_theories_path = os.path.join(path, '_sub_theories_.txt')
-            if not os.path.isfile(sub_theories_path):
-                assert False
-                open(sub_theories_path, 'wt').close()
         self._storage = Theory.storages[normpath]
         if active_folder is not None:
             self.set_active_folder(active_folder, owns_active_folder)
@@ -297,13 +291,37 @@ class Theory:
                 f.write(output)
 
     def get_axiom_names(self):
+        '''
+        Return the names of the axioms in this Theory.
+        '''
         return self._storage.get_axiom_names()
 
     def get_theorem_names(self):
+        '''
+        Return the names of the theorems in this Theory.
+        '''
         return self._storage.get_theorem_names()
 
-    def common_expression_names(self):
-        return self._storage.common_expression_names()
+    def get_common_expression_names(self):
+        '''
+        Return the names of the common expression in this Theory.
+        '''        
+        return self._storage.get_common_expression_names()
+
+    def get_expression_axiom_and_theorem_names(self):
+        '''
+        Return the names of the common expressions, axioms, theorems 
+        in this Theory.
+        '''        
+        return  self._storage.get_expression_axiom_and_theorem_names()
+
+    def get_expression_axiom_or_theorem_kind(self, name):
+        '''
+        Return 'common', 'axiom', or 'theorem' if the given name
+        is the name of a common expression, axiom, or theorem of this
+        Theory respectively.
+        '''
+        return  self._storage.get_expression_axiom_or_theorem_kind(name)
 
     def stored_common_expr_dependencies(self):
         '''
@@ -699,7 +717,7 @@ class CommonExpressions(ModuleType):
 
     def __dir__(self):
         return sorted(list(self.__dict__.keys()) +
-                      list(self._theory.common_expression_names()))
+                      list(self._theory.get_common_expression_names()))
 
     def __getattr__(self, name):
         import proveit
@@ -724,14 +742,50 @@ class CommonExpressions(ModuleType):
                     # exception so we know to execute the other common
                     # expression notebook first.
                     return UnsetCommonExpressionPlaceholder(
-                        self._theory, name)
+                            self._theory,  name)
             raise AttributeError(
-                "'" +
-                name +
-                "' not found in the list of common expressions of '" +
-                self._theory.name +
-                "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
+                    "'%s' not found in the list of common expressions of "
+                    "'%s'\n(make sure o execute the appropriate "
+                    "'_common_.ipynb' notebook after any changes)"
+                    %(name, self._theory.name))
 
+class TheoryPackage(ModuleType):
+    '''
+    Used in __init__.py modules of theory packages for accessing 
+    common expressions, axioms, and theorems of the package.
+    '''
+    
+    def __init__(self, name, filename, attr_dict):
+        ModuleType.__init__(self, name)
+        self._theory = Theory(filename)
+        self.__file__ = filename
+        self.__dict__.update(attr_dict)
+    
+    def __dir__(self):
+        expression_axiom_and_theorems_names = \
+            self._theory.get_expression_axiom_and_theorem_names()
+        return sorted(list(self.__dict__.keys()) + 
+                      list(expression_axiom_and_theorems_names))
+    
+    def __getattr__(self, name):
+        import importlib
+        if name[0:2]=='__': 
+            # don't handle internal Python attributes
+            raise AttributeError 
+        try:
+            kind = self._theory.get_expression_axiom_or_theorem_kind(name)
+        except KeyError:
+            # By default, we'll assume it is a common expression
+            # so we can deal with unset common expressions 
+            # appropriately via UnsetCommonExpressionPlaceholder.
+            kind = 'common'
+        if kind == 'common':
+            module = importlib.import_module(self.__name__ + '._common_')
+        elif kind == 'axiom':
+            module = importlib.import_module(self.__name__ + '._axioms_')
+        elif kind == 'theorem':
+            module = importlib.import_module(self.__name__ + '._theorems_')
+        return getattr(module, name)
 
 class UnsetCommonExpressionPlaceholder(object):
     '''
@@ -764,7 +818,7 @@ class UnsetCommonExpressionPlaceholder(object):
         # import a common expression:
         import proveit
         import_failure_filename = \
-            proveit.defaults._common_import_failure_filename
+            proveit.defaultsimport_failure_filename
         assert proveit.defaults._running_proveit_notebook is not None, (
             "Should only use UnsetCommonExpressionPlaceholder when "
             "executing a common expression notebook.")

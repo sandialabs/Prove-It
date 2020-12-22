@@ -6,7 +6,7 @@ from proveit.numbers.number_sets import (Integer, Natural, NaturalPos, Real,
                                          RealNonNeg, RealPos, Complex)
 import proveit.numbers.numerals.decimals
 from proveit.numbers.numerals.decimals import DIGITS
-from proveit._common_ import a, b, c, d, e, i, j, k, m, n, w, x, y, z
+from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
 from proveit import TransRelUpdater
 
@@ -36,7 +36,7 @@ class Mult(Operation):
                     # for single digit addition, import the theorem that
                     # provides the evaluation
                     Mult.multiplied_numerals.add(self)
-                    proveit.numbers.numerals.decimals._theorems_.__getattr__(
+                    proveit.numbers.numerals.decimals.__getattr__(
                         'mult_%d_%d' % (self.factors[0].as_int(), self.factors[1].as_int()))
                 except BaseException:
                     # may fail before the relevent _commons_ and _theorems_
@@ -45,7 +45,7 @@ class Mult(Operation):
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         # edited by JML 7/20/19
-        from ._theorems_ import (
+        from . import (
             mult_int_closure,
             mult_int_closure_bin,
             mult_nat_closure,
@@ -129,7 +129,7 @@ class Mult(Operation):
         Later: possibly consider an Equals(divisor,self.lhs) case?
         '''
         if divisor == self.operands[0]:  # a|ab
-            from proveit.numbers.divisibility._theorems_ import (
+            from proveit.numbers.divisibility import (
                 left_factor_divisibility)
             _x, _y = left_factor_divisibility.instance_params
             return left_factor_divisibility.instantiate(
@@ -137,7 +137,7 @@ class Mult(Operation):
                 assumptions=assumptions)
 
         elif divisor == self.operands[1]:  # a|ba
-            from proveit.numbers.divisibility._theorems_ import (
+            from proveit.numbers.divisibility import (
                 right_factor_divisibility)
             _x, _y = right_factor_divisibility.instance_params
             return right_factor_divisibility.instantiate(
@@ -153,7 +153,7 @@ class Mult(Operation):
                 format(self.operands[0], self.operands[1], divisor))
 
     def not_equal(self, rhs, assumptions=USE_DEFAULTS):
-        from ._theorems_ import mult_not_eq_zero
+        from . import mult_not_eq_zero
         from proveit.numbers import zero
         if rhs == zero:
             _n = self.operands.length(assumptions)
@@ -239,7 +239,7 @@ class Mult(Operation):
             w*(-x)*y*z = -(w*x*y*z)
         '''
         from proveit.numbers import Neg
-        from ._theorems_ import mult_neg_left, mult_neg_right, mult_neg_any
+        from . import mult_neg_left, mult_neg_right, mult_neg_any
 
         if not isinstance(self.operands[idx], Neg):
             raise ValueError(
@@ -298,7 +298,7 @@ class Mult(Operation):
             x*y*1*z = x*y*z
         '''
         from proveit.numbers import one
-        from ._theorems_ import elim_one_left, elim_one_right, elim_one_any
+        from . import elim_one_left, elim_one_right, elim_one_any
 
         if self.operands[idx] != one:
             raise ValueError(
@@ -434,7 +434,7 @@ class Mult(Operation):
         # Handle the special case of two neighboring factors which
         # serves as the base case.
         if len(expr.factors) == 2:
-            from proveit.numbers.division._theorems_ import (
+            from proveit.numbers.division import (
                 mult_frac_cancel_numer_left, mult_frac_cancel_denom_left)
 
             # First, let's eliminate any ones from the canceling
@@ -611,7 +611,7 @@ class Mult(Operation):
         Handle the trivial case of a zero factor or do pairwise evaluation
         after simplifying negations and eliminating one factors.
         '''
-        from ._theorems_ import mult_zero_left, mult_zero_right, mult_zero_any
+        from . import mult_zero_left, mult_zero_right, mult_zero_any
         from proveit.logic import is_irreducible_value, EvaluationError
         from proveit.numbers import zero
 
@@ -668,7 +668,7 @@ class Mult(Operation):
         derive and return the equivalence of this multiplication
         to a repeated addition; for example, 3*c = c + c + c.
         '''
-        from ._axioms_ import mult_def
+        from . import mult_def
         if hasattr(self.operands[0], 'as_int'):
             reps = self.operands[0].as_int()
         else:
@@ -764,8 +764,8 @@ class Mult(Operation):
         Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
-        from ._theorems_ import distribute_through_sum, distribute_through_subtract  # , distribute_through_summation
-        from proveit.numbers.division._theorems_ import prod_of_fracs  # , frac_in_prod
+        from . import distribute_through_sum, distribute_through_subtract  # , distribute_through_summation
+        from proveit.numbers.division import prod_of_fracs  # , frac_in_prod
         from proveit.numbers import Add, Div, Neg, Sum
         if idx is None and len(
                 self.factors) == 2 and all(
@@ -883,14 +883,14 @@ class Mult(Operation):
         '''
         from proveit import ExprRange, free_vars
         from proveit.logic import And
-        from proveit.numbers.exponentiation._theorems_ import (
+        from proveit.numbers.exponentiation import (
             product_of_posnat_powers, products_of_posnat_powers,
             product_of_pos_powers, products_of_pos_powers,
             product_of_real_powers, products_of_real_powers,
             product_of_complex_powers, products_of_complex_powers)
-        # from proveit.numbers.exponentiation._theorems_ import (
+        # from proveit.numbers.exponentiation import (
         #        sum_in_exp, diff_in_exp, diff_frac_in_exp)
-        from proveit.numbers.exponentiation._theorems_ import (
+        from proveit.numbers.exponentiation import (
             add_one_right_in_exp, add_one_left_in_exp)
         from proveit.numbers import Exp
         if start_idx is not None or end_idx is not None:
@@ -1072,7 +1072,7 @@ class Mult(Operation):
         For example, (a + b + ... + y + z) = (a + ... + y + b + z)
         via init_idx = 1 and final_idx = -2.
         '''
-        from ._theorems_ import commutation, leftward_commutation, rightward_commutation
+        from . import commutation, leftward_commutation, rightward_commutation
         return apply_commutation_thm(
             self,
             init_idx,
@@ -1109,7 +1109,7 @@ class Mult(Operation):
         range [start_idx, start_idx+length) are grouped together.
         For example, (a + b + ... + y + z) = (a + b ... + (l + ... + m) + ... + y + z)
         '''
-        from ._theorems_ import association
+        from . import association
         return apply_association_thm(
             self, start_idx, length, association, assumptions)
 
@@ -1119,7 +1119,7 @@ class Mult(Operation):
         at index idx is no longer grouped together.
         For example, (a + b ... + (l + ... + m) + ... + y+ z) = (a + b + ... + y + z)
         '''
-        from ._theorems_ import disassociation
+        from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation, assumptions)
 
 

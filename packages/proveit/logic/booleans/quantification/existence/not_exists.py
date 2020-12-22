@@ -1,6 +1,6 @@
 from proveit import OperationOverInstances
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import P, Q, S
+from proveit import P, Q, S
 
 
 class NotExists(OperationOverInstances):
@@ -42,7 +42,7 @@ class NotExists(OperationOverInstances):
         '''
         Derive and return Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x)
         '''
-        from ._theorems_ import not_exists_unfolding
+        from . import not_exists_unfolding
         P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Etcetera(
             Operation(Q, self.instance_vars)), self.conditions
@@ -58,7 +58,7 @@ class NotExists(OperationOverInstances):
         Prove and return some NotExists_{x | Q(x)} P(x) assuming Not(Exists_{x | Q(x)} P(x)).
         This is automatically derived; see Not.derive_side_effects(..) and Not.derive_not_exists(..).
         '''
-        from ._theorems_ import not_exists_folding
+        from . import not_exists_folding
         P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Etcetera(
             Operation(Q, self.instance_vars)), self.conditions
@@ -73,7 +73,7 @@ class NotExists(OperationOverInstances):
         Prove and return either some NotExists_{x | Q(x)} Not(P(x)) or NotExists_{x | Q(x)} P(x)
         assuming forall_{x | Q(x)} P(x) or assuming forall_{x | Q(x)} (P(x) != TRUE) respectively.
         '''
-        from ._theorems_ import forall_implies_not_exists_not, exists_def_negation
+        from . import forall_implies_not_exists_not, exists_def_negation
         from proveit.logic.equality.eq_ops import NotEquals
         from bool_ops import Not
         from bool_set import TRUE

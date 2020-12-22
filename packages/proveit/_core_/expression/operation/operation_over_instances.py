@@ -831,10 +831,10 @@ class OperationOverInstances(Operation):
         Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..) = Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
         Works also when there is no domain S and/or no conditions ..Q...
         '''
-        from proveit.logic.equality._axioms_ import instance_substitution, no_domain_instance_substitution
+        from proveit.logic.equality import instance_substitution, no_domain_instance_substitution
         from proveit.logic import Forall, Equals
         from proveit import Judgment
-        from proveit._common_ import n, Qmulti, x_multi, y_multi, z_multi, f, g, Upsilon, S
+        from proveit import n, Qmulti, x_multi, y_multi, z_multi, f, g, Upsilon, S
         if isinstance(universality, Judgment):
             universality = universality.expr
         if not isinstance(universality, Forall):

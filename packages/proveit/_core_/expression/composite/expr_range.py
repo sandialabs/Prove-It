@@ -458,7 +458,7 @@ class ExprRange(Expression):
         wrapped in an ExprTuple rather than 'self' itself.
         '''
         from proveit import Judgment
-        from proveit._common_ import f, i, j, m, n
+        from proveit import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.numbers import Add, one
         if (not defaults.auto_reduce
@@ -473,7 +473,7 @@ class ExprRange(Expression):
             # We can do a singular range reduction.
             # Temporarily disable automation to avoid infinite
             # recursion.
-            from proveit.core_expr_types.tuples._theorems_ import \
+            from proveit.core_expr_types.tuples import \
                 singular_range_reduction, singular_nested_range_reduction
             defaults.disabled_auto_reduction_types.add(ExprRange)
             try:
@@ -516,7 +516,7 @@ class ExprRange(Expression):
                     # We can do an empty range reduction on the entire expression
                     # Temporarily disable automation to avoid infinite
                     # recursion.
-                    from proveit.core_expr_types.tuples._theorems_ import \
+                    from proveit.core_expr_types.tuples import \
                         empty_outside_range_of_range
                     defaults.disabled_auto_reduction_types.add(ExprRange)
                     try:
@@ -532,7 +532,7 @@ class ExprRange(Expression):
                         defaults.disabled_auto_reduction_types.remove(
                             ExprRange)
                 else:
-                    from proveit.core_expr_types.tuples._axioms_ import \
+                    from proveit.core_expr_types.tuples import \
                         empty_range_def
                     defaults.disabled_auto_reduction_types.add(ExprRange)
                     try:
@@ -562,7 +562,7 @@ class ExprRange(Expression):
                     # We can do an empty range reduction on the entire expression
                     # Temporarily disable automation to avoid infinite
                     # recursion.
-                    from proveit.core_expr_types.tuples._theorems_ import \
+                    from proveit.core_expr_types.tuples import \
                         empty_inside_range_of_range
                     defaults.disabled_auto_reduction_types.add(ExprRange)
                     try:
@@ -1171,12 +1171,12 @@ class ExprRange(Expression):
              f(before_split_index+1), ..., f(self.end_index))
         where f represents the self.lambda_map.
         '''
-        from proveit._common_ import f, i, j, k
+        from proveit import f, i, j, k
         from proveit.logic import Equals
         from proveit.numbers import Add, one, subtract
-        from proveit.core_expr_types.tuples._axioms_ import (
+        from proveit.core_expr_types.tuples import (
             range_extension_def)
-        from proveit.core_expr_types.tuples._theorems_ import (
+        from proveit.core_expr_types.tuples import (
             partition_front, partition_back, partition)
 
         lambda_map = self.lambda_map
@@ -1214,10 +1214,10 @@ class ExprRange(Expression):
         If any of the 'new' parameters are unspecified, we attempt
         to deduce them from the other parameters.
         '''
-        from proveit._common_ import a, b, f, i, j, k, l
+        from proveit import a, b, f, i, j, k, l
         from proveit.numbers import Add, Neg, subtract
         from proveit._core_.expression.label.var import safe_dummy_var
-        from proveit.core_expr_types.tuples._theorems_ import (
+        from proveit.core_expr_types.tuples import (
             shift_equivalence, shift_equivalence_both)
 
         if old_shift is None:

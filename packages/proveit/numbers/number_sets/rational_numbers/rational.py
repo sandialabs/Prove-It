@@ -1,5 +1,5 @@
 from proveit import USE_DEFAULTS, maybe_fenced_string
-from proveit._common_ import q
+from proveit import q
 from proveit.logic import Membership
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 
@@ -21,13 +21,13 @@ class RationalSet(NumberSet):
         return RationalMembership(element, self)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import rational_membership_is_bool
-        from proveit._common_ import x
+        from . import rational_membership_is_bool
+        from proveit import x
         return rational_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.real_numbers._theorems_ import rational_within_real
+        from proveit.numbers.number_sets.real_numbers import rational_within_real
         return rational_within_real.derive_superset_membership(
             member, assumptions)
 
@@ -65,13 +65,13 @@ class RationalNonZeroSet(NumberSet):
         return maybe_fenced_string(inner_str, **kwargs)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import rational_non_zero_membership_is_bool
-        from proveit._common_ import x
+        from . import rational_non_zero_membership_is_bool
+        from proveit import x
         return rational_non_zero_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import rational_non_zero_in_rational
+        from . import rational_non_zero_in_rational
         return rational_non_zero_in_rational.derive_superset_membership(
             member, assumptions)
 
@@ -109,8 +109,8 @@ class RationalPosSet(NumberSet):
         return maybe_fenced_string(inner_str, **kwargs)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import rational_pos_membership_is_bool
-        from proveit._common_ import x
+        from . import rational_pos_membership_is_bool
+        from proveit import x
         return rational_pos_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
@@ -152,8 +152,8 @@ class RationalNegSet(NumberSet):
         return maybe_fenced_string(inner_str, **kwargs)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import rational_neg_membership_is_bool
-        from proveit._common_ import x
+        from . import rational_neg_membership_is_bool
+        from proveit import x
         return rational_neg_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
@@ -195,8 +195,8 @@ class RationalNonNegSet(NumberSet):
         return maybe_fenced_string(inner_str, **kwargs)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import rational_non_neg_membership_is_bool
-        from proveit._common_ import x
+        from . import rational_non_neg_membership_is_bool
+        from proveit import x
         return rational_non_neg_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
@@ -222,22 +222,22 @@ class RationalMembership(NumberMembership):
                 InSet(self.element, Rational).proven(assumptions)):
             if self.number_set == RationalNonZero:
                 if NotEquals(self.element, zero).proven(assumptions):
-                    from ._theorems_ import non_zero_rational_is_rational_non_zero
+                    from . import non_zero_rational_is_rational_non_zero
                     return non_zero_rational_is_rational_non_zero.instantiate(
                         {q: self.element}, assumptions=assumptions)
             if self.number_set == RationalPos:
                 if Greater(self.element, zero).proven(assumptions):
-                    from ._theorems_ import positive_rational_is_rational_pos
+                    from . import positive_rational_is_rational_pos
                     return positive_rational_is_rational_pos.instantiate(
                         {q: self.element}, assumptions=assumptions)
             if self.number_set == RationalNeg:
                 if Less(self.element, zero).proven():
-                    from ._theorems_ import negative_rational_is_rational_neg
+                    from . import negative_rational_is_rational_neg
                     return negative_rational_is_rational_neg.instantiate(
                         {q: self.element}, assumptions=assumptions)
             if self.number_set == RationalNonNeg:
                 if GreaterEq(self.element, zero).proven():
-                    from ._theorems_ import non_neg_rational_in_rational_neg
+                    from . import non_neg_rational_in_rational_neg
                     return non_neg_rational_in_rational_neg.instantiate(
                         {q: self.element}, assumptions=assumptions)
 
@@ -269,7 +269,7 @@ class RationalMembership(NumberMembership):
         Call "eliminate" to finish the Skolemization proof.
         '''
         from proveit.numbers import RationalPos
-        from ._theorems_ import reduced_nat_pos_ratio
+        from . import reduced_nat_pos_ratio
 
         if self.number_set == RationalPos:
             return reduced_nat_pos_ratio.instantiate(
@@ -286,7 +286,7 @@ try:
     # Import some fundamental axioms and theorems without quantifiers.
     # Fails before running the _axioms_ and _theorems_ notebooks for
     # the first time, but fine after that.
-    from ._theorems_ import (nat_within_rational, nat_within_rational_non_neg,
+    from . import (nat_within_rational, nat_within_rational_non_neg,
                              nat_pos_in_rational_pos,
                              nat_pos_in_rational_non_zero,
                              rational_non_zero_in_rational,
