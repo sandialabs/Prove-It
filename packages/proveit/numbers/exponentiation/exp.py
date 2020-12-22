@@ -1,8 +1,8 @@
 from proveit import (Literal, Operation, ExprTuple, InnerExpr, ProofFailure,
                      maybe_fenced_string, USE_DEFAULTS, StyleOptions)
 from proveit.logic import Membership
-import proveit._common_
-from proveit._common_ import a, b, c, k, m, n, x, S
+import proveit
+from proveit import a, b, c, k, m, n, x, S
 from proveit.numbers import one, two, Div, frac, num
 
 
@@ -71,14 +71,14 @@ class Exp(Operation):
         from proveit.logic import Equals, InSet
         from proveit.numbers import one, two, Rational, Real, Abs
         from proveit.relation import TransRelUpdater
-        from ._theorems_ import complex_x_to_first_power_is_x
+        from . import complex_x_to_first_power_is_x
         if self.exponent == one:
             return complex_x_to_first_power_is_x.instantiate({a: self.base})
         if (isinstance(self.base, Exp) and
             isinstance(self.base.exponent, Div) and
             self.base.exponent.numerator == one and
                 self.base.exponent.denominator == self.exponent):
-            from ._theorems_ import nth_power_of_nth_root
+            from . import nth_power_of_nth_root
             _n, _x = nth_power_of_nth_root.instance_params
             return nth_power_of_nth_root.instantiate(
                 {_n: self.exponent, _x: self.base.base}, assumptions=assumptions)
@@ -87,7 +87,7 @@ class Exp(Operation):
         # for convenience updating our equation:
         eq = TransRelUpdater(expr, assumptions)
         if self.exponent == two and isinstance(self.base, Abs):
-            from ._theorems_ import (square_abs_rational_simp,
+            from . import (square_abs_rational_simp,
                                      square_abs_real_simp)
             # |a|^2 = a if a is real
             rational_base = InSet(self.base, Rational).proven(assumptions)
@@ -116,7 +116,7 @@ class Exp(Operation):
         '''
         from proveit.logic import EvaluationError
         from proveit.numbers import zero, one
-        from ._theorems_ import exp_zero_eq_one, exponentiated_zero, exponentiated_one
+        from . import exp_zero_eq_one, exponentiated_zero, exponentiated_one
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
         elif self.base == zero:
@@ -135,7 +135,7 @@ class Exp(Operation):
         '''
         from proveit.logic import InSet
         from proveit.numbers import RationalPos
-        from ._theorems_ import exp_rational_non_zero__not_zero, exp_not_eq_zero
+        from . import exp_rational_non_zero__not_zero, exp_not_eq_zero
         if (not exp_not_eq_zero.is_usable() or (
                 InSet(self.base, RationalPos).proven(assumptions) and
                 InSet(self.exponent, RationalPos).proven(assumptions))):
@@ -165,13 +165,13 @@ class Exp(Operation):
         '''
         exponent = self.exponent
         if exponent == num(2):
-            from ._theorems_ import square_expansion
+            from . import square_expansion
             _x = square_expansion.instance_param
             return square_expansion.instantiate(
                 {_x: self.base}, assumptions=assumptions)
 
         if exponent == 3:
-            from ._theorems_ import cube_expansion
+            from . import cube_expansion
             _x = cube_expansion.instance_param
             return cube_expansion.instantiate(
                 {_x: self.base}, assumptions=assumptions)
@@ -244,7 +244,7 @@ class Exp(Operation):
         '''
         from proveit.logic import InSet
         from proveit.numbers import Mult, Div, NaturalPos, RealPos, Real
-        from ._theorems_ import (
+        from . import (
             posnat_power_of_product, posnat_power_of_products,
             posnat_power_of_quotient, posnat_power_of_posnat_power,
             pos_power_of_product, pos_power_of_products,
@@ -431,7 +431,7 @@ class Exp(Operation):
         Once established, these authorship notations can be deleted.
         '''
         from proveit.logic import InSet
-        from proveit.numbers.exponentiation._theorems_ import (
+        from proveit.numbers.exponentiation import (
             exp_complex_closure, exp_nat_closure, exp_real_closure,
             exp_real_closure_exp_non_zero, exp_real_closure_base_pos,
             exp_real_pos_closure, sqrt_complex_closure, sqrt_real_closure,
@@ -524,7 +524,7 @@ class ExpSetMembership(Membership):
         Attempt to conclude that the element is in the exponentiated set.
         '''
         from proveit.logic import InSet
-        from proveit.logic.sets.membership._theorems_ import (
+        from proveit.logic.sets.membership import (
             exp_set_0, exp_set_1, exp_set_2, exp_set_3, exp_set_4, exp_set_5,
             exp_set_6, exp_set_7, exp_set_8, exp_set_9)
         from proveit.numbers import zero, is_literal_int, DIGITS
@@ -554,7 +554,7 @@ class ExpSetMembership(Membership):
                 thm = locals()['exp_set_%d' % exponent.as_int()]
                 expr_map = {S: base}  # S is the base
                 # map a, b, ... to the elements of element.
-                expr_map.update({proveit._common_.__getattr__(
+                expr_map.update({proveit.__getattr__(
                     chr(ord('a') + k)): elem_k for k, elem_k in enumerate(element)})
                 elem_in_set = thm.instantiate(
                     expr_map, assumptions=assumptions)

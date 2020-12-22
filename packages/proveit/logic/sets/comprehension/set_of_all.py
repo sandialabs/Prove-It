@@ -1,6 +1,6 @@
 from proveit import (Literal, OperationOverInstances, Operation, ExprTuple,
                      single_or_composite_expression, USE_DEFAULTS)
-from proveit._common_ import x, y, f, P, Q, S
+from proveit import x, y, f, P, Q, S
 
 
 class SetOfAll(OperationOverInstances):
@@ -91,7 +91,7 @@ class SetOfAll(OperationOverInstances):
         From (x in {f(y) | ..Q(y)..})_{y in S}, derive and return exists_{y in S | ..Q(y)..} x = f(y).
         Also derive x in S, but this is not returned.
         '''
-        from ._theorems_ import unfold_comprehension, unfold_basic_comprehension, unfold_basic1_cond_comprehension, in_superset_if_in_comprehension
+        from . import unfold_comprehension, unfold_basic_comprehension, unfold_basic1_cond_comprehension, in_superset_if_in_comprehension
         Q_op, Q_op_sub = Operation(Qmulti, self.instance_var), self.conditions
         if len(self.instance_vars) == 1 and self.instance_element == self.instance_vars[0]:
             in_superset_if_in_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instance_vars[0]}, assumptions=assumptions) # x in S side-effect
@@ -108,7 +108,7 @@ class SetOfAll(OperationOverInstances):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''
-        from ._theorems_ import fold_comprehension, fold_basic_comprehension
+        from . import fold_comprehension, fold_basic_comprehension
         Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
         if len(self.instance_vars) == 1 and self.instance_element == self.instance_vars[0] and len(self.conditions) == 1:
             Pop, Psub = Operation(P, self.instance_vars), self.conditions[0]

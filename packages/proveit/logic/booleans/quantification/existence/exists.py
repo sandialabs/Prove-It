@@ -1,6 +1,6 @@
 from proveit import Lambda, Conditional, OperationOverInstances, Judgment
 from proveit import defaults, Literal, Operation, ExprTuple, USE_DEFAULTS
-from proveit._common_ import n, A, B, P, Q, R, S
+from proveit import n, A, B, P, Q, R, S
 
 
 class Exists(OperationOverInstances):
@@ -95,10 +95,10 @@ class Exists(OperationOverInstances):
         subset of assumptions you wish to eliminate from S.
         '''
         from proveit import Lambda
-        from proveit._common_ import n, P, Q, alpha
+        from proveit import n, P, Q, alpha
         from proveit.logic import And
-        from proveit.core_expr_types._common_ import (x_1_to_n, y_1_to_n)
-        from proveit.logic.booleans.quantification.existence._theorems_ import (
+        from proveit.core_expr_types import (x_1_to_n, y_1_to_n)
+        from proveit.logic.booleans.quantification.existence import (
             skolem_elim)
         if skolem_constants not in Exists.skolem_consts_to_existential:
             raise KeyError("In calling Exists.eliminate(), the Skolem "
@@ -151,7 +151,7 @@ class Exists(OperationOverInstances):
         version according to its definition (the negation of
         a universal quantification).
         '''
-        from proveit.logic.booleans.quantification.existence._theorems_ \
+        from proveit.logic.booleans.quantification.existence \
             import exists_unfolding
         _n = self.instance_params.length(assumptions)
         _P = Lambda(self.instance_params, self.operand.body.value)
@@ -166,7 +166,7 @@ class Exists(OperationOverInstances):
         equation with this existential quantifier on the left
         and a negated universal quantification on the right.
         '''
-        from proveit.logic.booleans.quantification.existence._axioms_ \
+        from proveit.logic.booleans.quantification.existence \
             import exists_def
         _n = self.instance_params.length(assumptions)
         _P = Lambda(self.instance_params, self.operand.body.value)
@@ -193,7 +193,7 @@ class Exists(OperationOverInstances):
         Conclude and return this [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] from P(..x..) and Q(..x..) and ..x.. in S, where ..x.. is the given example_instance.
         '''
         raise NotImplementedError("Need to update")
-        from ._theorems_ import existence_by_example
+        from . import existence_by_example
         from proveit.logic import InSet
         if len(
             self.instance_vars) > 1 and (
@@ -238,8 +238,8 @@ class Exists(OperationOverInstances):
         From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
         '''
         raise NotImplementedError("Need to update")
-        from ._axioms_ import exists_def
-        from ._theorems_ import exists_not_implies_not_forall
+        from . import exists_def
+        from . import exists_not_implies_not_forall
         from proveit.logic import Not
         Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
         if isinstance(self.instance_expr, Not):
@@ -272,7 +272,7 @@ class Exists(OperationOverInstances):
         given A subseteq B.
         '''
         raise NotImplementedError("Need to update")
-        from ._theorems_ import exists_in_superset
+        from . import exists_in_superset
         P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
         return exists_in_superset.instantiate(
@@ -292,7 +292,7 @@ class Exists(OperationOverInstances):
         eliminating the domain which is a weaker form.
         '''
         raise NotImplementedError("Need to update")
-        from ._theorems_ import exists_in_general
+        from . import exists_in_general
         P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
         return exists_in_general.instantiate(
@@ -311,7 +311,7 @@ class Exists(OperationOverInstances):
         all exists expressions are (they are taken to be false when not true).
         '''
         raise NotImplementedError("Need to update")
-        from ._theorems_ import exists_is_bool
+        from . import exists_is_bool
         P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
         return exists_is_bool.instantiate({P_op: P_op_sub, Q_op: Q_op_sub, S: self.domain}, relabel_map={
@@ -329,11 +329,11 @@ class Exists(OperationOverInstances):
         Works also when there is no domain S and/or no conditions ..Q...
         '''
         raise NotImplementedError("Need to update")
-        from ._theorems_ import existential_implication, no_domain_existential_implication
+        from . import existential_implication, no_domain_existential_implication
         from proveit import Etcetera
         from proveit.logic import Forall
         from proveit._generic_ import InstanceSubstitutionException
-        from proveit._common_ import n, Qmulti, x_multi, y_multi, z_multi, S
+        from proveit import n, Qmulti, x_multi, y_multi, z_multi, S
         if isinstance(universality, Judgment):
             universality = universality.expr
         if not isinstance(universality, Forall):

@@ -1,7 +1,7 @@
 from proveit import Literal, Operation  # , STRING, LATEX
 # from proveit.logic import Equation
 # from proveit.logic.generic_ops import AssociativeOperation, BinaryOperation
-from proveit._common_ import x, alpha, beta
+from proveit import x, alpha, beta
 
 pkg = __package__
 

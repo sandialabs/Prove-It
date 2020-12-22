@@ -1,7 +1,7 @@
 from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
                      single_or_composite_expression, ExprTuple,
                      ExprRange, InnerExpr, defaults, USE_DEFAULTS)
-from proveit._common_ import a, b, c, d, e, f, g, h, i, j, k, n, x, y
+from proveit import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
 
 class Len(Operation):
@@ -88,12 +88,12 @@ class Len(Operation):
             end_index = range_entry.end_index
             lambda_map = range_entry.lambda_map
             if start_index == one:
-                from proveit.core_expr_types.tuples._theorems_ import \
+                from proveit.core_expr_types.tuples import \
                     range_from1_len
                 return range_from1_len.instantiate(
                     {f: lambda_map, i: end_index}, assumptions=assumptions)
             else:
-                from proveit.core_expr_types.tuples._theorems_ import range_len
+                from proveit.core_expr_types.tuples import range_len
                 return range_len.instantiate(
                     {f: lambda_map, i: start_index, j: end_index},
                     assumptions=assumptions)
@@ -101,7 +101,7 @@ class Len(Operation):
             # Case of all non-range entries.
             if len(entries) == 0:
                 # zero length.
-                from proveit.core_expr_types.tuples._axioms_ import tuple_len_0
+                from proveit.core_expr_types.tuples import tuple_len_0
                 return tuple_len_0
             elif len(entries) < 10:
                 # Automatically get the count and equality with
@@ -111,7 +111,7 @@ class Len(Operation):
                 # |(a, b, c)| = |(1, .., 3)|
                 import proveit.numbers.numerals.decimals
                 _n = len(entries)
-                len_thm = proveit.numbers.numerals.decimals._theorems_\
+                len_thm = proveit.numbers.numerals.decimals\
                     .__getattr__('tuple_len_%d' % _n)
                 repl_map = dict()
                 for param, entry in zip(len_thm.explicit_instance_params(),
@@ -121,7 +121,7 @@ class Len(Operation):
             else:
                 # raise NotImplementedError("Can't handle length computation "
                 #                        ">= 10 for %s"%self)
-                from proveit.core_expr_types.tuples._axioms_ import tuple_len_incr
+                from proveit.core_expr_types.tuples import tuple_len_incr
                 from proveit.numbers import num
                 from proveit.logic import Equals
 
@@ -139,7 +139,7 @@ class Len(Operation):
                 and not isinstance(entries[0].body, ExprRange)):
             # Case of an extended range:
             # |(a_1, ..., a_n, b| = n+1
-            from proveit.core_expr_types.tuples._theorems_ import \
+            from proveit.core_expr_types.tuples import \
                 extended_range_len, extended_range_from1_len
             assert isinstance(entries[0], ExprRange)
             range_lambda = entries[0].lambda_map
@@ -159,7 +159,7 @@ class Len(Operation):
             # len_of_ranges_with_repeated_indices,
             # len_of_ranges_with_repeated_indices_from_1,
             # or len_of_empty_range_of_range
-            from proveit.core_expr_types.tuples._theorems_ import (
+            from proveit.core_expr_types.tuples import (
                 general_len, len_of_ranges_with_repeated_indices,
                 len_of_ranges_with_repeated_indices_from_1,
                 len_of_empty_range_of_ranges)
@@ -210,7 +210,7 @@ class Len(Operation):
                 # prove that the range is empty.
                 from proveit.numbers import is_literal_int, Add
                 from proveit.logic import Equals
-                from proveit._common_ import m
+                from proveit import m
                 _m = entries[0].start_index
                 _n = entries[0].end_index
                 empty_req = Equals(Add(_n, one), _m)
@@ -302,19 +302,19 @@ class Len(Operation):
             end_index = range_entry.end_index
             lambda_map = range_entry.lambda_map
             if start_index == one:
-                from proveit.core_expr_types.tuples._theorems_ import \
+                from proveit.core_expr_types.tuples import \
                     range_from1_len_typical_eq
                 return range_from1_len_typical_eq.instantiate(
                     {f: lambda_map, i: end_index}, assumptions=assumptions)
             else:
-                from proveit.core_expr_types.tuples._theorems_ import \
+                from proveit.core_expr_types.tuples import \
                     range_len_typical_eq
                 return range_len_typical_eq.instantiate(
                     {f: lambda_map, i: start_index, j: end_index},
                     assumptions=assumptions)
         elif not any(isinstance(entry, ExprRange) for entry in entries):
             if len(entries) == 0:
-                from proveit.core_expr_types.tuples._theorems_ import \
+                from proveit.core_expr_types.tuples import \
                     tuple_len_0_typical_eq
                 return tuple_len_0_typical_eq
             elif len(entries) < 10:
@@ -323,7 +323,7 @@ class Len(Operation):
                 # |(a, b, c)| = |(1, .., 3)|
                 import proveit.numbers.numerals.decimals
                 n = len(entries)
-                eq_thm = proveit.numbers.numerals.decimals._theorems_\
+                eq_thm = proveit.numbers.numerals.decimals\
                                 .__getattr__('tuple_len_%d_typical_eq' % n)
                 repl_map = dict()
                 for param, entry in zip(eq_thm.explicit_instance_params(),
@@ -334,7 +334,7 @@ class Len(Operation):
                 and not isinstance(entries[0].body, ExprRange)):
             # Case of an extended range:
             # |(a_1, ..., a_n, b| = n+1
-            from proveit.core_expr_types.tuples._theorems_ import \
+            from proveit.core_expr_types.tuples import \
                 (extended_range_len_typical_eq,
                  extended_range_from1_len_typical_eq)
             assert isinstance(entries[0], ExprRange)
@@ -446,7 +446,7 @@ class Len(Operation):
         return eq.relation
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
-        from proveit.core_expr_types.tuples._theorems_ import (
+        from proveit.core_expr_types.tuples import (
             range_len_is_nat, range_from1_len_is_nat)
         from proveit.numbers import Natural, one
         operand = self.operand

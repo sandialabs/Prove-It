@@ -2,7 +2,7 @@ from proveit import Literal, Operation, USE_DEFAULTS
 from .set_equiv import SetEquiv
 # from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
-from proveit._common_ import A, B
+from proveit import A, B
 
 
 class SetNotEquiv(Operation):
@@ -30,7 +30,7 @@ class SetNotEquiv(Operation):
         Side-effect derivations to attempt automatically for
         this SetNotEquiv operation.
         '''
-        from proveit.logic.booleans._common_ import FALSE
+        from proveit.logic.booleans import FALSE
         # automatically derive the reversed form which is equivalent
         yield self.derive_reversed  # B not_equiv A from A not_equiv B
         # if self.rhs==FALSE:
@@ -63,7 +63,7 @@ class SetNotEquiv(Operation):
         From A not_equiv B derive B not_equiv A.
         Derived automatically as a side-effect in side_effects() method.
         '''
-        from ._theorems_ import set_not_equiv_reversal
+        from . import set_not_equiv_reversal
         return set_not_equiv_reversal.instantiate({A: self.lhs, B: self.rhs},
                                                   assumptions=assumptions)
 
@@ -76,7 +76,7 @@ class SetNotEquiv(Operation):
     #     Also see version in Not class.
     #     '''
     #     from proveit.logic import FALSE
-    #     from proveit.logic.booleans._theorems_ import from_not_false
+    #     from proveit.logic.booleans import from_not_false
     #     if self.rhs == FALSE:
     #         return from_not_false.instantiate({A:self.lhs})
     #     raise ValueError("derive_via_double_negation does not apply to " + str(self) + " which is not of the form A != FALSE")
@@ -87,7 +87,7 @@ class SetNotEquiv(Operation):
     #     Also see version in Not class.
     #     '''
     #     from proveit.logic import FALSE
-    #     from proveit.logic.booleans._theorems_ import not_equals_false
+    #     from proveit.logic.booleans import not_equals_false
     #     if self.lhs == FALSE:
     #         # switch left and right sides and prove it that way.
     #         NotEquals(self.rhs, self.lhs).prove(assumptions)
@@ -101,14 +101,14 @@ class SetNotEquiv(Operation):
         Return (A not_equiv B) = Not(A equiv B) where self represents
         (A not_equiv B).
         '''
-        from ._axioms_ import set_not_equiv_def
+        from . import set_not_equiv_def
         return set_not_equiv_def.instantiate({A: self.lhs, B: self.rhs})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (A not_equiv B) derive and return Not(A equiv B).
         '''
-        from ._theorems_ import unfold_set_not_equiv
+        from . import unfold_set_not_equiv
         return unfold_set_not_equiv.instantiate(
             {A: self.lhs, B: self.rhs}, assumptions=assumptions)
 
@@ -116,7 +116,7 @@ class SetNotEquiv(Operation):
         '''
         Conclude (A not_equiv B) from Not(A equiv B).
         '''
-        from ._theorems_ import fold_set_not_equiv
+        from . import fold_set_not_equiv
         return fold_set_not_equiv.instantiate(
             {A: self.lhs, B: self.rhs}, assumptions=assumptions)
 
@@ -136,7 +136,7 @@ class SetNotEquiv(Operation):
         From A not_equiv B, and assuming (A equiv B),
         derive and return FALSE.
         '''
-        from ._theorems_ import set_not_equiv_contradiction
+        from . import set_not_equiv_contradiction
         return set_not_equiv_contradiction.instantiate(
             {A: self.lhs, B: self.rhs}, assumptions=assumptions)
 
@@ -163,5 +163,5 @@ class SetNotEquiv(Operation):
         Deduce and return that this 'not equiv' statement is in
         the set of BOOLEANS.
         '''
-        from ._theorems_ import set_not_equiv_is_bool
+        from . import set_not_equiv_is_bool
         return set_not_equiv_is_bool.instantiate({A: self.lhs, B: self.rhs})

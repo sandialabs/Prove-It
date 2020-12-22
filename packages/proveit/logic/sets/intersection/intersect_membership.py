@@ -1,7 +1,7 @@
 from proveit import USE_DEFAULTS
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
-from proveit._common_ import m, x, A
+from proveit import m, x, A
 
 
 class IntersectMembership(Membership):
@@ -24,7 +24,7 @@ class IntersectMembership(Membership):
         Deduce and return [element in (A intersect B ...)] = [(element in A) and (element in B) ...]
         where self = (A intersect B ...).
         '''
-        from ._axioms_ import intersection_def
+        from . import intersection_def
         element = self.element
         operands = self.domain.operands
         return intersection_def.instantiate(
@@ -35,7 +35,7 @@ class IntersectMembership(Membership):
         From [element in (A intersection B ...)], derive and return [(element in A) and (element in B) ...],
         where self represents (A intersection B ...).
         '''
-        from ._theorems_ import membership_unfolding
+        from . import membership_unfolding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
@@ -47,7 +47,7 @@ class IntersectMembership(Membership):
         From [element in A], [element in B] ..., derive and return [element in (A intersection B ...)],
         where self represents (A intersection B ...).
         '''
-        from ._theorems_ import membership_folding
+        from . import membership_folding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
@@ -76,7 +76,7 @@ class IntersectNonmembership(Nonmembership):
         Deduce and return [element not in (A intersect B ...)] = [(element not in A) or (element not in B) ...]
         where self = (A intersect B ...).
         '''
-        from ._theorems_ import nonmembership_equiv
+        from . import nonmembership_equiv
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
@@ -88,7 +88,7 @@ class IntersectNonmembership(Nonmembership):
         From either [element not in A] or [element not in B] ..., derive and return [element not in (A intersection B ...)],
         where self represents (A intersection B ...).
         '''
-        from ._theorems_ import nonmembership_folding
+        from . import nonmembership_folding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands

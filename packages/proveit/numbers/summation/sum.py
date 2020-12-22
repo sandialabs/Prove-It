@@ -3,7 +3,7 @@ from proveit import (Literal, Operation, OperationOverInstances, free_vars,
 from proveit.logic import InSet
 from proveit.numbers.number_sets import RealInterval, Interval, Real, Integer, Natural, Complex
 from proveit.numbers.negation import Neg
-from proveit._common_ import a, f, P, S
+from proveit import a, f, P, S
 
 
 class Sum(OperationOverInstances):
@@ -50,7 +50,7 @@ class Sum(OperationOverInstances):
         """
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
-        from ._theorems_ import summation_nats_closure, summation_ints_closure, summation_real_closure, summation_complex_closure
+        from . import summation_nats_closure, summation_ints_closure, summation_real_closure, summation_complex_closure
         P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
         Operation(P, self.instance_vars)

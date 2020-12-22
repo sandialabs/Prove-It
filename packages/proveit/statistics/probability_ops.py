@@ -1,5 +1,5 @@
 from proveit import Operation, Literal
-from proveit._common_ import x, X
+from proveit import x, X
 
 pkg = __package__
 

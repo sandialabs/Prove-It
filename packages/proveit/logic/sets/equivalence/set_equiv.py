@@ -2,7 +2,7 @@ from proveit import as_expression, USE_DEFAULTS, ProofFailure
 from proveit import Literal
 from proveit import TransitiveRelation, TransitivityException
 from proveit.logic.irreducible_value import IrreducibleValue, is_irreducible_value
-from proveit._common_ import A, B, C, P, f, x, y, z
+from proveit import A, B, C, P, f, x, y, z
 
 
 class SetEquiv(TransitiveRelation):
@@ -66,7 +66,7 @@ class SetEquiv(TransitiveRelation):
         derivations are also attempted depending upon the form of
         this equivalence.
         '''
-        from proveit.logic.booleans._common_ import TRUE, FALSE
+        from proveit.logic.booleans import TRUE, FALSE
         SetEquiv.known_equivalences.setdefault(self.lhs, set()).add(judgment)
         SetEquiv.known_equivalences.setdefault(self.rhs, set()).add(judgment)
         # not yet clear if the irreducible value check is relevant for sets
@@ -95,7 +95,7 @@ class SetEquiv(TransitiveRelation):
         Side-effect derivations to attempt automatically for a
         negated equivalence. IN PROGRESS
         '''
-        from proveit.logic.booleans._common_ import FALSE
+        from proveit.logic.booleans import FALSE
         yield self.deduce_not_equiv  # A not_equiv B from not(A equiv B)
 
     def conclude(self, assumptions):
@@ -150,7 +150,7 @@ class SetEquiv(TransitiveRelation):
     #         try:
     #             return Iff(self.lhs, self.rhs).derive_equality(assumptions)
     #         except:
-    #             from proveit.logic.booleans.implication._theorems_ import eq_from_mutual_impl
+    #             from proveit.logic.booleans.implication import eq_from_mutual_impl
     #             return eq_from_mutual_impl.instantiate({A:self.lhs, B:self.rhs}, assumptions=assumptions)
     #     except ProofFailure:
     #         pass
@@ -192,7 +192,7 @@ class SetEquiv(TransitiveRelation):
         '''
         Prove and return self of the form A equiv A.
         '''
-        from ._theorems_ import set_equiv_reflexivity
+        from . import set_equiv_reflexivity
         assert self.lhs == self.rhs
         return set_equiv_reflexivity.instantiate(
             {A: self.lhs}, assumptions=assumptions)
@@ -202,7 +202,7 @@ class SetEquiv(TransitiveRelation):
         From forall_{x} (x in A) = (x in B),
         conclude A set_equiv B.
         '''
-        from ._theorems_ import set_equiv_fold
+        from . import set_equiv_fold
         return set_equiv_fold.instantiate({A: self.lhs, B: self.rhs},
                                           assumptions=assumptions)
 
@@ -211,7 +211,7 @@ class SetEquiv(TransitiveRelation):
         From A set_equiv B derive
         forall_{x} (x in A) = (x in B)
         '''
-        from ._theorems_ import set_equiv_unfold
+        from . import set_equiv_unfold
         return set_equiv_unfold.instantiate({A: self.lhs, B: self.rhs},
                                             assumptions=assumptions)
 
@@ -220,7 +220,7 @@ class SetEquiv(TransitiveRelation):
         From A set_equiv B derive B set_equiv A.
         This derivation is an automatic side-effect.
         '''
-        from ._theorems_ import set_equiv_reversal
+        from . import set_equiv_reversal
         return set_equiv_reversal.instantiate(
             {A: self.lhs, B: self.rhs}, assumptions=assumptions)
 
@@ -241,7 +241,7 @@ class SetEquiv(TransitiveRelation):
         This method initially based on the apply_transitivity method
         from Equals class.
         '''
-        from ._theorems_ import set_equiv_transitivity
+        from . import set_equiv_transitivity
         other = as_expression(other)
         if not isinstance(other, SetEquiv):
             # If the other relation is not "SetEquiv",
@@ -284,7 +284,7 @@ class SetEquiv(TransitiveRelation):
         particular), or, if neither of those, an expression upon
         which to perform a global replacement of self.rhs.
         '''
-        from ._theorems_ import sub_left_side_into
+        from . import sub_left_side_into
         from proveit.logic import Equals
         Plambda = Equals._lambda_expr(lambda_map, self.rhs)
 
@@ -301,7 +301,7 @@ class SetEquiv(TransitiveRelation):
         particular), or, if neither of those, an expression upon
         which to perform a global replacement of self.lhs.
         '''
-        from ._theorems_ import sub_right_side_into
+        from . import sub_right_side_into
         from proveit.logic import Equals
         Plambda = Equals._lambda_expr(lambda_map, self.lhs)
         return sub_right_side_into.instantiate(
@@ -311,6 +311,6 @@ class SetEquiv(TransitiveRelation):
         '''
         Deduce and return that this SetEquiv claim is in the Boolean set.
         '''
-        from ._theorems_ import set_equiv_is_bool
+        from . import set_equiv_is_bool
         return set_equiv_is_bool.instantiate({A: self.lhs, B: self.rhs},
                                              assumptions=assumptions)

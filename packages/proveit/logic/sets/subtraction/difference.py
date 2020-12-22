@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import x, A, B
+from proveit import x, A, B
 
 
 class Difference(Operation):
@@ -14,7 +14,7 @@ class Difference(Operation):
         Deduce and return and [element in (A - B)] = [(element in A) and (element not in B)
         where self = (A - B).
         '''
-        from ._axioms_ import difference_def
+        from . import difference_def
         return difference_def.instantiate(
             {x: element, A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -23,7 +23,7 @@ class Difference(Operation):
         Deduce and return and [element not in (A - B)] = [(element not in A) or (element in B)]
         where self = (A - B).
         '''
-        from ._theorems_ import nonmembership_equiv
+        from . import nonmembership_equiv
         return nonmembership_equiv.instantiate(
             {x: element, A: self.operands[0], B: self.operands[1]})
 
@@ -32,7 +32,7 @@ class Difference(Operation):
         From [element in (A - B)], derive and return [(element in A) and (element not in B)],
         where self represents (A - B).
         '''
-        from ._axioms_ import difference_def
+        from . import difference_def
         return difference_def.instantiate(
             {x: element, A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -41,7 +41,7 @@ class Difference(Operation):
         From [element in A] and [element not in B], derive and return [element in (A - B)],
         where self represents (A - B).
         '''
-        from ._theorems_ import membership_folding
+        from . import membership_folding
         return membership_folding.instantiate(
             {x: element, A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -50,6 +50,6 @@ class Difference(Operation):
         From either [element not in A] or [element in B], derive and return [element not in (A - B)],
         where self represents (A - B).
         '''
-        from ._theorems_ import nonmembership_folding
+        from . import nonmembership_folding
         return nonmembership_folding.instantiate(
             {x: element, A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)

@@ -1,6 +1,6 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 # from proveit.numbers.number_sets import Integer, Real
-from proveit._common_ import a, b
+from proveit import a, b
 
 
 class Mod(Operation):
@@ -14,7 +14,7 @@ class Mod(Operation):
         self.divisor = self.operands[1]
 
     # def deduce_in_interval(self, assumptions=frozenset()):
-    #     from ._theorems_ import mod_in_interval, mod_in_interval_c_o
+    #     from . import mod_in_interval, mod_in_interval_c_o
     #     from number_sets import deduce_in_integer, deduce_in_real
     #     try:
     #         # if the operands are integers, then we can deduce that
@@ -29,7 +29,7 @@ class Mod(Operation):
     # b:self.divisor}).checked(assumptions)
 
     def deduce_in_interval(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import mod_in_interval, mod_in_interval_c_o
+        from . import mod_in_interval, mod_in_interval_c_o
         # from number_sets import deduce_in_integer, deduce_in_real
         try:
             # if the operands are integers, then we can deduce that
@@ -49,7 +49,7 @@ class Mod(Operation):
         set using the appropriate closure theorem.
         '''
         from proveit.logic import InSet
-        from proveit.numbers.modular._theorems_ import (
+        from proveit.numbers.modular import (
             mod_int_closure, mod_int_to_nat_closure, mod_real_closure)
         from proveit.numbers import Integer, Natural, Real
 

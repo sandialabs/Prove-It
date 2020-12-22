@@ -221,7 +221,7 @@ class Divides(DividesRelation):
         '''
         Prove and return self of the form x|x with x ≠ 0.
         '''
-        from ._theorems_ import divides_reflexivity
+        from . import divides_reflexivity
         _x = divides_reflexivity.instance_var
         assert self.lhs == self.rhs
         return divides_reflexivity.instantiate(
@@ -231,7 +231,7 @@ class Divides(DividesRelation):
         '''
         Prove and return self of the form x|0 for x ≠ 0
         '''
-        from ._theorems_ import non_zero_divides_zero
+        from . import non_zero_divides_zero
         _x = non_zero_divides_zero.instance_var
         return non_zero_divides_zero.instantiate(
             {_x: self.lhs}, assumptions=assumptions)
@@ -247,14 +247,14 @@ class Divides(DividesRelation):
                 # are actually ExprRanges (later!)
                 if self.lhs == self.rhs.operands[0]:
                     # apply left version
-                    from ._theorems_ import left_factor_divisibility
+                    from . import left_factor_divisibility
                     _x, _y = left_factor_divisibility.instance_params
                     return left_factor_divisibility.instantiate(
                         {_x: self.lhs, _y: self.rhs.operands[1]},
                         assumptions=assumptions)
                 elif self.lhs == self.rhs.operands[1]:
                     # apply right version
-                    from ._theorems_ import right_factor_divisibility
+                    from . import right_factor_divisibility
                     _x, _y = right_factor_divisibility.instance_params
                     return right_factor_divisibility.instantiate(
                         {_x: self.lhs, _y: self.rhs.operands[0]},
@@ -284,7 +284,7 @@ class Divides(DividesRelation):
         DividesRelation.side_effects() method.
         '''
         from proveit.numbers import two
-        from ._theorems_ import even__if__power_is_even
+        from . import even__if__power_is_even
         if not isinstance(self.rhs, Exp):
             raise ValueError(
                 "'eliminate_dividend_exponent' is only applicable "
@@ -317,7 +317,7 @@ class Divides(DividesRelation):
                 InSet(a, Integer).proven(assumptions) and
                     InSet(n, NaturalPos).proven(assumptions)):
 
-                from ._theorems_ import common_exponent_elimination
+                from . import common_exponent_elimination
                 _k, _a, _n = common_exponent_elimination.instance_params
                 return common_exponent_elimination.instantiate(
                     {_k: k, _a: a, _n: n}, assumptions=assumptions)
@@ -339,7 +339,7 @@ class Divides(DividesRelation):
         From self of the form (k)|(a), with integers k and a, derive
         and return k^n|a^n where n = exponent is a positive natural.
         '''
-        from ._theorems_ import common_exponent_introduction
+        from . import common_exponent_introduction
         _k, _a, _n = common_exponent_introduction.instance_params
         return common_exponent_introduction.instantiate(
             {_k: self.lhs, _a: self.rhs, _n: exponent},
@@ -367,8 +367,8 @@ class Divides(DividesRelation):
                 if (lhs1 == rhs1 and InSet(lhs1, Complex).proven() and
                         NotEquals(lhs1, zero).proven()):
 
-                    from ._theorems_ import common_factor_elimination
-                    from proveit._common_ import a, b, k
+                    from . import common_factor_elimination
+                    from proveit import a, b, k
                     return common_factor_elimination.instantiate(
                         {a: lhs2, b: rhs2, k: lhs1}, assumptions=assumptions)
 
@@ -390,7 +390,7 @@ class Divides(DividesRelation):
         From x|y (self) and y|z (other) derive and return x|z.
         Will also check for y|z (self) and x|y (other) to return x|z.
         '''
-        from ._theorems_ import divides_transitivity
+        from . import divides_transitivity
         _x, _y, _z = divides_transitivity.instance_params
         other = as_expression(other)
         if not isinstance(other, Divides):
@@ -420,7 +420,7 @@ class Divides(DividesRelation):
         Deduce and return that this 'Divides' expression is in
         the Boolean set.
         '''
-        from ._theorems_ import divides_is_bool
+        from . import divides_is_bool
         _x, _y = divides_is_bool.instance_params
         return divides_is_bool.instantiate(
             {_x: self.operands[0], _y: self.operands[1]},

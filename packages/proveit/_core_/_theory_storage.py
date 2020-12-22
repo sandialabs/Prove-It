@@ -465,7 +465,8 @@ class TheoryStorage:
             if name in self._name_to_kind:
                 if self._name_to_kind[name] != kind:
                     raise ValueError("'%s' is an overused name, as %s and %s."
-                                     %(kind_to_str[kind], self._name_to_kind[name]))
+                                     %(name, kind_to_str[kind], 
+                                       self._name_to_kind[name]))
             else:
                 self._name_to_kind[name] = kind
 
@@ -479,7 +480,7 @@ class TheoryStorage:
         if self._theorem_names is None:
             self._theorem_names = list(
                 self._loadSpecialStatementNames('theorem'))
-            self._update_name_to_kind(self._common_expr_names, 'common')
+            self._update_name_to_kind(self._theorem_names, 'theorem')
         return self._theorem_names
 
     def get_common_expression_names(self):

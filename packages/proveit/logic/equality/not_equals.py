@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
-from proveit._common_ import x, y, A, X
+from proveit import x, y, A, X
 from proveit.relation import Relation
 
 
@@ -22,7 +22,7 @@ class NotEquals(Relation):
         Side-effect derivations to attempt automatically for
         this NotEquals operation.
         '''
-        from proveit.logic.booleans._common_ import FALSE
+        from proveit.logic.booleans import FALSE
         # automatically derive the reversed form which is equivalent
         yield self.derive_reversed  # y != x from x != y
         if self.rhs == FALSE:
@@ -55,7 +55,7 @@ class NotEquals(Relation):
         '''
         From x != y derive y != x.
         '''
-        from ._theorems_ import not_equals_symmetry
+        from . import not_equals_symmetry
         return not_equals_symmetry.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -72,7 +72,7 @@ class NotEquals(Relation):
         Also see version in Not class.
         '''
         from proveit.logic import FALSE
-        from proveit.logic.booleans._theorems_ import from_not_false
+        from proveit.logic.booleans import from_not_false
         if self.rhs == FALSE:
             return from_not_false.instantiate({A: self.lhs})
         raise ValueError(
@@ -86,7 +86,7 @@ class NotEquals(Relation):
         Also see version in Not class.
         '''
         from proveit.logic import FALSE
-        from proveit.logic.booleans._theorems_ import not_equals_false
+        from proveit.logic.booleans import not_equals_false
         if self.lhs == FALSE:
             # switch left and right sides and prove it that way.
             NotEquals(self.rhs, self.lhs).prove(assumptions)
@@ -99,14 +99,14 @@ class NotEquals(Relation):
         '''
         Return (x != y) = Not(x=y) where self represents (x != y).
         '''
-        from ._axioms_ import not_equals_def
+        from . import not_equals_def
         return not_equals_def.instantiate({x: self.lhs, y: self.rhs})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (x != y), derive and return Not(x=y).
         '''
-        from ._theorems_ import unfold_not_equals
+        from . import unfold_not_equals
         return unfold_not_equals.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -114,7 +114,7 @@ class NotEquals(Relation):
         '''
         Conclude (x != y) from Not(x = y).
         '''
-        from ._theorems_ import fold_not_equals
+        from . import fold_not_equals
         return fold_not_equals.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -136,7 +136,7 @@ class NotEquals(Relation):
         r'''
         From x != y, and assuming x = y, derive and return FALSE.
         '''
-        from ._theorems_ import not_equals_contradiction
+        from . import not_equals_contradiction
         return not_equals_contradiction.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -160,5 +160,5 @@ class NotEquals(Relation):
         '''
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
         '''
-        from ._theorems_ import not_equals_is_bool
+        from . import not_equals_is_bool
         return not_equals_is_bool.instantiate({x: self.lhs, y: self.rhs})

@@ -717,7 +717,7 @@ class CommonExpressions(ModuleType):
 
     def __dir__(self):
         return sorted(list(self.__dict__.keys()) +
-                      list(self._theory.common_expression_names()))
+                      list(self._theory.get_common_expression_names()))
 
     def __getattr__(self, name):
         import proveit
@@ -818,7 +818,7 @@ class UnsetCommonExpressionPlaceholder(object):
         # import a common expression:
         import proveit
         import_failure_filename = \
-            proveit.defaults._common_import_failure_filename
+            proveit.defaultsimport_failure_filename
         assert proveit.defaults._running_proveit_notebook is not None, (
             "Should only use UnsetCommonExpressionPlaceholder when "
             "executing a common expression notebook.")

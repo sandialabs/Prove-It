@@ -1,7 +1,7 @@
 from proveit import Operation, Literal, USE_DEFAULTS, ProofFailure
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.sets.membership import Membership, Nonmembership
-from proveit._common_ import A, C, P, Q
+from proveit import A, C, P, Q
 
 
 class BooleanSet(Literal):
@@ -24,9 +24,9 @@ class BooleanSet(Literal):
         updated by JML 6/28/19
         '''
         from proveit.logic import Forall, Equals, SimplificationError
-        from ._theorems_ import false_eq_false, true_eq_true
-        from ._theorems_ import forall_bool_eval_true, forall_bool_eval_false_via_t_f, forall_bool_eval_false_via_f_f, forall_bool_eval_false_via_f_t
-        from ._common_ import TRUE, FALSE, Boolean
+        from . import false_eq_false, true_eq_true
+        from . import forall_bool_eval_true, forall_bool_eval_false_via_t_f, forall_bool_eval_false_via_f_f, forall_bool_eval_false_via_f_t
+        from . import TRUE, FALSE, Boolean
         from .conjunction import compose
         assert(isinstance(forall_stmt, Forall)
                ), "May only apply forall_evaluation method of BOOLEAN to a forall statement"
@@ -89,8 +89,8 @@ class BooleanSet(Literal):
         Given forall_{A in Boolean} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from ._theorems_ import unfold_forall_over_bool
-        from ._common_ import Boolean
+        from . import unfold_forall_over_bool
+        from . import Boolean
         assert(isinstance(forall_stmt, Forall)
                ), "May only apply unfold_forall method of Boolean to a forall statement"
         assert(forall_stmt.domain ==
@@ -107,8 +107,8 @@ class BooleanSet(Literal):
         [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall, And
-        from ._theorems_ import fold_forall_over_bool, fold_conditioned_forall_over_bool
-        from ._common_ import Boolean
+        from . import fold_forall_over_bool, fold_conditioned_forall_over_bool
+        from . import Boolean
         assert(isinstance(forall_stmt, Forall)
                ), "May only apply fold_as_forall method of Boolean to a forall statement"
         assert(forall_stmt.domain ==
@@ -152,7 +152,7 @@ class BooleanMembership(Membership):
         by calling 'in_bool_side_effects' on the element if it has such a method.
         Edited by JML on 6/27/19 to add fold_is_bool side_effect
         '''
-        from proveit.logic.booleans._theorems_ import unfold_is_bool, fold_is_bool
+        from proveit.logic.booleans import unfold_is_bool, fold_is_bool
         if hasattr(self.element, 'in_bool_side_effects'):
             for side_effect in self.element.in_bool_side_effects(judgment):
                 yield side_effect
@@ -165,7 +165,7 @@ class BooleanMembership(Membership):
         '''
         Try to deduce that the given element is in the Boolean set under the given assumptions.
         '''
-        from ._theorems_ import in_bool_if_true, in_bool_if_false
+        from . import in_bool_if_true, in_bool_if_false
         element = self.element
         # if the element is already proven or disproven, use in_bool_if_true or
         # in_bool_if_false
@@ -191,7 +191,7 @@ class BooleanMembership(Membership):
         '''
         Deduce [(element in Boolean) = [(element = TRUE) or (element = FALSE)].
         '''
-        from ._theorems_ import in_bool_def
+        from . import in_bool_def
         return in_bool_def.instantiate({A: self.element})
 
     def unfold(self, assumptions=USE_DEFAULTS):
@@ -200,7 +200,7 @@ class BooleanMembership(Membership):
         unfold_is_bool is usable.  It it is not, instead try to derive and return
         [(element=TRUE) or (element=FALSE)].
         '''
-        from ._theorems_ import unfold_is_bool, unfold_is_bool_explicit
+        from . import unfold_is_bool, unfold_is_bool_explicit
         if unfold_is_bool.is_usable():
             #  [element or not(element)] assuming in_bool(element)
             return unfold_is_bool.instantiate(
@@ -215,7 +215,7 @@ class BooleanMembership(Membership):
         From [(element=TRUE) or (element=FALSE)], derive in_bool(Element).
         Created by JML on 6/27/19 for fold_is_bool side_effect
         '''
-        from ._theorems_ import fold_is_bool
+        from . import fold_is_bool
         if fold_is_bool.is_usable():
             return fold_is_bool.instantiate(
                 {A: self.element}, assumptions=assumptions)
@@ -225,12 +225,12 @@ class BooleanMembership(Membership):
         Derive the consequent from (element in Boolean)
         given element => consequent and Not(element) => consequent.
         '''
-        from ._theorems_ import from_excluded_middle
+        from . import from_excluded_middle
         return from_excluded_middle.instantiate(
             {A: self.element, C: consequent}, assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_bool_is_bool
+        from . import in_bool_is_bool
         return in_bool_is_bool.instantiate({A: self.element})
 
 
@@ -243,7 +243,7 @@ class BooleanNonmembership(Nonmembership):
         '''
         Derive [(element not in Boolean) = [(element != TRUE) and (element != FALSE)].
         '''
-        from ._theorems_ import not_in_bool_equiv
+        from . import not_in_bool_equiv
         return not_in_bool_equiv.instantiate({A: element})
 
 
@@ -252,20 +252,20 @@ class TrueLiteral(Literal, IrreducibleValue):
         Literal.__init__(self, string_format='TRUE', latex_format=r'\top')
 
     def conclude(self, assumptions):
-        from ._axioms_ import true_axiom
+        from . import true_axiom
         return true_axiom
 
     def eval_equality(self, other, assumptions=USE_DEFAULTS):
-        from ._theorems_ import true_eq_true, true_not_false
-        from ._common_ import TRUE, FALSE
+        from . import true_eq_true, true_not_false
+        from . import TRUE, FALSE
         if other == TRUE:
             return true_eq_true.evaluation()
         elif other == FALSE:
             return true_not_false.unfold().equate_negated_to_false()
 
     def not_equal(self, other, assumptions=USE_DEFAULTS):
-        from ._theorems_ import true_not_false
-        from ._common_ import TRUE, FALSE
+        from . import true_not_false
+        from . import TRUE, FALSE
         if other == FALSE:
             return true_not_false
         if other == TRUE:
@@ -275,7 +275,7 @@ class TrueLiteral(Literal, IrreducibleValue):
             "Inequality between TRUE and a non-boolean not defined")
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import true_is_bool
+        from . import true_is_bool
         return true_is_bool
 
 
@@ -284,21 +284,21 @@ class FalseLiteral(Literal, IrreducibleValue):
         Literal.__init__(self, string_format='FALSE', latex_format=r'\bot')
 
     def eval_equality(self, other, assumptions=USE_DEFAULTS):
-        from ._axioms_ import false_not_true
-        from ._theorems_ import false_eq_false
-        from ._common_ import TRUE, FALSE
+        from . import false_not_true
+        from . import false_eq_false
+        from . import TRUE, FALSE
         if other == FALSE:
             return false_eq_false.evaluation()
         elif other == TRUE:
             return false_not_true.unfold().equate_negated_to_false()
 
     def conclude_negation(self, assumptions):
-        from proveit.logic.booleans.negation._theorems_ import not_false
+        from proveit.logic.booleans.negation import not_false
         return not_false  # the negation of FALSE
 
     def not_equal(self, other, assumptions=USE_DEFAULTS):
         from _.theorems_ import false_not_true
-        from ._common_ import TRUE, FALSE
+        from . import TRUE, FALSE
         if other == TRUE:
             return false_not_true
         if other == FALSE:
@@ -308,7 +308,7 @@ class FalseLiteral(Literal, IrreducibleValue):
             "Inequality between FALSE and a non-boolean not defined")
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import false_is_bool
+        from . import false_is_bool
         return false_is_bool
 
     def deny_assumption(self, assumption_to_deny, assumptions=USE_DEFAULTS):
@@ -323,7 +323,7 @@ class FalseLiteral(Literal, IrreducibleValue):
 
 def in_bool(*elements):
     from proveit.logic.sets import InSet
-    from ._common_ import Boolean
+    from . import Boolean
     if len(elements) == 1:
         return InSet(elements[0], Boolean)
     return [InSet(element, Boolean) for element in elements]

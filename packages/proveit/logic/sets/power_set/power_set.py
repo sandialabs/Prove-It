@@ -1,5 +1,5 @@
 from proveit import Literal, Function, USE_DEFAULTS
-from proveit._common_ import n, x
+from proveit import n, x
 
 
 class PowerSet(Function):

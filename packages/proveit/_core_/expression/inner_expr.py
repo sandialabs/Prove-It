@@ -489,9 +489,9 @@ class InnerExpr:
         and return a new proven statement (assuming the top
         level expression is proven, or can be proven automatically).
         '''
-        from proveit._common_ import x, P
+        from proveit import x, P
         from proveit.logic import TRUE, FALSE, Equals
-        from proveit.logic.equality._theorems_ import (
+        from proveit.logic.equality import (
             substitute_truth, substitute_falsehood)
         cur_inner_expr = self.expr_hierarchy[-1]
         if cur_inner_expr == TRUE:

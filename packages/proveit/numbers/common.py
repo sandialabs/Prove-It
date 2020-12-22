@@ -1,7 +1,7 @@
 from proveit import Operation
 from proveit.numbers import Add, zero, one
-from proveit._common_ import k, m, n, P
-from proveit.numbers.number_sets.integers._common_ import*
+from proveit import k, m, n, P
+from proveit.numbers.number_sets.integers import*
 
 Pzero = Operation(P, zero)
 Pn = Operation(P, n)

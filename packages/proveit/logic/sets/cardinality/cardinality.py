@@ -1,5 +1,5 @@
 from proveit import Function, Literal, USE_DEFAULTS
-from proveit._common_ import S, a, b, N
+from proveit import S, a, b, N
 
 
 class Card(Function):
@@ -23,7 +23,7 @@ class Card(Function):
         proves and returns that there exists distinct elements in that domain.
         '''
         from proveit.numbers import num
-        from ._theorems_ import distinct_subset_existence, distinct_pair_existence
+        from . import distinct_subset_existence, distinct_pair_existence
         if len(elems) == 2:
             a_var, b_var = elems
             return distinct_pair_existence.instantiate(

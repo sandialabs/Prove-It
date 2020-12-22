@@ -39,8 +39,8 @@ class Round(Function):
         For the case where the operand is of the form x = real + int,
         see the rounding_extraction() method.
         '''
-        from proveit._common_ import x
-        from ._theorems_ import round_of_integer
+        from proveit import x
+        from . import round_of_integer
 
         return apply_rounding_elimination(self, round_of_integer, assumptions)
 
@@ -69,7 +69,7 @@ class Round(Function):
         extraction is guaranteed to work only if the inner operands
         a, b, etc., are simple.
         '''
-        from ._theorems_ import round_of_real_plus_int
+        from . import round_of_real_plus_int
         return apply_rounding_extraction(
             self, round_of_real_plus_int, idx_to_extract, assumptions)
 
@@ -79,8 +79,8 @@ class Round(Function):
         Round expression is in that number set using the appropriate
         closure theorem.
         '''
-        from proveit.numbers.rounding._axioms_ import round_is_an_int
-        from proveit.numbers.rounding._theorems_ import round_real_pos_closure
+        from proveit.numbers.rounding import round_is_an_int
+        from proveit.numbers.rounding import round_real_pos_closure
 
         return rounding_deduce_in_number_set(
             self, number_set, round_is_an_int, round_real_pos_closure,
