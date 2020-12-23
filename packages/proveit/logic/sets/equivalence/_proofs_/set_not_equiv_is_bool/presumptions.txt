@@ -30,5 +30,4 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.equivalence.set_equiv_is_bool
-proveit.logic.sets.equivalence.set_equiv_is_bool
 # THEOREMS AND THEORIES TO EXCLUDE:

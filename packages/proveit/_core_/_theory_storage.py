@@ -47,7 +47,7 @@ class TheoryStorage:
             # make the __pv_it directory
             try:
                 os.makedirs(self.pv_it_dir)
-            except OSError:
+            except (OSError, FileExistsError):
                 # maybe another processor beat us to it.
                 pass
 
@@ -821,6 +821,7 @@ class TheoryStorage:
         given theorem_names, stash them or remove them if they are
         generic notebooks.
         '''
+        import shutil
         proofs_path = os.path.join(self.directory, '_proofs_')
         if not os.path.isdir(proofs_path):
             return  # nothing to stash
@@ -852,7 +853,7 @@ class TheoryStorage:
                             remove_folder = True
 
             if remove_folder:
-                os.remove(proof_path)
+                shutil.rmtree(proof_path)
             else:
                 self._stashProof(proof_path)
 
@@ -2770,9 +2771,9 @@ class StoredTheorem(StoredSpecialStmt):
         from proveit._core_.proof import Theorem
         with open(os.path.join(proof_path, 'presumptions.txt'), 'w') as f:
             f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
-            usable_theorem_names = [str(theorem) for theorem
-                                    in Theorem.all_theorems
-                                    if theorem.is_usable()]
+            usable_theorem_names = set(str(theorem) for theorem
+                                       in Theorem.all_theorems
+                                       if theorem.is_usable())
             for theorem in sorted(usable_theorem_names):
                 f.write(str(theorem) + '\n')
             f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')

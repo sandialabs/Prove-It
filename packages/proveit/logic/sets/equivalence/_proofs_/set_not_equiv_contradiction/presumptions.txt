@@ -12,7 +12,6 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.equality.substitute_truth
 proveit.logic.sets.equivalence.fold_set_not_equiv
 proveit.logic.sets.equivalence.set_equiv_is_bool
-proveit.logic.sets.equivalence.set_equiv_is_bool
 proveit.logic.sets.equivalence.set_equiv_reversal
 proveit.logic.sets.equivalence.set_not_equiv_reversal
 proveit.logic.sets.equivalence.unfold_set_not_equiv
