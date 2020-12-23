@@ -240,18 +240,30 @@ class ProveItHTMLPreprocessor(Preprocessor):
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
 html_exporter.template_file = 'proveit_html'
 
+def is_git_diff_empty(notebook_path):
+    '''
+    Return true if "git diff" for the given file is empty
+    (after filtering if there is filtering as there should be
+    for Jupyter notebooks).
+    '''
+    process = subprocess.Popen(["git", "diff", notebook_path],
+                               stdout=subprocess.PIPE)
+    output = process.communicate()[0]
+    output = re.sub('^diff --git .*$', '', output.decode('utf-8'))
+    return output == ""
 
 def git_clear_notebook(notebook_path):
+    '''
+    If "git diff" is empty after filtering (e.g., the Jupyter notebook 
+    only differs in its output), do "git add" to clear it from the list
+    of modified files.
+    '''
     try:
         # If the file is in a git repository which is filtering
         # the notebook output, see if the only change is in
         # the output.  In that case, 'git add' the file so it
         # doesn't show up as modified.
-        process = subprocess.Popen(["git", "diff", notebook_path],
-                                   stdout=subprocess.PIPE)
-        output = process.communicate()[0]
-        output = re.sub('^diff --git .*$', '', output.decode('utf-8'))
-        if output == "":
+        if is_git_diff_empty(notebook_path):
             # No change except perhaps filtered output.
             # Do "git add" so it won't show up as different.
             process = subprocess.Popen(['git', 'add', notebook_path])
@@ -607,305 +619,136 @@ def record_presuming_info(theorem, proof_notebook_path):
     finally:
         os.chdir(__owd)
 
-
-def build(execute_processor, theory_paths, all_paths, no_execute=False,
-          just_execute_essentials=False, just_execute_proofs=False,
-          just_execute_demos=False, just_execute_expression_nbs=False,
-          no_latex=False):
+def extract_tar_with_limitations(filename, paths):
     '''
-    Build all Theory-related notebooks (_common_, _axioms_,
-    _theorems_, and proof notebooks for the theorems)
-    in the theory_paths.
-    For the paths in all_paths (which should include the
-    theory paths), build any contained notebooks and
-    any of the expr.ipynb and dependencies.ipnyb notebooks
-    within the __pv_it directory (storing Prove-It "database"
-    information).
+    Extract the given tar file into the directory of this 'build.py'
+    script.  There are some limitations.  Other than files in the
+    database (the '__pv_it' folders), only .ipynb, .html, and .css
+    files will be extracted, and only if there is an empty 'git diff'
+    for Jupyter notebooks (and associated .html files).  Assuming
+    notebook output is filtered for 'git diff', this means that
+    we only extract notebooks whose output may differ.  Within the
+    '__pv_it' folders, we do check for hash collisions (which
+    should be astronomically rare) and raise an exception if it should
+    occur (why not play it safe).  Also, we skip over anything that 
+    isn't within the specified paths.
     '''
-    if not just_execute_proofs and not just_execute_demos and not just_execute_expression_nbs:
-        if not just_execute_essentials:
-            # Generate html pages from index.ipynb and guide.ipynb in the
-            # packages folder:
-            if no_execute:
-                export_notebook_to_html('index.ipynb')
-                export_notebook_to_html('guide.ipynb')
-            else:
-                execute_and_export_notebook(execute_processor, 'index.ipynb')
-                execute_and_export_notebook(execute_processor, 'guide.ipynb')
-
-        # Make sure there is a _common_.py, _axioms_.py, and _theorems_.py
-        # in each theory directory.
-        # These will be useful in figuring out dependencies between _common_
-        # notebooks (see CommonExpressions in proveit._core_.theory as well
-        # as avoiding import errors.
-        for theory_path in theory_paths:
-            for spec_expr_kind in ('common', 'axioms', 'theorems'):
-                Theory(theory_path).make_special_expr_module(spec_expr_kind)
-
-        # Execute the _theory_ notebooks in each theory directory
-        # and generate _theory_.html.
-        for theory_path in theory_paths:
-            fix_theory(theory_path)
-            theory_notebook_path = os.path.join(theory_path, '_theory_.ipynb')
-            with open(os.path.join(theory_path, '_mode_.txt'), 'wt') as f:
-                # when executed again, it will toggle to 'static' mode
-                f.write('interactive\n')
-            # execute into static mode
-            execute_and_export_notebook(
-                execute_processor,
-                theory_notebook_path,
-                no_execute=no_execute,
-                no_latex=no_latex)
-
-        # Next, run the _common_.ipynb (common expression) notebooks for the theories.
-        # For any that depend up _common_.py of other theories, run the
-        # requirements first.
-
-        """
-        common_nb_queue = list(theory_paths)
-        exececuted_common_nb = set()
-        while len(common_nb_queue) > 0:
-            theory_path = common_nb_queue.pop(0)
-            if theory_path in exececuted_common_nb:
+    try:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        nranks = comm.Get_size()
+    except BaseException:
+        rank, nranks = 0, 1
+    tar = tarfile.open(filename)
+    # extract into the directory of this 'build.py'
+    extract_to_path = os.path.dirname(os.path.realpath(__file__))
+    print("Extracting tarball into %s" % extract_to_path)
+    prefix = "Prove-It-master-full"
+    paths = [os.path.normpath(_path) for _path in paths]
+    def tar_member_generator():
+        for k, tar_member in enumerate(tar.getmembers()):
+            # Divy up the work when multiple cores are used.
+            if k%nranks != rank:
                 continue
+            # drop the first part of the path
+            assert tar_member.name.startswith(prefix), (
+                    "Expecting tar member names to start with %s"
+                    %prefix)
+            tar_member.name = tar_member.name[len(prefix)+1:]
+            member_path = os.path.normpath(tar_member.name)
+            is_contained_in_a_theory_path = False
+            for _path in paths:
+                if member_path.startswith(_path):
+                    is_contained_in_a_theory_path = True
+                    break
+            if not is_contained_in_a_theory_path:
+                continue
+            member_fullpath = os.path.join(extract_to_path, member_path)
+            member_folder, member_filename = os.path.split(member_path)
+            filebase, ext = os.path.splitext(member_filename)
+            # The '__pv_it' folder store Prove-It "database"
+            # information.
+            in_database_folder = ('__pv_it' in member_path.split(os.sep))
+            # Extract files in '__pv_it' folders or
+            # '.ipynb' and '.html' files.
+            if (in_database_folder or
+                    ext in ('.ipynb', '.html', '.css')):
+                if (not in_database_folder and ext == '.ipynb' 
+                        or ext == '.html'):
+                    # If this is a notebook or notebook html
+                    # not in the database, only extract it if
+                    # it is consistent with the git index
+                    # version.
+                    if ext == '.html':
+                        notebook_path = os.path.join(member_folder, 
+                                                     filebase + '.ipynb')
+                    elif ext == '.ipynb':
+                        notebook_path = member_fullpath
+                    if os.path.isfile(notebook_path):
+                        if not is_git_diff_empty(member_fullpath):
+                            # Skip this extraction since it
+                            # isn't committed.
+                            print("Skipping", tar_member.name)
+                            continue
+                unique_rep = None
+                if (in_database_folder and
+                        member_filename == 'unique_rep.pv_it'):
+                    if os.path.isfile(member_fullpath):
+                        with open(member_fullpath, 'r') as f:
+                            unique_rep = f.read()
+                print('Extracting', tar_member.name)
+                yield tar_member
+                if unique_rep is not None:
+                    # If the unique_rep has change, it seems
+                    # there was a hash collision; that should
+                    # be astronomically rare!
+                    with open(member_fullpath, 'r') as f:
+                        new_unique_rep = f.read()
+                    if new_unique_rep != unique_rep:
+                        raise Exception("There was a hash collision:\n%s\n%s\n"
+                              "apparently had the same hash.\n"
+                              "Wow!  That should be astronomically "
+                              "rare.  A 'build.py --clean' is "
+                              "recommended before continuing to "
+                              "ensure there are no bad links in the "
+                              "Prove-It database.\n"
+                              "You may then want to checkout master, do"
+                              "'build.py --download', and go from there."%
+                              (unique_rep, new_unique_rep))    
+                if (not in_database_folder and ext == '.html'):
+                    git_clear_notebook(member_fullpath)
+    tar.extractall(path=extract_to_path, members=tar_member_generator())
 
-            # The failed_common_import.txt file is used to communicate a failed
-            # common expression import from another theory.  First erase this
-            # file, then see if it is created after executing the common notebook.
-            failed_common_import_filename = os.path.join(theory_path, '__pv_it', 'failed_common_import.txt')
-            if os.path.isfile(failed_common_import_filename):
-                os.remove(failed_common_import_filename)
+"""
+def extract_tar_test(filename, paths):
+    '''
+    TEST
+    '''
+    tar = tarfile.open(filename)
+    # extract into the directory of this 'build.py'
+    extract_to_path = os.path.dirname(os.path.realpath(__file__))
+    extract_to_path = os.path.join(extract_to_path, 'tmp')
+    print("Extracting tarball into %s" % extract_to_path)
+    def tar_member_generator():
+        for tar_member in tar.getmembers():
+            print(tar_member)
+            yield tar_member
+    tar.extractall(path=extract_to_path, members=tar_member_generator())
+"""
 
-            try:
-                revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                execute_and_export_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                exececuted_common_nb.add(theory_path) # finished successfully
-            except execute.CellExecutionError as e:
-                retry = False
-                if os.path.isfile(failed_common_import_filename):
-                    # A failed_common_import.txt file was created.  It will indicate the
-                    # theory from which a common expression was attempted to be imported.
-                    # If its _common_ notebook has not already executed, execute it first
-                    # and then try to execute this one again.
-                    with open(failed_common_import_filename, 'r') as f:
-                        required_theory_name = f.read().strip()
-                        if required_theory_name not in exececuted_common_nb:
-                            print '  Failed to execute; try a prerequisite first:', required_theory_name
-                            common_nb_queue.insert(0, theory_path) # re-insert to try again
-                            # but first execute the _common_ notebook from the required_theory.
-                            common_nb_queue.insert(0, theory_map[required_theory_name])
-                            retry = True
-                if not retry:
-                    raise e
-        """
-
-        if no_execute:
-            for theory_path in theory_paths:
-                #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                export_notebook_to_html(
-                    os.path.join(
-                        theory_path,
-                        '_common_.ipynb'))
-        else:
-            # execute the commons notebooks first, and do this twice to work
-            # out inter-dependencies
-            for _ in range(2):
-                for theory_path in theory_paths:
-                    #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                    execute_processor.execute_notebook(os.path.join(
-                        theory_path, '_common_.ipynb'), no_latex=no_latex)
-            # Unless 'no_latex' is True, execute one last time to
-            # eliminate "expression notebook ... updated" messages
-            # and we'll export to html.
-            for theory_path in theory_paths:
-                #revise_special_notebook(os.path.join(theory_path, '_common_.ipynb'))
-                execute_and_export_notebook(
-                    execute_processor,
-                    os.path.join(
-                        theory_path,
-                        '_common_.ipynb'),
-                    no_execute=no_latex,
-                    no_latex=no_latex)
-
-        # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the theories.
-        # The order does not matter assuming these expression constructions
-        # do not depend upon other axioms or theorems (but possibly common expressions).
-        # Execute twice unless no_latex==True to get rid of extraneous
-        # information about adding/removing from database
-        if no_execute:
-            for theory_path in theory_paths:
-                export_notebook_to_html(
-                    os.path.join(
-                        theory_path,
-                        '_axioms_.ipynb'))
-                export_notebook_to_html(
-                    os.path.join(
-                        theory_path,
-                        '_theorems_.ipynb'))
-        else:
-            for theory_path in theory_paths:
-                #revise_special_notebook(os.path.join(theory_path, '_axioms_.ipynb'))
-                #revise_special_notebook(os.path.join(theory_path, '_theorems_.ipynb'))
-                execute_processor.execute_notebook(os.path.join(
-                    theory_path, '_axioms_.ipynb'), no_latex=no_latex)
-                execute_processor.execute_notebook(
-                    os.path.join(
-                        theory_path,
-                        '_theorems_.ipynb'),
-                    no_latex=no_latex)
-            # The second time we'll export to html.  Unless 'no_latex'
-            # is True, we will execute again to clear extra information.
-            for theory_path in theory_paths:
-                #revise_special_notebook(os.path.join(theory_path, '_axioms_.ipynb'))
-                #revise_special_notebook(os.path.join(theory_path, '_theorems_.ipynb'))
-                execute_and_export_notebook(
-                    execute_processor,
-                    os.path.join(
-                        theory_path,
-                        '_axioms_.ipynb'),
-                    no_execute=no_latex,
-                    no_latex=no_latex)
-                execute_and_export_notebook(
-                    execute_processor,
-                    os.path.join(
-                        theory_path,
-                        '_theorems_.ipynb'),
-                    no_execute=no_latex,
-                    no_latex=no_latex)
-    if not just_execute_expression_nbs and not just_execute_demos:
-        # Get the proof notebook filenames for the theorems in all of the
-        # theories.
-        # Map proof notebook names to corresponding Theorem objects:
-        proof_notebook_theorems = dict()
-        theorem_proof_notebooks = []
-        # Turn off automation while loading theorems simply for recording
-        # dependencies:
-        #proveit.defaults.automation = False
-        print("Finding theorem proof notebooks.")
-        for theory_path in theory_paths:
-            theory = Theory(theory_path)
-            for theorem_name in theory.get_theorem_names():
-                start_time = time.time()
-                print("Loading", theorem_name, end='', flush=True)
-                theorem = theory.get_theorem(theorem_name)
-                proof_notebook_name = theory.thm_proof_notebook(
-                    theorem_name, theorem.proven_truth.expr)
-                proof_notebook_theorems[proof_notebook_name] = theorem
-                theorem_proof_notebooks.append(proof_notebook_name)
-                print(
-                    "; finished in %0.2f seconds" %
-                    (time.time() - start_time))
-        # Turn automation back on:
-        #proveit.defaults.automation = True
-
-        '''
-        # Some proveit modules may not have loaded properly while
-        # automation was off, so we need to reset and reload it.
-        proveit.reset()
-        for k,v in list(sys.modules.items()):
-            if k.startswith('proveit'):
-                if k=='proveit' or k.startswith('proveit._core_'):
-                    # Don't reload proveit or proveit._core_.
-                    continue
-                print('reload', v)
-                importlib.reload(v)
-        '''
-
-        if no_execute:
-            if not just_execute_essentials:
-                for proof_notebook in theorem_proof_notebooks:
-                    # if not os.path.isfile(proof_notebook[-5:] + '.html'): #
-                    # temporary
-                    export_notebook_to_html(proof_notebook)
-        else:
-            # Next, for each of the theorems, record the "presuming" information
-            # of the proof notebooks in the _proofs_ folder.  Do this before executing
-            # any of the proof notebooks to account for dependencies properly
-            # (avoiding circular dependencies as intended).
-            print("Recording theorem dependencies.")
-            for proof_notebook in theorem_proof_notebooks:
-                record_presuming_info(
-                    proof_notebook_theorems[proof_notebook],
-                    proof_notebook)
-
-            if not just_execute_essentials:
-                # Next, execute all of the proof notebooks twice
-                # to ensure there are no circular logic violations.
-                for proof_notebook in theorem_proof_notebooks:
-                    execute_processor.execute_notebook(
-                        proof_notebook, no_latex=no_latex)
-                for proof_notebook in theorem_proof_notebooks:
-                    execute_and_export_notebook(
-                        execute_processor, proof_notebook, no_latex=no_latex)
-
-    if not just_execute_essentials and not just_execute_expression_nbs and not just_execute_proofs:
-        # Next, run any other notebooks within path/theory directories
-        # (e.g., with tests and demonstrations).
-        for path in all_paths:
-            for sub in os.listdir(path):
-                full_path = os.path.join(path, sub)
-                if os.path.isfile(full_path) and os.path.splitext(
-                        full_path)[1] == '.ipynb':
-                    if sub == '_demonstrations_.ipynb' or sub[0] != '_':
-                        execute_and_export_notebook(
-                            execute_processor, full_path, no_execute=no_execute, no_latex=no_latex)
-
-    if not just_execute_essentials and not just_execute_proofs and not just_execute_demos:
-        # Lastly, run expr.ipynb, proof.ipynb, and dependencies.ipynb within
-        # the hash directories of the __pv_it folders for each theory.
-        # May require multiple passes (showing expression info may generate
-        # expr.ipynb notebooks for sub-expressions).
-        executed_hash_paths = set()  # hash paths whose notebooks have been executed
-        while True:  # repeat until there are no more new notebooks to process
-            prev_num_executed = len(executed_hash_paths)
-            for path in all_paths:
-                pv_it_dir = os.path.join(path, '__pv_it')
-                if os.path.isdir(pv_it_dir):
-                    for folder in os.listdir(pv_it_dir):
-                        folder_dir = os.path.join(pv_it_dir, folder)
-                        if os.path.isdir(folder_dir):
-                            for hash_directory in os.listdir(folder_dir):
-                                hash_path = os.path.join(
-                                    folder_dir, hash_directory)
-                                if os.path.isdir(hash_path):
-                                    if hash_path in executed_hash_paths:
-                                        continue  # already executed this case
-                                    for filebase in (
-                                            'expr', 'axiom_expr', 'theorem_expr', 'proof'):
-                                        html_path = os.path.join(
-                                            hash_path, filebase + '.html')
-                                        notebook_path = os.path.join(
-                                            hash_path, filebase + '.ipynb')
-                                        if os.path.isfile(notebook_path):
-                                            if no_execute:
-                                                export_notebook_to_html(
-                                                    notebook_path)
-                                            else:
-                                                # if expr_html doesn't exist or
-                                                # is older than expr_notebook,
-                                                # generate it
-                                                if not os.path.isfile(html_path) or os.path.getmtime(
-                                                        html_path) < os.path.getmtime(notebook_path):
-                                                    # execute the expr.ipynb
-                                                    # notebook
-                                                    execute_and_export_notebook(
-                                                        execute_processor, notebook_path, no_latex=no_latex, git_clear=False)
-                                                    executed_hash_paths.add(
-                                                        hash_path)  # done
-                                    # always execute the dependencies notebook
-                                    # for now to be safes
-                                    dependencies_notebook = os.path.join(
-                                        hash_path, 'dependencies.ipynb')
-                                    if os.path.isfile(dependencies_notebook):
-                                        # execute the dependencies.ipynb
-                                        # notebook
-                                        execute_and_export_notebook(
-                                            execute_processor, dependencies_notebook,
-                                            no_execute=no_execute, no_latex=no_latex,
-                                            git_clear=False)
-            if len(executed_hash_paths) == prev_num_executed:
-                break  # no more new ones to process
-
+def sure_you_want_to_extract(paths):
+    print("WARNING: You will be extracting a tarball that will "
+          "overwrite Prove-It database files, Jupyter notebooks, \n"
+          "and html/css files into these folders: %s.\n"
+          "To be safe, only notebooks that are "
+          "the same as the git index up to filtering (e.g., the output "
+          "cells)\n"
+          "will be replaced, but you should still be careful.\n"
+          %paths)
+    response = input("Are you sure you want to continue? ")
+    if response == "": return False
+    return response[0].upper()=='Y'  
 
 if __name__ == '__main__':
     if os.path.sep != '/':
@@ -915,7 +758,9 @@ if __name__ == '__main__':
 
     # parse the arguments and provide help information.
     parser = argparse.ArgumentParser(
-        description='Build all of the Prove-It notebooks in selected directories.')
+        description=('Build all of the Prove-It notebooks in selected '
+                     'directories.  Works with mulptiple processors via '
+                     'mpi4py (e.g., using mpirun).'))
     parser.add_argument(
         '--clean',
         dest='clean',
@@ -929,41 +774,110 @@ if __name__ == '__main__':
         action='store_const',
         const=True,
         default=False,
-        help='download and extract the tarball of __pv_it directories from http://pyproveit.org')
+        help=("download and extract the tarball of __pv_it directories from "
+              "the 'master-full' branch with some limitations (skipping "
+              "notebooks with non-empty corresponding 'git diff' output)"))
     parser.add_argument(
-        '--justessential',
-        dest='just_execute_essentials',
+        '--extract',
+        dest='tar',
+        type=str,
+        default="",
+        help=("extract (with the same limitations as with --download) "
+              "from the specified tar file"))
+    parser.add_argument(
+        '--all',
+        dest='build_all',
         action='store_const',
         const=True,
         default=False,
-        help='only execute _common_, _axioms_ and _theorems_ notebooks')
+        help=('build all of the notebooks in the supplied paths in a '
+              'particular order (default if none of the following specific '
+              'selections are indicated)'))
     parser.add_argument(
-        '--justproofs',
-        dest='just_execute_proofs',
+        '--essential',
+        dest='build_essential',
+        action='store_const',
+        const=True,
+        default=True,
+        help=('build the notebooks that define the common expressions, axioms, '
+              'and theorems of the theories, essential for interdependencies '
+              '(default if other selections are made).'))
+    parser.add_argument(
+        '--theories',
+        dest='build_theories',
         action='store_const',
         const=True,
         default=False,
-        help='only execute proofs')
+        help=('build the _theory_ notebook for each theory '
+              '(--essential is disabled)'))
     parser.add_argument(
-        '--justdemos',
-        dest='just_execute_demos',
+        '--commons',
+        dest='build_commons',
         action='store_const',
         const=True,
         default=False,
-        help='only execute demonstrations')
+        help=('build the _common_ notebooks for common expressions of '
+              'each theory (--essential is disabled)'))
     parser.add_argument(
-        '--justexpressions',
-        dest='just_execute_expression_nbs',
+        '--axioms',
+        dest='build_axioms',
         action='store_const',
         const=True,
         default=False,
-        help='only execute expression notebooks')
+        help=('build the _axioms_ notebooks defining theory axioms '
+              '(--essential is disabled)'))
+    parser.add_argument(
+        '--theorems',
+        dest='build_theorems',
+        action='store_const',
+        const=True,
+        default=False,
+        help=('build the _theorems_ notebooks defining theory theorems '
+              '(--essential is disabled)'))
+    parser.add_argument(
+        '--demos',
+        dest='build_demos',
+        action='store_const',
+        const=True,
+        default=False,
+        help=('build the demonstrations notebook for each theory '
+              '(--essential is disabled)'))
+    parser.add_argument(
+        '--theorem_proofs',
+        dest='build_theorem_proofs',
+        action='store_const',
+        const=True,
+        default=False,
+        help=('build the thm_proof notebook for each theorem '
+              '(--all is disabled)'))
+    parser.add_argument(
+        '--dependencies',
+        dest='build_dependency_notebooks',
+        action='store_const',
+        const=True,
+        default=False,
+        help=('build the _dependencies_ notebooks corresponding with '
+              'theorem proofs (--all is disabled)'))
     parser.add_argument('--nolatex', dest='nolatex', action='store_const',
                         const=True, default=False,
                         help='speed execution by skipping LaTeX generation')
     parser.add_argument('--noexecute', dest='noexecute', action='store_const',
                         const=True, default=False,
                         help='do not execute notebooks, just convert to HTML')
+    parser.add_argument(
+        '--nogitclear',
+        dest='nogitclear',
+        action='store_const',
+        const=True,
+        default=False,
+        help='do not bother doing "git add" to clear git of notebooks whose modifications are only in filtered output')
+    parser.add_argument(
+        '--nohtml',
+        dest='nohtml',
+        action='store_const',
+        const=True,
+        default=False,
+        help='do not export notebooks to HTML, just execute them')
     parser.add_argument(
         'path',
         type=str,
@@ -1009,7 +923,7 @@ if __name__ == '__main__':
                 else:
                     os.remove(sub_path)
             '''
-    elif not args.download:
+    elif not args.download and args.tar == '':
         # remove the __pv_it/commons.pv_it in all of the theory paths
         # to make sure everything gets updated where there are dependencies
         # between common expressions of different theories.
@@ -1027,30 +941,36 @@ if __name__ == '__main__':
                   args.just_execute_demos, args.just_execute_expression_nbs,
                   args.nolatex)
 
+    tar_file = args.tar
     if args.download:
         '''
-        Download and extract the tarball of __pv_it directories.
+        Download and extract the tarball of __pv_it directories as well
+        as notebook outputs and html versions.
         '''
-        if not args.clean:
-            raise ValueError(
-                "The '--download' option is currently only implemented to work in conjunction with the '--clean' option")
-        if args.noexecute or args.just_execute_proofs or args.just_execute_demos or args.just_execute_expression_nbs:
-            raise ValueError(
-                "Do not combine the '--download' option with any other option besides '--clean'")
-        url = "http://pyproveit.org/pv_it.tar.gz"  # tarball url
-        print("Downloading '%s'" % url)
-        print("NOTE: If this fails (e.g., due to a firewall), it may be easiest to manually download and extract pv_it.tar.gz in this folder.")
-# file_tmp = urllib.urlretrieve(url, filename=None)[0]#Comment out for
-# Python 3
-        file_tmp = urllib.request.urlretrieve(
-            url, filename=None)[0]  # Comment in for Python 3
-        tar = tarfile.open(file_tmp)
-        # extract into the directory of this 'build.py'
-        path = os.path.dirname(os.path.realpath(__file__))
-        print("Extracting tarball into %s" % path)
-        tar.extractall(path)
-
-
+        url = ("https://github.com/PyProveIt/Prove-It/archive/"
+               "master-full.tar.gz")
+        if not sure_you_want_to_extract(paths):
+            print('Quitting')
+            tar_file = ''
+        else:
+            print("Downloading '%s'" % url)
+            try:
+                tar_file = urllib.request.urlretrieve(
+                    url, filename=None)[0]  # Comment in for Python 3
+            except urllib.error.URLError as e:
+                print(str(e))
+                raise Exception(
+                        "Unable to download %s; there may be a firewall "
+                        "issue.\nIn any case, you can try downloading this "
+                        "file manually and then use '--extract'."%url)        
+    elif tar_file != "":
+        if not sure_you_want_to_extract(paths):
+            print('Quitting')
+            tar_file = ''
+    if tar_file != "":
+        extract_tar_with_limitations(tar_file, paths)
+        #extract_tar_test(tar_file, paths)
+        
 def mpi_build(
         notebook_paths,
         no_latex=False,
