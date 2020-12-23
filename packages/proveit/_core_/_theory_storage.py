@@ -134,14 +134,6 @@ class TheoryStorage:
         self._loadedAxioms = dict()
         self._loadedTheorems = dict()
 
-        # Map 'common', 'axiom', and 'theorem' to respective modules.
-        # Base it upon the theory name.
-        self._specialExprModules = {
-            kind: self.name +
-            '.%s' %
-            module_name for kind,
-            module_name in Theory.special_expr_kind_to_module_name.items()}
-
         # Reflects the contents of the 'theorem_dependency_order.txt' file
         # which lists the theorems of the theory in order with other
         # theorems inserted as they are explicitly presumed.
@@ -234,12 +226,13 @@ class TheoryStorage:
         root = self.root_theory_storage
         referenced_root = referenced_theory._storage.root_theory_storage
         if root is not referenced_root:
+            assert False, "%s with a different root as %s, from %s referencing %s"%(root.name, referenced_root.name, self.name, referenced_theory._storage.name)
             referenced_root_name = referenced_root.name
-            if referenced_root_name not in self.referenced_theory_roots:
+            if referenced_root_name not in root.referenced_theory_roots:
                 with open(self.paths_filename, 'a') as paths_file:
                     paths_file.write(referenced_root_name + ' '
                                      + referenced_root.directory + '\n')
-                self.referenced_theory_roots.add(referenced_root_name)
+                root.referenced_theory_roots.add(referenced_root_name)
 
     """
     def _loadTheoremDependencyOrder(self):
@@ -937,16 +930,17 @@ class TheoryFolderStorage:
     def special_expr_address(self, obj_hash_id):
         '''
         A special expression "address" consists of a kind ('common',
-        'axiom', or 'theorem'), module and the name of the expression.
-        Provided that the given expression is one of the special
-        expressions of this theory, return the address as a tuple.
+        'axiom', or 'theorem'), theory package, and the name of the
+        expression.  Provided that the given expression is one of the 
+        special expressions of this theory, return the address as a 
+        tuple.
         '''
         kind = TheoryStorage._folder_to_kind(self.folder)
         # use the first instance.
         name = self._objhash_to_names[obj_hash_id][0]
         if kind == 'axiom' or kind == 'theorem':
             name = name + '.expr'
-        return kind, self.theory_storage._specialExprModules[kind], name
+        return kind, self.theory_storage.name, name
 
     def unload(self):
         '''

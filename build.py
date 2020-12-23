@@ -352,7 +352,7 @@ for m in list(sys.modules.keys()):
             parent, child = m.rsplit('.', 1)
             if parent in __init_modules:
                 # remove the module being deleted from its parent package
-                sys.modules[parent].__dict__.pop(child)
+                sys.modules[parent].__dict__.pop(child, None)
         del(sys.modules[m])
 %reset
 %reset in
@@ -410,7 +410,7 @@ len(gc.get_objects()) # used to check for memory leaks
             # Write it out if it has changed.
             with open(notebook_path, 'wt', encoding='utf8') as f:
                 f.write(new_nb_str)
-        print("\t_finished %s in %0.2f seconds" %
+        print("\tFinished %s in %0.2f seconds" %
               (notebook_path, time.time() - start_time))
 
         if git_clear:
@@ -1215,7 +1215,7 @@ def mpi_build(
                     print(msg[1])
                     comm.Abort()
                 else:
-                    print("\t_failure to execute %s, but we may retry "
+                    print("\tFailure to execute %s, but we may retry "
                           "after satisfying prerequisites" % failed_notebook)
                 return err_rank
             finished_notebook = assignments[ready_rank]

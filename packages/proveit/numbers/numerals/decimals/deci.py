@@ -2,7 +2,7 @@ from proveit import Literal, USE_DEFAULTS, Operation, ExprRange
 from proveit import a, b, c, d, k, m, n, x
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 from proveit.numbers.numerals.numeral import NumeralSequence, Numeral
-from proveit.numbers.numerals._common_ import zero, one, two, three, four, five, six, seven, eight, nine
+from proveit.numbers.numerals import zero, one, two, three, four, five, six, seven, eight, nine
 DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 

@@ -235,7 +235,7 @@ class Implies(TransitiveRelation):
         Or from (A => FALSE), derive and return A != TRUE.
         '''
         from proveit.logic import FALSE, in_bool
-        from ._axioms_ import affirm_via_contradiction, deny_via_contradiction
+        from . import affirmation_via_contradiction, denial_via_contradiction
         from . import not_true_via_contradiction
         if self.consequent != FALSE:
             raise ValueError(
@@ -243,11 +243,11 @@ class Implies(TransitiveRelation):
                 str(self))
         if isinstance(self.antecedent, Not):
             stmt = self.antecedent.operand
-            return affirm_via_contradiction.instantiate(
+            return affirmation_via_contradiction.instantiate(
                 {A: stmt}, assumptions=assumptions)
         else:
             if in_bool(self.antecedent).proven(assumptions):
-                return deny_via_contradiction.instantiate(
+                return denial_via_contradiction.instantiate(
                     {A: self.antecedent}, assumptions=assumptions)
             else:
                 return not_true_via_contradiction.instantiate(
