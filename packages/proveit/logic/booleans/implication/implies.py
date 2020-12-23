@@ -235,7 +235,7 @@ class Implies(TransitiveRelation):
         Or from (A => FALSE), derive and return A != TRUE.
         '''
         from proveit.logic import FALSE, in_bool
-        from . import affirm_via_contradiction, deny_via_contradiction
+        from ._axioms_ import affirm_via_contradiction, deny_via_contradiction
         from . import not_true_via_contradiction
         if self.consequent != FALSE:
             raise ValueError(
