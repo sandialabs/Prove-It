@@ -1,7 +1,7 @@
 from proveit import defaults, USE_DEFAULTS, ExprTuple
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
-from proveit._common_ import a, b, c, m, n, x, y
+from proveit import a, b, c, m, n, x, y
 
 
 class EnumMembership(Membership):
@@ -26,7 +26,7 @@ class EnumMembership(Membership):
         [element in {x, y, ..}].
         '''
         from proveit import ProofFailure
-        from ._theorems_ import fold_singleton, in_enumerated_set, fold
+        from . import fold_singleton, in_enumerated_set, fold
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
             return fold_singleton.instantiate(
@@ -51,8 +51,8 @@ class EnumMembership(Membership):
         deduce and return:
         |– [element in {x, y, ..}] = [(element=a) or ... or (element=a)]
         '''
-        from ._axioms_ import enum_set_def
-        from ._theorems_ import singleton_def
+        from . import enum_set_def
+        from . import singleton_def
         enum_elements = self.domain.elements
 
         if len(enum_elements) == 1:
@@ -65,7 +65,7 @@ class EnumMembership(Membership):
     def derive_in_singleton(self, expression, assumptions=USE_DEFAULTS):
         # implemented by JML 6/28/19
         from proveit.logic import TRUE, FALSE
-        from ._theorems_ import in_singleton_eval_false, in_singleton_eval_true
+        from . import in_singleton_eval_false, in_singleton_eval_true
         if expression.rhs == FALSE:
             return in_singleton_eval_false.instantiate(
                 {x: expression.lhs.element, y: expression.lhs.domain.elements[0]}, assumptions=assumptions)
@@ -77,7 +77,7 @@ class EnumMembership(Membership):
         '''
         From [element in {x, y, ..}], derive and return [(element=x) or (element=y) or ..].
         '''
-        from ._theorems_ import unfold_singleton, unfold
+        from . import unfold_singleton, unfold
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
             return unfold_singleton.instantiate(
@@ -87,7 +87,7 @@ class EnumMembership(Membership):
                 len(enum_elements)), x: self.element, y: enum_elements}, assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_singleton_is_bool, in_enum_set_is_bool
+        from . import in_singleton_is_bool, in_enum_set_is_bool
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
             return in_singleton_is_bool.instantiate(
@@ -120,7 +120,7 @@ class EnumNonmembership(Nonmembership):
            [(element != a) and ... and (element != n)]
         where self is the EnumNonmembership object.
         '''
-        from ._theorems_ import not_in_singleton_equiv, nonmembership_equiv
+        from . import not_in_singleton_equiv, nonmembership_equiv
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
             return not_in_singleton_equiv.instantiate(
@@ -139,7 +139,7 @@ class EnumNonmembership(Nonmembership):
         # among other things, convert any assumptions=None
         # to assumptions=()
         assumptions = defaults.checked_assumptions(assumptions)
-        from ._theorems_ import nonmembership_fold
+        from . import nonmembership_fold
         enum_elements = self.domain.elements
         element = self.element
         operands = self.domain.operands
@@ -152,7 +152,7 @@ class EnumNonmembership(Nonmembership):
         From [element not-in {a, b, ..., n}], derive and return
         [(element!=a) AND (element!=b) AND ... AND (element!=n)].
         '''
-        from ._theorems_ import (
+        from . import (
             nonmembership_unfold, nonmembership_unfold_singleton)
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
@@ -165,7 +165,7 @@ class EnumNonmembership(Nonmembership):
                 assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import not_in_singleton_is_bool, not_in_enum_set_is_bool
+        from . import not_in_singleton_is_bool, not_in_enum_set_is_bool
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
             return not_in_singleton_is_bool.instantiate(

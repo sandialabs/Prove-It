@@ -1,7 +1,7 @@
 from proveit import (Literal, maybe_fenced_latex, Operation, InnerExpr,
                      StyleOptions, USE_DEFAULTS)
 from proveit import TransRelUpdater
-from proveit._common_ import a, b, c, m, n, x, y, z
+from proveit import a, b, c, m, n, x, y, z
 
 
 class Div(Operation):
@@ -74,7 +74,7 @@ class Div(Operation):
     """
     # outdated.  obsolete.
     def combine_exponents(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import frac_int_exp, frac_nat_pos_exp
+        from . import frac_int_exp, frac_nat_pos_exp
         from proveit.numbers import Exp
         if isinstance(self.numerator, Exp) and isinstance(self.denominator, Exp):
             if self.numerator.exponent == self.denominator.exponent:
@@ -127,7 +127,7 @@ class Div(Operation):
 
         if self.numerator == self.denominator == term_to_cancel:
             # x/x = 1
-            from ._theorems_ import frac_cancel_complete
+            from . import frac_cancel_complete
             return frac_cancel_complete.instantiate(
                 {x: term_to_cancel}).checked(assumptions)
 
@@ -150,21 +150,21 @@ class Div(Operation):
                 term_to_cancel, group_factor=True, group_remainder=True,
                 assumptions=assumptions))
         if term_to_cancel == self.numerator:
-            from ._theorems_ import frac_cancel_numer_left
+            from . import frac_cancel_numer_left
             assert len(expr.denominator.operands) == 2, "Should be grouped"
             expr = eq.update(frac_cancel_numer_left.instantiate(
                 {x: term_to_cancel, y: expr.denominator.operands[1]},
                 assumptions=assumptions))
             return eq.relation
         elif term_to_cancel == self.denominator:
-            from ._theorems_ import frac_cancel_denom_left
+            from . import frac_cancel_denom_left
             assert len(expr.numerator.operands) == 2, "Should be grouped"
             expr = eq.update(frac_cancel_denom_left.instantiate(
                 {x: term_to_cancel, y: expr.numerator.operands[1]},
                 assumptions=assumptions))
             return eq.relation
         else:
-            from ._theorems_ import frac_cancel_left
+            from . import frac_cancel_left
             expr = eq.update(frac_cancel_left.instantiate(
                 {x: term_to_cancel, y: expr.numerator.operands[1],
                  z: expr.denominator.operands[1]},
@@ -194,7 +194,7 @@ class Div(Operation):
 
     def eliminate_divide_by_one(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import one
-        from ._theorems_ import frac_one_denom
+        from . import frac_one_denom
         if self.denominator != one:
             raise ValueError("'eliminate_divide_by_one' is only applicable "
                              "if the denominator is precisely one.")
@@ -213,7 +213,7 @@ class Div(Operation):
         numbers so that the associative and commutation theorems are applicable.
         '''
         from proveit.numbers import Add, subtract, Sum
-        from ._theorems_ import distributefrac_through_sum, distributefrac_through_subtract, distributefrac_through_summation
+        from . import distributefrac_through_sum, distributefrac_through_subtract, distributefrac_through_summation
         if isinstance(self.numerator, Add):
             return distributefrac_through_sum.instantiate(
                 {x_etc: self.numerator.operands, y: self.denominator})
@@ -247,7 +247,7 @@ class Div(Operation):
         from proveit.logic import InSet
         from proveit.numbers import (Exp, NaturalPos, RealPos, Real,
                                      Complex)
-        from proveit.numbers.exponentiation._theorems_ import (
+        from proveit.numbers.exponentiation import (
             quotient_of_posnat_powers, quotient_of_pos_powers,
             quotient_of_real_powers, quotient_of_complex_powers)
         if (isinstance(self.numerator, Exp)
@@ -309,8 +309,8 @@ class Div(Operation):
         Last Modified: 2/27/2020 by wdc. Creation.
         Once established, these authorship notations can be deleted.
         '''
-        from proveit._common_ import a, b
-        from proveit.numbers.division._theorems_ import (
+        from proveit import a, b
+        from proveit.numbers.division import (
             div_rational_closure, div_rational_non_zero_closure,
             div_rational_pos_closure, div_rational_non_neg_closure,
             div_real_closure, divide_real_pos_closure, divide_complex_closure)
@@ -348,7 +348,7 @@ class Div(Operation):
         Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
-        from ._theorems_ import frac_in_prod_rev, prod_of_fracs_rev, prod_of_fracs_left_numer_one_rev, prod_of_fracs_right_numer_one_rev
+        from . import frac_in_prod_rev, prod_of_fracs_rev, prod_of_fracs_left_numer_one_rev, prod_of_fracs_right_numer_one_rev
         from proveit.numbers import Mult, num
         dummy_var = safe_dummy_var(self)
         eqns = []

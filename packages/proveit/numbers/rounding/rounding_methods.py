@@ -19,7 +19,7 @@ def apply_rounding_elimination(expr, rounding_elimination_thm,
     For the case where the operand is of the form x = real + int,
     see the apply_rounding_extraction() function.
     '''
-    from proveit._common_ import x
+    from proveit import x
 
     # among other things, convert any assumptions=None
     # to assumptions=() to avoid later len() errors
@@ -61,9 +61,9 @@ def apply_rounding_extraction(
     operands of that Add class can be other things, but the extraction
     will work only if the inner operands a, b, ..., n are simple.
     '''
-    from proveit._common_ import n, x, y
+    from proveit import n, x, y
     from proveit.numbers import Add
-    # from ._theorems_ import round_of_real_plus_int
+    # from . import round_of_real_plus_int
 
     # among other things, convert any assumptions=None
     # to assumptions=() to avoid later len() errors
@@ -119,7 +119,7 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
     may be necessary to deduce the appropriate set containments for
     the operands within the Add operand x.
     '''
-    from proveit._common_ import n, x
+    from proveit import n, x
     from proveit.logic import InSet
     from proveit.numbers import Add, Integer, Real
 
@@ -270,7 +270,7 @@ def rounding_deduce_in_number_set(expr, number_set, rounding_real_closure_thm,
     the appropriate closure theorem.
     '''
     from proveit import ProofFailure
-    from proveit._common_ import x
+    from proveit import x
     from proveit.logic import InSet
     from proveit.numbers import Integer, Natural
 

@@ -1,9 +1,9 @@
 from proveit import Judgment, Literal, Operation, ExprRange, USE_DEFAULTS, StyleOptions, maybe_fenced_latex, ProofFailure, InnerExpr
-from proveit._common_ import a, b, c, d, i, j, k, l, n, x, y
+from proveit import a, b, c, d, i, j, k, l, n, x, y
 from proveit.logic import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.numbers.numerals.decimals import DIGITS
-import proveit.numbers.numerals.decimals._theorems_
+import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
 from proveit import TransRelUpdater
 import bisect
@@ -186,7 +186,7 @@ class Add(Operation):
         return call_strs
 
     def _closureTheorem(self, number_set):
-        from ._theorems_ import add_nat_closure, add_real_closure, add_complex_closure, add_int_closure
+        from . import add_nat_closure, add_real_closure, add_complex_closure, add_int_closure
         from proveit.numbers import Real, Complex, Integer, Natural
         if number_set == Real:
             return add_real_closure
@@ -236,7 +236,7 @@ class Add(Operation):
         created by JML 7/17/19. renamed by WMW 9/6/19.
 
         '''
-        from ._theorems_ import strictly_increasing_additions
+        from . import strictly_increasing_additions
         from proveit.numbers import num
         # print(b)
         for _i, term in enumerate(self.terms):
@@ -256,7 +256,7 @@ class Add(Operation):
         created by JML 7/17/19. renamed by WMW 9/6/19.
 
         '''
-        from ._theorems_ import strictly_decreasing_additions
+        from . import strictly_decreasing_additions
         from proveit.numbers import num
         # print(b)
         # print(self.terms)
@@ -275,7 +275,7 @@ class Add(Operation):
         '''
         From (a + b) = rhs, derive and return -(a-b) = -rhs
         '''
-        from proveit.numbers.addition.subtraction._theorems_ import negated_add
+        from proveit.numbers.addition.subtraction import negated_add
         if len(self.terms) != 2:
             raise Exception(
                 "deduce_negation implemented only when there are two and only two added terms")
@@ -287,7 +287,7 @@ class Add(Operation):
         '''
         From (a + b) = rhs, derive and return rhs - b = a.
         '''
-        from proveit.numbers.addition.subtraction._theorems_ import subtract_from_add
+        from proveit.numbers.addition.subtraction import subtract_from_add
         if len(self.terms) != 2:
             raise Exception(
                 "deduce_subtraction implemented only when there are two and only two added terms")
@@ -299,7 +299,7 @@ class Add(Operation):
         '''
         From (a + b) = rhs, derive and return b - rhs = -a.
         '''
-        from proveit.numbers.addition.subtraction._theorems_ import subtract_from_add_reversed
+        from proveit.numbers.addition.subtraction import subtract_from_add_reversed
         if len(self.terms) != 2:
             raise Exception(
                 "subtract_from_add_reversed implemented only when there are two and only two added terms")
@@ -315,7 +315,7 @@ class Add(Operation):
         '''
         from proveit import ExprRange
         from proveit.numbers import one
-        from proveit.numbers.multiplication._theorems_ import (
+        from proveit.numbers.multiplication import (
             mult_def_rev, repeated_addition_to_mult)
         if not all(operand == self.operands[0] for operand in self.operands):
             raise ValueError(
@@ -385,9 +385,9 @@ class Add(Operation):
         and return an equality between self and a form in which these
         operands are canceled.
         '''
-        from .subtraction._theorems_ import add_cancel_basic, add_cancel_reverse, add_cancel_general, add_cancel_general_rev
-        from .subtraction._theorems_ import add_cancel_triple_12, add_cancel_triple_13, add_cancel_triple_23
-        from .subtraction._theorems_ import add_cancel_triple_21, add_cancel_triple_31, add_cancel_triple_32
+        from .subtraction import add_cancel_basic, add_cancel_reverse, add_cancel_general, add_cancel_general_rev
+        from .subtraction import add_cancel_triple_12, add_cancel_triple_13, add_cancel_triple_23
+        from .subtraction import add_cancel_triple_21, add_cancel_triple_31, add_cancel_triple_32
         from proveit.numbers import num, Neg
         if idx1 > idx2:
             # choose i to be less than j
@@ -472,7 +472,7 @@ class Add(Operation):
         a specific zero operand (at the given index) is eliminated.
         '''
         from proveit.numbers import zero, num
-        from ._theorems_ import elim_zero_left, elim_zero_right, elim_zero_any
+        from . import elim_zero_left, elim_zero_right, elim_zero_any
 
         if self.operands[idx] != zero:
             raise ValueError(
@@ -498,7 +498,7 @@ class Add(Operation):
         added by JML on 9/10/19. renamed by WMW on 9/6/19.
         Given x + (-x) return x.
         '''
-        from ._theorems_ import add_neg_self
+        from . import add_neg_self
         from proveit.numbers import Neg
         if len(self.operands) != 2:
             raise IndexError(
@@ -522,7 +522,7 @@ class Add(Operation):
         given an expression with a term that is a negation of itself cancel them out
         a + b + (-b) + c = a + c
         '''
-        from ._theorems_ import expanded_add_neg_self
+        from . import expanded_add_neg_self
         from proveit.numbers import Neg, num
         expr = self
         # print("self, idx in add_neg_self", expr, idx)
@@ -782,7 +782,7 @@ class Add(Operation):
                 if isinstance(
                         expr.operands[_i].operands[0], Add) and len(
                         expr.operands[_i].operands[0].operands) == 1:
-                    from proveit.numbers.addition._axioms_ import single_add
+                    from proveit.numbers.addition import single_add
                     sub = single_add.instantiate(
                         {x: expr.operands[_i].operands[0].operands[0]})
                     # print("single Add", sub)
@@ -855,7 +855,7 @@ class Add(Operation):
                 # for single digit addition, import the theorem that provides
                 # the evaluation
                 Add.added_numerals.add((_a, _b))
-                proveit.numbers.numerals.decimals._theorems_.__getattr__(
+                proveit.numbers.numerals.decimals.__getattr__(
                     'add_%d_%d' % (_a, _b))
             except BaseException:
                 # may fail before the relevent _commons_ and _theorems_ have
@@ -957,7 +957,7 @@ class Add(Operation):
         If all of the terms are in Natural and just one is positive, then the sum is positive.
         '''
         from proveit.numbers.number_sets import DeduceInNumberSetException, deduce_positive
-        from ._theorems_ import add_nat_pos_closure
+        from . import add_nat_pos_closure
         from proveit.numbers import NaturalPos, num
         # first make sure all the terms are in Natural
         for _k, term in enumerate(self.operands):
@@ -976,7 +976,7 @@ class Add(Operation):
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
         '''
-        from proveit.numbers.addition._theorems_ import (
+        from proveit.numbers.addition import (
             add_int_closure_bin,
             add_int_closure,
             add_nat_closure_bin,
@@ -992,7 +992,7 @@ class Add(Operation):
             add_real_pos_from_non_neg,
             add_complex_closure,
             add_complex_closure_bin)
-        from proveit.numbers.addition.subtraction._theorems_ import (
+        from proveit.numbers.addition.subtraction import (
             subtract_nat_closure_bin, sub_one_is_nat)
         from proveit.numbers import (zero, one, num, Neg, Greater,
                                      Integer, Natural, Real, RealPos,
@@ -1081,7 +1081,7 @@ class Add(Operation):
 
     def deduce_difference_in_natural(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Neg
-        from proveit.numbers.number_sets.integers._theorems_ import difference_is_nat
+        from proveit.numbers.number_sets.integers import difference_is_nat
         if len(self.terms) != 2:
             raise ValueError("deduce_difference_in_natural only applicable "
                              "when there are two terms, got %s" % self)
@@ -1094,7 +1094,7 @@ class Add(Operation):
 
     def deduce_difference_in_natural_pos(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Neg
-        from proveit.numbers.number_sets.integers._theorems_ import difference_is_nat_pos
+        from proveit.numbers.number_sets.integers import difference_is_nat_pos
         if len(self.terms) != 2:
             raise ValueError(
                 "deduce_difference_in_natural_pos only applicable "
@@ -1118,7 +1118,7 @@ class Add(Operation):
         the statement that the sum is greater than the term at lower_bound_term_index.
         Assumptions may be needed to deduce that the terms are in RealPos or Real.
         '''
-        from ._theorems_ import strictly_increasing_additions
+        from . import strictly_increasing_additions
         return strictly_increasing_additions.instantiate(
             {a: self.terms[:lower_bound_term_index],
              c: self.terms[lower_bound_term_index + 1:]},
@@ -1135,7 +1135,7 @@ class Add(Operation):
         the statement that the sum is less than the term at upper_bound_term_index.
         Assumptions may be needed to deduce that the terms are in RealPos or Real.
         '''
-        from ._theorems_ import strictly_decreasing_additions
+        from . import strictly_decreasing_additions
         return strictly_decreasing_additions.instantiate(
             {a: self.terms[:upper_bound_term_index],
              c: self.terms[upper_bound_term_index + 1:]}).instantiate(
@@ -1155,7 +1155,7 @@ class Add(Operation):
         Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
-        from proveit.numbers.multiplication._theorems_ import distribute_through_sum
+        from proveit.numbers.multiplication import distribute_through_sum
         from proveit.numbers import num, one, Mult
         expr = self
         # for convenience updating our equation
@@ -1223,7 +1223,7 @@ class Add(Operation):
         For example, (a + b + ... + y + z) = (a + ... + y + b + z)
         via init_idx = 1 and final_idx = -2.
         '''
-        from ._theorems_ import commutation, leftward_commutation, rightward_commutation
+        from . import commutation, leftward_commutation, rightward_commutation
         eq = apply_commutation_thm(
             self,
             init_idx,
@@ -1270,7 +1270,7 @@ class Add(Operation):
         range [start_idx, start_idx+length) are grouped together.
         For example, (a + b + ... + y + z) = (a + b ... + (l + ... + m) + ... + y + z)
         '''
-        from ._theorems_ import association
+        from . import association
         eq = apply_association_thm(
             self, start_idx, length, association, assumptions)
 
@@ -1295,8 +1295,8 @@ class Add(Operation):
         '''
         from proveit.core_expr_types import Len
         from proveit.numbers import Neg
-        from ._theorems_ import disassociation
-        from .subtraction._theorems_ import subtraction_disassociation
+        from . import disassociation
+        from .subtraction import subtraction_disassociation
 
         if (isinstance(self.operands[idx], Neg) and
                 isinstance(self.operands[idx].operand, Add)):

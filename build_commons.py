@@ -74,6 +74,6 @@ if __name__ == '__main__':
     if nranks > 1:
         comm.barrier()
 
-    mpi_build(notebook_path_generator(paths, '_common_.ipynb'),
+    mpi_build(notebook_path_generator(paths, '_theory_nbs_/common.ipynb'),
               no_latex=args.nolatex, git_clear=not args.nogitclear,
               no_execute=args.noexecute, export_to_html=True)

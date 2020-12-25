@@ -1,7 +1,7 @@
 from proveit import Literal, USE_DEFAULTS, as_expression
 from proveit.logic import Equals
 from .ordering_relation import OrderingRelation, OrderingSequence, make_sequence_or_relation
-from proveit._common_ import a, b, c, d, x, y, z
+from proveit import a, b, c, d, x, y, z
 
 
 class GreaterRelation(OrderingRelation):
@@ -39,7 +39,7 @@ class GreaterSequence(OrderingSequence):
         # Containment in the {>, >=, =} set is relevant when dealing with a GreaterSequence,
         # so let's go ahead and import these unquantified theorems.
         try:
-            from ._theorems_ import greater__in__greater_eq_relations, greater_eq__in__greater_eq_relations, eq__in__greater_eq_relations
+            from . import greater__in__greater_eq_relations, greater_eq__in__greater_eq_relations, eq__in__greater_eq_relations
         except BaseException:
             # may fail before the relevent _theorems_ have been generated
             pass  # and that's okay
@@ -67,7 +67,7 @@ class Greater(GreaterRelation):
         OrderingRelation.__init__(self, Greater._operator_, lhs, rhs)
 
     def conclude(self, assumptions):
-        from ._theorems_ import positive_if_real_pos
+        from . import positive_if_real_pos
         from proveit.numbers import zero
         if self.rhs == zero:
             positive_if_real_pos.instantiate({a: self.lhs},
@@ -85,12 +85,12 @@ class Greater(GreaterRelation):
         '''
         From, x > y derive y < x.
         '''
-        from ._theorems_ import reverse_greater
+        from . import reverse_greater
         return reverse_greater.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=frozenset()):
-        from ._theorems_ import greater_than_is_bool
+        from . import greater_than_is_bool
         return greater_than_is_bool.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -99,7 +99,7 @@ class Greater(GreaterRelation):
         Relax a > b to a >= b, deducing the latter from the former (self) and returning the latter.
         Assumptions may be required to deduce that a and b are in Real.
         '''
-        from ._theorems_ import relax_greater
+        from . import relax_greater
         return relax_greater.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -116,7 +116,7 @@ class Greater(GreaterRelation):
             raise ValueError("expected self.lhs to be addition")
 
     def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
-        from ._theorems_ import transitivity_greater_greater, transitivity_greater_greater_eq
+        from . import transitivity_greater_greater, transitivity_greater_greater_eq
         from .less_than import Less, LessEq
         other = as_expression(other)
         if isinstance(other, Equals):
@@ -148,7 +148,7 @@ class Greater(GreaterRelation):
         From :math:`a > b`, derive and return :math:`-a < -b`.
         Assumptions may be required to prove that a, and b are in Real.
         '''
-        from ._theorems_ import negated_greater_than
+        from . import negated_greater_than
         return negated_greater_than.instantiate({a: self.lhs, b: self.rhs})
 
     def derive_shifted(
@@ -162,7 +162,7 @@ class Greater(GreaterRelation):
         Assumptions may be required to prove that a, b, and c are in
         Real.
         '''
-        from ._theorems_ import greater_shift_add_right, greater_shift_add_left
+        from . import greater_shift_add_right, greater_shift_add_left
         if addend_side == 'right':
             return greater_shift_add_right.instantiate(
                 {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
@@ -179,7 +179,7 @@ class Greater(GreaterRelation):
         From a > b, derive and return a + c > b given c >= 0 (and a, b, c
         are all Real) where c is the given 'addend'.
         '''
-        from ._theorems_ import greater_add_left
+        from . import greater_add_left
         return greater_add_left.instantiate(
             {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
 
@@ -188,7 +188,7 @@ class Greater(GreaterRelation):
         From a > b, derive and return a > b + c given 0 >= c (and a, b, c
         are all Real) where c is the given 'addend'.
         '''
-        from ._theorems_ import greater_add_right
+        from . import greater_add_right
         return greater_add_right.instantiate(
             {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
 
@@ -199,7 +199,7 @@ class Greater(GreaterRelation):
         given 'relation'.
         '''
         from .less_than import Less, LessEq
-        from ._theorems_ import greater_add_both
+        from . import greater_add_both
         if isinstance(relation, Greater) or isinstance(relation, GreaterEq):
             c_val = relation.lhs
             d_val = relation.rhs
@@ -215,7 +215,7 @@ class Greater(GreaterRelation):
                                             assumptions=assumptions)
 
     def conclude_via_equality(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import relax_equal_to_greater_eq
+        from . import relax_equal_to_greater_eq
         return relax_equal_to_greater_eq.instantiate(
             {x: self.operands[0], y: self.operands[1]},
             assumptions=assumptions)
@@ -246,7 +246,7 @@ class GreaterEq(GreaterRelation):
         # positive added to it.
         from proveit.numbers import zero
         if self.rhs == zero:
-            from ._theorems_ import non_neg_if_real_non_neg
+            from . import non_neg_if_real_non_neg
             return non_neg_if_real_non_neg.instantiate(
                 {a: self.lhs}, assumptions=assumptions)
         return GreaterRelation.conclude(self, assumptions)
@@ -262,17 +262,17 @@ class GreaterEq(GreaterRelation):
         '''
         From, x >= y derive y <= x.
         '''
-        from ._theorems_ import reverse_greater_eq
+        from . import reverse_greater_eq
         return reverse_greater_eq.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=frozenset()):
-        from ._theorems_ import greater_than_equals_is_bool
+        from . import greater_than_equals_is_bool
         return greater_than_equals_is_bool.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
     def unfold(self, assumptions=frozenset()):
-        from ._axioms_ import greater_than_equals_def
+        from . import greater_than_equals_def
         return greater_than_equals_def.instantiate({x: self.lhs, y: self.rhs})
 
     def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
@@ -282,7 +282,7 @@ class GreaterEq(GreaterRelation):
         obtain x>z or x>=z as appropriate.  In the special case
         of x>=y and y>=x (or x<=y), derive x=z.
         '''
-        from ._theorems_ import transitivity_greater_eq_greater, transitivity_greater_eq_greater_eq, symmetric_greater_eq
+        from . import transitivity_greater_eq_greater, transitivity_greater_eq_greater_eq, symmetric_greater_eq
         from .less_than import Less, LessEq
         other = as_expression(other)
         if isinstance(other, Equals):
@@ -319,7 +319,7 @@ class GreaterEq(GreaterRelation):
         From :math:`a \geq b`, derive and return :math:`-a \leq -b`.
         Assumptions may be required to prove that a, and b are in Real.
         '''
-        from ._theorems_ import negated_greater_than_equals
+        from . import negated_greater_than_equals
         return negated_greater_than_equals.instantiate({a:self.lhs, b:self.rhs})
     """
 
@@ -334,7 +334,7 @@ class GreaterEq(GreaterRelation):
         Assumptions may be required to prove that a, b, and c are in
         Real.
         '''
-        from ._theorems_ import greater_eq_shift_add_right, greater_eq_shift_add_left
+        from . import greater_eq_shift_add_right, greater_eq_shift_add_left
         if addend_side == 'right':
             return greater_eq_shift_add_right.instantiate(
                 {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
@@ -351,7 +351,7 @@ class GreaterEq(GreaterRelation):
         From a >= b, derive and return a + c >= b given c >= 0 (and a, b, c
         are all Real) where c is the given 'addend'.
         '''
-        from ._theorems_ import greater_eq_add_left
+        from . import greater_eq_add_left
         return greater_eq_add_left.instantiate(
             {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
 
@@ -360,7 +360,7 @@ class GreaterEq(GreaterRelation):
         From a >= b, derive and return a >= b + c given 0 >= c (and a, b, c
         are all Real) where c is the given 'addend'.
         '''
-        from ._theorems_ import greater_eq_add_right
+        from . import greater_eq_add_right
         return greater_eq_add_right.instantiate(
             {a: self.lhs, b: self.rhs, c: addend}, assumptions=assumptions)
 
@@ -371,7 +371,7 @@ class GreaterEq(GreaterRelation):
         given 'relation'.
         '''
         from .less_than import Less, LessEq
-        from ._theorems_ import greater_eq_add_both
+        from . import greater_eq_add_both
         if isinstance(relation, Greater) or isinstance(relation, GreaterEq):
             c_val = relation.lhs
             d_val = relation.rhs

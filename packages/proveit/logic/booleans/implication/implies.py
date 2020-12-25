@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, defaults, USE_DEFAULTS, composite_expression, ProofFailure
 from proveit.logic.booleans.negation import Not
-from proveit._common_ import A, B, C
+from proveit import A, B, C
 from proveit import TransitiveRelation
 
 
@@ -47,7 +47,7 @@ class Implies(TransitiveRelation):
         As a special case, if the consequent is FALSE, do
         derive_via_contradiction.
         '''
-        from proveit.logic.booleans._common_ import FALSE
+        from proveit.logic.booleans import FALSE
         for side_effect in TransitiveRelation.side_effects(self, judgment):
             yield side_effect
         if self.antecedent.proven():
@@ -72,7 +72,7 @@ class Implies(TransitiveRelation):
         amongst known true implications whose assumptions are covered by
         the given assumptions.
         '''
-        from ._theorems_ import (
+        from . import (
             true_implies_true, false_implies_true, false_implies_false,
             false_antecedent_implication, falsified_antecedent_implication,
             untrue_antecedent_implication)
@@ -148,10 +148,10 @@ class Implies(TransitiveRelation):
         Try to conclude True when Not(TRUE => FALSE) is called.
         implemented by JML on 6/18/19
         '''
-        from proveit.logic.booleans._common_ import FALSE, TRUE
+        from proveit.logic.booleans import FALSE, TRUE
         try:
             if self.antecedent == TRUE and self.consequent == FALSE:
-                from ._theorems_ import true_implies_false_negated
+                from . import true_implies_false_negated
         except BaseException:
             pass
 
@@ -160,7 +160,7 @@ class Implies(TransitiveRelation):
         From A => B return A => Not(Not(B)).
         implemented by JML on 6/18/19
         '''
-        from ._theorems_ import double_negate_consequent
+        from . import double_negate_consequent
         if isinstance(self.consequent.operand, Not):
             return double_negate_consequent.instantiate(
                 {A: self.antecedent, B: self.consequent.operand.operand}, assumptions=assumptions)
@@ -185,7 +185,7 @@ class Implies(TransitiveRelation):
         From Not(A => B) derive and return Not(A <=> B).
         implemented by JML on 6/18/19
         '''
-        from ._theorems_ import not_iff_via_not_right_impl
+        from . import not_iff_via_not_right_impl
         return not_iff_via_not_right_impl.instantiate(
             {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
 
@@ -194,13 +194,13 @@ class Implies(TransitiveRelation):
         From Not(B => A) derive and return Not(A <=> B).
         implemented by JML on 6/18/19
         '''
-        from ._theorems_ import not_iff_via_not_left_impl
+        from . import not_iff_via_not_left_impl
         return not_iff_via_not_left_impl.instantiate(
             {B: self.antecedent, A: self.consequent}, assumptions=assumptions)
 
     def deduce_negated_reflex(self, assumptions=USE_DEFAULTS):
         # implemented by JML on 6/18/19
-        from ._theorems_ import negated_reflex
+        from . import negated_reflex
         return negated_reflex.instantiate(
             {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
 
@@ -208,7 +208,7 @@ class Implies(TransitiveRelation):
         '''
         From A => B, derive and return Not(A) assuming Not(B).
         '''
-        from ._theorems_ import modus_tollens_affirmation, modus_tollens_denial
+        from . import modus_tollens_affirmation, modus_tollens_denial
         if isinstance(self.antecedent, Not):
             return modus_tollens_affirmation.instantiate(
                 {A: self.antecedent.operand, B: self.consequent}, assumptions=assumptions)
@@ -220,7 +220,7 @@ class Implies(TransitiveRelation):
         '''
         From :math:`A \Rightarrow B` (self) and a given :math:`B \Rightarrow C` (other_impl), derive and return :math:`A \Rightarrow C`.
         '''
-        from ._theorems_ import implication_transitivity
+        from . import implication_transitivity
         if self.consequent == other_impl.antecedent:
             return implication_transitivity.instantiate(
                 {A: self.antecedent, B: self.consequent, C: other_impl.consequent}, assumptions=assumptions)
@@ -235,26 +235,26 @@ class Implies(TransitiveRelation):
         Or from (A => FALSE), derive and return A != TRUE.
         '''
         from proveit.logic import FALSE, in_bool
-        from ._axioms_ import affirm_via_contradiction, deny_via_contradiction
-        from ._theorems_ import not_true_via_contradiction
+        from . import affirmation_via_contradiction, denial_via_contradiction
+        from . import not_true_via_contradiction
         if self.consequent != FALSE:
             raise ValueError(
                 'derive_via_contradiction method is only applicable if FALSE is implicated, not for ' +
                 str(self))
         if isinstance(self.antecedent, Not):
             stmt = self.antecedent.operand
-            return affirm_via_contradiction.instantiate(
+            return affirmation_via_contradiction.instantiate(
                 {A: stmt}, assumptions=assumptions)
         else:
             if in_bool(self.antecedent).proven(assumptions):
-                return deny_via_contradiction.instantiate(
+                return denial_via_contradiction.instantiate(
                     {A: self.antecedent}, assumptions=assumptions)
             else:
                 return not_true_via_contradiction.instantiate(
                     {A: self.antecedent}, assumptions=assumptions)
 
     def conclude_self_implication(self):
-        from ._theorems_ import self_implication
+        from . import self_implication
         if self.antecedent != self.consequent:
             raise ValueError(
                 'May only conclude a self implementation when the antecedent and consequent are the same')
@@ -297,7 +297,7 @@ class Implies(TransitiveRelation):
         * From :math:`[A  \Rightarrow \lnot B]`, derive :math:`[B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`.
         * From :math:`[A  \Rightarrow B]`, derive :math:`[\lnot B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
         '''
-        from ._theorems_ import from_contraposition, to_contraposition, contrapose_neg_consequent, contrapose_neg_antecedent
+        from . import from_contraposition, to_contraposition, contrapose_neg_consequent, contrapose_neg_antecedent
         from proveit.logic import Not
         if isinstance(
                 self.antecedent,
@@ -322,15 +322,15 @@ class Implies(TransitiveRelation):
         return the equality of this expression with TRUE or FALSE.
         '''
         # load in truth-table evaluations
-        from ._axioms_ import implies_t_f
-        from ._theorems_ import implies_t_t, implies_f_t, implies_f_f
+        from . import implies_t_f
+        from . import implies_t_t, implies_f_t, implies_f_f
         return Operation.evaluation(self, assumptions, automation=automation)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this implication expression is in the set of BOOLEANS.
         '''
-        from ._theorems_ import implication_closure
+        from . import implication_closure
         return implication_closure.instantiate(
             {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
 

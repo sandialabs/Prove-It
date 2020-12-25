@@ -27,7 +27,17 @@ git branch -D gh-pages-update
 
 << IN ONE LINE >>
 
+in ProveItWeb folder (where Prove-It is cloned for this purpose)
+
 git checkout --orphan gh-pages-update ; git rm -rf . ; mv ~/Prove-It/pv_it_web.tar.gz . ; tar -xzf pv_it_web.tar.gz; rm pv_it_web.tar.gz ; git add . ; git commit -a -m "Git-Hub Pages update" ; git push -f origin gh-pages-update:gh-pages ; git checkout gh-pages ; git branch -D gh-pages-update
 
 << A useful command for adding all notebook updates to the repository >>
 find . \( -name __pv_it -o -name .ipynb_checkpoints \) -prune -o -name "*.ipynb" -not -name "*stashed*.ipynb" -print | xargs git add
+
+
+<< HOW TO UPDATE MASTER_FULL BRANCH >>
+
+in ProveItMasterFull folder (where Prove-It is cloned for this purpose)
+master checked out and fully build in Prove-It
+
+git checkout --orphan master-full-update ; git rm -rf . ; cp -r ~/Prove-It/ . ; git checkout master-full -- .gitignore ; git add . ; git commit -a -m "master-full update" ; git push -f origin master-full-update:master-full ; git checkout master-full ; git branch -D master-full-update

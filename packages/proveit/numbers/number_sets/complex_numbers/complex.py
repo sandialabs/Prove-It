@@ -1,6 +1,6 @@
 import proveit
 from proveit import USE_DEFAULTS
-from proveit._common_ import a, x, y
+from proveit import a, x, y
 from proveit.numbers.number_sets.number_set import NumberSet
 
 
@@ -17,8 +17,8 @@ class ComplexSet(NumberSet):
         return not_in_complex_is_bool.instantiate({a: element}, assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import complex_membership_is_bool
-        from proveit._common_ import x
+        from . import complex_membership_is_bool
+        from proveit import x
         return complex_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
@@ -30,7 +30,7 @@ class ComplexSet(NumberSet):
         on the left.
         '''
         from proveit.logic import Equals
-        from proveit.numbers.multiplication._theorems_ import left_mult_eq
+        from proveit.numbers.multiplication import left_mult_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return left_mult_eq.instantiate(
@@ -45,7 +45,7 @@ class ComplexSet(NumberSet):
         on the left.
         '''
         from proveit.logic import NotEquals
-        from proveit.numbers.multiplication._theorems_ import left_mult_neq
+        from proveit.numbers.multiplication import left_mult_neq
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return left_mult_neq.instantiate(
@@ -60,7 +60,7 @@ class ComplexSet(NumberSet):
         on the right.
         '''
         from proveit.logic import Equals
-        from proveit.numbers.multiplication._theorems_ import right_mult_eq
+        from proveit.numbers.multiplication import right_mult_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return right_mult_eq.instantiate(
@@ -75,7 +75,7 @@ class ComplexSet(NumberSet):
         on the right.
         '''
         from proveit.logic import NotEquals
-        from proveit.numbers.multiplication._theorems_ import right_mult_neq
+        from proveit.numbers.multiplication import right_mult_neq
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return right_mult_neq.instantiate(
@@ -89,7 +89,7 @@ class ComplexSet(NumberSet):
         Divide both sides of the Equals relation by the 'divisor'.
         '''
         from proveit.logic import Equals
-        from proveit.numbers.division._theorems_ import div_eq
+        from proveit.numbers.division import div_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return div_eq.instantiate(
@@ -103,7 +103,7 @@ class ComplexSet(NumberSet):
         Divide both sides of the NotEquals relation by the 'divisor'.
         '''
         from proveit.logic import NotEquals
-        from proveit.numbers.division._theorems_ import div_neq
+        from proveit.numbers.division import div_neq
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return div_neq.instantiate(
@@ -118,7 +118,7 @@ class ComplexSet(NumberSet):
         on the left.
         '''
         from proveit.logic import Equals
-        from proveit.numbers.addition._theorems_ import left_add_eq
+        from proveit.numbers.addition import left_add_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return left_add_eq.instantiate(
@@ -133,7 +133,7 @@ class ComplexSet(NumberSet):
         on the left.
         '''
         from proveit.logic import NotEquals
-        from proveit.numbers.addition._theorems_ import left_add_neq
+        from proveit.numbers.addition import left_add_neq
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return left_add_neq.instantiate(
@@ -148,7 +148,7 @@ class ComplexSet(NumberSet):
         on the right.
         '''
         from proveit.logic import Equals
-        from proveit.numbers.addition._theorems_ import right_add_eq
+        from proveit.numbers.addition import right_add_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return right_add_eq.instantiate(
@@ -163,7 +163,7 @@ class ComplexSet(NumberSet):
         on the right.
         '''
         from proveit.logic import NotEquals
-        from proveit.numbers.addition._theorems_ import right_add_neq
+        from proveit.numbers.addition import right_add_neq
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return right_add_neq.instantiate(
@@ -177,7 +177,7 @@ class ComplexSet(NumberSet):
         Add both sides of the Equals relation by the 'exponent'.
         '''
         from proveit.logic import Equals
-        from proveit.numbers.exponentiation._theorems_ import exp_eq
+        from proveit.numbers.exponentiation import exp_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return exp_eq.instantiate(
@@ -191,7 +191,7 @@ class ComplexSet(NumberSet):
         Add both sides of the NotEquals relation by the 'exponent'.
         '''
         from proveit.logic import NotEquals
-        from proveit.numbers.exponentiation._theorems_ import exp_neq
+        from proveit.numbers.exponentiation import exp_neq
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return exp_neq.instantiate(
@@ -247,11 +247,11 @@ class ComplexSet(NumberSet):
 # if proveit.defaults.automation:
 #     # Import some fundamental theorems without quantifiers that are
 #     # imported when automation is used.
-#     from ._theorems_ import real_within_complex, real_pos_within_complex, real_neg_within_complex, int_within_complex, nat_within_complex
+#     from . import real_within_complex, real_pos_within_complex, real_neg_within_complex, int_within_complex, nat_within_complex
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first
     # time, but fine after that.
-    from ._theorems_ import real_within_complex, int_within_complex, nat_within_complex
+    from . import real_within_complex, int_within_complex, nat_within_complex

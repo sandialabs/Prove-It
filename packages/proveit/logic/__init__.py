@@ -33,8 +33,17 @@ if proveit.defaults.automation:
     # imported when automation is used.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first
     # time, but fine after that.
-    from .booleans.negation._axioms_ import not_f, not_t
-    from .booleans.negation._theorems_ import not_false
-    from .booleans.implication._theorems_ import true_implies_true, false_implies_true, false_implies_false
-    from .booleans._axioms_ import true_axiom, bools_def, false_not_true
-    from .booleans._theorems_ import true_eq_true, false_eq_false, true_not_false, true_is_bool, false_is_bool
+    from .booleans.negation import not_f, not_t
+    from .booleans.negation import not_false
+    from .booleans.implication import true_implies_true, false_implies_true, false_implies_false
+    from .booleans import true_axiom, bools_def, false_not_true
+    from .booleans import true_eq_true, false_eq_false, true_not_false, true_is_bool, false_is_bool
+
+
+# KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
+#  Make additions above, or add to sys.modules[__name__].__dict__ below.
+# This allows us to import common expression, axioms, and theorems of
+# the theory package directly from the package.
+import sys
+from proveit._core_.theory import TheoryPackage
+sys.modules[__name__] = TheoryPackage(__name__, __file__, locals())

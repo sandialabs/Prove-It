@@ -2,7 +2,7 @@ from proveit import as_expression, defaults, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
 from proveit import TransitiveRelation, TransitivityException
 from proveit.logic.irreducible_value import is_irreducible_value
-from proveit._common_ import A, B, P, Q, f, n, x, y, z
+from proveit import A, B, P, Q, f, n, x, y, z
 
 
 class Equals(TransitiveRelation):
@@ -73,7 +73,7 @@ class Equals(TransitiveRelation):
         derivations are also attempted depending upon the form of this
         equality.
         '''
-        from proveit.logic.booleans._common_ import TRUE, FALSE
+        from proveit.logic.booleans import TRUE, FALSE
         Equals.known_equalities.setdefault(self.lhs, set()).add(judgment)
         Equals.known_equalities.setdefault(self.rhs, set()).add(judgment)
 
@@ -237,7 +237,7 @@ class Equals(TransitiveRelation):
         '''
         Prove and return self of the form x = x.
         '''
-        from ._axioms_ import equals_reflexivity
+        from . import equals_reflexivity
         assert self.lhs == self.rhs
         return equals_reflexivity.instantiate({x: self.lhs})
 
@@ -245,7 +245,7 @@ class Equals(TransitiveRelation):
         '''
         From x = y derive y = x.  This derivation is an automatic side-effect.
         '''
-        from ._theorems_ import equals_reversal
+        from . import equals_reversal
         return equals_reversal.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -264,7 +264,7 @@ class Equals(TransitiveRelation):
         return NotEquals(self.lhs, self.rhs).conclude_as_folded(assumptions)
 
     def deduce_negated(self, i, assumptions=USE_DEFAULTS):
-        from proveit.logic.booleans.conjunction._theorems_ import falsified_and_if_not_right, falsified_and_if_not_left, falsified_and_if_neither
+        from proveit.logic.booleans.conjunction import falsified_and_if_not_right, falsified_and_if_not_left, falsified_and_if_neither
         if i == 0:
             # Deduce Not(A and B) from Not(A).
             return falsified_and_if_not_right.instantiate(
@@ -283,7 +283,7 @@ class Equals(TransitiveRelation):
         If "other" is not an equality, reverse roles and call 'apply_transitivity'
         from the "other" side.
         '''
-        from ._axioms_ import equals_transitivity
+        from . import equals_transitivity
         other = as_expression(other)
         if not isinstance(other, Equals):
             # If the other relation is not "Equals", call from the "other"
@@ -319,7 +319,7 @@ class Equals(TransitiveRelation):
         Note, see derive_stmt_eq_true or Not.equate_negated_to_false for the reverse process.
         '''
         from proveit.logic import TRUE, FALSE
-        from proveit.logic.booleans._axioms_ import eq_true_elim
+        from proveit.logic.booleans import eq_true_elim
         from proveit.logic import Not
         if self.rhs == TRUE:
             return eq_true_elim.instantiate(
@@ -334,7 +334,7 @@ class Equals(TransitiveRelation):
         From A=FALSE, and assuming A, derive FALSE.
         '''
         from proveit.logic import FALSE
-        from ._theorems_ import contradiction_via_falsification
+        from . import contradiction_via_falsification
         if self.rhs == FALSE:
             return contradiction_via_falsification.instantiate(
                 {A: self.lhs}, assumptions=assumptions)
@@ -362,7 +362,7 @@ class Equals(TransitiveRelation):
         Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.
         '''
         from proveit.logic import TRUE, FALSE, Not
-        from proveit.logic.booleans._axioms_ import eq_true_intro
+        from proveit.logic.booleans import eq_true_intro
         if self.rhs == TRUE:
             return eq_true_intro.instantiate(
                 {A: self.lhs}, assumptions=assumptions)
@@ -385,7 +385,7 @@ class Equals(TransitiveRelation):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from proveit.logic.sets.enumeration._theorems_ import fold_singleton
+        from proveit.logic.sets.enumeration import fold_singleton
         return fold_singleton.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
@@ -424,14 +424,14 @@ class Equals(TransitiveRelation):
         which to perform a global replacement of self.lhs.
         '''
         from proveit import ExprRange
-        from ._axioms_ import substitution
+        from . import substitution
 
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs, assumptions)
 
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use operands_substitution for ExprTuple
             # substitution.
-            from proveit.core_expr_types.operations._axioms_ import \
+            from proveit.core_expr_types.operations import \
                 operands_substitution
             from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
@@ -453,15 +453,15 @@ class Equals(TransitiveRelation):
         which to perform a global replacement of self.rhs.
         '''
         from proveit import ExprRange
-        from ._theorems_ import sub_left_side_into
-        from ._theorems_ import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
+        from . import sub_left_side_into
+        from . import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
         from proveit.logic import TRUE, FALSE
         lambda_map = Equals._lambda_expr(lambda_map, self.rhs)
 
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use sub_in_left_operands for ExprTuple
             # substitution.
-            from proveit.logic.equality._theorems_ import \
+            from proveit.logic.equality import \
                 sub_in_left_operands
             from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
@@ -505,15 +505,15 @@ class Equals(TransitiveRelation):
         which to perform a global replacement of self.lhs.
         '''
         from proveit import ExprRange
-        from ._theorems_ import sub_right_side_into
-        from ._theorems_ import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
+        from . import sub_right_side_into
+        from . import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
         from proveit.logic import TRUE, FALSE
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
 
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use sub_in_right_operands for ExprTuple
             # substitution.
-            from proveit.logic.equality._theorems_ import \
+            from proveit.logic.equality import \
                 sub_in_right_operands
             from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
@@ -551,7 +551,7 @@ class Equals(TransitiveRelation):
         '''
         From A = B, derive B (the Right-Hand-Side) assuming A.
         '''
-        from ._theorems_ import rhs_via_equality
+        from . import rhs_via_equality
         return rhs_via_equality.instantiate(
             {P: self.lhs, Q: self.rhs}, assumptions=assumptions)
 
@@ -559,7 +559,7 @@ class Equals(TransitiveRelation):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.
         '''
-        from ._theorems_ import lhs_via_equality
+        from . import lhs_via_equality
         return lhs_via_equality.instantiate(
             {P: self.lhs, Q: self.rhs}, assumptions=assumptions)
 
@@ -578,7 +578,7 @@ class Equals(TransitiveRelation):
         '''
         Deduce and return that this equality statement is in the Boolean set.
         '''
-        from ._axioms_ import equality_in_bool
+        from . import equality_in_bool
         return equality_in_bool.instantiate({x: self.lhs, y: self.rhs})
 
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
@@ -770,7 +770,7 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     assumptions = defaults.checked_assumptions(assumptions)
 
     from proveit.logic import TRUE, FALSE
-    from proveit.logic.booleans._axioms_ import true_axiom
+    from proveit.logic.booleans import true_axiom
     top_level = inner_expr.expr_hierarchy[0]
     inner = inner_expr.expr_hierarchy[-1]
     if operands_only:

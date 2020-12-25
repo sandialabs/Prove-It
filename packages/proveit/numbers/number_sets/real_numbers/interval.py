@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-import proveit._common_
-from proveit._common_ import a, b, c, x
+import proveit
+from proveit import a, b, c, x
 
 
 class RealInterval(Operation):
@@ -36,52 +36,52 @@ class IntervalOO(RealInterval):
                 + self.upper_bound.latex() + r'\right)')
 
     def deduce_elem_in_set(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_IntervalOO
+        from . import in_IntervalOO
         return in_IntervalOO.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import interval_o_o_lower_bound
+        from . import interval_o_o_lower_bound
         return interval_o_o_lower_bound.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import interval_o_o_upper_bound
+        from . import interval_o_o_upper_bound
         return interval_o_o_upper_bound.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import all_in_interval_oo__is__real
+        from . import all_in_interval_oo__is__real
         return all_in_interval_oo__is__real.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_rescaled_membership(self, member, scale_factor,
                                    assumptions=USE_DEFAULTS):
-        from ._theorems_ import rescale_interval_oo_membership
+        from . import rescale_interval_oo_membership
         return rescale_interval_oo_membership.instantiate(
             {a: self.lower_bound, b: self.upper_bound, c: scale_factor, x: member},
             assumptions=assumptions)
 
     def deduce_left_relaxed_membership(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import relax_IntervalOO_left
+        from . import relax_IntervalOO_left
         return relax_IntervalOO_left.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_right_relaxed_membership(
             self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import relax_IntervalOO_right
+        from . import relax_IntervalOO_right
         return relax_IntervalOO_right.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_left_right_relaxed_membership(self, member,
                                              assumptions=USE_DEFAULTS):
-        from ._theorems_ import relax_IntervalOO_left_right
+        from . import relax_IntervalOO_left_right
         return relax_IntervalOO_left_right.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
@@ -107,38 +107,38 @@ class IntervalOC(RealInterval):
                 + self.upper_bound.latex() + r'\right]')
 
     def deduce_elem_in_set(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_IntervalOC
+        from . import in_IntervalOC
         return in_IntervalOC.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import interval_o_c_lower_bound
+        from . import interval_o_c_lower_bound
         return interval_o_c_lower_bound.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import interval_o_c_upper_bound
+        from . import interval_o_c_upper_bound
         return interval_o_c_upper_bound.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import all_in_interval_oc__is__real
+        from . import all_in_interval_oc__is__real
         return all_in_interval_oc__is__real.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_rescaled_membership(self, member, scale_factor,
                                    assumptions=USE_DEFAULTS):
-        from ._theorems_ import rescale_interval_oc_membership
+        from . import rescale_interval_oc_membership
         return rescale_interval_oc_membership.instantiate(
             {a: self.lower_bound, b: self.upper_bound, c: scale_factor, x: member},
             assumptions=assumptions)
 
     def deduce_relaxed_membership(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import relax_IntervalOC
+        from . import relax_IntervalOC
         return relax_IntervalOC.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
@@ -164,38 +164,38 @@ class IntervalCO(RealInterval):
                 + self.upper_bound.latex() + r'\right)')
 
     def deduce_elem_in_set(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_IntervalCO
+        from . import in_IntervalCO
         return in_IntervalCO.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import interval_c_o_lower_bound
+        from . import interval_c_o_lower_bound
         return interval_c_o_lower_bound.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import interval_c_o_upper_bound
+        from . import interval_c_o_upper_bound
         return interval_c_o_upper_bound.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import all_in_interval_co__is__real
+        from . import all_in_interval_co__is__real
         return all_in_interval_co__is__real.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_rescaled_membership(self, member, scale_factor,
                                    assumptions=USE_DEFAULTS):
-        from ._theorems_ import rescale_interval_co_membership
+        from . import rescale_interval_co_membership
         return rescale_interval_co_membership.instantiate(
             {a: self.lower_bound, b: self.upper_bound, c: scale_factor, x: member},
             assumptions=assumptions)
 
     def deduce_relaxed_membership(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import relax_IntervalCO
+        from . import relax_IntervalCO
         return relax_IntervalCO.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
@@ -221,32 +221,32 @@ class IntervalCC(RealInterval):
                 + self.upper_bound.latex() + r'\right]')
 
     def deduce_elem_in_set(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import in_IntervalCC
+        from . import in_IntervalCC
         return in_IntervalCC.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import interval_c_c_lower_bound
+        from . import interval_c_c_lower_bound
         return interval_c_c_lower_bound.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import interval_c_c_upper_bound
+        from . import interval_c_c_upper_bound
         return interval_c_c_upper_bound.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import all_in_interval_cc__is__real
+        from . import all_in_interval_cc__is__real
         return all_in_interval_cc__is__real.instantiate(
             {a: self.lower_bound, b: self.upper_bound, x: member},
             assumptions=assumptions)
 
     def deduce_rescaled_membership(self, member, scale_factor,
                                    assumptions=USE_DEFAULTS):
-        from ._theorems_ import rescale_interval_cc_membership
+        from . import rescale_interval_cc_membership
         return rescale_interval_cc_membership.instantiate(
             {a: self.lower_bound, b: self.upper_bound, c: scale_factor, x: member},
             assumptions=assumptions)

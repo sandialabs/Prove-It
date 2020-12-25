@@ -1,6 +1,6 @@
 from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr)
-from proveit._common_ import A, B, C, D, E, i, j, k, l, m, n
+from proveit import A, B, C, D, E, i, j, k, l, m, n
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
 
@@ -28,7 +28,7 @@ class Or(Operation):
         if len(operands) == 0:
             Or.trivial_disjunctions.add(self)
             try:
-                from proveit.logic.booleans.disjunction._axioms_ import empty_disjunction
+                from proveit.logic.booleans.disjunction import empty_disjunction
             except BaseException:
                 pass  # empty_disjunction not initially defined when doing a clean rebuild
         if len(operands) == 1:
@@ -45,7 +45,7 @@ class Or(Operation):
         Automatically reduce "Or() = FALSE" and "Or(a) = a".
         '''
         if len(self.operands) == 0:
-            from proveit.logic.booleans.disjunction._theorems_ import \
+            from proveit.logic.booleans.disjunction import \
                 empty_disjunction_eval
             if empty_disjunction_eval.is_usable():
                 return empty_disjunction_eval
@@ -64,7 +64,7 @@ class Or(Operation):
         theorem.  Otherwise, a reduction proof will be attempted
         (evaluating the operands).
         '''
-        from ._theorems_ import true_or_true, true_or_false, false_or_true
+        from . import true_or_true, true_or_false, false_or_true
         if self in {true_or_true.expr, true_or_false.expr, false_or_true.expr}:
             # should be proven via one of the imported theorems as a simple
             # special case
@@ -144,8 +144,8 @@ class Or(Operation):
         yield self.deduce_parts_in_bool
 
     def conclude_negation(self, assumptions):
-        from ._theorems_ import false_or_false_negated, neither_intro, not_or_if_not_any
-        from ._axioms_ import empty_disjunction
+        from . import false_or_false_negated, neither_intro, not_or_if_not_any
+        from . import empty_disjunction
         if self == false_or_false_negated.operand:
             return false_or_false_negated  # the negation of (FALSE or FALSE)
         elif len(self.operands) == 0:
@@ -159,13 +159,13 @@ class Or(Operation):
                 {m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
 
     def conclude_via_both(self, assumptions):
-        from ._theorems_ import or_if_both
+        from . import or_if_both
         assert len(self.operands) == 2
         return or_if_both.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
     def conclude_via_only_left(self, assumptions):
-        from ._theorems_ import or_if_only_left
+        from . import or_if_only_left
         assert len(self.operands) == 2
         return or_if_only_left.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -174,13 +174,13 @@ class Or(Operation):
         '''
         From A being (or assumed) True, conclude that (A V B) is True.
         '''
-        from ._theorems_ import or_if_left
+        from . import or_if_left
         assert len(self.operands) == 2
         return or_if_left.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
     def conclude_via_only_right(self, assumptions):
-        from ._theorems_ import or_if_only_right
+        from . import or_if_only_right
         assert len(self.operands) == 2
         return or_if_only_right.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -190,7 +190,7 @@ class Or(Operation):
         # created by JML 6/28/19
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
-        from ._theorems_ import demorgans_law_and_to_or, demorgans_law_and_to_or_bin
+        from . import demorgans_law_and_to_or, demorgans_law_and_to_or_bin
         from proveit.numbers import num
         if len(self.operands) == 2:
             return demorgans_law_and_to_or_bin.instantiate(
@@ -209,7 +209,7 @@ class Or(Operation):
         '''
         From (A or B) derive and return B assuming Not(A), in_bool(B).
         '''
-        from ._theorems_ import right_if_not_left
+        from . import right_if_not_left
         assert len(self.operands) == 2
         left_operand, right_operand = self.operands
         return right_if_not_left.instantiate(
@@ -219,7 +219,7 @@ class Or(Operation):
         '''
         From (A or B) derive and return A assuming in_bool(A), Not(B).
         '''
-        from ._theorems_ import left_if_not_right
+        from . import left_if_not_right
         assert len(self.operands) == 2
         left_operand, right_operand = self.operands
         return left_if_not_right.instantiate(
@@ -231,7 +231,7 @@ class Or(Operation):
         From (A or B) as self, and assuming A => C, B => C, and A and B are Boolean,
         derive and return the conclusion, C.  Self is (A or B).
         '''
-        from ._theorems_ import singular_constructive_dilemma, singular_constructive_multi_dilemma
+        from . import singular_constructive_dilemma, singular_constructive_multi_dilemma
         if len(self.operands) == 2:
             return singular_constructive_dilemma.instantiate(
                 {A: self.operands[0], B: self.operands[1], C: conclusion}, assumptions=assumptions)
@@ -244,7 +244,7 @@ class Or(Operation):
         From (A or B) as self, and assuming A => C, B => D, and A, B, C, and D are Boolean,
         derive and return the conclusion, C or D.
         '''
-        from ._theorems_ import constructive_dilemma, destructive_dilemma, constructive_multi_dilemma, destructive_multi_dilemma
+        from . import constructive_dilemma, destructive_dilemma, constructive_multi_dilemma, destructive_multi_dilemma
         from proveit.logic import Not, Or
         from proveit.numbers import num
         assert isinstance(
@@ -309,7 +309,7 @@ class Or(Operation):
         '''
         Deduce A in Boolean from (A or B) in Boolean.
         '''
-        from ._axioms_ import left_in_bool
+        from . import left_in_bool
         if len(self.operands) == 2:
             return left_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -318,7 +318,7 @@ class Or(Operation):
         '''
         Deduce B in Boolean from (A or B) in Boolean.
         '''
-        from ._axioms_ import right_in_bool
+        from . import right_in_bool
         if len(self.operands) == 2:
             return right_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -336,7 +336,7 @@ class Or(Operation):
         Deduce X in Boolean from (A or B or .. or X or .. or Z) in Boolean
         provided X by expression or index number.
         '''
-        from ._theorems_ import each_is_bool
+        from . import each_is_bool
         from proveit.numbers import num
         idx = index_or_expr if isinstance(
             index_or_expr, int) else list(
@@ -360,7 +360,7 @@ class Or(Operation):
         '''
         Deduce not(A) assuming not(A or B) where self is (A or B).
         '''
-        from ._theorems_ import not_left_if_neither
+        from . import not_left_if_neither
         assert len(self.operands) == 2
         left_operand, right_operand = self.operands
         return not_left_if_neither.instantiate(
@@ -370,7 +370,7 @@ class Or(Operation):
         '''
         Deduce not(B) assuming not(A or B) where self is (A or B).
         '''
-        from ._theorems_ import not_right_if_neither
+        from . import not_right_if_neither
         assert len(self.operands) == 2
         left_operand, right_operand = self.operands
         return not_right_if_neither.instantiate(
@@ -380,7 +380,7 @@ class Or(Operation):
         '''
         From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.
         '''
-        from ._theorems_ import hypothetical_disjunction
+        from . import hypothetical_disjunction
         from proveit.logic import Implies, compose
         # forall_{A in Bool, B in Bool, C in Bool} (A=>C and B=>C) => ((A or B)
         # => C)
@@ -409,7 +409,7 @@ class Or(Operation):
         '''
         from proveit.logic import TRUE, SimplificationError
         # load in truth-table evaluations
-        from ._axioms_ import or_t_t, or_t_f, or_f_t, or_f_f
+        from . import or_t_t, or_t_f, or_f_t, or_f_f
         if len(self.operands) == 0:
             return self.unary_reduction(assumptions=assumptions)
 
@@ -459,7 +459,7 @@ class Or(Operation):
         r'''
         From (A or B), and assuming not(A) and not(B), derive and return FALSE.
         '''
-        from ._theorems_ import binary_or_contradiction, or_contradiction
+        from . import binary_or_contradiction, or_contradiction
         if len(self.operands) == 2:
             return binary_or_contradiction.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -473,7 +473,7 @@ class Or(Operation):
         From (A or B or ... or Y or Z), assuming in Boolean and given beginning and end of group, derive and return
         (A or B ... or (l or ... or M) or ... or X or Z).
         '''
-        from ._theorems_ import group
+        from . import group
         from proveit.numbers import num
         if end <= beg:
             raise IndexError(
@@ -495,7 +495,7 @@ class Or(Operation):
         the beginning and end of the groups to be switched,
         derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).
         '''
-        from ._theorems_ import swap
+        from . import swap
         from proveit.numbers import num
         if 0 < idx1 < idx2 < len(self.operands) - 1:
             return swap.instantiate({l: num(idx1),
@@ -532,7 +532,7 @@ class Or(Operation):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
         '''
-        from ._theorems_ import binary_closure, closure
+        from . import binary_closure, closure
         from proveit.numbers import num
         if len(self.operands) == 2:
             return binary_closure.instantiate(
@@ -547,7 +547,7 @@ class Or(Operation):
         Requires all of the operands to be in the set of BOOLEANS.
         '''
         from proveit.numbers import num
-        from ._theorems_ import or_if_any, or_if_left, or_if_right
+        from . import or_if_any, or_if_left, or_if_right
         index = self.operands.index(true_operand)
         if len(self.operands) == 2:
             if index == 0:
@@ -664,7 +664,7 @@ class Or(Operation):
         will return:
             {A in Bool} |– [V](A) = A
         '''
-        from proveit.logic.booleans.disjunction._theorems_ import \
+        from proveit.logic.booleans.disjunction import \
             unary_or_reduction
         if not self.operands.is_singular():
             raise ValueError("Or.unary_reduction: expression must have only a "
@@ -687,7 +687,7 @@ class Or(Operation):
         For example, (A or B or ... or Y or Z) = (A or ... or Y or B or Z)
         via init_idx = 1 and final_idx = -2.
         '''
-        from ._theorems_ import (commutation, leftward_commutation,
+        from . import (commutation, leftward_commutation,
                                  rightward_commutation)
         return apply_commutation_thm(
             self,
@@ -735,7 +735,7 @@ class Or(Operation):
         For example, given (A or B or ... or Y or Z) derive (A or ... or Y or B or Z)
         via init_idx = 1 and final_idx = -2.
         '''
-        from ._theorems_ import commute, leftward_commute, rightward_commute
+        from . import commute, leftward_commute, rightward_commute
         return apply_commutation_thm(
             self,
             init_idx,
@@ -772,7 +772,7 @@ class Or(Operation):
         range [start_idx, start_idx+length) are grouped together.
         For example, (A or B or ... or Y or Z) = (A or B ... or (L or ... or M) or ... or Y or Z)
         '''
-        from ._theorems_ import association
+        from . import association
         return apply_association_thm(
             self, start_idx, length, association, assumptions)
 
@@ -783,7 +783,7 @@ class Or(Operation):
         For example, from (A or B or ... or Y or Z) derive
         (A or B ... or (L or ... or M) or ... or Y or Z).
         '''
-        from ._theorems_ import associate
+        from . import associate
         return apply_association_thm(
             self, start_idx, length, associate, assumptions)
 
@@ -793,7 +793,7 @@ class Or(Operation):
         at index idx is no longer grouped together.
         For example, (A or B ... or (L or ... or M) or ... or Y or Z) = (A or B or ... or Y or Z)
         '''
-        from ._theorems_ import disassociation
+        from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation, assumptions)
 
     def disassociate(self, idx, assumptions=USE_DEFAULTS):
@@ -803,7 +803,7 @@ class Or(Operation):
         For example, from (A or B ... or (L or ... or M) or ... or Y or Z)
         derive (A or B or ... or Y or Z).
         '''
-        from ._theorems_ import disassociate
+        from . import disassociate
         return apply_disassociation_thm(self, idx, disassociate, assumptions)
 
 

@@ -41,7 +41,7 @@ class Defaults:
         # When running a common expressions notebook, this will be
         # set to the appropriate file to send information about failed
         # imports of other common expressions.
-        self._common_import_failure_filename = None
+        selfimport_failure_filename = None
 
         Defaults.considered_assumption_sets.clear()
 

@@ -137,14 +137,14 @@ class Conditional(Expression):
         would make use of this reduction.
         '''
         from proveit import ExprRange
-        from proveit._common_ import a, m, n, Q, R
+        from proveit import a, m, n, Q, R
         from proveit.logic import And, TRUE
         if self.condition == TRUE:
-            from proveit.core_expr_types.conditionals._axioms_ import \
+            from proveit.core_expr_types.conditionals import \
                 true_condition_reduction
             return true_condition_reduction.instantiate({a: self.value})
         elif isinstance(self.condition, And):
-            from proveit.core_expr_types.conditionals._theorems_ import \
+            from proveit.core_expr_types.conditionals import \
                 (singular_conjunction_condition_reduction,
                  condition_merger_reduction,
                  condition_append_reduction, condition_prepend_reduction,

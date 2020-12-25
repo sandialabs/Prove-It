@@ -1,7 +1,7 @@
 from proveit import USE_DEFAULTS
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
-from proveit._common_ import m, A, x
+from proveit import m, A, x
 
 
 class UnionMembership(Membership):
@@ -24,7 +24,7 @@ class UnionMembership(Membership):
         Deduce and return and [element in (A union B ...)] = [(element in A) or (element in B) ...]
         where self = (A union B ...).
         '''
-        from ._axioms_ import union_def
+        from . import union_def
         element = self.element
         operands = self.domain.operands
         return union_def.instantiate(
@@ -35,7 +35,7 @@ class UnionMembership(Membership):
         From [element in (A union B ...)], derive and return [(element in A) or (element in B) ...],
         where self represents (A union B ...).
         '''
-        from ._theorems_ import membership_unfolding
+        from . import membership_unfolding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
@@ -47,7 +47,7 @@ class UnionMembership(Membership):
         From either [element in A] or [element in B] ..., derive and return [element in (A union B ...)],
         where self represents (A union B ...).
         '''
-        from ._theorems_ import membership_folding
+        from . import membership_folding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
@@ -76,7 +76,7 @@ class UnionNonmembership(Nonmembership):
         Deduce and return and [element not in (A union B ...)] = [(element not in A) and (element not in B) ...]
         where self = (A union B ...).
         '''
-        from ._theorems_ import nonmembership_equiv
+        from . import nonmembership_equiv
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
@@ -88,7 +88,7 @@ class UnionNonmembership(Nonmembership):
         From [element not in A] and [element not in B] ..., derive and return [element not in (A union B ...)],
         where self represents (A union B ...).
         '''
-        from ._theorems_ import nonmembership_folding
+        from . import nonmembership_folding
         from proveit.numbers import num
         element = self.element
         operands = self.domain.operands

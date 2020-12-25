@@ -1,9 +1,9 @@
 import sys
 from proveit import Lambda, Literal, Operation, TransitiveRelation, USE_DEFAULTS, defaults
-from proveit._common_ import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
+from proveit import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
-# from proveit.physics.quantum._common_ import Xgate, Ygate, Zgate, Hgate
+# from proveit.physics.quantum import Xgate, Ygate, Zgate, Hgate
 # not clear yet what to substitute for ExpressionTensor -- perhaps ExprArray
 # and Block is not being used in the active code
 # from proveit.multi_expression import ExpressionTensor, Block
@@ -222,20 +222,20 @@ class Gate(Operation):
         Automatically reduce "Gate() = IdentityOp()".
         '''
         if len(self.operands) == 0:
-            from proveit.physics.quantum._axioms_ import empty_gate
+            from proveit.physics.quantum import empty_gate
             with defaults.disabled_auto_reduction_types as disable_reduction_types:
                 disable_reduction_types.add(Gate)
                 return empty_gate
 
         if isinstance(self.gate_operation, Input):
-            from proveit.physics.quantum._theorems_ import input_gate_to_ket
+            from proveit.physics.quantum import input_gate_to_ket
             # with defaults.disabled_auto_reduction_types as disable_reduction_types:
             #   disable_reduction_types.add(Gate)
 
             return input_gate_to_ket.instantiate(
                 {U: self.gate_operation.state}, assumptions=assumptions)
         elif isinstance(self.gate_operation, Output):
-            from proveit.physics.quantum._theorems_ import output_gate_to_ket
+            from proveit.physics.quantum import output_gate_to_ket
             # with defaults.disabled_auto_reduction_types as disable_reduction_types:
             #   disable_reduction_types.add(Gate)
 
@@ -364,7 +364,7 @@ class MultiQubitGate(Operation):
         return self.formatted('latex', **kwargs)
 
     def unary_reduction(self, assumptions=USE_DEFAULTS):
-        from proveit.physics.quantum._theorems_ import unary_multi_qubit_gate_reduction
+        from proveit.physics.quantum import unary_multi_qubit_gate_reduction
 
         if not self.gate_set.operands.singular():
             raise ValueError("Expression must have a single operand in "
@@ -376,7 +376,7 @@ class MultiQubitGate(Operation):
                 {U: self.gate, A: operand}, assumptions=assumptions)
 
     def empty_set_reduction(self, assumptions=USE_DEFAULTS):
-        from proveit.physics.quantum._theorems_ import empty_multi_qubit_gate_reduction
+        from proveit.physics.quantum import empty_multi_qubit_gate_reduction
         if not len(self.gate_set.operands) == 0:
             raise ValueError("Expression must have an empty Set() in "
                              "order to invoke empty_set_reduction")
@@ -563,15 +563,15 @@ class CircuitEquiv(TransitiveRelation):
         which to perform a global replacement of self.lhs.
         '''
         from proveit import ExprRange
-        from ._axioms_ import substitution
-        from proveit._common_ import f, x, y
+        from . import substitution
+        from proveit import f, x, y
 
         lambda_map = CircuitEquiv._lambda_expr(lambda_map, self.lhs, assumptions)
         '''
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use operands_substitution for ExprTuple
             # substitution.
-            from proveit.core_expr_types.operations._axioms_ import \
+            from proveit.core_expr_types.operations import \
                 operands_substitution
             from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
@@ -595,9 +595,9 @@ class CircuitEquiv(TransitiveRelation):
         which to perform a global replacement of self.rhs.
         '''
         # from proveit import ExprRange
-        from ._theorems_ import sub_left_side_into
-        # from ._theorems_ import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
-        from proveit._common_ import P, x, y
+        from . import sub_left_side_into
+        # from . import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
+        from proveit import P, x, y
         # from proveit.logic import TRUE, FALSE
         lambda_map = CircuitEquiv._lambda_expr(lambda_map, self.rhs)
 
@@ -605,7 +605,7 @@ class CircuitEquiv(TransitiveRelation):
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use sub_in_left_operands for ExprTuple
             # substitution.
-            from proveit.logic.equality._theorems_ import \
+            from proveit.logic.equality import \
                 sub_in_left_operands
             from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
@@ -650,17 +650,17 @@ class CircuitEquiv(TransitiveRelation):
         which to perform a global replacement of self.lhs.
         '''
         from proveit import ExprRange
-        from ._theorems_ import sub_right_side_into
-        # from ._theorems_ import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
+        from . import sub_right_side_into
+        # from . import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
         # from proveit.logic import TRUE, FALSE
-        from proveit._common_ import P, x, y
+        from proveit import P, x, y
         lambda_map = CircuitEquiv._lambda_expr(lambda_map, self.lhs)
 
         '''
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use sub_in_right_operands for ExprTuple
             # substitution.
-            from proveit.logic.equality._theorems_ import \
+            from proveit.logic.equality import \
                 sub_in_right_operands
             from proveit.numbers import one
             assert lambda_map.parameters[0].start_index == one
@@ -813,7 +813,7 @@ class Circuit(Operation):
         Given the piece that is to be replaced, and the piece it is being replaced with,
         use either space_equiv or time_equiv to prove the replacement.
         '''
-        from ._theorems_ import sing_time_equiv, time_equiv, sing_space_equiv, two_qubit_space_equiv
+        from . import sing_time_equiv, time_equiv, sing_space_equiv, two_qubit_space_equiv
         if not isinstance(current, Circuit):
             raise ValueError(
                 'The current circuit piece must be a circuit element.')
@@ -1353,17 +1353,17 @@ class Circuit(Operation):
                                 col += 1
                         elif not isinstance(value.first(), Gate):
                             if isinstance(value.first(), Literal):
-                                from proveit.physics.quantum._common_ import SPACE, CONTROL, CLASSICAL_CONTROL
+                                from proveit.physics.quantum import SPACE, CONTROL, CLASSICAL_CONTROL
                                 if value.first() != SPACE or value.first() != CONTROL or \
                                         value.first() != CLASSICAL_CONTROL:
                                     raise TypeError(
                                         'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                        'Literal imported from proveit.physics.quantum._common_  %s is not' %
+                                        'Literal imported from proveit.physics.quantum  %s is not' %
                                         value.first())
                             else:
                                 raise TypeError(
                                     'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                    'Literal imported from proveit.physics.quantum._common_  %s is not' %
+                                    'Literal imported from proveit.physics.quantum  %s is not' %
                                     value.first())
                         else:
                             # this is a gate
@@ -1455,17 +1455,17 @@ class Circuit(Operation):
                                         col += 1
                                 elif not isinstance(item.first(), Gate):
                                     if isinstance(item.first(), Literal):
-                                        from proveit.physics.quantum._common_ import SPACE, CONTROL, CLASSICAL_CONTROL
+                                        from proveit.physics.quantum import SPACE, CONTROL, CLASSICAL_CONTROL
                                         if item.first() != SPACE or item.first() != CONTROL or \
                                                 item.first() != CLASSICAL_CONTROL:
                                             raise TypeError(
                                                 'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                                'Literal imported from proveit.physics.quantum._common_  %s is not' %
+                                                'Literal imported from proveit.physics.quantum  %s is not' %
                                                 item.first())
                                     else:
                                         raise TypeError(
                                             'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                            'Literal imported from proveit.physics.quantum._common_  %s is not' %
+                                            'Literal imported from proveit.physics.quantum  %s is not' %
                                             item.first())
                                 else:
                                     # this is a gate
@@ -1507,16 +1507,16 @@ class Circuit(Operation):
                                 col += 1
                             elif not isinstance(item, Gate):
                                 if isinstance(item, Literal):
-                                    from proveit.physics.quantum._common_ import SPACE, CONTROL, CLASSICAL_CONTROL
+                                    from proveit.physics.quantum import SPACE, CONTROL, CLASSICAL_CONTROL
                                     if item != SPACE or item != CONTROL or \
                                             item != CLASSICAL_CONTROL:
                                         raise TypeError(
                                             'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                            'Literal imported from proveit.physics.quantum._common_  %s is not' % item)
+                                            'Literal imported from proveit.physics.quantum  %s is not' % item)
                                 else:
                                     raise TypeError(
                                         'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                        'Literal imported from proveit.physics.quantum._common_  %s is not' % item)
+                                        'Literal imported from proveit.physics.quantum  %s is not' % item)
                             else:
                                 # this is a gate
                                 if connect:

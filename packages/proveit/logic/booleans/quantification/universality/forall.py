@@ -1,7 +1,7 @@
 from proveit import (Literal, Operation, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
                      defaults, USE_DEFAULTS, ProofFailure)
-from proveit._common_ import k, n, x, P, S
+from proveit import k, n, x, P, S
 from proveit._core_.proof import Generalization
 
 
@@ -191,7 +191,7 @@ class Forall(OperationOverInstances):
         via bundle with num_levels=2.
         '''
         from proveit import bundle  # generic for OperationOverInstances
-        from ._theorems_ import bundle as bundle_thm
+        from . import bundle as bundle_thm
         return bundle(self, bundle_thm, num_levels=num_levels,
                       assumptions=assumptions)
 
@@ -207,7 +207,7 @@ class Forall(OperationOverInstances):
         via bundle with num_levels=2.
         '''
         from proveit import bundle  # generic for OperationOverInstances
-        from ._theorems_ import bundling
+        from . import bundling
         return bundle(self, bundling, num_levels=num_levels,
                       assumptions=assumptions)
 
@@ -226,7 +226,7 @@ class Forall(OperationOverInstances):
         by the remaining number of parameters.
         '''
         from proveit import unbundle  # generic for Op..OverInstances
-        from ._theorems_ import unbundle as unbundle_thm
+        from . import unbundle as unbundle_thm
         return unbundle(self, unbundle_thm,
                         num_param_entries=num_param_entries,
                         assumptions=assumptions)
@@ -247,7 +247,7 @@ class Forall(OperationOverInstances):
         by the remaining number of parameters.
         '''
         from proveit import unbundle  # generic for Op..OverInstances
-        from ._theorems_ import bundling
+        from . import bundling
         return unbundle(
             self, bundling, num_param_entries=num_param_entries,
             assumptions=assumptions)
@@ -292,7 +292,7 @@ class Forall(OperationOverInstances):
         (they are taken to be false when not true).
         '''
         from proveit.numbers import one
-        from ._axioms_ import forall_in_bool
+        from . import forall_in_bool
         _x = self.instance_params
         P_op, _P_op = Operation(P, _x), self.instance_expr
         _n = _x.length(assumptions)

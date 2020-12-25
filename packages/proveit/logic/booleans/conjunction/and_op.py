@@ -1,7 +1,7 @@
 from proveit import (Literal, Operation, Conditional,
                      defaults, USE_DEFAULTS, ProofFailure, InnerExpr)
 from proveit.logic.equality import SimplificationError
-from proveit._common_ import j, k, l, m, n, A, B, C, D, E, F, G
+from proveit import j, k, l, m, n, A, B, C, D, E, F, G
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
 
@@ -24,7 +24,7 @@ class And(Operation):
         Automatically reduce "And() = TRUE" and "And(a) = a".
         '''
         if len(self.operands) == 0:
-            from proveit.logic.booleans.conjunction._theorems_ import \
+            from proveit.logic.booleans.conjunction import \
                 empty_conjunction_eval
             if empty_conjunction_eval.is_usable():
                 return empty_conjunction_eval
@@ -43,7 +43,7 @@ class And(Operation):
         :math:'A', :math:'B', ..., :math:'Z' individually.
         '''
         from proveit import ExprRange
-        from ._theorems_ import true_and_true
+        from . import true_and_true
         if self == true_and_true.expr:
             return true_and_true  # simple special case
         if (len(self.operands) == 1 and
@@ -54,7 +54,7 @@ class And(Operation):
 
     def conclude_negation(self, assumptions=USE_DEFAULTS):
         # Created by JML on 6/24/19
-        from ._theorems_ import (
+        from . import (
             true_and_false_negated,
             false_and_true_negated,
             false_and_false_negated,
@@ -176,7 +176,7 @@ class And(Operation):
         index_or_expr specifies X, either by index or the expression.
         '''
         from proveit import ExprRange
-        from ._theorems_ import (any_from_and, left_from_and, right_from_and,
+        from . import (any_from_and, left_from_and, right_from_and,
                                  from_unary_and)
         if isinstance(index_or_expr, int):
             idx = index_or_expr
@@ -227,7 +227,7 @@ class And(Operation):
         to start_idx for a single entry which should be an ExprRange.
         '''
         from proveit.core_expr_types import Len
-        from proveit.logic.booleans.conjunction._theorems_ import some_from_and
+        from proveit.logic.booleans.conjunction import some_from_and
         if end_idx is None:
             end_idx = start_idx
         A_sub = self.operands[:start_idx]
@@ -259,7 +259,7 @@ class And(Operation):
         return self.derive_any(1, assumptions)
 
     def unary_reduction(self, assumptions=USE_DEFAULTS):
-        from proveit.logic.booleans.conjunction._theorems_ import \
+        from proveit.logic.booleans.conjunction import \
             unary_and_reduction
         if not self.operands.is_singular():
             raise ValueError("Expression must have a single operand in "
@@ -281,7 +281,7 @@ class And(Operation):
         '''
         Deduce A in Boolean from (A and B) in Boolean.
         '''
-        from ._axioms_ import left_in_bool
+        from . import left_in_bool
         if len(self.operands) == 2:
             left_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -290,7 +290,7 @@ class And(Operation):
         '''
         Deduce B in Boolean from (A and B) in Boolean.
         '''
-        from ._axioms_ import right_in_bool
+        from . import right_in_bool
         if len(self.operands) == 2:
             right_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -308,7 +308,7 @@ class And(Operation):
         Deduce X in Boolean from (A and B and .. and X and .. and Z) in Boolean
         provided X by expression or index number.
         '''
-        from ._theorems_ import each_is_bool
+        from . import each_is_bool
         idx = index_or_expr if isinstance(
             index_or_expr, int) else list(
             self.operands).index(index_or_expr)
@@ -334,7 +334,7 @@ class And(Operation):
         # created by JML 6/28/19
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
-        from ._theorems_ import demorgans_law_or_to_and, demorgans_law_or_to_and_bin
+        from . import demorgans_law_or_to_and, demorgans_law_or_to_and_bin
         from proveit.numbers import num
         if len(self.operands) == 2:
             return demorgans_law_or_to_and_bin.instantiate(
@@ -349,7 +349,7 @@ class And(Operation):
         Requires all of the operands to be in the BOOLEAN set.
         '''
         from proveit.numbers import num
-        from ._theorems_ import nand_if_not_one, nand_if_not_left, nand_if_not_right
+        from . import nand_if_not_one, nand_if_not_left, nand_if_not_right
         index = self.operands.index(true_operand)
         if len(self.operands) == 2:
             if index == 0:
@@ -373,7 +373,7 @@ class And(Operation):
         '''
         from proveit import ExprRange
         from proveit.numbers import one
-        from ._theorems_ import redundant_conjunction
+        from . import redundant_conjunction
         if (len(self.operands) != 1 or
                 not isinstance(self.operands[0], ExprRange) or
                 not self.operands[0].is_parameter_independent):
@@ -402,7 +402,7 @@ class And(Operation):
         '''
         from proveit.logic import FALSE
         # load in truth-table evaluations
-        from ._axioms_ import and_t_t, and_t_f, and_f_t, and_f_f
+        from . import and_t_t, and_t_f, and_f_t, and_f_f
         if len(self.operands) == 0:
             return self.unary_reduction(assumptions)
 
@@ -453,7 +453,7 @@ class And(Operation):
         Attempt to deduce, then return, that this 'and' expression is in the BOOLEAN set.
         '''
 
-        from ._theorems_ import binary_closure, closure
+        from . import binary_closure, closure
         if len(self.operands) == 2:
             return binary_closure.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
@@ -473,7 +473,7 @@ class And(Operation):
         For example, (A and B and ... and Y and Z) = (A and ... and Y and B and Z)
         via init_idx = 1 and final_idx = -2.
         '''
-        from ._theorems_ import commutation, leftward_commutation, rightward_commutation
+        from . import commutation, leftward_commutation, rightward_commutation
         return apply_commutation_thm(
             self,
             init_idx,
@@ -511,7 +511,7 @@ class And(Operation):
         For example, given (A and B and ... and Y and Z) derive (A and ... and Y and B and Z)
         via init_idx = 1 and final_idx = -2.
         '''
-        from ._theorems_ import commute, leftward_commute, rightward_commute
+        from . import commute, leftward_commute, rightward_commute
         return apply_commutation_thm(
             self,
             init_idx,
@@ -548,7 +548,7 @@ class And(Operation):
         range [start_idx, start_idx+length) are grouped together.
         For example, (A and B and ... and Y and Z) = (A and B ... and (L and ... and M) and ... and Y and Z)
         '''
-        from ._theorems_ import association
+        from . import association
         return apply_association_thm(
             self, start_idx, length, association, assumptions)
 
@@ -559,7 +559,7 @@ class And(Operation):
         For example, from (A and B and ... and Y and Z) derive
         (A and B ... and (L and ... and M) and ... and Y and Z).
         '''
-        from ._theorems_ import associate
+        from . import associate
         return apply_association_thm(
             self, start_idx, length, associate, assumptions)
 
@@ -569,7 +569,7 @@ class And(Operation):
         at index idx is no longer grouped together.
         For example, (A and B ... and (L and ... and M) and ... and Y and Z) = (A and B and ... and Y and Z)
         '''
-        from ._theorems_ import disassociation
+        from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation, assumptions)
 
     def disassociate(self, idx, assumptions=USE_DEFAULTS):
@@ -579,7 +579,7 @@ class And(Operation):
         For example, from (A and B ... and (L and ... and M) and ... and Y and Z)
         derive (A and B and ... and Y and Z).
         '''
-        from ._theorems_ import disassociate
+        from . import disassociate
         return apply_disassociation_thm(self, idx, disassociate, assumptions)
 
 
@@ -589,16 +589,16 @@ def compose(*expressions, assumptions=USE_DEFAULTS):
     derived from each separately.
     '''
     if len(expressions) == 0:
-        from proveit.logic.booleans.conjunction._axioms_ import \
+        from proveit.logic.booleans.conjunction import \
             empty_conjunction
         return empty_conjunction
     if len(expressions) == 2:
-        from ._theorems_ import and_if_both
+        from . import and_if_both
         return and_if_both.instantiate(
             {A: expressions[0], B: expressions[1]}, assumptions=assumptions)
     else:
         from proveit.numbers import num
-        from ._theorems_ import and_if_all
+        from . import and_if_all
         return and_if_all.instantiate(
             {m: num(len(expressions)), A: expressions}, assumptions=assumptions)
 

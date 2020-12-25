@@ -53,6 +53,9 @@ def reset():
     Clear all references to Prove-It information.
     This should make a clean slate w.r.t. Prove-It.
     '''
+    from ._core_.expression import Expression
+    from ._core_.judgment import Judgment
+    from ._core_.theory import UnsetCommonExpressionPlaceholder
     Expression._clear_()
     Literal._clear_()
     Operation._clear_()
@@ -64,3 +67,20 @@ def reset():
         magics.prove_it_magic.reset()
     from proveit._core_._unique_data import clear_unique_data
     clear_unique_data()
+    # Regenerate the Theory for this package.
+    proveit_module = sys.modules[__name__]
+    proveit_module.sys.modules[__name__]._theory = Theory(__file__)
+    # Rorce a reload of the common expressions, axioms, and theorems
+    # of the proveit theory package.
+    for key, val in proveit_module.__dict__.items():
+        if (isinstance(val, Judgment) or isinstance(val, Expression) or 
+                isinstance(val, UnsetCommonExpressionPlaceholder)):
+            proveit_module.__dict__.pop(key)
+
+# KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
+#  Make additions above, or add to sys.modules[__name__].__dict__ below.
+# This allows us to import common expression, axioms, and theorems of
+# the theory package directly from the package.
+import sys
+from proveit._core_.theory import TheoryPackage
+sys.modules[__name__] = TheoryPackage(__name__, __file__, locals())

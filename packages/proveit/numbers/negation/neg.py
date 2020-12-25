@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, maybe_fenced_string, maybe_fenced_latex, InnerExpr, USE_DEFAULTS, ProofFailure
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import Integer, Real, Complex
-from proveit._common_ import a, b, m, n, x, y, B
+from proveit import a, b, m, n, x, y, B
 
 
 class Neg(Operation):
@@ -20,7 +20,7 @@ class Neg(Operation):
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
         '''
-        from ._theorems_ import int_closure, real_closure, complex_closure
+        from . import int_closure, real_closure, complex_closure
         from proveit.logic import InSet
         if NumberSet == Integer:
             return int_closure.instantiate({a: self.operand})
@@ -60,7 +60,7 @@ class Neg(Operation):
         Only handles -0 = 0 or double negation.
         '''
         from proveit.logic import EvaluationError
-        from ._theorems_ import negated_zero
+        from . import negated_zero
         from proveit.numbers import zero
         if self.operand == zero:
             return negated_zero
@@ -72,7 +72,7 @@ class Neg(Operation):
         raise EvaluationError(self, assumptions)
 
     def double_neg_simplification(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import double_negation
+        from . import double_negation
         assert isinstance(
             self.operand, Neg), "Expecting a double negation: %s" % str(self)
         return double_negation.instantiate({x: self.operand.operand},
@@ -127,8 +127,8 @@ class Neg(Operation):
         Distribute negation through a sum, deducing and returning
         the equality between the original and distributed forms.
         '''
-        from ._theorems_ import distribute_neg_through_binary_sum
-        from ._theorems_ import distribute_neg_through_subtract, distribute_neg_through_sum
+        from . import distribute_neg_through_binary_sum
+        from . import distribute_neg_through_subtract, distribute_neg_through_sum
         from proveit.numbers import Add, num
         from proveit.relation import TransRelUpdater
         expr = self
@@ -180,7 +180,7 @@ class Neg(Operation):
         the associative and commutation theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''
-        from ._theorems_ import neg_times_pos, pos_times_neg, mult_neg_one_left, mult_neg_one_right
+        from . import neg_times_pos, pos_times_neg, mult_neg_one_left, mult_neg_one_right
         if isinstance(the_factor, Neg):
             if pull == 'left':
                 thm = neg_times_pos
@@ -225,7 +225,7 @@ class Neg(Operation):
         See Mult.neg_simplification where this may be used indirectly.
         '''
         from proveit.numbers import Mult, num
-        from ._theorems_ import mult_neg_left_double, mult_neg_right_double, mult_neg_any_double
+        from . import mult_neg_left_double, mult_neg_right_double, mult_neg_any_double
 
         mult_expr = self.operand
         if not isinstance(mult_expr, Mult):

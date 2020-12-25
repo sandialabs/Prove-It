@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-from proveit._common_ import a, b, x
+from proveit import a, b, x
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
 from proveit.numbers import Add, Mult
@@ -20,7 +20,7 @@ class Abs(Operation):
 
     def not_equal(self, rhs, assumptions=USE_DEFAULTS):
         # accessed from conclude() method in not_equals.py
-        from ._theorems_ import abs_not_eq_zero
+        from . import abs_not_eq_zero
         from proveit.numbers import zero
         if rhs == zero:
             return abs_not_eq_zero.instantiate(
@@ -34,7 +34,7 @@ class Abs(Operation):
 
     def deduce_greater_than_equals_zero(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Complex
-        from ._theorems_ import abs_is_non_neg
+        from . import abs_is_non_neg
         return abs_is_non_neg.instantiate(
             {a: self.operand}, assumptions=assumptions)
 
@@ -49,8 +49,8 @@ class Abs(Operation):
         for an example; WW thinks this is a prob with iterations and
         we'll fix/update this later.
         '''
-        from ._theorems_ import abs_frac, abs_prod
-        from proveit._common_ import n, x
+        from . import abs_frac, abs_prod
+        from proveit import n, x
         from proveit.numbers import num, Complex, Div, Mult
         if isinstance(self.operand, Div):
             return abs_frac.instantiate(
@@ -74,7 +74,7 @@ class Abs(Operation):
         '''
 
         from proveit.numbers import Neg
-        from ._theorems_ import abs_non_neg_elim, abs_neg_elim
+        from . import abs_non_neg_elim, abs_neg_elim
         # deduce_non_neg(self.operand, assumptions) # NOT YET IMPLEMENTED
         if operand_type is None or operand_type == 'non-negative':
             return abs_non_neg_elim.instantiate({x: self.operand},
@@ -144,7 +144,7 @@ class Abs(Operation):
             # and then it will get picked up in the next if() below
 
         if GreaterEq(self.operand, zero).proven(assumptions=assumptions):
-            from proveit.numbers.number_sets.real_numbers._theorems_ import (
+            from proveit.numbers.number_sets.real_numbers import (
                 in_real_non_neg_if_greater_eq_zero)
             in_real_non_neg_if_greater_eq_zero.instantiate(
                 {a: self.operand}, assumptions=assumptions)
@@ -209,7 +209,7 @@ class Abs(Operation):
             assumptions=assumptions).rhs
 
         if negated_op_simp in InSet.known_memberships.keys():
-            from proveit.numbers.number_sets.real_numbers._theorems_ import (
+            from proveit.numbers.number_sets.real_numbers import (
                 neg_is_real_neg_if_pos_is_real_pos)
             for kt in InSet.known_memberships[negated_op_simp]:
                 if kt.is_sufficient(assumptions):
@@ -239,7 +239,7 @@ class Abs(Operation):
         attempt to prove that the given expression is in that number
         set using the appropriate closure theorem.
         '''
-        from proveit.numbers.absolute_value._theorems_ import (
+        from proveit.numbers.absolute_value import (
             abs_rational_closure, abs_rational_non_zero_closure,
             abs_complex_closure, abs_nonzero_closure,
             abs_complex_closure_non_neg_real)

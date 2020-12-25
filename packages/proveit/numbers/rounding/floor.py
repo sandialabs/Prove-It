@@ -48,7 +48,7 @@ class Floor(Function):
         For the case where the operand is of the form x = real + int,
         see the rounding_extraction() method.
         '''
-        from ._theorems_ import floor_of_integer
+        from . import floor_of_integer
 
         return apply_rounding_elimination(self, floor_of_integer, assumptions)
 
@@ -77,7 +77,7 @@ class Floor(Function):
         extraction is guaranteed to work only if the inner operands
         a, b, etc., are simple.
         '''
-        from ._theorems_ import floor_of_real_plus_int
+        from . import floor_of_real_plus_int
         return apply_rounding_extraction(
             self, floor_of_real_plus_int, idx_to_extract, assumptions)
 
@@ -87,8 +87,8 @@ class Floor(Function):
         Floor expression is in that number set using the appropriate
         closure theorem.
         '''
-        from proveit.numbers.rounding._axioms_ import floor_is_an_int
-        from proveit.numbers.rounding._theorems_ import floor_real_pos_closure
+        from proveit.numbers.rounding import floor_is_an_int
+        from proveit.numbers.rounding import floor_real_pos_closure
 
         return rounding_deduce_in_number_set(
             self, number_set, floor_is_an_int, floor_real_pos_closure,

@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-from proveit._common_ import a, b, x
+from proveit import a, b, x
 
 
 class Abs(Operation):
@@ -17,7 +17,7 @@ class Abs(Operation):
 
     def not_equal(self, rhs, assumptions=USE_DEFAULTS):
         # accessed from conclude() method in not_equals.py
-        from ._theorems_ import abs_not_eq_zero
+        from . import abs_not_eq_zero
         from proveit.numbers import zero
         if rhs == zero:
             return abs_not_eq_zero.instantiate(
@@ -31,7 +31,7 @@ class Abs(Operation):
 
     # def deduce_greater_than_equals_zero(self, assumptions=frozenset()):
     #     # not yet clear how to update this method
-    #     from ._theorems_ import abs_is_non_neg
+    #     from . import abs_is_non_neg
     #     deduce_in_complex(self.operand, assumptions)
     # return abs_is_non_neg.instantiate({a:self.operand}).checked(assumptions)
 
@@ -39,7 +39,7 @@ class Abs(Operation):
         # 03/21/2020 wdc: a first attempt at updating this method
         from proveit.logic import InSet
         from proveit.numbers import Complex
-        from ._theorems_ import abs_is_non_neg
+        from . import abs_is_non_neg
         # InSet(self.operand, Complex).prove(assumptions=assumptions)
         return abs_is_non_neg.instantiate(
             {a: self.operand}, assumptions=assumptions)
@@ -50,7 +50,7 @@ class Abs(Operation):
     #     Assumptions may be needed to deduce that the sub-operands are
     #     complex numbers.
     #     '''
-    #     from ._theorems_ import abs_frac, abs_prod
+    #     from . import abs_frac, abs_prod
     #     from proveit.numbers import Div, Mult
     #     if isinstance(self.operand, Div):
     #         deduce_in_complex(self.operand.numerator, assumptions)
@@ -73,8 +73,8 @@ class Abs(Operation):
         Assumptions may be needed to deduce that the sub-operands are
         complex numbers.
         '''
-        from ._theorems_ import abs_frac, abs_prod
-        from proveit._common_ import n, xx
+        from . import abs_frac, abs_prod
+        from proveit import n, xx
         from proveit.logic import InSet
         from proveit.numbers import num, Complex, Div, Mult
         if isinstance(self.operand, Div):
@@ -82,7 +82,7 @@ class Abs(Operation):
                 {a: self.operand.numerator, b: self.operand.denominator},
                 assumptions=assumptions)
         elif isinstance(self.operand, Mult):
-            from proveit._common_ import xx
+            from proveit import xx
             the_operands = self.operand.operands
             return abs_prod.instantiate({n: num(len(the_operands)), xx: the_operands},
                                         assumptions=assumptions)
@@ -96,7 +96,7 @@ class Abs(Operation):
         For some |x| expression, deduce |x| = x after trying to deduce
         x >= 0. Assumptions may be needed to deduce x >= 0.
         '''
-        from ._theorems_ import abs_elim
+        from . import abs_elim
         # deduce_non_neg(self.operand, assumptions) # NOT YET IMPLEMENTED
         return abs_elim.instantiate({x: self.operand}, assumptions=assumptions)
 
@@ -114,7 +114,7 @@ class Abs(Operation):
         Once established, these authorship notations can be deleted.
         '''
         from proveit.logic import InSet
-        from proveit.numbers.absolute_value._theorems_ import (
+        from proveit.numbers.absolute_value import (
             abs_complex_closure, abs_nonzero_closure,
             abs_complex_closure_non_neg_real)
         from proveit.numbers import Complex, Real, RealNonNeg, RealPos

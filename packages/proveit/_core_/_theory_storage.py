@@ -47,7 +47,7 @@ class TheoryStorage:
             # make the __pv_it directory
             try:
                 os.makedirs(self.pv_it_dir)
-            except OSError:
+            except (OSError, FileExistsError):
                 # maybe another processor beat us to it.
                 pass
 
@@ -112,6 +112,10 @@ class TheoryStorage:
         # expression).
         self._kindname_to_objhash = dict()
 
+        # Map each common expression, axiom, or theorem name
+        # to 'common', 'axiom', or 'theorem' respectively.
+        self._name_to_kind = dict()
+
         # Map the special object kind ('common', 'axiom', or
         # 'theorem') to a dictionary mapping names to storage
         # identifiers:
@@ -129,14 +133,6 @@ class TheoryStorage:
         self._loadedCommonExprs = dict()
         self._loadedAxioms = dict()
         self._loadedTheorems = dict()
-
-        # Map 'common', 'axiom', and 'theorem' to respective modules.
-        # Base it upon the theory name.
-        self._specialExprModules = {
-            kind: self.name +
-            '.%s' %
-            module_name for kind,
-            module_name in Theory.special_expr_kind_to_module_name.items()}
 
         # Reflects the contents of the 'theorem_dependency_order.txt' file
         # which lists the theorems of the theory in order with other
@@ -230,12 +226,13 @@ class TheoryStorage:
         root = self.root_theory_storage
         referenced_root = referenced_theory._storage.root_theory_storage
         if root is not referenced_root:
+            assert False, "%s with a different root as %s, from %s referencing %s"%(root.name, referenced_root.name, self.name, referenced_theory._storage.name)
             referenced_root_name = referenced_root.name
-            if referenced_root_name not in self.referenced_theory_roots:
+            if referenced_root_name not in root.referenced_theory_roots:
                 with open(self.paths_filename, 'a') as paths_file:
                     paths_file.write(referenced_root_name + ' '
                                      + referenced_root.directory + '\n')
-                self.referenced_theory_roots.add(referenced_root_name)
+                root.referenced_theory_roots.add(referenced_root_name)
 
     """
     def _loadTheoremDependencyOrder(self):
@@ -335,8 +332,7 @@ class TheoryStorage:
                                for name, expr in definitions.items()}
             # "Retrieve" the proofs to make sure they are stored
             # for future needs.
-            theory_folder_storage = self.theory_folder_storage(
-                kind + 's')
+            self.theory_folder_storage(kind + 's')
         self._setSpecialObjects(names, definitions, kind)
 
     def _setSpecialObjects(self, names, definitions, kind):
@@ -439,6 +435,7 @@ class TheoryStorage:
                     self.theory, kind, hash_id)
 
         # Now we'll write the new name to hash information.
+        self._update_name_to_kind(names, kind)
         new_lines = []
         for name in names:
             new_lines.append(name + ' ' + special_hash_ids[name])
@@ -453,22 +450,50 @@ class TheoryStorage:
             # theorems
             self._updateTheoremDependencyOrder(names)
         """
+    
+    def _update_name_to_kind(self, names, kind):
+        kind_to_str = {'axiom':'an axiom', 'theorem':'a theorem',
+                       'common':'a common expression'}
+        for name in names:
+            if name in self._name_to_kind:
+                if self._name_to_kind[name] != kind:
+                    raise ValueError("'%s' is an overused name, as %s and %s."
+                                     %(name, kind_to_str[kind], 
+                                       self._name_to_kind[name]))
+            else:
+                self._name_to_kind[name] = kind
 
     def get_axiom_names(self):
         if self._axiom_names is None:
             self._axiom_names = list(self._loadSpecialStatementNames('axiom'))
+            self._update_name_to_kind(self._axiom_names, 'axiom')
         return self._axiom_names
 
     def get_theorem_names(self):
         if self._theorem_names is None:
             self._theorem_names = list(
                 self._loadSpecialStatementNames('theorem'))
+            self._update_name_to_kind(self._theorem_names, 'theorem')
         return self._theorem_names
 
-    def common_expression_names(self):
+    def get_common_expression_names(self):
         if self._common_expr_names is None:
             self._common_expr_names = list(self._loadCommonExpressionNames())
+            self._update_name_to_kind(self._common_expr_names, 'common')
         return self._common_expr_names
+
+    def get_expression_axiom_and_theorem_names(self):
+        return (self.get_common_expression_names() + self.get_axiom_names()
+                + self.get_theorem_names())        
+
+    def get_expression_axiom_or_theorem_kind(self, name):
+        '''
+        Return 'common', 'axiom', or 'theorem' if the given name
+        is the name of a common expression, axiom, or theorem of this
+        Theory respectively.
+        '''
+        self.get_expression_axiom_and_theorem_names()
+        return self._name_to_kind[name]        
 
     def load_special_names(self):
         '''
@@ -692,7 +717,7 @@ class TheoryStorage:
         of the expression that we have encountered.
         '''
         from proveit._core_.theory import Theory
-        proofs_path = os.path.join(self.directory, '_proofs_')
+        proofs_path = os.path.join(self.directory, '_theory_nbs_', 'proofs')
         proof_path = os.path.join(proofs_path, theorem_name)
         # Let's first check if the same expression existed
         # in the previous version -- then we can simply
@@ -739,7 +764,7 @@ class TheoryStorage:
             if os.path.isfile(filename):
                 return relurl(filename)
         if not os.path.isdir(proof_path):
-            # make the directory for the _proofs_
+            # make the directory for the proofs
             os.makedirs(proof_path)
         # make a generic 'presumptions.txt' file
         presumptions_filename = os.path.join(proof_path, 'presumptions.txt')
@@ -766,7 +791,8 @@ class TheoryStorage:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
             theory_links = self.theory.links(
-                os.path.join(self.directory, '_proofs_', theorem_name))
+                os.path.join(self.directory, '_theory_nbs_', 
+                             'proofs', theorem_name))
             nb = nb.replace('#THEORY#', theory_links)
         return nb
 
@@ -776,9 +802,9 @@ class TheoryStorage:
         '''
         with open(filename, 'r') as proof_notebook:
             nb = proof_notebook.read()
-            # the theorem name should come after "_theorems_.ipynb#"
+            # the theorem name should come after "theorems.ipynb#"
             # in the notebook
-            match = re.search(r'_theorems_\.ipynb\#([_a-zA-Z]\w*)', nb)
+            match = re.search(r'theorems\.ipynb\#([_a-zA-Z]\w*)', nb)
             if match is None:
                 return None
             return match.groups()[0]
@@ -789,7 +815,9 @@ class TheoryStorage:
         given theorem_names, stash them or remove them if they are
         generic notebooks.
         '''
-        proofs_path = os.path.join(self.directory, '_proofs_')
+        import shutil
+        proofs_path = os.path.join(self.directory, '_theory_nbs_',
+                                   'proofs')
         if not os.path.isdir(proofs_path):
             return  # nothing to stash
         for proof_folder in os.listdir(proofs_path):
@@ -817,10 +845,10 @@ class TheoryStorage:
                     with open(filename, 'r') as notebook:
                         if generic_version == notebook.read():
                             # just remove it, it is generic
-                            remove_file = True
+                            remove_folder = True
 
             if remove_folder:
-                os.remove(proof_path)
+                shutil.rmtree(proof_path)
             else:
                 self._stashProof(proof_path)
 
@@ -904,16 +932,17 @@ class TheoryFolderStorage:
     def special_expr_address(self, obj_hash_id):
         '''
         A special expression "address" consists of a kind ('common',
-        'axiom', or 'theorem'), module and the name of the expression.
-        Provided that the given expression is one of the special
-        expressions of this theory, return the address as a tuple.
+        'axiom', or 'theorem'), theory package, and the name of the
+        expression.  Provided that the given expression is one of the 
+        special expressions of this theory, return the address as a 
+        tuple.
         '''
         kind = TheoryStorage._folder_to_kind(self.folder)
         # use the first instance.
         name = self._objhash_to_names[obj_hash_id][0]
         if kind == 'axiom' or kind == 'theorem':
             name = name + '.expr'
-        return kind, self.theory_storage._specialExprModules[kind], name
+        return kind, self.theory_storage.name, name
 
     def unload(self):
         '''
@@ -1075,7 +1104,6 @@ class TheoryFolderStorage:
         Return the storage directory path for the Prove-It object with
         the given storage id.
         '''
-        from .theory import Theory
         theory_folder_storage, hash_directory = self._split(
             prove_it_storage_id)
         return os.path.join(theory_folder_storage.path, hash_directory)
@@ -1125,7 +1153,7 @@ class TheoryFolderStorage:
         These will be 'explicit' ids (e.g., with the full
         theory and folder path).
         '''
-        from proveit import Expression, Judgment, Proof, Theory
+        from proveit import Expression, Judgment, Proof
         if storage_ids is None:
             if unique_rep[:6] == 'Proof:':
                 storage_ids = Proof._extractReferencedObjIds(unique_rep[6:])
@@ -1160,8 +1188,8 @@ class TheoryFolderStorage:
         __pv_it directory) based upon a hash of the unique
         representation.
         '''
-        from proveit import Expression, Literal, Operation
-        from proveit._core_.proof import Proof, Axiom, Theorem
+        from proveit import Literal, Operation
+        from proveit._core_.proof import Axiom, Theorem
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         if prove_it_object._style_id in proveit_obj_to_storage:
             return proveit_obj_to_storage[prove_it_object._style_id]
@@ -1234,11 +1262,11 @@ class TheoryFolderStorage:
         '''
         directory = self.theory._storage.directory
         if self.folder in ('common', 'axioms', 'theorems', 'demonstrations'):
-            return os.path.join(directory, '_' + self.folder + '_.ipynb')
+            return os.path.join(directory, '_theory_nbs_', self.folder + '.ipynb')
         thm_proof_prefix = '_proof_'
         if self.folder[:len(thm_proof_prefix)] == '_proof_':
             name = self.folder[len(thm_proof_prefix):]
-            return os.path.join(directory, '_proofs_', name, 'thm_proof.ipynb')
+            return os.path.join(directory, '_theory_nbs_', 'proofs', name, 'thm_proof.ipynb')
         return "the %s notebook in %s" % (self.folder, directory)
 
     def _raiseNotebookNotFound(self, filepath):
@@ -1271,11 +1299,9 @@ class TheoryFolderStorage:
         (%end_[common/axioms/theorems] has not been
         called yet in the special expressions notebook).
         '''
-        import proveit
         from proveit import Expression
         from proveit._core_.proof import Axiom, Theorem
         from json import JSONDecodeError
-        proveit_path = os.path.split(proveit.__file__)[0]
 
         if not isinstance(expr, Expression):
             raise ValueError("'expr' should be an Expression object")
@@ -1384,14 +1410,14 @@ class TheoryFolderStorage:
             with open(filepath, 'r') as f:
                 try:
                     orig_nb = clean_nb(f)
-                except JSONDecodeError as e:
+                except JSONDecodeError:
                     orig_nb = ""
             if orig_nb != nb:
                 if os.path.isfile(alt_filepath):
                     with open(alt_filepath, 'r') as f:
                         try:
                             orig_alt_nb = clean_nb(f)
-                        except JSONDecodeError as e:
+                        except JSONDecodeError:
                             orig_alt_nb = ""
                 else:
                     orig_alt_nb = None
@@ -1447,6 +1473,7 @@ class TheoryFolderStorage:
         Helper method of expression_notebook.
         '''
         import proveit
+        from json import JSONDecodeError
         proveit_path = os.path.split(proveit.__file__)[0]
         from proveit import expression_depth
         from .theory import Theory
@@ -1651,7 +1678,7 @@ class TheoryFolderStorage:
                 if kind_str == 'Theorem':
                     see_proof_str = (
                         '***see <a class=\\"ProveItLink\\" '
-                        'href=\\"../../../_proofs_/%s/thm_proof.ipynb\\">'
+                        'href=\\"../../../_theory_nbs_/proofs/%s/thm_proof.ipynb\\">'
                         'proof</a>***' %
                         name)
                 else:
@@ -1663,7 +1690,7 @@ class TheoryFolderStorage:
                 with open(dependencies_filename, 'r') as f:
                     try:
                         orig_nb = clean_nb(f)
-                    except JSONDecodeError as e:
+                    except JSONDecodeError:
                         orig_nb = ""
                 if orig_nb != dep_nb:
                     with open(dependencies_filename, 'w') as dependencies_file:
@@ -1698,7 +1725,7 @@ class TheoryFolderStorage:
         name, full names must be used instead of abbreviations.
         '''
         from proveit import (Expression, Operation, Literal, ExprTuple,
-                             NamedExprs, ExprArray, Axiom, Theorem)
+                             NamedExprs, Axiom, Theorem)
 
         if isinstance(obj, Axiom) or isinstance(obj, Theorem):
             expr = obj.proven_truth.expr
@@ -1817,7 +1844,7 @@ class TheoryFolderStorage:
         return '.'.join(split_module_name)
 
     def _exprBuildingCode(self, expr, item_names, is_sub_expr=True):
-        from proveit import (Expression, Composite, ExprTuple,
+        from proveit import (Expression, ExprTuple,
                              NamedExprs, ExprArray)
 
         if expr is None:
@@ -2029,17 +2056,7 @@ class TheoryFolderStorage:
                     import_fn(expr_class_strs[expr_id])
                 except BaseException:
                     # If importing the absolute path fails, maybe the
-                    # relative path will work.  This is needed to
-                    # resolve, for example, the issue that the
-                    # proveit.logic package imports from
-                    # proveit.logic.booleans._common_ but we need to be
-                    # able to execute
-                    # proveit.logic.booleans._common_.ipynb in
-                    # the first place which requires imports within
-                    # proveit.logic.booleans.  The solution is to use
-                    # relative imports when executing
-                    # proveit.logic.booleans._common_.ipynb
-                    # the first time but afterwards use absolute paths.
+                    # relative path will work.
                     import_fn(expr_class_rel_strs[expr_id])
                     # use the relative path
                     expr_class_strs[expr_id] = expr_class_rel_strs[expr_id]
@@ -2073,7 +2090,7 @@ class TheoryFolderStorage:
         Return the Judgment or Proof object that is represented
         in storage by the given storage_id.
         '''
-        from proveit import Theory, Proof, Axiom, Theorem
+        from proveit import Proof, Axiom, Theorem
         from proveit._core_.judgment import Judgment
         theory_folder_storage, hash_folder = self._split(storage_id)
         if theory_folder_storage != self:
@@ -2117,7 +2134,6 @@ class TheoryFolderStorage:
         the purposes of displaying the proof.
         '''
         from proveit._core_.proof import Proof
-        from proveit._core_.theory import Theory
         theory_folder_storage, hash_directory = self._split(proof_id)
         theory = theory_folder_storage.theory
         folder = theory_folder_storage.folder
@@ -2421,7 +2437,8 @@ class StoredAxiom(StoredSpecialStmt):
         Return the link to the axiom definition in the _axioms_ notebook.
         '''
         axioms_notebook_link = relurl(os.path.join(self.theory.get_path(),
-                                                   '_axioms_.ipynb'))
+                                                   '_theory_nbs_',
+                                                   'axioms.ipynb'))
         return axioms_notebook_link + '#' + self.name
 
 
@@ -2445,8 +2462,8 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         Return the link to the theorem's proof notebook.
         '''
-        return relurl(os.path.join(self.theory.get_path(), '_proofs_',
-                                   self.name, 'thm_proof.ipynb'))
+        return relurl(os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                   'proofs', self.name, 'thm_proof.ipynb'))
 
     def remove(self, keep_path=False):
         if self.has_proof():
@@ -2597,8 +2614,8 @@ class StoredTheorem(StoredSpecialStmt):
         you could presume the proveit.logic theory but exclude
         proveit.logic.equality).
         '''
-        proof_path = os.path.join(self.theory.get_path(),
-                                  '_proofs_', self.name)
+        proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                  'proofs', self.name)
 
         presumptions = set()
         exclusions = set()
@@ -2718,8 +2735,8 @@ class StoredTheorem(StoredSpecialStmt):
         # Record any imported theorem that is usable as a "presumptions"
         # stored in a presumptions.txt file that should be allowable
         # theorems whenever the proof is regenerated.
-        proof_path = os.path.join(self.theory.get_path(),
-                                  '_proofs_', self.name)
+        proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                  'proofs', self.name)
 
         # For temporary backward compatibility, created the directory
         # if necessary.  TODO: remove
@@ -2741,9 +2758,9 @@ class StoredTheorem(StoredSpecialStmt):
         from proveit._core_.proof import Theorem
         with open(os.path.join(proof_path, 'presumptions.txt'), 'w') as f:
             f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
-            usable_theorem_names = [str(theorem) for theorem
-                                    in Theorem.all_theorems
-                                    if theorem.is_usable()]
+            usable_theorem_names = set(str(theorem) for theorem
+                                       in Theorem.all_theorems
+                                       if theorem.is_usable())
             for theorem in sorted(usable_theorem_names):
                 f.write(str(theorem) + '\n')
             f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
@@ -2866,7 +2883,7 @@ class StoredTheorem(StoredSpecialStmt):
         Returns the set of names of theorems used to prove the given
         theorem, directly or indirectly.
         '''
-        from .theory import Theory
+        from .theory import Theory, TheoryException
         if not self.has_proof():
             raise Exception('The theorem must be proven in order to '
                             'obtain its requirements')
