@@ -53,6 +53,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     paths = args.path
 
-    mpi_build(notebook_path_generator(paths, '_demonstrations_.ipynb'),
+    mpi_build(notebook_path_generator(paths, '_theory_nbs_/demonstrations.ipynb'),
               no_latex=args.nolatex, git_clear=not args.nogitclear,
               no_execute=args.noexecute, export_to_html=True)

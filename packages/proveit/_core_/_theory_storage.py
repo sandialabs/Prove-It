@@ -717,7 +717,7 @@ class TheoryStorage:
         of the expression that we have encountered.
         '''
         from proveit._core_.theory import Theory
-        proofs_path = os.path.join(self.directory, '_proofs_')
+        proofs_path = os.path.join(self.directory, '_theory_nbs_', 'proofs')
         proof_path = os.path.join(proofs_path, theorem_name)
         # Let's first check if the same expression existed
         # in the previous version -- then we can simply
@@ -764,7 +764,7 @@ class TheoryStorage:
             if os.path.isfile(filename):
                 return relurl(filename)
         if not os.path.isdir(proof_path):
-            # make the directory for the _proofs_
+            # make the directory for the proofs
             os.makedirs(proof_path)
         # make a generic 'presumptions.txt' file
         presumptions_filename = os.path.join(proof_path, 'presumptions.txt')
@@ -791,7 +791,8 @@ class TheoryStorage:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
             theory_links = self.theory.links(
-                os.path.join(self.directory, '_proofs_', theorem_name))
+                os.path.join(self.directory, '_theory_nbs_', 
+                             'proofs', theorem_name))
             nb = nb.replace('#THEORY#', theory_links)
         return nb
 
@@ -801,9 +802,9 @@ class TheoryStorage:
         '''
         with open(filename, 'r') as proof_notebook:
             nb = proof_notebook.read()
-            # the theorem name should come after "_theorems_.ipynb#"
+            # the theorem name should come after "theorems.ipynb#"
             # in the notebook
-            match = re.search(r'_theorems_\.ipynb\#([_a-zA-Z]\w*)', nb)
+            match = re.search(r'theorems\.ipynb\#([_a-zA-Z]\w*)', nb)
             if match is None:
                 return None
             return match.groups()[0]
@@ -815,7 +816,8 @@ class TheoryStorage:
         generic notebooks.
         '''
         import shutil
-        proofs_path = os.path.join(self.directory, '_proofs_')
+        proofs_path = os.path.join(self.directory, '_theory_nbs_',
+                                   'proofs')
         if not os.path.isdir(proofs_path):
             return  # nothing to stash
         for proof_folder in os.listdir(proofs_path):
@@ -1260,11 +1262,11 @@ class TheoryFolderStorage:
         '''
         directory = self.theory._storage.directory
         if self.folder in ('common', 'axioms', 'theorems', 'demonstrations'):
-            return os.path.join(directory, '_' + self.folder + '_.ipynb')
+            return os.path.join(directory, '_theory_nbs_', self.folder + '.ipynb')
         thm_proof_prefix = '_proof_'
         if self.folder[:len(thm_proof_prefix)] == '_proof_':
             name = self.folder[len(thm_proof_prefix):]
-            return os.path.join(directory, '_proofs_', name, 'thm_proof.ipynb')
+            return os.path.join(directory, '_theory_nbs_', 'proofs', name, 'thm_proof.ipynb')
         return "the %s notebook in %s" % (self.folder, directory)
 
     def _raiseNotebookNotFound(self, filepath):
@@ -1676,7 +1678,7 @@ class TheoryFolderStorage:
                 if kind_str == 'Theorem':
                     see_proof_str = (
                         '***see <a class=\\"ProveItLink\\" '
-                        'href=\\"../../../_proofs_/%s/thm_proof.ipynb\\">'
+                        'href=\\"../../../_theory_nbs_/proofs/%s/thm_proof.ipynb\\">'
                         'proof</a>***' %
                         name)
                 else:
@@ -2054,17 +2056,7 @@ class TheoryFolderStorage:
                     import_fn(expr_class_strs[expr_id])
                 except BaseException:
                     # If importing the absolute path fails, maybe the
-                    # relative path will work.  This is needed to
-                    # resolve, for example, the issue that the
-                    # proveit.logic package imports from
-                    # proveit.logic.booleans._common_ but we need to be
-                    # able to execute
-                    # proveit.logic.booleans._common_.ipynb in
-                    # the first place which requires imports within
-                    # proveit.logic.booleans.  The solution is to use
-                    # relative imports when executing
-                    # proveit.logic.booleans._common_.ipynb
-                    # the first time but afterwards use absolute paths.
+                    # relative path will work.
                     import_fn(expr_class_rel_strs[expr_id])
                     # use the relative path
                     expr_class_strs[expr_id] = expr_class_rel_strs[expr_id]
@@ -2445,7 +2437,8 @@ class StoredAxiom(StoredSpecialStmt):
         Return the link to the axiom definition in the _axioms_ notebook.
         '''
         axioms_notebook_link = relurl(os.path.join(self.theory.get_path(),
-                                                   '_axioms_.ipynb'))
+                                                   '_theory_nbs_',
+                                                   'axioms.ipynb'))
         return axioms_notebook_link + '#' + self.name
 
 
@@ -2469,8 +2462,8 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         Return the link to the theorem's proof notebook.
         '''
-        return relurl(os.path.join(self.theory.get_path(), '_proofs_',
-                                   self.name, 'thm_proof.ipynb'))
+        return relurl(os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                   'proofs', self.name, 'thm_proof.ipynb'))
 
     def remove(self, keep_path=False):
         if self.has_proof():
@@ -2621,8 +2614,8 @@ class StoredTheorem(StoredSpecialStmt):
         you could presume the proveit.logic theory but exclude
         proveit.logic.equality).
         '''
-        proof_path = os.path.join(self.theory.get_path(),
-                                  '_proofs_', self.name)
+        proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                  'proofs', self.name)
 
         presumptions = set()
         exclusions = set()
@@ -2742,8 +2735,8 @@ class StoredTheorem(StoredSpecialStmt):
         # Record any imported theorem that is usable as a "presumptions"
         # stored in a presumptions.txt file that should be allowable
         # theorems whenever the proof is regenerated.
-        proof_path = os.path.join(self.theory.get_path(),
-                                  '_proofs_', self.name)
+        proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                  'proofs', self.name)
 
         # For temporary backward compatibility, created the directory
         # if necessary.  TODO: remove

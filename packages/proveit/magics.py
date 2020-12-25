@@ -87,7 +87,7 @@ class TheoryInterface:
     A SubTheories object is an interface for the _sub_theories_.txt file
     which stores the names of the sub-theories of the theory in the current
     directory and also tracks whether it is in interactive or state mode.
-    With each %theory execution (in the _theory_.ipynb notebook), the
+    With each %theory execution (in the theory.ipynb notebook), the
     mode is toggled.  If in interactive mode, the SubTheories object is
     responsible for creating the interactive widget to add/modify/remove
     sub-theories and edit their brief descriptions.
@@ -217,19 +217,21 @@ class TheoryInterface:
 
     def sub_theory_notebook(self, sub_theory_name):
         '''
-        Returns the path of the _theory_.ipynb notebook for the given sub-theory,
+        Returns the path of the theory.ipynb notebook for the given sub-theory,
         creating it if necessary.
         '''
         import proveit
-        notebook_name = os.path.join(sub_theory_name, '_theory_.ipynb')
-        if not os.path.isdir(sub_theory_name):
+        sub_theory_folder = os.path.join('..', sub_theory_name)
+        notebook_name = os.path.join(sub_theory_folder, '_theory_nbs_',
+                                     'theory.ipynb')
+        if not os.path.isdir(sub_theory_folder):
             import shutil
-            os.mkdir(sub_theory_name)
-            init_name = os.path.join(sub_theory_name, '__init__.py')
+            os.mkdir(sub_theory_folder)
+            init_name = os.path.join(sub_theory_folder, '__init__.py')
             proveit_path = os.path.split(proveit.__file__)[0]
             # Create an '__init__.py' file from the template.
             template_filename = os.path.join(proveit_path, '..', 
-                                             '__init__template.py')
+                                             '__init_template.py')
             shutil.copyfile(template_filename, init_name)
         # Create the generic version from the template
         # (even if we have an existing version so we can update the
@@ -238,7 +240,8 @@ class TheoryInterface:
         with open(os.path.join(proveit_path, '..', '_theory_template_.ipynb'), 'r') as template:
             generic_nb_str = template.read()
             super_theory_links = Theory('.').links(
-                from_directory=sub_theory_name)
+                from_directory=os.path.join(sub_theory_folder, 
+                                            '_theory_nbs_'))
             generic_nb_str = generic_nb_str.replace(
                 '#THEORY#', super_theory_links + '.' + sub_theory_name)
         if os.path.isfile(notebook_name):
@@ -330,7 +333,7 @@ class TheoryInterface:
     def read_description(self, sub_theory_name):
         brief_description = ''
         brief_description_filename = os.path.join(
-            sub_theory_name, '_brief_description_.txt')
+            '..', sub_theory_name, '_brief_description_.txt')
         if os.path.isfile(brief_description_filename):
             with open(brief_description_filename) as f2:
                 brief_description = f2.read().strip()
@@ -341,7 +344,7 @@ class TheoryInterface:
         brief_description = self.sub_theory_descriptions[sub_theory_name]
         if brief_description != '':
             brief_description_filename = os.path.join(
-                sub_theory_name, '_brief_description_.txt')
+                '..', sub_theory_name, '_brief_description_.txt')
             with open(brief_description_filename, 'w') as f:
                 f.write(brief_description + '\n')
 
@@ -381,7 +384,8 @@ class ProveItMagicCommands:
                 href = relurl(
                     os.path.join(
                         theory.get_path(),
-                        '_theory_.ipynb'))
+                        '_theory_nbs_',
+                        'theory.ipynb'))
                 html += '<li><a class="ProveItLink" href="%s">%s</a></li>\n' % (
                     href, theory.name)
                 html += generate_contents(list(theory.generate_sub_theories()))
@@ -391,7 +395,7 @@ class ProveItMagicCommands:
 
     def display_theory(self):
         '''
-        Create the _common_, _axioms_ and _theorems_ notebooks for the current
+        Create the common, axioms and theorems notebooks for the current
         theory (if they do not already exist).  Show the table of contents
         for sub-theories which may be edited.
         '''
@@ -412,7 +416,7 @@ class ProveItMagicCommands:
             'theorems',
             'demonstrations')
         for special_notebook_type in special_notebook_types:
-            notebook_name = '_%s_.ipynb' % special_notebook_type
+            notebook_name = '%s.ipynb' % special_notebook_type
             # Create the generic version from the template
             # (even if we have an existing version so we can update the
             # markdown title if we need to.)
@@ -433,8 +437,9 @@ class ProveItMagicCommands:
             special_notebooks_html = '<table><tr>\n'
             for special_notebook_type, special_notebook_text in zip(
                     special_notebook_types, special_notebook_texts):
-                special_notebooks_html += '<th><a class="ProveItLink" href="_%s_.ipynb">%s</a></th>\n' % (
-                    special_notebook_type, special_notebook_text)
+                special_notebooks_html += ('<th><a class="ProveItLink" '
+                                           'href="%s.ipynb">%s</a></th>\n' % (
+                                               special_notebook_type, special_notebook_text))
             special_notebooks_html += '</tr></table>\n'
             special_notebooks_html += '<h3>Sub-theories</h3>\n'
             if len(theory_interface.sub_theory_names) > 0:
@@ -442,8 +447,9 @@ class ProveItMagicCommands:
                 for name in theory_interface.sub_theory_names:
                     description = theory_interface.sub_theory_descriptions[name]
                     href = theory_interface.sub_theory_notebook(name)
-                    special_notebooks_html += '<tr><th><a class="ProveItLink" href="%s">%s</a></th><td>%s</td></tr>\n' % (
-                        href, name, description)
+                    special_notebooks_html += ('<tr><th><a class="ProveItLink" '
+                                               'href="%s">%s</a></th><td>%s</td></tr>\n' % (
+                                                   href, name, description))
                 special_notebooks_html += '</table>\n'
             display(HTML(special_notebooks_html))
         else:
@@ -453,7 +459,7 @@ class ProveItMagicCommands:
                     special_notebook_types, special_notebook_texts):
                 special_notebook_links.append(
                     widgets.HTML(
-                        '<a class="ProveItLink" href="_%s_.ipynb">%s</a>' %
+                        '<a class="ProveItLink" href="%s.ipynb">%s</a>' %
                         (special_notebook_type, special_notebook_text), layout=full_width_layout))
             special_notebook_links = widgets.HBox(special_notebook_links)
 
@@ -475,7 +481,7 @@ class ProveItMagicCommands:
                                   add_theory_widget]))
 
         display(
-            HTML('<h3>Axioms contained within this theory and its descendents</h3>'))
+            HTML('<h3>All axioms contained within this theory</h3>'))
         self.display_all_contained_axioms(theory)
 
         #display(HTML('<h3>Theorems (or conjectures) contained (directly or indirectly) within this theory</h3>'))

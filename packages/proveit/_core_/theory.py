@@ -4,8 +4,8 @@ and theorems.  Consider, for example, a mathematics subject area such
 as trigonometry or linear algebra.  A theory could represent such a
 subject area, or a reasonable subset of such a subject area.  Such
 theories are represented in directories.  The directory will contain
-Jupyter notebooks for common expressions (_common_.ipynb) including
-literals, axioms (_axioms_.ipynb), and theorems (_theorems_.ipynb).  It
+Jupyter notebooks for common expressions (common.ipynb) including
+literals, axioms (axioms.ipynb), and theorems (theorems.ipynb).  It
 will also contain Python scripts for defining Operation or Literal classes
 for building Expression objects specific to the theory with convenient
 methods for invoking theorems and automated derivations.  Proofs of
@@ -92,12 +92,12 @@ class Theory:
             #    active_folder = splitpath[pv_it_idx+1]
             path = os.path.abspath(os.path.join(
                 *([path] + ['..'] * num_up_levels)))
-        # If in a _proofs_ directory, go to the containing theory
-        # directory.
+        # If in a _theory_nbs_ directory, go to the 
+        # containing theory directory.
         splitpath = path.split(os.path.sep)
-        if '_proofs_' in splitpath:
-            proofs_idx = splitpath.index('_proofs_')
-            num_up_levels = (len(splitpath) - proofs_idx)
+        if '_theory_nbs_' in splitpath:
+            nbs_idx = splitpath.index('_theory_nbs_')
+            num_up_levels = (len(splitpath) - nbs_idx)
             path = os.path.abspath(os.path.join(
                 *([path] + ['..'] * num_up_levels)))
 
@@ -178,13 +178,9 @@ class Theory:
         theory_name_segments = self._storage.name.split('.')
         theory_html_segments = []
         for k, theory_name_segment in enumerate(theory_name_segments):
-            path = os.path.join(*
-                                ([self._storage.directory] +
-                                 ['..'] *
-                                    (len(theory_name_segments) -
-                                     k -
-                                     1) +
-                                    ['_theory_.ipynb']))
+            path = os.path.join(*([self._storage.directory] +
+                                  ['..'] * (len(theory_name_segments) - k - 1) +
+                                  ['_theory_nbs_', 'theory.ipynb']))
             url_link = relurl(path, start=from_directory)
             theory_html_segments.append(
                 r'<a class=\"ProveItLink\" href=\"%s\">%s</a>' %
@@ -667,8 +663,8 @@ class TheoryPackage(ModuleType):
                             self._theory,  name)
             raise AttributeError(
                     "'%s' not found in the list of common expressions of "
-                    "'%s'\n(make sure o execute the appropriate "
-                    "'_common_.ipynb' notebook after any changes)"
+                    "'%s'\n(make sure to execute the appropriate "
+                    "'common.ipynb' notebook after any changes)"
                     %(name, self._theory.name))
         return getattr(module, name)
 
@@ -715,7 +711,7 @@ class UnsetCommonExpressionPlaceholder(object):
         with open(import_failure_filename, 'w') as f:
             f.write(self.theory.name + '\n')
         raise CommonExpressionDependencyError(
-            "Must execute '_common_.ipynb' for the theory of %s "
+            "Must execute 'common.ipynb' for the theory of %s "
             "to define '%s' before it may be used" %
             (self.theory.name, self.name))
 
