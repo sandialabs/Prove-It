@@ -44,8 +44,8 @@ class DividesRelation(TransitiveRelation):
             yield self.eliminate_common_exponent
 
         # for (ka)|(kb)
-        if (isinstance(self.lhs, Mult) and len(self.lhs.operands) == 2 and
-                isinstance(self.rhs, Mult) and len(self.rhs.operands) == 2):
+        if (isinstance(self.lhs, Mult) and self.lhs.operands.is_double() and
+                isinstance(self.rhs, Mult) and self.rhs.operands.is_double()):
             operands_intersection = (set(self.lhs.operands).
                                      intersection(set(self.lhs.operands)))
             if(len(operands_intersection) > 0):
@@ -242,7 +242,7 @@ class Divides(DividesRelation):
         '''
         from proveit.numbers import Mult
         if isinstance(self.rhs, Mult):
-            if len(self.rhs.operands) == 2:
+            if self.rhs.operands.is_double():
                 # should check to make sure none of the operands
                 # are actually ExprRanges (later!)
                 if self.lhs == self.rhs.operands[0]:
@@ -356,8 +356,8 @@ class Divides(DividesRelation):
         if (isinstance(self.lhs, Mult) and
                 isinstance(self.rhs, Mult)):
 
-            if (len(self.lhs.operands) == 2 and
-                    len(self.rhs.operands) == 2):
+            if (self.lhs.operands.is_double() and
+                    self.rhs.operands.is_double()):
 
                 lhs1 = self.lhs.operands[0]
                 lhs2 = self.lhs.operands[1]

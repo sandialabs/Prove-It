@@ -35,7 +35,7 @@ class Forall(OperationOverInstances):
         if (hasattr(self, 'instance_param') and self.has_domain()
                 and hasattr(self.domain, 'unfold_forall')):
 
-            if len(self.conditions) == 0:
+            if self.conditions.num_entries() == 0:
                 # derive an unfolded version (dependent upon the domain)
                 yield self.unfold
 
@@ -150,7 +150,7 @@ class Forall(OperationOverInstances):
             "Forall.conclude_by_cases: cannot fold a forall statement, or "
             "prove a forall statement using proof by cases, if the forall "
             "statement has no domain specified.")
-        if len(self.instance_params) > 1:
+        if self.instance_params.num_entries() > 1:
             # When there are more than one instance variables, we
             # must conclude the unbundled form first and then
             # derive the bundled form from that.
@@ -169,7 +169,7 @@ class Forall(OperationOverInstances):
         '''
         assert self.has_domain(), (
             "Cannot fold a forall statement with no domain")
-        if len(self.instance_params) > 1:
+        if self.instance_params.num_entries() > 1:
             # When there are more than one instance variables, we
             # must conclude the unbundled form first and the
             # derive the bundled form from that.
@@ -295,7 +295,7 @@ class Forall(OperationOverInstances):
         from . import forall_in_bool
         _x = self.instance_params
         P_op, _P_op = Operation(P, _x), self.instance_expr
-        _n = _x.length(assumptions)
+        _n = _x.num_elements(assumptions)
         x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
         return forall_in_bool.instantiate(
             {n: _n, P_op: _P_op, x_1_to_n: _x},

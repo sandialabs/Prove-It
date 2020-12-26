@@ -111,6 +111,11 @@ class ExprTuple(Composite, Expression):
         return iter(self.entries)
 
     def __len__(self):
+        raise NotImplementedError(
+                "__len__ is deliberately not implement in order to avoid "
+                "ambiguity.  Use num_entries or num_elements.")
+
+    def num_entries(self):
         '''
         Return the number of entries of the list.
         Some entries may be ranges (ExprRange) that
@@ -137,19 +142,18 @@ class ExprTuple(Composite, Expression):
         '''
         return ExprTuple(*(self.entries + tuple(other)))
 
-    def is_singular(self):
+    def is_single(self):
         '''
         Return True if this has a single element that is not an
         ExprRange.
         '''
-        from .expr_range import ExprRange
-        return len(self) == 1 and not isinstance(self[0], ExprRange)
+        return is_single(self)
 
-    def is_binary(self):
+    def is_double(self):
         '''
         Returns True if this has two elements that are not ExprRanges.
         '''
-        return len(self) == 2 and not self.contains_range()
+        return is_double(self)
 
     def contains_range(self):
         '''
@@ -157,7 +161,7 @@ class ExprTuple(Composite, Expression):
         '''
         from .expr_range import ExprRange
         return any(isinstance(entry, ExprRange) for entry in self.entries)
-
+    
     def index(self, entry, start=0, stop=None):
         if stop is None:
             return self.entries.index(entry, start)
@@ -191,7 +195,7 @@ class ExprTuple(Composite, Expression):
         from .expr_range import ExprRange
 
         out_str = ''
-        if len(self) == 0 and fence:
+        if len(self.entries) == 0 and fence:
             # for an empty list, show the parenthesis to show something.
             return '()'
 
@@ -312,10 +316,10 @@ class ExprTuple(Composite, Expression):
 
         return out_str
 
-    def length(self, assumptions=USE_DEFAULTS):
+    def num_elements(self, assumptions=USE_DEFAULTS):
         '''
-        Return the proven length of this ExprTuple as an Expression.
-        This length includes the extent of all contained ranges.
+        Return the proven number of elements of this ExprTuple as an 
+        Expression.  This includes the extent of all contained ranges.
         '''
         from proveit.core_expr_types import Len
         return Len(self).computed(assumptions)
@@ -329,7 +333,7 @@ class ExprTuple(Composite, Expression):
         from proveit import ExprRange, composite_expression
         if not isinstance(other_tuple, ExprTuple):
             other_tuple = composite_expression(other_tuple)
-        if len(self) != len(other_tuple):
+        if len(self.entries) != len(other_tuple):
             return False  # don't have the same number of entries
         for entry, other_entry in zip(self, other_tuple):
             if (isinstance(entry, ExprRange)
@@ -405,7 +409,7 @@ class ExprTuple(Composite, Expression):
 
         # Determine the position of the first ExprRange item and get the
         # lambda map.
-        first_range_pos = len(self)
+        first_range_pos = len(self.entries)
         lambda_map = None
         for _k, item in enumerate(self):
             if isinstance(item, ExprRange):
@@ -423,7 +427,7 @@ class ExprTuple(Composite, Expression):
             front_singles = ExprTuple(eq.expr[:first_range_pos])
             i_sub = lambda_map.extract_argument(front_singles[0])
             j_sub = lambda_map.extract_argument(front_singles[-1])
-            if len(front_singles) == 2:
+            if len(front_singles.entries) == 2:
                 # Merge a pair of singular items.
                 front_merger = merge_pair.instantiate(
                     {f: lambda_map, i: i_sub, j: j_sub},
@@ -439,11 +443,11 @@ class ExprTuple(Composite, Expression):
                         :first_range_pos],
                     assumptions=assumptions))
 
-        if len(eq.expr) == 1:
+        if eq.expr.num_entries() == 1:
             # We have accomplished a merger down to one item.
             return eq.relation
 
-        if len(eq.expr) == 2:
+        if eq.expr.num_entries() == 2:
             # Merge a pair.
             if isinstance(eq.expr[0], ExprRange):
                 if isinstance(eq.expr[1], ExprRange):
@@ -483,7 +487,7 @@ class ExprTuple(Composite, Expression):
             eq.update(merger)
             return eq.relation
 
-        while len(eq.expr) > 1:
+        while eq.expr.num_entries() > 1:
             front_merger = ExprTuple(*eq.expr[:2]).merger(assumptions)
             eq.update(front_merger.substitution(
                 eq.expr.inner_expr(assumptions)[:2],
@@ -503,15 +507,15 @@ class ExprTuple(Composite, Expression):
 
         # Handle the special counting cases.  For example,
         #   (1, 2, 3, 4) = (1, ..., 4)
-        _n = len(self)
+        _n = len(self.entries)
         if all(self[_k] == num(_k + 1) for _k in range(_n)):
             if (isinstance(equality.rhs, ExprTuple)
-                    and len(equality.rhs) == 1
+                    and equality.rhs.num_entries() == 1
                     and isinstance(equality.rhs[0], ExprRange)):
                 expr_range = equality.rhs[0]
                 if (expr_range.start_index == one and
                         expr_range.end_index == num(_n)):
-                    if len(self) >= 10:
+                    if len(self.entries) >= 10:
                         raise NotImplementedError("counting range equality "
                                                   "not implemented for more "
                                                   "then 10 elements")
@@ -543,6 +547,21 @@ class ExprTuple(Composite, Expression):
     """
 
 
+def is_single(expr_tuple):
+    '''
+    Return True if this has a single element that is not an
+    ExprRange.
+    '''
+    from .expr_range import ExprRange
+    return (len(expr_tuple.entries) == 1 and 
+                not isinstance(expr_tuple[0], ExprRange))
+
+def is_double(expr_tuple):
+    '''
+    Returns True if this has two elements that are not ExprRanges.
+    '''
+    return len(expr_tuple.entries) == 2 and not expr_tuple.contains_range()
+
 def extract_var_tuple_indices(indexed_var_tuple):
     '''
     Given an ExprTuple of only IndexedVar and ExprRange entries, returns
@@ -556,13 +575,13 @@ def extract_var_tuple_indices(indexed_var_tuple):
     for entry in indexed_var_tuple:
         if isinstance(entry, IndexedVar):
             entry_indices = entry.indices
-            if len(entry_indices) == 1:
+            if is_single(entry_indices):
                 indices.append(entry_indices[0])
             else:
                 indices.append(entry_indices)
         elif isinstance(entry, ExprRange):
             inner_indices = extract_var_tuple_indices(ExprTuple(entry.body))
-            assert len(inner_indices) == 1
+            assert is_single(inner_indices)
             body = inner_indices[0]
             indices.append(ExprRange(entry.parameter, body,
                                      entry.start_index, entry.end_index))

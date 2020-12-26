@@ -102,8 +102,8 @@ class Label(Expression):
         init_args = inspect.getargspec(self.__class__.__init__)[0]
         if len(init_args) == 1:
             return  # no arguments (except self) are taken
-        if len(
-                init_args) >= 3 and init_args[1] == 'string_format' and init_args[2] == 'latex_format':
+        if (len(init_args) >= 3 and init_args[1] == 'string_format' and 
+                init_args[2] == 'latex_format'):
             string_format, latex_format = self.core_info()[1:3]
             yield '"' + string_format + '"'
             if latex_format != string_format:

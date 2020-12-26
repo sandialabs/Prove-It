@@ -1054,7 +1054,7 @@ class ExprArray(ExprTuple):
         default_style = ("explicit" if format_type == 'string' else 'implicit')
 
         out_str = ''
-        if len(self) == 0 and fence:
+        if len(self.entries) == 0 and fence:
             # for an empty list, show the parenthesis to show something.
             return '()'
 

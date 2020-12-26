@@ -406,7 +406,7 @@ class Theory:
         '''
         generic_title = Theory.extract_markdowntitle_of_notebook(
             generic_nb_str)
-        with open(filename, 'r') as _f:
+        with open(filename, 'r', encoding='utf8') as _f:
             nb_str = _f.read()
         try:
             existing_title, nb_str = \

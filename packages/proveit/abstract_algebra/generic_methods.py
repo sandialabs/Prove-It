@@ -25,26 +25,26 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
     # transform any wrap-around indexing for simplicity
     # this needs work actually …
     if init_idx < 0:
-        init_idx = len(expr.operands) + init_idx
+        init_idx = expr.operands.num_entries() + init_idx
     if final_idx < 0:
-        final_idx = len(expr.operands) + final_idx
+        final_idx = expr.operands.num_entries() + final_idx
 
     # check validity of supplied index values
-    if init_idx >= len(expr.operands):
+    if init_idx >= expr.operands.num_entries():
         raise IndexError("'init_idx' = {0} is out of range. Should "
                          "have 0 ≤ init_idx ≤ {1}.".
-                         format(init_idx, len(expr.operands) - 1))
-    if final_idx >= len(expr.operands):
+                         format(init_idx, expr.operands.num_entries() - 1))
+    if final_idx >= expr.operands.num_entries():
         raise IndexError("'final_idx' = {0} is out of range. Should "
                          "have 0 ≤ final_idx ≤ {1}.".
-                         format(final_idx, len(expr.operands) - 1))
+                         format(final_idx, expr.operands.num_entries() - 1))
 
     # trivial commutation (i.e. non-commutation)
     if init_idx == final_idx:
         return Equals(expr, expr).prove()
 
     # number of operands or elements = 2
-    if len(expr.operands) == 2 and set([init_idx, final_idx]) == {0, 1}:
+    if expr.operands.num_entries() == 2 and set([init_idx, final_idx]) == {0, 1}:
         A, B = binary_thm.all_instance_vars()
         return binary_thm.instantiate(
             {A: expr.operands[0], B: expr.operands[1]}, assumptions=assumptions)
@@ -53,19 +53,23 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
     if init_idx < final_idx:
         thm = rightward_thm
         l, m, n, A, B, C, D = thm.all_instance_vars()
-        Asub, Bsub, Csub, Dsub = (
+        _A, _B, _C, _D = (
             expr.operands[:init_idx], expr.operands[init_idx],
             expr.operands[init_idx + 1:final_idx + 1], expr.operands[final_idx + 1:])
-        l_sub, m_sub, n_sub = num(len(Asub)), num(len(Csub)), num(len(Dsub))
+        _l = _A.num_elements(assumptions)
+        _m = _C.num_elements(assumptions)
+        _n = _D.num_elements(assumptions)
     else:
         thm = leftward_thm
         l, m, n, A, B, C, D = thm.all_instance_vars()
-        Asub, Bsub, Csub, Dsub = (
+        _A, _B, _C, _D = (
             expr.operands[:final_idx], expr.operands[final_idx:init_idx],
             expr.operands[init_idx], expr.operands[init_idx + 1:])
-        l_sub, m_sub, n_sub = num(len(Asub)), num(len(Bsub)), num(len(Dsub))
+        _l = _A.num_elements(assumptions)
+        _m = _B.num_elements(assumptions)
+        _n = _D.num_elements(assumptions)
     return thm.instantiate(
-        {l: l_sub, m: m_sub, n: n_sub, A: Asub, B: Bsub, C: Csub, D: Dsub},
+        {l: _l, m: _m, n: _n, A: _A, B: _B, C: _C, D: _D},
         assumptions=assumptions)
 
 
@@ -79,21 +83,21 @@ def apply_association_thm(
     from proveit.logic import Equals
     beg = start_idx
     if beg < 0:
-        beg = len(expr.operands) + beg  # use wrap-around indexing
+        beg = expr.operands.num_entries() + beg  # use wrap-around indexing
     end = beg + length
-    if end > len(expr.operands):
+    if end > expr.operands.num_entries():
         raise IndexError("'start_idx+length' out of bounds: %d > %d." % (
-                         end, len(expr.operands)))
-    if beg == 0 and end == len(expr.operands):
+                         end, expr.operands.num_entries()))
+    if beg == 0 and end == expr.operands.num_entries():
         # association over the entire range is trivial:
         return Equals(expr, expr).prove()  # simply the self equality
     i, j, k, A, B, C = thm.all_instance_vars()
     _A = ExprTuple(*expr.operands[:beg])
     _B = ExprTuple(*expr.operands[beg:end])
     _C = ExprTuple(*expr.operands[end:])
-    _i = _A.length(assumptions)
-    _j = _B.length(assumptions)
-    _k = _C.length(assumptions)
+    _i = _A.num_elements(assumptions)
+    _j = _B.num_elements(assumptions)
+    _k = _C.num_elements(assumptions)
     return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C},
                            assumptions=assumptions)
 
@@ -101,8 +105,8 @@ def apply_association_thm(
 def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     from proveit import ExprTuple
     if idx < 0:
-        idx = len(expr.operands) + idx  # use wrap-around indexing
-    if idx >= len(expr.operands):
+        idx = expr.operands.num_entries() + idx  # use wrap-around indexing
+    if idx >= expr.operands.num_entries():
         raise IndexError("'idx' out of range for disassociation")
     if not isinstance(expr.operands[idx], expr.__class__):
         raise ValueError(
@@ -112,9 +116,9 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     _A = ExprTuple(*expr.operands[:idx])
     _B = expr.operands[idx].operands
     _C = ExprTuple(*expr.operands[idx + 1:])
-    _i = _A.length(assumptions)
-    _j = _B.length(assumptions)
-    _k = _C.length(assumptions)
+    _i = _A.num_elements(assumptions)
+    _j = _B.num_elements(assumptions)
+    _k = _C.num_elements(assumptions)
     return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C},
                            assumptions=assumptions)
 
@@ -146,9 +150,9 @@ def group_commutation(
 
     # use the following to allow/acknowledge wrap-around indexing
     if init_idx < 0:
-        init_idx = len(expr.operands) + init_idx     # wrap
+        init_idx = expr.operands.num_entries() + init_idx     # wrap
     if final_idx < 0:
-        final_idx = len(expr.operands) + final_idx  # wrap
+        final_idx = expr.operands.num_entries() + final_idx  # wrap
     if length == 1:
         return expr.commutation(init_idx, final_idx, assumptions=assumptions)
 
@@ -178,9 +182,9 @@ def group_commute(expr, init_idx, final_idx, length, disassociate=True,
     '''
     # use the following to allow/acknowledge wrap-around indexing
     if init_idx < 0:
-        init_idx = len(expr.operands) + init_idx     # wrap
+        init_idx = expr.operands.num_entries() + init_idx     # wrap
     if final_idx < 0:
-        final_idx = len(expr.operands) + final_idx  # wrap
+        final_idx = expr.operands.num_entries() + final_idx  # wrap
     if length == 1:
         return expr.commute(init_idx, final_idx, assumptions=assumptions)
 
@@ -203,10 +207,10 @@ def pairwise_evaluation(expr, assumptions):
     # for convenience while updating our equation:
     eq = TransRelUpdater(expr, assumptions)
 
-    if len(expr.operands) == 2:
+    if expr.operands.num_entries() == 2:
         raise ValueError("pairwise_evaluation may only be used when there "
                          "are more than 2 operands.")
-    while len(expr.operands) > 2:
+    while expr.operands.num_entries() > 2:
         expr = eq.update(
             expr.association(
                 0,
@@ -249,7 +253,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
     #     i.e. consisting of ints 0, 1, 2, …, n-1 (but we allow cycle
     #     notation to omit length-1 cycles)
     # (3) cannot have repeated indices
-    expected_number_of_indices = len(expr.operands)
+    expected_number_of_indices = expr.operands.num_entries()
     expected_indices_set = set(range(0, expected_number_of_indices))
     # might be able to condense some of new_order and cycles together
     # later, but somewhat challenging if we allow cycles to omit

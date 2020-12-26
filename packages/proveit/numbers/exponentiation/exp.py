@@ -256,41 +256,41 @@ class Exp(Operation):
         base = self.base
         exponent = self.exponent
         if isinstance(base, Mult):
-            if self.base.operands.is_binary():
+            if self.base.operands.is_double():
                 _a, _b = self.base.operands
             else:
-                _m = self.operands.length(assumptions)
+                _m = self.operands.num_elements(assumptions)
                 _a = self.operands
             if InSet(exponent, NaturalPos).proven(assumptions):
-                if self.base.operands.is_binary():
+                if self.base.operands.is_double():
                     return posnat_power_of_product.instantiate(
                         {a: _a, b: _b, n: exponent}, assumptions=assumptions)
                 else:
                     return posnat_power_of_products.instantiate(
                         {m: _m, a: _a, n: exponent}, assumptions=assumptions)
             elif InSet(exponent, RealPos).proven(assumptions):
-                if self.base.operands.is_binary():
+                if self.base.operands.is_double():
                     return pos_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent}, assumptions=assumptions)
                 else:
                     return pos_power_of_products.instantiate(
                         {m: _m, a: _a, c: exponent}, assumptions=assumptions)
             elif InSet(exponent, Real).proven(assumptions):
-                if self.base.operands.is_binary():
+                if self.base.operands.is_double():
                     return real_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent}, assumptions=assumptions)
                 else:
                     return real_power_of_products.instantiate(
                         {m: _m, a: _a, c: exponent}, assumptions=assumptions)
             else:  # Complex is the default
-                if self.base.operands.is_binary():
+                if self.base.operands.is_double():
                     return complex_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent}, assumptions=assumptions)
                 else:
                     return complex_power_of_products.instantiate(
                         {m: _m, a: _a, c: exponent}, assumptions=assumptions)
         elif isinstance(base, Div):
-            assert self.base.operands.is_binary()
+            assert self.base.operands.is_double()
             _a, _b = self.base.operands
             if InSet(exponent, NaturalPos).proven(assumptions):
                 return posnat_power_of_quotient.instantiate(
@@ -544,7 +544,7 @@ class ExpSetMembership(Membership):
             if exponent == zero:
                 return exp_set_0.instantiate(
                     {S: base}, assumptions=assumptions)
-            if len(element) != exponent.as_int():
+            if element.num_entries() != exponent.as_int():
                 raise ProofFailure(
                     elem_in_set, assumptions,
                     "Element not a member of the exponentiated set; "

@@ -868,10 +868,11 @@ def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
     antecedent_expr as the antecedent and consequent_expr as the consequent.
     '''
     from proveit.logic import Implies
+    from proveit._core_.expression.composite import is_double
     assert isinstance(
         implication_expr, Implies), 'The result of deduction must be an Implies operation'
-    assert len(
-        implication_expr.operands) == 2, 'Implications are expected to have two operands'
+    assert is_double(implication_expr.operands), (
+            'Implications are expected to have two operands')
     assert antecedent_expr == implication_expr.operands[
         0], 'The result of deduction must be an Implies operation with the proper antecedent'
     assert consequent_expr == implication_expr.operands[
@@ -881,15 +882,17 @@ def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
 class ModusPonens(Proof):
     def __init__(self, implication_expr, assumptions=None):
         from proveit.logic import Implies
+        from proveit._core_.expression.composite import is_double
         assumptions = defaults.checked_assumptions(assumptions)
         prev_default_assumptions = defaults.assumptions
         # these assumptions will be used for deriving any side-effects
         defaults.assumptions = assumptions
         try:
             # obtain the implication and antecedent Judgments
-            assert isinstance(
-                implication_expr, Implies) and len(
-                implication_expr.operands) == 2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
+            assert (isinstance(implication_expr, Implies) and 
+                    is_double(implication_expr.operands)), (
+                            'The implication of a modus ponens proof must '
+                            'refer to an Implies expression with two operands')
             try:
                 # Must prove the implication under the given assumptions.
                 implication_truth = implication_expr.prove(assumptions)
@@ -978,7 +981,7 @@ class Instantiation(Proof):
         See Expression.substituted for details regarding the replacement rules.
         '''
         from proveit import (Expression, Function, Lambda, ExprRange,
-                             ExprTuple, IndexedVar)
+                             ExprTuple)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var, LambdaApplicationError)
 
@@ -1119,7 +1122,7 @@ class Instantiation(Proof):
                 #                   (x_1, ..., x_n, x_{n+1})})
                 # put ones with the fewest number of entries first
                 # but break ties arbitrarily via the "meaning id".
-                return (len(var_tuple), var_tuple._meaning_id)
+                return (var_tuple.num_entries(), var_tuple._meaning_id)
             for var in repl_vars:
                 if var in repl_map:
                     # The variable itself is in the replacement map.

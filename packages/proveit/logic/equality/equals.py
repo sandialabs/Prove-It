@@ -400,7 +400,7 @@ class Equals(TransitiveRelation):
         if not isinstance(lambda_map, Lambda):
             # as a default, do a global replacement
             lambda_map = Lambda.global_repl(lambda_map, expr_being_replaced)
-        if len(lambda_map.parameters) != 1:
+        if lambda_map.parameters.num_entries() != 1:
             raise ValueError("When substituting, expecting a single "
                              "'lambda_map' parameter entry which may "
                              "be a single parameter or a range; got "

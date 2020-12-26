@@ -43,7 +43,7 @@ class SetOfAll(OperationOverInstances):
         from proveit import ExprRange
         out_str = ''
         explicit_conditions = ExprTuple(*self.explicit_conditions())
-        inner_fence = (len(explicit_conditions) > 0)
+        inner_fence = (explicit_conditions.num_entries() > 0)
         formatted_instance_element = self.instance_element.formatted(
             format_type, fence=inner_fence)
         explicit_domains = self.explicit_domains()
@@ -53,7 +53,7 @@ class SetOfAll(OperationOverInstances):
         else:
             out_str += "{"
         out_str += formatted_instance_element
-        if len(explicit_conditions) > 0:
+        if explicit_conditions.num_entries() > 0:
             formatted_conditions = explicit_conditions.formatted(
                 format_type, fence=False)
             if format_type == 'latex':

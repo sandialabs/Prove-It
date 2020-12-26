@@ -28,18 +28,11 @@ class MatrixProd(Operation):
         # This should eventually be done differently because we shouldn't need to
         # know anything about the quantum application here.
         from proveit.physics.quantum import Bra, Ket, RegisterBra, RegisterKet
-        if len(
-            self.operands) == 2 and (
-            isinstance(
-                self.operands[0],
-                Bra) or isinstance(
-                self.operands[0],
-                RegisterBra)) and (
-                    isinstance(
-                        self.operands[1],
-                        Ket) or isinstance(
-                            self.operands[1],
-                        RegisterKet)):
+        if (self.operands.num_entries() == 2 and (
+                isinstance(self.operands[0], Bra) 
+                or isinstance(self.operands[0],RegisterBra)) and (
+                    isinstance(self.operands[1], Ket) or 
+                    isinstance(self.operands[1], RegisterKet))):
             return self.operands[0].formatted(
                 format_type) + self.operands[1].formatted(format_type, no_lvert=True)
         # return Operation.formatted(self, format_type, fence, sub_fence)

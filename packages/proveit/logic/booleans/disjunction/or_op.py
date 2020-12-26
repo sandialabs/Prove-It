@@ -1,6 +1,6 @@
 from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr)
-from proveit import A, B, C, D, E, i, j, k, l, m, n
+from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
 
@@ -25,13 +25,14 @@ class Or(Operation):
         # expressions
         if self in Or.trivial_disjunctions:
             return
-        if len(operands) == 0:
+        operands = self.operands
+        if operands.num_entries() == 0:
             Or.trivial_disjunctions.add(self)
             try:
                 from proveit.logic.booleans.disjunction import empty_disjunction
             except BaseException:
                 pass  # empty_disjunction not initially defined when doing a clean rebuild
-        if len(operands) == 1:
+        if operands.is_single():
             operand = operands[0]
             try:
                 Or.trivial_disjunctions.add(self)
@@ -44,12 +45,12 @@ class Or(Operation):
         '''
         Automatically reduce "Or() = FALSE" and "Or(a) = a".
         '''
-        if len(self.operands) == 0:
+        if self.operands.num_entries() == 0:
             from proveit.logic.booleans.disjunction import \
                 empty_disjunction_eval
             if empty_disjunction_eval.is_usable():
                 return empty_disjunction_eval
-        elif self.operands.is_singular():
+        elif self.operands.is_single():
             try:
                 return self.unary_reduction(assumptions=assumptions)
             except BaseException:
@@ -84,7 +85,7 @@ class Or(Operation):
                         operand, assumptions=assumptions)  # possible way to prove it
                 except ProofFailure:
                     pass
-            if len(self.operands) == 2 and len(proven_operand_indices) > 0:
+            if self.operands.is_double() and len(proven_operand_indices) > 0:
                 # One or both of the two operands were known to be true (without automation).
                 # Try a possibly simpler proof than conclude_via_example.
                 try:
@@ -112,7 +113,7 @@ class Or(Operation):
         Side-effect derivations to attempt automatically.
         '''
         from proveit.logic import Not
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
@@ -123,10 +124,10 @@ class Or(Operation):
         Side-effect derivations to attempt automatically for Not(A or B or .. or .. Z).
         '''
         from proveit.logic import Not, And
-        if len(self.operands) == 0:
+        if self.operands.num_entries() == 0:
             return  # No side-effects needed for [Or]()
         yield self.derive_in_bool  # A or B or .. or .. Z in Boolean
-        if len(self.operands) == 2:  # Not(A or B)
+        if self.operands.is_double():  # Not(A or B)
             yield self.deduce_not_left_if_neither  # Not(A)
             yield self.deduce_not_right_if_neither  # Not(B)
         # implemented by JML on 7/2/19
@@ -148,25 +149,26 @@ class Or(Operation):
         from . import empty_disjunction
         if self == false_or_false_negated.operand:
             return false_or_false_negated  # the negation of (FALSE or FALSE)
-        elif len(self.operands) == 0:
+        elif self.operands.num_entries() == 0:
             return empty_disjunction
-        elif len(self.operands) == 2:
+        elif self.is_double():
             return neither_intro.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         else:
-            from proveit.numbers import num
+            _A = self.operands
+            _m = _A.num_elements(assumptions)
             return not_or_if_not_any.instantiate(
-                {m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
+                {m: _m, A: _A}, assumptions=assumptions)
 
     def conclude_via_both(self, assumptions):
         from . import or_if_both
-        assert len(self.operands) == 2
+        assert self.operands.num_entries().is_double()
         return or_if_both.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
     def conclude_via_only_left(self, assumptions):
         from . import or_if_only_left
-        assert len(self.operands) == 2
+        assert self.operands.num_entries().is_double()
         return or_if_only_left.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -175,13 +177,13 @@ class Or(Operation):
         From A being (or assumed) True, conclude that (A V B) is True.
         '''
         from . import or_if_left
-        assert len(self.operands) == 2
+        assert self.operands.num_entries().is_double()
         return or_if_left.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
     def conclude_via_only_right(self, assumptions):
         from . import or_if_only_right
-        assert len(self.operands) == 2
+        assert self.operands.is_double()
         return or_if_only_right.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -191,13 +193,14 @@ class Or(Operation):
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
         from . import demorgans_law_and_to_or, demorgans_law_and_to_or_bin
-        from proveit.numbers import num
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return demorgans_law_and_to_or_bin.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         else:
+            _A = self.operands
+            _m = _A.num_elements(assumptions)
             return demorgans_law_and_to_or.instantiate(
-                {m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
+                {m: _m, A: _A}, assumptions=assumptions)
 
     def derive_in_bool(self, assumptions=USE_DEFAULTS):
         '''
@@ -210,7 +213,7 @@ class Or(Operation):
         From (A or B) derive and return B assuming Not(A), in_bool(B).
         '''
         from . import right_if_not_left
-        assert len(self.operands) == 2
+        assert self.operands.is_double
         left_operand, right_operand = self.operands
         return right_if_not_left.instantiate(
             {A: left_operand, B: right_operand}, assumptions=assumptions)  # .derive_conclusion(assumptions)
@@ -220,7 +223,7 @@ class Or(Operation):
         From (A or B) derive and return A assuming in_bool(A), Not(B).
         '''
         from . import left_if_not_right
-        assert len(self.operands) == 2
+        assert self.operands.is_double()
         left_operand, right_operand = self.operands
         return left_if_not_right.instantiate(
             {A: left_operand, B: right_operand}, assumptions=assumptions)  # .derive_conclusion(assumptions)
@@ -232,12 +235,13 @@ class Or(Operation):
         derive and return the conclusion, C.  Self is (A or B).
         '''
         from . import singular_constructive_dilemma, singular_constructive_multi_dilemma
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return singular_constructive_dilemma.instantiate(
                 {A: self.operands[0], B: self.operands[1], C: conclusion}, assumptions=assumptions)
-        from proveit.numbers import num
-        return singular_constructive_multi_dilemma.instantiate({m: num(
-            len(self.operands)), A: self.operands, C: conclusion}, assumptions=assumptions)
+        _A = self.operands
+        _m = _A.num_elements(assumptions)
+        return singular_constructive_multi_dilemma.instantiate(
+                {m: _m, A: _A, C: conclusion}, assumptions=assumptions)
 
     def derive_via_multi_dilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -246,16 +250,16 @@ class Or(Operation):
         '''
         from . import constructive_dilemma, destructive_dilemma, constructive_multi_dilemma, destructive_multi_dilemma
         from proveit.logic import Not, Or
-        from proveit.numbers import num
-        assert isinstance(
-            conclusion, Or) and len(
-            conclusion.operands) == len(
-            self.operands), "derive_via_multi_dilemma requires conclusion to be a disjunction, the same number of operands as self."
+        assert (isinstance(conclusion, Or) and 
+                (conclusion.operands.num_entries() 
+                == self.operands.num_entries())), \
+                ("derive_via_multi_dilemma requires conclusion to be a "
+                 "disjunction, the same number of operands as self.")
         # Check for destructive versus constructive dilemma cases.
         if all(isinstance(operand, Not) for operand in self.operands) and all(
                 isinstance(operand, Not) for operand in conclusion.operands):
             # destructive case.
-            if len(self.operands) == 2 and destructive_dilemma.is_usable():
+            if self.operands.is_double() and destructive_dilemma.is_usable():
                 # From Not(C) or Not(D), A => C, B => D, conclude Not(A) or
                 # Not(B)
                 return destructive_dilemma.instantiate(
@@ -273,10 +277,13 @@ class Or(Operation):
                     operand.operand for operand in self.operands]
                 negated_operands_conc = [
                     operand.operand for operand in conclusion.operands]
-                return destructive_multi_dilemma.instantiate({m: num(len(
-                    self.operands)), A: negated_operands_self, B: negated_operands_conc}, assumptions=assumptions)
+                _A = negated_operands_self
+                _B = negated_operands_conc
+                _m = _A.num_elements(assumptions)
+                return destructive_multi_dilemma.instantiate(
+                        {m: _m, A: _A, B: _B}, assumptions=assumptions)
         # constructive case.
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             # From (A or B), A => C, B => D, conclude C or D.
             return constructive_dilemma.instantiate(
                 {
@@ -286,8 +293,11 @@ class Or(Operation):
                     D: conclusion.operands[1]},
                 assumptions=assumptions)
         #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
-        return constructive_multi_dilemma.instantiate({m: num(len(
-            self.operands)), A: self.operands, B: conclusion.operands}, assumptions=assumptions)
+        _A = self.operands
+        _B = conclusion.operands
+        _m = _A.num_elements(assumptions)
+        return constructive_multi_dilemma.instantiate(
+                {m: _m, A: _A, B: _B}, assumptions=assumptions)
 
     def derive_via_dilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -295,10 +305,9 @@ class Or(Operation):
         self, try derive_via_multi_dilemma.  Otherwise, or if that fails, try
         derive_via_singular_dilemma.
         '''
-        if isinstance(
-            conclusion, Or) and len(
-            conclusion.operands) == len(
-                self.operands):
+        if (isinstance(conclusion, Or) and 
+                (conclusion.operands.num_entries() ==
+                 self.operands.num_entries())):
             try:
                 return self.derive_via_multi_dilemma(conclusion, assumptions)
             except ProofFailure:
@@ -310,7 +319,7 @@ class Or(Operation):
         Deduce A in Boolean from (A or B) in Boolean.
         '''
         from . import left_in_bool
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return left_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -319,7 +328,7 @@ class Or(Operation):
         Deduce B in Boolean from (A or B) in Boolean.
         '''
         from . import right_in_bool
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return right_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -328,7 +337,7 @@ class Or(Operation):
         Deduce A in Boolean, B in Boolean, ..., Z in Boolean
         from (A or B or ... or Z) in Boolean.
         '''
-        for _i in range(len(self.operands)):
+        for _i in range(self.operands.num_entries()):
             self.deduce_part_in_bool(_i, assumptions)
 
     def deduce_part_in_bool(self, index_or_expr, assumptions=USE_DEFAULTS):
@@ -337,31 +346,30 @@ class Or(Operation):
         provided X by expression or index number.
         '''
         from . import each_is_bool
-        from proveit.numbers import num
         idx = index_or_expr if isinstance(
             index_or_expr, int) else list(
             self.operands).index(index_or_expr)
-        if idx < 0 or idx >= len(self.operands):
+        if idx < 0 or idx >= self.operands.num_entries():
             raise IndexError("Operand out of range: " + str(idx))
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if idx == 0:
                 return self.deduce_left_in_bool(assumptions)
             elif idx == 1:
                 return self.deduce_right_in_bool(assumptions)
         # attempt to replace with AA and CC over Amulti and Cmulti
-        return each_is_bool.instantiate({m: num(idx),
-                                         n: num(len(self.operands) - idx - 1),
-                                         A: self.operands[:idx],
-                                         B: self.operands[idx],
-                                         C: self.operands[idx + 1:]},
-                                        assumptions=assumptions)
+        _A, _B, _C = (self.operands[:idx], self.operands[idx], 
+                      self.operands[idx + 1:])
+        _m = _A.num_elements(assumptions)
+        _n = _C.num_elements(assumptions)
+        return each_is_bool.instantiate(
+                {m: _m, n: _n, A: _A, B: _B, C: _C}, assumptions=assumptions)
 
     def deduce_not_left_if_neither(self, assumptions=USE_DEFAULTS):
         '''
         Deduce not(A) assuming not(A or B) where self is (A or B).
         '''
         from . import not_left_if_neither
-        assert len(self.operands) == 2
+        assert self.operands.is_double()
         left_operand, right_operand = self.operands
         return not_left_if_neither.instantiate(
             {A: left_operand, B: right_operand}, assumptions=assumptions)
@@ -371,7 +379,7 @@ class Or(Operation):
         Deduce not(B) assuming not(A or B) where self is (A or B).
         '''
         from . import not_right_if_neither
-        assert len(self.operands) == 2
+        assert self.operands.is_double()
         left_operand, right_operand = self.operands
         return not_right_if_neither.instantiate(
             {A: left_operand, B: right_operand}, assumptions=assumptions)
@@ -384,7 +392,7 @@ class Or(Operation):
         from proveit.logic import Implies, compose
         # forall_{A in Bool, B in Bool, C in Bool} (A=>C and B=>C) => ((A or B)
         # => C)
-        assert len(self.operands) == 2
+        assert self.operands.is_double()
         left_operand, right_operand = self.operands
         left_impl_conclusion = Implies(left_operand, conclusion)
         right_impl_conclusion = Implies(right_operand, conclusion)
@@ -410,7 +418,7 @@ class Or(Operation):
         from proveit.logic import TRUE, SimplificationError
         # load in truth-table evaluations
         from . import or_t_t, or_t_f, or_f_t, or_f_f
-        if len(self.operands) == 0:
+        if self.operands.num_entries() == 0:
             return self.unary_reduction(assumptions=assumptions)
 
         # First just see if it has a known evaluation.
@@ -460,57 +468,15 @@ class Or(Operation):
         From (A or B), and assuming not(A) and not(B), derive and return FALSE.
         '''
         from . import binary_or_contradiction, or_contradiction
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return binary_or_contradiction.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         else:
-            from proveit.numbers import num
+            _A = self.operands
+            _m = self.operands.num_elements(assumptions)
             return or_contradiction.instantiate(
-                {m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
-
-    def derive_group(self, beg, end, assumptions=USE_DEFAULTS):
-        '''
-        From (A or B or ... or Y or Z), assuming in Boolean and given beginning and end of group, derive and return
-        (A or B ... or (l or ... or M) or ... or X or Z).
-        '''
-        from . import group
-        from proveit.numbers import num
-        if end <= beg:
-            raise IndexError(
-                "Beginning and end value must be of the form beginning < end.")
-        if end > len(self.operands) - 1:
-            raise IndexError(
-                "End value must be less than length of expression.")
-        return group.instantiate({l: num(beg),
-                                  m: num(end - beg),
-                                  n: num(len(self.operands) - end),
-                                  A: self.operands[:beg],
-                                  B: self.operands[beg: end],
-                                  C: self.operands[end:]},
-                                 assumptions=assumptions)
-
-    def derive_swap(self, idx1, idx2, assumptions=USE_DEFAULTS):
-        '''
-        From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Boolean and given
-        the beginning and end of the groups to be switched,
-        derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).
-        '''
-        from . import swap
-        from proveit.numbers import num
-        if 0 < idx1 < idx2 < len(self.operands) - 1:
-            return swap.instantiate({l: num(idx1),
-                                     m: num(idx2 - idx1 - 1),
-                                     n: num(len(self.operands) - idx2 - 1),
-                                     A: self.operands[:i],
-                                     B: self.operands[i],
-                                     C: self.operands[i + 1:j],
-                                     D: self.operands[j],
-                                     E: self.operands[j + 1:]},
-                                    assumptions=assumptions)
-        else:
-            raise IndexError(
-                "Beginnings and ends must be of the type: 0<i<j<length.")
-
+                {m: _m, A: _A}, assumptions=assumptions)
+    
     def affirm_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B), derive the conclusion provided that the negated
@@ -533,34 +499,34 @@ class Or(Operation):
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
         '''
         from . import binary_closure, closure
-        from proveit.numbers import num
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return binary_closure.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         else:
+            _A = self.operands
+            _m = _A.num_elements(assumptions)
             return closure.instantiate(
-                {m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
+                {m: _m, A: _A}, assumptions=assumptions)
 
     def conclude_via_example(self, true_operand, assumptions=USE_DEFAULTS):
         '''
         From one true operand, conclude that this 'or' expression is true.
         Requires all of the operands to be in the set of BOOLEANS.
         '''
-        from proveit.numbers import num
         from . import or_if_any, or_if_left, or_if_right
         index = self.operands.index(true_operand)
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if index == 0:
                 return or_if_left.instantiate(
                     {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
             elif index == 1:
                 return or_if_right.instantiate(
                     {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-        return or_if_any.instantiate({m: num(index),
-                                      n: num(len(self.operands) - index - 1),
-                                      A: self.operands[:index],
-                                      B: self.operands[index],
-                                      C: self.operands[index + 1:]},
+        _A, _B, _C = (self.operands[:index], self.operands[index],
+                      self.operands[index + 1:])
+        _m = _A.num_elements(assumptions)
+        _n = _C.num_elements(assumptions)
+        return or_if_any.instantiate({m: _m, n: _n, A: _A, B: _B, C: _C},
                                      assumptions=assumptions)
 
     def conclude_via_some(self, subset_disjunction, assumptions=USE_DEFAULTS):
@@ -639,15 +605,15 @@ class Or(Operation):
                              format(unexpected_operands))
 
         # NOTICE we are assuming no repetition of operands and that
-        # len(perm_operands) = len(self_operands)
+        # len(perm_operands) = self_operands.num_entries()
 
-        for i in range(len(self_operands)):
+        for _i in range(self_operands.num_entries()):
             # update the operands list each time for the permuting version
             perm_operands = permuted_disjunction.operands
-            temp_operand = self_operands[i]
-            j = perm_operands.index(temp_operand)
+            temp_operand = self_operands[_i]
+            _j = perm_operands.index(temp_operand)
             equiv_permuted_disjunction = (
-                permuted_disjunction.commutation(j, i)
+                permuted_disjunction.commutation(_j, _i)
             )
             permuted_disjunction = (
                 equiv_permuted_disjunction
@@ -666,7 +632,7 @@ class Or(Operation):
         '''
         from proveit.logic.booleans.disjunction import \
             unary_or_reduction
-        if not self.operands.is_singular():
+        if not self.operands.is_single():
             raise ValueError("Or.unary_reduction: expression must have only a "
                              "single operand in order to invoke the "
                              "unary_or_reduction theorem.")

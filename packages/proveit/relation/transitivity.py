@@ -616,6 +616,11 @@ class TransitiveSequence(OperationSequence):
     '''
 
     def __init__(self, operators, operands, do_min_size_check=True):
+        from proveit import ExprTuple
+        if isinstance(operators, ExprTuple):
+            operators = operators.entries
+        if isinstance(operands, ExprTuple):
+            operands = operands.entries
         if do_min_size_check and len(operators) < 2:
             raise ValueError(
                 "Do not use a TransitiveSequence for fewer than two relationship (it is unnecessary)")

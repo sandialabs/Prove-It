@@ -140,7 +140,7 @@ class InnerExpr:
             # sub-Expression or a slice (in which case the replacement map
             # has multiple parameters).
             if isinstance(key, int) and key < 0:
-                key = len(cur_inner_expr) + key
+                key = cur_inner_expr.num_entries() + key
             if isinstance(key, slice):
                 if key.step is not None and key.step != 1:
                     raise ValueError("When using a slice for an InnerExpr, the"
@@ -235,7 +235,7 @@ class InnerExpr:
                     str(equiv_method))
             repl_lambda = self.repl_lambda()
             if (isinstance(cur_inner_expr, ExprTuple)
-                    and len(self.expr_hierarchy) > 2
+                    and self.expr_hierarchy.num_entries() > 2
                     and isinstance(self.expr_hierarchy[-2], Operation)):
                 # When replace operands of an operation, we need a
                 # a repl_lambda with a range of parameters.
@@ -403,8 +403,8 @@ class InnerExpr:
             if start is None:
                 start = 0
             if stop is None:
-                stop = len(parent_tuple)
-            sub_tuple_len = cur_sub_expr.length(self.assumptions)
+                stop = parent_tuple.num_entries()
+            sub_tuple_len = cur_sub_expr.num_elements(self.assumptions)
             dummy_var = top_level_expr.safe_dummy_var()
             lambda_params = var_range(dummy_var, one, sub_tuple_len)
             lambda_body = ExprTuple(*(parent_tuple[:start] + (lambda_params,)
@@ -414,7 +414,7 @@ class InnerExpr:
             dummy_vars = top_level_expr.safe_dummy_vars(len(cur_sub_expr))
             lambda_params = dummy_vars
             cur_sub_class = cur_sub_expr.__class__
-            if len(self.parameters)==0:
+            if self.parameters.num_entries()==0:
                 lambda_body = cur_sub_class._checked_make(
                         cur_sub_expr.core_info(), cur_sub_expr.get_styles(),
                         dummy_vars)
@@ -429,7 +429,7 @@ class InnerExpr:
             """
         else:
             lambda_params = [top_level_expr.safe_dummy_var()]
-            if len(self.parameters) == 0:
+            if self.parameters.num_entries() == 0:
                 lambda_body = lambda_params[0]
             else:
                 # The replacements should be a function of the
@@ -520,7 +520,7 @@ class InnerExpr:
         # else:
         sub_exprs = [cur_sub_expr]
         named_expr_dict = [('lambda', repl_lambda)]
-        if len(self.parameters) == 0:
+        if self.parameters.num_entries() == 0:
             named_expr_dict += [('$%s$' % lambda_param.latex(), sub_expr)
                                 for lambda_param, sub_expr
                                 in zip(lambda_params, sub_exprs)]
