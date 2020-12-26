@@ -125,7 +125,7 @@ class Exists(OperationOverInstances):
             _Q = Lambda(
                 existential.instance_params, And())
         _alpha = judgment
-        _n = existential.instance_params.length(assumptions)
+        _n = existential.instance_params.num_elements(assumptions)
         x_1_to__n = ExprTuple(x_1_to_n.replaced({n: _n}))
         y_1_to__n = ExprTuple(y_1_to_n.replaced({n: _n}))
 
@@ -153,7 +153,7 @@ class Exists(OperationOverInstances):
         '''
         from proveit.logic.booleans.quantification.existence \
             import exists_unfolding
-        _n = self.instance_params.length(assumptions)
+        _n = self.instance_params.num_elements(assumptions)
         _P = Lambda(self.instance_params, self.operand.body.value)
         _Q = Lambda(self.instance_params, self.operand.body.condition)
         return exists_unfolding.instantiate(
@@ -168,7 +168,7 @@ class Exists(OperationOverInstances):
         '''
         from proveit.logic.booleans.quantification.existence \
             import exists_def
-        _n = self.instance_params.length(assumptions)
+        _n = self.instance_params.num_elements(assumptions)
         _P = Lambda(self.instance_params, self.operand.body.value)
         _Q = Lambda(self.instance_params, self.operand.body.condition)
         return exists_def.instantiate(
@@ -195,13 +195,10 @@ class Exists(OperationOverInstances):
         raise NotImplementedError("Need to update")
         from . import existence_by_example
         from proveit.logic import InSet
-        if len(
-            self.instance_vars) > 1 and (
-            not isinstance(
-                example_instance,
-                ExprTuple) or (
-                len(example_instance) != len(
-                    self.instance_vars))):
+        if self.instance_vars.num_entries() > 1 and (
+            not isinstance(example_instance, ExprTuple) or (
+                    example_instance.num_entries() != 
+                    self.instance_vars.num_entries())):
             raise Exception(
                 'Number in example_instance list must match number of instance variables in the Exists expression')
         P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
@@ -355,7 +352,8 @@ class Exists(OperationOverInstances):
                     "The first condition of the 'universality' must match the instance expression of the Exists operation having instances substituted",
                     self,
                     universality)
-            if len(universality.instance_vars) != len(self.instance_vars):
+            if (universality.instance_vars.num_entries() !=
+                    self.instance_vars.num_entries()):
                 raise InstanceSubstitutionException(
                     "'universality' must have the same number of variables as the Exists operation having instances substituted",
                     self,

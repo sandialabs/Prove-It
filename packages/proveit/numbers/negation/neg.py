@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, maybe_fenced_string, maybe_fenced_latex, InnerExpr, USE_DEFAULTS, ProofFailure
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import Integer, Real, Complex
-from proveit import a, b, m, n, x, y, B
+from proveit import a, b, c, m, n, x, y, B
 
 
 class Neg(Operation):
@@ -129,7 +129,7 @@ class Neg(Operation):
         '''
         from . import distribute_neg_through_binary_sum
         from . import distribute_neg_through_subtract, distribute_neg_through_sum
-        from proveit.numbers import Add, num
+        from proveit.numbers import Add
         from proveit.relation import TransRelUpdater
         expr = self
         # for convenience updating our equation
@@ -138,7 +138,7 @@ class Neg(Operation):
         if isinstance(self.operand, Add):
             # Distribute negation through a sum.
             add_expr = self.operand
-            if len(add_expr.operands) == 2:
+            if add_expr.operands.is_double():
                 # special case of 2 operands
                 if isinstance(add_expr.operands[1], Neg):
                     expr = eq.update(distribute_neg_through_subtract.instantiate(
@@ -148,8 +148,10 @@ class Neg(Operation):
                         {a: add_expr.operands[0], b: add_expr.operands[1]}, assumptions=assumptions))
             else:
                 # distribute the negation over the sum
+                _x = add_expr.operands
+                _n = _x.num_elements(assumptions)
                 expr = eq.update(distribute_neg_through_sum.instantiate(
-                    {n: num(len(add_expr.operands)), xx: add_expr.operands}), assumptions=assumptions)
+                    {n: _n, x: _x}), assumptions=assumptions)
             assert isinstance(
                 expr, Add), "distribute_neg theorems are expected to yield an Add expression"
             # check for double negation
@@ -224,7 +226,7 @@ class Neg(Operation):
         -(a*b*(-c)*d) = a*b*c*d.
         See Mult.neg_simplification where this may be used indirectly.
         '''
-        from proveit.numbers import Mult, num
+        from proveit.numbers import Mult
         from . import mult_neg_left_double, mult_neg_right_double, mult_neg_any_double
 
         mult_expr = self.operand
@@ -237,20 +239,20 @@ class Neg(Operation):
                 "Operand at the index %d expected to be a negation for %s" %
                 (idx, str(mult_expr)))
 
-        if len(mult_expr.operands) == 2:
+        if mult_expr.operands.is_double():
             if idx == 0:
                 return mult_neg_left_double.instantiate(
                     {a: mult_expr.operands[1]}, assumptions=assumptions)
             else:
                 return mult_neg_right_double.instantiate(
                     {a: mult_expr.operands[0]}, assumptions=assumptions)
-        a_val = mult_expr.operands[:idx]
-        b_val = mult_expr.operands[idx]
-        c_val = mult_expr.operands[idx + 1:]
-        m_val = num(len(a_val))
-        n_val = num(len(c_val))
+        _a = mult_expr.operands[:idx]
+        _b = mult_expr.operands[idx]
+        _c = mult_expr.operands[idx + 1:]
+        _m = _a.num_elements(assumptions)
+        _n = _c.num_elements(assumptions)
         return mult_neg_any_double.instantiate(
-            {m: m_val, n: n_val, AA: a_val, B: b_val, CC: c_val}, assumptions=assumptions)
+            {m: _m, n: _n, a: _a, b: _b, c: _c}, assumptions=assumptions)
 
 
 # Register these expression equivalence methods:

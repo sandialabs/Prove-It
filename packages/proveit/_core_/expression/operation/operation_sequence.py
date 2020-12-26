@@ -4,7 +4,10 @@ from .operation import Operation
 class OperationSequence(Operation):
     def __init__(self, operators, operands, styles=None):
         from proveit import ExprRange
-        if len(operands) != len(operators) + 1:
+        Operation.__init__(self, operators, operands, styles=styles)
+        operators = self.operators
+        operands = self.operands
+        if operands.num_entries() != operators.num_entries() + 1:
             raise ValueError(
                 "An operation sequence must have one more operand than operators")
         operand_range_indices = set()
@@ -21,12 +24,10 @@ class OperationSequence(Operation):
                     raise ValueError(
                         "In an operation sequence, operation and operand ranges in correspondence must have the same start and end indices")
         for k, operand in enumerate(operands):
-            if isinstance(
-                    operand,
-                    ExprRange) and k not in operand_range_indices:
+            if (isinstance(operand, ExprRange) and 
+                    k not in operand_range_indices):
                 raise ValueError(
                     "In an operation sequence, an iteration of operands must correspond with an iteration of operations (with iterated operands preceeding operation or vice-versa)")
-        Operation.__init__(self, operators, operands, styles=styles)
 
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)

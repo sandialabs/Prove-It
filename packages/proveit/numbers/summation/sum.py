@@ -116,7 +116,7 @@ class Sum(OperationOverInstances):
         if isinstance(
                 self.domain,
                 Interval) and self.domain.lower_bound == self.domain.upper_bound:
-            if len(self.instance_vars) == 1:
+            if self.instance_vars.is_single():
                 return sum_single.instantiate({Operation(
                     f, self.instance_vars): self.summand}).instantiate({a: self.domain.lower_bound})
         raise SimplificationError(
@@ -170,7 +170,7 @@ class Sum(OperationOverInstances):
         the equivalence of this summation with a index-shifted version.
         '''
         from theorems import index_shift
-        if len(self.indices) != 1 or not isinstance(self.domain, Interval):
+        if not self.indices.is_single() or not isinstance(self.domain, Interval):
             raise Exception(
                 'Sum shift only implemented for summations with one index over a Interval')
         f_op, f_op_sub = Operation(f, self.index), self.summand
@@ -234,7 +234,7 @@ class Sum(OperationOverInstances):
             return self.split_off_last()
         if side == 'after' and self.domain.lower_bound == split_index:
             return self.split_off_first()
-        if isinstance(self.domain, Interval) and len(self.instance_vars) == 1:
+        if isinstance(self.domain, Interval) and self.instance_vars.is_single():
             from theorems import sum_split_after, sum_split_before
             sum_split = sum_split_after if side == 'after' else sum_split_before
             deduce_in_integer(self.domain.lower_bound, assumptions)
@@ -249,7 +249,7 @@ class Sum(OperationOverInstances):
 
     def split_off_last(self, assumptions=frozenset()):
         from axioms import sum_split_last
-        if isinstance(self.domain, Interval) and len(self.instance_vars) == 1:
+        if isinstance(self.domain, Interval) and self.instance_vars.is_single():
             deduce_in_integer(self.domain.lower_bound, assumptions)
             deduce_in_integer(self.domain.upper_bound, assumptions)
             # Also needs lower_bound < upper_bound
@@ -260,7 +260,7 @@ class Sum(OperationOverInstances):
 
     def split_off_first(self, assumptions=frozenset()):
         from theorems import sum_split_first  # only for associative summation
-        if isinstance(self.domain, Interval) and len(self.instance_vars) == 1:
+        if isinstance(self.domain, Interval) and self.instance_vars.is_single():
             deduce_in_integer(self.domain.lower_bound, assumptions)
             deduce_in_integer(self.domain.upper_bound, assumptions)
             # Also needs lower_bound < upper_bound
@@ -277,7 +277,6 @@ class Sum(OperationOverInstances):
             group_remainder=None,
             assumptions=frozenset()):
         '''
-        Pull out a common factor from a summation, pulling it either to the "left" or "right".
         If group_factor is True and the_factor is a product, it will be grouped together as a
         sub-product.  group_remainder is not relevant kept for compatibility with other factor
         methods.  Returns the equality that equates self to this new version.
@@ -335,9 +334,9 @@ class Sum(OperationOverInstances):
                     Multi_variable(z_dummy))}).checked()
         eq.update(spec1.derive_conclusion().instantiate({Etcetera(
             Multi_variable(x_dummy)): x_sub, Etcetera(Multi_variable(z_dummy)): z_sub}))
-        if group_factor and len(factor_operands) > 1:
+        if group_factor and factor_operands.num_entries() > 1:
             eq.update(
                 eq.eq_expr.rhs.group(
-                    end_idx=len(factor_operands),
+                    end_idx=factor_operands.num_entries(),
                     assumptions=assumptions))
         return eq.eq_expr  # .checked(assumptions)

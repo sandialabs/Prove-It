@@ -64,7 +64,7 @@ class DecimalSequence(NumeralSequence):
 
     def deduce_in_natural(self, assumptions=USE_DEFAULTS):
         from . import deci_sequence_is_nat
-        return deci_sequence_is_nat.instantiate({n: self.operands.length(
+        return deci_sequence_is_nat.instantiate({n: self.operands.num_elements(
             assumptions), a: self.digits}, assumptions=assumptions)
         # if Numeral._inNaturalStmts is None:
         #     from proveit.numbers.number_sets.integers import zero_in_nats
@@ -76,7 +76,7 @@ class DecimalSequence(NumeralSequence):
     def deduce_in_natural_pos(self, assumptions=USE_DEFAULTS):
         from . import deci_sequence_is_nat_pos
         return deci_sequence_is_nat_pos.instantiate(
-            {n: self.operands.length(assumptions), a: self.digits}, assumptions=assumptions)
+            {n: self.operands.num_elements(assumptions), a: self.digits}, assumptions=assumptions)
         # from proveit import ProofFailure
         # if Numeral._inNaturalPosStmts is None:
         #     from proveit.numbers.numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5
@@ -110,9 +110,9 @@ class DecimalSequence(NumeralSequence):
                     Numeral):
                 import proveit.numbers.numerals.decimals
 
-                _m = expr.digits[:i].length(assumptions)
+                _m = expr.digits[:i].num_elements(assumptions)
                 _n = digit.end_index
-                _k = expr.digits[i + 1:].length(assumptions)
+                _k = expr.digits[i + 1:].num_elements(assumptions)
                 _a = expr.digits[:i]
                 _b = digit.body
                 _d = expr.digits[i + 1:]
@@ -166,7 +166,7 @@ class DecimalSequence(NumeralSequence):
         if all(digit == nine for digit in num2.digits):
             # every digit is 9
             return md_only_nine_add_one.instantiate(
-                {k: num2.digits.length(assumptions)}, assumptions=assumptions)
+                {k: num2.digits.num_elements(assumptions)}, assumptions=assumptions)
         elif num2.digits[-1] == nine:
             # the last digit is nine
             from proveit.numbers import Add
@@ -181,7 +181,7 @@ class DecimalSequence(NumeralSequence):
                 else:
                     count += 1
                 idx -= 1
-            length = num2.digits.length(assumptions)
+            length = num2.digits.num_elements(assumptions)
             _m = num(length.as_int() - count - 1)
             _k = num(count)
             _a = num2.digits[:-(count + 1)]
@@ -190,7 +190,7 @@ class DecimalSequence(NumeralSequence):
                 {m: _m, k: _k, a: _a, b: _b}, assumptions=assumptions)
         else:
             # the last digit is not nine
-            _m = num(num2.digits.length(assumptions).as_int() - 1)
+            _m = num(num2.digits.num_elements(assumptions).as_int() - 1)
             _k = num(0)
             _a = num2.digits[:-1]
             _b = num2.digits[-1]
@@ -216,9 +216,9 @@ class DecimalSequence(NumeralSequence):
             if isinstance(digit, Add):
                 # only implemented for addition.
 
-                _m = expr.digits[:i].length(assumptions=assumptions)
-                _n = digit.operands.length(assumptions=assumptions)
-                _k = expr.digits[i + 1:].length(assumptions=assumptions)
+                _m = expr.digits[:i].num_elements(assumptions=assumptions)
+                _n = digit.operands.num_elements(assumptions=assumptions)
+                _k = expr.digits[i + 1:].num_elements(assumptions=assumptions)
                 # _a = expr.inner_expr().operands[:i]
                 _b = digit.operands
                 _c = digit.evaluation(assumptions=assumptions).rhs

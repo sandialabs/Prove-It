@@ -78,9 +78,9 @@ class Add(Operation):
         from proveit import ExprRange
         from proveit.numbers import Neg
         subtraction_positions = self.subtraction_positions()
-        if len(subtraction_positions) > 0 and len(self.operands) > 1:
+        if len(subtraction_positions) > 0 and self.operands.num_entries() > 1:
             operators = []
-            operands = list(self.operands)
+            operands = list(self.operands.entries)
             for operand in operands:
                 if isinstance(operand, ExprRange):
                     # Make the operator an ExprRange in correspondence
@@ -142,10 +142,9 @@ class Add(Operation):
 
     def remake_constructor(self):
         # Added by JML on 9/10/19
-        if len(
-            self.operands) == 2 and self.subtraction_positions() == (
-            1,) and Add._isNegatedOperand(
-                self.operands[1]):
+        if (self.operands.is_double() 
+                and self.subtraction_positions() == (1,) 
+                and Add._isNegatedOperand(self.operands[1])):
             return 'subtract'  # use a different constructor if using the subtraction style
         return Operation.remake_constructor(self)
 
@@ -155,10 +154,9 @@ class Add(Operation):
         that could be used to recreate the Operation.
         '''
         from proveit.numbers import Neg
-        if len(
-            self.operands) == 2 and self.subtraction_positions() == (
-            1,) and Add._isNegatedOperand(
-                self.operands[1]):
+        if (self.operands.is_double() 
+                and self.subtraction_positions() == (1,) 
+                and Add._isNegatedOperand(self.operands[1])):
             yield self.operands[0]
             assert isinstance(
                 self.operands[1], Neg), "The second operand must be negated"
@@ -217,7 +215,7 @@ class Add(Operation):
                 # print("adding known equalities:", term)
                 Add.known_equalities.setdefault(term, set()).add(judgment)
 
-            if len(addition.terms) == 2:
+            if addition.terms.is_double():
                 # deduce the commutation form: b+a=c from a+b=c
                 if addition.terms[0] != addition.terms[1]:
                     yield (lambda assumptions: judgment.inner_expr().lhs.commute(0, 1, assumptions))
@@ -237,16 +235,15 @@ class Add(Operation):
 
         '''
         from . import strictly_increasing_additions
-        from proveit.numbers import num
         # print(b)
         for _i, term in enumerate(self.terms):
             if term == x:
                 idx = _i
-        _i = num(idx)
-        _j = num(len(self.terms) - 1 - idx)
         _a = self.terms[:idx]
         _b = self.terms[idx]
         _c = self.terms[idx + 1:]
+        _i = _a.num_elements(assumptions)
+        _j = _c.num_elements(assumptions)
         # print(strictly_increasing_additions.instantiate({m:num(idx),n:num(n_val),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
         return strictly_increasing_additions.instantiate(
             {i: _i, j: _j, a: _a, b: _b, c: _c}, assumptions=assumptions)
@@ -257,17 +254,16 @@ class Add(Operation):
 
         '''
         from . import strictly_decreasing_additions
-        from proveit.numbers import num
         # print(b)
         # print(self.terms)
         for _i, term in enumerate(self.terms):
             if term == x:
                 idx = _i
-        _i = num(idx)
-        _j = num(len(self.terms) - 1 - idx)
         _a = self.terms[:idx]
         _b = self.terms[idx]
         _c = self.terms[idx + 1:]        # print(n_val)
+        _i = _a.num_elements(assumptions)
+        _j = _c.num_elements(assumptions)
         return strictly_decreasing_additions.instantiate(
             {i: _i, j: _j, a: _a, b: _b, c: _c}, assumptions=assumptions)
 
@@ -276,7 +272,7 @@ class Add(Operation):
         From (a + b) = rhs, derive and return -(a-b) = -rhs
         '''
         from proveit.numbers.addition.subtraction import negated_add
-        if len(self.terms) != 2:
+        if not self.terms.is_double():
             raise Exception(
                 "deduce_negation implemented only when there are two and only two added terms")
         deduction = negated_add.instantiate(
@@ -288,7 +284,7 @@ class Add(Operation):
         From (a + b) = rhs, derive and return rhs - b = a.
         '''
         from proveit.numbers.addition.subtraction import subtract_from_add
-        if len(self.terms) != 2:
+        if not self.terms.is_double():
             raise Exception(
                 "deduce_subtraction implemented only when there are two and only two added terms")
         deduction = subtract_from_add.instantiate(
@@ -300,7 +296,7 @@ class Add(Operation):
         From (a + b) = rhs, derive and return b - rhs = -a.
         '''
         from proveit.numbers.addition.subtraction import subtract_from_add_reversed
-        if len(self.terms) != 2:
+        if not self.terms.is_double():
             raise Exception(
                 "subtract_from_add_reversed implemented only when there are two and only two added terms")
         deduction = subtract_from_add_reversed.instantiate(
@@ -321,14 +317,14 @@ class Add(Operation):
             raise ValueError(
                 "'as_mult' is only applicable on an 'Add' expression if all operands are the same: %s" %
                 str(self))
-        if (len(self.operands) == 1 and isinstance(self.operands[0], ExprRange)
+        if (self.operands.num_entries() == 1 and isinstance(self.operands[0], ExprRange)
                 and self.operands[0].is_parameter_independent
                 and self.operands[0].start_index == one):
             expr_range = self.operands[0]
             return repeated_addition_to_mult.instantiate(
                 {x: expr_range.body, n: expr_range.end_index},
                 assumptions=assumptions)
-        _n = self.operands.length(assumptions)
+        _n = self.operands.num_elements(assumptions)
         _a = self.operands
         _x = self.operands[1]
         return mult_def_rev.instantiate({n: _n, a: _a, x: _x},
@@ -388,7 +384,7 @@ class Add(Operation):
         from .subtraction import add_cancel_basic, add_cancel_reverse, add_cancel_general, add_cancel_general_rev
         from .subtraction import add_cancel_triple_12, add_cancel_triple_13, add_cancel_triple_23
         from .subtraction import add_cancel_triple_21, add_cancel_triple_31, add_cancel_triple_32
-        from proveit.numbers import num, Neg
+        from proveit.numbers import Neg
         if idx1 > idx2:
             # choose i to be less than j
             return self.cancelation(idx2, idx1, assumptions)
@@ -413,10 +409,10 @@ class Add(Operation):
             raise ValueError("Unable to cancel operands idx1 and idx2; "
                              "one is not the negation of the other.")
 
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return basic_thm.instantiate(
                 {a: canceled_op}, assumptions=assumptions)
-        elif len(self.operands) == 3:
+        elif self.operands.num_entries() == 3:
             # _k is the 3rd index, completing i and j in the set {0,1,2}.
             _k = {0, 1, 2}.difference([idx1, idx2]).pop()
             thm = triple_thms[2 - _k]
@@ -427,9 +423,9 @@ class Add(Operation):
             _b = canceled_op
             _c = self.operands[idx1 + 1:idx2]
             _d = self.operands[idx2 + 1:]
-            _i = num(len(_a))
-            _j = num(len(_c))
-            _k = num(len(_d))
+            _i = _a.num_elements(assumptions)
+            _j = _c.num_elements(assumptions)
+            _k = _d.num_elements(assumptions)
             spec = general_thm.instantiate(
                 {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c, d: _d},
                 assumptions=assumptions)
@@ -458,7 +454,7 @@ class Add(Operation):
         # Work in reverse order so indices don't need to be updated.
         for rev_idx, operand in enumerate(reversed(self.operands)):
             if operand == zero:
-                idx = len(self.operands) - rev_idx - 1
+                idx = self.operands.num_entries() - rev_idx - 1
                 expr = eq.update(expr.zero_elimination(idx, assumptions))
                 if not isinstance(expr, Add):
                     # can't do an elimination if reduced to a single term.
@@ -471,7 +467,7 @@ class Add(Operation):
         Derive and return this Add expression equal to a form in which
         a specific zero operand (at the given index) is eliminated.
         '''
-        from proveit.numbers import zero, num
+        from proveit.numbers import zero
         from . import elim_zero_left, elim_zero_right, elim_zero_any
 
         if self.operands[idx] != zero:
@@ -479,7 +475,7 @@ class Add(Operation):
                 "Operand at the index %d expected to be zero for %s" %
                 (idx, str(self)))
 
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if idx == 0:
                 return elim_zero_left.instantiate(
                     {a: self.operands[1]}, assumptions=assumptions)
@@ -488,8 +484,8 @@ class Add(Operation):
                     {a: self.operands[0]}, assumptions=assumptions)
         _a = self.operands[:idx]
         _b = self.operands[idx + 1:]
-        _i = num(len(_a))
-        _j = num(len(_b))
+        _i = _a.num_elements(assumptions)
+        _j = _b.num_elements(assumptions)
         return elim_zero_any.instantiate(
             {i: _i, j: _j, a: _a, b: _b}, assumptions=assumptions)
 
@@ -500,7 +496,7 @@ class Add(Operation):
         '''
         from . import add_neg_self
         from proveit.numbers import Neg
-        if len(self.operands) != 2:
+        if self.operands.num_entries() != 2:
             raise IndexError(
                 "Expecting two operands.  Use substitution and inner_expr() for more than two operands")
         if isinstance(self.operands[0], Neg):
@@ -622,7 +618,7 @@ class Add(Operation):
                     except ValueError:
                         pass
                     assert isinstance(newval, Mult), "This is unexpected"
-                    if len(newval.operands) > 2:
+                    if newval.operands.num_entries() > 2:
                         newval = Mult(newval.operands[1:])
                     else:
                         newval = newval.operands[-1]
@@ -652,7 +648,7 @@ class Add(Operation):
 
         # ungroup the expression (disassociate nested additions).
         _n = 0
-        length = len(expr.operands) - 1
+        length = expr.operands.num_entries() - 1
         # loop through all operands
         while _n < length:
             operand = expr.operands[_n]
@@ -669,7 +665,7 @@ class Add(Operation):
                      isinstance(operand.operand, Add))):
                 # if it is grouped, ungroup it
                 expr = eq.update(expr.disassociation(_n, assumptions))
-            length = len(expr.operands)
+            length = expr.operands.num_entries()
             _n += 1
 
         # eliminate zeros where possible
@@ -687,7 +683,7 @@ class Add(Operation):
         # Check for any double-negations.
         # Normally, this would have been dealt with in the initial
         # reduction, but can emerge after disassociating a subtraction.
-        for _i in range(len(expr.operands)):
+        for _i in range(expr.operands.num_entries()):
             if (isinstance(expr.operands[_i], Neg) and
                     isinstance(expr.operands[_i].operand, Neg)):
                 inner_expr = expr.inner_expr().operands[_i]
@@ -707,8 +703,8 @@ class Add(Operation):
             # Reorder the terms so like terms are adjacent.
             pos = 0
             # The indices keep moving as we reorder, so keep on top of this.
-            old2new = {_k: _k for _k in range(len(expr.operands))}
-            new2old = {_k: _k for _k in range(len(expr.operands))}
+            old2new = {_k: _k for _k in range(expr.operands.num_entries())}
+            new2old = {_k: _k for _k in range(expr.operands.num_entries())}
             for key in order:
                 for orig_idx in hold[key]:
                     start_idx = old2new[orig_idx]
@@ -747,7 +743,7 @@ class Add(Operation):
 
             # If all the operands are the same, combine via multiplication.
             if (all(operand == expr.operands[0] for operand in expr.operands)
-                    and not (len(expr.operands) == 1 and
+                    and not (expr.operands.num_entries() == 1 and
                              isinstance(expr.operands[0], ExprRange) and
                              not expr.operands[0].is_parameter_independent)):
                 expr = eq.update(
@@ -779,9 +775,9 @@ class Add(Operation):
                 if isinstance(operand.operands[0], Add):
                     expr = eq.update(
                         expr.inner_expr().operands[_i].operands[0].simplification(assumptions))
-                if isinstance(
-                        expr.operands[_i].operands[0], Add) and len(
-                        expr.operands[_i].operands[0].operands) == 1:
+                if (isinstance(expr.operands[_i].operands[0], Add) and
+                        expr.operands[_i].operands[0].operands.num_entries()
+                        == 1):
                     from proveit.numbers.addition import single_add
                     sub = single_add.instantiate(
                         {x: expr.operands[_i].operands[0].operands[0]})
@@ -793,7 +789,7 @@ class Add(Operation):
 
         # ungroup the expression
         _n = 0
-        length = len(expr.operands) - 1
+        length = expr.operands.num_entries() - 1
         while _n < length:
             # loop through all operands
             # print("n, length", n, length)
@@ -801,7 +797,7 @@ class Add(Operation):
                 # if it is grouped, ungroup it
                 # print("to ungroup")
                 expr = eq.update(expr.disassociation(_n, assumptions))
-            length = len(expr.operands)
+            length = expr.operands.num_entries()
             _n += 1
         # print("expr after initial ungroup", expr)
         # print("expr after evaluation", expr)
@@ -905,11 +901,11 @@ class Add(Operation):
             eq.update(expr.evaluation(assumptions))
             return eq.relation
 
-        if len(expr.operands) > 2:
+        if expr.operands.num_entries() > 2:
             expr = eq.update(pairwise_evaluation(expr, assumptions))
             return eq.relation
 
-        if len(expr.operands) == 2:
+        if expr.operands.num_entries() == 2:
             # If both operands are negated, factor out the negation.
             if all(isinstance(operand, Neg) for operand in expr.operands):
                 negated = Neg(
@@ -942,10 +938,10 @@ class Add(Operation):
             raise ValueError(
                 "Specified term is not negated, can't provide the subtraction folding.")
         expr = self
-        if term_idx != -1 and term_idx != len(expr.terms) - 1:
+        if term_idx != -1 and term_idx != expr.terms.num_entries() - 1:
             # put the negative term at the end
             expr = expr.commute(term_idx, term_idx + 1, -1)
-        if len(expr.terms) > 2:
+        if expr.terms.num_entries() > 2:
             # group all of the other terms
             expr = expr.group(0, -1)
         return add_neg_as_subtract.instantiate(
@@ -964,7 +960,7 @@ class Add(Operation):
             #try:
                 # found one positive term to make the sum positive
             deduce_positive(term, assumptions)
-            return add_nat_pos_closure.instantiate({i:num(_k), n:num(len(self.operands)-_k-1), a:self.operands[:_k], b:term, c:self.operands[_k+1:]}, assumptions=assumptions)
+            return add_nat_pos_closure.instantiate({i:num(_k), n:num(self.operands.num_entries()-_k-1), a:self.operands[:_k], b:term, c:self.operands[_k+1:]}, assumptions=assumptions)
             #except:
                # pass
         # need to have one of the elements positive for the sum to be positive
@@ -981,7 +977,6 @@ class Add(Operation):
             add_int_closure,
             add_nat_closure_bin,
             add_nat_closure,
-            add_nat_pos_closure,
             add_nat_pos_from_non_neg,
             add_real_closure_bin,
             add_real_closure,
@@ -994,18 +989,20 @@ class Add(Operation):
             add_complex_closure_bin)
         from proveit.numbers.addition.subtraction import (
             subtract_nat_closure_bin, sub_one_is_nat)
-        from proveit.numbers import (zero, one, num, Neg, Greater,
+        from proveit.numbers import (zero, one, Neg, Greater,
                                      Integer, Natural, Real, RealPos,
                                      RealNonNeg, Complex, NaturalPos)
         from proveit.logic import InSet
         if number_set == Integer:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 return add_int_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            _a = self.operands
+            _i = _a.num_elements(assumptions)
             return add_int_closure.instantiate(
-                {i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                {i:_i, a: _a}, assumptions=assumptions)
         if number_set == Natural:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 if isinstance(self.operands[1], Neg):
                     # A subtraction case:
                     if self.operands[1].operand == one:
@@ -1019,9 +1016,11 @@ class Add(Operation):
                         assumptions=assumptions)
                 return add_nat_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]},
-                    assumptions=assumptions)
+                    assumptions=assumptions)            
+            _a = self.operands
+            _i = _a.num_elements(assumptions)
             return add_nat_closure.instantiate(
-                {i: num(len(self.operands)), a: self.operands},
+                {i: _i, a: _a},
                 assumptions=assumptions)
         if (number_set == NaturalPos or number_set == RealPos and not
                 all(InSet(operand, number_set).proven(assumptions) for
@@ -1039,42 +1038,48 @@ class Add(Operation):
                 raise ProofFailure(InSet(self, number_set), assumptions,
                                    "Expecting at least one value to be "
                                    "known to be greater than zero")
-            # print(len(self.operands))
+            # print(self.operands.num_entries())
             if number_set == NaturalPos:
                 temp_thm = add_nat_pos_from_non_neg
             else:
                 temp_thm = add_real_pos_from_non_neg
-            #print(temp_thm, {i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
-            return temp_thm.instantiate({i: num(val),
-                                         j: num(len(self.operands) - val - 1),
-                                         a: self.operands[:val],
-                                         b: self.operands[val],
-                                         c: self.operands[val + 1:]},
+            #print(temp_thm, {i: num(val), j:num(self.operands.num_entries() - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
+            _a, _b, _c = (self.operands[:val], self.operands[val],
+                          self.operands[val + 1:])
+            _i = _a.num_elements(assumptions)
+            _j = _c.num_elements(assumptions)
+            return temp_thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c},
                                         assumptions=assumptions)
         if number_set == RealPos:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 return add_real_pos_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            _a = self.operands
+            _i = _a.num_elements(assumptions)                
             return add_real_pos_closure.instantiate(
-                {i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                {i: _i, a: _a}, assumptions=assumptions)
         if number_set == RealNonNeg:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 return add_real_non_neg_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            _a = self.operands
+            _i = _a.num_elements(assumptions)
             return add_real_non_neg_closure.instantiate(
-                {i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                {i:_i, a: _a}, assumptions=assumptions)
         if number_set == Real:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 return add_real_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            _a = self.operands
+            _i = _a.num_elements(assumptions)
             return add_real_closure.instantiate(
-                {i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                {i: _i, a: _a}, assumptions=assumptions)
         if number_set == Complex:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 return add_complex_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return add_complex_closure.instantiate(
-                {i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+                {i: _i, a: _a}, assumptions=assumptions)
         msg = "'deduce_in_number_set' not implemented for the %s set" % str(
             number_set)
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
@@ -1082,7 +1087,7 @@ class Add(Operation):
     def deduce_difference_in_natural(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Neg
         from proveit.numbers.number_sets.integers import difference_is_nat
-        if len(self.terms) != 2:
+        if not self.terms.is_double():
             raise ValueError("deduce_difference_in_natural only applicable "
                              "when there are two terms, got %s" % self)
         if not isinstance(self.terms[1], Neg):
@@ -1095,7 +1100,7 @@ class Add(Operation):
     def deduce_difference_in_natural_pos(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Neg
         from proveit.numbers.number_sets.integers import difference_is_nat_pos
-        if len(self.terms) != 2:
+        if not self.terms.is_double():
             raise ValueError(
                 "deduce_difference_in_natural_pos only applicable "
                 "when there are two terms, got %s" %
@@ -1156,13 +1161,13 @@ class Add(Operation):
         the associative and commutation theorems are applicable.
         '''
         from proveit.numbers.multiplication import distribute_through_sum
-        from proveit.numbers import num, one, Mult
+        from proveit.numbers import one, Mult
         expr = self
         # for convenience updating our equation
         eq = TransRelUpdater(expr, assumptions)
         _b = []
         # factor the_factor from each term
-        for _i in range(len(expr.terms)):
+        for _i in range(expr.terms.num_entries()):
             term = expr.terms[_i]
             if hasattr(term, 'factorization'):
                 term_factorization = term.factorization(
@@ -1204,9 +1209,9 @@ class Add(Operation):
         else:
             _a = []
             _c = factor_sub
-        _i = num(len(_a))
-        _j = num(len(_b))
-        _k = num(len(_c))
+        _i = _a.num_elements(assumptions)
+        _j = _b.num_elements(assumptions)
+        _k = _c.num_elements(assumptions)
         eq.update(distribute_through_sum.instantiate(
             {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
             assumptions=assumptions).derive_reversed(assumptions))
@@ -1394,7 +1399,7 @@ def const_shift_decomposition(idx):
     from proveit.numbers import zero, is_literal_int
     if is_literal_int(idx):
         return (zero, idx.as_int())
-    elif (isinstance(idx, Add) and len(idx.operands) == 2
+    elif (isinstance(idx, Add) and idx.operands.num_entries() == 2
           and is_literal_int(idx.operands[1])):
         return (idx.operands[0], idx.operands[1].as_int())
     return (idx, 0)

@@ -76,7 +76,7 @@ class Len(Operation):
             # represent a tuple.  So just return the self equality.
             from proveit.logic import Equals
             return Equals(self, self).prove()
-        entries = self.operand
+        entries = self.operand.entries
         has_range = any(isinstance(entry, ExprRange) for entry in entries)
         if (len(entries) == 1 and has_range
                 and not isinstance(entries[0].body, ExprRange)):
@@ -291,7 +291,7 @@ class Len(Operation):
                              "on a Len operating on an ExprTuple, not %s"
                              % self)
 
-        entries = self.operand
+        entries = self.operand.entries
         if (len(entries) == 1 and isinstance(entries[0], ExprRange) and
                 not isinstance(entries[0].body, ExprRange)):
             # Treat the special case something of the form
@@ -397,7 +397,7 @@ class Len(Operation):
         if isinstance(equality.rhs, Len):
             if (isinstance(equality.rhs.operand, ExprTuple)
                     and isinstance(self.operand, ExprTuple)):
-                if (len(equality.rhs.operand) == 1 and
+                if (equality.rhs.operand.num_entries() == 1 and
                         isinstance(equality.rhs.operand[0], ExprRange)):
                     try:
                         eq = \
@@ -451,7 +451,8 @@ class Len(Operation):
         from proveit.numbers import Natural, one
         operand = self.operand
         if number_set == Natural:
-            if len(operand) == 1 and isinstance(operand[0], ExprRange):
+            if (operand.num_entries() == 1
+                    and isinstance(operand[0], ExprRange)):
                 # Special case of proving that the length
                 # of a single range is in the set of Natural numbers.
                 range_start = operand[0].start_index

@@ -40,4 +40,4 @@ find . \( -name __pv_it -o -name .ipynb_checkpoints \) -prune -o -name "*.ipynb"
 in ProveItMasterFull folder (where Prove-It is cloned for this purpose)
 master checked out and fully build in Prove-It
 
-git checkout --orphan master-full-update ; git rm -rf . ; cp -r ~/Prove-It/ . ; git checkout master-full -- .gitignore ; git add . ; git commit -a -m "master-full update" ; git push -f origin master-full-update:master-full ; git checkout master-full ; git branch -D master-full-update
+git checkout --orphan master-full-update ; git rm -rf . ; cp -r ~/Prove-It/* . ; git checkout master-full -- .gitignore ; git add . ; git commit -a -m "master-full update" ; git push -f origin master-full-update:master-full ; git checkout master-full ; git branch -D master-full-update
