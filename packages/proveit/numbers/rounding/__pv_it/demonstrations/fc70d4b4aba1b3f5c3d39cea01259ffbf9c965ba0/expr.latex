@@ -1,0 +1,1 @@
+\left(round(1 + \left(x \cdot y\right) + 2), round(\left(x \cdot y\right) + 3)\right)

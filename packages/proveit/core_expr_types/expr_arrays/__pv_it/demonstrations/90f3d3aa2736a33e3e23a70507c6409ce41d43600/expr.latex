@@ -1,0 +1,6 @@
+\begin{array} {cccc} 
+ A & B & C & D  \\ 
+  A_{1, j} & B_{1, j} & C_{1, j} & D_{1, j}  \\ 
+  \vdots & \vdots & \vdots & \vdots  \\ 
+  A_{m, j} & B_{m, j} & C_{m, j} & D_{m, j}  \\ 
+  A & B & C & D \end{array} 

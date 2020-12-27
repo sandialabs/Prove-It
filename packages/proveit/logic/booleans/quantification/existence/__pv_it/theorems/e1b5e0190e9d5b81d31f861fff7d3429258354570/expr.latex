@@ -1,0 +1,1 @@
+\left\{\exists_{x_{1}, \ldots, x_{n}~|~Q(x_{1}, \ldots, x_{n})}~P(x_{1}, \ldots, x_{n}) \textrm{ if } \lnot \left[\forall_{y_{1}, \ldots, y_{n}~|~Q(y_{1}, \ldots, y_{n})}~\left(P(y_{1}, \ldots, y_{n}) \neq \top\right)\right]\right..

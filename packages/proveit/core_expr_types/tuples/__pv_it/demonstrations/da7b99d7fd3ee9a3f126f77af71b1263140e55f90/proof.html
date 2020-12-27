@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Show the Proof</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Show-the-Proof">Show the Proof<a class="anchor-link" href="#Show-the-Proof">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when only showing a stored proof:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Makes files smaller.</span>
+<span class="o">%</span><span class="k">show_proof</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[1]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>
+<tr><td><a name="proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step0">0</a></td><td>instantiation</td><td><a href="#proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step1">1</a>, <a href="#proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step2">2</a>, <a href="#proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step3">3</a>, <a href="#proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step4">4</a></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../50fb44271f822e199ac040d6de6677587d3532220/expr.html"><img src="../50fb44271f822e199ac040d6de6677587d3532220/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../../../__pv_it/common/674a03b9c3ca221b3aabd5636837b31528ff33830/expr.html"><img src="../../../../../__pv_it/common/674a03b9c3ca221b3aabd5636837b31528ff33830/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../../../numbers/numerals/__pv_it/common/2778428c7f555b2bdc06aa0530bc142c6e6335100/expr.html"><img src="../../../../../numbers/numerals/__pv_it/common/2778428c7f555b2bdc06aa0530bc142c6e6335100/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../__pv_it/common/8968bb04eb3f7dfa02353397ce929b025bbd79c20/expr.html"><img src="../../../../../__pv_it/common/8968bb04eb3f7dfa02353397ce929b025bbd79c20/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../../../numbers/numerals/__pv_it/common/7d0a36793ffe8d307a5c120ee5598162e8cd2db10/expr.html"><img src="../../../../../numbers/numerals/__pv_it/common/7d0a36793ffe8d307a5c120ee5598162e8cd2db10/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../4daf6333afa9c1ff15ecd8735a714077dcc1aa970/expr.html"><img src="../4daf6333afa9c1ff15ecd8735a714077dcc1aa970/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../8319aa2d39c173fde1e306e162f5e2736b2bbb510/expr.html"><img src="../8319aa2d39c173fde1e306e162f5e2736b2bbb510/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../__pv_it/common/ae955345c83abf786c3aff8681cd5465beae262d0/expr.html"><img src="../../../../../__pv_it/common/ae955345c83abf786c3aff8681cd5465beae262d0/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../bc19c60d77525b8b7c0a43d7c5fce359c889f9fc0/expr.html"><img src="../bc19c60d77525b8b7c0a43d7c5fce359c889f9fc0/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../__pv_it/common/1ed21df18baca2f42b561a7ffbf30a2743d594650/expr.html"><img src="../../../../../__pv_it/common/1ed21df18baca2f42b561a7ffbf30a2743d594650/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../02e38b53d27d14f33b88f82b1d214d19e24d614c0/expr.html"><img src="../02e38b53d27d14f33b88f82b1d214d19e24d614c0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step1">1</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../_theory_nbs_/proofs/len_of_empty_range_of_ranges/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../theorems/7eda5abcff19dd8788894d2366768bdf96efdfd10/expr.html"><img src="../../theorems/7eda5abcff19dd8788894d2366768bdf96efdfd10/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../_theory_nbs_/proofs/len_of_empty_range_of_ranges/thm_proof.html">proveit.core_expr_types.tuples.len_of_empty_range_of_ranges</a></td></tr><tr><td><a name="proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step2">2</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/nat1/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../numbers/numerals/decimals/__pv_it/theorems/7fb9a05424b991456a1d535347793e2786ff41910/expr.html"><img src="../../../../../numbers/numerals/decimals/__pv_it/theorems/7fb9a05424b991456a1d535347793e2786ff41910/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/nat1/thm_proof.html">proveit.numbers.numerals.decimals.nat1</a></td></tr><tr><td><a name="proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step3">3</a></td><td>axiom</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../numbers/number_sets/natural_numbers/_theory_nbs_/axioms.html#zero_in_nats" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../numbers/number_sets/natural_numbers/__pv_it/axioms/41585b68a7dd1d513f84c532999561d9671aca5e0/expr.html"><img src="../../../../../numbers/number_sets/natural_numbers/__pv_it/axioms/41585b68a7dd1d513f84c532999561d9671aca5e0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../../numbers/number_sets/natural_numbers/_theory_nbs_/axioms.html#zero_in_nats">proveit.numbers.number_sets.natural_numbers.zero_in_nats</a></td></tr><tr><td><a name="proveit.core_expr_types.tuples.demonstrations.da7b99d7fd3ee9a3f126f77af71b1263140e55f90_step4">4</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/add_0_1/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../numbers/numerals/decimals/__pv_it/theorems/3f2d2a58def48e62e6872a27a7f39bb8b2267d4d0/expr.html"><img src="../../../../../numbers/numerals/decimals/__pv_it/theorems/3f2d2a58def48e62e6872a27a7f39bb8b2267d4d0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/add_0_1/thm_proof.html">proveit.numbers.numerals.decimals.add_0_1</a></td></tr></table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

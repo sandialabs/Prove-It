@@ -1,0 +1,1 @@
+\left(a, b_{1}, \ldots, b_{m}\right) \mapsto \left\{\left(a^{b_{1}} \cdot \ldots \cdot a^{b_{m}}\right) = a^{b_{1} + \ldots + b_{m}} \textrm{ if } a \in \mathbb{R}^+ ,  b_{1} \in \mathbb{C} ,  \ldots ,  b_{m} \in \mathbb{C}\right..

@@ -1,0 +1,9 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{1, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{1, n}} 
+} \hspace{2em}\right), \ldots, \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{p, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{p, n}} 
+} \hspace{2em}\right)

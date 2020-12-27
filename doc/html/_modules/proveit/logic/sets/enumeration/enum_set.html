@@ -1,0 +1,1307 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.logic.sets.enumeration.enum_set &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.logic.sets.enumeration.enum_set</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">Function</span><span class="p">,</span> <span class="n">InnerExpr</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span>
+                     <span class="n">Operation</span><span class="p">,</span> <span class="n">var_range</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.abstract_algebra.generic_methods</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">apply_commutation_thm</span><span class="p">,</span> <span class="n">generic_permutation</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Set"><a class="viewcode-back" href="../../../../../api/proveit.logic.Set.html#proveit.logic.Set">[docs]</a><span class="k">class</span> <span class="nc">Set</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Defines an enumerated set (i.e. a set with explicitly-listed</span>
+<span class="sd">    elements). For example, one could use Set(one, two, three) to</span>
+<span class="sd">    produce the enumerated set {1, 2, 3} or Set(a, b, a) to produce</span>
+<span class="sd">    the enumerated set {a, b, a}. Although repeated elements can be</span>
+<span class="sd">    specified and will appear in output expressions, the Set is</span>
+<span class="sd">    interpreted as a set and not a multiset --- thus, e.g., we have</span>
+<span class="sd">    {a, b, a} = {a, b} and the cardinality of an enumerated Set such</span>
+<span class="sd">    as {a, b, a} should be the cardinality of the underlying support</span>
+<span class="sd">    {a, b}.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># operator of the Set operation</span>
+    <span class="n">_operator_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="n">string_format</span><span class="o">=</span><span class="s1">&#39;Set&#39;</span><span class="p">,</span>
+                         <span class="n">latex_format</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\textrm</span><span class="si">{Set}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="vm">__file__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">elems</span><span class="p">):</span>
+        <span class="n">Operation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Set</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="n">elems</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+
+    <span class="k">def</span> <span class="nf">membership_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.enum_membership</span> <span class="k">import</span> <span class="n">EnumMembership</span>
+        <span class="k">return</span> <span class="n">EnumMembership</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">nonmembership_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.enum_membership</span> <span class="k">import</span> <span class="n">EnumNonmembership</span>
+        <span class="k">return</span> <span class="n">EnumNonmembership</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Set.string"><a class="viewcode-back" href="../../../../../api/proveit.logic.Set.html#proveit.logic.Set.string">[docs]</a>    <span class="k">def</span> <span class="nf">string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;{&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">string</span><span class="p">(</span><span class="n">fence</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span></div>
+
+<div class="viewcode-block" id="Set.latex"><a class="viewcode-back" href="../../../../../api/proveit.logic.Set.html#proveit.logic.Set.latex">[docs]</a>    <span class="k">def</span> <span class="nf">latex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">r</span><span class="s1">&#39;\left\{&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">latex</span><span class="p">(</span><span class="n">fence</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;\right\}&#39;</span></div>
+
+    <span class="k">def</span> <span class="nf">prove_by_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forall_stmt</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        For the enumerated set S = {x1, x2, ..., xn} (i.e. self),</span>
+<span class="sd">        and given a universal quantification over the set S of the form</span>
+<span class="sd">        Forall_{x in S} P(x), conclude and return the Forall expression</span>
+<span class="sd">        knowing/assuming [P(x1) and P(x2) and ... P(xn)]. This also</span>
+<span class="sd">        addresses the case where we have</span>
+<span class="sd">        Forall_{x in S | Q(x) ^ Q(x) =&gt; P(x)} P(x).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">InSet</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">true_for_each_then_true_for_all</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">forall_stmt</span><span class="p">,</span> <span class="n">Forall</span><span class="p">)),</span> <span class="p">(</span>
+            <span class="s2">&quot;May only call the prove_by_cases method of the enumerated &quot;</span>
+            <span class="s2">&quot;Set class using a Forall (universally quantified) expression &quot;</span>
+            <span class="s2">&quot;as the first argument.&quot;</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">forall_stmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span>
+            <span class="s2">&quot;When calling the prove_by_cases method of the enumerated &quot;</span>
+            <span class="s2">&quot;Set class, the Forall argument should have (at least) &quot;</span>
+            <span class="s2">&quot;a domain condition matching the enumerated Set.&quot;</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">forall_stmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">InSet</span><span class="p">)),</span> <span class="p">(</span>
+            <span class="s2">&quot;When calling the prove_by_cases method of the enumerated &quot;</span>
+            <span class="s2">&quot;Set class, the domain condition for the Forall argument &quot;</span>
+            <span class="s2">&quot;should appear as the first element in the Forall.conditions. &quot;</span>
+            <span class="s2">&quot;Consider using the &#39;domain=&#39; kwarg when specifying the &quot;</span>
+            <span class="s2">&quot;domain when constructing your Forall expression, or &quot;</span>
+            <span class="s2">&quot;specify the domain using an InSet expression as the first &quot;</span>
+            <span class="s2">&quot;of the conditions you specify.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">forall_stmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">true_for_each_then_true_for_all_conditioned</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">forall_stmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># Note that when a Forall expression is created, if the</span>
+                <span class="c1"># domain was defined separately using the domain=</span>
+                <span class="c1"># notation, the InSet() domain expression then appears</span>
+                <span class="c1"># at index 0 in Forall.conditions. So, we assume</span>
+                <span class="c1"># condition[0] is a domain condition and any remaining</span>
+                <span class="c1"># condition(s) are something else.</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="o">*</span><span class="n">forall_stmt</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+            <span class="c1"># Cardinality of the domain:</span>
+            <span class="n">n_sub</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+
+            <span class="c1"># Domain elements to substitute</span>
+            <span class="c1"># Notice the n_sub is already a Numeral and not an int</span>
+            <span class="n">var_range_update</span> <span class="o">=</span> <span class="n">var_range</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">n_sub</span><span class="p">)</span>
+            <span class="n">var_range_sub</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">elements</span>
+
+            <span class="c1"># Predicate re-definition (using user-supplied instance_var)</span>
+            <span class="n">Qx</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">instance_var</span><span class="p">)</span>
+            <span class="c1"># Predicate to substitute</span>
+            <span class="n">Qx_sub</span> <span class="o">=</span> <span class="n">condition</span>
+            <span class="c1"># Predicate re-definition (using user-supplied instance_var)</span>
+            <span class="n">Px</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">instance_var</span><span class="p">)</span>
+            <span class="c1"># Predicate to substitute</span>
+            <span class="n">Px_sub</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">instance_expr</span>
+
+            <span class="c1"># Instance var to substitute (user-supplied instance_var)</span>
+            <span class="n">x_sub</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">instance_var</span>
+
+            <span class="k">return</span> <span class="n">true_for_each_then_true_for_all_conditioned</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">n_sub</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="n">var_range_update</span><span class="p">):</span> <span class="n">var_range_sub</span><span class="p">,</span>
+                 <span class="n">x</span><span class="p">:</span> <span class="n">x_sub</span><span class="p">,</span> <span class="n">Px</span><span class="p">:</span> <span class="n">Px_sub</span><span class="p">,</span> <span class="n">Qx</span><span class="p">:</span> <span class="n">Qx_sub</span><span class="p">},</span>
+                <span class="n">num_forall_eliminations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># forall_{x in A} P(x), assuming/knowing P(x) for each x</span>
+            <span class="c1"># in A. This is the basic case where the only condition</span>
+            <span class="c1"># is the domain specification</span>
+
+            <span class="c1"># Cardinality of the domain:</span>
+            <span class="n">n_sub</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+
+            <span class="c1"># Domain elements to substitute</span>
+            <span class="c1"># Notice the n_sub is already a Numeral and not an int</span>
+            <span class="n">var_range_update</span> <span class="o">=</span> <span class="n">var_range</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">n_sub</span><span class="p">)</span>
+            <span class="n">var_range_sub</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">elements</span>
+
+            <span class="c1"># Predicate re-definition (using user-supplied instance_var)</span>
+            <span class="n">Px</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">instance_var</span><span class="p">)</span>
+
+            <span class="c1"># Predicate to substitute</span>
+            <span class="n">Px_sub</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">instance_expr</span>
+
+            <span class="c1"># Instance var to substitute</span>
+            <span class="n">x_sub</span> <span class="o">=</span> <span class="n">forall_stmt</span><span class="o">.</span><span class="n">instance_var</span>
+
+            <span class="k">return</span> <span class="n">true_for_each_then_true_for_all</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">n_sub</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="n">var_range_update</span><span class="p">):</span> <span class="n">var_range_sub</span><span class="p">,</span>
+                 <span class="n">x</span><span class="p">:</span> <span class="n">x_sub</span><span class="p">,</span> <span class="n">Px</span><span class="p">:</span> <span class="n">Px_sub</span><span class="p">},</span> <span class="n">num_forall_eliminations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">permutation_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">final_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this Set expression is equal to a Set</span>
+<span class="sd">        in which the element at index init_idx has been moved to</span>
+<span class="sd">        final_idx. For example, {a, b, c, d} = {a, c, b, d} via</span>
+<span class="sd">        init_idx = 1 (i.e. &#39;b&#39;) and final_idx = -2. In traditional</span>
+<span class="sd">        cycle notation, this corresponds to an index-based cycle</span>
+<span class="sd">        (init_idx, init_idx+1, ..., final_idx) where</span>
+<span class="sd">        0 ≤ init_idx ≤ final_idx ≤ n - 1 for a set of size n.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="p">(</span><span class="n">binary_permutation</span><span class="p">,</span> <span class="n">leftward_permutation</span><span class="p">,</span>
+                                 <span class="n">rightward_permutation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">apply_commutation_thm</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">init_idx</span><span class="p">,</span> <span class="n">final_idx</span><span class="p">,</span> <span class="n">binary_permutation</span><span class="p">,</span>
+            <span class="n">leftward_permutation</span><span class="p">,</span> <span class="n">rightward_permutation</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">permutation_swap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx01</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">idx02</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this Set expression is equal to a Set in which the</span>
+<span class="sd">        elements at indices idx01 and idx02 have swapped locations.</span>
+<span class="sd">        For example,</span>
+<span class="sd">        {a, b, c, d, e}.permutation_swap(2, 4) would return</span>
+<span class="sd">        |– {a, b, c, d, e} = {a, b, e, d, c}</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Before processing, quickly check that:</span>
+        <span class="c1"># (1) user has specified both idx values;</span>
+        <span class="c1"># (2) and the idx values are plausible.</span>
+        <span class="k">if</span> <span class="n">idx01</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">idx02</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Set.permutation_swap() method expecting the &quot;</span>
+                             <span class="s2">&quot;individual index locations of the two elements &quot;</span>
+                             <span class="s2">&quot;to swap, idx01 = </span><span class="si">{0}</span><span class="s2"> and idx02 = </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span>
+                             <span class="nb">format</span><span class="p">(</span><span class="n">idx01</span><span class="p">,</span> <span class="n">idx02</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">idx01</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">idx02</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">valid_indices_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_subset_indices_weak</span><span class="p">(</span><span class="n">valid_indices_list</span><span class="p">,</span> <span class="p">[</span><span class="n">idx01</span><span class="p">,</span> <span class="n">idx02</span><span class="p">])</span>
+
+        <span class="n">new_order</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)))</span>
+        <span class="n">new_order</span><span class="p">[</span><span class="n">idx01</span><span class="p">],</span> <span class="n">new_order</span><span class="p">[</span><span class="n">idx02</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_order</span><span class="p">[</span><span class="n">idx02</span><span class="p">],</span> <span class="n">new_order</span><span class="p">[</span><span class="n">idx01</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">new_order</span><span class="o">=</span><span class="n">new_order</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">permutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cycles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this Set expression is equal to a Set in which</span>
+<span class="sd">        the elements at indices 0, 1, …, n-1 have been reordered as</span>
+<span class="sd">        specified EITHER by the new_order list OR by the cycles list</span>
+<span class="sd">        parameter. For example,</span>
+<span class="sd">            {a, b, c, d}.permutation_general(new_order=[0, 2, 3, 1])</span>
+<span class="sd">        and</span>
+<span class="sd">            {a, b, c, d}.permutation_general(cycles=[(1, 2, 3)])</span>
+<span class="sd">        would both return |- {a, b, c, d} = {a, c, d, b}.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">generic_permutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_order</span><span class="p">,</span> <span class="n">cycles</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">deduce_enum_subset_eq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subset_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                              <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this Set expression has as an improper subset the</span>
+<span class="sd">        set specified by either the indices in subset_indices list or</span>
+<span class="sd">        the Set() specified by subset (but not both).</span>
+<span class="sd">        For example, both</span>
+<span class="sd">        {a, b, c, d}.deduce_enum_subset_eq(subset_indices=[1, 3]) and</span>
+<span class="sd">        {a, b, c, d}.deduce_enum_subset_eq(subset=Set(b, d))</span>
+<span class="sd">        return |– {b, d} subset_eq {a, b, c, d}.</span>
+<span class="sd">        This process is complicated by the fact that the Set class</span>
+<span class="sd">        allows for multiplicity of elements without actually</span>
+<span class="sd">        representing a multi-set (thus, for example, {a, a} = {a}).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Set</span>
+
+        <span class="c1"># Before bothering with much processing, quickly check that:</span>
+        <span class="c1"># (1) user has specified subset_indices OR subset but not both;</span>
+        <span class="c1"># (2) if only subset specification, it has the correct form;</span>
+        <span class="c1"># (3) if only subset_indices, they are plausible.</span>
+        <span class="k">if</span> <span class="n">subset_indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need to specify the desired subset by &quot;</span>
+                             <span class="s2">&quot;specifying the list of indices (subset_indices) &quot;</span>
+                             <span class="s2">&quot;OR an actual subset (in the form of an &quot;</span>
+                             <span class="s2">&quot;enumerated set using Set()).&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subset_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">subset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need to specify the desired subset by &quot;</span>
+                             <span class="s2">&quot;specifying the list of indices (subset_indices) &quot;</span>
+                             <span class="s2">&quot;OR an actual subset, but NOT both.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="n">Set</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Specified subset </span><span class="si">{}</span><span class="s2"> does not appear to be a &quot;</span>
+                             <span class="s2">&quot;valid Set object.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">subset</span><span class="p">))</span>
+        <span class="n">self_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        <span class="n">valid_indices_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">subset_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># We must have had subset=None, so check validity of the</span>
+            <span class="c1"># indices and use them to create a subset Set</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_subset_indices_weak</span><span class="p">(</span><span class="n">valid_indices_list</span><span class="p">,</span> <span class="n">subset_indices</span><span class="p">)</span>
+            <span class="n">subset_list_from_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">self_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">subset_indices</span><span class="p">]</span>
+            <span class="n">subset_from_indices</span> <span class="o">=</span> <span class="n">Set</span><span class="p">(</span><span class="o">*</span><span class="n">subset_list_from_indices</span><span class="p">)</span>
+            <span class="n">subset</span> <span class="o">=</span> <span class="n">subset_from_indices</span>
+
+        <span class="c1"># We should now have a subset Set, either explicitly provided</span>
+        <span class="c1"># as an argument or derived from the subset_indices.</span>
+        <span class="c1"># A subset generated from the subet_indices will automatically</span>
+        <span class="c1"># be a plausible subset (b/c it derived from the superset self</span>
+        <span class="c1"># elements). If the subset was originally supplied as</span>
+        <span class="c1"># an argument, however, we still need to check if it is a</span>
+        <span class="c1"># plausible subset of self: it should only have elements found</span>
+        <span class="c1"># in self or elements somehow proven to be equal to elements</span>
+        <span class="c1"># in self.</span>
+        <span class="n">subset_was_substituted</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">subset_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subset</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subset_indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># subset provided by user</span>
+
+            <span class="c1"># then our subset and subset_reduced might have issues</span>
+            <span class="n">error_elem_candidates</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">error_elem_equivalences_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">subset_list</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">elem</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">self_list</span><span class="p">):</span>
+                    <span class="n">error_elem_candidates</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">error_elem_candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># We have candidates in the supposed subset that do not</span>
+                <span class="c1"># literally appear in the supposed superset self, but</span>
+                <span class="c1"># the candidates might be known to be &#39;equal&#39; to</span>
+                <span class="c1"># appropriate values, so we check just a little more</span>
+                <span class="c1"># assiduously before returning an error message</span>
+                <span class="n">error_elems</span> <span class="o">=</span> <span class="n">error_elem_candidates</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span>
+                <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">error_elem_candidates</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">super_elem</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">self_list</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">Equals</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">super_elem</span><span class="p">)</span><span class="o">.</span><span class="n">proven</span><span class="p">(</span>
+                                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">):</span>
+                            <span class="n">error_elems</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+                            <span class="c1"># add to dict for later processing</span>
+                            <span class="n">error_elem_equivalences_dict</span><span class="p">[</span><span class="n">elem</span><span class="p">]</span> <span class="o">=</span> <span class="n">super_elem</span>
+                            <span class="c1"># only need elem to be equal to one super_elem</span>
+                            <span class="k">break</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">error_elems</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;Specified subset </span><span class="si">{0}</span><span class="s2"> does not appear to be a &quot;</span>
+                        <span class="s2">&quot;subset of the original set </span><span class="si">{1}</span><span class="s2">. The following &quot;</span>
+                        <span class="s2">&quot;elements appear in the requested subset Set but &quot;</span>
+                        <span class="s2">&quot;not in the original Set: </span><span class="si">{2}</span><span class="s2">.&quot;</span><span class="o">.</span>
+                        <span class="nb">format</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">error_elems</span><span class="p">))</span>
+                <span class="c1"># use any equivalences found above and stored in dict</span>
+                <span class="c1"># to deduce subset equal to the set obtained when the</span>
+                <span class="c1"># substitutions are made</span>
+                <span class="n">temp_subset</span> <span class="o">=</span> <span class="n">subset</span>
+                <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">TransRelUpdater</span>
+                <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="n">temp_subset</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">error_elem_equivalences_dict</span><span class="p">:</span>
+                    <span class="n">temp_subset</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">temp_subset</span><span class="o">.</span><span class="n">elem_substitution</span><span class="p">(</span>
+                        <span class="n">elem</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+                        <span class="n">sub_elem</span><span class="o">=</span><span class="n">error_elem_equivalences_dict</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                        <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+                <span class="n">subset</span> <span class="o">=</span> <span class="n">temp_subset</span>
+                <span class="n">subset_to_substituted_subset_kt</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>
+                <span class="n">subset_was_substituted</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Derive the reduced form of the self Set. We could have done</span>
+        <span class="c1"># this earlier, but delayed until after param checking.</span>
+        <span class="c1"># The eventual subset relationship will be based on the</span>
+        <span class="c1"># reduced forms of the specified Sets.</span>
+        <span class="n">self_to_support_kt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">self_reduced</span> <span class="o">=</span> <span class="n">self_to_support_kt</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="n">self_reduced_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">self_reduced</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+
+        <span class="c1"># Derive the reduced form of the subset Set.</span>
+        <span class="c1"># The eventual subset relationship will be based</span>
+        <span class="c1"># on the reduced forms of the specified Sets.</span>
+        <span class="n">subset_to_support_kt</span> <span class="o">=</span> <span class="n">subset</span><span class="o">.</span><span class="n">reduction</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">subset_reduced</span> <span class="o">=</span> <span class="n">subset_to_support_kt</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="n">subset_reduced_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subset_reduced</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+
+        <span class="c1"># For convenience, convert the subset_reduced_list to indices</span>
+        <span class="c1"># of the self_reduced_list. Because of earlier checks, the</span>
+        <span class="c1"># subset_reduced_list should not contain any items not also</span>
+        <span class="c1"># contained in self_reduced_list.</span>
+        <span class="n">subset_reduced_indices_list</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">self_reduced_list</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">subset_reduced_list</span><span class="p">])</span>
+
+        <span class="n">full_indices_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">self_reduced_list</span><span class="p">)))</span>
+
+        <span class="c1"># construct the complement of the subset indices</span>
+        <span class="c1"># avoiding using sets to preserve order just in case</span>
+        <span class="n">remaining_indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">full_indices_list</span><span class="p">)</span>  <span class="c1"># clone</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">subset_reduced_indices_list</span><span class="p">:</span>
+            <span class="n">remaining_indices</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+
+        <span class="c1"># establish the desired order for eventual thm application</span>
+        <span class="n">new_order</span> <span class="o">=</span> <span class="n">subset_reduced_indices_list</span> <span class="o">+</span> <span class="n">remaining_indices</span>
+        <span class="c1"># find superset permutation needed for thm application</span>
+        <span class="n">superset_perm_relation</span> <span class="o">=</span> <span class="n">generic_permutation</span><span class="p">(</span>
+            <span class="n">self_reduced</span><span class="p">,</span> <span class="n">new_order</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1"># construct the desired list of subset elems</span>
+        <span class="n">desired_subset_list</span> <span class="o">=</span> <span class="n">subset_reduced_list</span>
+        <span class="c1"># construct the desired complement list of elems</span>
+        <span class="n">desired_complement_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">remaining_indices</span><span class="p">:</span>
+            <span class="n">desired_complement_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">self_reduced_list</span><span class="p">[</span><span class="n">elem</span><span class="p">])</span>
+
+        <span class="c1"># Organize info for theorem instantiation</span>
+        <span class="c1"># then instantiate.</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">subset_eq_of_superset</span>
+        <span class="c1"># from proveit._common_ import m, n, aa, bb</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">subset_eq_of_superset</span><span class="o">.</span><span class="n">all_instance_vars</span><span class="p">()</span>
+        <span class="n">a_sub</span><span class="p">,</span> <span class="n">b_sub</span> <span class="o">=</span> <span class="p">(</span><span class="n">desired_subset_list</span><span class="p">,</span> <span class="n">desired_complement_list</span><span class="p">)</span>
+        <span class="n">m_sub</span><span class="p">,</span> <span class="n">n_sub</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a_sub</span><span class="p">)),</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b_sub</span><span class="p">))</span>
+        <span class="n">subset_of_permuted_superset</span> <span class="o">=</span> <span class="n">subset_eq_of_superset</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">m_sub</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">n_sub</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">a_sub</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">b_sub</span><span class="p">},</span>
+            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="c1"># We now have |- reduced_subset \subseteq reduced_superset.</span>
+        <span class="c1"># We back-sub to get the original subset as a subset_eq of the</span>
+        <span class="c1"># original superset (self):</span>
+        <span class="c1"># (1) Replace permuted reduced superset with unpermuted reduced</span>
+        <span class="c1">#     superset:</span>
+        <span class="n">reduced_subset_of_reduced_superset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">superset_perm_relation</span><span class="o">.</span><span class="n">sub_left_side_into</span><span class="p">(</span>
+                <span class="n">subset_of_permuted_superset</span><span class="o">.</span><span class="n">inner_expr</span><span class="p">()</span><span class="o">.</span><span class="n">rhs</span><span class="p">))</span>
+        <span class="c1"># (2) Replace reduced superset with original superset:</span>
+        <span class="n">reduced_subset_of_orig_superset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">self_to_support_kt</span><span class="o">.</span><span class="n">sub_left_side_into</span><span class="p">(</span>
+                <span class="n">reduced_subset_of_reduced_superset</span><span class="p">))</span>
+
+        <span class="c1"># (3) Replace the reduced (and possibly substituted) subset</span>
+        <span class="c1">#     with the non-reduced (and possibly substituted) subset:</span>
+        <span class="n">substituted_subset_of_orig_superset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">subset_to_support_kt</span><span class="o">.</span><span class="n">sub_left_side_into</span><span class="p">(</span>
+                <span class="n">reduced_subset_of_orig_superset</span><span class="p">))</span>
+
+        <span class="c1"># (4) If we performed substitutions into the subset, replace</span>
+        <span class="c1">#     the substituted subset with the original subset</span>
+        <span class="k">if</span> <span class="n">subset_was_substituted</span><span class="p">:</span>
+            <span class="n">orig_subset_of_orig_superset</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">subset_to_substituted_subset_kt</span><span class="o">.</span><span class="n">sub_left_side_into</span><span class="p">(</span>
+                    <span class="n">substituted_subset_of_orig_superset</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">orig_subset_of_orig_superset</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># no substitutions into subset performed earlier, so no</span>
+            <span class="c1"># back-substitution needed:</span>
+            <span class="k">return</span> <span class="n">substituted_subset_of_orig_superset</span>
+
+    <span class="k">def</span> <span class="nf">deduce_enum_proper_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subset_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                  <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this Set expression has as a proper subset the</span>
+<span class="sd">        set specified by either (a) the indices in the subset_indices</span>
+<span class="sd">        list OR (b) the Set specified by subset (but not both).</span>
+<span class="sd">        For example, both</span>
+<span class="sd">        {a, b, c, d}.deduce_enum_subset(subset_indices=[1, 3]) and</span>
+<span class="sd">        {a, b, c, d}.deduce_enum_subset(subset=Set(b, d))</span>
+<span class="sd">        return |– {b, d} subset {a, b, c, d} (assuming the appropriate</span>
+<span class="sd">        knowledge about either a or c (or both) not being elements of</span>
+<span class="sd">        the subset {b, d}).</span>
+<span class="sd">        This proper subset method is more complex than the analogous</span>
+<span class="sd">        method for improper subsets. As with the improper subset case,</span>
+<span class="sd">        this process is complicated by the fact that the Set class</span>
+<span class="sd">        allows for multiplicity of elements without it actually</span>
+<span class="sd">        representing a multi-set (thus, for example, {a, a} = {a}).</span>
+<span class="sd">        Subset deductions are based on the support sets (i.e. the sets</span>
+<span class="sd">        with all multiplicities reduced to 1) for the self</span>
+<span class="sd">        and subsets supplied. The process is further complicated by</span>
+<span class="sd">        the fact that elements in one set might not *appear* to be in</span>
+<span class="sd">        the other set but might be *equal* to elements in the other set,</span>
+<span class="sd">        making it challenging to confirm the proper subset relationship.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Set</span>
+
+        <span class="c1"># Before bothering with much processing, quickly check that:</span>
+        <span class="c1"># (1) user has specified subset_indices OR subset but not both;</span>
+        <span class="c1"># (2) if only subset specification, it has the correct form;</span>
+        <span class="c1"># (3) if only subset_indices, they are plausible.</span>
+        <span class="k">if</span> <span class="n">subset_indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need to specify the desired subset by &quot;</span>
+                             <span class="s2">&quot;specifying the list of indices (subset_indices) &quot;</span>
+                             <span class="s2">&quot;OR an actual subset (in the form of an &quot;</span>
+                             <span class="s2">&quot;enumerated set using Set()).&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subset_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">subset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need to specify the desired subset by &quot;</span>
+                             <span class="s2">&quot;specifying the list of indices (subset_indices) &quot;</span>
+                             <span class="s2">&quot;OR an actual subset, but NOT both.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="n">Set</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Specified subset </span><span class="si">{}</span><span class="s2"> does not appear to be a &quot;</span>
+                             <span class="s2">&quot;valid Set object.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">subset</span><span class="p">))</span>
+        <span class="n">self_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        <span class="n">valid_indices_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">subset_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># We must have had subset=None, so check validity of the</span>
+            <span class="c1"># indices and use them to create a subset Set</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_subset_indices_weak</span><span class="p">(</span>
+                <span class="n">valid_indices_list</span><span class="p">,</span> <span class="n">subset_indices</span><span class="p">,</span> <span class="n">proper_subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">subset_list_from_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">self_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">subset_indices</span><span class="p">]</span>
+            <span class="n">subset_from_indices</span> <span class="o">=</span> <span class="n">Set</span><span class="p">(</span><span class="o">*</span><span class="n">subset_list_from_indices</span><span class="p">)</span>
+            <span class="n">subset</span> <span class="o">=</span> <span class="n">subset_from_indices</span>
+
+        <span class="c1"># Reformat assumptions if necessary. Among other things,</span>
+        <span class="c1"># convert any assumptions=None to assumptions=()</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checked_assumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="c1"># We should now have a subset Set, either explicitly provided</span>
+        <span class="c1"># as an argument or derived from the subset_indices.</span>
+        <span class="n">subset_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subset</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+
+        <span class="c1"># Try to make some appropriate substitutions into the subset,</span>
+        <span class="c1"># and reduce the subset, all to make later processing (such as</span>
+        <span class="c1"># finding a superset element not also in the subset) easier.</span>
+        <span class="c1"># This seems like a lot of extra code, but should execute</span>
+        <span class="c1"># fairly quickly because it doesn&#39;t depend on automation --</span>
+        <span class="c1"># just some list searches and theorem instantiations.</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">is_irreducible_value</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">TransRelUpdater</span>
+        <span class="n">temp_subset</span> <span class="o">=</span> <span class="n">subset</span>
+        <span class="n">eq_temp</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="n">temp_subset</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1"># perform substitutions to irreducible values when possible</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">temp_subset</span><span class="o">.</span><span class="n">operands</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">known_equalities</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">kt</span> <span class="ow">in</span> <span class="n">Equals</span><span class="o">.</span><span class="n">known_equalities</span><span class="p">[</span><span class="n">elem</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">kt</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)):</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">kt</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">elem</span> <span class="ow">and</span> <span class="n">is_irreducible_value</span><span class="p">(</span><span class="n">kt</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span>
+                                <span class="ow">and</span> <span class="n">kt</span><span class="o">.</span><span class="n">lhs</span> <span class="o">!=</span> <span class="n">kt</span><span class="o">.</span><span class="n">rhs</span><span class="p">):</span>
+                            <span class="n">temp_subset</span> <span class="o">=</span> <span class="n">eq_temp</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                                <span class="n">temp_subset</span><span class="o">.</span><span class="n">elem_substitution</span><span class="p">(</span>
+                                    <span class="n">elem</span><span class="o">=</span><span class="n">elem</span><span class="p">,</span> <span class="n">sub_elem</span><span class="o">=</span><span class="n">kt</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span>
+                                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+                            <span class="k">break</span>
+        <span class="c1"># reduce multiplicities</span>
+        <span class="n">temp_subset</span> <span class="o">=</span> <span class="n">eq_temp</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">temp_subset</span><span class="o">.</span><span class="n">reduction</span><span class="p">(</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="n">subset</span> <span class="o">=</span> <span class="n">temp_subset</span>
+        <span class="n">subset_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subset</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        <span class="n">subset_to_subset_subbed_reduced_kt</span> <span class="o">=</span> <span class="n">eq_temp</span><span class="o">.</span><span class="n">relation</span>
+        <span class="c1"># subset_was_substituted = True</span>
+
+        <span class="c1"># ================================================= #</span>
+        <span class="c1"># LATER do that same process for the superset self? #</span>
+        <span class="c1"># ================================================= #</span>
+
+        <span class="c1"># We now have a SUBSTITUTED and REDUCED subset Set.</span>
+        <span class="c1"># A subset generated from the subset_indices will automatically</span>
+        <span class="c1"># be a plausible subset (b/c it derived from the superset self</span>
+        <span class="c1"># elements). If the subset was originally supplied as</span>
+        <span class="c1"># an argument, however, we now check if it is a plausible</span>
+        <span class="c1"># subset of self: it should only have elements found in self</span>
+        <span class="c1"># or elements somehow proven to be equal to elements in self.</span>
+        <span class="k">if</span> <span class="n">subset_indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># i.e. subset provided explicitly by user</span>
+            <span class="c1"># then substituted, reduced subset might not be a subset</span>
+            <span class="n">error_elem_candidates</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">error_elem_equivalences_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">subset_list</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">elem</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">self_list</span><span class="p">):</span>
+                    <span class="n">error_elem_candidates</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">error_elem_candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># We have candidates in the supposed subset that do not</span>
+                <span class="c1"># literally appear in the supposed superset self, but</span>
+                <span class="c1"># the candidates might be known to be &#39;Equal&#39; to</span>
+                <span class="c1"># appropriate values, so we check just a little more</span>
+                <span class="c1"># assiduously before returning an error message</span>
+                <span class="n">error_elems</span> <span class="o">=</span> <span class="n">error_elem_candidates</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="c1"># from proveit.logic import Equals</span>
+                <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">error_elem_candidates</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">super_elem</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">self_list</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">Equals</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">super_elem</span><span class="p">)</span><span class="o">.</span><span class="n">proven</span><span class="p">(</span>
+                                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">):</span>
+                            <span class="n">error_elems</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+                            <span class="k">break</span>  <span class="c1"># b/c we just need 1 instance</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">error_elems</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;Specified subset </span><span class="si">{0}</span><span class="s2"> does not appear to be a &quot;</span>
+                        <span class="s2">&quot;subset of the original set </span><span class="si">{1}</span><span class="s2">. The following &quot;</span>
+                        <span class="s2">&quot;elements appear in the requested subset Set but &quot;</span>
+                        <span class="s2">&quot;not in the original Set: </span><span class="si">{2}</span><span class="s2">.&quot;</span><span class="o">.</span>
+                        <span class="nb">format</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">error_elems</span><span class="p">))</span>
+
+        <span class="c1"># Furthermore, we need to check that at least one superset</span>
+        <span class="c1"># elem does not appear in the proposed proper subset.</span>
+        <span class="c1"># This is not a proof, just a superficial check that</span>
+        <span class="c1"># there at least APPEAR to be elements in self that do not</span>
+        <span class="c1"># appear in the subset (but we can be fooled by variables).</span>
+        <span class="c1"># Those candidates will then be checked more carefully later</span>
+        <span class="c1"># using the reduced forms of the sets.</span>
+        <span class="n">non_subset_elem_candidates</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">non_subset_elem_remaining</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">non_subset_elem_proven</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">non_subset_elem_index</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">non_subset_elem_kt</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">self_list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">elem</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">subset_list</span><span class="p">):</span>
+                <span class="n">non_subset_elem_candidates</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+                <span class="n">non_subset_elem_remaining</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="c1"># if no candidate elements, raise an error</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_subset_elem_candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Specified subset </span><span class="si">{0}</span><span class="s2"> does not appear to be a proper &quot;</span>
+                <span class="s2">&quot;subset of the original set </span><span class="si">{1}</span><span class="s2">. All of the superset &quot;</span>
+                <span class="s2">&quot;elements appear in the specified subset.&quot;</span><span class="o">.</span>
+                <span class="nb">format</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+        <span class="c1"># but if we have candidates, see if at least one can be proven</span>
+        <span class="c1"># to not be in the subset</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">NotInSet</span>
+            <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">non_subset_elem_candidates</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">subset_elem</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">subset_list</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">Equals</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">subset_elem</span><span class="p">)</span><span class="o">.</span><span class="n">proven</span><span class="p">(</span>
+                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">):</span>
+                        <span class="n">non_subset_elem_remaining</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+                        <span class="k">break</span>
+            <span class="c1"># that might have reduced the set of remaining candidates</span>
+            <span class="c1"># so now check if there are any remaining. If not, raise</span>
+            <span class="c1"># an error; if so, try proving one of the remaining</span>
+            <span class="c1"># candidates really is not in the subset</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_subset_elem_remaining</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;In calling Set.deduce_enum_proper_subset(), &quot;</span>
+                                 <span class="s2">&quot;the self superset </span><span class="si">{0}</span><span class="s2"> does not appear to &quot;</span>
+                                 <span class="s2">&quot;have any elements outside of the requested &quot;</span>
+                                 <span class="s2">&quot;subset </span><span class="si">{1}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subset</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">non_subset_elem_remaining</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">non_subset_elem_kt</span> <span class="o">=</span> <span class="n">NotInSet</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">subset</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span>
+                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                        <span class="n">non_subset_elem_proven</span> <span class="o">=</span> <span class="n">elem</span>
+                        <span class="k">break</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="k">pass</span>
+
+            <span class="k">if</span> <span class="n">non_subset_elem_proven</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to prove that the supposed Self superset </span><span class="si">{0}</span><span class="s2"> &quot;</span>
+                    <span class="s2">&quot;has any elements not already contained in the &quot;</span>
+                    <span class="s2">&quot;supposed proper subset </span><span class="si">{1}</span><span class="s2">. Notice that this might &quot;</span>
+                    <span class="s2">&quot;be because the sets have unassigned variables&quot;</span><span class="o">.</span>
+                    <span class="nb">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subset</span><span class="p">))</span>
+
+        <span class="c1"># Derive the reduced form of the self superset Set. We could</span>
+        <span class="c1"># have done this earlier, but delayed until after param</span>
+        <span class="c1"># checking. The eventual (proper) subset relationship will be</span>
+        <span class="c1"># based on the reduced forms of the specified Sets.</span>
+        <span class="n">self_to_support_kt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">self_reduced</span> <span class="o">=</span> <span class="n">self_to_support_kt</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="n">self_reduced_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">self_reduced</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        <span class="c1"># while we&#39;re here, get the index of the non_subset_elem_proven</span>
+        <span class="n">non_subset_elem_index</span> <span class="o">=</span> <span class="n">self_reduced_list</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">non_subset_elem_proven</span><span class="p">)</span>
+
+        <span class="c1"># For convenience, convert the subset_list to indices</span>
+        <span class="c1"># of the self_reduced_list. Because of earlier checks, the</span>
+        <span class="c1"># subset_list should contain only items in</span>
+        <span class="c1"># self_reduced_list but not all the items in self_reduced_list.</span>
+        <span class="n">subset_indices_list</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">self_reduced_list</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">subset_list</span><span class="p">])</span>
+
+        <span class="n">full_indices_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">self_reduced_list</span><span class="p">)))</span>
+
+        <span class="c1"># construct the complement of the subset_indices_list,</span>
+        <span class="c1"># to use in the eventual construction of the necessary</span>
+        <span class="c1"># permutation of the self superset Set.</span>
+        <span class="n">remaining_indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">full_indices_list</span><span class="p">)</span>  <span class="c1"># clone</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">subset_indices_list</span><span class="p">:</span>
+            <span class="n">remaining_indices</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="c1"># then also remove the index for the non_subset_elem_proven</span>
+        <span class="n">remaining_indices</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">non_subset_elem_index</span><span class="p">)</span>
+
+        <span class="c1"># establish the desired order for eventual thm application</span>
+        <span class="n">new_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">subset_indices_list</span> <span class="o">+</span> <span class="p">[</span><span class="n">non_subset_elem_index</span><span class="p">]</span> <span class="o">+</span>
+                     <span class="n">remaining_indices</span><span class="p">)</span>
+        <span class="c1"># find superset permutation needed for thm application</span>
+        <span class="n">superset_perm_relation</span> <span class="o">=</span> <span class="n">generic_permutation</span><span class="p">(</span>
+            <span class="n">self_reduced</span><span class="p">,</span> <span class="n">new_order</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1"># construct the desired list of subset elems</span>
+        <span class="n">desired_subset_list</span> <span class="o">=</span> <span class="n">subset_list</span>
+        <span class="c1"># construct the desired complement list of elems</span>
+        <span class="n">desired_complement_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">non_subset_elem_proven</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">remaining_indices</span><span class="p">:</span>
+            <span class="n">desired_complement_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">self_reduced_list</span><span class="p">[</span><span class="n">elem</span><span class="p">])</span>
+
+        <span class="c1"># Organize info for theorem instantiation</span>
+        <span class="c1"># then instantiate.</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">proper_subset_of_superset</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">proper_subset_of_superset</span><span class="o">.</span><span class="n">all_instance_vars</span><span class="p">()</span>
+        <span class="n">a_sub</span> <span class="o">=</span> <span class="n">desired_subset_list</span>
+        <span class="n">b_sub</span> <span class="o">=</span> <span class="n">desired_complement_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">c_sub</span> <span class="o">=</span> <span class="n">desired_complement_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">m_sub</span><span class="p">,</span> <span class="n">n_sub</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a_sub</span><span class="p">)),</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c_sub</span><span class="p">))</span>
+        <span class="n">subset_of_permuted_superset</span> <span class="o">=</span> <span class="n">proper_subset_of_superset</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">m_sub</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">n_sub</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">a_sub</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">b_sub</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">c_sub</span><span class="p">},</span>
+            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="c1"># We now have</span>
+        <span class="c1"># |- subset_subbed_reduced \propersubset superset_reduced.</span>
+        <span class="c1"># We back-sub to get the original subset as a proper subset of</span>
+        <span class="c1"># the original superset (self):</span>
+        <span class="c1"># (1) Replace permuted reduced superset with unpermuted reduced</span>
+        <span class="c1">#     superset:</span>
+        <span class="n">reduced_subset_of_reduced_superset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">superset_perm_relation</span><span class="o">.</span><span class="n">sub_left_side_into</span><span class="p">(</span>
+                <span class="n">subset_of_permuted_superset</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="c1"># (2) Replace reduced superset with original superset:</span>
+        <span class="n">reduced_subset_of_orig_superset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">self_to_support_kt</span><span class="o">.</span><span class="n">sub_left_side_into</span><span class="p">(</span>
+                <span class="n">reduced_subset_of_reduced_superset</span><span class="p">,</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="c1"># (3) Replace the substituted, reduced subset with the original</span>
+        <span class="c1">#     subset (might be trivial if subsitution and reduction</span>
+        <span class="c1">#     were essentially identities):</span>
+        <span class="n">orig_subset_of_orig_superset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">subset_to_subset_subbed_reduced_kt</span><span class="o">.</span><span class="n">sub_left_side_into</span><span class="p">(</span>
+                <span class="n">reduced_subset_of_orig_superset</span><span class="p">,</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">orig_subset_of_orig_superset</span>
+
+    <span class="k">def</span> <span class="nf">reduction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this enum Set expression is equal to the Set&#39;s</span>
+<span class="sd">        support -- i.e. equal to a Set with all multiplicities reduced</span>
+<span class="sd">        to 1. For example, the Set(a, a, b, b, c, d)={a, a, b, b, c, d}</span>
+<span class="sd">        is equal to its support {a, b, c, d}. The deduction is</span>
+<span class="sd">        achieved by successively applying the element-by-element</span>
+<span class="sd">        reduction_elem() method until no further reduction is possible.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">TransRelUpdater</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">current_operands</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        <span class="c1"># the following does not preserve the order, but we really</span>
+        <span class="c1"># just want the size of the support set</span>
+        <span class="n">desired_operands</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        <span class="n">desired_num_operands</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">))</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_operands</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">desired_num_operands</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">reduction_elem</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="n">current_operands</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">operands</span>
+
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>
+
+    <span class="k">def</span> <span class="nf">reduction_elem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this enum Set expression is equal to a Set</span>
+<span class="sd">        in which the multiply-occurring element specified either by</span>
+<span class="sd">        elem or by the position idx has been removed from the set.</span>
+<span class="sd">        If elem specified, method attempts to delete the 2nd occurrence</span>
+<span class="sd">        of elem from the set. If neither elem nor idx specified,</span>
+<span class="sd">        method attempts to delete the first repeated element of the Set.</span>
+<span class="sd">        If both elem and idx are specified, the elem param is ignored.</span>
+<span class="sd">        Examples: Let S = Set(a, b, a, b, a, c). Then</span>
+<span class="sd">        S.reduction_elem() gives |-S = {a, b, b, a, c};</span>
+<span class="sd">        S.reduction_elem(elem=b) gives |- S = {a, b, a, a, c};</span>
+<span class="sd">        S.reduction_elem(idx=4) gives |- S = {a, b, a, b, c}.</span>
+<span class="sd">        Consider changing name to elem_reduction, then use elem_reduced</span>
+<span class="sd">        as adj and elem_reduce as verb.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+
+        <span class="c1"># if user has specified position index idx,</span>
+        <span class="c1"># check for validity and use  idx if possible</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">idx</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">n</span> <span class="ow">or</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="n">n</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Index specification idx is out of bounds: </span><span class="si">{0}</span><span class="s2">. &quot;</span>
+                             <span class="s2">&quot;Need </span><span class="si">{1}</span><span class="s2"> ≤ idx ≤ </span><span class="si">{2}</span><span class="s2">.&quot;</span><span class="o">.</span>
+                             <span class="nb">format</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># we already checked for valid idx, so</span>
+            <span class="c1"># transform any wrap-around indexing for simplicity</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="n">idx</span>
+            <span class="c1"># check if idx corresponds to an elem that repeats</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The element &#39;</span><span class="si">{0}</span><span class="s2">&#39; specified at index &quot;</span>
+                                 <span class="s2">&quot;idx=</span><span class="si">{1}</span><span class="s2"> occurs just once in the enum Set &quot;</span>
+                                 <span class="s2">&quot;and thus cannot be eliminated.&quot;</span><span class="o">.</span>
+                                 <span class="nb">format</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
+
+        <span class="c1"># if user has specified elem instead of position index</span>
+        <span class="c1"># check validity and use if possible by converting to</span>
+        <span class="c1"># a positional index value</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># find index of 2nd occurrence of elem, if it exists</span>
+            <span class="c1"># first gen enumerated list of those repeated elems</span>
+            <span class="n">idx_list_of_elem</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="n">elem</span><span class="p">])</span>
+            <span class="n">temp_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_list_of_elem</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">temp_len</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">temp_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">temp_err_string</span> <span class="o">=</span> <span class="s1">&#39;zero times&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">temp_err_string</span> <span class="o">=</span> <span class="s1">&#39;just 1 time&#39;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Specified element &#39;</span><span class="si">{0}</span><span class="s2">&#39; appears </span><span class="si">{1}</span><span class="s2"> &quot;</span>
+                                 <span class="s2">&quot;in the enum Set and thus cannot be &quot;</span>
+                                 <span class="s2">&quot;eliminated.&quot;</span><span class="o">.</span>
+                                 <span class="nb">format</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">temp_err_string</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">idx_list_of_elem</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># if user has specified NEITHER elem NOR positional index idx</span>
+        <span class="c1"># find first repeated element (if it exists) and use</span>
+        <span class="c1"># its positional index for idx</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">elem</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># check if there are ANY repeating elements:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> appears to already be in reduced form.&quot;</span><span class="o">.</span>
+                                 <span class="nb">format</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># find first repeated elem</span>
+                <span class="n">already_seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">already_seen</span><span class="p">:</span>
+                        <span class="n">idx</span> <span class="o">=</span> <span class="n">i</span>
+                        <span class="k">break</span>
+                    <span class="n">already_seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+
+        <span class="c1"># now that idx is OK determine location of a matching elem</span>
+        <span class="c1"># that will remain (so we can apply one of our reduction thms)</span>
+        <span class="n">idx_to_elim</span> <span class="o">=</span> <span class="n">idx</span>  <span class="c1"># index of elem to eliminate</span>
+        <span class="n">idx_to_keep</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>   <span class="c1"># index of matching elem to keep</span>
+        <span class="n">elem_to_elim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx_to_elim</span><span class="p">]</span>
+        <span class="n">idxs_of_elems</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="n">elem_to_elim</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">idx_to_elim</span> <span class="o">!=</span> <span class="n">idxs_of_elems</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="c1"># elem to keep is left of elem to eliminate</span>
+            <span class="n">idx_to_keep</span> <span class="o">=</span> <span class="n">idxs_of_elems</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># elem to keep is right of elem to eliminate</span>
+            <span class="n">idx_to_keep</span> <span class="o">=</span> <span class="n">idxs_of_elems</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Now ready to apply the single-elem reduction theorem</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">reduction_right</span><span class="p">,</span> <span class="n">reduction_left</span>
+        <span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">aa</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">bb</span><span class="p">,</span> <span class="n">cc</span> <span class="o">=</span> <span class="n">reduction_right</span><span class="o">.</span><span class="n">all_instance_vars</span><span class="p">()</span>
+
+        <span class="c1"># NOTICE most of this is the same whether we are eliminating an</span>
+        <span class="c1"># extra element to the right or to the left of an id&#39;d element</span>
+        <span class="n">idx_left</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">idx_to_keep</span><span class="p">,</span> <span class="n">idx_to_elim</span><span class="p">)</span>
+        <span class="n">idx_right</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">idx_to_keep</span><span class="p">,</span> <span class="n">idx_to_elim</span><span class="p">)</span>
+        <span class="c1"># so we break the set in into [ ]+[idx_left]+[ ]+[idx_right]+[ ]</span>
+        <span class="n">l_sub</span><span class="p">,</span> <span class="n">m_sub</span><span class="p">,</span> <span class="n">n_sub</span> <span class="o">=</span> <span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="n">idx_left</span><span class="p">),</span>
+                               <span class="n">num</span><span class="p">(</span><span class="n">idx_right</span> <span class="o">-</span> <span class="n">idx_left</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                               <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">idx_right</span><span class="p">))</span>
+        <span class="n">aa_sub</span><span class="p">,</span> <span class="n">x_sub</span><span class="p">,</span> <span class="n">bb_sub</span><span class="p">,</span> <span class="n">cc_sub</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">idx_left</span><span class="p">],</span>
+            <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)[</span><span class="n">idx_left</span><span class="p">],</span>
+            <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)[</span><span class="n">idx_left</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">idx_right</span><span class="p">],</span>
+            <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)[</span><span class="n">idx_right</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:])</span>
+        <span class="k">if</span> <span class="n">idx_to_keep</span> <span class="o">&lt;</span> <span class="n">idx_to_elim</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">reduction_right</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">l</span><span class="p">:</span> <span class="n">l_sub</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">m_sub</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">n_sub</span><span class="p">,</span> <span class="n">aa</span><span class="p">:</span> <span class="n">aa_sub</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">x_sub</span><span class="p">,</span>
+                 <span class="n">bb</span><span class="p">:</span> <span class="n">bb_sub</span><span class="p">,</span> <span class="n">cc</span><span class="p">:</span> <span class="n">cc_sub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">reduction_left</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">l</span><span class="p">:</span> <span class="n">l_sub</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">m_sub</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">n_sub</span><span class="p">,</span> <span class="n">aa</span><span class="p">:</span> <span class="n">aa_sub</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">x_sub</span><span class="p">,</span>
+                 <span class="n">bb</span><span class="p">:</span> <span class="n">bb_sub</span><span class="p">,</span> <span class="n">cc</span><span class="p">:</span> <span class="n">cc_sub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">single_elem_substitution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sub_elem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                 <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this enum Set expression is equal to a Set</span>
+<span class="sd">        in which the element specified either by elem or by the</span>
+<span class="sd">        position idx has been replaced with sub_elem. The deduction</span>
+<span class="sd">        depends on the sub_elem being equal to the replace elem.</span>
+<span class="sd">        If elem specified in the form elem=&#39;elem&#39;, method attempts to</span>
+<span class="sd">        substitute for the 1st occurrence of elem; if elem=[&#39;elem&#39;,n],</span>
+<span class="sd">        method attempts to substitute for the nth occurrence of elem.</span>
+<span class="sd">        If both elem and idx are specified, the elem arg is ignored.</span>
+<span class="sd">        Examples: Let S = Set(a, b, a, b, a, c). Then</span>
+<span class="sd">        S.single_elem_substitution() gives error;</span>
+<span class="sd">        S.single_elem_substitution(elem=b, sub_elem=four,</span>
+<span class="sd">                                   assumptions=[Equals(b, four)])</span>
+<span class="sd">            gives |- S = {a, 4, a, b, a, c};</span>
+<span class="sd">        S.single_elem_substitution(elem=[b, 2], sub_elem=four,</span>
+<span class="sd">                                   assumptions=[Equals(b, four)])</span>
+<span class="sd">            gives |- S = {a, b, a, 4, a, c};</span>
+<span class="sd">        S.single_elem_substitution(idx=3, sub_elem=four,</span>
+<span class="sd">                                   assumptions=[Equals(b, four)])</span>
+<span class="sd">            gives |- S = {a, b, a, 4, a, c};</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># First, a quick check on elem, idx, and sub_elem arguments</span>
+        <span class="k">if</span> <span class="n">elem</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;single_elem_substitution() method requires &quot;</span>
+                             <span class="s2">&quot;the specification of element (elem=) or &quot;</span>
+                             <span class="s2">&quot;element index (idx=) candidate for &quot;</span>
+                             <span class="s2">&quot;substitution.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sub_elem</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;single_elem_substitution() method missing &quot;</span>
+                             <span class="s2">&quot;sub_elem argument. Must specify the replacement &quot;</span>
+                             <span class="s2">&quot;value using argument &#39;sub_elem=&#39;.&quot;</span><span class="p">)</span>
+
+        <span class="n">set_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+
+        <span class="c1"># if user has specified position index idx,</span>
+        <span class="c1"># check for validity and use idx if possible</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">idx</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">set_length</span> <span class="ow">or</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="n">set_length</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Index specification idx = </span><span class="si">{0}</span><span class="s2"> is out of bounds. &quot;</span>
+                             <span class="s2">&quot;Need </span><span class="si">{1}</span><span class="s2"> ≤ idx ≤ </span><span class="si">{2}</span><span class="s2">.&quot;</span><span class="o">.</span>
+                             <span class="nb">format</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="o">-</span><span class="n">set_length</span><span class="p">,</span> <span class="n">set_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># we already checked for valid idx, so</span>
+            <span class="c1"># transform any wrap-around indexing for simplicity</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">set_length</span> <span class="o">+</span> <span class="n">idx</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+        <span class="c1"># Designate which one of (possibly) multiple copies of the</span>
+        <span class="c1"># elem we want to replace -- default is 1st location:</span>
+        <span class="n">which_elem</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># We must have had an elem specified</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>  <span class="c1"># elem = [x, n]</span>
+                <span class="n">which_elem</span> <span class="o">=</span> <span class="n">elem</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>    <span class="c1"># which_elem = n</span>
+                <span class="n">elem</span> <span class="o">=</span> <span class="n">elem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>          <span class="c1"># elem = x</span>
+                <span class="k">if</span> <span class="n">which_elem</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">which_elem</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;In specifying the elem to be replaced in the &quot;</span>
+                        <span class="s2">&quot;call to Set.single_elem_substitution(), it &quot;</span>
+                        <span class="s2">&quot;doesn&#39;t appear to make sense to specify instance &quot;</span>
+                        <span class="s2">&quot;#</span><span class="si">{0}</span><span class="s2"> of the element </span><span class="si">{1}</span><span class="s2"> in the set of elements &quot;</span>
+                        <span class="s2">&quot;</span><span class="si">{2}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">which_elem</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">))</span>
+            <span class="c1"># find indice(s) of elem in Set</span>
+            <span class="n">elem_indices</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="n">elem</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elem_indices</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">which_elem</span> <span class="ow">and</span> <span class="n">which_elem</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">elem_indices</span><span class="p">[</span><span class="n">which_elem</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;single_elem_substitution() method looked for &quot;</span>
+                    <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> instance(s) of the elem &#39;</span><span class="si">{1}</span><span class="s2">&#39; in the set </span><span class="si">{2}</span><span class="s2"> &quot;</span>
+                    <span class="s2">&quot;but found only </span><span class="si">{3}</span><span class="s2"> instance(s). The elem &#39;</span><span class="si">{1}</span><span class="s2">&#39; does &quot;</span>
+                    <span class="s2">&quot;not appear to exist in the original set with &quot;</span>
+                    <span class="s2">&quot;sufficient multiplicity.&quot;</span><span class="o">.</span>
+                    <span class="nb">format</span><span class="p">(</span><span class="n">which_elem</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">,</span>
+                           <span class="nb">len</span><span class="p">(</span><span class="n">elem_indices</span><span class="p">)))</span>
+
+        <span class="c1"># We should now have a valid idx indicating the index of the</span>
+        <span class="c1"># set item to be replaced, either because it was explicitly</span>
+        <span class="c1"># supplied or because it was derived from the elem argument</span>
+
+        <span class="c1"># We deduce the desired equality by instantiating the</span>
+        <span class="c1"># equal_element_equality theorem from the enumeration theory</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">equal_element_equality</span>
+        <span class="c1"># --- Organize the instantiation mapping info.</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">aa</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">equal_element_equality</span><span class="o">.</span><span class="n">all_instance_vars</span><span class="p">()</span>
+        <span class="c1"># --- Break the set into [ ]+[idx]+[ ].</span>
+        <span class="n">m_sub</span><span class="p">,</span> <span class="n">n_sub</span> <span class="o">=</span> <span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">num</span><span class="p">(</span><span class="n">set_length</span> <span class="o">-</span> <span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">aa_sub</span><span class="p">,</span> <span class="n">b_sub</span><span class="p">,</span> <span class="n">cc_sub</span><span class="p">,</span> <span class="n">d_sub</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">idx</span><span class="p">],</span>
+            <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)[</span><span class="n">idx</span><span class="p">],</span>
+            <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:],</span>
+            <span class="n">sub_elem</span><span class="p">)</span>
+        <span class="c1"># --- Specialize and return.</span>
+        <span class="k">return</span> <span class="n">equal_element_equality</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">m_sub</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">n_sub</span><span class="p">,</span> <span class="n">aa</span><span class="p">:</span> <span class="n">aa_sub</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">b_sub</span><span class="p">,</span> <span class="n">cc</span><span class="p">:</span> <span class="n">cc_sub</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">d_sub</span><span class="p">},</span>
+            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">elem_substitution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sub_elem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce that this enum Set expression is equal to the Set</span>
+<span class="sd">        obtained when every instance of elem in self is replaced by the</span>
+<span class="sd">        sub_elem. The deduction depends on the sub_elem being equal to</span>
+<span class="sd">        the elem it is replacing.</span>
+<span class="sd">        Examples: Let S = Set(a, b, a, b, a, c). Then</span>
+<span class="sd">        S.elem_substitution() gives ERROR;</span>
+<span class="sd">        S.elem_substitution(elem=d, sub_elem=two,</span>
+<span class="sd">                            assumptions=[Equals(d, two)] gives ERROR;</span>
+<span class="sd">        S.elem_substitution(elem=b, sub_elem=four,</span>
+<span class="sd">                            assumptions=[Equals(b, four)])</span>
+<span class="sd">            gives |- S = {a, 4, a, 4, a, c};</span>
+<span class="sd">        S.single_elem_substitution(elem=a, sub_elem=two,</span>
+<span class="sd">                                   assumptions=[Equals(a, two)])</span>
+<span class="sd">            gives |- S = {2, b, 2, b, 2, c};</span>
+<span class="sd">        S.single_elem_substitution(elem=c, sub_elem=d,</span>
+<span class="sd">                                   assumptions=[Equals(c, d)])</span>
+<span class="sd">            gives |- S = {a, b, a, b, a, d};</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># First, a quick check on elem and sub_elem arguments</span>
+        <span class="k">if</span> <span class="n">elem</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">sub_elem</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Set.elem_substitution() method requires &quot;</span>
+                             <span class="s2">&quot;the specification of the element to be replaced &quot;</span>
+                             <span class="s2">&quot;and the requested substitution value, but &quot;</span>
+                             <span class="s2">&quot;found elem=</span><span class="si">{0}</span><span class="s2"> and sub_elem=</span><span class="si">{1}</span><span class="s2">.&quot;</span><span class="o">.</span>
+                             <span class="nb">format</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">sub_elem</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">elem</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;In calling the Set.elem_substitution() method, &quot;</span>
+                             <span class="s2">&quot;the element &#39;</span><span class="si">{0}</span><span class="s2">&#39; to be replaced does not &quot;</span>
+                             <span class="s2">&quot;appear to exist in the original set </span><span class="si">{1}</span><span class="s2">.&quot;</span><span class="o">.</span>
+                             <span class="nb">format</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+
+        <span class="c1"># count the number of elems to replace with the sub_elem</span>
+        <span class="n">self_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span>
+        <span class="n">num_elems_to_replace</span> <span class="o">=</span> <span class="n">self_list</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">TransRelUpdater</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">while</span> <span class="n">num_elems_to_replace</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">single_elem_substitution</span><span class="p">(</span>
+                <span class="n">elem</span><span class="o">=</span><span class="n">elem</span><span class="p">,</span> <span class="n">sub_elem</span><span class="o">=</span><span class="n">sub_elem</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+            <span class="n">num_elems_to_replace</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>
+
+    <span class="c1"># ----------------- #</span>
+    <span class="c1"># Utility Functions #</span>
+    <span class="c1"># ----------------- #</span>
+
+    <span class="k">def</span> <span class="nf">_check_subset_indices_weak</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">valid_indices_list</span><span class="p">,</span> <span class="n">subset_indices_list</span><span class="p">,</span>
+            <span class="n">proper_subset</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        A minimal check that indices in subset_indices_list form a</span>
+<span class="sd">        valid subset of the valid_indices_list, which requires only</span>
+<span class="sd">        that the indices in subset_indices_list appear in the</span>
+<span class="sd">        valid_indices_list. Multiplicity is not an issue (for example,</span>
+<span class="sd">        subset_indices_list could be [0, 1, 2, 1] and valid_indices_list</span>
+<span class="sd">        could be [0, 1, 2, 3]). If proper_subset flag set to True, the</span>
+<span class="sd">        subset_indices_list with multiplicities removed must have</span>
+<span class="sd">        strictly fewer elements than the valid_indices_list with</span>
+<span class="sd">        multiplicities removed.</span>
+<span class="sd">        LATER: allow negative indices?</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">valid_indices_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">valid_indices_list</span><span class="p">)</span>
+        <span class="n">subset_indices_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">subset_indices_list</span><span class="p">)</span>
+        <span class="n">unexpected_indices_set</span> <span class="o">=</span> <span class="n">subset_indices_set</span> <span class="o">-</span> <span class="n">valid_indices_set</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unexpected_indices_set</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="s2">&quot;Index or indices out of bounds: </span><span class="si">{0}</span><span class="s2">. Subset indices &quot;</span>
+                <span class="s2">&quot;should be elements of </span><span class="si">{1}</span><span class="s2">.&quot;</span><span class="o">.</span>
+                <span class="nb">format</span><span class="p">(</span><span class="n">unexpected_indices_set</span><span class="p">,</span> <span class="n">valid_indices_set</span><span class="p">))</span>
+        <span class="c1"># if we made it this far and proper_subset = True,</span>
+        <span class="c1"># confirm that the subset indices are compatible with a proper</span>
+        <span class="c1"># subset instead of an improper subset</span>
+        <span class="k">if</span> <span class="n">proper_subset</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">subset_indices_set</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_indices_set</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The subset indices are not compatible with a &quot;</span>
+                             <span class="s2">&quot;proper subset (too many elements).&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_check_subset_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valid_indices_list</span><span class="p">,</span> <span class="n">subset_indices_list</span><span class="p">,</span>
+                              <span class="n">proper_subset</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Checks if indices in subset_indices_list form a valid subset of</span>
+<span class="sd">        the valid_indices_list, which requires that the indices in</span>
+<span class="sd">        subset_indices_list have multiplicity &lt;= 1 and values i such</span>
+<span class="sd">        that i is an element of valid_indices_list. If proper_subset</span>
+<span class="sd">        flag set to True, the subset_indices_list must have strictly</span>
+<span class="sd">        fewer elements than valid_indices_list.</span>
+<span class="sd">        LATER: allow negative indices?</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">valid_indices_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">valid_indices_list</span><span class="p">)</span>
+        <span class="c1"># allowed_indices_set = set(range(0, len(self.operands)))</span>
+        <span class="n">subset_indices_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">subset_indices_list</span><span class="p">)</span>
+        <span class="n">unexpected_indices_set</span> <span class="o">=</span> <span class="n">subset_indices_set</span> <span class="o">-</span> <span class="n">valid_indices_set</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unexpected_indices_set</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Index or indices out of bounds: </span><span class="si">{0}</span><span class="s2">. &quot;</span>
+                             <span class="s2">&quot;subset indices i should satisfy &quot;</span>
+                             <span class="s2">&quot;0 ≤ i ≤ </span><span class="si">{1}</span><span class="s2">.&quot;</span><span class="o">.</span>
+                             <span class="nb">format</span><span class="p">(</span><span class="n">unexpected_indices_set</span><span class="p">,</span>
+                                    <span class="nb">len</span><span class="p">(</span><span class="n">valid_indices_set</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subset_indices_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">subset_indices_set</span><span class="p">):</span>
+            <span class="c1"># we have repeated indices, so let&#39;s find them to use in</span>
+            <span class="c1"># feedback/error message</span>
+            <span class="n">repeated_indices_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">subset_indices_set</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">subset_indices_list</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">repeated_indices_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The subset_indices specification contains &quot;</span>
+                             <span class="s2">&quot;repeated indices, with repeated index or &quot;</span>
+                             <span class="s2">&quot;indices: </span><span class="si">{}</span><span class="s2">. Each index value should appear at &quot;</span>
+                             <span class="s2">&quot;most 1 time.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repeated_indices_set</span><span class="p">))</span>
+        <span class="c1"># if we made it this far and proper_subset = True,</span>
+        <span class="c1"># confirm that the subset indices are compatible with a proper</span>
+        <span class="c1"># subset instead of an improper subset</span>
+        <span class="k">if</span> <span class="n">proper_subset</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">subset_indices_set</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_indices_set</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The subset indices are not compatible with a &quot;</span>
+                             <span class="s2">&quot;proper subset (too many elements).&quot;</span><span class="p">)</span></div>
+
+
+<span class="c1"># Register these expression equivalence methods:</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span>
+    <span class="n">Set</span><span class="p">,</span> <span class="s1">&#39;permutation&#39;</span><span class="p">,</span> <span class="s1">&#39;permuted&#39;</span><span class="p">,</span> <span class="s1">&#39;permute&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span>
+    <span class="n">Set</span><span class="p">,</span> <span class="s1">&#39;permutation_move&#39;</span><span class="p">,</span> <span class="s1">&#39;moved&#39;</span><span class="p">,</span> <span class="s1">&#39;move&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span>
+    <span class="n">Set</span><span class="p">,</span> <span class="s1">&#39;permutation_swap&#39;</span><span class="p">,</span> <span class="s1">&#39;swapped&#39;</span><span class="p">,</span> <span class="s1">&#39;swap&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span>
+    <span class="n">Set</span><span class="p">,</span> <span class="s1">&#39;reduction&#39;</span><span class="p">,</span> <span class="s1">&#39;reduced&#39;</span><span class="p">,</span> <span class="s1">&#39;reduce&#39;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../../index.html">Module code</a><ul>
+  <li><a href="../../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

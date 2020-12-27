@@ -1,0 +1,1 @@
+n \mapsto \left\{\lfloor x + n\rfloor = \left(\lfloor x\rfloor + n\right) \textrm{ if } n \in \mathbb{Z}\right..

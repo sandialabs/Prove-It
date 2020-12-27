@@ -1,0 +1,47 @@
+\left(\left(\begin{array} {cccccccc} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert \psi \rangle} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \qw 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \qw 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \control \qw 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \meter 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \control \cw 
+} \hspace{2em} & SPACE  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \qw 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \targ 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \targ 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \qw 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& MEAS 
+} \hspace{2em} & SPACE & SPACE  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \control \qw 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \qw 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \qw 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& X 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& Z 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \rstick{\lvert \psi \rangle} \qw 
+} \hspace{2em} \end{array} 
+\right)\right)

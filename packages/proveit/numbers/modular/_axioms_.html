@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.numbers.modular</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.numbers.modular">Axioms for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.modular</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.numbers.modular">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">q</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Forall</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">GreaterEq</span><span class="p">,</span> <span class="n">Less</span><span class="p">,</span> <span class="n">Min</span><span class="p">,</span> <span class="n">Mod</span><span class="p">,</span> <span class="n">ModAbs</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">Neg</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.numbers.modular&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="For-positive-real-valued-modulus-$b$,-$\text{mod}(a,-b)$-is-the-non-negative-remainder-$r$-when-$a$-is-divided-by-$b$-in-the-usual-way,-giving-$0-\le-r-&lt;-b$.-This-means-that-there-exists-a-unique-integer-$q$-such-that-$a-=-qb-+-r$.">For positive real-valued modulus $b$, $\text{mod}(a, b)$ is the non-negative remainder $r$ when $a$ is divided by $b$ in the usual way, giving $0 \le r &lt; b$. This means that there exists a unique integer $q$ such that $a = qb + r$.<a class="anchor-link" href="#For-positive-real-valued-modulus-$b$,-$\text{mod}(a,-b)$-is-the-non-negative-remainder-$r$-when-$a$-is-divided-by-$b$-in-the-usual-way,-giving-$0-\le-r-&lt;-b$.-This-means-that-there-exists-a-unique-integer-$q$-such-that-$a-=-qb-+-r$.">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># a mod b ≥ 0</span>
+<span class="n">mod_greater_eq_zero</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+    <span class="n">GreaterEq</span><span class="p">(</span><span class="n">Mod</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">zero</span><span class="p">),</span>
+    <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="mod_greater_eq_zero">mod_greater_eq_zero:</strong> <a class="ProveItLink" href="__pv_it/axioms/beec94f59c07175090f028ca6c49bb11b25d541d0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPEAAAAWBAMAAADjpGcAAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA4hJREFU
+SMe9lltoE0EUhv8k3Sa72SQ+qA8WYYlWfRGC8QJeI74J6j6poJBSb+iDFu+VPsQiEvXBRUFFkEaL
+KLWaRRERxC5VEaMtEQUveImCPqhgtVWkiDhnZjdNakO7gh44mcm/M/PtnDl7doG/sFO2V7Kzi4vd
+60OPILlAnZeuwEpKeEW72ceH7W0Aqo0/rna+0Ll8n/58cEUOG8IrmtwnxsUYnu8M52YPzDaVRi6f
+oJEpV+RHtlc2QY6YtEM7DBudaw+Bbi6HM4BquiI32j4ceRlbGqdtaek6u7Mf6MiQHMq1tR13BZYb
+hA9LvsuDm7C1lftE+53dksnlH+l00wh4VrHnjQmHPHfaONZIb2ZE66uibOH26G32v72zVpDfR+ew
+eMacecc+8rzrZWSNyywKB0ZALi6AQF44FhrhHhL8zWiZyM5PakRAg1IDVeT2r0zWQKhQnHiUjkj+
+CSQ1Li9y8q/clhYqkf2mcGU8fDw1A6MQSSFp+C1I3xAo2Lkd7EdEQ3DgXJ7wQLE9Jy0u++HNlxCu
+TVnzllonSsGt++drZWRPQrivH36NkwuIWGjRk+x2fiJrQeFkX4H6Uo8zb3KuJNokq3l/sUTciOe9
+KnIaf+zYz4Vb86BZ6hncim+Lm4PInhSyOienaHMtegdlDYVSkNnjzFLJISt3tWKGdQhZLix3yE+v
+t4GRn1MMIqxUhA6dzDBy6OKQ0WYb6kApmfbci6xDjuSxIIMqEW15lhPYNPDalg+sZT+tk96hilYn
+MuVxMrqJpQAzRm4fMsOyJjYHjRKyJwapD+GUfc6RBMsEO8PkzWZ5JeHyFYZXdkj9CEOQ40SZnJkg
+arpm+eJlZMoA8oAW2qkO7DmpS2MQtiCPhu8rydX5ABvl44/j+URJyJQxtsxmwReTGtDKyb7126lt
+xiuF07SZGxJlZAoUuVJfe2wiPc9bvq86PFb93ISjD6ZT+Lpqv9TRyU7rotPWB79vOifpthxiRc5j
+euuwIp1Oa171yGMaMBozpd3pdDO0e1OJrLupniV2bhg5awSeZ6pFtIOrqd72owZ1ItpXc27fGKXv
+xGFkj5FcAlUX55yz5IPYE0rhjiCr7eWzAobwEb3LRUG6tItsx2CZzq7+8jzgEFWSbqt1vlSD5Q/Y
+8iwhg02flHjB3ZfBoLscgexl52xXLtFMYef8F19DJfbMlVz58+k/WP7fI34DHBkNtthCaVoAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># a mod b &lt; b</span>
+<span class="n">mod_less_modulus</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+    <span class="n">Less</span><span class="p">(</span><span class="n">Mod</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span>
+    <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="mod_less_modulus">mod_less_modulus:</strong> <a class="ProveItLink" href="__pv_it/axioms/17d6abd77b2d674d54976f3464901473491ae3360/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAAAWBAMAAAAMZgw+AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA5JJREFU
+SMfFllloE1EUhv8mmTadTBIfXBFhjKI+KASjIqg14INPah5EEYWUuqEgFhdQaSFWkaig0T4ogjS1
+oFKrDYpIQXCwilirxgVcwDKuiAotdUFbFc+Zm0mTOMGOIB44Mzd3++495793AvyFHc94EZMXJ7Pl
+NssengSgc+GZLa4cE17MPN1ho9vOaqA0Udh6egQ91gG3+Mc7W2BfQnhRawiLfkGi67+1viQ/Bxyl
+V3nMFvhBxouaX4D9KXpczYnEa+PVT66o8FE+lJQt8PaM/wm8iFPdmK31bjai5OrjNAyBt6O5+Ygt
+bnm18D+CbxjxDmcqHTVCcoox9BXwNR6vGQROy5YcQeGobx/Lc0nPpweqXIHdQEvgGm2mMxAVsDeB
+WcQJilEtm0yFVI2jALcDq4G9gwAHsyV3WrhrFLqNirI6NIzHPUjb4VbRmMJdoeqfydYEvEJdTbXm
+8NZ38jegC5hnpTxgoV4MXJYS3pjGTLGSIfDHEE2UaZA+44Cpak8f/Co8RmRL32eHX0miF7hEc8CR
+zgFcmrTyhZGKDMmzaU+FmgcuCQufm4QIn1uHX0NDJEqr+S5/p00ZYKeOVlpKD5dPDoArwF2iREiX
+ZW+Gy6G0Q0EHg3ys9DPtc6Bqygm0hzaHUgXgkZA/C3CMt9YQuUKVX6VeE0zHeFEqA0Z97cAxdvUb
+4HJ9iVn3uK0ZBH7KEfCT9r37jyUJ7D1rFWpat6cnD8w7/ihnwf40B8VVXSCuH3DSgZpPpb2rOPkT
+XsPFkzOYFRwNrKf0kxG4xUpccj9K9bZccEkQ0ie8NXPsD8tjYIpr4Dh9YnGwuHCB1iRvlfrggwCH
+GDIxOU7c46rmDOWBOfvsdXhUqQ2AoxFpGHwaDoUxVzUElXZTL6dWcIFswC56zuaVUTdnUKpGkwF2
+rtnC7zp0yQZMnbE2nAfm4LGfDCyr4hZp45flB4cr3TWo75xGe5h9PzrcUMzU25zpSMGV2TSZM8lF
+L4WgJOWoxNJ4PK46lMMPuX0oZkjb4vE6qDen8PQRG1dmrp2y/sCZN19rwv00WSpC7VnByejDaFSK
+UF/ssPmRyLWrlrWKah6RRHQBlIjIcYdWvg87vDFcF2ClJX+UOyF8UN9u3bL6XDZvVefnAPv5Armj
+NVVIo7Gkk2an8+Gp+SCHdFt/BAoXaWEFl7SDcpzRgXhNohzb/+uTa08sa71F49WG/2Tpf074BQ5q
+BYd3gNJYAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># a mod b is the remainder after taking out integer multiples of modulus b</span>
+<span class="n">mod_is_remainder</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+    <span class="n">Exists</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="n">b</span><span class="p">),</span><span class="n">Mod</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">))),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">),</span>
+    <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="mod_is_remainder">mod_is_remainder:</strong> <a class="ProveItLink" href="__pv_it/axioms/f847bed1938accdfecdf3bb67f707e34b87b41c20/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAY0AAAAWBAMAAADOX93WAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABSZJREFU
+WMPVl39oW1UUx0/y8vLj5b1kf0zdVoRn2m5Dp4RGi+DWRQQHgi7+MxE3EqpWFNS6qXXaP2InkjrU
+hwOnE2nWohu1LmEySkHsY1HGajsiij8GzvijKw5p6+xE2yqe+yMvr7cvXYr9Qw988+O+k/fO595z
+zr0BWL7dMP4mmlHl6tvOw4Eik2BBw9Gzmr1zh/VxqCJtIg4lMvbtsjg+hua2trZ1zheVtPP4US77
+0FX48rCjZzX7aIY+4/l2AK9RkRqHT8mFC8vkAMcAqIWqrNPPXHb7EXXM0bOaBWbYQ6IIU6oIOd4g
+V9Mrx/G587AWZVpgcyhV51+O2zyrG+MI5/HlZEXIEcriW37lOPY6D/sMJrt5ZkmOrBI4fMblObZj
+0HC4IuTQRvr7D8KKcQTanX9zkMtuKvX9SeBYOhjGcYomV9wScsAfmUxnDcGbtXG4SVYcKFyTFcbr
+uQJj1zZYpdRaj4lQEDio1+Ym0kbk72+KtHoiLwAMRMhDB042Mo7zkVtwGqKWCMeDAN01cETtHKc6
+Ojr+dHTzY9P0rIUpOt+T1OgvX+a61fBOl31zFxS8yTmBg3mFqJevC3oa4DOQ94JfB6UOVNav/s7m
+DNCwwLkIx2204hfZXaUlOIT18K4p7OPXfTjDh4tws3i755iUq8FLbqyQseEsXAQYFDiYl0Rbj38V
+hNOQNHwmyJfAX+L9KjgLYR2CmJZchMMHbvvGM7jx/h/oZPLAgrtfbNGX4FA+jBV9htrLE8mFd9ya
+hd0ix2omaRpcJENzBKYFlHmAJLl8ZnLyicnJ89xTmgUfbWMYediEnkQSZ2ceciYolEMqkc8yLhkX
+4VCLPmsPw5jcKoyQe4RID3uvsAV0U+2FQmxPLO/I8fVQPwRhV3kXJxxrQLlUhcOVhp44WbYU3T48
+c5zDth7MK5egHGky8T2JYVLHkNQ5B24f2/MiR6C0o/wwEhNynCXrE8b2p+0/lEUO7X3n9VCaGvIe
+Nh4ttwHMK5zk4LStPlK2vMrp8J11n7/IxMO2xXmFkz0Mdg6yHr+RHzOOcJGsuQdziotwQPcD+NK3
+fhxoTISDBJWMPIKlg4YcA84cRxJJI8T2rrcSlTpX5rAGhoT14HWey8Mrth6KleRU5+j1GD14lTlc
+UZBnIJTm9RGOYwWJdQ4fIJPylDwLNCbkiJGYN2Tr2dlLN6WYM0cM7oY++rlXtfYE9OuCr1KmwFFg
+CunavDX2KOzD180CB3r5de1ptbIeyYR8BYRMCKwG6SLtK0U/PkYyLVEO9AQpKrezmNxS25PkvQvO
+KTR2vfmhuMgxgX13HdTBergnk8noYI7AIb5H46S8G7m3NS5wbGNSWq+bscb6NpEEHhc4qFfj62SX
+kR///b5Xr1SnOuHA6I3kB2ONv5IsVZrGSJUkLFEODVuNK+9OsZjc6mtfsHJrlp/JZLpAP3098UqI
+6wHY/LvAS4M/UYTTNZ5LtGnhfNy+rHOJzY5UpJanLWf4z2a9LK+CO0kPncXpTrG8OjHidC4BWIs9
+XSV8kkTXoaZzolfYl6xzYn9N50SbLTwn8nZpJO9kMZG+awZegme1NHzCONQBZ47bN+Hc7scPX7aN
+TqTKhV5lOru5XELlHHP0rMGEcztP69bjW1hMg2fMvha5DnaMYkzY7oKdvyixkiMH7RZuUh+1/49S
+p/ZcLuqjtXGQCStLXViOlZiC7G0j1sdi21AuTcn81/9rteX9r7XZNxW5J+JVnIZqutXWcfiPWxH+
+Z/YP/YWuIDDsx+cAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">mod_abs_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+    <span class="n">Equals</span><span class="p">(</span><span class="n">ModAbs</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Min</span><span class="p">(</span><span class="n">Mod</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Mod</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">b</span><span class="p">))),</span>
+    <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">Real</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="mod_abs_def">mod_abs_def:</strong> <a class="ProveItLink" href="__pv_it/axioms/2f0351f6fbfdae2074247b287e7ccd88d097f8320/axiom_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

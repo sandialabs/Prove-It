@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{x, y_{1}, \ldots, y_{n}~|~x \in \left\{y_{1}, \ldots, y_{n}\right\}}~\left(\left(x = y_{1}\right) \lor \ldots \lor \left(x = y_{n}\right)\right) \textrm{ if } n \in \mathbb{N}\right..

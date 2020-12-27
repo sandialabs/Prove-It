@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.core_expr_types.tuples.merge theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.core_expr_types.tuples.merge-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">core_expr_types</a>.<a class="ProveItLink" href="../../theory.html">tuples</a>.<a class="ProveItLink" href="../../theorems.html#merge">merge</a> theorem<a class="anchor-link" href="#Proof-of-proveit.core_expr_types.tuples.merge-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> merge
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="merge">merge:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/d1fccad8c352771c41930d401a8c886e73d8ee4c0/expr.html"><img src="data:image/png;base64,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
+1QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/02bda6ecc18dba8c7187a5d4b7e38a17c8be799e0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

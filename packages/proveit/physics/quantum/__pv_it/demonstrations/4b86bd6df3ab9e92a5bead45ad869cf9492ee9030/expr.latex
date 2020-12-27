@@ -1,0 +1,13 @@
+\left(\left(\begin{array} {ccccc} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{Z{\Big \{} \left\{1\right\}} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H{\Big \{} \left\{1\right\}} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{X{\Big \{} \left\{1\right\}} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H{\Big \{} \left\{1\right\}} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{Z{\Big \{} \left\{1\right\}} 
+} \hspace{2em} \end{array} 
+\right)\right)

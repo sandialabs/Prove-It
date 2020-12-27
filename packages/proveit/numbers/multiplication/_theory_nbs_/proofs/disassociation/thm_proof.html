@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.multiplication.disassociation theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.multiplication.disassociation-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">multiplication</a>.<a class="ProveItLink" href="../../theorems.html#disassociation">disassociation</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.multiplication.disassociation-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> disassociation
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="disassociation">disassociation:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/9b0040b683399259c78e755bdedaf5a405e3ffe80/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/0fed6df28b807aab8f82c6c648011dc5daf7c26c0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}^+}~\left[\forall_{a_{1}, \ldots, a_{n}, b_{1}, \ldots, b_{n}~|~a_{1} = b_{1}, \ldots, a_{n} = b_{n}}~\left(\left(a_{1}, \ldots, a_{n}\right) = \left(b_{1}, \ldots, b_{n}\right)\right)\right]

@@ -1,0 +1,13 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \qw 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \targ 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \targ 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \qw 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& MEAS 
+} \hspace{2em}, SPACE, SPACE\right)

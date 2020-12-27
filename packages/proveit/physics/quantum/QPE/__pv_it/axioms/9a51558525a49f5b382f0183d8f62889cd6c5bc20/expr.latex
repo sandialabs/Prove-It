@@ -1,0 +1,1 @@
+\left(\frac{1}{2^{\frac{t}{2}}}, \sum_{k=0}^{2^{t} - 1} \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k} \cdot \lvert k \rangle\right)

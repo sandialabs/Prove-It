@@ -1,0 +1,3 @@
+proveit.logic.booleans.disjunction.binary_closure
+proveit.logic.booleans.in_bool_def
+proveit.logic.equality.sub_left_side_into

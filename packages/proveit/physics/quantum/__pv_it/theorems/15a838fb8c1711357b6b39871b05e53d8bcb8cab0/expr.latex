@@ -1,0 +1,5 @@
+\forall_{U}~\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{ Input(U)} 
+} \hspace{2em} = \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{U} 
+} \hspace{2em}\right)

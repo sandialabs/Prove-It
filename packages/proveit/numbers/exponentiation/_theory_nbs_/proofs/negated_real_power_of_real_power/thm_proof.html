@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.negated_real_power_of_real_power theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.negated_real_power_of_real_power-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#negated_real_power_of_real_power">negated_real_power_of_real_power</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.negated_real_power_of_real_power-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> negated_real_power_of_real_power
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="negated_real_power_of_real_power">negated_real_power_of_real_power:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/e201c42d677530eb188288562807422667ba1b050/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAU4AAAAmCAMAAACcXYLYAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAABI9JREFUaN7tWomO2yAQdVuDuQ///8eWw5wGnHh3GyMVaaVVMhmGxxxvxl6WCZdSDzOI42Xe
+BfTjTNr0tGhuK3/gFc/qn3xFn9iWNT9Npmg1J5wY9yPu50JOtvWLLcL9xJi5Xmhn/TPDH7tD1tEP
+2fU1P3npgdVa/NQdyp7+VNPRPqF7soFzLqPvvuacqKtfx880mA9OqEd5AADcdxEJwN0Dk4b+Qx2I
+JUit88G55oiwspoCwhdg0ptoOinZFnTzwIwU+gt1AqfAMXVJP7fXaMZ6xpI4Lb+kBmqlY+Go3JoW
+vOY9pktz/Rzm6rZkxGoyrIzpVU+QStXeTFvHcYx3QOssXB8ohGVOtoo3Ecx+u+FcP1pZpg4lf8Tm
+XxbQZXSG1EkyaGvaskfUJPjWMoVopT9TtyWmAfbMKaWYAE6S3TmpATKpTdGjczpXYEu4b/JSTir9
+mTolE6e3GCvJ7WJkhkq0w7o+5E6EpcxPW2ZdCBS4m84Ir/QndXDLmIX1yN2lCCKngDNFcayxDEoI
+qhbvbn/U0mX36kduRtz4riJHpS/mlm9qjLdhcLkjSHC6YW/wUcdVGDAZy/VelawLI6XOVoK+qctt
+1lMkVH3ZG0zFsP0TKjHBoHPxggCK4aglaEmM6h5ER04S+MSTkvVEHGlSBd5SbHlvWNXS5XDukEhe
+gLHLwPnBSZ4LCaH5lCPLFZCWdWMcBIAdt0jewHMgMYCT4YMm+1pa9j2ioEX28E6GgFrwFm9o6vL3
+0w7eMhv7zC5VaKPycKGCcSusmANSyIpxRAEHluLn+xtJDOC0t2fC2rpoTRYbcK40Sn8Zzraudwsl
+06ZoBecFWKOQAZybI+HVs7IxjgIBLFk3xwOJEs64qd9QpjkcUVfBzl2AiRq9jbyRO3HMzE1dr+cK
+H+ymDOHtIFjoGDTFVGqcirUa45RrHVgQwro57kuUcMZNsaMYf8yfOqyo445nld2XIu781fQjZTQq
+fQuOpq43OmB/2SI0G/bEiBQpVvBSed64BrAgxmSrm+O+RAVn3DTnJN471zqN7bLmQs4egpeSBcBb
+tK+t6/XmKaSicOk2V7mHSIj4hhUsTCDUaIyTgPU9BlQEK+S7vkQFZ9w0H2v4DLbXfGrFdTxzDABi
+GJSS+lb+a+t6nfwFcxU/zsBsENnykcyGR0XmZWOMi1AWSPK6Oe5KlHCmTbHJY79/2WymOpV9oXrQ
+ZJ66wn8+n6nMNSwW7Y5jSZQ1CshPFZituaFxTQIHDZKLF4jdbEui6Z1x00CSQtNz4p2LXAcjkHxS
+/Ak4ZT0p2DAQALqT0UhJuCmD1LZOyHplbFyDgCDScFIOofYCqTluSLTgzDb1JOnAUzY6RZE7QLeR
+4595iWD0GGsBR+IrTvOWQFNiyDvFVRHIu8zT+Pga5x9dhW2vrEsC8TrDoFfzhN7vcg9gbfvVR9D0
+87m3cu2XBcZwquuR64Ofb8EPvqcEb0fUY6fc6wzz91NKf+q7amDC58LWCdBD7ZrznS+l/0fNdy76
+xJdX2MomhdNOoJ5nk1hmXYw8zhOoWuZd7GnuycMM6i/xMTX7idlS0wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/209f128e5ee7667d1432e022e6b8f6764d4d52fb0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

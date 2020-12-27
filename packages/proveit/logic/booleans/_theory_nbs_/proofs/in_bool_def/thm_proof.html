@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.in_bool_def theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.in_bool_def-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../theory.html">booleans</a>.<a class="ProveItLink" href="../../theorems.html#in_bool_def">in_bool_def</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.in_bool_def-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">l</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">A</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">bools_def</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> in_bool_def
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="in_bool_def">in_bool_def:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/559b827ebfc7bf227a6df8a9c299bc1ccf0cb3fe0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVMAAAAUBAMAAADCT8MnAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA4ZJREFU
+SMedV01oE0EUfs1Ps9lsUoVCbxL05qWBgr0IBjwUikK8lIJgC9aDJ1sKLlaFHBSTgyS3FkSaUrGl
+Qgn2oJ4s7a2KhHqxaEugKthDKyrYClrf/O3u7O5M0AffZLMz37xv3sy8mQUIsWSDQW0vQt495NBY
+qhpGauVIoElebMr18xxol+SayFjpT9cIQHvAJ5hFBrR401cXtakNw9UQUhiB2EVSEEcCr8iLHbnR
+Fw60PR8/E8/OzzbADPadqTKQx68hAc2ScpE+F6g8QVIQ4CkdS9PFFJnwotQmnWMgj3s1mW/EGpEC
+Nl8J9PyWA23rl0qqRcsrpFgHPYFJpY44MqjFqkttElUGtCdn+Ey/s+0ml5qqo9SZQM83ODACSwcq
+qeYRUg6QYgL0BC51xkV6bWFhUm4zyYHW6M7T38GTblStfpSayfu34igDmYrID5VU+CimPZYDPYFL
+JY4E9kulW3KbExzYX+0lTQTmjmcB9A3gWrNyvo4jOQa0/tRvpdRV+oztjCroCVwqcSSAC6dMX5ZF
+m/scAI9gKCv2oZDaddhJAkGXw5tdYtu0osGA48rHv1EntHI3J0ndoiUGc1CQXIK3O0cqcSRwlm/n
+tDMJNzkA8jBNPRnebWVtLqPnUV8MEnUGnApIfldG9RktjwOMCJKKwKUSRwIJiNCxzTqT0MkB8cs9
+12hyuEBGK7YVFM9jlT+9tOUZcNP0nNpXSh2i5RwPj47ApRJHAlYjQd+tjQekxrAz2uWUN6pQbNdK
+xeJYC6nROks6OkKI1GST5o54thRYAGROaXZpk6QOZ3AUo+7i+iwtgBRizLNWhyWpfSxdNBPOqnEJ
+3u4cqcSRAJTpsmmHXv+2StbFORLNSlH9ILaV92wQ2+pByBnn31Zwd90hqQgh2wqWaIDeQ7dos8pB
+cqtx4ASaH6zL1ioGKrrs61gkFJoqK1WV1NPs38CEQ1IRuFTiSAA6SCfm9uuKOEP7GOYPdyBV+UlT
+wOM7Nem6ApmCr2M+SWblTw2eH44HHMfYTe0TH3FOkBSEXts+atvXmSMBSBMV0RpMF4IHq2Pn7tnS
+lM9pDlaNmTzHJWsuSW9zHjDD/NPRCF5XlKa9rqjNygZJrR2teB0a+5Cs3Bb/yt6zKzw6wUsgOSmN
+agvHiyGklo4EwsxztVaYob1aq60cfrXWO9IFofUHy8b/fbCk//mDZcPFXwUnQf2viAHxAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/ae44538eec8c5624aa0e2bcf8c88dc3c1926c20a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bools_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../axioms.html#bools_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/axioms/431e034907d6f96351eae8139726328016eb40280/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGYAAAAVBAMAAABGR4Y+AAAAMFBMVEX////c3Nx2dnaqqqqYmJhm
+Zmbu7u7MzMy6urpUVFQyMjJEREQQEBAiIiKIiIgAAAAUQ1kVAAAAAXRSTlMAQObYZgAAAPdJREFU
+OMtjYMAOWEKwi5c+Y8AF2BbhkukpYGB4e3r/mpsNGNZ8YGBgvQsGE2BixWCSdQGQWFDHtg3DIUwX
+wBTzAyQxO4TMhhaG59yk6zEmQ49GNsl6OK5PJ0HPAZCenvt/wOGmtQoEloJlOBfg0gMKUZDbVJzQ
+7bEpwKWHYSlEDzeHA6qW6osMOPVw3oPoYZiAJbZx6FkJsYeTYQHcPyshhm0g5B9uFgXSwm1BEYNS
+JL6wZvuFHj/Y0yhUDyRs7iYwMMTevXvm7t2bcBksAEWGOQGXDKqeA8gcBqL0gEMHBvKQZVgX4Myo
+yPkUJcJ7GnDqYcZTHgAACIJoLluo+GYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Ain_boolSet</span> <span class="o">=</span> <span class="n">InSet</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">bools_def</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="Ain_boolSet">Ain_boolSet:</strong> <a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/194f360d096e551afb8e4f09ea66e32a32b847020/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGYAAAAVBAMAAABGR4Y+AAAAMFBMVEX///92dnYiIiIQEBBERERU
+VFS6urqIiIjc3NxmZmaqqqru7u6YmJgyMjLMzMwAAADiRdoGAAAAAXRSTlMAQObYZgAAAR9JREFU
+OMtjYMAOeOZgF39ZzYALcF/EJZP8AMp4i2HNBwaGSUogoAoXewUmOS9AuffR9TAqgKnlyGLLkWUY
+eO5vIFnPrvkNEMYRJaULROo5UJ8App9UE20P24b1B8CBdZsYtxmAqW0M7wtANGsDXJ71Ai49oBAF
+ggSG/gkgmgUhv/gBLj0MN0EEX+TMeAcQ4/FdIABb8ESDAaceVnWQdxgYmMEqWzBiG5ueqyBiAQMD
+E9hjzAh5Vge8/uEA6uEFe4yzgNhwawL5/geYr4VVz/4L6PGz5f9tBi7/T+CA2+q2AVVPDohg0mYA
+J1hjcIKFpQM4SHRCTTsQsBpLSsQCoLENAQLE6YHGNiT/FSDLwPMPJkDKpzyo+TQBpx4uPOUBAOkT
+U2q64DW9AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">in_bool_set_def</span> <span class="o">=</span> <span class="n">Ain_boolSet</span><span class="o">.</span><span class="n">equivalence</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="in_bool_set_def">in_bool_set_def:</strong> <span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/aac8cdddc8e0fa7134c0a241d1c08f6eeb36987b0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/a3aa2a2a822f5d489a4516e0e4500dfd802751ea0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAU0AAAAVBAMAAAAwdKHZAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAA0VJREFU
+SMfFVz9oU0EY/9KkadK8F0RcXDQdFDRDu5U6PRDBQcGhLk5ZpIpSs4lQMA5qhFIiLnYQX9VFKbaI
+g4tJBCuhGcxWrFAyiSBiB8H/rfd9d+/P3bt7SV384He5d+/d/X733d13XwCMZt/Ttx+agf9h+Y6+
+3Xpo6nGsADCtaf8sEGPpbr/0nk0LQJs/H464cxPgbhXtmt92kMqsC5DoRie2zMFswFXeZWmg6i7Y
+p/Yy0XtsSERkT3njkvpVskI/U+G2Kf+N5UaGHe5yYHVT48oylqtUL9BkqGqi99iQCGHXuPeWmjvS
+CeORYd8JMFv/bdKZpHI3FmvEa6L32cY5MtwDb+6LhXxfrbr96FyJDDsnwOZ/fsuk0zqF5QgWs1io
+9FG2FY6PvK1z1aHf4kyf/hx21ANR4UDvDH016YRH3hZJkScVeo1OJGK4Qg+p5iU6d9ZiP+uOPknW
+lFGHahzMTqT/GHVOUJ19lyMPyvQ6nUjE8JIeXsNo2TtdwhKuSSdGArDp9ZEnaI+xmutwsMk6A99A
+eevrXKeS+aBIFZle6uCxuYQb9ODAF3JFLtB0tmDSCThQuqLMPlPiYN6B/A+jP89ReRlgD1Vkep0/
+kYhhkkLE3vn9FPkO4HzIU8U5MOpM3GRd1NAz6HCwUzJ/+5dR5yiVLS+wyfQ6nUjEMMk9AIPU75N8
+6xh0LkCsTlac6aEzW0qWAp0+fYxOcjwuGQWMweCrxHLs/kxVgg21IK17muE6KG99ncd5cHAzEKy7
+Ty91EGxIxIAbOV/yrpBsud/zbqsO8M/RB/31Ip0jeLYG/jkK6HX+FOdoQgSx3FZoX6s637qR+Jkd
+U+8vHj94DG10TTrv8KeRWfDDVIheoxOJGNg6tLcXId34Tifu1fOmrPMkrSmOypKS05SU8DhfUEYV
+62M1fjbhwvatCGuKR8gHIhkQ51uhD8xnQyKGjDLzoy/ke5PbxcjN34q5N2PMEqPmhTsy3V49Whx2
+zfCedqFnYxGdsXmI2ZJlJXus9eoh8hCom9L50M62pNGzrjavw4sw18s9q2pDvdcCeGRt0xehfN6W
+83lHKyiUJ5utbsiTjebP3pj4p+P+H2382/8Oe8f/OzY4/gKZlBhJhXt5QwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bools_def</span><span class="o">.</span><span class="n">sub_left_side_into</span><span class="p">(</span><span class="n">in_bool_set_def</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/ab748daa8f3a99f2be9ce901e45a806bf45a6e1c0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/theorems/84e653f1f9818c763d21cccc19a260efc420977d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAR0AAAAUBAMAAABCPPQ0AAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAwxJREFU
+SMedVj9ok0EUf03S/E8I0kWEmiwOOjSbVJeMHSJ0iFA6ZVMRtJs4GYfKpxRJcdBORnGxiA0uCmKS
+wUpMloBDsWDJJC6ig6BWbXz33uX7c993F/TB77i777v7/d67d38AsgMw2KWAvs8SBosO1R4zDRMR
+WZ/bx72fY6sv95dmAKZ8E0O6yUALNZRvCYssB7PqqGAasmOiEERE9pQ7t5SfkqGV/tsBpBu+4ckh
+Q1S/BoRmRZQ9qudJNFU1NMLOkZcNRqZOfZmtjvenVGQQy2MUTvqGv5dA2/2t0xOm8pAodmh+DY2t
+h4gQcfb0zX25MJkX1i2pJ1pFPdu+4bcl0J8LBzo96UVRFkSxJgqVxq9nm/GJ+wbXSpwRzzt2fMJl
+1JMsqYlZYwjtsW86PfBovLQRioxCE6BHECGuUiPSucz53+s467VQwPUP15XRsToDrRz9o9UzT3X8
+L0URUWgC9AgixCtqvIY5nmbWyZ+lUUXEgBL61Kawx/RhwMA1KYW+00z0cbPu0bNLJcbxBFW8NK7p
+bD2CCHGDGiX4wtM1Xfkc/lDE6WuKN/EqA72F7E9tfM5TeQVghioKTUB8BBGiQllzeOMoKQktC+FS
+DzTPYI+6padLDMzWjfVfWj1zVHbHB4aXJkiPIEJU2FOYpnFZd3ygOWXUg8XyBD2Jarjq6LFpDHoo
+kGIJaIPColtPLolz1JwFf+BZryhi1ZU/OY+eBd6MjTg462XTuKaz9QgihEi0bNU+au964vNunM/u
+g3Kczx+Dj1tPPsOzHbDz2UUTEB+Zz/PycEgd2Nkq74tieB5dThSV0XJf8hnUHur03OFWYQ3s7e+i
+CdAjiBAY1/7oCUTbPyjz00fKnvsUknlltIxrur3fgYujm77ZI3zCPJRuyf2k0Dh2z7LOWtZ1JkLE
+FQ8jp/m+GFvXcF8YLC2Piaw8X+PDSSO6jEzd/JvxPtUb36eOTaKx71Nomf30709xAaQmudtTO1qT
+AirfG+OHksZSxveY3lqa95iRiMjMD8m9/3uvZv75vbrH+AtergN9Aum3tAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">qed</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>
+<tr><td><a name="0xc5be13559c5f26a_step0">0</a></td><td>generalizaton</td><td><a href="#0xc5be13559c5f26a_step1">1</a></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/fc89e555990ea6ce380c23c0bf33bf8331776c8c0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/theorems/559b827ebfc7bf227a6df8a9c299bc1ccf0cb3fe0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVMAAAAUBAMAAADCT8MnAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA4ZJREFU
+SMedV01oE0EUfs1Ps9lsUoVCbxL05qWBgr0IBjwUikK8lIJgC9aDJ1sKLlaFHBSTgyS3FkSaUrGl
+Qgn2oJ4s7a2KhHqxaEugKthDKyrYClrf/O3u7O5M0AffZLMz37xv3sy8mQUIsWSDQW0vQt495NBY
+qhpGauVIoElebMr18xxol+SayFjpT9cIQHvAJ5hFBrR401cXtakNw9UQUhiB2EVSEEcCr8iLHbnR
+Fw60PR8/E8/OzzbADPadqTKQx68hAc2ScpE+F6g8QVIQ4CkdS9PFFJnwotQmnWMgj3s1mW/EGpEC
+Nl8J9PyWA23rl0qqRcsrpFgHPYFJpY44MqjFqkttElUGtCdn+Ey/s+0ml5qqo9SZQM83ODACSwcq
+qeYRUg6QYgL0BC51xkV6bWFhUm4zyYHW6M7T38GTblStfpSayfu34igDmYrID5VU+CimPZYDPYFL
+JY4E9kulW3KbExzYX+0lTQTmjmcB9A3gWrNyvo4jOQa0/tRvpdRV+oztjCroCVwqcSSAC6dMX5ZF
+m/scAI9gKCv2oZDaddhJAkGXw5tdYtu0osGA48rHv1EntHI3J0ndoiUGc1CQXIK3O0cqcSRwlm/n
+tDMJNzkA8jBNPRnebWVtLqPnUV8MEnUGnApIfldG9RktjwOMCJKKwKUSRwIJiNCxzTqT0MkB8cs9
+12hyuEBGK7YVFM9jlT+9tOUZcNP0nNpXSh2i5RwPj47ApRJHAlYjQd+tjQekxrAz2uWUN6pQbNdK
+xeJYC6nROks6OkKI1GST5o54thRYAGROaXZpk6QOZ3AUo+7i+iwtgBRizLNWhyWpfSxdNBPOqnEJ
+3u4cqcSRAJTpsmmHXv+2StbFORLNSlH9ILaV92wQ2+pByBnn31Zwd90hqQgh2wqWaIDeQ7dos8pB
+cqtx4ASaH6zL1ioGKrrs61gkFJoqK1WV1NPs38CEQ1IRuFTiSAA6SCfm9uuKOEP7GOYPdyBV+UlT
+wOM7Nem6ApmCr2M+SWblTw2eH44HHMfYTe0TH3FOkBSEXts+atvXmSMBSBMV0RpMF4IHq2Pn7tnS
+lM9pDlaNmTzHJWsuSW9zHjDD/NPRCF5XlKa9rqjNygZJrR2teB0a+5Cs3Bb/yt6zKzw6wUsgOSmN
+agvHiyGklo4EwsxztVaYob1aq60cfrXWO9IFofUHy8b/fbCk//mDZcPFXwUnQf2viAHxAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td><a name="0xc5be13559c5f26a_step1">1</a></td><td>instantiation</td><td><a href="#0xc5be13559c5f26a_step2">2</a>, <a href="#0xc5be13559c5f26a_step3">3</a>, <a href="#0xc5be13559c5f26a_step4">4</a></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/ab748daa8f3a99f2be9ce901e45a806bf45a6e1c0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/theorems/84e653f1f9818c763d21cccc19a260efc420977d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAR0AAAAUBAMAAABCPPQ0AAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAwxJREFU
+SMedVj9ok0EUf03S/E8I0kWEmiwOOjSbVJeMHSJ0iFA6ZVMRtJs4GYfKpxRJcdBORnGxiA0uCmKS
+wUpMloBDsWDJJC6ig6BWbXz33uX7c993F/TB77i777v7/d67d38AsgMw2KWAvs8SBosO1R4zDRMR
+WZ/bx72fY6sv95dmAKZ8E0O6yUALNZRvCYssB7PqqGAasmOiEERE9pQ7t5SfkqGV/tsBpBu+4ckh
+Q1S/BoRmRZQ9qudJNFU1NMLOkZcNRqZOfZmtjvenVGQQy2MUTvqGv5dA2/2t0xOm8pAodmh+DY2t
+h4gQcfb0zX25MJkX1i2pJ1pFPdu+4bcl0J8LBzo96UVRFkSxJgqVxq9nm/GJ+wbXSpwRzzt2fMJl
+1JMsqYlZYwjtsW86PfBovLQRioxCE6BHECGuUiPSucz53+s467VQwPUP15XRsToDrRz9o9UzT3X8
+L0URUWgC9AgixCtqvIY5nmbWyZ+lUUXEgBL61Kawx/RhwMA1KYW+00z0cbPu0bNLJcbxBFW8NK7p
+bD2CCHGDGiX4wtM1Xfkc/lDE6WuKN/EqA72F7E9tfM5TeQVghioKTUB8BBGiQllzeOMoKQktC+FS
+DzTPYI+6padLDMzWjfVfWj1zVHbHB4aXJkiPIEJU2FOYpnFZd3ygOWXUg8XyBD2Jarjq6LFpDHoo
+kGIJaIPColtPLolz1JwFf+BZryhi1ZU/OY+eBd6MjTg462XTuKaz9QgihEi0bNU+au964vNunM/u
+g3Kczx+Dj1tPPsOzHbDz2UUTEB+Zz/PycEgd2Nkq74tieB5dThSV0XJf8hnUHur03OFWYQ3s7e+i
+CdAjiBAY1/7oCUTbPyjz00fKnvsUknlltIxrur3fgYujm77ZI3zCPJRuyf2k0Dh2z7LOWtZ1JkLE
+FQ8jp/m+GFvXcF8YLC2Piaw8X+PDSSO6jEzd/JvxPtUb36eOTaKx71Nomf30709xAaQmudtTO1qT
+AirfG+OHksZSxveY3lqa95iRiMjMD8m9/3uvZv75vbrH+AtergN9Aum3tAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/84fb6bfbf82ffd89b2e4fb128d4f37cc62a695fa0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADcAAAAUBAMAAADbzbjtAAAAMFBMVEX///8iIiLc3Ny6urqIiIiq
+qqp2dnbMzMwQEBDu7u5mZmYyMjJERERUVFSYmJgAAAA4CJ/KAAAAAXRSTlMAQObYZgAAAQ1JREFU
+KM9jYIADpgcMyCAITL79f/burgkMDHNQ5Bh4FcDUbwYGnk4Ghk2okpwbQCT7NwYG1i8MfAtQJRlS
+QATLZyD+xsCogCY5A0TwfABa8JlBEU2OgdsASPADDddfwOCF5O5lS4BuYAPZU5/AwCrGwHAOIWmh
+wA00jQ/kIv9raUuAPhFFuLOPgesA0JECQPb5CWChZrgk108GRgegL4C6GT4yoElyHGCYXwCRZP8F
+EUIYOz+BIR5IMQtAvAkCCAfND2C4zaoAdhD3T4hQFlySx4FPlg1odQID1/6/DmAhQ6BBZ4DgJAPn
+FXddZ6CuAoTnMIJvIhIbe8DDwCFsUQYDaJHNg2INWjJ5xMAAAHA6PhPQZp1jAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/224be8945859b23e174563b695ecf20b36c7e9280/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASgAAAAUBAMAAADM5r1IAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAqdJREFU
+SMedlj1oFEEUgN8ll/NyuxuuUxuTRgtFL5XhUh3YRESwMJUQ0hmbeI2IIHg2epUEAqKkyBnSKMFY
+CAmI5wZMCElzpZ4QrvQXRUGs1PfebPZ23u7Njj7YHebtfPvezHvzZgCGWpAmuU5c9wWfNHRWKmwA
+Nrar+sdNg4/ENO4zA/qgTnIbMnIyBlvH6MUAGXuqlKsmp3ZimkLHjF5mzxv07mPFCNgCaMybY523
+6huc6q9KzVswo2wDxnj65I9XtQbQWF4t8dZisNTv6vVGPFgXpOYePhKN29jklSrSWN8aQGPvla51
+q8LtiZuJS7UsM7aGL4Em2ChU9oN2FuyBZbjBnax/lTeGuyIHfyhfw0mWhfYABUJHk2z0c7yu4NME
+e6AML7nzGkrVMP2jkp3itGwz8YSFOId+q6Pj/PGxZsPjTMhjCGmzCiDyOx1owx3uVOArf3TkBDZb
+sIDNjFDnp/Glo0kTz9V4WauQ4YBZAjNwkXPx8MNhnstR8j2a6Is+3MWmJH4xQEZ0NMlG3zfOiVpQ
+UyyBkhqYRTPsyic59hK4341OhWhvp+A+nO46lQ6U1JJiMPK86wdkLfgBORo3EUmCoha+EFU59Uiz
+keXwwUdQrQ5EfqcDE5x8QziwwJMaFFXS/QmZxmyQ6BEJE72LJk1cJTo4J9VvLYE2b3aqH87v7mQi
+sgZviqMA87LEq62roQk2BkdVUA6pEm4JzFNgdv+sQO7VL94SG8+DI+DcCxQfNq6fOoj5syQrhVpm
+DdXkvKqFI6oXFIqeAJ7gk3SCK2Bpv/SHcmY96ZipGY4Zg2wH7eegkFgBaMybg3QxHsgGGdO7dgAZ
+a1o4Fb+6OB1IR1255lbATvfiZZSm8ZLXU5welzwz0LS4otKy/+d1eO9fr8N7ythfBs3+I76SJcQA
+AAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../__pv_it/common/a0d9d672aa5e272d907247690c152cc2c6daafb70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAALVBMVEX///9mZmaqqqrMzMxEREQy
+MjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAACJHQtQAAAAAXRSTlMAQObYZgAAAEJJREFUCNdj
+YLhzeuWJAwy8Dew5bAEMHBc43nIuYOBlYHFgAAG+A2DKzgBIMF04x8BzgWGegh/DcgaG22fuiBcw
+AAATyhBrnyPYZQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../__pv_it/common/97424376de9815ad99f7180e3191b1cf4ab2a5710/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAOBAMAAAAGUYvhAAAALVBMVEX///92dnaqqqqYmJhmZmbu
+7u7MzMy6urpUVFQyMjJEREQQEBAiIiKIiIgAAADLM1dYAAAAAXRSTlMAQObYZgAAAE5JREFUCNdj
+uLNr3ewTBQwMDBNyWZc6A+kFxQzXuCC0EpQWjwLT7MfaQHT1udcFEHFhQwjNxW4AoRkawDQHwwQI
+n1kAaG4ig6AHAwPUHgCe0xzmuIDRVAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../__pv_it/common/ff7dba4ef0bbe791ab573bf2d9c220a304399ac80/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAANBAMAAACN24kIAAAAMFBMVEX///8iIiKYmJhUVFTMzMxE
+REQyMjKqqqq6urp2dnYQEBDc3NxmZmaIiIju7u4AAACH5sGpAAAAAXRSTlMAQObYZgAAAFlJREFU
+CNdj4LtzgWHXAwZOjgUM9xkYtvMkMIQyMDzgusDwl4GBof8ByxcgdYyBdwGQCmZgNQBShxn6FYDU
+47vnNzAwgGUZGJgT+H4AKUYF1gtAiuPuESAJAJGkFvXVdzA+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../__pv_it/axioms/8de6b7a9c15c035c2442c799647897b14dacace50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADsAAAAVBAMAAAAKrYvGAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAJ9JREFU
+KM9jYGDgu8eADbBePACieHYxYAdMqSCS7wMDw82ZIDADrrEATN0GEVwTwOxCJH3sAmBq5QBKLwMR
+HBtwSb8HEWUBuKS5LzAwhExmwCXN0Amk1XDrbgDZ7YDXbgIuR5Y+vwGXv/VABOccBgbemTOnZc6c
+2YAqDQE1yDEKkU5AElmAIQ2KbxjgEUCWBsc3A1Jq4UNJLUkQd+JJawBEEjEuvk8gMwAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="0xc5be13559c5f26a_step2">2</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../equality/_theory_nbs_/proofs/sub_left_side_into/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../equality/__pv_it/theorems/8c444378a3a7afbc2953d40707cf277d9e5724670/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAL8AAAAWBAMAAABj11ATAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAthJREFU
+SMe1VU1oE0EU/rruTzbZJl48eQkWSgkFcxFUREKFqmA19SDeDMEWKrXtoR4sKvGWCrW5WQRxBalY
+PAQ8iIK41IMQg0YURFDYs1C7KEpbi/rmp5vdJhHF+GD3zXxvZr43782bAf6H3JD6IX0ua3xoz7qd
+4yvDY3uBaEECegl4zhof2+R5gty9bCNekv0o9edIm4U2EZxygCdJvPaBRSBuA1a5TQQ7M/Q5OO8D
+tyhulYWFa+1K7ix94xlzwgfixLhSLF74w/k8tNpvBvygcH+Bkqbo7xjpo/hY1BwCpgF1dnT3mcYZ
+Gf6XRot3YpmW62vrwAMHkRpwD2+Tlyg+lOUDPNd4BTxrnCKzL4wjorOnJYHyrfo0BRiU0gpe2ofJ
+G4qWAYUYMUzpaUnAjZojOvMtCSJrXHXQHm0U+Z482njNYM2LEFBTAm7UszJxpZZlMOETAJ83CEz3
+BCuJVShT7ODu6qZ11G4Ydp1AGMmPvhymxIatruNDclkOijJIc8VCBO0rzx6jnD7NWuu9rKYVe8wg
+fithDwZ2IIx0mJ01bStiOYJSujupF0lmBOiXAYsUefBI8ZASScZ9xmK54hxgianrB9ETIBDGQzBv
+TygFqAzMxmtyAwLksmyL4Wmo3yOeSSO2sLwlkow1Lcev8v8+5AMEwtjPxutJaJwu4WeCg0z2/xST
+KC7RfKqL3aBxlrdOxpuQt4Xm8UKaxLYAgTCepOhmOrJQczzeyOqfSJYEGJL6VXGnfk0xh+bsm5Zr
+kcI51QsQcCMbbGSPkUOOecX0XkCeWgGGJHTZyRJZZuUzWJ5/s1ghhf4et04gjOxcqfmrFJKMtj16
+9kivLedyMFwPwes6JDJO5WgpUgvWgXCijLuYobhSgQYncTAk/oMT2VQysZJUunMUDQTUGVXJpcfi
+KfSFg82fzHebn7wNpb53mhAMYKBK7tGRqoXg6j9c8OnGDSr2X63wC2jlxTKsC1d/AAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../equality/_theory_nbs_/proofs/sub_left_side_into/thm_proof.html">proveit.logic.equality.sub_left_side_into</a></td></tr><tr><td><a name="0xc5be13559c5f26a_step3">3</a></td><td>instantiation</td><td><a href="#0xc5be13559c5f26a_step5">5</a>, <a href="#0xc5be13559c5f26a_step6">6</a>, <a href="#0xc5be13559c5f26a_step7">7</a></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/aac8cdddc8e0fa7134c0a241d1c08f6eeb36987b0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/a3aa2a2a822f5d489a4516e0e4500dfd802751ea0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAU0AAAAVBAMAAAAwdKHZAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAA0VJREFU
+SMfFVz9oU0EY/9KkadK8F0RcXDQdFDRDu5U6PRDBQcGhLk5ZpIpSs4lQMA5qhFIiLnYQX9VFKbaI
+g4tJBCuhGcxWrFAyiSBiB8H/rfd9d+/P3bt7SV384He5d+/d/X733d13XwCMZt/Ttx+agf9h+Y6+
+3Xpo6nGsADCtaf8sEGPpbr/0nk0LQJs/H464cxPgbhXtmt92kMqsC5DoRie2zMFswFXeZWmg6i7Y
+p/Yy0XtsSERkT3njkvpVskI/U+G2Kf+N5UaGHe5yYHVT48oylqtUL9BkqGqi99iQCGHXuPeWmjvS
+CeORYd8JMFv/bdKZpHI3FmvEa6L32cY5MtwDb+6LhXxfrbr96FyJDDsnwOZ/fsuk0zqF5QgWs1io
+9FG2FY6PvK1z1aHf4kyf/hx21ANR4UDvDH016YRH3hZJkScVeo1OJGK4Qg+p5iU6d9ZiP+uOPknW
+lFGHahzMTqT/GHVOUJ19lyMPyvQ6nUjE8JIeXsNo2TtdwhKuSSdGArDp9ZEnaI+xmutwsMk6A99A
+eevrXKeS+aBIFZle6uCxuYQb9ODAF3JFLtB0tmDSCThQuqLMPlPiYN6B/A+jP89ReRlgD1Vkep0/
+kYhhkkLE3vn9FPkO4HzIU8U5MOpM3GRd1NAz6HCwUzJ/+5dR5yiVLS+wyfQ6nUjEMMk9AIPU75N8
+6xh0LkCsTlac6aEzW0qWAp0+fYxOcjwuGQWMweCrxHLs/kxVgg21IK17muE6KG99ncd5cHAzEKy7
+Ty91EGxIxIAbOV/yrpBsud/zbqsO8M/RB/31Ip0jeLYG/jkK6HX+FOdoQgSx3FZoX6s637qR+Jkd
+U+8vHj94DG10TTrv8KeRWfDDVIheoxOJGNg6tLcXId34Tifu1fOmrPMkrSmOypKS05SU8DhfUEYV
+62M1fjbhwvatCGuKR8gHIhkQ51uhD8xnQyKGjDLzoy/ke5PbxcjN34q5N2PMEqPmhTsy3V49Whx2
+zfCedqFnYxGdsXmI2ZJlJXus9eoh8hCom9L50M62pNGzrjavw4sw18s9q2pDvdcCeGRt0xehfN6W
+83lHKyiUJ5utbsiTjebP3pj4p+P+H2382/8Oe8f/OzY4/gKZlBhJhXt5QwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../../../__pv_it/common/8968bb04eb3f7dfa02353397ce929b025bbd79c20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAJBAMAAAD0ltBnAAAAMFBMVEX///8QEBCYmJgyMjIiIiKq
+qqrMzMzu7u5ERERmZmaIiIjc3NxUVFR2dna6uroAAABXsXCEAAAAAXRSTlMAQObYZgAAAEdJREFU
+CNdj4Luze9UsBgZeji6G+g0MqSwGDPsTGArqHzDoMzAwxDMwHAZSkxkYPrEzMMgysH7nZeD+x8Br
+oMbA58DAfSgAABUwDxmEwURaAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../../../numbers/numerals/__pv_it/common/ba3b059982e8b49413dc653e957beb11e974e4bc0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAOBAMAAAAPuiubAAAALVBMVEX///+qqqqIiIgyMjLc3Nwi
+IiIQEBC6urp2dnZUVFTMzMxERERmZmbu7u4AAAAQI6y7AAAAAXRSTlMAQObYZgAAAFJJREFUCNdj
+4D2zewEDw00GjucMDGcZGNIYGFIZGOY5MNhdYJgHlGBgiLsAJNhfgJisE0DkGRDBdABEyjCwODBw
+NTAwOTC4dvRMZWCwe/fuKQMANh0TGKpG4roAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../__pv_it/common/a0d9d672aa5e272d907247690c152cc2c6daafb70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAALVBMVEX///9mZmaqqqrMzMxEREQy
+MjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAACJHQtQAAAAAXRSTlMAQObYZgAAAEJJREFUCNdj
+YLhzeuWJAwy8Dew5bAEMHBc43nIuYOBlYHFgAAG+A2DKzgBIMF04x8BzgWGegh/DcgaG22fuiBcw
+AAATyhBrnyPYZQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../../../__pv_it/common/09585084922504426caf1db2ff588a23a0932a960/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAALVBMVEX///8iIiIQEBBERERUVFS6
+urqIiIjc3NxmZmaqqqru7u6YmJgyMjLMzMwAAACK9jtgAAAAAXRSTlMAQObYZgAAAFtJREFUCNdj
+YACBOwxQcA5Kc59bAGGs7CuAMDbkBYBp1gXzNoAZSxnuJYAZAQx1DSCa16PDzwCshIGB6QCIMYGB
+gVEBSLMDGTwPgIxCIGZ+zsCw+N0pBk67hw0AfpEVEQi8t+wAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../__pv_it/common/ff7dba4ef0bbe791ab573bf2d9c220a304399ac80/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAANBAMAAACN24kIAAAAMFBMVEX///8iIiKYmJhUVFTMzMxE
+REQyMjKqqqq6urp2dnYQEBDc3NxmZmaIiIju7u4AAACH5sGpAAAAAXRSTlMAQObYZgAAAFlJREFU
+CNdj4LtzgWHXAwZOjgUM9xkYtvMkMIQyMDzgusDwl4GBof8ByxcgdYyBdwGQCmZgNQBShxn6FYDU
+47vnNzAwgGUZGJgT+H4AKUYF1gtAiuPuESAJAJGkFvXVdzA+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../__pv_it/axioms/315a8b9bf65b427d70263f865647f1527443ff150/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAUBAMAAADfOGjQAAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAALBJREFU
+KM9jYOC7wIAN5IGI0wycHWCgABMWAxFMD4DEOhCLrQBJSzqI4FnAwMA7AbscgzkDA8cDHHJHGRhe
+MOCQ43JgqMQlxzyBYS8uOd4FDG245NgaGEJwyTF+wCuH00yWBrxusUTI8fxCluM0YPCAGACOjI4D
+DAwzOjpCOzqagH4XgIYZBLAdQDL5BCysIYAZOQKBYc2wD8E9jiQFiiNg3MIBcgrgBtmFI03cY2AA
+AKg3L5dygH0EAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="0xc5be13559c5f26a_step4">4</a></td><td>axiom</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../axioms.html#bools_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/axioms/431e034907d6f96351eae8139726328016eb40280/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGYAAAAVBAMAAABGR4Y+AAAAMFBMVEX////c3Nx2dnaqqqqYmJhm
+Zmbu7u7MzMy6urpUVFQyMjJEREQQEBAiIiKIiIgAAAAUQ1kVAAAAAXRSTlMAQObYZgAAAPdJREFU
+OMtjYMAOWEKwi5c+Y8AF2BbhkukpYGB4e3r/mpsNGNZ8YGBgvQsGE2BixWCSdQGQWFDHtg3DIUwX
+wBTzAyQxO4TMhhaG59yk6zEmQ49GNsl6OK5PJ0HPAZCenvt/wOGmtQoEloJlOBfg0gMKUZDbVJzQ
+7bEpwKWHYSlEDzeHA6qW6osMOPVw3oPoYZiAJbZx6FkJsYeTYQHcPyshhm0g5B9uFgXSwm1BEYNS
+JL6wZvuFHj/Y0yhUDyRs7iYwMMTevXvm7t2bcBksAEWGOQGXDKqeA8gcBqL0gEMHBvKQZVgX4Myo
+yPkUJcJ7GnDqYcZTHgAACIJoLluo+GYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../axioms.html#bools_def">proveit.logic.booleans.bools_def</a></td></tr><tr><td><a name="0xc5be13559c5f26a_step5">5</a></td><td>axiom</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../sets/enumeration/_theory_nbs_/axioms.html#enum_set_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../sets/enumeration/__pv_it/axioms/b01212efd6e28480519640e6f97d2066a14ba12d0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../sets/enumeration/_theory_nbs_/axioms.html#enum_set_def">proveit.logic.sets.enumeration.enum_set_def</a></td></tr><tr><td><a name="0xc5be13559c5f26a_step6">6</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/nat2/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../numbers/numerals/decimals/__pv_it/theorems/f05a14f3b1e025929c966a4ccb020e28f34812b20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAPBAMAAABU9YHxAAAAMFBMVEX///+YmJiqqqqIiIgyMjLc
+3NwiIiIQEBC6urp2dnZUVFTMzMxERERmZmbu7u4AAADrYmUNAAAAAXRSTlMAQObYZgAAAOBJREFU
+GNNj4Lt7ZgMDMuDzP+PHwFlfwfCKgfMHigwDj8AuBob3DAz3GBjKUWW4spkNGNgZGMoYGNYHgEVk
+0tIcwDI9D1YzsDEw+D9gWA+2aI8dTE/0gicP2MDM/Acgi/3gpgUocy8Ay3D8hPARMpwNwmAZtgVg
+FyFcEMCwjmsbiHUXzN/uAgQOUJlXDO5ABvMFsEwMsh7uCduBDF0GVpAV7MgyDEJAw7knMDCDZHgN
+4DJAT3ACjQibOXcZWCAJJsOiACSuAH36//83sMCrEw/ANHd+DZB8ghxenccgoQMFAOa6NR2IZoaj
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/nat2/thm_proof.html">proveit.numbers.numerals.decimals.nat2</a></td></tr><tr><td><a name="0xc5be13559c5f26a_step7">7</a></td><td>instantiation</td><td><a href="#0xc5be13559c5f26a_step8">8</a></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/98f045433d7cd8c9ee8441561d7e775698489c240/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_in_bool_def/3d88a8bb76a9685a070535965ddc23f65b6c8d860/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMoAAAAVBAMAAAD1I2xhAAAAMFBMVEX///9UVFQQEBCqqqoiIiJm
+ZmYyMjJERESYmJjc3NyIiIi6urp2dnbu7u7MzMwAAAADGpxCAAAAAXRSTlMAQObYZgAAAdRJREFU
+SMe1lT1Iw0AUx1+bJk3bRIqbW3EXHFwUhAhdBIUIgg4OnVwEcXWRLgpuHXXr4uASOji4WQcXK1hF
+O7gouFp0KjjUeh9J7pr0XergGy4vl/e/H/eR/0EXEqOb2JE4QIs9T0Z/nmdtK9qt1Mih1fx6prD3
+YL1MYykseKdNqoZTiEYZzxsHAFMyxWCjLchF7MWu4BSq0WZQiF2E+wZ0ZMohjKbALU4hmofrPkrR
+25AugVWXKMsY5RGnUI2JU9IOpL7BLglKzsEoRgOjMI2CYvQh9QOwIyh5F6NYLkZhGgWFRIZ8vRGU
+bBWjmJWAYm2zcAMK06gpV02AI0HJzGIUzcHmwjRqCv0t5gQl3cAoE18YhWmUFJ3O+/O/KWcwTMFX
+rOBE9qU49oppLpwCXPxt96NzSdz9D4Dzod23pJP8WpEpehOjME2+7wtoY/fkJLdyt0YWYktQCvyv
+vGSHfJU0xDqnmXUabxiFavTJ3iYXZIr+mWJJuU2Ug8GAlOzGHIbHojzek9ph4gK+Je3QM52YW/Jo
+yvVqtxwh4I4hMtktszXh2HXZvhXOH2iGBDxewqwTucWCMOXy7Bi3mBk/XtUw2/frPdXtesxaL9rt
+jXsjm3y+3i+FJau4cX6g0wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../../../__pv_it/common/c06c606ec12678c58933ac85412ecadc2ae28be60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAAEdJREFU
+CNdjYOC7c3slAwND1wP2DwwMnMsYeAMYGHh/MrBsYGDgCmCYb8DAMP8Agz5QxXwFBnGmBwysG9gc
+eYAqpTc/3MEAAP4BD32xAXDqAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../__pv_it/common/95025295868b9266d37330b4427adf122f6061770/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAAG1BMVEX///+YmJi6urqIiIiqqqpU
+VFQiIiJmZmYAAAD2GhH1AAAAAXRSTlMAQObYZgAAABhJREFUCNdjKEsDgVQGIHBmgABa0YpADADk
+ogYfXGfJdgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../__pv_it/common/195236b98c6c564a75b5dbada74b173bc52d5c3e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAOBAMAAAAPuiubAAAALVBMVEX///+YmJjc3NyIiIhUVFR2
+dna6urqqqqpmZmYyMjIiIiIQEBBERETu7u4AAAALjtrwAAAAAXRSTlMAQObYZgAAAE9JREFUCNdj
+4D29gAEIOBtAJF8BiMy7ACKjQATDFON2BgbelxfuKTCwv2XgM2DgmMBwLwCkPK+AgU+Aoe8CA18C
+70YGBhYBHqARvM2BDAwAqXgQspq5HJAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../__pv_it/common/e0f123f2e4f322e1eba7f861749cda9fd9d99a120/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAAG1BMVEX///9UVFQQEBAiIiJmZmaI
+iIiqqqrMzMwAAADC2JlRAAAAAXRSTlMAQObYZgAAABlJREFUCNdjYGBgKGOAgFRa0s7GxkrGxoYA
+QSUGlQeagkgAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="0xc5be13559c5f26a_step8">8</a></td><td>conjecture</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/tuple_len_2_typical_eq/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../numbers/numerals/decimals/__pv_it/theorems/bb1c1a418873d36ac86831cd16ffb643d1ab33940/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPsAAAAWBAMAAAD0hvfJAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAxVJREFU
+SMe9lk9o01Acx39N1iZNk3YHT4JQ1A68hR1EcMOKh52k9eJBhNWhB0EkFyfOHeZBWA9CTm4ehKjg
+xg426EH0YnFFwT9Y8KKC0oMTpjCGILgeWt/v5b0mbfrSiuCDpl/e++X7Sd775fcegLidgr8ZjIwO
+t7gTOZysQ42L7vaEXmu9N3gdtweDUzZe9Tw1aqD+HA5a5YargU7tmgWQsMV4bSEafe/QdYDzDI9G
+r1F/DwducsJmsDdtEkRDjE8Tx9RuIV0rwbs8PGB4NFrG+Q0/s2EyQxR+y7jk8lyMfw9w/0VTiJcd
+iI2CnvXwaJQmKaC7oUDFZoaKHewuYMLcEeOv4AOL8TELEjugjTI8MTJera0thQOXuGH32Es6w3kR
+PmlF49NNSPwC+MrwaPR7cXE+HLiPE1AkJ8bZen7be5jcaYrwkhmNx9kko+sMj0bnAMp8bGSLqxuc
+gOKond72UqflVGwwGnxQ36LN5Hi1PhBfqAJ8YXg0OsZSmbZ1Lq5yAhHaHpC95Ew1IZOFlCV6e8Ud
+iJ8lv8cMj0YKSH5h+cHFLk4gQm6CkvUytwGVKsS3RfhYfhBexpmaZng00uuKP7rTDx9bgEqRf/YF
+95/wmEpd+GTjJJajsQ0sxD/HnPDkkxd+xj77OhxxYMTqWfvS0JOfMuEWwBTDU6PyWbK8l+J4kzQn
+meHUq7hw0SvUmTzJg0Dq9b79wNQ7DXCgO/XgkYVLEscnUbNGw8/BGhOkd1aHChlJ1FXyeHJVhKef
+pETwGEwvWisokvNvDhLOBMNTI5LLEHOlEl07ueSZTXECEdpM7uZ+UOaIGn+LGVAU4XE25TOtSRoM
+SollOhWXybKm2+02CdngZQeNDNJfsdVP5C/jxFxh0X3KxUp00e0O9pe9s8FrFsOvdIqxPX0clh3F
++SDecqpcRG85PcGdpvsqsOWwcjfzcBJOuPELndvKnMBLopblImLDVe2eYL/d7ajghhtsbtRxw+Aj
+6hDHDSOc9H5tKzO8avc5BfmHrVz/w9ZHes312ueGPWwZFCMVmZHfD/+9/QF9Af9Lm1VaRQAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/tuple_len_2_typical_eq/thm_proof.html">proveit.numbers.numerals.decimals.tuple_len_2_typical_eq</a></td></tr></table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

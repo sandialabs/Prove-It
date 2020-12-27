@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.addition.add_complex_closure_bin theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.addition.add_complex_closure_bin-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">addition</a>.<a class="ProveItLink" href="../../theorems.html#add_complex_closure_bin">add_complex_closure_bin</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.addition.add_complex_closure_bin-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> add_complex_closure_bin
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="add_complex_closure_bin">add_complex_closure_bin:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/0e41a4fe54ba45da984a9cde0fa4ffe2b5dd8fdb0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALYAAAAVBAMAAAAZVgl3AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAtFJREFU
+OMutVU1oE0EU/pLN5meTTTx4EsSgtQcPstSjtVZFelGaItUehJaiiCBSEa2oSATRBCvsyRb0sFpQ
+idIsFZFKwdIeBEUJiNAWtHvQglUW9aQVxTe7k02m26QKPng7b97MfvP+5g2wMsVKLi9LYzX0cR2w
+mPC2LvY9zktJudgHhHWffvOFr2c0HAVesNlCXeyPnH2U1OgAa6m28yeGf2kYAYaY09l60KrmcoVG
++Zgy6TO5dHs4DcxpSKSRNICEWQ87orvsx26nf3GLT6b7+x0X3gRIG9agrIL6vFAYrBuSQc5+7GdO
+YFoduWsTV2osEgrZ/h74nsudr4u9gXOsuWmNiD2/fis57YRLKadM6dnHpSngMJAvw4TsZbCvcd6h
+J78I2Mpvo6hDdSLhlUtsYieX3gG7qlM95ZXnwJFeLp5zWVkLKStgxxeRSiPex+Sodxm0MvZjShOC
+lXvxiZkzvqWkdBnyZ65b7bK0iAhFEa9s+4Rtz5MkWShOQHac6bCJmI1K9iD/r5viVYpU/P/BEj5W
+gHoTGBexA1kUM4LdVN7tJsce8iAWwhXsmLWfhOHGD/SVvzUaIZab3Y9oQYwJmfhUrJNUCdsNhJyY
+BDzs1w421WEbDflD5MkpeZHE4NmglmRLszO+XBZNHI/rAnYr5YDnUkqXt0cbSAxZTi7xkA6WNJkd
+H02r1jDb8KSqBU25TGunE4Ld4VKUfJQmPO9cahkw7ufI7mZ2PJ0TMIM9zLNWqedALpdL3+isYLe5
+rPRuvN4g1mDTSxZ1Nwl3Lhl8v9yy7iTTsSCrpCzq0VkaUkbAdMIl3aZfV7zzDt3l454r/ULbUvq4
+ENC792LIiBjTSGScO5jxmpC/VxWqJ5M1rnOinIFQ7+g2dJjyMQreVaZ4YF/OlHflUXV1fU3cqrEw
+Ik7ddhikeP/V2+CWhV5jIe97hv75TZup1fVFMBX/l/4Ai/3AHpQ7Oh4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/6a1a687fa3e953e33a1038481b8b57d3021769760/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

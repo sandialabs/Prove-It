@@ -1,0 +1,3 @@
+proveit.logic.booleans.conjunction.nand_if_not_right
+proveit.logic.booleans.true_is_bool
+proveit.logic.equality.substitute_truth

@@ -1,0 +1,5 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} & \gate{H} & \gate{X} \qwx[2] & \gate{H} & \rstick{\lvert + \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \multigate{1}{H} & \gate{H{\Big \{} \left\{2\right\}} & \gate{X} & \rstick{\lvert - \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \ghost{H} & \gate{X} & \gate{X} & \rstick{\lvert - \rangle} \qw 
+} \hspace{2em}

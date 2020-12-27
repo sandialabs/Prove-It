@@ -1,0 +1,2 @@
+proveit.logic.sets.inclusion.subset_eq_def
+proveit.logic.sets.intersection.intersection_def

@@ -1,0 +1,11 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{I} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& X 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{I} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \rstick{\lvert 1 \rangle} \qw 
+} \hspace{2em}\right)

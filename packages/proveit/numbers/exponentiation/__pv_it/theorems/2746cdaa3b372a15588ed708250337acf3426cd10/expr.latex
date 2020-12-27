@@ -1,0 +1,1 @@
+\forall_{m \in \mathbb{N}^+}~\left[\forall_{a \in \mathbb{C}, k_{1} \in \mathbb{N}^+, \ldots, k_{m} \in \mathbb{N}^+}~\left(\left(a^{k_{1}} \cdot \ldots \cdot a^{k_{m}}\right) = a^{k_{1} + \ldots + k_{m}}\right)\right]

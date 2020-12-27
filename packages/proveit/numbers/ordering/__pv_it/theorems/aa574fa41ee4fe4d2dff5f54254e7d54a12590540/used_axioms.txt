@@ -1,0 +1,4 @@
+proveit.logic.equality.equals_symmetry
+proveit.numbers.ordering.greater_eq_def
+proveit.numbers.ordering.less_eq_def
+proveit.numbers.ordering.reverse_relation

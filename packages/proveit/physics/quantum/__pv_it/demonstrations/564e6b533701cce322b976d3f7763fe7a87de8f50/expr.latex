@@ -1,0 +1,5 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, 1}{\Big \{} S_{i, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, m}{\Big \{} S_{i, m}} 
+} \hspace{2em}\right)

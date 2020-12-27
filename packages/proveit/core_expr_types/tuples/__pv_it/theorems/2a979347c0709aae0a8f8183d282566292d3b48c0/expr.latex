@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}^+}~\left[\forall_{f_{1}, \ldots, f_{n}, i, j~|~\left(j - i + 1\right) \in \mathbb{N}}~\left(\begin{array}{c} |\left(f_{1}(i), \ldots, f_{1}(j), \ldots\ldots, f_{n}(i), \ldots, f_{n}(j)\right)| \\  = \left(n \cdot \left(j - i + 1\right)\right) \end{array}\right)\right]

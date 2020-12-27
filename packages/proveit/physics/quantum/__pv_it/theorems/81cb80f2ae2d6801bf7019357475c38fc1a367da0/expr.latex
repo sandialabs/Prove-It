@@ -1,0 +1,23 @@
+\forall_{ \scriptsize \begin{array}{c}
+A_{1, 1}, \ldots, A_{1, k}, \ldots\ldots, A_{m, 1}, \ldots, A_{m, k}, B_{1}, \ldots, B_{m}, \\
+C_{1, 1}, \ldots, C_{1, h}, \ldots\ldots, C_{m, 1}, \ldots, C_{m, h}, D_{1}, \ldots, D_{m}, \\
+S_{1}, \ldots, S_{m}, R_{1, 1}, \ldots, R_{1, k}, \ldots\ldots, R_{m, 1}, \ldots, R_{m, k}, \\
+Q_{1, 1}, \ldots, Q_{1, h}, \ldots\ldots, Q_{m, 1}, \ldots, Q_{m, h}\end{array}
+}~  \\
+\left(\begin{array}{c} \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1}{\Big \{} S_{1}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{B_{m}{\Big \{} S_{m}} 
+} \hspace{2em} \cong \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{1}{\Big \{} S_{1}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{D_{m}{\Big \{} S_{m}} 
+} \hspace{2em}\right) \Rightarrow  \\ \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}{\Big \{} R_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{1, k}{\Big \{} R_{1, k}} \qwx[1] & \gate{B_{1}{\Big \{} S_{1}} \qwx[1] & \gate{C_{1, 1}{\Big \{} Q_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{1, h}{\Big \{} Q_{1, h}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{A_{i, j}{\Big \{} R_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{C_{i, j}{\Big \{} Q_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{A_{m, 1}{\Big \{} R_{m, 1}} & \gate{\cdots} & \gate{A_{m, k}{\Big \{} R_{m, k}} & \gate{B_{m}{\Big \{} S_{m}} & \gate{C_{m, 1}{\Big \{} Q_{m, 1}} & \gate{\cdots} & \gate{C_{m, h}{\Big \{} Q_{m, h}} 
+} \hspace{2em} \cong \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}{\Big \{} R_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{1, k}{\Big \{} R_{1, k}} \qwx[1] & \gate{D_{1}{\Big \{} S_{1}} \qwx[1] & \gate{C_{1, 1}{\Big \{} Q_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{1, h}{\Big \{} Q_{1, h}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{A_{i, j}{\Big \{} R_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{C_{i, j}{\Big \{} Q_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{A_{m, 1}{\Big \{} R_{m, 1}} & \gate{\cdots} & \gate{A_{m, k}{\Big \{} R_{m, k}} & \gate{D_{m}{\Big \{} S_{m}} & \gate{C_{m, 1}{\Big \{} Q_{m, 1}} & \gate{\cdots} & \gate{C_{m, h}{\Big \{} Q_{m, h}} 
+} \hspace{2em}\right) \end{array}\right)

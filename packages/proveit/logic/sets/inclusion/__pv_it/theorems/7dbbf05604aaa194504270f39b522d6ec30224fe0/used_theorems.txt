@@ -1,0 +1,3 @@
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.sets.inclusion.unfold_proper_subset
+proveit.logic.sets.inclusion.unfold_subset_eq

@@ -1,0 +1,1 @@
+\left(round(\left(x + y + 2\right) + 1), round(x + y + 2) + 1\right)

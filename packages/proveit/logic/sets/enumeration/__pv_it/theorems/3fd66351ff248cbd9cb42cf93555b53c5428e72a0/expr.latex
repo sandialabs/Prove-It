@@ -1,0 +1,1 @@
+\left(a_{1}, \ldots, a_{n}\right) \mapsto \left[\forall_{P~|~P(a_{1}), \ldots, P(a_{n})}~\left[\forall_{x \in \left\{a_{1}, \ldots, a_{n}\right\}}~P(x)\right]\right]

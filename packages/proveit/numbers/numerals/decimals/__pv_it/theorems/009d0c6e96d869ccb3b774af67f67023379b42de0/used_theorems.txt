@@ -1,0 +1,3 @@
+proveit.numbers.numerals.decimals.add_1_1
+proveit.numbers.numerals.decimals.nat1
+proveit.numbers.numerals.decimals.tuple_len_1_typical_eq

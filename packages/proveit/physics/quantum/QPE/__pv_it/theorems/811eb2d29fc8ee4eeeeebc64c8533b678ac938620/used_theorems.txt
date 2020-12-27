@@ -1,0 +1,8 @@
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.addition.add_int_closure_bin
+proveit.numbers.modular.mod_int_closure
+proveit.numbers.number_sets.integers.nat_within_int
+proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
+proveit.physics.quantum.QPE.two_pow_t_is_nat_pos
+proveit.physics.quantum.QPE.two_pow_t_not_zero

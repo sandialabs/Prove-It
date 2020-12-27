@@ -1,0 +1,1 @@
+\left(f, i, j, m, n\right) \mapsto \left\{\left(f(m, i), \ldots, f(m, j), \ldots\ldots, f(n, i), \ldots, f(n, j)\right) = () \textrm{ if } \left(j + 1\right) = i\right..

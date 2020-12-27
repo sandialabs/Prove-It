@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.physics.quantum.QFT</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.physics.quantum.QFT">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.physics.quantum.QFT</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.physics.quantum.QFT">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">n</span>
+<span class="kn">from</span> <span class="nn">proveit.linalg</span> <span class="k">import</span> <span class="n">MatrixProd</span><span class="p">,</span> <span class="n">SU</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">subtract</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">NaturalPos</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="n">RegisterKet</span><span class="p">,</span> <span class="n">RegisterBra</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum.QFT</span> <span class="k">import</span> <span class="n">InverseFourierTransform</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.physics.quantum.QFT&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">inv_f_tin_s_u</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">n</span><span class="p">,</span>
+    <span class="n">InSet</span><span class="p">(</span><span class="n">InverseFourierTransform</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">SU</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">n</span><span class="p">))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="inv_f_tin_s_u"><a class="ProveItLink" href="_proofs_/inv_f_tin_s_u/thm_proof.html">inv_f_tin_s_u</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/1db867ceefae0450cd2f699308bf5b0c18ef9b9b0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOwAAAAmBAMAAAA1jmr1AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABFFJREFU
+WMOtmF1oFFcUx/87O7O7MzuziQ9pUalJ9UEJJS6GKohKgtAHC+3gQx9KwbVW09IHUyJoQDRNQFdC
+y1YoiiAZfWjE0jYQFtqH0tGotNbilqSF0q/FUh8KNRtb40cq23vv3PnKrNtbnAuZvXvmzPzuPefc
+c84GEBo/I7ahFYRVpWp8WLwgrNlrxYiVRLertSHO8aegXqoQK/Y9QdvtKEVErz0GVnQXNxErVnkg
+pKbej8quPo6VbwhpJaPH592R5f8TNf3dyrw7/1boiURHVNYZCYuu3xcJftnHPk4732aewlLgMzYf
+60H1v5PQmEn80VfftX72Adpv7ry7Z7YfuyNal+hl8po9o/bNjSJTv+FItCFo3UVTPdsP4tIUC86E
+ja/p5x9Nsb+yOLhH/trIiqWHUFox2hCbqeBcDfrfZLqSLyRXwgdUkuqQW8ki2C5TVZykMTPUFLuB
+xdU8ufyo5SkWhUdguwGjilyNTDdy7DSbLkHCTNrEahdZnqohR5ykTzTFHvCwZ9UKw3biTfemcXT/
+IRer3QHkDrTQXRQ4dhB4EthbGkP6eYI9Q2XZ+zCunj9/onlI/cWxqqWrJsO+7J1bZdjydyuTW4qJ
+F0kIaraDVfuBWQt7zecgfUNt3kMfWgDuFYsHG7Bsf3qbYw0WDxQLPMvvfWwFjKzVL9PZdbIro8fB
+Ss6pOeyq6fS7Rl5BYvJYA2zeLwQPOTYTwH7Fb74R8u3a+jzReYuedT/IyJD/8XxS5RvZysPrkVjV
+wc6tbw9gO/nNoRBW+759GTQaBSkuSbOwSXtZONtPr2QVaUiVYMIcuISnC0Es9QTbbSqA5cVBWXGL
+DP/cIrmALFU4ziUJ6ksa4e7Lajxa9EraE344tRmf6lbSmuoe6J5YjA361rVEaLckHrQF6He4Ezys
+lI9i1epLnuFHT1n4vCOvNzLyvNscBLFoDWBpl0Sqi15zzo9v5EmobumUqZE16upj5DAYm7evom4m
+o1w+HsZqt5tg1wWwWbKGpI2smwTdkFJsSKVgSLGNTJIFGL2VRMnJz2X9o1dCWLAwVEJYr56kJ3xs
+cgC4Qma/Qd3tepsemBPXpvq8ama7bmshp/vUarRYGntTGfZUGPsEXeCG+ghb8da350ZMXk+oKV7f
+5mPlXXvoKvQj67wgo0adrdfvuu/KmVRIk7ZBj/Kr6IVyoFgcJtjTNMbMQHGNFn6nnjBnfeknx0Y1
+aTAsG2eW9tqLNmxSWBwQrLw9rHqhQTvE6kkUEpVMh2WsFOjus2oN+8pgqW0G+Cms+kW00+P1RACb
+CbV/TmbKudlDLuCZCjLEM/KhHpZiAuOTSrTyO/VEAKuFiqqziMUvXEN8Gx2ZaIPJ60lwrF7c1HSF
+mhpn/OCYryTSSxmtiHdsEfstshAzVrDr7IqXKglaL2HGik1UxPSMaqxYYeMNx0lVl4pqjsdp5fEJ
+4QUOxoh9R1z1/Rj/ZUL7jX8BgIU7XIxZKAIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">inv_f_ton_matrix_elem</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">n</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">),</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">MatrixProd</span><span class="p">(</span><span class="n">RegisterBra</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+                             <span class="n">InverseFourierTransform</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
+                             <span class="n">RegisterKet</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+                  <span class="n">Mult</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">n</span><span class="p">))),</span>
+                       <span class="n">Exp</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">frac</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">)),</span>
+                                   <span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">n</span><span class="p">))))),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">subtract</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">one</span><span class="p">))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="inv_f_ton_matrix_elem"><a class="ProveItLink" href="_proofs_/inv_f_ton_matrix_elem/thm_proof.html">inv_f_ton_matrix_elem</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/283a4a56337a31fe669bb3f833c1d5cc37b0185d0/theorem_expr.html"><img src="data:image/png;base64,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
+ekdH//B/PJSIU6pS76kAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.physics.quantum.QFT
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

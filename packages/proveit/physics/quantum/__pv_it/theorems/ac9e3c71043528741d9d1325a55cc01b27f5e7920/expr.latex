@@ -1,0 +1,17 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}{\Big \{} S_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{1, n}{\Big \{} S_{1, n}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{B_{i, j}{\Big \{} S_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{B_{m, 1}{\Big \{} S_{m, 1}} & \gate{\cdots} & \gate{B_{m, n}{\Big \{} S_{m, n}} 
+} \hspace{2em} \cong \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{1, 1}{\Big \{} S_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{D_{1, n}{\Big \{} S_{1, n}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{D_{i, j}{\Big \{} S_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{D_{m, 1}{\Big \{} S_{m, 1}} & \gate{\cdots} & \gate{D_{m, n}{\Big \{} S_{m, n}} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}{\Big \{} R_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{1, k}{\Big \{} R_{1, k}} \qwx[1] & \gate{B_{1, 1}{\Big \{} S_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{1, n}{\Big \{} S_{1, n}} \qwx[1] & \gate{C_{1, 1}{\Big \{} Q_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{1, h}{\Big \{} Q_{1, h}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{A_{i, j}{\Big \{} R_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{B_{i, j}{\Big \{} S_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{C_{i, j}{\Big \{} Q_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{A_{m, 1}{\Big \{} R_{m, 1}} & \gate{\cdots} & \gate{A_{m, k}{\Big \{} R_{m, k}} & \gate{B_{m, 1}{\Big \{} S_{m, 1}} & \gate{\cdots} & \gate{B_{m, n}{\Big \{} S_{m, n}} & \gate{C_{m, 1}{\Big \{} Q_{m, 1}} & \gate{\cdots} & \gate{C_{m, h}{\Big \{} Q_{m, h}} 
+} \hspace{2em} \cong \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}{\Big \{} R_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{1, k}{\Big \{} R_{1, k}} \qwx[1] & \gate{D_{1, 1}{\Big \{} S_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{D_{1, n}{\Big \{} S_{1, n}} \qwx[1] & \gate{C_{1, 1}{\Big \{} Q_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{1, h}{\Big \{} Q_{1, h}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{A_{i, j}{\Big \{} R_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{D_{i, j}{\Big \{} S_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{C_{i, j}{\Big \{} Q_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{A_{m, 1}{\Big \{} R_{m, 1}} & \gate{\cdots} & \gate{A_{m, k}{\Big \{} R_{m, k}} & \gate{D_{m, 1}{\Big \{} S_{m, 1}} & \gate{\cdots} & \gate{D_{m, n}{\Big \{} S_{m, n}} & \gate{C_{m, 1}{\Big \{} Q_{m, 1}} & \gate{\cdots} & \gate{C_{m, h}{\Big \{} Q_{m, h}} 
+} \hspace{2em}\right)

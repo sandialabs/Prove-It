@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.real_numbers.in_IntervalOC theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.real_numbers.in_IntervalOC-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">real_numbers</a>.<a class="ProveItLink" href="../../theorems.html#in_IntervalOC">in_IntervalOC</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.real_numbers.in_IntervalOC-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> in_IntervalOC
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="in_IntervalOC">in_IntervalOC:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ef1023a3a581725be92c3aabdc7380daaa96125c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQMAAAAWBAMAAAA2k+RkAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA21JREFU
+SMe1lk9IFFEcx387u+Pszs6ulyAIgiVLQkKWJOhQYnWQoGC9lIcg2f6QUOLBkjRCyGolgqWDeYlG
+BAsRdqmDf4hctk4b2EBCJiRidUhRFilILej3/szMm3FCg/XBzpv39vt7+5nfv1mA7RhPPHdDhmtj
+tg3GcJoj959LS6B2eW4/dyx24uUtlKUB3pH1QmkRomnP7e+O1ReKoKIL+oiHukqL8MFzNxJ3LNcp
+AuSRWAfQsqVFuOlYTbe302grDt8E1hhCP7IVhoYel5Yg1CquGqv4jfNXtFaGEK0D+JVK3SotgoQe
+V/c0H8/T1LTyrILQHTm4i+dLsiJLEDQUXwLosbyz/K9j6zb9Yds2iMU3DB9jt8mizHL/Q/wcS0eL
+bJVZUFcJQgSDdIJmJR9vnMeO7L8wz+6cCRvQ3QCjgq2CqVWA9/pJymNJOtElu8HPT5rQYYUghDEg
+Ckh2y1gUivtVjSFpUIhtRJDvuQlexwRbH7pMhxRbNCzjoM+4A8C/Bgo7D2pB/U0QZPSKZij2UatC
+Io8NASLMGBsQQlfcdT9riLY+GrUVtuizRIjg64JMwmwLgXUTITR3BncGKr+Rx1upJC7OH6pMBEgV
+E4ScgEBV6uEE15hTtWHb8kCA/JPziIHI5GCCr/4QlyBCgFRGz0U89rpM6lTqINks6S1KXRQYQk3c
+RqAqdZI8JNXwqZ62FWZrpuO4VARajf6YkI6ZLLSEmQt/QL9hpiO8RA5/XCY0wRjZkWEJH5ge67/c
+JqQjVTXQyFANn4a7wbKlJR9HJweL/K3UKaQ6am5okCG6a3CH9gU/8XI5cvqyUhONor+Jp8TZVCoV
+k7RHUwICVWlfHWlDpuEHgi31rZqsquDvvsFuHp96dGNyX+9eUDpITA8YrDWRcEZQkkkHZ3Aq1300
+jkUZylggwud0G4GpBu4C11iTtGjZbmzQp+67G/S4eYMIz6wkTp8/DX26ok/j9ak2p4GWYLlQENKR
+qgB6sZVRDZeSx1gCYrvF11ROQMhbvSb54ig0ZOWrObwOTuULAMS5I5O5gVobgapIoTUD1ZhSHGGd
+2Jrt0ftlbTZhNWYjCG2RjqxwBQlzwf7K2R0b06LB//5liYCN4KJl5RL2fATPQ72lW//jVt0Gn1zB
+cjFuisClo1g8KR22e8S37+i/0pwVLAnVwM4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/1890248adbb2677b1d4ec55d1feb1ff019df666a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

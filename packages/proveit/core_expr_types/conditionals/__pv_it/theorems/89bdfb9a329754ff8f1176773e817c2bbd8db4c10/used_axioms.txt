@@ -1,0 +1,2 @@
+proveit.core_expr_types.conditionals.true_condition_reduction
+proveit.logic.booleans.eq_true_intro

@@ -1,0 +1,1 @@
+\left\{B_{1} \lor \ldots \lor B_{m} \textrm{ if } A_{1} \in \mathbb{B} ,  \ldots ,  A_{m} \in \mathbb{B} ,  B_{1} \in \mathbb{B} ,  \ldots ,  B_{m} \in \mathbb{B} ,  A_{1} \lor \ldots \lor A_{m} ,  A_{1} \Rightarrow B_{1} ,  \ldots ,  A_{m} \Rightarrow B_{m}\right..

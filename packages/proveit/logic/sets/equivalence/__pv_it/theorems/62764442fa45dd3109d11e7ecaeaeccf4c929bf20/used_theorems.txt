@@ -1,0 +1,3 @@
+proveit.logic.equality.sub_left_side_into
+proveit.numbers.numerals.decimals.posnat1
+proveit.numbers.numerals.decimals.tuple_len_1_typical_eq

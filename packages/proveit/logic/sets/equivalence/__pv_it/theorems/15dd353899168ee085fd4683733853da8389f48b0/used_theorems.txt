@@ -1,0 +1,3 @@
+proveit.logic.booleans.negation.closure
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.equivalence.set_equiv_is_bool

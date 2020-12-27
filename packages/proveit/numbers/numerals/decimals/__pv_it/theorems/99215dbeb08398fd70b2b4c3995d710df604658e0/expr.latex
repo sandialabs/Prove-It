@@ -1,0 +1,1 @@
+\left(a_{1} \in \mathbb{N}^{\leq 9}\right) \land \ldots \land \left(a_{m} \in \mathbb{N}^{\leq 9}\right) \land \left(b \in \mathbb{N}^{\leq 9}\right) \land \left(b < 9\right)

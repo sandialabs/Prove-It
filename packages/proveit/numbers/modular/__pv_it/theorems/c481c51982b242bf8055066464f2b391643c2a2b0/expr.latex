@@ -1,0 +1,1 @@
+\left(N, a, b\right) \mapsto \left\{\left\{x ~\textup{mod}~ N\right\}_{x \in \{a \dots b\}} = \{0 \dots N - 1\} \textrm{ if } N \in \mathbb{Z} ,  a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  \left(b - a\right) = \left(N - 1\right) ,  N \neq 0\right..

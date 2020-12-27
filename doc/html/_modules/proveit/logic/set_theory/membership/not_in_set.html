@@ -1,0 +1,465 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.logic.set_theory.membership.not_in_set &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.logic.set_theory.membership.not_in_set</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">x</span><span class="p">,</span> <span class="n">S</span>
+
+<div class="viewcode-block" id="NotInSet"><a class="viewcode-back" href="../../../../../api/proveit.logic.NotInSet.html#proveit.logic.NotInSet">[docs]</a><span class="k">class</span> <span class="nc">NotInSet</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="c1"># operator of the NotInSet operation</span>
+    <span class="n">_operator_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="n">stringFormat</span><span class="o">=</span><span class="s1">&#39;not-in&#39;</span><span class="p">,</span>
+                         <span class="n">latexFormat</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\notin&#39;</span><span class="p">,</span>
+                         <span class="n">theory</span><span class="o">=</span><span class="vm">__file__</span><span class="p">)</span>
+
+    <span class="c1"># maps elements to NotInSet Judgments.</span>
+    <span class="c1"># For example, map x to (x \nin S) if (x \nin S) is a Judgment.</span>
+    <span class="n">knownNonmemberships</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+        <span class="n">Operation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">NotInSet</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">domain</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="s1">&#39;nonmembershipObject&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nonmembershipObject</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">nonmembershipObject</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nonmembershipObject</span><span class="p">,</span> <span class="n">Nonmembership</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The &#39;nonmembershipObject&#39; of </span><span class="si">%s</span><span class="s2"> is a </span><span class="si">%s</span><span class="s2"> which &quot;</span>
+                                <span class="s2">&quot;is not derived from </span><span class="si">%s</span><span class="s2"> as it should be.&quot;</span>
+                                <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">nonmembershipObject</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span>
+                                  <span class="n">Nonmembership</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If the domain has a &#39;nonmembershipObject&#39; method, include methods from the</span>
+<span class="sd">        object it generates (also &#39;unfold&#39; which defaults as &#39;unfoldNotIn&#39; if it</span>
+<span class="sd">        isn&#39;t defined in &#39;nonmembershipObject&#39;).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;nonmembershipObject&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">membershipObject</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="s1">&#39;unfold&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If the domain has a &#39;nonmembershipObject&#39; method, include methods from the</span>
+<span class="sd">        object it generates (also &#39;unfold&#39; defaults as &#39;unfoldNotIn&#39; if it isn&#39;t</span>
+<span class="sd">        defined in &#39;nonmembershipObject&#39;).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;nonmembershipObject&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nonmembershipObject</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">attr</span><span class="o">==</span><span class="s1">&#39;unfold&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unfoldNotIn</span> <span class="c1"># the default &#39;unfold&#39; method</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span>
+
+<div class="viewcode-block" id="NotInSet.sideEffects"><a class="viewcode-back" href="../../../../../api/proveit.logic.NotInSet.html#proveit.logic.NotInSet.sideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">sideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">judgment</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Store the proven non-membership in knownNonmemberships.</span>
+<span class="sd">        Unfold x not-in S as Not(x in S) as an automatic side-effect.</span>
+<span class="sd">        If the domain has a &#39;nonmembershipObject&#39; method, side effects</span>
+<span class="sd">        will also be generated from the &#39;sideEffects&#39; object that it generates.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">NotInSet</span><span class="o">.</span><span class="n">knownNonmemberships</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">judgment</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">unfoldNotIn</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;nonmembershipObject&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">sideEffect</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nonmembershipObject</span><span class="o">.</span><span class="n">sideEffects</span><span class="p">(</span><span class="n">judgment</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">sideEffect</span></div>
+
+<div class="viewcode-block" id="NotInSet.deduceInBool"><a class="viewcode-back" href="../../../../../api/proveit.logic.NotInSet.html#proveit.logic.NotInSet.deduceInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deduceInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce and return that this &#39;not in&#39; statement is in the set of BOOLEANS.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">notInSetInBool</span>
+        <span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">x</span><span class="p">,</span> <span class="n">S</span>
+        <span class="k">return</span> <span class="n">notInSetInBool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">S</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">},</span>
+                                         <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NotInSet.unfoldNotIn"><a class="viewcode-back" href="../../../../../api/proveit.logic.NotInSet.html#proveit.logic.NotInSet.unfoldNotIn">[docs]</a>    <span class="k">def</span> <span class="nf">unfoldNotIn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (x \notin y), derive and return Not(x \in y).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">unfoldNotInSet</span>
+        <span class="k">return</span> <span class="n">unfoldNotInSet</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">S</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NotInSet.conclude"><a class="viewcode-back" href="../../../../../api/proveit.logic.NotInSet.html#proveit.logic.NotInSet.conclude">[docs]</a>    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to conclude that the element is in the domain.</span>
+<span class="sd">        First, see if it is not contained in a superset of the domain.</span>
+<span class="sd">        Next, check if the element has a known simplification; if so,</span>
+<span class="sd">        try to derive non-membership via this simplification.</span>
+<span class="sd">        If there isn&#39;t a known simplification, next try to call</span>
+<span class="sd">        the &#39;self.domain.nonmembershipObject.conclude(..)&#39; method to prove</span>
+<span class="sd">        the non-membership.  If that fails, try simplifying the element</span>
+<span class="sd">        again, this time using automation to push the simplification through</span>
+<span class="sd">        if possible.</span>
+<span class="sd">        As a last resort, try &#39;concludeAsFolded&#39;.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">SupersetEq</span><span class="p">,</span> <span class="n">InSet</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ProofFailure</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">SimplificationError</span>
+
+
+        <span class="c1"># See if the membership is already known.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span> <span class="ow">in</span> <span class="n">NotInSet</span><span class="o">.</span><span class="n">knownNonmemberships</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">knownNonmembership</span> <span class="ow">in</span> <span class="n">NotInSet</span><span class="o">.</span><span class="n">knownNonmemberships</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">knownNonmembership</span><span class="o">.</span><span class="n">isSufficient</span><span class="p">(</span><span class="n">assumptions</span><span class="p">):</span>
+                    <span class="c1"># x not in R is a judgment; if we know that</span>
+                    <span class="c1"># R supseteq S, we are done.</span>
+                    <span class="n">supRel</span> <span class="o">=</span> <span class="n">SupersetEq</span><span class="p">(</span><span class="n">knownNonmembership</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">supRel</span><span class="o">.</span><span class="n">proven</span><span class="p">(</span><span class="n">assumptions</span><span class="p">):</span>
+                        <span class="c1"># S is a subset of R, so now we can prove x not in S.</span>
+                        <span class="k">return</span> <span class="n">supRel</span><span class="o">.</span><span class="n">deriveSubsetNonMembership</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">,</span>
+                                                                <span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1"># No known membership works.  Let&#39;s see if there is a known</span>
+        <span class="c1"># simplification of the element before trying anything else.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">elem_simplification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">simplification</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span>
+                                                              <span class="n">automation</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">elem_simplification</span><span class="o">.</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">elem_simplification</span><span class="o">.</span><span class="n">rhs</span><span class="p">:</span>
+                <span class="n">elem_simplification</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># reflection doesn&#39;t count</span>
+        <span class="k">except</span> <span class="n">SimplificationError</span><span class="p">:</span>
+            <span class="n">elem_simplification</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># If the element simplification succeeded, prove the membership</span>
+        <span class="c1"># via the simplified form of the element.</span>
+        <span class="k">if</span> <span class="n">elem_simplification</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">simple_elem</span> <span class="o">=</span> <span class="n">elem_simplification</span><span class="o">.</span><span class="n">rhs</span>
+            <span class="n">simple_nonmembership</span> <span class="o">=</span> <span class="n">NotInSet</span><span class="p">(</span><span class="n">simple_elem</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">inner_expr</span> <span class="o">=</span> <span class="n">simple_nonmembership</span><span class="o">.</span><span class="n">innerExpr</span><span class="p">()</span><span class="o">.</span><span class="n">element</span>
+            <span class="k">return</span> <span class="n">elem_simplification</span><span class="o">.</span><span class="n">subLeftSideInto</span><span class="p">(</span><span class="n">inner_expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># If it has a &#39;nonmembershipObject&#39;, try to conclude</span>
+            <span class="c1"># nonmembership using that.</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;nonmembershipObject&#39;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nonmembershipObject</span><span class="o">.</span><span class="n">conclude</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Otherwise, attempt to conclude via Not(x in S)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeAsFolded</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NotInSet.concludeAsFolded"><a class="viewcode-back" href="../../../../../api/proveit.logic.NotInSet.html#proveit.logic.NotInSet.concludeAsFolded">[docs]</a>    <span class="k">def</span> <span class="nf">concludeAsFolded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to conclude x not in S via Not(x in S).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">foldNotInSet</span>
+        <span class="k">return</span> <span class="n">foldNotInSet</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">S</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NotInSet.doReducedEvaluation"><a class="viewcode-back" href="../../../../../api/proveit.logic.NotInSet.html#proveit.logic.NotInSet.doReducedEvaluation">[docs]</a>    <span class="k">def</span> <span class="nf">doReducedEvaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to form evaluation of whether (element not in domain) is</span>
+<span class="sd">        TRUE or FALSE.  If the domain has a &#39;membershipObject&#39; method,</span>
+<span class="sd">        attempt to use the &#39;equivalence&#39; method from the object it generates.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">InSet</span>
+        <span class="c1"># try an &#39;equivalence&#39; method (via the nonmembership object)</span>
+        <span class="n">equiv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nonmembershipObject</span><span class="o">.</span><span class="n">equivalence</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">equiv</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">equiv</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1"># try also to evaluate this by deducing membership or non-membership</span>
+        <span class="c1"># in case it generates a shorter proof.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">rhs</span> <span class="o">==</span> <span class="n">TRUE</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;nonmembershipObject&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">nonmembershipObject</span><span class="o">.</span><span class="n">conclude</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inDomain</span> <span class="o">=</span> <span class="n">In</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">inDomain</span><span class="p">,</span> <span class="s1">&#39;membershipObject&#39;</span><span class="p">):</span>
+                    <span class="n">inDomain</span><span class="o">.</span><span class="n">membershipObject</span><span class="o">.</span><span class="n">conclude</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">evaluation</span></div></div>
+
+<div class="viewcode-block" id="Nonmembership"><a class="viewcode-back" href="../../../../../api/proveit.logic.Nonmembership.html#proveit.logic.Nonmembership">[docs]</a><span class="k">class</span> <span class="nc">Nonmembership</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Base class for any &#39;nonmembership object&#39; return by a domain&#39;s</span>
+<span class="sd">    &#39;nonmembershipObject&#39; method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element</span> <span class="o">=</span> <span class="n">element</span>
+
+<div class="viewcode-block" id="Nonmembership.sideEffects"><a class="viewcode-back" href="../../../../../api/proveit.logic.Nonmembership.html#proveit.logic.Nonmembership.sideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">sideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">judgment</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Nonmembership object has no &#39;sideEffects&#39; method implemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Nonmembership.conclude"><a class="viewcode-back" href="../../../../../api/proveit.logic.Nonmembership.html#proveit.logic.Nonmembership.conclude">[docs]</a>    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Nonmembership object has no &#39;conclude&#39; method implemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Nonmembership.equivalence"><a class="viewcode-back" href="../../../../../api/proveit.logic.Nonmembership.html#proveit.logic.Nonmembership.equivalence">[docs]</a>    <span class="k">def</span> <span class="nf">equivalence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Nonmembership object has no &#39;equivalence&#39; method implemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Nonmembership.deduceInBool"><a class="viewcode-back" href="../../../../../api/proveit.logic.Nonmembership.html#proveit.logic.Nonmembership.deduceInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deduceInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Nonmembership object has no &#39;deduceInBool&#39; method implemented&quot;</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../../index.html">Module code</a><ul>
+  <li><a href="../../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

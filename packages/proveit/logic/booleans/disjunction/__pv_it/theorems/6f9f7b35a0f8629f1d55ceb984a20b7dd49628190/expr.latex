@@ -1,0 +1,1 @@
+\left(A_{1}, \ldots, A_{m}\right) \mapsto \left\{\left(A_{1} \lor \ldots \lor A_{m}\right) = \bot \textrm{ if } \left(A_{1} \in \left\{\bot\right\}\right) \land \ldots \land \left(A_{m} \in \left\{\bot\right\}\right)\right..

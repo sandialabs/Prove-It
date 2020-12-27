@@ -1,0 +1,8 @@
+\begin{array} {cc} 
+ A_{i} & C_{i}  \\ 
+  \vdots & \vdots  \\ 
+  A_{j} & C_{j}  \\ 
+  B_{i} & D_{i}  \\ 
+  \vdots & \vdots  \\ 
+  B_{j} & D_{j}  \\ 
+  \end{array} 

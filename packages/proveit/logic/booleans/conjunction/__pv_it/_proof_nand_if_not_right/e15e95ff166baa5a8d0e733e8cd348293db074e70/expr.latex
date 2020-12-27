@@ -1,0 +1,1 @@
+\left\{\lnot \left(A \land B\right) \textrm{ if } A \in \mathbb{B} ,  \left(B \in \mathbb{B}\right) \land (\lnot B)\right.. = \left\{\lnot \left(A \land B\right) \textrm{ if } A \in \mathbb{B} ,  B \in \mathbb{B} ,  \lnot B\right..

@@ -1,0 +1,8 @@
+\begin{array} {ccc} 
+ A_{1, j} & \cdots & A_{m, j}  \\ 
+  B_{1, j} & \cdots & B_{m, j}  \\ 
+  C_{1, j} & \cdots & C_{m, j}  \\ 
+  D_{1, j} & \cdots & D_{m, j}  \\ 
+  E_{1, j} & \cdots & E_{m, j}  \\ 
+  F_{1, j} & \cdots & F_{m, j}  \\ 
+  \end{array} 

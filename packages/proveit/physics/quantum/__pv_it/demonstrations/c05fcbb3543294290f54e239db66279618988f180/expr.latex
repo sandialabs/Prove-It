@@ -1,0 +1,3 @@
+i \mapsto \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{i}{\Big \{} S_{i}} 
+} \hspace{2em}

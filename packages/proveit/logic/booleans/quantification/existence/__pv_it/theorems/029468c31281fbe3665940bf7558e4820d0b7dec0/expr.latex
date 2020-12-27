@@ -1,0 +1,1 @@
+\forall_{P, Q}~\left(\left[\exists_{y_{1}, \ldots, y_{n}~|~Q(y_{1}, \ldots, y_{n})}~P(y_{1}, \ldots, y_{n})\right] \in \mathbb{B}\right)

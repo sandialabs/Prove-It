@@ -1,0 +1,1 @@
+x \mapsto \left(\left(x \in \left[a,b\right]\right) = \left(\left(x \in \mathbb{R}\right) \land \left(a \leq x \leq b\right)\right)\right)

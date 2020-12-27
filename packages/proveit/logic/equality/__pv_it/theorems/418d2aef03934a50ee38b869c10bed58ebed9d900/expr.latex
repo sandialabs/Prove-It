@@ -1,0 +1,1 @@
+\left\{\forall_{P, x_{1}, \ldots, x_{n}, y_{1}, \ldots, y_{n}~|~P(y_{1}, \ldots, y_{n}), x_{1} = y_{1}, \ldots, x_{n} = y_{n}}~P(x_{1}, \ldots, x_{n}) \textrm{ if } n \in \mathbb{N}\right..

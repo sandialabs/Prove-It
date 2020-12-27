@@ -1,0 +1,1 @@
+\forall_{l, m, n \in \mathbb{N}}~\left[\forall_{A_{1}, \ldots, A_{l}, B_{1}, \ldots, B_{m}, C, D_{1}, \ldots, D_{n}~|~A_{1}, \ldots, A_{l}, B_{1}, \ldots, B_{m}, C, D_{1}, \ldots, D_{n}}~\left(A_{1} \land \ldots \land A_{l} \land C \land B_{1} \land \ldots \land B_{m} \land D_{1} \land \ldots \land D_{n}\right)\right]

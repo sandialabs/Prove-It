@@ -1,0 +1,898 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to Prove-It’s documentation! &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="as_expression" href="api/proveit.as_expression.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-prove-it-s-documentation">
+<h1>Welcome to Prove-It’s documentation!<a class="headerlink" href="#welcome-to-prove-it-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-proveit">
+<span id="proveit-package"></span><h2>proveit Package<a class="headerlink" href="#module-proveit" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.as_expression.html#proveit.as_expression" title="proveit.as_expression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_expression</span></code></a>(truth_or_expression)</td>
+<td>Return the argument as Expressions.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.as_expressions.html#proveit.as_expressions" title="proveit.as_expressions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_expressions</span></code></a>(*truth_or_expressions)</td>
+<td>Return the arguments as a list of Expressions via as_expression.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.attempt_to_simplify.html#proveit.attempt_to_simplify" title="proveit.attempt_to_simplify"><code class="xref py py-obj docutils literal notranslate"><span class="pre">attempt_to_simplify</span></code></a>(expr,&nbsp;assumptions[,&nbsp;…])</td>
+<td>Attempt to simplify the given expression under the given assumptions.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.bundle.html#proveit.bundle" title="proveit.bundle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bundle</span></code></a>(expr,&nbsp;bundle_thm[,&nbsp;num_levels,&nbsp;…])</td>
+<td>Given a nested OperationOverInstances, derive or equate an</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.composite_expression.html#proveit.composite_expression" title="proveit.composite_expression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">composite_expression</span></code></a>(expressions)</td>
+<td>Put the appropriate CompositeExpression wrapper around expressions.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.expression_depth.html#proveit.expression_depth" title="proveit.expression_depth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expression_depth</span></code></a>(expr)</td>
+<td>Returns the depth of the expression tree for the given expression.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.extract_var_tuple_indices.html#proveit.extract_var_tuple_indices" title="proveit.extract_var_tuple_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_var_tuple_indices</span></code></a>(indexed_var_tuple)</td>
+<td>Given an ExprTuple of only IndexedVar and ExprRange entries, returns an ExprTuple of just the corresponding indices (including ranges of indices and nested ranges of indices).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.free_vars.html#proveit.free_vars" title="proveit.free_vars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">free_vars</span></code></a>(expr,&nbsp;*,&nbsp;err_inclusively)</td>
+<td>Returns the set of variables that are free, the variable itself or some indices of the variable.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.maybe_fenced.html#proveit.maybe_fenced" title="proveit.maybe_fenced"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maybe_fenced</span></code></a>(format_type,&nbsp;inner_formatted,&nbsp;…)</td>
+<td>Return the inner_formatted string/latex iff kwargs[‘fence’]=True.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.maybe_fenced_latex.html#proveit.maybe_fenced_latex" title="proveit.maybe_fenced_latex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maybe_fenced_latex</span></code></a>(inner_latex,&nbsp;**kwargs)</td>
+<td>Return inner_latex, wrapped in parentheses iff kwargs[‘fence’]==True.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.maybe_fenced_string.html#proveit.maybe_fenced_string" title="proveit.maybe_fenced_string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maybe_fenced_string</span></code></a>(inner_str,&nbsp;**kwargs)</td>
+<td>Return inner_str, wrapped in parentheses iff kwargs[‘fence’]==True.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.possibly_free_var_ranges.html#proveit.possibly_free_var_ranges" title="proveit.possibly_free_var_ranges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">possibly_free_var_ranges</span></code></a>(expr[,&nbsp;exclusions])</td>
+<td>Return the dictionary mapping Variables to forms w.r.t.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.reset.html#proveit.reset" title="proveit.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a>()</td>
+<td>Clear all references to Prove-It information.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.safe_default_or_dummy_var.html#proveit.safe_default_or_dummy_var" title="proveit.safe_default_or_dummy_var"><code class="xref py py-obj docutils literal notranslate"><span class="pre">safe_default_or_dummy_var</span></code></a>(default_var,&nbsp;…)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.safe_dummy_var.html#proveit.safe_dummy_var" title="proveit.safe_dummy_var"><code class="xref py py-obj docutils literal notranslate"><span class="pre">safe_dummy_var</span></code></a>(*expressions[,&nbsp;start_index])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.safe_dummy_vars.html#proveit.safe_dummy_vars" title="proveit.safe_dummy_vars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">safe_dummy_vars</span></code></a>(n,&nbsp;*expressions[,&nbsp;start_index])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.single_or_composite_expression.html#proveit.single_or_composite_expression" title="proveit.single_or_composite_expression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">single_or_composite_expression</span></code></a>(expr_or_exprs)</td>
+<td>Put the approriate CompositeExpression wrapper around a list (iterable) or dictionary of Expressions, or simply return the given Expression if it is one.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.traverse_inner_expressions.html#proveit.traverse_inner_expressions" title="proveit.traverse_inner_expressions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">traverse_inner_expressions</span></code></a>(expr)</td>
+<td>A simple algorithm to yield all inner expressions of an expression, including the expression itself.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.unbundle.html#proveit.unbundle" title="proveit.unbundle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unbundle</span></code></a>(expr,&nbsp;unbundle_thm[,&nbsp;…])</td>
+<td>Given a nested OperationOverInstances, derive or equate an</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.used_vars.html#proveit.used_vars" title="proveit.used_vars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">used_vars</span></code></a>(expr)</td>
+<td>Return all of the used Variables of this Expression, included those in sub-expressions.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.var_range.html#proveit.var_range" title="proveit.var_range"><code class="xref py py-obj docutils literal notranslate"><span class="pre">var_range</span></code></a>(var,&nbsp;start_index_or_indices,&nbsp;…)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.ArgumentExtractionError.html#proveit.ArgumentExtractionError" title="proveit.ArgumentExtractionError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ArgumentExtractionError</span></code></a>(specifics)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Assumption.html#proveit.Assumption" title="proveit.Assumption"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Assumption</span></code></a>(expr[,&nbsp;assumptions])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Axiom.html#proveit.Axiom" title="proveit.Axiom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Axiom</span></code></a>(expr,&nbsp;theory,&nbsp;name)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Composite.html#proveit.Composite" title="proveit.Composite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Composite</span></code></a></td>
+<td>The base class for NamedExprs, ExprTuple, and ExprArray.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Conditional.html#proveit.Conditional" title="proveit.Conditional"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Conditional</span></code></a>(value,&nbsp;condition_or_conditions)</td>
+<td>A Conditional expression is one that may reduce to its ‘value’ if and only if its ‘condition’ evaluates to TRUE.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.ConditionalSet.html#proveit.ConditionalSet" title="proveit.ConditionalSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConditionalSet</span></code></a>(conditionals)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Deduction.html#proveit.Deduction" title="proveit.Deduction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Deduction</span></code></a>(consequent_truth,&nbsp;antecedent_expr)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.DisallowedParameterRelabeling.html#proveit.DisallowedParameterRelabeling" title="proveit.DisallowedParameterRelabeling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DisallowedParameterRelabeling</span></code></a>(param_var,&nbsp;…)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.DuplicateLiteralError.html#proveit.DuplicateLiteralError" title="proveit.DuplicateLiteralError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DuplicateLiteralError</span></code></a>(message)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.ExprArray.html#proveit.ExprArray" title="proveit.ExprArray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExprArray</span></code></a>(*expressions[,&nbsp;styles])</td>
+<td>An ExprArray is simply an ExprTuple of ExprTuples or ExprRanges.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.ExprRange.html#proveit.ExprRange" title="proveit.ExprRange"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExprRange</span></code></a>(parameter,&nbsp;body,&nbsp;start_index,&nbsp;…)</td>
+<td>An ExprRange expression represents a range of “element” expressions within a containing ExprTuple.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.ExprTuple.html#proveit.ExprTuple" title="proveit.ExprTuple"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExprTuple</span></code></a>(*expressions[,&nbsp;styles])</td>
+<td>An ExprTuple is a composite Expression composed of an ordered list of member Expression “entries”.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.ExprTupleError.html#proveit.ExprTupleError" title="proveit.ExprTupleError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExprTupleError</span></code></a>(msg)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Expression.html#proveit.Expression" title="proveit.Expression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Expression</span></code></a>(core_info[,&nbsp;sub_expressions,&nbsp;styles])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Function.html#proveit.Function" title="proveit.Function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Function</span></code></a>(operator,&nbsp;operand_or_operands[,&nbsp;styles])</td>
+<td>A Function is an Operation with a default format as a function: f(x), Q(x, y), etc.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Generalization.html#proveit.Generalization" title="proveit.Generalization"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Generalization</span></code></a>(instance_truth,&nbsp;…[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.GeneralizationFailure.html#proveit.GeneralizationFailure" title="proveit.GeneralizationFailure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizationFailure</span></code></a>(expr,&nbsp;assumptions,&nbsp;message)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.ImproperReplacement.html#proveit.ImproperReplacement" title="proveit.ImproperReplacement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ImproperReplacement</span></code></a>(orig_expr,&nbsp;repl_map,&nbsp;message)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.IndexedVar.html#proveit.IndexedVar" title="proveit.IndexedVar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IndexedVar</span></code></a>(var,&nbsp;index_or_indices)</td>
+<td>An IndexedVar Expression expresses a Variable or nested IndexedVar, representing an ExprTuple (or ExprArray which is really just an ExprTuple of ExprTuples), being indexed to yield an element.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.InnerExpr.html#proveit.InnerExpr" title="proveit.InnerExpr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InnerExpr</span></code></a>(top_level[,&nbsp;_inner_expr_path,&nbsp;…])</td>
+<td>Represents an “inner” sub-expression of a particular “top_level” Expression or Judgment.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Instantiation.html#proveit.Instantiation" title="proveit.Instantiation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Instantiation</span></code></a>(orig_judgment,&nbsp;…)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.InstantiationFailure.html#proveit.InstantiationFailure" title="proveit.InstantiationFailure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InstantiationFailure</span></code></a>(original_judgment,&nbsp;…)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.InvalidAssumptions.html#proveit.InvalidAssumptions" title="proveit.InvalidAssumptions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InvalidAssumptions</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Judgment.html#proveit.Judgment" title="proveit.Judgment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment</span></code></a>(expression,&nbsp;assumptions)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Label.html#proveit.Label" title="proveit.Label"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Label</span></code></a>(string_format[,&nbsp;latex_format,&nbsp;…])</td>
+<td>Label is the base class for the Variable, Literal, and Multi_variable expr classes (Label is not itself an expr class).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Lambda.html#proveit.Lambda" title="proveit.Lambda"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Lambda</span></code></a>(parameter_or_parameters,&nbsp;body)</td>
+<td>A lambda-function Expression.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.LambdaApplicationError.html#proveit.LambdaApplicationError" title="proveit.LambdaApplicationError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LambdaApplicationError</span></code></a>(parameters,&nbsp;body,&nbsp;…)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Literal.html#proveit.Literal" title="proveit.Literal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code></a>(string_format[,&nbsp;latex_format,&nbsp;…])</td>
+<td>A Literal expresses contextual meaning.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.MakeNotImplemented.html#proveit.MakeNotImplemented" title="proveit.MakeNotImplemented"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MakeNotImplemented</span></code></a>(expr_sub_class)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.ModusPonens.html#proveit.ModusPonens" title="proveit.ModusPonens"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModusPonens</span></code></a>(implication_expr[,&nbsp;assumptions])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.ModusPonensFailure.html#proveit.ModusPonensFailure" title="proveit.ModusPonensFailure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModusPonensFailure</span></code></a>(expr,&nbsp;assumptions,&nbsp;message)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.NamedExprs.html#proveit.NamedExprs" title="proveit.NamedExprs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NamedExprs</span></code></a>(items[,&nbsp;styles])</td>
+<td>An NamedExprs is a composite expr that maps strings to Expressions.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Operation.html#proveit.Operation" title="proveit.Operation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Operation</span></code></a>(operator_or_operators,&nbsp;…[,&nbsp;styles])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.OperationError.html#proveit.OperationError" title="proveit.OperationError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OperationError</span></code></a>(message)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.OperationOverInstances.html#proveit.OperationOverInstances" title="proveit.OperationOverInstances"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OperationOverInstances</span></code></a>(operator,&nbsp;…[,&nbsp;…])</td>
+<td>OperationOverInstances description: TODO</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.OperationSequence.html#proveit.OperationSequence" title="proveit.OperationSequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OperationSequence</span></code></a>(operators,&nbsp;operands[,&nbsp;styles])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.ParameterCollisionError.html#proveit.ParameterCollisionError" title="proveit.ParameterCollisionError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParameterCollisionError</span></code></a>(parameters,&nbsp;main_msg)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Proof.html#proveit.Proof" title="proveit.Proof"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Proof</span></code></a>(proven_truth,&nbsp;required_truths[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.ProofFailure.html#proveit.ProofFailure" title="proveit.ProofFailure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProofFailure</span></code></a>(expr,&nbsp;assumptions,&nbsp;message)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.RangeInstanceError.html#proveit.RangeInstanceError" title="proveit.RangeInstanceError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RangeInstanceError</span></code></a>(msg)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.StyleOptions.html#proveit.StyleOptions" title="proveit.StyleOptions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StyleOptions</span></code></a>(expr)</td>
+<td>An Object for displaying the valid style options of an Expression.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.Theorem.html#proveit.Theorem" title="proveit.Theorem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theorem</span></code></a>(expr,&nbsp;theory,&nbsp;name)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Theory.html#proveit.Theory" title="proveit.Theory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory</span></code></a>([path,&nbsp;active_folder,&nbsp;owns_active_folder])</td>
+<td>A Theory object provides an interface into the __pv_it database for access to the common expressions, axioms, theorems and associated proofs of a Prove-It theory.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.TheoryException.html#proveit.TheoryException" title="proveit.TheoryException"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TheoryException</span></code></a>(message)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.TransRelUpdater.html#proveit.TransRelUpdater" title="proveit.TransRelUpdater"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransRelUpdater</span></code></a>(expr[,&nbsp;assumptions])</td>
+<td>Transitive relation updater: A convenient class for updating a transitive relation (equality, less, subset, etc.) by adding relations that modify the relation via transitivity.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.TransitiveRelation.html#proveit.TransitiveRelation" title="proveit.TransitiveRelation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransitiveRelation</span></code></a>(operator,&nbsp;lhs,&nbsp;rhs)</td>
+<td>Base class for generic transitive relations.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.TransitiveSequence.html#proveit.TransitiveSequence" title="proveit.TransitiveSequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransitiveSequence</span></code></a>(operators,&nbsp;operands[,&nbsp;…])</td>
+<td>Base clase for Operation Expressions that represent a sequence of transitive relationships.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.TransitivityException.html#proveit.TransitivityException" title="proveit.TransitivityException"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransitivityException</span></code></a>(expr,&nbsp;assumptions,&nbsp;message)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.Variable.html#proveit.Variable" title="proveit.Variable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Variable</span></code></a>(string_format[,&nbsp;latex_format,&nbsp;…])</td>
+<td>A Variable is an interchangeable label.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="module-proveit.core_expr_types">
+<span id="proveit-core-expr-types-package"></span><h2>proveit.core_expr_types Package<a class="headerlink" href="#module-proveit.core_expr_types" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Classes<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.core_expr_types.Len.html#proveit.core_expr_types.Len" title="proveit.core_expr_types.Len"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Len</span></code></a>(operand)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="module-proveit.logic">
+<span id="proveit-logic-package"></span><h2>proveit.logic Package<a class="headerlink" href="#module-proveit.logic" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h3>Functions<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.compose.html#proveit.logic.compose" title="proveit.logic.compose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compose</span></code></a>(*expressions[,&nbsp;assumptions])</td>
+<td>Returns [A and B and …], the And operator applied to the collection of given arguments, derived from each separately.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.conclude_via_implication.html#proveit.logic.conclude_via_implication" title="proveit.logic.conclude_via_implication"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conclude_via_implication</span></code></a>(consequent,&nbsp;assumptions)</td>
+<td>Perform a breadth-first search of implications going in reverse from the consequent until reaching an antecedent that has been proven.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.default_simplification.html#proveit.logic.default_simplification" title="proveit.logic.default_simplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_simplification</span></code></a>(inner_expr[,&nbsp;…])</td>
+<td>Default attempt to simplify the given inner expression under the given assumptions.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.evaluate_truth.html#proveit.logic.evaluate_truth" title="proveit.logic.evaluate_truth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_truth</span></code></a>(expr,&nbsp;assumptions)</td>
+<td>Attempts to prove that the given expression equals TRUE under the given assumptions via proving the expression.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.in_bool.html#proveit.logic.in_bool" title="proveit.logic.in_bool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">in_bool</span></code></a>(*elements)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.is_irreducible_value.html#proveit.logic.is_irreducible_value" title="proveit.logic.is_irreducible_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_irreducible_value</span></code></a>(expr)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.reduce_operands.html#proveit.logic.reduce_operands" title="proveit.logic.reduce_operands"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reduce_operands</span></code></a>(inner_expr[,&nbsp;in_place,&nbsp;…])</td>
+<td>Attempt to return an InnerExpr object that is provably equivalent to the given inner_expr but with simplified operands at the inner-expression level.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id3">
+<h3>Classes<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.And.html#proveit.logic.And" title="proveit.logic.And"><code class="xref py py-obj docutils literal notranslate"><span class="pre">And</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.BooleanSet.html#proveit.logic.BooleanSet" title="proveit.logic.BooleanSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BooleanSet</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.Card.html#proveit.logic.Card" title="proveit.logic.Card"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Card</span></code></a>(domain)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.Difference.html#proveit.logic.Difference" title="proveit.logic.Difference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Difference</span></code></a>(A,&nbsp;B)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.Disjoint.html#proveit.logic.Disjoint" title="proveit.logic.Disjoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Disjoint</span></code></a>(*sets)</td>
+<td>The Disjoint operation defines a property for a collection of sets.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.Distinct.html#proveit.logic.Distinct" title="proveit.logic.Distinct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Distinct</span></code></a>(*elements)</td>
+<td>The Distinct operation defines a property for any collection.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.Equals.html#proveit.logic.Equals" title="proveit.logic.Equals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Equals</span></code></a>(a,&nbsp;b)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.EvaluationError.html#proveit.logic.EvaluationError" title="proveit.logic.EvaluationError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EvaluationError</span></code></a>(expr,&nbsp;assumptions)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.Exists.html#proveit.logic.Exists" title="proveit.logic.Exists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Exists</span></code></a>(instance_param_or_params,&nbsp;…[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.FalseLiteral.html#proveit.logic.FalseLiteral" title="proveit.logic.FalseLiteral"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FalseLiteral</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.Forall.html#proveit.logic.Forall" title="proveit.logic.Forall"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Forall</span></code></a>(instance_param_or_params,&nbsp;…[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.Iff.html#proveit.logic.Iff" title="proveit.logic.Iff"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Iff</span></code></a>(A,&nbsp;B)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.Implies.html#proveit.logic.Implies" title="proveit.logic.Implies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Implies</span></code></a>(antecedent,&nbsp;consequent)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.InSet.html#proveit.logic.InSet" title="proveit.logic.InSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InSet</span></code></a>(element,&nbsp;domain)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.Intersect.html#proveit.logic.Intersect" title="proveit.logic.Intersect"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Intersect</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.IntersectAll.html#proveit.logic.IntersectAll" title="proveit.logic.IntersectAll"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntersectAll</span></code></a>(instance_param_or_params,&nbsp;…)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.IrreducibleValue.html#proveit.logic.IrreducibleValue" title="proveit.logic.IrreducibleValue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IrreducibleValue</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.Membership.html#proveit.logic.Membership" title="proveit.logic.Membership"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Membership</span></code></a>(element)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.Nonmembership.html#proveit.logic.Nonmembership" title="proveit.logic.Nonmembership"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Nonmembership</span></code></a>(element)</td>
+<td>Base class for any ‘nonmembership object’ return by a domain’s ‘nonmembership_object’ method.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.Not.html#proveit.logic.Not" title="proveit.logic.Not"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Not</span></code></a>(A)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.NotEquals.html#proveit.logic.NotEquals" title="proveit.logic.NotEquals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotEquals</span></code></a>(a,&nbsp;b)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.NotExists.html#proveit.logic.NotExists" title="proveit.logic.NotExists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotExists</span></code></a>(instance_param_or_params,&nbsp;…[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.NotInSet.html#proveit.logic.NotInSet" title="proveit.logic.NotInSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotInSet</span></code></a>(element,&nbsp;domain)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.NotProperSubset.html#proveit.logic.NotProperSubset" title="proveit.logic.NotProperSubset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotProperSubset</span></code></a>(subset,&nbsp;superset)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.NotProperSuperset.html#proveit.logic.NotProperSuperset" title="proveit.logic.NotProperSuperset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotProperSuperset</span></code></a>(superset,&nbsp;subset)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.NotSubsetEq.html#proveit.logic.NotSubsetEq" title="proveit.logic.NotSubsetEq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotSubsetEq</span></code></a>(subset,&nbsp;superset)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.NotSupersetEq.html#proveit.logic.NotSupersetEq" title="proveit.logic.NotSupersetEq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotSupersetEq</span></code></a>(superset,&nbsp;subset)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.Or.html#proveit.logic.Or" title="proveit.logic.Or"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Or</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.PowerSet.html#proveit.logic.PowerSet" title="proveit.logic.PowerSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PowerSet</span></code></a>(operand)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.ProperSubset.html#proveit.logic.ProperSubset" title="proveit.logic.ProperSubset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProperSubset</span></code></a>(subset,&nbsp;superset)</td>
+<td>Class to represent proper subset relation, such as A proper_subset B, to represent the claim that any element in set A is also in set B, while B also has at least one element not in set A.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.ProperSuperset.html#proveit.logic.ProperSuperset" title="proveit.logic.ProperSuperset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProperSuperset</span></code></a>(superset,&nbsp;subset)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.Set.html#proveit.logic.Set" title="proveit.logic.Set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Set</span></code></a>(*elems)</td>
+<td>Defines an enumerated set (i.e.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.SetEquiv.html#proveit.logic.SetEquiv" title="proveit.logic.SetEquiv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SetEquiv</span></code></a>(a,&nbsp;b)</td>
+<td>Class to capture the membership equivalence of 2 sets A and B.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.SetNotEquiv.html#proveit.logic.SetNotEquiv" title="proveit.logic.SetNotEquiv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SetNotEquiv</span></code></a>(a,&nbsp;b)</td>
+<td>Class to capture the LACK of membership equivalence of 2 sets A and B.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.SetOfAll.html#proveit.logic.SetOfAll" title="proveit.logic.SetOfAll"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SetOfAll</span></code></a>(instance_param_or_params,&nbsp;…[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.SimplificationError.html#proveit.logic.SimplificationError" title="proveit.logic.SimplificationError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SimplificationError</span></code></a>(message)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.StrictSubset.html#proveit.logic.StrictSubset" title="proveit.logic.StrictSubset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StrictSubset</span></code></a></td>
+<td>alias of <a class="reference internal" href="api/proveit.logic.ProperSubset.html#proveit.logic.ProperSubset" title="proveit.logic.sets.inclusion.subset.ProperSubset"><code class="docutils literal notranslate"><span class="pre">proveit.logic.ProperSubset</span></code></a></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.StrictSuperset.html#proveit.logic.StrictSuperset" title="proveit.logic.StrictSuperset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StrictSuperset</span></code></a></td>
+<td>alias of <a class="reference internal" href="api/proveit.logic.ProperSuperset.html#proveit.logic.ProperSuperset" title="proveit.logic.sets.inclusion.superset.ProperSuperset"><code class="docutils literal notranslate"><span class="pre">proveit.logic.ProperSuperset</span></code></a></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.SubsetEq.html#proveit.logic.SubsetEq" title="proveit.logic.SubsetEq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SubsetEq</span></code></a>(subset,&nbsp;superset)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.SubsetProper.html#proveit.logic.SubsetProper" title="proveit.logic.SubsetProper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SubsetProper</span></code></a></td>
+<td>alias of <a class="reference internal" href="api/proveit.logic.ProperSubset.html#proveit.logic.ProperSubset" title="proveit.logic.sets.inclusion.subset.ProperSubset"><code class="docutils literal notranslate"><span class="pre">proveit.logic.ProperSubset</span></code></a></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.SupersetEq.html#proveit.logic.SupersetEq" title="proveit.logic.SupersetEq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SupersetEq</span></code></a>(superset,&nbsp;subset)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.SupersetProper.html#proveit.logic.SupersetProper" title="proveit.logic.SupersetProper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SupersetProper</span></code></a></td>
+<td>alias of <a class="reference internal" href="api/proveit.logic.ProperSuperset.html#proveit.logic.ProperSuperset" title="proveit.logic.sets.inclusion.superset.ProperSuperset"><code class="docutils literal notranslate"><span class="pre">proveit.logic.ProperSuperset</span></code></a></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.TrueLiteral.html#proveit.logic.TrueLiteral" title="proveit.logic.TrueLiteral"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TrueLiteral</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.logic.Union.html#proveit.logic.Union" title="proveit.logic.Union"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Union</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.logic.UnionAll.html#proveit.logic.UnionAll" title="proveit.logic.UnionAll"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UnionAll</span></code></a>(instance_param_or_params,&nbsp;…[,&nbsp;…])</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="module-proveit.numbers">
+<span id="proveit-numbers-package"></span><h2>proveit.numbers Package<a class="headerlink" href="#module-proveit.numbers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h3>Functions<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.GreaterEqOnlySeq.html#proveit.numbers.GreaterEqOnlySeq" title="proveit.numbers.GreaterEqOnlySeq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GreaterEqOnlySeq</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.GreaterOnlySeq.html#proveit.numbers.GreaterOnlySeq" title="proveit.numbers.GreaterOnlySeq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GreaterOnlySeq</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.LessEqOnlySeq.html#proveit.numbers.LessEqOnlySeq" title="proveit.numbers.LessEqOnlySeq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LessEqOnlySeq</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.LessOnlySeq.html#proveit.numbers.LessOnlySeq" title="proveit.numbers.LessOnlySeq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LessOnlySeq</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.const_shift_composition.html#proveit.numbers.const_shift_composition" title="proveit.numbers.const_shift_composition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">const_shift_composition</span></code></a>(idx,&nbsp;shift)</td>
+<td>Return an expression representing the ‘idx’ shifted by amount ‘shift’ where ‘shift’ is a Python integer.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.const_shift_decomposition.html#proveit.numbers.const_shift_decomposition" title="proveit.numbers.const_shift_decomposition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">const_shift_decomposition</span></code></a>(idx)</td>
+<td>Return a tuple whose sum is the given ‘idx’ where the first element is an Expression and the second element is an integer.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.dist_add.html#proveit.numbers.dist_add" title="proveit.numbers.dist_add"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dist_add</span></code></a>(*terms)</td>
+<td>Returns the distributed sum of expression.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.dist_subtract.html#proveit.numbers.dist_subtract" title="proveit.numbers.dist_subtract"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dist_subtract</span></code></a>(a,&nbsp;b)</td>
+<td>Returns the distributed a-b expression.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.frac.html#proveit.numbers.frac" title="proveit.numbers.frac"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frac</span></code></a>(numer,&nbsp;denom)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.greater_sequence.html#proveit.numbers.greater_sequence" title="proveit.numbers.greater_sequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">greater_sequence</span></code></a>(operators,&nbsp;operands)</td>
+<td>Create a GreaterSequence with the given operators or operands, or create an appropriate degenerate Expression when there are fewer than two operators.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.is_literal_int.html#proveit.numbers.is_literal_int" title="proveit.numbers.is_literal_int"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_literal_int</span></code></a>(expr)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.lesser_sequence.html#proveit.numbers.lesser_sequence" title="proveit.numbers.lesser_sequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lesser_sequence</span></code></a>(operators,&nbsp;operands)</td>
+<td>Create a LessSequence with the given operators or operands, or create an appropriate degenerate Expression when there are fewer than two operators.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.num.html#proveit.numbers.num" title="proveit.numbers.num"><code class="xref py py-obj docutils literal notranslate"><span class="pre">num</span></code></a>(x)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.sqrt.html#proveit.numbers.sqrt" title="proveit.numbers.sqrt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sqrt</span></code></a>(base)</td>
+<td>Special function for square root version of an exponential.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.subtract.html#proveit.numbers.subtract" title="proveit.numbers.subtract"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subtract</span></code></a>(a,&nbsp;b)</td>
+<td>Return the a-b expression (which is internally a+(-b)).</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id5">
+<h3>Classes<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Abs.html#proveit.numbers.Abs" title="proveit.numbers.Abs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Abs</span></code></a>(A)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Add.html#proveit.numbers.Add" title="proveit.numbers.Add"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Add</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Ceil.html#proveit.numbers.Ceil" title="proveit.numbers.Ceil"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Ceil</span></code></a>(A)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence" title="proveit.numbers.DecimalSequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DecimalSequence</span></code></a>(*digits)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Div.html#proveit.numbers.Div" title="proveit.numbers.Div"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Div</span></code></a>(numerator,&nbsp;denominator)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Divides.html#proveit.numbers.Divides" title="proveit.numbers.Divides"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Divides</span></code></a>(x,&nbsp;…)</td>
+<td>(equivalently, x is a factor of y, y is a multiple of x, or y/x is an integer).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.DividesProper.html#proveit.numbers.DividesProper" title="proveit.numbers.DividesProper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DividesProper</span></code></a>(a,&nbsp;b)</td>
+<td>DividesProper(x, y) represents the claim that x divides y (i.e.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Exp.html#proveit.numbers.Exp" title="proveit.numbers.Exp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Exp</span></code></a>(base,&nbsp;exponent)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Floor.html#proveit.numbers.Floor" title="proveit.numbers.Floor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Floor</span></code></a>(A)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.GCD.html#proveit.numbers.GCD" title="proveit.numbers.GCD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GCD</span></code></a>(a,&nbsp;b)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Greater.html#proveit.numbers.Greater" title="proveit.numbers.Greater"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Greater</span></code></a>(lhs,&nbsp;rhs)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.GreaterEq.html#proveit.numbers.GreaterEq" title="proveit.numbers.GreaterEq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GreaterEq</span></code></a>(lhs,&nbsp;rhs)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.GreaterSequence.html#proveit.numbers.GreaterSequence" title="proveit.numbers.GreaterSequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GreaterSequence</span></code></a>(operators,&nbsp;operands)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Integrate.html#proveit.numbers.Integrate" title="proveit.numbers.Integrate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Integrate</span></code></a>(index,&nbsp;integrand,&nbsp;domain,&nbsp;*[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Interval.html#proveit.numbers.Interval" title="proveit.numbers.Interval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Interval</span></code></a>(lower_bound,&nbsp;upper_bound)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.IntervalCC.html#proveit.numbers.IntervalCC" title="proveit.numbers.IntervalCC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntervalCC</span></code></a>(lower_bound,&nbsp;upper_bound)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.IntervalCO.html#proveit.numbers.IntervalCO" title="proveit.numbers.IntervalCO"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntervalCO</span></code></a>(lower_bound,&nbsp;upper_bound)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.IntervalOC.html#proveit.numbers.IntervalOC" title="proveit.numbers.IntervalOC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntervalOC</span></code></a>(lower_bound,&nbsp;upper_bound)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.IntervalOO.html#proveit.numbers.IntervalOO" title="proveit.numbers.IntervalOO"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntervalOO</span></code></a>(lower_bound,&nbsp;upper_bound)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Less.html#proveit.numbers.Less" title="proveit.numbers.Less"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Less</span></code></a>(lhs,&nbsp;rhs)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.LessEq.html#proveit.numbers.LessEq" title="proveit.numbers.LessEq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LessEq</span></code></a>(lhs,&nbsp;rhs)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.LesserSequence.html#proveit.numbers.LesserSequence" title="proveit.numbers.LesserSequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LesserSequence</span></code></a>(operators,&nbsp;operands)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Max.html#proveit.numbers.Max" title="proveit.numbers.Max"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Max</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Min.html#proveit.numbers.Min" title="proveit.numbers.Min"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Min</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Mod.html#proveit.numbers.Mod" title="proveit.numbers.Mod"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Mod</span></code></a>(dividend,&nbsp;divisor)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.ModAbs.html#proveit.numbers.ModAbs" title="proveit.numbers.ModAbs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModAbs</span></code></a>(value,&nbsp;divisor)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Mult.html#proveit.numbers.Mult" title="proveit.numbers.Mult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Mult</span></code></a>(*operands)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Neg.html#proveit.numbers.Neg" title="proveit.numbers.Neg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Neg</span></code></a>(A)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Numeral.html#proveit.numbers.Numeral" title="proveit.numbers.Numeral"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Numeral</span></code></a>(n[,&nbsp;string_format,&nbsp;latex_format])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Prod.html#proveit.numbers.Prod" title="proveit.numbers.Prod"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prod</span></code></a>(indices,&nbsp;summand,&nbsp;domain,&nbsp;*[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.RealInterval.html#proveit.numbers.RealInterval" title="proveit.numbers.RealInterval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RealInterval</span></code></a>(operator,&nbsp;lower_bound,&nbsp;upper_bound)</td>
+<td>Base class for all permutations of closed and open intervals.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/proveit.numbers.Round.html#proveit.numbers.Round" title="proveit.numbers.Round"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Round</span></code></a>(A)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/proveit.numbers.Sum.html#proveit.numbers.Sum" title="proveit.numbers.Sum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sum</span></code></a>(index_or_indices,&nbsp;summand,&nbsp;*[,&nbsp;domain,&nbsp;…])</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="module-proveit.physics">
+<span id="proveit-physics-package"></span><h2>proveit.physics Package<a class="headerlink" href="#module-proveit.physics" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="api/proveit.as_expression.html" title="next chapter">as_expression</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

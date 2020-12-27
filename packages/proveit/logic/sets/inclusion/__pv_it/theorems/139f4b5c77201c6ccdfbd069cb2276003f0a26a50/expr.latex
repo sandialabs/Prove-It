@@ -1,0 +1,1 @@
+\forall_{A, B, x~|~A \supseteq B, x \notin A}~\left(x \notin B\right)

@@ -1,0 +1,2 @@
+proveit.logic.booleans.conjunction.and_if_both
+proveit.logic.equality.sub_left_side_into

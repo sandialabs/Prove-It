@@ -1,0 +1,4 @@
+proveit.logic.booleans.conjunction.and_if_both
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.quantification.existence.skolem_elim_lemma

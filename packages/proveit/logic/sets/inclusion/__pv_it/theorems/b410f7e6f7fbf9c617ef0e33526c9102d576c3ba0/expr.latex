@@ -1,0 +1,1 @@
+\forall_{A, B~|~\forall_{x \in A}~\left(x \in B\right)}~\left(A \subseteq B\right)

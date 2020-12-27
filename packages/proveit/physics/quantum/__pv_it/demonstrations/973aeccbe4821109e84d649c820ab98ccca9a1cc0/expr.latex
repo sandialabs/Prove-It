@@ -1,0 +1,14 @@
+\begin{array} {ccc} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}{\Big \{} S_{1, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, m}{\Big \{} S_{1, m}} 
+} \hspace{2em}  \\ 
+  \vdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, j}{\Big \{} S_{i, j}} 
+} \hspace{2em} & \vdots  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{q, 1}{\Big \{} S_{q, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{q, m}{\Big \{} S_{q, m}} 
+} \hspace{2em} \end{array} 

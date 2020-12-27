@@ -1,0 +1,1 @@
+\left(w < x \leq y = z, \left(x < x_{i + 1}\right) \land \left(y \leq x_{i + 1}\right) \land \left(z = x_{i + 1}\right)\right)

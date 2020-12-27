@@ -1,0 +1,2 @@
+proveit.logic.booleans.negation.not_f
+proveit.logic.booleans.negation.not_t

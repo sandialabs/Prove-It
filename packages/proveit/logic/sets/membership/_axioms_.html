@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.logic.sets.membership</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.logic.sets.membership">Axioms for the theory of <a class="ProveItLink" href="_theory_.html">proveit.logic.sets.membership</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.logic.sets.membership">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">,</span> <span class="n">NotInSet</span><span class="p">,</span> <span class="n">EmptySet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">one</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets</span> <span class="k">import</span> <span class="n">each_x_in_S</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.logic.sets.membership&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Set membership should be either true or false (though one might not know which it is), and thus we might naively expect to include here an axiom for set membership being in the Boolean set, something like</strong><br></p>
+<blockquote><p>$\text{membership_in_bool} = \forall_{x, S}\;(x\in S) \in Boolean$</p>
+</blockquote>
+<p><strong>This would be problematic, however, and open up the system to Russell's paradox. Instead we use whether or not membership can be proven to be in the Boolean set to dictate whether something is a set or not.</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Define an exponentiated set.</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Bob has a good suggestion to move this to a new theory, proveit.logic.sets.cartesian_product, as a theorem.  The axioms would define S^n = S x S x ... S and the axiom would be a more general one about membership in a general cartesian product.</p>
+
+</div>
+</div>
+</div>exp_set_def = Forall(n, Forall((x, S), Equals(InSet(x, Exp(S, n)), 
+                                            And(Equals(Len(x), n), 
+                                                each_x_in_S))),
+                   domain=Natural)
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>$x \notin S$ is defined as the negation of $x \in S$ for all $x$ and $S$:</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">not_in_set_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">Not</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="not_in_set_def">not_in_set_def:</strong> <a class="ProveItLink" href="__pv_it/axioms/8be16e9afd23cc4b250b8360657ad5ff99cb420c0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQIAAAAWCAMAAAAcoWJbAAAAQlBMVEX///9jY2MJCQkNDQ0rKysP
+Dw8WFhYQEBCIiIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAADRR/RZAAAA
+AXRSTlMAQObYZgAAAt5JREFUWMPlWO2y1CAMRa9aoHwEKO//qlLa0gZIy65endH82DO7sBwIyYHA
+2CfazP5dswEjYZr43dnXaMYbHuwgxriU9jA8LhiMVBCoagLCe8+CZEzZV2jGG6iVN8QIvTs6LjA6
+5GIxEiYk+mpCnn1cP5dXaMYb+tYhRmgPj9ph1waBcSwPxNY7ZHLPx2nGG4id6BEjPDb/DIcn0xZj
+d5pG//iuL5sNcRNHmblhGqcZb9h4k12DrE+MMHhYzephLdQYeypgODCDZirjJjXzNqFFjtKMN+y8
+lRHECKNZTftRF3CBEThXVvJLbMMaWVW+Q4z+ckh6MUpDNhC8jXb2iRGq3MF0o2tOUurC3KrLiZB8
+FzRnl+jLOsurdOcxWTkKwtnbLxcTDU1f3Wje1mVdYoRSkBqdm1ysUtEh9MnzPgKTJ7/pHjAQ1BSn
+/Vf3mHf78EIX80O8nTjoEWNcP3jX5xo6I08S4drFoC7zlLbz28e6qY06x91/c3xywVSrhVUjvJux
+R2KMPlAXuZg97G5dkPuhoM/Ha3XA+CMxf5sLCN7aKGKMdikXOc/FzFXJ/WXykorQguswWC2m5lIA
+6ui5x6PUfS1QDU3jgnveOgko4gqNVdtK05GiFqbLskGkJJJ9OTrQQRKc7b8l6vimIpcr6j474Vs5
+vFe91gW3vM3dmCKu0AldSrsl1MR1juBjRaYIW++eqHLRTuH9ETp39mWTxeMZ3B6b8wBvowEUcY2X
+nIqnwMK8ZVF9TKAQAsU5cIFrLFBfJToQBJNKKHXOcHkspKW+bSB4DealiWsMcKbXWeY716v3hi7I
+4Ys31UUVp+jAXfStC7K85y3ENZagj0mbsohak5wiTK6w4I0yyTzUcn+yTOoS13jGUZCer3eOeUoR
+IGyqswXQCyQX+lTQjxXL5PDGvuuBbrFMPjP8ypMJD28u7nOeTOjNu5vI/dvW08PZwxTD33o4O4hr
+7Hdm/439BJP2M3paqy+JAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

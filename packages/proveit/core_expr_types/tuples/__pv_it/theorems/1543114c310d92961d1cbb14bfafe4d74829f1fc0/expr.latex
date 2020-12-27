@@ -1,0 +1,1 @@
+\left\{\left(f(i + a), \ldots, f(j + a)\right) = \left(f(k + b), \ldots, f(l + b)\right) \textrm{ if } \left(\left(j + 1\right) - i\right) \in \mathbb{N} ,  \left(i + a\right) = \left(k + b\right) ,  \left(j + a\right) = \left(l + b\right)\right..

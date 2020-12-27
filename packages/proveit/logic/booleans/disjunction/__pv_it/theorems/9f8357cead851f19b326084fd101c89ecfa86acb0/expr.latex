@@ -1,0 +1,1 @@
+\left(A_{1}, \ldots, A_{m}, B, C_{1}, \ldots, C_{n}\right) \mapsto \left\{A_{1} \lor \ldots \lor A_{m} \lor B \lor C_{1} \lor \ldots \lor C_{n} \textrm{ if } A_{1} \in \mathbb{B} ,  \ldots ,  A_{m} \in \mathbb{B} ,  B \in \mathbb{B} ,  C_{1} \in \mathbb{B} ,  \ldots ,  C_{n} \in \mathbb{B} ,  B\right..

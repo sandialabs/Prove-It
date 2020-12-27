@@ -1,0 +1,1 @@
+\forall_{A, B~|~\lnot A, \lnot B}~\left(\left(A \land B\right) = \bot\right)

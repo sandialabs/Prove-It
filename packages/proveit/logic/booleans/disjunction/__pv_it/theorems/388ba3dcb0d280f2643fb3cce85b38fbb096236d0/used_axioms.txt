@@ -1,0 +1,2 @@
+proveit.logic.booleans.eq_true_elim
+proveit.logic.equality.equality_in_bool

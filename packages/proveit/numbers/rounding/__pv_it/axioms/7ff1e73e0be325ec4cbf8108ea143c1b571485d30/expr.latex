@@ -1,0 +1,1 @@
+\left(x - \lfloor x\rfloor, \lceil x\rceil - x\right)

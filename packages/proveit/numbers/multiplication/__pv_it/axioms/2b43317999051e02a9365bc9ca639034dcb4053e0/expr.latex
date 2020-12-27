@@ -1,0 +1,1 @@
+\left(n, x\right) \mapsto \left\{\forall_{a_{1}, \ldots, a_{n} \in \left\{x\right\}}~\left(\left(n \cdot x\right) = \left(a_{1} + \ldots + a_{n}\right)\right) \textrm{ if } n \in \mathbb{N} ,  x \in \mathbb{C}\right..

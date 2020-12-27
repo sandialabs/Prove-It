@@ -1,0 +1,10 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} & \gate{Z} \qwx[1] & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 0 \rangle} & \control \qw & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 0 \rangle} & \gate{Z} \qwx[1] & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \control \qw & \rstick{\lvert 1 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \gate{Z} \qwx[1] & \rstick{\lvert 1 \rangle} \qw   \\ 
+  & \lstick{\lvert 0 \rangle} & \control \qw & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \gate{Z} \qwx[1] & \rstick{-\lvert 1 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \control \qw & \rstick{\lvert 1 \rangle} \qw 
+} \hspace{2em}

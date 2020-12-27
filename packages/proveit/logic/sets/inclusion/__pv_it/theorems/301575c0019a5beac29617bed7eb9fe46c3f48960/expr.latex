@@ -1,0 +1,1 @@
+\forall_{A, B~|~A \subset B}~\left[\forall_{x \in A}~\left(x \in B\right)\right]

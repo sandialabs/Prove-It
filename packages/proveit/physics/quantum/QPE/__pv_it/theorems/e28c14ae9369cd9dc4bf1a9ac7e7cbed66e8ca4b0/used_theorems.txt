@@ -1,0 +1,10 @@
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.exponentiation.exp_not_eq_zero
+proveit.numbers.number_sets.complex_numbers.real_within_complex
+proveit.numbers.number_sets.integers.nat_within_int
+proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
+proveit.numbers.number_sets.natural_numbers.non_zero_if_is_nat_pos
+proveit.numbers.number_sets.rational_numbers.int_within_rational
+proveit.numbers.number_sets.real_numbers.rational_within_real
+proveit.numbers.numerals.decimals.nat2
+proveit.numbers.numerals.decimals.posnat2

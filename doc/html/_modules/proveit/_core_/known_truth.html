@@ -1,0 +1,1381 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit._core_.known_truth &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit._core_.known_truth</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A KnownTruth represents an expression that has been proven to be a true</span>
+<span class="sd">statement.  A KnownTruth wraps an Expression (acting like the Expression</span>
+<span class="sd">in many ways via overloading __getattr__) but also has a list of assumptions</span>
+<span class="sd">and its proof (as a Proof object, which may be updated if a newer proof,</span>
+<span class="sd">with possibly fewer assumptions, suffices).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">proveit._core_.expression</span> <span class="k">import</span> <span class="n">Expression</span>
+<span class="kn">from</span> <span class="nn">proveit._core_._unique_data</span> <span class="k">import</span> <span class="n">meaningData</span><span class="p">,</span> <span class="n">styleData</span>
+<span class="kn">from</span> <span class="nn">.defaults</span> <span class="k">import</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="k">class</span> <span class="nc">_ExprProofs</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Stores a set of proofs for a particular expression under any set</span>
+<span class="sd">    of assumptions.  We maintain such sets so that we can update</span>
+<span class="sd">    KnownTruth proofs appropriately when a particular proof has been</span>
+<span class="sd">    disabled.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">all_expr_proofs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span> <span class="c1"># map expressions to expression proofs</span>
+        
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_expr</span> <span class="o">=</span> <span class="n">expr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proofs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">_ExprProofs</span><span class="o">.</span><span class="n">all_expr_proofs</span><span class="p">[</span><span class="n">expr</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
+    
+    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newproof</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Insert a new proof for the expression, maintaining sorted order</span>
+<span class="sd">        in the proof size (number of steps).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.proof</span> <span class="k">import</span> <span class="n">Proof</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">newproof</span><span class="p">,</span> <span class="n">Proof</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">newproof</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">expr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proofs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">newproof</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">discard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oldproof</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.proof</span> <span class="k">import</span> <span class="n">Proof</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">oldproof</span><span class="p">,</span> <span class="n">Proof</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">oldproof</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">expr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expr</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">oldproof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">(),</span> <span class="s2">&quot;Should only remove unusable proofs&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proofs</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">oldproof</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">bestProof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knowntruth</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the best proof applicable to the knowntruth that is usable</span>
+<span class="sd">        (or None if there aren&#39;t any that are usable).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">knowntruth</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">)</span>
+        <span class="n">best_unusable_proof</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">fewestSteps</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">proof</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_proofs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">proof</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">assumptionsSet</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">knowntruth</span><span class="o">.</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                <span class="k">assert</span> <span class="n">proof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">(),</span> <span class="s1">&#39;unusable proofs should have been removed&#39;</span>
+                
+                <span class="k">if</span> <span class="n">proof</span><span class="o">.</span><span class="n">numSteps</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">fewestSteps</span><span class="p">:</span>
+                    <span class="n">fewestSteps</span> <span class="o">=</span> <span class="n">proof</span><span class="o">.</span><span class="n">numSteps</span><span class="p">()</span>
+                    <span class="n">best_unusable_proof</span> <span class="o">=</span> <span class="n">proof</span>
+        <span class="k">return</span> <span class="n">best_unusable_proof</span> <span class="c1"># the proof with the fewest steps that is applicable</span>
+
+            
+<div class="viewcode-block" id="KnownTruth"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth">[docs]</a><span class="k">class</span> <span class="nc">KnownTruth</span><span class="p">:</span>
+    <span class="c1"># lookup_dict maps each Expression to a set of KnownTruths for proving the </span>
+    <span class="c1"># Expression under various assumptions.</span>
+    <span class="n">lookup_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    
+    <span class="c1"># (KnownTruth, default assumptions) pairs for which deriveSideEffects has been called.  </span>
+    <span class="c1"># We track this to make sure we didn&#39;t miss anything while automation was disabled and then re-enabled.</span>
+    <span class="n">sideeffect_processed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    
+    <span class="c1"># Call the beginProof method to begin a proof of a Theorem.</span>
+    <span class="n">theoremBeingProven</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># Theorem being proven.</span>
+    <span class="n">hasBeenProven</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># Has the theoremBeingProven been proven yet in this session?  </span>
+                         <span class="c1"># Goes from None to False (after beginning a proof and disabling Theorems that cannot be used)</span>
+                         <span class="c1"># to True (when there is a legitimate proof).</span>
+    <span class="c1"># Set of theorems/packages that are presumed to be True for the purposes of the proof being proven:</span>
+    <span class="n">presumingTheoremNamess</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># set of full names of presumed theorems when in use</span>
+    <span class="n">presumingPrefixes</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># set of context names or full theorem names when in use.</span>
+    <span class="n">qedInProgress</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># set to true when &quot;%qed&quot; is in progress</span>
+    
+    <span class="c1"># Set of (style-id, Proof) tuples of hyperlinked Proofs for</span>
+    <span class="c1"># KnownTruths that are displayed.  We need to add reference counts</span>
+    <span class="c1"># to these.</span>
+    <span class="n">hyperlinked_proof_styles</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    
+    <span class="c1"># KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite</span>
+    <span class="c1"># recursion when deducing side effects after something is proven.</span>
+    <span class="n">in_progress_to_derive_sideeffects</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> 
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_clear_</span><span class="p">():</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Clear all references to Prove-It information in</span>
+<span class="sd">        the KnownTruth jurisdiction.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">lookup_dict</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">sideeffect_processed</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">hasBeenProven</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">presumingTheorems</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">presumingPrefixes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">qedInProgress</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">hyperlinked_proof_styles</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">_ExprProofs</span><span class="o">.</span><span class="n">all_expr_proofs</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">KnownTruth</span><span class="o">.</span><span class="n">in_progress_to_derive_sideeffects</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Unexpected remnant &#39;in_progress_to_derive_sideeffects&#39; items (should have been temporary)&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a KnownTruth with the given Expression, set of assumptions.  These</span>
+<span class="sd">        should not be created manually but rather through the creation of Proofs which should</span>
+<span class="sd">        be done indirectly via Expression/KnownTruth derivation-step methods.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># do some type checking</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The expression (expr) of a KnownTruth should be an Expression&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="n">assumptions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Each assumption should be an Expression&#39;</span><span class="p">)</span>
+                
+        <span class="c1"># note: these contained expressions are subject to style changes on a KnownTruth instance basis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">=</span> <span class="n">expression</span>
+        <span class="c1"># store the assumptions as an ordered list (with the desired order for display)</span>
+        <span class="c1"># and an unordered set (for convenience when checking whether one set subsumes another).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assumptionsSet</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="c1"># The meaning data is shared among KnownTruths with the same structure disregarding style</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span> <span class="o">=</span> <span class="n">meaningData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_generate_unique_rep</span><span class="p">(</span><span class="k">lambda</span> <span class="n">expr</span> <span class="p">:</span> <span class="nb">hex</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">_meaning_id</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="p">,</span> <span class="s1">&#39;_exprProofs&#39;</span><span class="p">):</span>
+            <span class="c1"># create or assign the _ExprProofs object for storing all proofs</span>
+            <span class="c1"># for this KnownTruth&#39;s expr (under any set of assumptions).</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="ow">in</span> <span class="n">_ExprProofs</span><span class="o">.</span><span class="n">all_expr_proofs</span><span class="p">:</span>
+                <span class="n">exprProofs</span> <span class="o">=</span> <span class="n">_ExprProofs</span><span class="o">.</span><span class="n">all_expr_proofs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">exprProofs</span> <span class="o">=</span> <span class="n">_ExprProofs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_exprProofs</span> <span class="o">=</span> <span class="n">exprProofs</span>
+            <span class="c1"># Initially, _proof is None but will be assigned and updated via _addProof()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_proof</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="c1"># The style data is shared among KnownTruths with the same structure and style.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span> <span class="o">=</span> <span class="n">styleData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_generate_unique_rep</span><span class="p">(</span><span class="k">lambda</span> <span class="n">expr</span> <span class="p">:</span> <span class="nb">hex</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">_style_id</span><span class="p">)))</span>
+        
+        <span class="c1"># establish some parent-child relationships (important in case styles are updated)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumption</span><span class="p">)</span>
+        
+        <span class="c1"># reference this unchanging data of the unique &#39;meaning&#39; data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_meaning_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_unique_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exprProofs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_exprProofs</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_style_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_styleData</span><span class="o">.</span><span class="n">_unique_id</span>
+        
+        <span class="c1"># The _proof can change so it must be accessed via indirection into self._meaningData</span>
+        <span class="c1"># (see proof() method).</span>
+    
+    <span class="k">def</span> <span class="nf">_generate_unique_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objectRepFn</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">objectRepFn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;;[&#39;</span> <span class="o">+</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">objectRepFn</span><span class="p">(</span><span class="n">assumption</span><span class="p">)</span> <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extractReferencedObjIds</span><span class="p">(</span><span class="n">unique_rep</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given a unique representation string, returns the list of representations</span>
+<span class="sd">        of Prove-It objects that are referenced.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Everything between the punctuation, &#39;;&#39;, &#39;[&#39;, &#39;]&#39;, &#39;,&#39;, is a represented object.</span>
+        <span class="n">objIds</span> <span class="o">=</span>  <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;|\[|,|\]&quot;</span><span class="p">,</span><span class="n">unique_rep</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">objId</span> <span class="k">for</span> <span class="n">objId</span> <span class="ow">in</span> <span class="n">objIds</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">objId</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>           
+                
+<div class="viewcode-block" id="KnownTruth.deriveSideEffects"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.deriveSideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">deriveSideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Derive any side-effects that are obvious consequences arising from this truth.</span>
+<span class="sd">        Called after the corresponding Proof is complete.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.proof</span> <span class="k">import</span> <span class="n">ProofFailure</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">defaults</span><span class="o">.</span><span class="n">automation</span><span class="p">:</span>
+            <span class="k">return</span> <span class="c1"># automation disabled</span>
+        <span class="c1"># Sort the assumptions according to hash key so that sets of assumptions</span>
+        <span class="c1"># are unique for determining which side-effects have been processed already.</span>
+        <span class="n">sorted_assumptions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">expr</span> <span class="p">:</span> <span class="nb">hash</span><span class="p">(</span><span class="n">expr</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">sorted_assumptions</span><span class="p">)</span> <span class="ow">in</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">sideeffect_processed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="c1"># has already been processed</span>
+        <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">in_progress_to_derive_sideeffects</span><span class="p">:</span>
+            <span class="c1"># avoid infinite recursion by using in_progress_to_deduce_sideeffects</span>
+            <span class="n">KnownTruth</span><span class="o">.</span><span class="n">in_progress_to_derive_sideeffects</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">sideEffect</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">sideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                    <span class="c1">#print(self, &quot;side-effect&quot;, sideEffect)</span>
+                    <span class="c1"># Attempt each side-effect derivation, specific to the</span>
+                    <span class="c1"># type of Expression.</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="c1"># use the default assumptions which are temporarily set to the</span>
+                        <span class="c1"># assumptions utilized in the last derivation step.</span>
+                        <span class="n">sideEffect</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>     
+                    <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                        <span class="k">pass</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Side effect failure for </span><span class="si">%s</span><span class="s2">, while running </span><span class="si">%s</span><span class="s2">: &quot;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">sideEffect</span><span class="p">))</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="n">KnownTruth</span><span class="o">.</span><span class="n">in_progress_to_derive_sideeffects</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>        
+            <span class="n">KnownTruth</span><span class="o">.</span><span class="n">sideeffect_processed</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">sorted_assumptions</span><span class="p">))</span></div>
+    
+<div class="viewcode-block" id="KnownTruth.orderOfAppearance"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.orderOfAppearance">[docs]</a>    <span class="k">def</span> <span class="nf">orderOfAppearance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subExpressions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yields the given sub-Expressions in the order in which they</span>
+<span class="sd">        appear in this KnownTruth.  There may be repeats.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="n">assumption</span><span class="o">.</span><span class="n">orderOfAppearance</span><span class="p">(</span><span class="n">subExpressions</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">expr</span>
+        <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">orderOfAppearance</span><span class="p">(</span><span class="n">subExpressions</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">expr</span></div>
+    
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaning_id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_meaning_id</span>
+        <span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="kc">False</span> <span class="c1"># other must be an Expression to be equal to self</span>
+    
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaning_id</span>
+        
+<div class="viewcode-block" id="KnownTruth.beginProof"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.beginProof">[docs]</a>    <span class="k">def</span> <span class="nf">beginProof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theorem</span><span class="p">,</span> <span class="n">presuming</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span> <span class="n">justRecordPresumingInfo</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Begin a proof for a theorem.  Only use other theorems that are in </span>
+<span class="sd">        the presuming list of theorems/packages or theorems that are required,</span>
+<span class="sd">        directly or indirectly, in proofs of theorems that are explicitly </span>
+<span class="sd">        listed (these are implicitly presumed).  If there exists any </span>
+<span class="sd">        presumed theorem that has a direct or indirect dependence upon this </span>
+<span class="sd">        theorem then a CircularLogic exception is raised. </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.context</span> <span class="k">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">ContextException</span>
+        <span class="kn">from</span> <span class="nn">.proof</span> <span class="k">import</span> <span class="n">Theorem</span>
+        <span class="k">if</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProofInitiationFailure</span><span class="p">(</span><span class="s2">&quot;May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theorem</span><span class="p">,</span> <span class="n">Theorem</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Only begin a proof for a Theorem&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">theorem</span><span class="o">.</span><span class="n">provenTruth</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Inconsistent theorem for the KnownTruth in beginProof call&#39;</span><span class="p">)</span>
+                
+        <span class="c1"># Note: all previous theorems of the context are presumed automatically.</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">theorem</span><span class="o">.</span><span class="n">context</span>
+        <span class="n">num_prev_thms</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># number of previous theorems within the context</span>
+        <span class="k">for</span> <span class="n">prev_thm_name</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">theoremNames</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">prev_thm_name</span> <span class="o">==</span> <span class="n">theorem</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                <span class="k">break</span> <span class="c1"># concludes all &quot;previous&quot; theorems of the context</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span>  <span class="n">prev_thm_name</span><span class="p">)</span> <span class="ow">in</span> <span class="n">presuming</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Do not explicitly presuming any previous theorems of the context.  They are automatically presumed.&quot;</span><span class="p">)</span>
+            <span class="n">num_prev_thms</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="c1"># split the presuming information into specific theorems (which are transitively presumed)</span>
+        <span class="c1"># and entire contexts (which are not transitively presumed only applies to theorems of</span>
+        <span class="c1"># the other context that do not presume this one).</span>
+        <span class="n">explicitly_presumed_thm_names</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># list of theorem name strings</span>
+        <span class="n">presumed_context_names</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># list of context name strings</span>
+        <span class="k">for</span> <span class="n">presumption_name</span> <span class="ow">in</span> <span class="n">presuming</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">presumption_name</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">context_name</span><span class="p">,</span> <span class="n">theorem_name</span> <span class="o">=</span> <span class="n">presumption_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">context</span> <span class="o">=</span> <span class="n">Context</span><span class="o">.</span><span class="n">getContext</span><span class="p">(</span><span class="n">context_name</span><span class="p">)</span>
+                    <span class="c1"># Ensure we load the theorem and derive its automatic side-effects</span>
+                    <span class="c1"># for these explicitly presumed theorems (but not the indirectly</span>
+                    <span class="c1"># presumed ones).</span>
+                    <span class="n">context</span><span class="o">.</span><span class="n">getTheorem</span><span class="p">(</span><span class="n">theorem_name</span><span class="p">)</span>
+                    <span class="c1"># it is a theorem</span>
+                    <span class="n">explicitly_presumed_thm_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">presumption_name</span><span class="p">)</span> <span class="c1"># append as a string</span>
+                    <span class="k">continue</span> <span class="c1"># continue to the next thing</span>
+                <span class="k">except</span> <span class="p">(</span><span class="n">ContextException</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+                    <span class="k">pass</span>
+            <span class="c1"># it must not be a theorem; it should be a Context.</span>
+            <span class="n">presumed_context_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">presumption_name</span><span class="p">)</span> <span class="c1"># not a theorem; must be a context</span>
+        
+        <span class="c1"># record the explicitly presumed theorems</span>
+        <span class="n">theorem</span><span class="o">.</span><span class="n">recordPresumedContexts</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">presumed_context_names</span><span class="p">))</span>
+        <span class="n">theorem</span><span class="o">.</span><span class="n">recordPresumedTheorems</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">explicitly_presumed_thm_names</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">justRecordPresumingInfo</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recorded &#39;presuming&#39; information&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># The full list of presumed theorems includes all previous theorems</span>
+        <span class="c1"># of the context and all indirectly presumed theorems via transitivity</span>
+        <span class="c1"># (a presumption of a presumption is a presumption).</span>
+        <span class="n">presumed_theorem_names</span> <span class="o">=</span> <span class="n">theorem</span><span class="o">.</span><span class="n">getAllPresumedTheoremNames</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">in</span> <span class="n">presumed_theorem_names</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.proof</span> <span class="k">import</span> <span class="n">CircularLogic</span>
+            <span class="c1"># extra sanity check (should be caught within getAllPresumedTheoremNames)</span>
+            <span class="k">raise</span> <span class="n">CircularLogic</span><span class="p">(</span><span class="n">theorem</span><span class="p">,</span> <span class="n">theorem</span><span class="p">)</span>
+        
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span> <span class="o">=</span> <span class="n">theorem</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">presumingTheoremNames</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">presumed_theorem_names</span><span class="p">)</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">presumingPrefixes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">presumed_context_names</span><span class="p">)</span>
+        <span class="n">Theorem</span><span class="o">.</span><span class="n">updateUsability</span><span class="p">()</span>
+        
+        <span class="c1"># change KnownTruth.hasBeenProven</span>
+        <span class="c1"># from None to False -- we can now test to see if </span>
+        <span class="c1"># we have a proof for KnownTruth.theoremBeingProven</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">hasBeenProven</span> <span class="o">=</span> <span class="kc">False</span>        
+        
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        # check to see if the theorem was already proven before we started</span>
+<span class="sd">        for proof in theorem._possibleProofs:</span>
+<span class="sd">            if proof.isUsable():</span>
+<span class="sd">                proof.provenTruth._recordBestProof(proof)</span>
+<span class="sd">                return self.expr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checkIfReadyForQED</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proof</span><span class="p">()):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="c1"># already proven</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">presumed_context_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Presuming theorems in </span><span class="si">%s</span><span class="s2"> (except any that presume this theorem).&quot;</span><span class="o">%</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">presumed_context_names</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">explicitly_presumed_thm_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">theorem_or_theorems</span> <span class="o">=</span> <span class="s1">&#39;theorem&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">explicitly_presumed_thm_names</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;theorems&#39;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Presuming </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> (applied transitively).&quot;</span><span class="o">%</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thm</span><span class="p">)</span> <span class="k">for</span> <span class="n">thm</span> <span class="ow">in</span> <span class="n">explicitly_presumed_thm_names</span><span class="p">)),</span> <span class="n">theorem_or_theorems</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">num_prev_thms</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">theorem_or_theorems</span> <span class="o">=</span> <span class="s1">&#39;theorem&#39;</span> <span class="k">if</span> <span class="n">num_prev_thms</span><span class="o">==</span><span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;theorems&#39;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Presuming previous </span><span class="si">%s</span><span class="s2"> (applied transitively).&quot;</span><span class="o">%</span><span class="n">theorem_or_theorems</span><span class="p">)</span>
+        <span class="n">theorem</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_unusableProof</span> <span class="o">=</span> <span class="n">theorem</span> <span class="c1"># can&#39;t use itself to prove itself</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span></div>
+    
+    <span class="k">def</span> <span class="nf">_qed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Complete a proof that began via `beginProof`, entering it into</span>
+<span class="sd">        the certification database.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;No theorem being proven; cannot call qed method&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">!=</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">expr</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;qed does not match the theorem being proven&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;qed proof should not have any remaining assumptions&#39;</span><span class="p">)</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">qedInProgress</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">proof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">proof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+                <span class="n">proof</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">raiseUnusableProof</span><span class="p">()</span>
+            <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span><span class="o">.</span><span class="n">recordProof</span><span class="p">(</span><span class="n">proof</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">KnownTruth</span><span class="o">.</span><span class="n">qedInProgress</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">proof</span>
+
+<div class="viewcode-block" id="KnownTruth.proof"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.proof">[docs]</a>    <span class="k">def</span> <span class="nf">proof</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns the most up-to-date proof of this KnownTruth.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_proof</span></div>
+    
+<div class="viewcode-block" id="KnownTruth.isUsable"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.isUsable">[docs]</a>    <span class="k">def</span> <span class="nf">isUsable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns True iff this KnownTruth has a &quot;usable&quot; proof.  Proofs</span>
+<span class="sd">        may be unusable when proving a theorem that is restricted with</span>
+<span class="sd">        respect to which theorems may be used (to avoid circular logic).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">proof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">proof</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">proof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="KnownTruth.isSufficient"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.isSufficient">[docs]</a>    <span class="k">def</span> <span class="nf">isSufficient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True iff the given assumptions satisfy the KnownTruth; </span>
+<span class="sd">        the KnownTruth is usable and requires a subset of the given assumptions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">isUsable</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptionsSet</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="KnownTruth.asTheoremOrAxiom"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.asTheoremOrAxiom">[docs]</a>    <span class="k">def</span> <span class="nf">asTheoremOrAxiom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Assuming this KnownTruth represents a Theorem or Axiom, return </span>
+<span class="sd">        the Theorem or Axiom object.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.proof</span> <span class="k">import</span> <span class="n">Theorem</span><span class="p">,</span> <span class="n">Axiom</span>
+        <span class="c1"># Get the theorem associated with the KnownTruth (or raise an exception if there is none)</span>
+        <span class="k">if</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">==</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">expr</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span>
+        <span class="n">proof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">proof</span><span class="p">,</span> <span class="n">Theorem</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">proof</span><span class="p">,</span> <span class="n">Axiom</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">proof</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;KnownTruth does not represent a theorem or axiom.&quot;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="KnownTruth.printRequirements"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.printRequirements">[docs]</a>    <span class="k">def</span> <span class="nf">printRequirements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Provided that this KnownTruth is known to represent a proven theorem,</span>
+<span class="sd">        print the set of axioms that are required directly or indirectly in</span>
+<span class="sd">        its proof as well as any required theorems that are unproven (if it</span>
+<span class="sd">        has not yet been proven completely).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.certify</span> <span class="k">import</span> <span class="n">isFullyProven</span><span class="p">,</span> <span class="n">allRequirements</span>
+        <span class="c1"># print the required axioms and unproven theorems </span>
+        <span class="n">requiredAxioms</span><span class="p">,</span> <span class="n">requiredTheorems</span> <span class="o">=</span> <span class="n">allRequirements</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">axiom</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">requiredAxioms</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">axiom</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">requiredTheorems</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">isFullyProven</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="s2">&quot;certification database is corrupt&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Theorem is fully proven!&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">requiredTheorems</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">isFullyProven</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="s2">&quot;certification database is corrupt&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Unproven theorems:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">theorem</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">requiredTheorems</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">theorem</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="KnownTruth.printDependents"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.printDependents">[docs]</a>    <span class="k">def</span> <span class="nf">printDependents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Provided that this KnownTruth is known to represent a theorem or axiom,</span>
+<span class="sd">        print all theorems that are known to depend on it directly or indirectly.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.certify</span> <span class="k">import</span> <span class="n">allDependents</span>
+        <span class="n">dependents</span> <span class="o">=</span> <span class="n">allDependents</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">theorem</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dependents</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">theorem</span><span class="p">)</span></div>
+    
+    <span class="k">def</span> <span class="nf">_discardProof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proof</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Discard a disabled proof as an option in the _ExprProofs object.</span>
+<span class="sd">        Don&#39;t change self._meaningData._proof, now, however.  It will be updated</span>
+<span class="sd">        in due time and may be replaced with a proof that hasn&#39;t</span>
+<span class="sd">        been disabled.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exprProofs</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">proof</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">_addProof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newproof</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        After a Proof is finished being constructed, record the best</span>
+<span class="sd">        proof for the KnownTruth which may be the new proof, &#39;proof&#39;,</span>
+<span class="sd">        or a pre-existing one.  Update all KnownTruths</span>
+<span class="sd">        with the same &#39;truth&#39; expression that should be updated.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#print &#39;record best&#39;, self.expr, &#39;under&#39;, self.assumptions</span>
+        <span class="c1"># update KnownTruth.lookup_dict and use find all of the KnownTruths</span>
+        <span class="c1"># with this expr to see if the proof should be updated with the new proof.</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">newproof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+            <span class="c1"># Don&#39;t bother with a disabled proof unless it is the only</span>
+            <span class="c1"># proof.  in that case, we record it so we can generate a useful</span>
+            <span class="c1"># error message via raiseUnusableProof(..).</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_proof</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_proof</span> <span class="o">=</span> <span class="n">newproof</span>
+            <span class="k">return</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exprProofs</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">newproof</span><span class="p">)</span>
+    
+        <span class="c1"># Check to see if the new proof is applicable to any other KnownTruth.</span>
+        <span class="c1"># It can replace an old proof if it became unusable or if the newer one uses fewer steps.</span>
+        <span class="n">expr_known_truths</span> <span class="o">=</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">lookup_dict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+        <span class="n">expr_known_truths</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">expr_known_truth</span> <span class="ow">in</span> <span class="n">expr_known_truths</span><span class="p">:</span>
+            <span class="c1"># Is &#39;proof&#39; applicable to &#39;expr_known_truth&#39;?</span>
+            <span class="k">if</span> <span class="n">newproof</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">assumptionsSet</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">expr_known_truth</span><span class="o">.</span><span class="n">assumptionsSet</span><span class="p">):</span>
+                <span class="c1"># replace if there was no pre-existing usable proof or the new proof has fewer steps</span>
+                <span class="n">preexisting_proof</span> <span class="o">=</span> <span class="n">expr_known_truth</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">preexisting_proof</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">preexisting_proof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">()</span> <span class="ow">or</span> <span class="n">newproof</span><span class="o">.</span><span class="n">numSteps</span><span class="p">()</span><span class="o">&lt;</span><span class="n">preexisting_proof</span><span class="o">.</span><span class="n">numSteps</span><span class="p">():</span>
+                    <span class="n">expr_known_truth</span><span class="o">.</span><span class="n">_updateProof</span><span class="p">(</span><span class="n">newproof</span><span class="p">)</span> <span class="c1"># replace an old proof</span>
+    
+    <span class="k">def</span> <span class="nf">_reviseProof</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        After a proof and its dependents have been disabled, we will see</span>
+<span class="sd">        if there is another proof that is usable (see Proof.disable()).</span>
+<span class="sd">        Return True iff the proof actually changed to something usable.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_updateProof</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exprProofs</span><span class="o">.</span><span class="n">bestProof</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>             
+        
+        
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    def _recordBestProof(self, newProof):</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        After a Proof is finished being constructed, check to see if</span>
+<span class="sd">        any proofs for this KnownTruth are obsolete; the new proof</span>
+<span class="sd">        might make a previous one obsolete, or it may be born</span>
+<span class="sd">        obsolete itself.  A proof is obsolete if there exists a KnownTruth</span>
+<span class="sd">        with a subset of the assumptions required for that proof, or with</span>
+<span class="sd">        the same set of assumptions but fewer steps.  A tie goes to the</span>
+<span class="sd">        new proof, but note that the step number comparison will prevent</span>
+<span class="sd">        anything cyclic (since a proof for a KnownTruth that requires that</span>
+<span class="sd">        same KnownTruth as a dependent will necessarily include the</span>
+<span class="sd">        number of steps of the original proof plus more).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        self._updateProof(self._exprProofs.bestProof(self))</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        from proof import Theorem</span>
+<span class="sd">        if not self.expr in KnownTruth.lookup_dict:</span>
+<span class="sd">            # the first KnownTruth for this Expression</span>
+<span class="sd">            self._proof = newProof</span>
+<span class="sd">            KnownTruth.lookup_dict[self.expr] = [self]</span>
+<span class="sd">            return</span>
+<span class="sd">        if not newProof.isUsable():</span>
+<span class="sd">            # if it is not usable, we&#39;re done.</span>
+<span class="sd">            if self._proof is None:</span>
+<span class="sd">                # but first set _proof to the newProof if there </span>
+<span class="sd">                # is not another one.</span>
+<span class="sd">                self._proof = newProof</span>
+<span class="sd">            return</span>
+<span class="sd">        keptTruths = []</span>
+<span class="sd">        bornObsolete = False</span>
+<span class="sd">        for other in KnownTruth.lookup_dict[self.expr]:</span>
+<span class="sd">            if self.assumptionsSet == other.assumptionsSet:</span>
+<span class="sd">                if not other._proof.isUsable():</span>
+<span class="sd">                    # use the new proof since the old one is unusable.</span>
+<span class="sd">                    other._updateProof(newProof)</span>
+<span class="sd">                elif newProof.numSteps &lt;= other._proof.numSteps:</span>
+<span class="sd">                    if newProof.requiredProofs != other._proof.requiredProofs:</span>
+<span class="sd">                        # use the new (different) proof that does the job as well or better</span>
+<span class="sd">                        if isinstance(newProof, Theorem):</span>
+<span class="sd">                            # newer proof is a theorem; record the existing proof as a possible proof for that theorem</span>
+<span class="sd">                            newProof._possibleProofs.append(other._proof)</span>
+<span class="sd">                        other._updateProof(newProof)</span>
+<span class="sd">                else:</span>
+<span class="sd">                    # the new proof was born obsolete, taking more steps than an existing one</span>
+<span class="sd">                    if isinstance(other._proof, Theorem):</span>
+<span class="sd">                        # the older proof is a theorem, record the new proof as a possible proof for that theorem</span>
+<span class="sd">                        other._proof._possibleProofs.append(newProof)</span>
+<span class="sd">                    self._proof = other._proof # use an old proof that does the job better</span>
+<span class="sd">                    keptTruths.append(other)</span>
+<span class="sd">                    bornObsolete = True</span>
+<span class="sd">            elif self.assumptionsSet.issubset(other.assumptionsSet):</span>
+<span class="sd">                # use the new proof that does the job better</span>
+<span class="sd">                other._updateProof(newProof) </span>
+<span class="sd">            elif self.assumptionsSet.issuperset(other.assumptionsSet) and other._proof.isUsable():</span>
+<span class="sd">                # the new proof was born obsolete, requiring more assumptions than an existing one</span>
+<span class="sd">                self._proof = other._proof # use an old proof that does the job better</span>
+<span class="sd">                keptTruths.append(other)</span>
+<span class="sd">                bornObsolete = True</span>
+<span class="sd">            else:</span>
+<span class="sd">                # &#39;other&#39; uses a different, non-redundant set of assumptions or </span>
+<span class="sd">                # uses a subset of the assumptions but is unusable</span>
+<span class="sd">                keptTruths.append(other)</span>
+<span class="sd">        if not bornObsolete:</span>
+<span class="sd">            if KnownTruth.theoremBeingProven is not None:</span>
+<span class="sd">                if not KnownTruth.qedInProgress and len(self.assumptions)==0 and self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:</span>
+<span class="sd">                    if not KnownTruth.hasBeenProven:</span>
+<span class="sd">                        KnownTruth.hasBeenProven = True</span>
+<span class="sd">                        print &#39;%s has been proven. &#39;%self.asTheoremOrAxiom().name, r&#39;Now simply execute &quot;%qed&quot;.&#39;</span>
+<span class="sd">            self._proof = newProof</span>
+<span class="sd">            keptTruths.append(self)</span>
+<span class="sd">        # Remove the obsolete KnownTruths from the lookup_dict -- SHOULD ACTUALLY KEEP OLD PROOFS IN CASE ONE IS DISABLED -- TODO</span>
+<span class="sd">        KnownTruth.lookup_dict[self.expr] = keptTruths</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_updateProof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newProof</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Update the proof of this KnownTruth.  Return True iff the proof actually changed to something usable.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">meaningData</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meaningData</span>
+        
+        <span class="k">if</span> <span class="n">newProof</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># no usable proof.  </span>
+            <span class="c1"># no need to update dependencies because that would have already been done when the proof was disabled.</span>
+            <span class="k">if</span> <span class="n">meaningData</span><span class="o">.</span><span class="n">_proof</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="ow">not</span> <span class="n">meaningData</span><span class="o">.</span><span class="n">_proof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">(),</span> <span class="s2">&quot;should not update to an unusable new proof if the old one was usable&quot;</span>
+            <span class="k">return</span> <span class="kc">False</span> <span class="c1"># did not change to something usable</span>
+        <span class="k">assert</span> <span class="n">newProof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">(),</span> <span class="s2">&quot;Should not update with an unusable proof&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_checkIfReadyForQED</span><span class="p">(</span><span class="n">newProof</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">meaningData</span><span class="o">.</span><span class="n">_proof</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># no previous dependents to update</span>
+            <span class="n">meaningData</span><span class="o">.</span><span class="n">_proof</span> <span class="o">=</span> <span class="n">newProof</span>
+            <span class="k">return</span> <span class="kc">True</span> <span class="c1"># new usable proof</span>
+        <span class="k">elif</span> <span class="n">meaningData</span><span class="o">.</span><span class="n">_proof</span> <span class="o">==</span> <span class="n">newProof</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span> <span class="c1"># no change</span>
+                
+        <span class="c1"># swap out the old proof for the new proof in all dependencies</span>
+        <span class="n">meaningData</span><span class="o">.</span><span class="n">_proof</span><span class="o">.</span><span class="n">_updateDependencies</span><span class="p">(</span><span class="n">newProof</span><span class="p">)</span>
+        <span class="n">meaningData</span><span class="o">.</span><span class="n">_proof</span> <span class="o">=</span> <span class="n">newProof</span> <span class="c1"># set to the new proof</span>
+        
+        <span class="k">return</span> <span class="kc">True</span>
+    
+    <span class="k">def</span> <span class="nf">_checkIfReadyForQED</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proof</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">proof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">()</span> <span class="ow">and</span> <span class="n">proof</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">==</span><span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">hasBeenProven</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># check if we have a usable proof for the theorem being proven</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">qedInProgress</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">==</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">expr</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">hasBeenProven</span><span class="p">:</span>
+                        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">hasBeenProven</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> has been proven. &#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">asTheoremOrAxiom</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;Now simply execute &quot;%qed&quot;.&#39;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    
+    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        KnownTruths should be read-only objects.  Attributes may be added, however; for example,</span>
+<span class="sd">        the &#39;png&#39; attribute which will be added whenever it is generated).   Also,</span>
+<span class="sd">        _proof is an exception which can be updated internally.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="o">!=</span> <span class="s1">&#39;_proof&#39;</span> <span class="ow">and</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Attempting to alter read-only value&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>    
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        The KnownTruth aquires the attributes of its Expression, so it will act</span>
+<span class="sd">        like the Expression except it has additional (or possibly overridden) </span>
+<span class="sd">        attributes.  When accessing functions of the Expression, if that </span>
+<span class="sd">        function has &#39;assumptions&#39; as a keyword argument, the assumptions of </span>
+<span class="sd">        the KnownTruth are automatically included.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span>
+        <span class="kn">import</span> <span class="nn">inspect</span>
+        
+        <span class="c1"># called only if the attribute does not exist in KnownTruth directly</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;png&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;Do not use the Expression version of the &#39;png&#39; &quot;</span>
+                                 <span class="s2">&quot;attribute.&quot;</span><span class="p">)</span> 
+        <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="s1">&#39;__call__&#39;</span><span class="p">):</span>
+            <span class="n">argspec</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;assumptions&#39;</span> <span class="ow">in</span> <span class="n">argspec</span><span class="o">.</span><span class="n">args</span> 
+                    <span class="ow">or</span> <span class="s1">&#39;assumptions&#39;</span> <span class="ow">in</span> <span class="n">argspec</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">):</span>
+                <span class="c1"># The attribute is a callable function with </span>
+                <span class="c1"># &#39;assumptions&#39; as an argument.</span>
+                <span class="c1"># Automatically include the KnownTruth assumptions.</span>
+    
+                <span class="c1"># note, index zero is self.</span>
+                <span class="k">if</span> <span class="s1">&#39;assumptions&#39;</span> <span class="ow">in</span> <span class="n">argspec</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+                    <span class="n">assumptions_idx</span> <span class="o">=</span> <span class="n">argspec</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;assumptions&#39;</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">assumptions_idx</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># &#39;assumptions&#39; is kwonly</span>
+                
+                <span class="k">def</span> <span class="nf">call_method_with_known_truth_assumptions</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">assumptions_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> 
+                            <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">assumptions_idx</span><span class="p">):</span>
+                        <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+                        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="n">assumptions_idx</span><span class="p">]</span>
+                        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>                    
+                        <span class="n">assumptions</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span>
+                        <span class="n">args</span><span class="p">[</span><span class="n">assumptions_idx</span><span class="p">]</span> <span class="o">=</span> \
+                            <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;assumptions&#39;</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span><span class="p">)</span>
+                        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                        <span class="n">assumptions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span>
+                        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;assumptions&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                            <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">attr</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">call_method_with_known_truth_assumptions</span>
+        
+        <span class="k">return</span> <span class="n">attr</span>
+            
+    
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        The KnownTruth aquires the attributes of its Expression as well as its</span>
+<span class="sd">        own attributes.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="KnownTruth.withMatchingStyles"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.withMatchingStyles">[docs]</a>    <span class="k">def</span> <span class="nf">withMatchingStyles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Alter the styles of the KnownTruth expression and any of its assumptions</span>
+<span class="sd">        to match the given styles.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">withMatchingStyle</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+        <span class="c1"># storing the assumptions in a trivial dictionary will be useful for popping them out.</span>
+        <span class="n">assumptions_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">assumption</span><span class="p">:</span><span class="n">assumption</span> <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="n">assumptions</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="n">assumptions_dict</span><span class="p">:</span>
+                <span class="n">assumption</span><span class="o">.</span><span class="n">withMatchingStyle</span><span class="p">(</span><span class="n">assumptions_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">assumption</span><span class="p">))</span>
+        <span class="n">proof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">proof</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">proof</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">_style_id</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style_id</span><span class="p">:</span>
+                <span class="n">proof</span><span class="o">.</span><span class="n">provenTruth</span><span class="o">.</span><span class="n">withMatchingStyles</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+    
+<div class="viewcode-block" id="KnownTruth.findKnownTruth"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.findKnownTruth">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">findKnownTruth</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">assumptions_set</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Try to find a KnownTruth for this expression that applies to</span>
+<span class="sd">        the given set of assumptions (its assumptions are a subset</span>
+<span class="sd">        of the given assumptions).  Return None if there is no match.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">expression</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">lookup_dict</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">truths</span> <span class="o">=</span> <span class="n">KnownTruth</span><span class="o">.</span><span class="n">lookup_dict</span><span class="p">[</span><span class="n">expression</span><span class="p">]</span>
+        <span class="n">suitableTruths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">truth</span> <span class="ow">in</span> <span class="n">truths</span><span class="p">:</span>
+            <span class="n">proof</span> <span class="o">=</span> <span class="n">truth</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">proof</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">proof</span><span class="o">.</span><span class="n">isUsable</span><span class="p">()</span> <span class="ow">and</span> 
+                    <span class="n">truth</span><span class="o">.</span><span class="n">assumptionsSet</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">assumptions_set</span><span class="p">)):</span>
+                <span class="n">suitableTruths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">truth</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">suitableTruths</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="kc">None</span> <span class="c1"># no suitable truth</span>
+        <span class="c1"># return one wih the shortest proof, and among those the fewest assumptions</span>
+        <span class="n">best_known_truth</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">suitableTruths</span><span class="p">,</span> 
+                               <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">truth</span> <span class="p">:</span> <span class="p">(</span><span class="n">truth</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span><span class="o">.</span><span class="n">numSteps</span><span class="p">(),</span> 
+                                                   <span class="nb">len</span><span class="p">(</span><span class="n">truth</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)))</span>
+        <span class="c1"># Make sure we get the desired style (and labels) for the</span>
+        <span class="c1"># assumptions and &#39;truth&#39;.</span>
+        <span class="c1"># Although this looks vacuous, it will map an assumption of</span>
+        <span class="c1"># any style to the assumption of the desired style.</span>
+        <span class="n">assumptions_with_style</span> <span class="o">=</span> <span class="p">{</span><span class="n">assumption</span><span class="p">:</span><span class="n">assumption</span> <span class="k">for</span> 
+                                  <span class="n">assumption</span> <span class="ow">in</span> <span class="n">assumptions_set</span><span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">best_known_truth</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">_style_id</span> <span class="o">!=</span> <span class="n">expression</span><span class="o">.</span><span class="n">_style_id</span> <span class="ow">or</span>
+                <span class="nb">any</span><span class="p">(</span><span class="n">assumption</span><span class="o">.</span><span class="n">_style_id</span> <span class="o">!=</span> <span class="n">assumptions_with_style</span><span class="p">[</span><span class="n">assumption</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="n">best_known_truth</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)):</span>
+            <span class="n">assumptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">assumptions_with_style</span><span class="p">[</span><span class="n">assumption</span><span class="p">]</span> <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span>
+                           <span class="n">best_known_truth</span><span class="o">.</span><span class="n">assumptions</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">best_known_truth</span><span class="o">.</span><span class="n">withMatchingStyles</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span>
+                                                       <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">best_known_truth</span></div>
+    
+<div class="viewcode-block" id="KnownTruth.forgetKnownTruths"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.forgetKnownTruths">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">forgetKnownTruths</span><span class="p">():</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Forget all KnownTruth&#39;s and all Assumption proof objects.  This is used</span>
+<span class="sd">        for demonstration purposes in the tutorial, but should not generally be needed.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proof</span> <span class="k">import</span> <span class="n">Assumption</span>
+        <span class="n">KnownTruth</span><span class="o">.</span><span class="n">lookup_dict</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">Assumption</span><span class="o">.</span><span class="n">allAssumptions</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+    
+    <span class="k">def</span> <span class="nf">_checkedTruth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proof</span><span class="p">):</span>
+        <span class="n">proven_truth</span> <span class="o">=</span> <span class="n">proof</span><span class="o">.</span><span class="n">provenTruth</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">proven_truth</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+            <span class="n">proven_truth</span><span class="o">.</span><span class="n">raiseUnusableProof</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">proven_truth</span>        
+    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    def relabel(self, relabelMap):</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        Performs a relabeling derivation step, deriving another KnownTruth</span>
+<span class="sd">        from this KnownTruth, under the same assumptions, with relabeled</span>
+<span class="sd">        Variables.  A Variable may only be relabeled to a Variable.</span>
+<span class="sd">        Returns the proven relabeled KnownTruth, or throws an exception if the proof fails.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        from proveit._core_.proof import Specialization</span>
+<span class="sd">        return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="KnownTruth.specialize"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.specialize">[docs]</a>    <span class="k">def</span> <span class="nf">specialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repl_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">relabel_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="c1"># TEMPORARY BACKWARD COMPATIBILITY</span>
+        <span class="k">if</span> <span class="n">repl_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">repl_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">relabel_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">repl_map</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">relabel_map</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">repl_map</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="KnownTruth.instantiate"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.instantiate">[docs]</a>    <span class="k">def</span> <span class="nf">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repl_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">num_forall_eliminations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Performs an instantiation derivation step to be proven under the given</span>
+<span class="sd">        assumptions, in addition to the (possibly revised) assumptions of the </span>
+<span class="sd">        KnownTruth.  This may instantiate Variables, according to the </span>
+<span class="sd">        &quot;replacement&quot; map (repl_map), on either side of the turnstile of the </span>
+<span class="sd">        KnownTruth, the assumptions side and the &quot;truth&quot; side.  It may also </span>
+<span class="sd">        eliminate any number of nested Forall operations, instantiating the </span>
+<span class="sd">        instance Variables according to repl_map, going to the depth</span>
+<span class="sd">        for which the instance variables occur as keys in repl_map.  </span>
+<span class="sd">        For Variables that map to Variables and occur as &quot;internal&quot; Lambda</span>
+<span class="sd">        map parameters (internal after the Forall operations are eliminated),</span>
+<span class="sd">        they will be relabeled within the &quot;internal&quot; Lambda map parameters.</span>
+<span class="sd">        For Variables that map to non-Variables, the replacement will not</span>
+<span class="sd">        penetrate into internal Lambda maps that use that Variable as a</span>
+<span class="sd">        parameter.  Replacements are made simultaneously.  For example,</span>
+<span class="sd">        the {x:y, y:x} mapping will swap x and y variables, but mapping {x:y} </span>
+<span class="sd">        then {y:x} in series would set both variables to x.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns the proven instantiated KnownTruth, or throws an exception if </span>
+<span class="sd">        the proof fails.  For the proof to succeed, all conditions of</span>
+<span class="sd">        eliminated Forall operations, after replacements are made, must</span>
+<span class="sd">        be proven.  Furthermore, there may be additional requirements when</span>
+<span class="sd">        iterated parameters are instantiated (see Lambda.apply for details).</span>
+<span class="sd">        Automation will be used in attempting to prove these requirements.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">Variable</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> 
+                             <span class="n">singleOrCompositeExpression</span><span class="p">,</span> 
+                             <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.lambda_expr.lambda_expr</span> <span class="k">import</span> \
+            <span class="n">getParamVar</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span>
+        <span class="kn">from</span> <span class="nn">.proof</span> <span class="k">import</span> <span class="n">Instantiation</span><span class="p">,</span> <span class="n">ProofFailure</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+            <span class="c1"># If this KnownTruth is not usable, see if there is an alternate </span>
+            <span class="c1"># under the set of assumptions that is usable.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">alternate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raiseUnusableProof</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">alternate</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">repl_map</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        
+        <span class="c1"># If no repl_map is provided, specialize the &quot;explicitInstanceVars&quot; </span>
+        <span class="c1"># of the Forall with default mappings (mapping instance variables to </span>
+        <span class="c1"># themselves)</span>
+        <span class="k">if</span> <span class="n">repl_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">repl_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">ivar</span><span class="p">:</span><span class="n">ivar</span> <span class="k">for</span> <span class="n">ivar</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">explicitInstanceVars</span><span class="p">()}</span>
+                        
+        <span class="c1"># Include the KnownTruth assumptions along with any provided assumptions</span>
+        <span class="n">assumptions</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">checkedAssumptions</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="c1"># For any entrys in repl_map with Operation keys, convert</span>
+        <span class="c1"># them to corresponding operator keys with Lambda substitutions.</span>
+        <span class="c1"># For example f(x,y):g(x,y) would become f:[(x,y) -&gt; g(x,y)].</span>
+        <span class="c1"># And any ExprTuple-wrapped ExprRange entries will be </span>
+        <span class="c1"># Also, convert to composite expressions as needed</span>
+        <span class="c1"># (via singleOrCompositeExpression).</span>
+        <span class="n">processed_repl_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">equiv_alt_expansions</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">replacement</span> <span class="ow">in</span> <span class="n">repl_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">replacement</span> <span class="o">=</span> <span class="n">singleOrCompositeExpression</span><span class="p">(</span><span class="n">replacement</span><span class="p">)</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            if isinstance(replacement, ExprRange):</span>
+<span class="sd">                raise TypeError(&quot;Not expecting an ExprRange for a replacement &quot;</span>
+<span class="sd">                                &quot;when instantiating.  Got %s.  Perhaps it &quot;</span>
+<span class="sd">                                &quot;should be wrapped in an ExprTuple.&quot;</span>
+<span class="sd">                                %replacement)</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">Variable</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">):</span>
+                <span class="n">processed_repl_map</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">replacement</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">)</span> 
+                          <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">)):</span>
+                        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is not the expected kind of &quot;</span>
+                                        <span class="s2">&quot;Expression as a repl_map key.  An &quot;</span>
+                                        <span class="s2">&quot;ExprTuple with one entry is expected &quot;</span>
+                                        <span class="s2">&quot;to contain an ExprRange of IndexedVars.&quot;</span>
+                                        <span class="o">%</span><span class="n">key</span><span class="p">)</span>
+                    <span class="c1"># Replacement key of the form (x_i, ..., x_j)</span>
+                    <span class="c1"># which is valid for replacing a range of variables.</span>
+                    <span class="n">processed_repl_map</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">replacement</span>
+                    <span class="c1"># Although this is redundant (not really necessary</span>
+                    <span class="c1"># as an entry in `equiv_alt_expansions` as far</span>
+                    <span class="c1"># as Lambda.apply is concerned) it is useful for</span>
+                    <span class="c1"># bookkeeping to extract all of the instantiation</span>
+                    <span class="c1"># mappings:</span>
+                    <span class="n">equiv_alt_expansions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">replacement</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span>
+                    <span class="c1"># An &quot;alternative equivalent expansion&quot; of</span>
+                    <span class="c1"># some (x_i, ..., x_j).  For example,</span>
+                    <span class="c1"># (x_i, x_{i+1}, ..., x_j).</span>
+                    <span class="n">equiv_alt_expansions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">replacement</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">Operation</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">operator</span><span class="p">,</span> <span class="n">Variable</span><span class="p">)):</span>
+                <span class="n">operation</span> <span class="o">=</span> <span class="n">key</span>
+                <span class="n">repl_var</span> <span class="o">=</span> <span class="n">operation</span><span class="o">.</span><span class="n">operator</span>
+                <span class="n">replacement</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">operation</span><span class="o">.</span><span class="n">operands</span><span class="p">,</span> <span class="n">replacement</span><span class="p">)</span>
+                <span class="n">processed_repl_map</span><span class="p">[</span><span class="n">repl_var</span><span class="p">]</span> <span class="o">=</span> <span class="n">replacement</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is not the expected kind of Expression as &quot;</span>
+                                <span class="s2">&quot;a repl_map key.  Expecting repl_map keys to be &quot;</span>
+                                <span class="s2">&quot;Variables, Operations with Variable operators &quot;</span>
+                                <span class="s2">&quot;(for operation substitution), or an ExprTuple &quot;</span>
+                                <span class="s2">&quot;containing a single iterated IndexedVar &quot;</span>
+                                <span class="s2">&quot;like (x_i, ..., x_j).&quot;</span><span class="o">%</span><span class="n">key</span><span class="p">)</span>
+        
+        <span class="k">def</span> <span class="nf">get_repl_var</span><span class="p">(</span><span class="n">repl_key</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">repl_key</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">getParamVar</span><span class="p">(</span><span class="n">repl_key</span><span class="o">.</span><span class="n">entries</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">getParamVar</span><span class="p">(</span><span class="n">repl_key</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">num_forall_eliminations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Determine the number of Forall eliminations.  </span>
+            <span class="c1"># The number is determined by the instance variables that </span>
+            <span class="c1"># occur as keys in repl_map.</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span>
+            <span class="n">remaining_repl_vars</span> <span class="o">=</span> \
+                <span class="p">{</span><span class="n">get_repl_var</span><span class="p">(</span><span class="n">repl_key</span><span class="p">)</span> <span class="k">for</span> <span class="n">repl_key</span> 
+                 <span class="ow">in</span> <span class="n">processed_repl_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+            <span class="n">forall_depth</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">num_forall_eliminations</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">remaining_repl_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Forall</span><span class="p">):</span>
+                    <span class="c1"># No more directly nested universal quantifiers </span>
+                    <span class="k">break</span>  <span class="c1"># to eliminate.</span>
+                <span class="n">lambda_expr</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">operand</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_expr</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">),</span> <span class="p">(</span>
+                        <span class="s2">&quot;Forall Operation operand must be a Lambda function&quot;</span><span class="p">)</span>
+                <span class="n">instance_param_vars</span> <span class="o">=</span> <span class="n">lambda_expr</span><span class="o">.</span><span class="n">parameterVars</span>
+                <span class="n">expr</span> <span class="o">=</span> <span class="n">lambda_expr</span><span class="o">.</span><span class="n">body</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">):</span>
+                    <span class="c1"># Skip over the &quot;conditions&quot; of the Forall expression.</span>
+                    <span class="n">expr</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">value</span>
+                <span class="n">forall_depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">iparam_var</span> <span class="ow">in</span> <span class="n">instance_param_vars</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">iparam_var</span> <span class="ow">in</span> <span class="n">remaining_repl_vars</span><span class="p">:</span>
+                        <span class="c1"># Remove this instance parameter variable from </span>
+                        <span class="c1"># the remaining variables to replace.</span>
+                        <span class="n">remaining_repl_vars</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">iparam_var</span><span class="p">)</span>
+                        <span class="c1"># Eliminate to this depth at least since there</span>
+                        <span class="c1"># is a replacement map for the instance </span>
+                        <span class="c1"># variable:</span>
+                        <span class="n">num_forall_eliminations</span> <span class="o">=</span> <span class="n">forall_depth</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># default is to map instance variables to </span>
+                        <span class="c1"># themselves</span>
+                        <span class="n">processed_repl_map</span><span class="p">[</span><span class="n">iparam_var</span><span class="p">]</span> <span class="o">=</span> <span class="n">iparam_var</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checkedTruth</span><span class="p">(</span>
+                <span class="n">Instantiation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                              <span class="n">num_forall_eliminations</span><span class="o">=</span><span class="n">num_forall_eliminations</span><span class="p">,</span> 
+                              <span class="n">repl_map</span><span class="o">=</span><span class="n">processed_repl_map</span><span class="p">,</span> 
+                              <span class="n">equiv_alt_expansions</span><span class="o">=</span><span class="n">equiv_alt_expansions</span><span class="p">,</span>
+                              <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span></div>
+        
+<div class="viewcode-block" id="KnownTruth.generalize"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.generalize">[docs]</a>    <span class="k">def</span> <span class="nf">generalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forall_var_or_vars_or_var_lists</span><span class="p">,</span> 
+                   <span class="n">domain_lists</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="nb">tuple</span><span class="p">()):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Performs a generalization derivation step.  Returns the</span>
+<span class="sd">        proven generalized KnownTruth.  Can introduce any number of</span>
+<span class="sd">        nested Forall operations to wrap the original statement,</span>
+<span class="sd">        corresponding to the number of given forallVarLists and domains.</span>
+<span class="sd">        A single variable list or single variable and a single domain may </span>
+<span class="sd">        be provided to introduce a single Forall wrapper.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.proof</span> <span class="k">import</span> <span class="n">Generalization</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.lambda_expr.lambda_expr</span> <span class="k">import</span> \
+            <span class="n">valid_params</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.composite.composite</span> <span class="k">import</span> \
+            <span class="n">compositeExpression</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">InSet</span>
+        
+        <span class="c1"># Convert all forms of `forall_var_or_vars_or_var_lists` to</span>
+        <span class="c1"># forall_var_lists, the most general form.  Start with the</span>
+        <span class="c1"># default:</span>
+        <span class="n">forall_var_lists</span> <span class="o">=</span> <span class="n">forall_var_or_vars_or_var_lists</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">forall_vars</span> <span class="o">=</span> <span class="n">compositeExpression</span><span class="p">(</span><span class="n">forall_var_or_vars_or_var_lists</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">valid_params</span><span class="p">(</span><span class="n">forall_vars</span><span class="p">):</span>
+                <span class="n">forall_var_lists</span> <span class="o">=</span> <span class="p">[</span><span class="n">forall_vars</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span> <span class="c1"># don&#39;t change the default</span>
+            
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">forall_var_lists</span><span class="p">,</span> <span class="s1">&#39;__len__&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must supply &#39;generalize&#39; with a Variable, &quot;</span>
+                             <span class="s2">&quot;list of Variables (or variable ranges), or &quot;</span>
+                             <span class="s2">&quot;list of lists of Variables (or variable &quot;</span>
+                             <span class="s2">&quot;ranges).&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">forall_var_lists</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must provide at least one Variable to generalize over&quot;</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">forall_var_list</span> <span class="ow">in</span> <span class="n">forall_var_lists</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">forall_var_lists</span><span class="p">,</span> <span class="s1">&#39;__iter__&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;`forallVarLists` must be a list of lists specifying &quot;</span>
+                        <span class="s2">&quot;instance parameters of forall operations to &quot;</span>
+                        <span class="s2">&quot;introduce (or, for convenience it may be a single &quot;</span>
+                        <span class="s2">&quot;variable)&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Add domain conditions as appropriate</span>
+        <span class="k">if</span> <span class="n">domain</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">domain_lists</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either specify a `domain` or &quot;</span>
+                             <span class="s2">&quot;&#39;domain_lists&#39; but not both&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">domain</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">domain_lists</span> <span class="o">=</span> <span class="p">[[</span><span class="n">domain</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">forall_var_lists</span><span class="p">)</span> <span class="k">for</span> 
+                            <span class="n">forall_var_list</span> <span class="ow">in</span> <span class="n">forall_var_lists</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">domain_lists</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">domain_conditions</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">domain_list</span><span class="p">,</span> <span class="n">forall_var_list</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">domain_lists</span><span class="p">,</span> 
+                                                     <span class="n">forall_var_lists</span><span class="p">):</span>
+                <span class="n">domain_list</span> <span class="o">=</span> <span class="n">compositeExpression</span><span class="p">(</span><span class="n">domain_list</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain_list</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">domain_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">domain_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">forall_var_list</span><span class="p">)</span>
+                <span class="n">domain_conditions</span> <span class="o">+=</span> <span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">instanceVar</span><span class="p">,</span> <span class="n">domain</span><span class="p">)</span> <span class="k">for</span> 
+                                      <span class="n">instanceVar</span><span class="p">,</span> <span class="n">domain</span> <span class="ow">in</span> 
+                                      <span class="nb">zip</span><span class="p">(</span><span class="n">forall_var_list</span><span class="p">,</span> <span class="n">domain_list</span><span class="p">)]</span>
+            <span class="n">conditions</span> <span class="o">=</span> <span class="n">domain_conditions</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checkedTruth</span><span class="p">(</span><span class="n">Generalization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forall_var_lists</span><span class="p">,</span> 
+                                                 <span class="n">conditions</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="KnownTruth.asImplication"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.asImplication">[docs]</a>    <span class="k">def</span> <span class="nf">asImplication</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Performs a hypothetical reasoning derivation step, forming an</span>
+<span class="sd">        implication statement with the given hypothesis and this statement</span>
+<span class="sd">        as the conclusion.  The hypothesis is removed from the set of</span>
+<span class="sd">        the conclusion statement&#39;s assumptions for the implication</span>
+<span class="sd">        statement&#39;s assumptions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.proof</span> <span class="k">import</span> <span class="n">HypotheticalReasoning</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">):</span>
+            <span class="n">hypothesis</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">expr</span> <span class="c1"># we want the expression for this purpose</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checkedTruth</span><span class="p">(</span><span class="n">HypotheticalReasoning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">))</span></div>
+        
+<div class="viewcode-block" id="KnownTruth.evaluation"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.evaluation">[docs]</a>    <span class="k">def</span> <span class="nf">evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calling evaluation on a KnownTruth results in deriving that its</span>
+<span class="sd">        expression is equal to TRUE, under the assumptions of the KnownTruth.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">evaluateTruth</span>
+        <span class="k">return</span> <span class="n">evaluateTruth</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="KnownTruth.asImpl"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.asImpl">[docs]</a>    <span class="k">def</span> <span class="nf">asImpl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Abbreviation for asImplication.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">asImplication</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="KnownTruth.raiseUnusableProof"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.raiseUnusableProof">[docs]</a>    <span class="k">def</span> <span class="nf">raiseUnusableProof</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.proof</span> <span class="k">import</span> <span class="n">UnusableProof</span>
+        <span class="n">proof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+        <span class="n">unusuable_proof</span> <span class="o">=</span> <span class="n">proof</span><span class="o">.</span><span class="n">_meaningData</span><span class="o">.</span><span class="n">_unusableProof</span>
+        <span class="k">if</span> <span class="n">proof</span> <span class="o">==</span> <span class="n">unusuable_proof</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnusableProof</span><span class="p">(</span><span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span><span class="p">,</span> <span class="n">unusuable_proof</span><span class="p">)</span>        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnusableProof</span><span class="p">(</span><span class="n">KnownTruth</span><span class="o">.</span><span class="n">theoremBeingProven</span><span class="p">,</span> <span class="n">unusuable_proof</span><span class="p">,</span> <span class="s1">&#39;required to prove&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">string</span><span class="p">(</span><span class="n">performUsabilityCheck</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span> </div>
+
+<div class="viewcode-block" id="KnownTruth.string"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.string">[docs]</a>    <span class="k">def</span> <span class="nf">string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">performUsabilityCheck</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Display the turnstile notation to show that the known truth</span>
+<span class="sd">        on the right derives from the set of assumptions on the left.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprTuple</span>
+        <span class="k">if</span> <span class="n">performUsabilityCheck</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span> <span class="bp">self</span><span class="o">.</span><span class="n">raiseUnusableProof</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">assumptionsStr</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">fence</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">r</span><span class="s1">&#39;{&#39;</span> <span class="o">+</span><span class="n">assumptionsStr</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;} |- &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">string</span><span class="p">()</span>
+        <span class="k">return</span> <span class="sa">r</span><span class="s1">&#39;|- &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">string</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="KnownTruth.latex"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.latex">[docs]</a>    <span class="k">def</span> <span class="nf">latex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">performUsabilityCheck</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Display the turnstile notation to show that the known truth</span>
+<span class="sd">        on the right derives from the set of assumptions on the left.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprTuple</span>
+        <span class="k">if</span> <span class="n">performUsabilityCheck</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span> <span class="bp">self</span><span class="o">.</span><span class="n">raiseUnusableProof</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">assumptionsLatex</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="s1">&#39;latex&#39;</span><span class="p">,</span> <span class="n">fence</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">r</span><span class="s1">&#39;{&#39;</span> <span class="o">+</span><span class="n">assumptionsLatex</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;} \vdash &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">latex</span><span class="p">()</span>
+        <span class="k">return</span> <span class="sa">r</span><span class="s1">&#39;\vdash &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">latex</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a string representation of the KnownTruth.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">string</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a string representation of the KnownTruth.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span> <span class="bp">self</span><span class="o">.</span><span class="n">raiseUnusableProof</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">string</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Generate html to show the KnownTruth as a set of assumptions,</span>
+<span class="sd">        turnstile, then the statement expression.  Expressions are png&#39;s</span>
+<span class="sd">        compiled from the latex (that may be recalled from memory or storage </span>
+<span class="sd">        if previously generated) with a links to</span>
+<span class="sd">        expr.ipynb notebooks for displaying the expression information.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Set</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">defaults</span><span class="o">.</span><span class="n">display_latex</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span> <span class="c1"># No LaTeX display at this time.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span> <span class="bp">self</span><span class="o">.</span><span class="n">raiseUnusableProof</span><span class="p">()</span>
+        <span class="n">html</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">proof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+        <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;span style=&quot;font-size:20px;&quot;&gt;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">html</span> <span class="o">+=</span> <span class="n">Set</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">_repr_html_</span><span class="p">()</span>
+        <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span>
+        <span class="k">if</span> <span class="n">proof</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># link to the proof</span>
+            <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;a class=&quot;ProveItLink&quot; href=&quot;</span><span class="si">%s</span><span class="s1">&quot; style=&quot;text-decoration: none&quot;&gt;&#39;</span><span class="o">%</span><span class="n">proof</span><span class="o">.</span><span class="n">getLink</span><span class="p">()</span>
+            <span class="c1"># Record as a proof of a &quot;displayed&quot; (style-specific) </span>
+            <span class="c1"># KnownTruth.</span>
+            <span class="n">KnownTruth</span><span class="o">.</span><span class="n">hyperlinked_proof_styles</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">proof</span><span class="o">.</span><span class="n">_style_id</span><span class="p">,</span> <span class="n">proof</span><span class="p">))</span> 
+        <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&amp;#x22A2;&amp;nbsp;&#39;</span> <span class="c1"># turnstile symbol</span>
+        <span class="k">if</span> <span class="n">proof</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;/a&gt;&#39;</span>
+        <span class="n">html</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">_repr_html_</span><span class="p">()</span>
+        <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;/span&gt;&#39;</span>
+        <span class="k">return</span> <span class="n">html</span>
+    
+<div class="viewcode-block" id="KnownTruth.innerExpr"><a class="viewcode-back" href="../../../api/proveit.KnownTruth.html#proveit.KnownTruth.innerExpr">[docs]</a>    <span class="k">def</span> <span class="nf">innerExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return an InnerExpr object to wrap the KnownTruth and</span>
+<span class="sd">        access any inner sub-expression (including assumptions or</span>
+<span class="sd">        inner expressions of assumptions) for the purpose of </span>
+<span class="sd">        replacing the inner expression, changing its style,</span>
+<span class="sd">        or relabeling variables.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.expression.inner_expr</span> <span class="k">import</span> <span class="n">InnerExpr</span>
+        <span class="k">return</span> <span class="n">InnerExpr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="asExpression"><a class="viewcode-back" href="../../../api/proveit.asExpression.html#proveit.asExpression">[docs]</a><span class="k">def</span> <span class="nf">asExpression</span><span class="p">(</span><span class="n">truthOrExpression</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return the argument as Expressions.  That is, if the argument is the</span>
+<span class="sd">    KnownTruth, yield its associated Expression.  If it is an Expression,</span>
+<span class="sd">    yield just that.  Otherwise, raise a TypeError.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">truthOrExpression</span><span class="p">,</span> <span class="n">KnownTruth</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">truthOrExpression</span><span class="o">.</span><span class="n">expr</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">truthOrExpression</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">truthOrExpression</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected to be a KnownTruth or an Expression&#39;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="asExpressions"><a class="viewcode-back" href="../../../api/proveit.asExpressions.html#proveit.asExpressions">[docs]</a><span class="k">def</span> <span class="nf">asExpressions</span><span class="p">(</span><span class="o">*</span><span class="n">truthOrExpressions</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return the arguments as a list of Expressions via asExpression.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">asExpression</span><span class="p">(</span><span class="n">truthOrExpression</span><span class="p">)</span> <span class="k">for</span> <span class="n">truthOrExpression</span> <span class="ow">in</span> <span class="n">truthOrExpression</span><span class="p">]</span></div>
+
+<span class="k">class</span> <span class="nc">ProofInitiationFailure</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

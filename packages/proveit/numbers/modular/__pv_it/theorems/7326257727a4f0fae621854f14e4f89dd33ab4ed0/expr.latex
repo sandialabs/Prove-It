@@ -1,0 +1,1 @@
+\left(a, b, c\right) \mapsto \left\{\left(a \cdot \left|b\right|_{\textup{mod}\thinspace c}\right) = \left|a \cdot b\right|_{\textup{mod}\thinspace a \cdot c} \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  c \in \mathbb{R}\right..

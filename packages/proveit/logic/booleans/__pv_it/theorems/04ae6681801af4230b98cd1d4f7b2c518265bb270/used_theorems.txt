@@ -1,0 +1,6 @@
+proveit.logic.booleans.disjunction.constructive_dilemma
+proveit.logic.booleans.negation.closure
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.true_is_bool
+proveit.logic.booleans.unfold_is_bool_explicit
+proveit.logic.equality.substitute_truth

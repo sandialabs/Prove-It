@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.rightward_permutation theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.rightward_permutation-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#rightward_permutation">rightward_permutation</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.rightward_permutation-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> rightward_permutation
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="rightward_permutation">rightward_permutation:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/b7d9fdac2772ab3839e7dfc12a1bad3afddbede90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA8oAAAAZBAMAAAAbA8obAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAACCtJREFU
+aN7tWn2IVFUUPzszb2bnzcculqVGMK65LPY1KGWW1lrUUlDNKKT2gcuS2IfJEOaSLbTZH61FNWCo
+BcWrJS2ldlJBVkJHDSUrGJRIK2lBDdIyMZVcLbrn3Pdx38e8d11G3cAL+/a+O7977jnnd++55773
+AOTK/M4iXC7/yxLp7JKFFi6Ffqlpw89nykTNo3VvZfhpOnOCUVsxbFl+H0D9fVgujZHuts/Lw1HT
+6TmAfs7yAP47IMGyJLBGRe1mS/n4eXf75OqhDjj7ClnAne7ffrnA3hDNClRUeSXLK2FGWbRILH+D
+90ckWJYE1qikmXbJIQSQg0Me8awsYJf7p10X2h0Hz0fRhhL/j/5TB4jlVewa75ZgWRJYo7IXhsby
+2aEOGBmUBVwKls+eh6LwsGaxDNuJ5TRrSpYkWJYE1qi8ODSWg11QrQQOZgIuAcuiWcFe2SUiPySW
+U7vXrl0pk31JAmtT4oWhsZwccpaYzsoCLgHLolmBiprhnXqlWynH/runp0uGZUlgbUooa2gZnzpx
+jP+EEAHpjnHGptQ03n+I7U0562b59rn+YUoAbPNmOVBRWL5jrFZl/AD9LLMCFY1PHW+E92QjXrLE
+8jyAZVIsywFrU+rx/BnFzGF6Me2fatsAfUfUM9zYl+At324rS/UDVkQcDW9rviFTAPCEOnmMCl9Y
+C2UUZTL+rDJ+kH6mWYGKMjXqjfBOZ5TUALF8D+VhIa7uYfY3NuPNMgcGbCDHpEgMn/JovEuY2zGc
+sF+wBvVaCLOUb3b1IxcHjON3WzU4wQWU4VlQfJLFLoiWuL24eVXwfOQD5wDuGXfITIyUUBRl3GY6
+mo8/W1I/06xARVGNAQiNMEN3okAsxyDEFo7CH2Cic2Oteo9ZU1tDV1ksc2BA2SF3Gvaa9X1CvY7p
+MBszsPAgxDIwc3L1CUMAmGOcZdVzfMqwGa9MKvh1M+zl6C5fOAEMz8x3LAPltaKEoijjedPRNL6/
+WYJ+olldQXaxCQ6L6CaK4x0nlpOVmMPbGBLULydVEt274XaLZRfQqxyVYjnhFRS2OFimZzd13dDH
+/rVVFaUDzMQjwnelURRZCn7dhDIK1JO+cA4gz0C63etxWKCiKOOUY/w2Sf0EswIURTVaQeVz5Fcw
+WY4PPGIH0tD7+tdCYk8YyhbLLqBXOSOXM2YDwgBF7CiztK8MW33doQP08o++CPjU9/FGX1kMLecg
+cdwPrgPa3PsyZ/wpCUV1Gbbx2+T0E83yV1RXgwNoX47wiA3LnmT1ZhJCmdwOpRkiSEPisTkZgWUC
+Qm/zYbdss1E50axRgpvxShoNeyfe5M4Te5uOOrMvzLH7SrAwUfRzBwHu1tfXSdy5uF8g4eeNBgYr
+qXrmqp5lmV6/H8scgJ6plmMHKsplcEfr4/ugbfqZZgUqqquRzM5o13NsPfuCDRiNG5CccAQj6R8b
++7Q0xdXc7u9FlhGovqCwWfWMwwBqxL6hJZRdLFIanRi2qeUBnsbamtxcDaKaW0R4wLbYkeX6TGpx
+kia9+i8aMaBXzDsOKA/ylufgVV65FdRbyBv2bmYl3A69ObQXW2Ap/NBeJrgbSRcOQM9UOy9binrI
+sAZBR+MdjW8zy4429bObZVfUYySuRvqnBwb1k2i4zFluYOvuvU2o7KdJXBKn2fbSy1lOmqG1oAPD
+WaUAjzsOhtQIGh8EVeyGnBPD8ktFr02CPCjbNKeIRkiYgTxiPBVRO8avuI47r5P1iKGCi0G/xJbo
+gPi6Av+994YKryS/26NLsXWjCrbAtwcyZC/KgNVNczpaCU63JpJGQjgHnM5VfyoiKOqWYQ2CjqY7
+HN9ulh1t6Gc3y6Go2y6uRsM866lIjrOc0miSGIFSGfEGS697enoyiVy8UhBYRmBdKcQELnFs+dTI
+syY2Cdk9uDBwjVBjYSumuUWES9WecKI7Eu6D4mYzwmeE380KsezuZrWgvZvBNrU2Q1U4eSbg2Vcb
+eMqwWpaKd4FmVbzMClQU8i0lw39rwHq/rA7SNG1gaX6oOx+HKF/LcG9GYJnifrH+R83JIDWuR2iD
+hgyjGBfLmJcdwA2AHfDfXOtkmUTE3tlre1vRaHNe0u1dM0Xp+1j4PWmPCO7cz9r9ioIMDi9Xh5Nn
+PFneZme5XF1RcnRZ1izUz21WoKLQojQWbW8rjKNNOf46mwOwSqvPzApBEklPtUKq7GC5rjj3QWJw
+lcY66Bdq3JhltZi2j13TrZBFjIVgl0MQjj9awLbRyqkKsuwQ8QTU7f/MnMVF2/tl3FA+cic0Zo63
+JSn8blbwiYBHN6slL8oguJqpDifPBLxf3gReMqwW5mjhLsisPHiZFagoLFUKGf5+WX/zqAteUFRY
+SG2BfCldjI4HwNjUdgig3cFypGP9NGI5X1JGQ76IlxI1RnPYtqDMrvGJe2i9M5EcgcKX3zgBU3dW
+u+/6ccSyS8RD4yxL8bxofiuy/OUOAPcjmZRZW/218LtRiU8+nfHqZrW0iDIInoLqcO6ZyJUebzLK
+oqIpH0WZo627QLNawMOsYEXhN+hgy3R6K18tti+CErRp6FtjiO3LjiecQlliPZYxa2siRq1kYhKi
+cOBvLvU2jNhOEU3pdWbL+9jpQn/3tfT8u3h/97WhMlz0swp997UfHCz3R+8fA4li1bcVVpnxV0kA
+6rXoBL3Gr4jhXx1x4XzOa0ZNufkOt4gpqa/gIha0dziXmuknslyJ7ix6BQKPtWwLK85ayiuGUO3d
+D2xtXiIuqhd3Du+vj2umn/Q3nJ21+B775ylwuVz0Eulc/B+UdfkS+PKCdgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/756a743e1ceef5f51dc6944072dcc7bab8fba71b0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

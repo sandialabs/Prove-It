@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Expression of type Equals</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Expression-of-type-Equals">Expression of type <a class="ProveItLink" href="../../../../../../../doc/html/api/proveit.logic.Equals.html">Equals</a><a class="anchor-link" href="#Expression-of-type-Equals">&#182;</a></h1><h1 id="from-the-theory-of-proveit.numbers.addition">from the theory of <a class="ProveItLink" href="../../../_theory_nbs_/theory.html">proveit.numbers.addition</a><a class="anchor-link" href="#from-the-theory-of-proveit.numbers.addition">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when building an expression:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Makes files smaller.</span>
+<span class="o">%</span><span class="k">load_expr</span> # Load the stored expression as &#39;stored_expr&#39;
+<span class="c1"># import Expression classes needed to build the expression</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">b</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">three</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># build up the expression from sub-expressions</span>
+<span class="n">expr</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">three</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">three</span><span class="p">,</span> <span class="n">b</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="expr">expr:</strong> <a class="ProveItLink" href="expr.html"><img src="expr.png" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># check that the built expression is the same as the stored expression</span>
+<span class="k">assert</span> <span class="n">expr</span> <span class="o">==</span> <span class="n">stored_expr</span>
+<span class="k">assert</span> <span class="n">expr</span><span class="o">.</span><span class="n">_style_id</span> <span class="o">==</span> <span class="n">stored_expr</span><span class="o">.</span><span class="n">_style_id</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Passed sanity check: expr matches stored_expr&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Passed sanity check: expr matches stored_expr
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Show the LaTeX representation of the expression for convenience if you need it.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">latex</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>\left(\left(1 + 3\right) \cdot b\right) = \left(\left(1 \cdot b\right) + \left(3 \cdot b\right)\right)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># display the expression information</span>
+<span class="n">expr</span><span class="o">.</span><span class="n">expr_info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>
+<tr><td>0</td><td>Operation</td><td>operator:&nbsp;1<br>operands:&nbsp;2<br></td><td><a class="ProveItLink" href="expr.html"><img src="expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>1</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../../logic/equality/__pv_it/common/fb96dc12b2aa8801dda64d0132b396c63d1502bb0/expr.html"><img src="../../../../../logic/equality/__pv_it/common/fb96dc12b2aa8801dda64d0132b396c63d1502bb0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>2</td><td>ExprTuple</td><td>3, 4</td><td><a class="ProveItLink" href="../c2b9a153f5e804e17858e49bf2aa555f120d62c80/expr.html"><img src="../c2b9a153f5e804e17858e49bf2aa555f120d62c80/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>3</td><td>Operation</td><td>operator:&nbsp;13<br>operands:&nbsp;5<br></td><td><a class="ProveItLink" href="../39418f2e3767760f7f13bb5b567e886384e898f30/expr.html"><img src="../39418f2e3767760f7f13bb5b567e886384e898f30/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>4</td><td>Operation</td><td>operator:&nbsp;10<br>operands:&nbsp;6<br></td><td><a class="ProveItLink" href="../9f2da0da6c8cfa80972455315ffb05b9613335e10/expr.html"><img src="../9f2da0da6c8cfa80972455315ffb05b9613335e10/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>5</td><td>ExprTuple</td><td>7, 17</td><td><a class="ProveItLink" href="../7109fb0a2f2d34dfd20edad36365a818463461890/expr.html"><img src="../7109fb0a2f2d34dfd20edad36365a818463461890/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>6</td><td>ExprTuple</td><td>8, 9</td><td><a class="ProveItLink" href="../35d066cdf9ea978c34ed7bed3cc930f9ca9c9e8a0/expr.html"><img src="../35d066cdf9ea978c34ed7bed3cc930f9ca9c9e8a0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>7</td><td>Operation</td><td>operator:&nbsp;10<br>operands:&nbsp;11<br></td><td><a class="ProveItLink" href="../../../../numerals/decimals/__pv_it/theorems/55c5e252bd3822bd28e5b3698333efef6b236f090/expr.html"><img src="../../../../numerals/decimals/__pv_it/theorems/55c5e252bd3822bd28e5b3698333efef6b236f090/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>8</td><td>Operation</td><td>operator:&nbsp;13<br>operands:&nbsp;12<br></td><td><a class="ProveItLink" href="../643276a5d03793a3a1c7b5a536fc68ea8f9c9fa10/expr.html"><img src="../643276a5d03793a3a1c7b5a536fc68ea8f9c9fa10/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>9</td><td>Operation</td><td>operator:&nbsp;13<br>operands:&nbsp;14<br></td><td><a class="ProveItLink" href="../73234887d4e44a39bc34da66497751f3da7cf0b30/expr.html"><img src="../73234887d4e44a39bc34da66497751f3da7cf0b30/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>10</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../common/4b7effaab3619a1c2c38fe2dee8601df8ec714590/expr.html"><img src="../../common/4b7effaab3619a1c2c38fe2dee8601df8ec714590/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>11</td><td>ExprTuple</td><td>15, 16</td><td><a class="ProveItLink" href="../../../../numerals/decimals/__pv_it/theorems/cb7b432f8fafd4a095119c6233763710271cdf9f0/expr.html"><img src="../../../../numerals/decimals/__pv_it/theorems/cb7b432f8fafd4a095119c6233763710271cdf9f0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>12</td><td>ExprTuple</td><td>15, 17</td><td><a class="ProveItLink" href="../c10b20ee0880b90cb714a3850a942bf55988db620/expr.html"><img src="../c10b20ee0880b90cb714a3850a942bf55988db620/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>13</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../multiplication/__pv_it/common/ed719cef37831779c16481533a4d380a2f95ab270/expr.html"><img src="../../../../multiplication/__pv_it/common/ed719cef37831779c16481533a4d380a2f95ab270/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>14</td><td>ExprTuple</td><td>16, 17</td><td><a class="ProveItLink" href="../ca3043c96bbae8b85b08695f75516bcbceffdbbd0/expr.html"><img src="../ca3043c96bbae8b85b08695f75516bcbceffdbbd0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>15</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../numerals/__pv_it/common/2778428c7f555b2bdc06aa0530bc142c6e6335100/expr.html"><img src="../../../../numerals/__pv_it/common/2778428c7f555b2bdc06aa0530bc142c6e6335100/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>16</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../numerals/__pv_it/common/0a19a501c0770212f27a044b71e9c626b8ca0bec0/expr.html"><img src="../../../../numerals/__pv_it/common/0a19a501c0770212f27a044b71e9c626b8ca0bec0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>17</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../../../../__pv_it/common/195236b98c6c564a75b5dbada74b173bc52d5c3e0/expr.html"><img src="../../../../../__pv_it/common/195236b98c6c564a75b5dbada74b173bc52d5c3e0/expr.png" style="display:inline;vertical-align:middle;" /></a></td></tr>
+</table>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

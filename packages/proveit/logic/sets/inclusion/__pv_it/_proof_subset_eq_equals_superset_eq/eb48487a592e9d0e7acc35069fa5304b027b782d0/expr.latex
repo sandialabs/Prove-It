@@ -1,0 +1,1 @@
+\left(\left(A \subseteq B\right) \Leftrightarrow \left(B \supseteq A\right)\right) = \left(\left(\left(A \subseteq B\right) \Rightarrow \left(B \supseteq A\right)\right) \land \left(\left(B \supseteq A\right) \Rightarrow \left(A \subseteq B\right)\right)\right)

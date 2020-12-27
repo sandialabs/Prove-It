@@ -1,0 +1,2 @@
+proveit.logic.equality.sub_left_side_into
+proveit.numbers.numerals.decimals.nat1

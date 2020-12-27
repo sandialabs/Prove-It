@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.conjunction.any_from_and theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.conjunction.any_from_and-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">conjunction</a>.<a class="ProveItLink" href="../../theorems.html#any_from_and">any_from_and</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.conjunction.any_from_and-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">And</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.booleans</span> <span class="k">import</span> <span class="n">in_bool_if_true</span><span class="p">,</span> <span class="n">fold_forall_over_bool</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.booleans.conjunction</span>  <span class="k">import</span> <span class="n">left_in_bool</span><span class="p">,</span> <span class="n">right_in_bool</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> any_from_and
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="any_from_and">any_from_and:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/697957ccff67fd76cba9c24a6ad74baf20e074260/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdIAAAAZBAMAAAB3FrLGAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA/hJREFU
+WMPtmF1oFFcUx//O7GR25yObl5a29mFFqGmpJiD9oI10gy++iJt96JPQxTQ0CKUBi5GgEvtQVy1k
+6UMaBM0WH9T1a0AWKrSwNP2MHwwiJbSVBn1qXyqmatSGes6drJndO0mmZbawpQOZOWf25Nz7m3vu
+uedeINz1zmABTXzFBneHNR1Ak1+j/5P+B0mn+XE9BGkrP2y32Qh/+Kv35XyaSS+y+lsIUsuhR2ux
+6QbzKUC9w6RjpCSGQ5AKo7GmA9XmKPPOMCmPkhiuZecpD/zFpiNV7tOcu82k9mSp9EmojPRzqXSy
++RJTvA34dEjk3tl8fnco0mQ+v7/SdKTJHLSdRUHaBxwIRdqSQVwUSvHgcqnGy6aZiX7PbKq38rxs
+bH/YpTx2E3s8AFF7Bt569+p+x1tPN8KYDp7LO77CqtwCaawTZ4X8SzrI3P6jRmuD1cbC0RROtEnG
+iRsw9i1EWFWI3DPQUYDxpEeqQwlYJE9NbMBnVlEt+iqHAaxl0XgjcFE9NufX1BzMB9ww9dKWU/s4
+IU1JpNF7Bpi6wxGklqsHfMZDh4v4ItVp+Wuky16lZB3vDOrP5A6/pqegcqjoNLO1lGTMmSErkUbv
+GbjLpClBmph+k8g2ZFcrz2XgSRzSdJXLH9eQHtVELGfjQcuvlsr71XMZrON46KCbIZUbCg9KSSKN
+3rNYTvFe2qt7D7xNfN3uiu0Kg7BU8GrEsnVmq580PiqmUU4lZXt9Ey14xa9uWdsuPssuT60z12uJ
+qqTRexbLqTY7X+GfJ/eH1yCZVnkNYaloiCgqozLhJzVFi7aj3MLWZ+r78xM6/OoVYA0//xRavXmy
+EkTaAM9opZzVfXCeNMnBvg090EWptA3d0Hbl8x8Q6RG9Zi9zm29nu76jCBmq645x89KIP5Q+otzg
+zE+bM5I5zzHDrSdtgOeW3++u7z9U3bXZ7OcJtGNcg5C6NOS8MY1la0h/5NtrSNyR+0NJejxjv379
+pc8zQn9IYcar2qv0V5HMVYoxC2Re8ZM2wLO8P03corGcsjBWJOn9Mr7ml9eoApT2pzH6YHOiAbI9
+WL1hM8WGa67DSrMCepN4gMSzLOguThdk8z0wvofZPu823jDPMmksh18xOokeh6QXXcQpPmJ705QN
+6klHhjF2z+UGehztafQU+ObEZ5EY2YM+Y0BNQ1uJb2fW9wsB33S9ANSbw+r9kiKpTxv2kTbC8xJn
+DtVdTTvN06XOHIZ8tgvSgNmpm5S6qu/NZcyVa7U1UuSeFyc1C+FOV7Izjs+2Khk5Jd1CpeiF6g8X
+ljE3L0uk0XpenNT+G+dI9qL/5UrCkua1Yxqp539wYjbYyPNe9V847935CLHHhISSD19TAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/983afd26f79057fa6ea40dd7ff65c937bb12331a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

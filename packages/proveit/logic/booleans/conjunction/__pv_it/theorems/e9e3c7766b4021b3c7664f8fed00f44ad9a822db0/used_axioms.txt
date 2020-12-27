@@ -1,0 +1,3 @@
+proveit.logic.booleans.conjunction.and_f_f
+proveit.logic.booleans.conjunction.and_f_t
+proveit.logic.booleans.negation.not_t

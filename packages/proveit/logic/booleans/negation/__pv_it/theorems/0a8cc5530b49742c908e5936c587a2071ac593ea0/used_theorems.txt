@@ -1,0 +1,3 @@
+proveit.logic.booleans.fold_forall_over_bool
+proveit.logic.booleans.negation.double_negation_intro
+proveit.logic.booleans.negation.falsified_negation_intro

@@ -1,0 +1,1 @@
+\left\{round(x) = \lceil x\rceil \textrm{ if } x \in \mathbb{R} ,  \left(x - \lfloor x\rfloor\right) = \left(\lceil x\rceil - x\right)\right..

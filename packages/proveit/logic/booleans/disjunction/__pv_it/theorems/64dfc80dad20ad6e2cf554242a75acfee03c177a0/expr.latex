@@ -1,0 +1,1 @@
+\forall_{l, m, n \in \mathbb{N}}~\left[\forall_{A_{1}, \ldots, A_{l}, B_{1}, \ldots, B_{m}, C_{1}, \ldots, C_{n}~|~A_{1} \lor \ldots \lor A_{l} \lor \left(B_{1} \lor \ldots \lor B_{m}\right) \lor C_{1} \lor \ldots \lor C_{n}}~\left(A_{1} \lor \ldots \lor A_{l} \lor B_{1} \lor \ldots \lor B_{m} \lor C_{1} \lor \ldots \lor C_{n}\right)\right]

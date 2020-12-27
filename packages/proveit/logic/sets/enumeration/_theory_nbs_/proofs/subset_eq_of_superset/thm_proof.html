@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.subset_eq_of_superset theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.subset_eq_of_superset-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#subset_eq_of_superset">subset_eq_of_superset</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.subset_eq_of_superset-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> subset_eq_of_superset
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="subset_eq_of_superset">subset_eq_of_superset:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/76a85e34d95e29aedb71a5ed46c03f9b8482c3cc0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/49b8ce233adae30bd6b381ae8f26f67754ec1c190/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

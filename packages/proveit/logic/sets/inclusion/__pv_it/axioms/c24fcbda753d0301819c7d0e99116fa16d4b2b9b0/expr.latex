@@ -1,0 +1,1 @@
+\left(A, B\right) \mapsto \left(\left(A \nsubseteq B\right) = (\lnot \left(A \subseteq B\right))\right)

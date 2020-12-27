@@ -1,0 +1,6 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \multigate{1}{Z}   \\ 
+  & \ghost{Z}   \\ 
+  & \gate{H} \qwx[1]   \\ 
+  & \gate{A} 
+} \hspace{2em}

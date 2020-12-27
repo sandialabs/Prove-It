@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.rounding.floor_real_pos_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.rounding.floor_real_pos_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">rounding</a>.<a class="ProveItLink" href="../../theorems.html#floor_real_pos_closure">floor_real_pos_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.rounding.floor_real_pos_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> floor_real_pos_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="floor_real_pos_closure">floor_real_pos_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f23af16263fe41a1db896b26ce682d43fa2906c70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAAAVBAMAAAC5yWGZAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAjdJREFU
+OMul1D9o1FAcB/Avuctdk0tiB8FNQgsinYqHOAhy6CA6ZTqXDoe2ahZxEG5QyuFirqIcLroZKagc
+UgoOUnE4o4NG0AwF/0DhcBErSioIFRd/L39eEi/GFh/c8f6ED+/3+733gC012Uv6Ov6nSR6kVjIc
+5n+1Ei+tFWL3UYQtbV638XSjUekBr9jEeiH2uRDDNbEF2YdM87dYHJ0iS50uxs4YE8A44ACaDSjL
+RVi1l4upV9rzQWd2oWLgPHCH5tx+/2ZhlGx1FBMv29HYbMrrDNMawKZlXRoVlKQ7GWHyhHnY4dhS
+bMGs6U2GKZSOOaA7ipVSCY6wB3irz3PM5Osmnqs6YSotHAnqUIBdjDAXb+xjHOuksIo9R1iNflUI
+qeONR3tPfcxiOyPMhpXkTNz9jVqEyS2Nqin6FKpX5ZfmSd0TFLi6Uj9QP/gnBnxPMCm9M8yIESYN
+m/H0u5U+CPvg5YYJ8UeqmuNpTF0mu0xhojtLf87+PUaZyhFgg9wCPBZ8THFsH1+nCuJlJywAHpIo
+2OeqDQ0hVp/OYM9CrPxrzJc8jlX5Qf/CUkyTJdoDdtCbIuIrsBhgpdMXsgU4GmLyyanJtSRM+ezx
+cPnEBu2KHQjNYPciOH4/adqyLF1Qbqyy/PzzOpVfRNcpbvd4T/RFVMIwazP2ti563Jy4c1sZKlCM
+MGfuIPtVd0tYcvTvrjoucJUd2teDxUPbeRzjNtbLjgXKWf6zLe9qh5z0qf2Xx+898BveNqFAS7Zo
+mgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/c9bdb6a61eac8b56115dd0f5a9fd1c6c4847c2690/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

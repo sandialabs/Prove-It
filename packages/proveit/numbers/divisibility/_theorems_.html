@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.numbers.divisibility</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.divisibility">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.divisibility</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.divisibility">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Boolean</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">Or</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">NaturalPos</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Divides</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">GCD</span><span class="p">,</span> <span class="n">Greater</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">subtract</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.numbers.divisibility&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">non_zero_conditions</span><span class="p">(</span><span class="n">non_zero_vars</span><span class="p">):</span>
+    <span class="n">temp_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">_i</span><span class="p">,</span> <span class="n">zero</span><span class="p">)</span> <span class="k">for</span> <span class="n">_i</span> <span class="ow">in</span> <span class="n">non_zero_vars</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">temp_list</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Fundamental-InBool-theorem:-a-Divides(m,n)-claim-is-Boolean.">Fundamental InBool theorem: a Divides(m,n) claim is Boolean.<a class="anchor-link" href="#Fundamental-InBool-theorem:-a-Divides(m,n)-claim-is-Boolean.">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Proven</span>
+<span class="n">divides_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+        <span class="n">InSet</span><span class="p">(</span><span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Boolean</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="divides_is_bool"><a class="ProveItLink" href="_proofs_/divides_is_bool/thm_proof.html">divides_is_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/4f2e236a8ac9575b0b07da32df72d287beda21950/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAAAWBAMAAADdgQhOAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAlRJREFU
+OMudlEFoE0EUhn/jJrvZ7NocFDzJktLYg1AR2lNbFcGAoGk9eBDBIgp6kSJWD5YaPGgiSFcQWhRx
+6CGUHiTgwYOX0OYgVWEPHqusoAcFpYqCenJm3qTNbmZBOvAy2X9evsx7+94D/mudxtZXNiCTq0Vb
+ztf7Cj0UX95pDheVdYJwKea0d/fsh2uHpP5KPH/RgD4ri4Cexr3Ck/bdEanPiygq3Rx3P1kU5Hgx
+t8px9FlS38H41ugGmT5ZFGTn1d/cuT7TBr2wpO6uLi3NaSKbUxYF4aP8TN9imzdqLZL+u1qd1oB6
+lS0UH+zzOMju9XCfYYVSxTZDM6Yu8J3rfKtpQPfI7KZ7xQw5yDHyGADex15e5fDN7/ytCf0I7FAD
+ukHmMOev4XPQo+0hqsBz+nlnst+sQeomUoEGtJPMhlWROWLbPPwAzsoU7fnGVxtkGYHUncBEMgjo
+8SjZZZb+pUDZyI0sTEg9G57iwvJgcQwwijBZJDTuMkagUaT4uy/Jw3wnKCO6Q+i180CKXTZ5zpwe
+Nh5Ndo4N8EMBug1rop3sA5EbuU3Sn03yqPFVyA9L6FceK2TlxiweyxsNocxzMUzVulHB4Rm8HgLp
+Mgn4I/VhnFMeJbJ6YWEkkKB64SAv9E9U4BePRZtW6q7ISno9LQ6uYldyi4xywiQ9Gy9Vi7RbR+l4
+4oQO5hmmjPWEps2E9k9N08abuf52eRXjDRzt3yjOGjpKvgUzsDzNGNGPl4btW0HCYDMKg9A3E7r0
+nJ9pntCP2j4Vb8KojekujLXmVkf8P+SuqLuf5iAMAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Divides-is-Transitive">Divides is Transitive<a class="anchor-link" href="#Divides-is-Transitive">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">divides_transitivity</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span>
+        <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Divides</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="divides_transitivity"><a class="ProveItLink" href="_proofs_/divides_transitivity/thm_proof.html">divides_transitivity</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/257e56efc47387c3f88147a976c5ab9bdaa243de0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKsAAAAXBAMAAACGzqIkAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAnxJREFU
+OMutlU1oE0EUx/9N9iO72U08KAiCFAOlBA+5CIIeQgWL4MfGg4oXS7AHoUoO9VCRsse0UNlLbRHE
+FYrS6iEgCAqFJcdUdFFBhRT24KkgBEHw4+Kb2WR3k6z1sB0I//fezvx28t6bWWDvhmhjL8fDrmpl
+X1/Rz2PGdhKqag5gJQvYYsZOEmzOGsCqtNVVUsVMgv2AASya9C7Ks9ZIgp0bwj4G9NbGxkoSqlIb
+wubI+Fmv302CTZUom0duTDQ5dnK/6EKj0DSw8I8VQmiW+x5EvYwLPMen0XmGVZcKxykDVLNTvHKx
+IxOa/UWNejIVpoV39hmO5eXPUl5kpNwk2BHauo16L7dXqAXEDjmujKRY4HsXK0zBxyreJdZqx8YM
+Co5BZgd7ZWc5xGqFi9MEmpjCHfK4mFDm140wCRB/dLEveU1Ycyxcp3Lat2QKanm7wuIn2qMhtih5
+swRyfov7yONiIr3ZjJTsdaqDIsNmS5D8kuEFsUV8Y1MeTGKcz30WSYKRo4WmslZL0X/3hQy1d4So
+m4Q/mY7iMuzl9vuvQNqheJ7v7BefcxJVfqrL0dzmLZbNtCOxiVwIuxZ0YQ1qtVjY5kko6YdpaY7l
+R7d5lkU2ZxYHmCzjagR7DQaB5PIIm82FcmsEt+vw4X3aizzSPA2rNm4LHRJlZtMMsErnLRyGNS5A
+WeRC3v2tz7teNf548rHZQqWB0+MeiS4etAOsevPsUZtAQvUexENcyHMri0Ebxl2M0dFQLVbXRmzf
+rmOJzo8v5q7XePAef2QtyTnPJBY7I3jse8LFjP3opLqd/KV/szqEtsMkFnvuDYnrS6JrH+nQLPU9
+KP1v5V/MEagpL7uwwAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Divides-is-Reflexive">Divides is Reflexive<a class="anchor-link" href="#Divides-is-Reflexive">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">divides_reflexivity</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">,</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="n">non_zero_conditions</span><span class="p">([</span><span class="n">x</span><span class="p">]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="divides_reflexivity"><a class="ProveItLink" href="_proofs_/divides_reflexivity/thm_proof.html">divides_reflexivity</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/2fa6f1569c809d826a6345df15326722ca102c630/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAAAXCAMAAADaxpaQAAAAOVBMVEX///8QEBAoKCgUFBQNDQ2I
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAMeWbTAAAAAXRSTlMAQObY
+ZgAAAixJREFUSMfFlomSpCAMQNO7G+5w/f/HLgGhFRnbmSprUtW2BoKPXAjwq6IIfl1cnBRBTgrv
++JrGc4xPM5GFT1CgmSr4/pged2Vyn6GIveQ6vbNPM0UBn6Eg4M5Bb5c9JcbdgaIX8wdicebxLF+8
+YQEFiXXZspjwNBRu0SNE7STWMDWovaboeJ5WfGvd/eXlZYlVgICnTdpW3VQGokEwqUMdNOWW/6To
+Sf+FeBu00bhb/oJJqJoSxUrPKdWSNhTqkAmk61AHTTGsYeYLnpoU+SBE0ZKyxUilcAvKVRRT02Jq
+MS85PGntPqcOmvKqXEdiAzvWr/WOeHp0Fcffg+INAGV218svoVgyzomecYJyCZTuTUIo5CSTvadI
+5VXzwRpqWLTZoS3Lk01chq+OqwnqrSlrNAdZp9sgEuhUnT9SLFI8lcAOaljoWsP/yi+WV7C/DC4T
+3RNgbpYb1EGzJXrRii16BTdVUxrN15O/ghoWDdHD21OvCaqWOsjsweZ+NjPUUVNKJZwiWtcDZerG
+LYLzSl1ADYv9gdtyKk+do4WFNCKh2E5/hjpqyiZVj9E+y1j5rmdB+O4/C6jNQqeU/v4pF3bcsvru
+HjNTzbkMoQSU3ReGe5yo92HZp3YWvR305n3qU985kPeQOsrSiusO7agVCilZrZbh21u0drBRhSAW
+/eLup8vXR1XLqWUzWjf+j6fnnY+87xx3N6DSDz6HcS6i+FOmNVR8/HvsWsTD6/8H8OUYyt1sIAoA
+AAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Divides-is-Disjunctive-Anti-Symmetric">Divides is Disjunctive Anti-Symmetric<a class="anchor-link" href="#Divides-is-Disjunctive-Anti-Symmetric">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">divides_anti_symmetry</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+        <span class="n">Or</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Neg</span><span class="p">(</span><span class="n">y</span><span class="p">))),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Divides</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="divides_anti_symmetry"><a class="ProveItLink" href="_proofs_/divides_anti_symmetry/thm_proof.html">divides_anti_symmetry</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/7684196e5c53878bb00bce8cee24aa9d9f2b01350/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAT8AAAAWBAMAAABEXIbSAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA0NJREFU
+SMfNVk9IFFEY/9yd3Xmus+qh7oMLIhLoxS6VSULSJfXSLRIpokssUYcwwpPsHqQNAsWoRg8qErHg
+yU7LerNDCwUhFAx0MiiWKMi69L73Z+fNvDdaI0Qf/PbN/N73vf3N9773B+Ao9kQgxraiRHvD7Bjl
+txT4SHxIpi83yxFn2UqEWI9xXDcESrxC4lMygZ0VjtgPYF+fYc8T+LMX47hnCJRYxAzPJhP4RiDW
+6iwdqC3v4s+g2U3n6wE6PQCnmkzgXYFYW2YZnKI/toc/MdnW+eUA+Z2NjYVk+tqLHAfUwIicwFF8
+iPufBWOgxI9S6V4ygalBjlzPjXP1SBEVXHjogcPmbpOijA8FipXeRyfcyEAFY6DENREdspHWkxXi
+Q2+kwfEc3rn36bvzhRmKcqxuGKDTw1aJTaeZVfk8FVDL37L9sDPy0pRAiVGx2EIWrBoS4kNvdpVj
+B157F8Lxj9M+lAA6WAGkXMiyL56hAjznpxUtuRljoIQNqUYygW0jHB4OGTavzYWvNHFNNm1FeMHY
+Y/QZiL5lIM8TOqEESjgNG44mEHDIiI17me9SIJziuy0KAehyTQINgRLt/iXccIZ66XZl9fL9QAhE
+kkiSNUR6qlMMOGRQVrirwDCkumkMX+NPoRhM5ZUJzVmZYiVQAspXaZl4N22aC6fLmwwyyEgiSdYQ
+6akukpepJvRHkjIHZEouEiCXedboYujwBugQEed5Y6AEbBbxOPqMvUtj0BcIZCSRJGuI9GRJ4PuA
+9Ys0tVvASRinVLrGXjLXuaRtOoPVB/r1YtsYKCGKYp91n4ZptQb3WdUJEhvS8oTWHOSm+wvabWO1
+5ywe1KIYPvJmDPmVM9qaHDMGSkAePy/TZGf6bTiuCESStEhsSMvz0KNumGJNPC/FHWkmXgauKQPA
+M8d3YNGDO1YzEMhIKglJ0Uc4eehlIevnvsnLwkGXAo1XAuvqAKtv6zswWYXzfX4gkJFUIJKij3BS
+bjoVDkNOGsQF/QQox2S7bAiUUK2aq5CGtg9ykveRP7ywWj1DYBB/+IU1CDR8fUclW7uob9SMFH3k
+r678u0mv/LsK1FIA631NF8hI0UfgP7GgatMhPv3PlfwGWJ0npYbBR+8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="If-$a|b$-and-$a|c$,-then-$a|(b&#177;c)$">If $a|b$ and $a|c$, then $a|(b&#177;c)$<a class="anchor-link" href="#If-$a|b$-and-$a|c$,-then-$a|(b&#177;c)$">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">divides_sum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span>
+        <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="divides_sum"><a class="ProveItLink" href="_proofs_/divides_sum/thm_proof.html">divides_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/9985969cc0e83c0ca829b18fba31dc792dc46de80/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOQAAAAXBAMAAADpf/4JAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAxNJREFU
+SMe9lk1oE0EYht8mu0l2s0mKKIhCiQZKKR6CIAgWiRUsgj9bDypeGoI9FGrpoR4qWoIHaQuVXGqL
+IK5SlFbRgKAoFEK8taLBCiq0soeKUDAEQbAVwW92uz9jtr1scWCYefNN9tmdeeebAbauiBr+V7mz
+3ioZTtaVl1SjBUBnYskPUc5zSFvWlRDh0APMM7HiBxkvcEhb1r8b+7wnwCQ1Ut4PcgEccsEdiybd
+qswGJRGnNVeKfpCDPHJwY+Q99qmNiM3NzEz4IUr9HNKR9cg4G7AM/BoevuoHGUjTq+/taS+bSCbv
+74e0i0d2bBcrUCiG10A3MLLB0wSnm+ECbhWpAI/xMTlkIpksHUGgxiHlsdRBIMb88wU4ajrJq0Sc
+Lm8wtwqTEebwTjtuIklKxcOI5HmkYdEom/QXNAaBih9kA4E0DFtrSVLGNiSIpVSr35qq1awx7DzZ
+VGSf3kWBShh+kcAPFxLCGrpUfi0FBraQkn6WbZkDzTRIaEaYJcqJlXEHqaTOdBOkPYsrjpKGplVn
+YiH+tJBMBnXs+cexzw0um9gOqiMXyWdaX5j+oCS0ThY7tJh0kK0hfYAgpTWx0VHB2bLLPq/ILa2O
+fSJZ3OCR0TRCjn3wjNgivrPI7Q60GEMeuSZWjdNT8tJUfyBvKzKElT7I+cLvSE2qmEi2EYJZ4Q+P
+PLf4nvZjsETdNqoJ4+dVI9SGnGGwjHstEwUGCZZCSUdhyt5J/ZBzraml9YllkyfnUqs8Mh1romCc
+rcVXqjHNWFmRhQawgzXjuOBCdkElSDjToDpKUu3T0SvhBXWv7POQfY2Vne4quoJJDZeFGjVS72ze
+Rkq1tygxpHoa0qilbs1/2jit9+HperKQNY+0bpYHH8pz6CziWItOTUzcqdlI+dKJfRpBhNxNiLst
+VekctbcSf3iRvIbrmx1e7lKUC8xwRc99OY0xmiiPXVp/RLenVM9tzt6NT67RQqh0yrwreCB7Bd28
+S9QlBuvmEVA3v4h8ZsbhD/AYhMUSazyRJ99QU/FCbmUJOt00F0j7eepfXgfStPPcnqEAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">divides_difference</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span>
+        <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">subtract</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="divides_difference"><a class="ProveItLink" href="_proofs_/divides_difference/thm_proof.html">divides_difference</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/9cb5b342bd8c208d913dbdf668bf7d9bf768a9eb0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOQAAAAXBAMAAADpf/4JAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAwZJREFU
+SMe9lk9IFFEcx7/uzuzu7F+JgiiIrQUR6SBBECSxGSRBf8YOFV1cljwIJh7sYJQsHUIFYy+mBNEU
+UmhRC0FRIAzbTaOWDCrQ2INdhGIJgjSCfr8Zd2aeO+tlpB8Mb76838xn3vt933sDbF3IGv5X3F1v
+o2lB1sQruiJ5oMxiyQsxnBOQlqyJAOHQA8yzWPGCjOcFpCVrv42H9xSYpEbJeUEuQEAu1M8sclIS
+cap5tOAFOSgiB+tn3uehNiI2NzMz4YWo9AtIW7qUgBOWgd/Dw9e8IH2t9On7etqLJpLlgwNQdolZ
+HdvlEqLUhzdANzBS522SfZsWOpwqVAKe4FNyyESy1I/CVxGdM5Y6BMTYP1+BY6aT3CJk34oGc6og
+GWEO77UTJpKkUjiCkPhA2LBohCf9JeXAV/KCbCCQhuFqLUmGsQ2JJHF+GKEaaRfIpjIPvYsSS0F4
+RQI/HUhIa+hSN9QoAxuplM/xkjnYRElSE4K8UU6sjNvIaOpsN0HaM7hqK2VoWrUnFvKvKpKlv4y9
+G77+hcHlie2ga+QS+UzrC9ID0YTWyX2HF5M2siVQHiCIviY32so/W3TY5zW5pcW2TyiDmyIx0oqA
+bR88J7aM79xzpwPNRspjx8SqcXpLTpnq9+UsRYWqbh/kfOlPqKKUTCQvBH9G+isizy9+oPXo1+m2
+ja6EMaJVo6sNWcNgaWctE3mG+PVA0laYsqrUj3C2JbW0PrE8eeFsalVEtsb2UGeca/GNrphmVFbm
+rgHs4GYcFx3ILqgECaYbVFspqnU6um14ftd194hHU92d7kXLUUxquCJVqFF6Z3MWUqm8g85I9QyU
+0aq6Pf+5/rbeh2fpTbZ1Mx5+LM6hs4DjzWVqYvJOzUKGL5/crxFEyt6CvLuqSp2j1lISDy+S13Fj
+s8PLGYVwng1XcF2X0xgj57ms0tojuj2lui5z/jZxc43kA/pp81/BBdkrlc1/iZqNofrn4VM3/xH5
+wsYRD/AYpEWdG1fkqbfUlNyQWxl+h8tFz3t56z8Dc9DLm98iowAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># We need to constrain to the set of integer numbers in the case of Euclid&#39;s Lemma</span>
+<span class="n">euclids_lemma</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span>
+        <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">GCD</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">one</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="euclids_lemma"><a class="ProveItLink" href="_proofs_/euclids_lemma/thm_proof.html">euclids_lemma</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/af3be16d11e3f6552e83ac3f8b5b7b1f67c44e3b0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARYAAAAXBAMAAAA8SH1tAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA+BJREFU
+SMfFll1oFFcUx//ZndnZnZlNfCkU8rKkuITgx2KUSjUYLMRATd31oYiQZhtUFFJJJSkqKou+rNrq
+gNWIYB2M+FXQxY+KD5Yl0ZeoYbR9qJKWfWgfqih5KiZPnnNnZndmPwyKrAd275mZ3733P/ece+4A
+H9o2fnAFOO06d+1GM4ACO3/VXYqaKdOCbcB9bp/VXUujUa7lCnCSmkim7lp+R7kWPYZGk5pc3bXs
+qtCizkN04vLlkbpLiQxWaME/wKtsds/bDmV4L5LvAAQS9Hc2/tOCGGuRvuvsBcaBzcDBuWfv9Hq6
+79GNMnRVsiYgu4kZtigo+egOpcBaLj5upwd/A59DLdSU8M0Py9uFU8rujNh+Hgsa/j5XawJyuxsa
+hTJUN/VZyWAtpthBt+g2AlZVHb+Md1CKTbRVaJHz/lKR9vf7rTYguVoaaHVVhDNOvsiH6K+P5FlK
+VSnRw6dM5OQnVoWWUFkC/Oe/HK8N+LQATTFHSxdsLZHCV+SMLYvTAFIcCu3xyL5LSYqdWF8dJS36
+J+s3k6cUQYw8Ow4sFNLH4jRKC0ZbnjMgUGB1GrsdwKdFEVWkL2lr0cTCraHfwU2U1+Z2hZOyyUyx
+gDtjzuGAJzc9WtpChSHyRoogVkzRq/3KXhwHoHSm1GF5lgGBAvlZeR4DW7NkVkkL565mLqZ5Wct1
+IC1yF9cJkPGCkVNr0CoinIOaEE4s79GSbLTY63bAUU4q+nVzwZjBYSyHHEzQ5N0Oisi5wUDGBvzr
+otPo63JH+YS8C3nvw0W0ECvdqGFGMCvRz805Urczm90PXTcjZilfmgz2uhwwZUDluH/NIRrELJop
+EXKBtACaxOYJ5kMxG/BrYed8y9kOi7UE8YjqHP7lYXgyeVpmZggf8eskZRMihl/0QjdKWvqobmWw
+oQjiOH9+8NR6mtaD3ueqEX5qbnBQyovOhiQD21+SeWJU7Qxwn53RCzpOmhiWpiOHcOL+n8A9vp9I
+iJSytUSmJ5En7wL5BPKdgTv0YIp6aulQmqp4sMHo6yVAoDSSklwHBhzTBt94Ntp2/o+xCaRy6Got
+yM2wUrTfw5Tq0S0Dk98Xtajfrl1g8j6ihSSQl1T+mPyl3HPJpIVjC9uk/msdBAiURpL6j4AB5xT6
+9H93wnC1bwav5VSDElxzrlopX7zVtugFKLMZdI1Uke6GUlEJOOe+hkv4Ee6WnONbyn8QaUYo/yVw
+u1rl850BVO4YdLuRfOMEldsK+jYGpIIA3vCNOd8prf6TJAppirawNaeWHht0bJR7/vz4Mw/dYzcW
+eh7YwHu1hNfTfO/QVknPCVS11/x6GgzQI7UEAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">non_zero_divides_zero</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">,</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="n">non_zero_conditions</span><span class="p">([</span><span class="n">x</span><span class="p">]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="non_zero_divides_zero"><a class="ProveItLink" href="_proofs_/non_zero_divides_zero/thm_proof.html">non_zero_divides_zero</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/40734556a70c045234dd9063082ee38fbb0988010/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJEAAAAXCAMAAAA8713UAAAAOVBMVEX///8QEBAoKCgUFBQNDQ2I
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAMeWbTAAAAAXRSTlMAQObY
+ZgAAAk9JREFUSMfFlouO7CAIhp09i3e8vf/DHoHW3uzsZJNmSWbSWrGf8INV6i/Novpbi+U0kM3h
+NkX6r+O+lIeBMKg5UYaSLV04QsppfVyfDmGNc6LaEdDTQ6T4xBU8hoeBilZTovLiyyrR2oVmC9ZD
+5uOcKDjWUCMOJLqSkSz6p2U9eQETNSYyjSNSeSSQ+fwwESxJQwAXDXB+iAibFiJgRrpxLPMQP1/c
+vCsofnuGywaDlDL2B8WD8nUhio2nWiEqNGz0qvIbSyE772C3+P1cbVkI3cmdZSQ6zR05d82YOIi0
+EDFY4tzSH1yaEaasdR9FG/oituZPiCJzeBbDqZm8zIhhCDsdHbNmG48XoTrWakgRyb1Egf+IKHDB
+NArUK02JyBpclZ1E2UIUq7JLjDNoCyQsszYPY5OV7U+JhoNMXiRBc32ZZo2f20P183JFYmokNCE6
+2QCgcpWDPmRVsFw0vxENB8cF+91/pb+RFvcwVXZCBU08Jx1SlN1n6SVpnb2yI47+mjC9IRoOwpfU
+FqPXiSjrte2Eth66copQ9PAlcdP5lNh+ye+3nvccQMVk7T3RcNifpKKjduoRkg90AAh6OdWFCDOM
+xFe7pmbLMW9cbbWrEbZGcyVaHFyt9d9X/6OQTWvt9hQ5FPipwmLjdFLg8ghM1HydZ/1o57BW/tqe
+L/3o9qQ9DJxSja6Y3m15c2GUBuZag7OzrO0dpPIXpJz1pDXEn4je9em+quho2nWmnf3Hg/H2i+0N
+84c2Jaq/+KqFY9GU3wJNicrTn1dvTT+5+H8TzhnnvjAnkgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Here the restriction of y to the set of Integer numbers is related to the axiomatic def of Divides</span>
+<span class="c1"># x|y = (y/x in Integer). Thus x|xy = (xy/x = y in Integer)</span>
+<span class="n">left_factor_divisibility</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+    <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span>
+    <span class="n">domains</span><span class="o">=</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">Integer</span><span class="p">),</span>
+    <span class="n">condition</span><span class="o">=</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">zero</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="left_factor_divisibility"><a class="ProveItLink" href="_proofs_/left_factor_divisibility/thm_proof.html">left_factor_divisibility</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/3633241435315c6e47d4ebacab842e312f32c56a0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOMAAAAXCAMAAADOUwhxAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAAA0BJREFUWMPdWImO3CAMpW24zZX//9hiEwgQJrPTXWlGRdowirme/fxwlrEPb8qx/61BnF4E
+eWN82Dz0fWrvY3w/RGfZY4xX4+OmoeuDr6/TB7AiwQ3Gq/HGWanroToH7PshRsEeY1wYb1rgXV/D
+dwb0fc3ADUYDL7F+6/oYHDYwHyA4izM0jK8eMMmu3y02E96PkR9sdJxrkJxo1jCujFPouMCXsBEz
+wzGeeq3wp4WfPK28pREdOfCLV21RdpcN0XBmUo9xZZxCziQSk+8lfY8B1EvR6dDysrFBG83vlHqz
+QVhxisKdfglFGZLX1XM6FkkI2Qlhd0xCj3FlPF2G8fNMIApbNvcHt0uPD365HJ0PQuS3Ttm8ikor
+LtcxKAfBcfcVjEDIDGXJdFttsh3a2jkfV0Z6saeGdcNA7CUaamddH2LBOcq49eBwwQiEzi8wtjHZ
+xSr2VcgNRvRYPhgGc/NLjOw86BXjYCwBbnSQ6DRFS88YITGl620iFMcElZV3Uvky5+CG5DjUONaN
+IQay3gl2uKmONcv8UDbG5UxccpWdB71ydTDOWYAR5celIc3QW9Blpcw2nYhHLT2jizAmdnaW2sYy
+EKPt1RpjW1OTfv/JfzEfE51k+FJzvCu6QdyfNWcwzhTR9TFrTp4nDsz5mImWci1E3vkeIzj0C7fD
+GJTtIYw9xrZmQezZGcdtwljkXu6e2b1W4A3jyjjHUeOAwyLC2HcEp82ZMuR0y7NaqZEZOIdE9hyD
+0UW9A7fOxx3msrrk4z5dMYVWTnOer7rjE6FhXBlnCcxGUTdLauyjO7lOnmenrAvHB4lGJm807xwj
+vcJNAywxHmvqlNLvX/mBYV3q6k/UcqKqrBn7RsSdhcSIdaEFDwT9znUFkCQalflQtlen4IguyweM
+3Zr13qhVy+V+/GZNntM+E0QuavIh1lHm8oO8a5uMuZCSRV1UpPVSc3v4qo6JWusQ0iniHcZ+zXJv
+HCBDWJzZ3n1bPSvFUKYtX3xbPS4ea671FU+eBE3i1mNu7kf/tCb+1jeyzNmoJn+8XKKiwupcFaan
+I9eneT7vqpdc/cv/Oup9F1+uwnELGcMXvlCWGOMHfKH+YBOfdJi/gg0lcS9Y1rMAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">right_factor_divisibility</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+    <span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span>
+    <span class="n">domains</span><span class="o">=</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">Integer</span><span class="p">),</span>
+    <span class="n">condition</span><span class="o">=</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">zero</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="right_factor_divisibility"><a class="ProveItLink" href="_proofs_/right_factor_divisibility/thm_proof.html">right_factor_divisibility</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/e26b7105ce5b35b87bddeb3cc62f047288cd4dd30/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOMAAAAXCAMAAADOUwhxAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAAA0xJREFUWMPdWIuu2yAMZVt4v/n/j50NgZiEpu10pVZDal0F7HDM4WDK2Jc35dn/1lw6PYjy
+pvNhC47aPJ6n9HmI3rLHGK+dj5t2xMbQH+cvYEV2NxivnTfJysS6nhxnPw8xCfYY46LzpkVObF++
+Y0E/14y7wWjcW6zfiE3RY3PmCwRnMYeB8d0JZklssdhM/DxGvrPRc66d5JVmA+Pe6bnAx267qgd1
+A8c9WLVa4U/rfnK28pZGdcqRX7Jqm7J76EiGM5Mpxr0zMons4+UalrrBz111qpWC6NDysLFRG83v
+lHqzUVhxiMKdfglVdwjE1eft2CQhQhJi8Uw6irF1usAETtXaKWMXN4i+c7tZ/OKXw9GHKAQ89cqC
+s8orLvcxKAfRc/8KRleRmbpLTnzb5Jj1wDAwtk7o2zDbpafcl0zAHtCZKtTG1HDOMm6D8+iWXEUX
+FhjHGEixSrQKucGIGYOZ4WJuYYmRUQwnjEA7zIyq/m19KRsKf4DRZaZ0P02E4rhBZeedVKGF2/er
+5DjUeEbGVAYymgQ7nVR7zOYf24sxnElLrjKK4cRV1qjKt3Vxe0Bn0kzWOt0iAdt0rjwa2zP5NKlR
+RIapbS4DcbWDWmMcMXXV7z/wSTAZTJLhS80JvklK5f5Zc5jV/essG9TtpDnQK3bMMM1cQ3lxeAaK
+0XnMC7fTGJTtaRkpxhGzIQ7sWMfthLHJvSyB2dIr8IGxnwVC45BrbT27wbg4W0Lj+nKmTE265SBk
+Ss2yCD5VZI8xuLqoas6v92Nx57K67cdyOmIarbzmHE7B/YowMHbuYbco15NudoPEqtkmT3cqPjy4
+IDyfNBqZvFW/Y4wMCkNHt8S4x9Q559+/4AuXdamrL9dyIj+v5cxsBxELi5lV1sWxeE7U31A9uCqJ
+RgEt2uvVITiCZHrCSGL2c6NXLZfz8ZWaHPY2sEC+V5NPy50klB81uzYc9UPOFnVRVa2Xmts9jX1M
+0lrHmImK22XMdm7sIGNc3CPs3d3Kdi22/L271ePise81Kl3g5A6JW465OR/D05r4+R1Zwm5Uz4vJ
+nqy3S1RUWA0F4/PdsMb43O/6dwZX//JfRz/v0ttVOL5CpvjCDWWJMX3BDfUHm/imyfwFijAlceiz
+Ak0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># later generalize those binary versions to a1,..,ai, b, c1,…,cj ?</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># This can be generalized to any prime number. </span>
+<span class="n">even__if__power_is_even</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">Divides</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span>
+    <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">))])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="even__if__power_is_even"><a class="ProveItLink" href="_proofs_/even__if__power_is_even/thm_proof.html">even__if__power_is_even</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/e4b528afabeb0e32b925a286bcbdcfc768faba930/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKEAAAAXBAMAAACR7DLtAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAApZJREFU
+OMutlU1oE0EUx//bZJPsR1IPelARArG1fhyWFqRgAwmiHlSMHhREaQzWk5QcNCj2EBQhUQt70trT
+Sg+VeEhQehAPhkYv9WsPXiIUcvGgveRQweQS32yy2ew2BFz6IJP/TGZ+M2/eexNgW+wytssEvf39
+odN/S58aE+tuiS+BpcmHFtGnAp+Y+O2W+AtiEt9iXaJIB1xgZ8+6BAYVeDRwO7pErAIhDZBLLol+
+FVwavoZFfEHbrBUKz9w6TQtDTfj+WMRQDPiby825JUbaJ20yojA1vofcVYAZID9oVcxoKw+0juq1
+eaM9V2bEuBqqk8sUmuNGgLbYtSeTE4Ywoiarvhq2xu+e0WZY9oj74KEJUprOjCHdMfFVJYq7WDtk
+Ef0q3+gQg8fWy+bEnazxKIzoacIfBng6p6z7nTnxeFFDia/qPcSYsNkhSmNI24gRo2a4LIqJNlGo
+XaShpdGfjBW9EGH3YGwtwyISqElKHJ9NYIbP9notKXhOxGIZ76nnZbvlr1Ou3+abjBjXObVdmKiu
+2IjkUhbLiWkN6aHvvZG5AhxkxBJmJdWIDN6k2V3wDL54AMOaqBj1FC7biBWmJnCJyk76YhJpUJj7
+fDRNxEA4mCGvPGzVMF0oVxpKsikpxMHfyeXuQ5Y1QbOIVG+k9mLUduOnKKVbrRYjiqmRp/upm2CT
+aWFRDfxg63dhiofBPn2VUsYinsEJZMUG5guOKrS/Zlg2BadOn8WCJtRxawUf2YiisBOYRH7j3SNS
+u/lN3fFSOIirpvCmXkdxvuRN4oiOAD0cwRs3v2YsItdq1UmdPByx527eQXQWi/kEjdE9di3bR/W+
+uDZiQLX9LKn96nog0fxXGOn0q45awX8TXZnSRw2yf3/pr4CHq4HRAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># might not need explicit restrictions here on k and a</span>
+<span class="n">common_exponent_elimination</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+    <span class="n">Divides</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span>
+    <span class="n">domains</span> <span class="o">=</span> <span class="p">[</span><span class="n">Integer</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">],</span>
+    <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">Exp</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">))]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="common_exponent_elimination"><a class="ProveItLink" href="_proofs_/common_exponent_elimination/thm_proof.html">common_exponent_elimination</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/fd9be1e75d6f2c908e68f4f3c40487e85260f6490/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPEAAAAYBAMAAADZrgZwAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA3lJREFU
+SMe9llFoHEUYx/+5vc3m9vYu0CKoQbhSEyW1cOReFBK4INgHEa95MFIaGkMbfCghkDa0UMoZXy5G
+YRHREAldU7AQkVuqCwYSeuRaxChloVKaEmmgSKFQyEMJbUTo981s9nbvSDlSLgN7M/xv9vvNN/Of
+mQX2tBzDXpdZr77u1Qv0rHPjnwaD9Tz0z0YD5GYT+JMbDxtMThIomQ6QdUp4mupYvsHkW/S02gEy
+lmkoFmDYDSafp+dDK0j+AUiszM9/12BwjJf496DDkMwCTwqFC7sLWKq3Y4SX+D6W3mFyrLvrVZpm
+kk4Bk7sjp+vt2OKSp/6LfPM/k3vN5AZNNVnsXWG0A6ndk7Pi148QremokY/iW526S2T9NShk6Dgt
+gIYIDUnLbu+0l8ufh5P55Mu3MyFBHbuOA4MVstwZHOHW0hpl6PmZ27I00V/KfrnOyhY0GqNKeRuu
+RlKRnacvZlzNNOYsH/JTuYeMudKJkPKbYSlWOTOWsQNkjnA1r/lk0a6QtaEJQW7Ko5iT5Nj6RyQd
+4R53FuYRx8Csj0lMzViw1VU3rCyl0gaqc+YIzbmPfbJoV2a7mL2UZXKxhGu8JGz3yZP0U1Y7EJWh
+0sKzetdIjjzARTEEs6fvIKTiOF/XkjmChsNZJl/u+Fe2Kw67h6JdYrKNkbgpHIZfGP/o16KVlFl9
+n+PqSu6EJQ91rDpC73WbTKk4xs/Ha8gc4UcsukTWz6pbEG1ZeAt9itYck1tSiXEatsLptbIpNwl3
+WXSbExkig37oIraeEpMw8wZaLak4KJVryJu57QyhpNXRoCV5aqcQ6bLY20Pt375OJwn3TpA11H1T
+QH+hUEihtIIZUtvQAfVcoTABw7Bi7Lkh9HqKg1l2Ty5IFhE8cpMdGaw5PUO3JK74p0z+aAzNYnyO
+iz8o0af4ah7i/fcHYNBdg5fQrUrFQbQvEDfvR/DIRbPlrlV9Y4TJy/4pk+qPwOAkFIUmJ/YFXlEf
+u7ghHJcm305bsQ2ccaTyN7BWTRYRtnM2T3wQPsTMKrK+XrlAm9t5LYDbw389GFTb8N6hg2QW2g6J
+4dM3x3HUjg7iLalEL2bl/ATJMoIkR4eu9lR/GYTJ/lC255zXWZS4p7xZmPBado0SJgcSfM7XkDc4
+rO54JC9UC3Fz5/O7DnL9xa0WEtgj8ovclkp9bz0DxjTzNAYdFBQAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">common_exponent_introduction</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+    <span class="n">Divides</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">Exp</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+    <span class="n">domains</span> <span class="o">=</span> <span class="p">[</span><span class="n">Integer</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">],</span>
+    <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">a</span><span class="p">)]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="common_exponent_introduction"><a class="ProveItLink" href="_proofs_/common_exponent_introduction/thm_proof.html">common_exponent_introduction</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/5aaaf7488d34ace2e6f70f3e0b5245b2a87298100/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPMAAAAYBAMAAADdW9ZNAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA3BJREFU
+SMe9lk9IFFEcx7/uzuzOzo4rRJHiZU0ysw5be/GQpAR1iGj1kASJm5SnCMmSogixy5oJQx0SQxgV
+MgxxqRYSisStQxYxUFRGwUJEFEQeNEo79Hvzdv7sbiu0sD2c2ff7zvj97Hu/3/x2gOKP0oaWakDU
+nFGRh09Pw5r0EhVKozOaoVmKhR+Kgr5Ffxvpc3gLyjQLzSOPCjxj4deioL/Q8ZFNOtAEC80jmZY8
+xHamtygpDtFplc02YJdoo40Ic0CAsq/Ei4H20p4KK2xlizidsNA8wih9t/nJyetF2W/mqnTRSYhi
+u26heYQAhT9jsQuFec+ufZk9QoGQ/6XKQ4a+lqxKP2JQKB3Hgf7C0KG1Lw/SMR3felC30EIFvluV
+QHW2x6i2qmDhaL6TzEFwXj5Px6MxbQoWelRHvXnVT6nwwkXfy2vWn6c8eSlzOUev1IczBLH7Maqi
+Npo/H8xBct62no4dthWhd2s4ZZkskqR72c6wHMgPwrpXVcY06/7byQacw3wdMpT7iubWkuHucNyB
+Zg456J7aoANdDnnZifalDtFsHwvfzkzCj7YR+9EcGNYQFxf0TOVhMKQge9XMQcracHnJt2Sj5d/w
+L5qhwGq//xidkmINBO4VMipX3nkyQnXAhlux276hJBJXc9HMgdDjNZ/sMitdlFcVG70KT2rGUWa4
+y/jf7k1rAa7diLCPiUi7xhs8FhJ22zeUhDJ1JAfNHCTIZ8SVtJykwunFso1GH95EzSfSzSZlLB0/
+iDduaGP83jBaIRvmcnDWavtcSWA2mYNmDhLcIbErLVMGpDiq62z0zU2HO8xyDrAFllJ9iOsGgNZY
+LBbE7DyGSa1EDcSzsVgfFEXzaem2z5UERlhpRpxow0FCSdwVdTRSx7B6OB8T5sTV2+yDx0h/QsdT
+WuovDE7CcNnfBkU1236Ur1pocbj0Wg4SplXpneb4+ciLnjMnUrDVBYUtw+2m4vNdRoW4pOOJUXYh
+2rshjbd9Q3kFvM9GGw60arX9gKn3r4GWU+YsoHo2A7RleN35/HNUrMTebdU6yxVKO0+86EFznLd9
+pggXG/kOOdGGgwSh406D41UhL1rKzAZcLNe8zaWVWsosH/EcJRPNDf/6gpQ2jzijhbzteSZb8Kv5
+e3k+dGFDz3nlwP9CF/jj6f6Xf/sD46DwRTLGxYcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">common_factor_elimination</span> <span class="o">=</span> <span class="p">(</span>
+       <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span>
+              <span class="n">Divides</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">),</span>
+              <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">,</span>
+              <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Divides</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">a</span><span class="p">),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">b</span><span class="p">)),</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zero</span><span class="p">)]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[18]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="common_factor_elimination"><a class="ProveItLink" href="_proofs_/common_factor_elimination/thm_proof.html">common_factor_elimination</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/949d6f6b4caefb9bd717a1988eb36736a016ad180/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPkAAAAXCAMAAAD+3xlQAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAAA5RJREFUWMPlWAmO2zAMdFvrpO7/P7a6bzm7CyzQZgUksJMRqaGGpOzr+hGDyuuHDGHGe036
+OyXCt633xrwNcQnXhrmEm6dbFqhrVf6176MIK67tnlucIxP2W5TwCHgb4gZfe+aubLNG3Va3zf/v
+Bxd75sQVWcs7BEjLMAR/n/K2UknMdfvDhh8chMH1d6zh2GU+BqRf8oqK2AXWGN2yMrcMIZykrQOG
+RfuwOifWduZu9AGnZIz0cZ4iA34BZteqt7dYitJFGs17BrlJkdtzsq7VduczW7pI1AT7BJdqt2ik
+rxScbAiAZpx1CxqqZOwd23nXhUWH3wCzayzOK8A05qpfBZvSXOVcDhHAUJmrmOYuLldF4YcvtGvm
+tit6slaHSyqNscdLCv43avWeOdXTvGG/WMPvgNm1ZNsVRCmzGo3JxZ0ihOPPHFXm2EYr0RtNUjCJ
+/TJcF3FSEQaUkMGoEdGIOjBPWUT4U8uFE7C47jrzZClE3fMIc2+1Y35DBSTmsZuT1NkSc2EvmmMr
+MWK21BXqEGKyyY8iVpIjroQqOpennjkf5032k8jgAKyuOy2OlkjeuuCcm43a0+Yq12q7M1UJJYwg
+WAqT5NQbK2QRl61OWqNI1FstCEaapSrC0lvqvMl+Sk44AKvrLocLgMVe9Md/TDbG0abCybi5zMZT
+emJOSvLnCufN4ywk7J3RKipAFeGnJU36XavlTaon5gTWeZ399DccgNU1aRYLIIVGXW3Pp6Kfq2O0
+wVlsHJE586QhLx/nFHV5akiYJqiQLzjf0RtBShAeQ+7NCkXpE3M2zgstprNPbWW+AxbXtEqsAvpH
+kpTGbiz6WcnSd28qGCK1q2GkS16UlDYy2xFBKzJLLiipFA8E3nXM6CY/LFHrqwtzCuO8yT6pat8A
+m2tS3VUAs9b+/uW/rNnX9uPptesTc9314aaOmPD44o35XDOQr/0ee5kGprputD8i0XL6X5kn423e
+YD814oTfAbPrDJtWUDpaOa/N/fz8xNLu5+MVYUih0KppCDhlWl/5OnQXhtJpr2lOWwt99o21XV7D
+vN6+FwxptX0FZtcZNq8gdbRMXeuF53ognZhvz221fh2uo+5inu9Gzxw9PvzZhn8C2t0K1KtnjP2b
+iYfILC9s1usXA443s33TQeAVbFqB/fTbKDTUYvNEyByuP8OcnCeW3gjPwAIb/zf/4psEfBTOtAdy
+wJ+A6BtfkP0FBOYrEDKpaWkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="GCD-Theorems">GCD Theorems<a class="anchor-link" href="#GCD-Theorems">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Defining/interpreting GCD(a,b)=1.</span>
+<span class="c1"># Somewhat opaque because we are not explicitly restricting p &lt;= a, p &lt;= b</span>
+<span class="c1"># BUT if p &gt; a then p|a will be FALSE (b/c a/p will not be an integer)</span>
+<span class="n">GCD_one_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">p</span><span class="p">,</span>
+           <span class="n">Not</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="n">Divides</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">Divides</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">b</span><span class="p">))),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">,</span>
+           <span class="n">condition</span><span class="o">=</span><span class="n">Greater</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">one</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">,</span>
+    <span class="n">condition</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">GCD</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">one</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[19]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="GCD_one_def"><a class="ProveItLink" href="_proofs_/GCD_one_def/thm_proof.html">GCD_one_def</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/0604b6f2793d7b4b6e5ea31adf8c3ad7f04d208d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAckAAAAaBAMAAAAuzLp3AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABb1JREFU
+WMPVmH2IVFUUwI8z783OvPdmd/+xkv4Zd2GJtHg4wYZpDUXaH32MBrqS5LBYGVQMWZgmNSjVLBI8
+EjYJzFcLfWyUQ7WaULawfcBKMGmhiMaQGWRoi7RSbkXnvHvve/fdeW/VrQm7cObOveecmfe799x7
+z7sALSupDRvhcihLN4y28Nfb4DIpmdL/jFJ3Z2Bw2VLuVBu8wyqw2nRiPLgB6YUQZYM6j7eGsp2q
+bP3SXY2K0hAdghIejvFAg7eu5HohSHmAdKdaQ2nVsGp3L9213VEaosOnfE9Eo+JBBie4XghS7qCq
+0hpK73d3zMD1kNoQHT6lleN0dtiDDKa4XghS0lB7Y96KdUkxcmAGrhvVxkaV0uhkdd+msAcaaOe5
+XghSZseHh19u1e5zbHj47fIMtv6y0vA7fEr4gVVru8IeaGCVhZ4L7bG/Vaub4/7O+oeUHdXqCxFH
+8oVO6YStNEjuHFje4xLl9rG5GH9jbEobbb6RMGjv764xPReifABgIO7vktMNuPS9GEOZKkLaadbY
+F6BM15UGyehDNatCATkHfsHu79g01Nhqkw12nzJ+Z3ouRHkbDoj4Re1MNKWm0k8GE0I+HwanckWm
+1Gx/M4yiLKiKPu6JT967Actm3kDJ1H6E7ARCvFaHG7F7r9jhGtzDN/jUhbNMz4Uo2yARDN0Yr1cu
+KiSuCCjT6uk0ASlH8kmKhp4vh7KCMlwnJybrP4O5pYDSH5EMC4Z7e1lzlsAf5A0UA7dO6zxC3OLC
+49i9xjM46MVi2OBmMP5gei5EadWlJOVnQvg4Xzcr47DQyvfmb4qkNBuwWvYx/BxKC1N+BX77nbHF
+8JHlJt2x/Pp8LUxprGPDtDSekrbOdCdCXAXGpE+JO+wK4SEMToA21USZaawIHh8DGo7sGwbzYJJC
+Mm4uLZsNoe/zUwzlq7rgz257xYVPcrYFEXMJmecdibKtJlHyiKWtc7dtFXCezAlhato8H5AM4E9I
+nmd6Ll4eO7AWP4Z6TlJIne1xNXoG875VuWbKY10lsLpyxoLrazRHgU8QlwplehAH+dDxniIufywj
+Iy81UXpa0Le6AaW/+wxKuw+e/1/jFmpMQaqxj+8+REiksgH8SktX3X3gA3ww40mdztLEpoTtJZ9m
+cfzbJspEKW3DE3rnm8U1Lh5Qkg/sgXVVLHWV0qSV9s2kXmb58oj17mqV0tPi8HwfUFrCQOcNko6K
+PpuOwy1wuISPtsjfrTZB2OBR2ApMz8Wj7MAkKGl7f5XOZRtDjNIixzDlLiddS1agmIdloFVkH7gj
+Zi5pt8u8XspMGN6Dj8DomELpab2QnuNTanJWQA2Se27tdgjija5V/RggJ72cgD66IGwwNJ9C4WQg
+HmUWY2VWLVHyFnGytBLnJGcWM/UyG8uA8jB0uLNwAVwNPaCVZB+4P47yKF0a5MxO/alqdQtS7myT
+jldvLklL9f6cTxmZ4X0ZzvDK/lGkQ4QB6YX475e7nfRRhCWKFJtLuD0nncze5xc4hx0O4Jn74jCe
+i5IPLIHHzmBpili2ZRZTNpTYXGrLpeev+FqAu8eDiI3M1k9EZuuSUchAydb5gzhr7oIdbpt7BCwa
+6WwBsqMq5R54ENoLYM/RJ+s4RpIPHPPPmAjKXc5KFz731qBkKSg9LfQtBP+oh3DCRI20Y0xFvnkF
+RmED5c2LB1r/+4thWU1/BNG20aBikltSKZPzT0NmwUF3ybzuOq552ecGcSL0nss1Ue7vQoQ0hrr2
+TAFSKqWnHfTeirc/2x/7Fr33r5xMOdD0Fh02GJBEuRFhx1QC16U6UryeHXTNC/k0prsR8bZDuAbX
+pVIqQqs/d5E3Igm+pLNxNyLcgPRCFErTiU2f2SWR2WgCZz5mfTrKp+N+tjKttkV3eFmYnvJ0t3S5
+odUln6HIdxJ+H5s8505DGa/99+5jL/IOL+oNbJ/0/dqZ/b8N/1H5G0IQx0XdpKBfAAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.numbers.divisibility
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

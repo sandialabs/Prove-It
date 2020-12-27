@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.disjunction.constructive_multi_dilemma theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.disjunction.constructive_multi_dilemma-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">disjunction</a>.<a class="ProveItLink" href="../../theorems.html#constructive_multi_dilemma">constructive_multi_dilemma</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.disjunction.constructive_multi_dilemma-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> constructive_multi_dilemma
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="constructive_multi_dilemma">constructive_multi_dilemma:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/4d1ad2d47412e378b689b551caa31d232aa11c350/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/a4aefed488e74858e75dc56cd4ed4832ae2f2eb40/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,11 @@
+i \mapsto \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, 1}{\Big \{} R_{i, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, k}{\Big \{} R_{i, k}} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{i}{\Big \{} S_{i}} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{i, 1}{\Big \{} Q_{i, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{i, h}{\Big \{} Q_{i, h}} 
+} \hspace{2em}\right)

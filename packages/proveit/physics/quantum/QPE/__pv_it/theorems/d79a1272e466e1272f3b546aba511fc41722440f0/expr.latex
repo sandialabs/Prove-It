@@ -1,0 +1,1 @@
+l \mapsto \left\{\left(\delta - \frac{l}{2^{t}}\right) \notin \mathbb{Z} \textrm{ if } l \in \{-2^{t - 1} + 1 \dots 2^{t - 1}\} ,  l \neq 0\right..

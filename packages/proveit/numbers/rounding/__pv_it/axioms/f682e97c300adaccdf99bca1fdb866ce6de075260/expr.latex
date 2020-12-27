@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{R}~|~\left(x - \lfloor x\rfloor\right) = \left(\lceil x\rceil - x\right)}~\left(round(x) = \lceil x\rceil\right)

@@ -1,0 +1,1 @@
+\forall_{x, y~|~x \rvert y, y \rvert x}~\left(\left(x = y\right) \lor \left(x = \left(-y\right)\right)\right)

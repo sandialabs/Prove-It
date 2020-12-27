@@ -1,0 +1,1 @@
+\left(P, x_{1}, \ldots, x_{n}, y_{1}, \ldots, y_{n}\right) \mapsto \left\{P(x_{1}, \ldots, x_{n}) \textrm{ if } P(y_{1}, \ldots, y_{n}) ,  \left(x_{1}, \ldots, x_{n}\right) = \left(y_{1}, \ldots, y_{n}\right)\right..

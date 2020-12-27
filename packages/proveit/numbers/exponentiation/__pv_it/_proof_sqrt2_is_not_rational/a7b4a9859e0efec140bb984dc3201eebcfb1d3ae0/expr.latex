@@ -1,0 +1,1 @@
+\forall_{a^*, b^* \in \mathbb{N}^+}~\left(\left(\left(\left|\sqrt{2}\right| = \frac{a^*}{b^*}\right) \land \left(gcd(a^*, b^*) = 1\right)\right) \Rightarrow \bot\right)

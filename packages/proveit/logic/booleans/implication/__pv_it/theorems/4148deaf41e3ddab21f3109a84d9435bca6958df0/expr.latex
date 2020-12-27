@@ -1,0 +1,1 @@
+\forall_{A, B~|~A \Rightarrow B}~\left(A \Rightarrow (\lnot (\lnot B))\right)

@@ -1,0 +1,1 @@
+\textrm{disjoint}(A_{1}, \ldots, A_{m}) \land \left[\forall_{X \in \left\{A_{1}, \ldots, A_{m}\right\}}~\textrm{disjoint}(X, B)\right]

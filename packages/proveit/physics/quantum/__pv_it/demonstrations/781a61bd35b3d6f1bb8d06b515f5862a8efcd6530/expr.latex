@@ -1,0 +1,10 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} & \gate{I} & \control \qw \qwx[1] & \gate{I} & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 0 \rangle} & \gate{H} & \gate{Z} & \gate{H} & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 0 \rangle} & \gate{I} & \control \qw \qwx[1] & \gate{I} & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \gate{H} & \gate{Z} & \gate{H} & \rstick{\lvert 1 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \gate{I} & \control \qw \qwx[1] & \gate{I} & \rstick{\lvert 1 \rangle} \qw   \\ 
+  & \lstick{\lvert 0 \rangle} & \gate{H} & \gate{Z} & \gate{H} & \rstick{\lvert 1 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \gate{I} & \control \qw \qwx[1] & \gate{I} & \rstick{\lvert 1 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \gate{H} & \gate{Z} & \gate{H} & \rstick{\lvert 0 \rangle} \qw 
+} \hspace{2em}

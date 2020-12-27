@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.addition.subtraction.subtract_from_add_reversed theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.addition.subtraction.subtract_from_add_reversed-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">addition</a>.<a class="ProveItLink" href="../../theory.html">subtraction</a>.<a class="ProveItLink" href="../../theorems.html#subtract_from_add_reversed">subtract_from_add_reversed</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.addition.subtraction.subtract_from_add_reversed-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> subtract_from_add_reversed
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="subtract_from_add_reversed">subtract_from_add_reversed:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/68173efd1b9cf23dabd4f1c879adb1c3a14e69ed0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAS8AAAAWBAMAAABj8gc6AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA4BJREFU
+SMfFV01oE0EUfs1mm/+kB0ERhGBtD6IQ6s+pakVseymsB7UnG4KiopYcVNB6CAjS4A970oIKW3No
+KWKCv1QKDXpThKVe2qIlUntolVCKB60WfPOz2d3ZDa0YceDbdN98M/vNzHtvXgFq3u5zuLSQ6rQF
+dPv7KEeJvHysoa5ghmJ4vVvnaadpWHivVxnekpeFGgqLqgyzbp2PnKZ5cWElhgGym5kaCnvP8dOt
+MxwXLZGEaHnFENWQXqihsEsM3mXXc24QLT6H2w0yRN6MjNypoa5AmiGcdu3+LBqc3462MXzv77+y
+1q+Kq1OcFE+CIZpqFM4hvLkJ4LXIb7QuqrVlI/ISDCcAskaPt1xFURub2moi3KdOpl9nyC8Ef9i3
+sg9uAczQecq0Ue+6aaHsV6OLeIYlhgM0BngTFhS6cTJF/8i4BDtyJWde8hUYxjVYsncU4QzAC5Hf
+Z3HATSDhh0JpBh94zBT3xWSN7dCD3Zr81RQmFyu5hnODSYewujaGvRD8RfID3Zs5/GufRrp7RP46
+nIVtoCItgw+jVl5kCOs+k2bu/uToCETuAYyZwuorLuU3uPNVhc2C154wNkA1YZWhGcgrprBA6Qga
+c81kVfJSs0bdNO4lDnDwGXabwnwVnt/gbjc9O24/yhWQbAmD7h9Ah8XHksJR5oswTpw3zQDZ4zjs
+gkym8VwmAQXn5YYoYU5PGWMyPLI5z29wn8Opfmw6GWJ3/m8waL8EV9BzuPNbm8X58wXoxdvUcH54
+guqkhEw0+uPEgh6o5Ajz5ahNWKfJM7idvJ8M4VvHg/0cXLUr2A3BXQCtojBLuOGMFzHwpSIDxPAQ
+6gqeJHUQKUleAI7iPsTvHrYJa+e83vKnclmn3GOGe1RylnEQuW1C1RB+N4HPOVFYh+W0U023t2AG
+VBgggm6VV/3T+BPTyBdiKo876QGyTWHdFR7ZMcptR5XY9JgqXklVSo/06lfSEAdbsdrTBQOaT5vE
+J94HibBCM7FCr1QubIjzmDDChQ/mNZIQLnH4y0ucH0Dq8R44VJDPFvEZaJnQ4DoxPyxfUyxRqTEe
+j0rkwk4jrZMh3FNUBlhj2ZOtUvZYW8Hy9KCPmT1UmKdgy2NglJmuhaJ7y65eKLosjBW+buUvv5Iy
+orCQ/meldWQNpfUUh3WY5ekqrKsyGf/Nwf9uCff/Jbb+uy/+BubvEtChPDbWAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/e665da300acf0ab218e0e6f828ce8e5aef1805fe0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

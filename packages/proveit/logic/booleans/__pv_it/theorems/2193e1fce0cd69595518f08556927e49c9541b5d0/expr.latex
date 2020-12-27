@@ -1,0 +1,1 @@
+\left(P, Q\right) \mapsto \left\{\forall_{A \in \mathbb{B}~|~Q(A)}~P(A) \textrm{ if } Q(\top) \Rightarrow P(\top) ,  Q(\bot) \Rightarrow P(\bot)\right..

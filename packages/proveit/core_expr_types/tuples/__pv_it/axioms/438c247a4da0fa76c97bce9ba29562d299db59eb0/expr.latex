@@ -1,0 +1,1 @@
+\forall_{f, i, j~|~\left(j + 1\right) = i}~\left(\left(f(i), \ldots, f(j)\right) = ()\right)

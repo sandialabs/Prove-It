@@ -1,0 +1,626 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.numbers.numerals.decimals.deci &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.numbers.numerals.decimals.deci</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">ExprRange</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.number_sets.number_set</span> <span class="k">import</span> <span class="n">NumberSet</span><span class="p">,</span> <span class="n">NumberMembership</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.numerals.numeral</span> <span class="k">import</span> <span class="n">NumeralSequence</span><span class="p">,</span> <span class="n">Numeral</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.numerals._common_</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">four</span><span class="p">,</span> <span class="n">five</span><span class="p">,</span> <span class="n">six</span><span class="p">,</span> <span class="n">seven</span><span class="p">,</span> <span class="n">eight</span><span class="p">,</span> <span class="n">nine</span>
+<span class="n">DIGITS</span> <span class="o">=</span> <span class="p">[</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">four</span><span class="p">,</span> <span class="n">five</span><span class="p">,</span> <span class="n">six</span><span class="p">,</span> <span class="n">seven</span><span class="p">,</span> <span class="n">eight</span><span class="p">,</span> <span class="n">nine</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="DecimalSequence"><a class="viewcode-back" href="../../../../../api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence">[docs]</a><span class="k">class</span> <span class="nc">DecimalSequence</span><span class="p">(</span><span class="n">NumeralSequence</span><span class="p">):</span>
+    <span class="c1"># operator of the WholeDecimal operation.</span>
+    <span class="n">_operator_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="n">string_format</span><span class="o">=</span><span class="s1">&#39;Decimal&#39;</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="vm">__file__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">digits</span><span class="p">):</span>
+        <span class="n">NumeralSequence</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">DecimalSequence</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="o">*</span><span class="n">digits</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">digit</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">digits</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">digit</span><span class="p">,</span> <span class="n">Literal</span><span class="p">)</span> <span class="ow">and</span> <span class="n">digit</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DIGITS</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="s1">&#39;A DecimalSequence may only be composed of 0-9 digits&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DecimalSequence.auto_reduction"><a class="viewcode-back" href="../../../../../api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence.auto_reduction">[docs]</a>    <span class="k">def</span> <span class="nf">auto_reduction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Tries to reduce each value in the Numeral Sequence to a single digit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span>
+        <span class="k">for</span> <span class="n">digit</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">digits</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">digit</span><span class="p">,</span> <span class="n">Add</span><span class="p">):</span>
+                <span class="c1"># if at least one digit is an addition object, we can use the</span>
+                <span class="c1"># evaluate_add_digit method</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_add_digit</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">digit</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">):</span>
+                <span class="c1"># if at least one digit is an ExprRange, we can try to reduce it to an ExprTuple</span>
+               <span class="c1"># return self.reduce_exprRange(assumptions=assumptions)</span>
+                <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="DecimalSequence.as_int"><a class="viewcode-back" href="../../../../../api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence.as_int">[docs]</a>    <span class="k">def</span> <span class="nf">as_int</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="s1">&#39;string&#39;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DecimalSequence.deduce_in_number_set"><a class="viewcode-back" href="../../../../../api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence.deduce_in_number_set">[docs]</a>    <span class="k">def</span> <span class="nf">deduce_in_number_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number_set</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">InSet</span>
+        <span class="k">if</span> <span class="n">number_set</span> <span class="o">==</span> <span class="n">Natural</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduce_in_natural</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">number_set</span> <span class="o">==</span> <span class="n">NaturalPos</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduce_in_natural_pos</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Do this to avoid infinite recursion -- if</span>
+                <span class="c1"># we already know this numeral is in NaturalPos</span>
+                <span class="c1"># we should know how to prove that it is in any</span>
+                <span class="c1"># number set that contains the natural numbers.</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_int</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">InSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">InSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+                <span class="c1"># Try to prove that it is in the given number</span>
+                <span class="c1"># set after proving that the numeral is in</span>
+                <span class="c1"># the Natural set and the NaturalPos set.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">deduce_in_natural</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_int</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">deduce_in_natural_pos</span><span class="p">()</span></div>
+            <span class="c1"># return InSet(self, number_set).conclude(assumptions)</span>
+
+<div class="viewcode-block" id="DecimalSequence.deduce_in_natural"><a class="viewcode-back" href="../../../../../api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence.deduce_in_natural">[docs]</a>    <span class="k">def</span> <span class="nf">deduce_in_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">deci_sequence_is_nat</span>
+        <span class="k">return</span> <span class="n">deci_sequence_is_nat</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">n</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">length</span><span class="p">(</span>
+            <span class="n">assumptions</span><span class="p">),</span> <span class="n">a</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">digits</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+        <span class="c1"># if Numeral._inNaturalStmts is None:</span>
+        <span class="c1">#     from proveit.numbers.number_sets.integers._theorems_ import zero_in_nats</span>
+        <span class="c1">#     from proveit.numbers.numerals.decimals._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9</span>
+        <span class="c1">#     Numeral._inNaturalStmts = {0: zero_in_nats, 1: nat1, 2: nat2, 3: nat3, 4: nat4, 5: nat5, 6: nat6, 7: nat7,</span>
+        <span class="c1">#                                 8: nat8, 9: nat9}</span>
+        <span class="c1"># return Numeral._inNaturalStmts[self.n]</span>
+
+    <span class="k">def</span> <span class="nf">deduce_in_natural_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">deci_sequence_is_nat_pos</span>
+        <span class="k">return</span> <span class="n">deci_sequence_is_nat_pos</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">),</span> <span class="n">a</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">digits</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1"># from proveit import ProofFailure</span>
+        <span class="c1"># if Numeral._inNaturalPosStmts is None:</span>
+        <span class="c1">#     from proveit.numbers.numerals.decimals._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5</span>
+        <span class="c1">#     from proveit.numbers.numerals.decimals._theorems_ import posnat6, posnat7, posnat8, posnat9</span>
+        <span class="c1">#     Numeral._inNaturalPosStmts = {1: posnat1, 2: posnat2, 3: posnat3, 4: posnat4, 5: posnat5, 6: posnat6,</span>
+        <span class="c1">#                                    7: posnat7, 8: posnat8, 9: posnat9}</span>
+        <span class="c1"># if self.n &lt;= 0:</span>
+        <span class="c1">#     raise ProofFailure(self, [],</span>
+        <span class="c1">#                        &quot;Cannot prove %d in NaturalPos&quot; % self.n)</span>
+        <span class="c1"># return Numeral._inNaturalPosStmts[self.n]</span>
+
+<div class="viewcode-block" id="DecimalSequence.reduce_exprRange"><a class="viewcode-back" href="../../../../../api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence.reduce_exprRange">[docs]</a>    <span class="k">def</span> <span class="nf">reduce_exprRange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Tries to reduce a decimal sequence containing an ExprRange.</span>
+<span class="sd">        For example, reduce #(3 4 2 .. 4 repeats .. 2 3) to 3422223</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">TransRelUpdater</span>
+        <span class="kn">from</span> <span class="nn">proveit.core_expr_types.tuples._theorems_</span> <span class="k">import</span> <span class="n">n_repeats_reduction</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers.numerals.decimals._theorems_</span> <span class="k">import</span> <span class="n">deci_sequence_reduction_ER</span>
+
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="c1"># A convenience to allow successive update to the equation via transitivities.</span>
+        <span class="c1"># (starting with self=self).</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">digit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">digits</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                    <span class="n">digit</span><span class="p">,</span>
+                    <span class="n">ExprRange</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+                    <span class="n">digit</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
+                    <span class="n">Numeral</span><span class="p">):</span>
+                <span class="kn">import</span> <span class="nn">proveit.numbers.numerals.decimals</span>
+
+                <span class="n">_m</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">digits</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="n">_n</span> <span class="o">=</span> <span class="n">digit</span><span class="o">.</span><span class="n">end_index</span>
+                <span class="n">_k</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="n">_a</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">digits</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">_b</span> <span class="o">=</span> <span class="n">digit</span><span class="o">.</span><span class="n">body</span>
+                <span class="n">_d</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+
+                <span class="c1"># if digit.end_index.as_int() &gt;= 10:</span>
+                <span class="c1"># Automatically reduce an Expression range of</span>
+                <span class="c1"># a single numeral to an Expression tuple</span>
+                <span class="c1"># (3 .. 4 repeats.. 3) = 3333</span>
+                <span class="c1"># #(2 3 4 (5 ..3 repeats.. 5) 6 7 8) = 234555678</span>
+
+                <span class="k">while</span> <span class="n">_n</span><span class="o">.</span><span class="n">as_int</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">9</span><span class="p">:</span>
+                    <span class="n">_x</span> <span class="o">=</span> <span class="n">digit</span><span class="o">.</span><span class="n">body</span>
+
+                    <span class="n">_c</span> <span class="o">=</span> <span class="n">n_repeats_reduction</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                        <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">_n</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">_x</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">rhs</span>
+
+                    <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">deci_sequence_reduction_ER</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                        <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">_m</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">_n</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">_k</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">_b</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">_c</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">_d</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+                    <span class="n">_n</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="n">_n</span><span class="o">.</span><span class="n">as_int</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1">#_n = digit.end_index</span>
+                <span class="n">len_thm</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">numbers</span><span class="o">.</span><span class="n">numerals</span><span class="o">.</span><span class="n">decimals</span><span class="o">.</span><span class="n">_theorems_</span> \
+                    <span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="s1">&#39;reduce_</span><span class="si">%s</span><span class="s1">_repeats&#39;</span> <span class="o">%</span> <span class="n">_n</span><span class="p">)</span>
+                <span class="n">_x</span> <span class="o">=</span> <span class="n">digit</span><span class="o">.</span><span class="n">body</span>
+
+                <span class="n">_c</span> <span class="o">=</span> <span class="n">len_thm</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">x</span><span class="p">:</span> <span class="n">_x</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">rhs</span>
+
+                <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">deci_sequence_reduction_ER</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">_m</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">_n</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">_k</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">_b</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">_c</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">_d</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span></div>
+
+<div class="viewcode-block" id="DecimalSequence.num_add_eval"><a class="viewcode-back" href="../../../../../api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence.num_add_eval">[docs]</a>    <span class="k">def</span> <span class="nf">num_add_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num2</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        evaluates the addition of two integers</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">md_only_nine_add_one</span><span class="p">,</span> <span class="n">md_nine_add_one</span>
+        <span class="n">num1</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num2</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">num2</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="n">num2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">num2</span> <span class="o">==</span> <span class="n">one</span><span class="p">:</span>
+            <span class="c1"># if the second number (num2) is one, we set it equal to the first number and then assume the</span>
+            <span class="c1"># first number to be one and the second number to not be one.  SHOULD BE DELETED once addition works</span>
+            <span class="c1"># for numbers greater than one.</span>
+            <span class="n">num2</span> <span class="o">=</span> <span class="n">num1</span>
+        <span class="k">elif</span> <span class="n">num2</span> <span class="o">!=</span> <span class="n">one</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;Currently, num_add_eval only works for the addition of Decimal &quot;</span>
+                <span class="s2">&quot;Sequences and one, not </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">num1</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">num2</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">digit</span> <span class="o">==</span> <span class="n">nine</span> <span class="k">for</span> <span class="n">digit</span> <span class="ow">in</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">):</span>
+            <span class="c1"># every digit is 9</span>
+            <span class="k">return</span> <span class="n">md_only_nine_add_one</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">nine</span><span class="p">:</span>
+            <span class="c1"># the last digit is nine</span>
+            <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">while</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">==</span> <span class="n">nine</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="nb">isinstance</span><span class="p">(</span>
+                    <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+                    <span class="n">ExprRange</span><span class="p">)</span> <span class="ow">and</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">body</span> <span class="o">==</span> <span class="n">nine</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">):</span>
+                    <span class="n">count</span> <span class="o">+=</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">end_index</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">idx</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">_m</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="n">length</span><span class="o">.</span><span class="n">as_int</span><span class="p">()</span> <span class="o">-</span> <span class="n">count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">_k</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+            <span class="n">_a</span> <span class="o">=</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[:</span><span class="o">-</span><span class="p">(</span><span class="n">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="n">_b</span> <span class="o">=</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="n">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="n">md_nine_add_one</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">_m</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">_k</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">_b</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># the last digit is not nine</span>
+            <span class="n">_m</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">as_int</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">_k</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">_a</span> <span class="o">=</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">_b</span> <span class="o">=</span> <span class="n">num2</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">md_nine_add_one</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">_m</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">_k</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">_b</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">inner_expr</span><span class="p">(</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DecimalSequence.evaluate_add_digit"><a class="viewcode-back" href="../../../../../api/proveit.numbers.DecimalSequence.html#proveit.numbers.DecimalSequence.evaluate_add_digit">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_add_digit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluates each addition within the DecimalSequence</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">TransRelUpdater</span><span class="p">,</span> <span class="n">ExprTuple</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">deci_sequence_reduction</span>
+
+        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="c1"># A convenience to allow successive update to the equation via transitivities.</span>
+        <span class="c1"># (starting with self=self).</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">digit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">digits</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">digit</span><span class="p">,</span> <span class="n">Add</span><span class="p">):</span>
+                <span class="c1"># only implemented for addition.</span>
+
+                <span class="n">_m</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">digits</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="n">_n</span> <span class="o">=</span> <span class="n">digit</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="n">_k</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="c1"># _a = expr.inner_expr().operands[:i]</span>
+                <span class="n">_b</span> <span class="o">=</span> <span class="n">digit</span><span class="o">.</span><span class="n">operands</span>
+                <span class="n">_c</span> <span class="o">=</span> <span class="n">digit</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">rhs</span>
+                <span class="c1"># _d = expr.inner_expr().operands[i + 1:]</span>
+
+                <span class="n">_a</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">digits</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">_d</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">digits</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+
+                <span class="n">expr</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">deci_sequence_reduction</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">_m</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">_n</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">_k</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">_b</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">_c</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">_d</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span></div>
+
+    <span class="k">def</span> <span class="nf">_formatted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format_type</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">var_range</span>
+        <span class="n">outstr</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">fence</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">operator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">operator</span> <span class="o">=</span> <span class="s1">&#39; ~ &#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">digit</span><span class="p">,</span> <span class="n">Numeral</span><span class="p">)</span> <span class="k">for</span> <span class="n">digit</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">digits</span><span class="p">):</span>
+            <span class="n">outstr</span> <span class="o">+=</span> <span class="sa">r</span><span class="s1">&#39;\# (&#39;</span>
+            <span class="n">fence</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">digit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">digits</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">fence</span><span class="p">:</span>
+                <span class="n">add</span> <span class="o">=</span> <span class="n">operator</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">add</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">digit</span><span class="p">,</span> <span class="n">Operation</span><span class="p">):</span>
+                <span class="n">outstr</span> <span class="o">+=</span> <span class="n">add</span> <span class="o">+</span> <span class="n">digit</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="n">format_type</span><span class="p">,</span> <span class="n">fence</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">digit</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">):</span>
+                <span class="n">outstr</span> <span class="o">+=</span> <span class="n">add</span> <span class="o">+</span> <span class="n">digit</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="n">format_type</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="n">operator</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">outstr</span> <span class="o">+=</span> <span class="n">add</span> <span class="o">+</span> <span class="n">digit</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="n">format_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fence</span><span class="p">:</span>
+            <span class="n">outstr</span> <span class="o">+=</span> <span class="sa">r</span><span class="s1">&#39;)&#39;</span>
+        <span class="k">return</span> <span class="n">outstr</span></div>
+
+
+<span class="k">class</span> <span class="nc">DigitSet</span><span class="p">(</span><span class="n">NumberSet</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">NumberSet</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="s1">&#39;Digits&#39;</span><span class="p">,</span>
+            <span class="sa">r</span><span class="s1">&#39;\mathbb</span><span class="si">{N}</span><span class="s1">^{\leq 9}&#39;</span><span class="p">,</span>
+            <span class="n">theory</span><span class="o">=</span><span class="vm">__file__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">deduce_member_lower_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">digits_lower_bound</span>
+        <span class="k">return</span> <span class="n">digits_lower_bound</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">member</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">deduce_member_upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">digits_upper_bound</span>
+        <span class="k">return</span> <span class="n">digits_upper_bound</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">member</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">membership_side_effects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">judgment</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield side-effects when proving &#39;n in Natural&#39; for a given n.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">member</span> <span class="o">=</span> <span class="n">judgment</span><span class="o">.</span><span class="n">element</span>
+        <span class="k">yield</span> <span class="k">lambda</span> <span class="n">assumptions</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduce_member_lower_bound</span><span class="p">(</span><span class="n">member</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="k">lambda</span> <span class="n">assumptions</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduce_member_upper_bound</span><span class="p">(</span><span class="n">member</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">membership_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">DeciMembership</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">DeciMembership</span><span class="p">(</span><span class="n">NumberMembership</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Defines methods that apply to membership of a decimal sequence.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">number_set</span><span class="p">):</span>
+        <span class="n">NumberMembership</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">number_set</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ProofFailure</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">n_in_digits</span>
+        <span class="c1"># if we know the element is 0-9, then we can show it is a digit</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">NumberMembership</span><span class="o">.</span><span class="n">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">n_in_digits</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="c1"># if isinstance(self.element, numeral) and 0 &lt;= self.element.as_int() &lt;= 9:</span>
+        <span class="c1">#     _n = self.element.as_int()</span>
+        <span class="c1">#     thm = proveit.numbers.numerals.decimals._theorems_ \</span>
+        <span class="c1">#         .__getattr__(&#39;digit%s&#39; % _n)</span>
+        <span class="c1">#     return thm</span>
+        <span class="c1"># else:</span>
+        <span class="c1"># return n_in_digits.instantiate({n: self.element},</span>
+        <span class="c1"># assumptions=assumptions)</span>
+
+
+<div class="viewcode-block" id="num"><a class="viewcode-back" href="../../../../../api/proveit.numbers.num.html#proveit.numbers.num">[docs]</a><span class="k">def</span> <span class="nf">num</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Neg</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Neg</span><span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">zero</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">one</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">two</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">three</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">four</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">five</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">six</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">7</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">seven</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">eight</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">nine</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DecimalSequence</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">num</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">digit</span><span class="p">))</span> <span class="k">for</span> <span class="n">digit</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;num not implemented for anything except integers currently. plans to take in strings or floats with specified precision&#39;</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../../index.html">Module code</a><ul>
+  <li><a href="../../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

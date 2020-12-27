@@ -1,0 +1,1 @@
+\forall_{A, B, C, D \in \mathbb{B}~|~(\lnot C) \lor (\lnot D), A \Rightarrow C, B \Rightarrow D}~\left((\lnot A) \lor (\lnot B)\right)

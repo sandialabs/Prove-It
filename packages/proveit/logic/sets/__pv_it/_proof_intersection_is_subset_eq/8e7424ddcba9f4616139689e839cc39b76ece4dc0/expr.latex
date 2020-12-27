@@ -1,0 +1,1 @@
+\left(\left(A \cap B\right) \subseteq A\right) = \left[\forall_{x \in A \cap B}~\left(x \in A\right)\right]

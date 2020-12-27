@@ -1,0 +1,1 @@
+\left(f, x_{1}, \ldots, x_{n}, y_{1}, \ldots, y_{n}\right) \mapsto \left\{f(x_{1}, \ldots, x_{n}) = f(y_{1}, \ldots, y_{n}) \textrm{ if } \left(x_{1} = y_{1}\right) \land \ldots \land \left(x_{n} = y_{n}\right)\right..

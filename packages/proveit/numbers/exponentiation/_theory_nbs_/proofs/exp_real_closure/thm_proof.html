@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.exp_real_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.exp_real_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#exp_real_closure">exp_real_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.exp_real_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> exp_real_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="exp_real_closure">exp_real_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/7f906f5a8d09469ea56b6e0059e2ec266feec6170/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUMAAAAcCAMAAADMQi2jAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAABH1JREFUaN7tWdmSmzAQJAmjaxgd/P/HRifoAtvx5slW1e6WvbSEWj1Hw7J8xzm4c18S3h2G
+fTl4dQjefnb6JTh8GVyE7L7Yt9diX345dNRxugNIeiX27adTyPpYBEULvJQSVWD8LET20zjd9l5y
+6Em1N6XZqhVxd27FwlVk3OgrYX9gEV59iWG3Oc4t5P8v0CLlcwi/sJwKfloor0MRDsJcb0szLptJ
+fzLVSlfyM/rjQzlkN9tKyaLyw/Ucsq0kQRaut4bC2NSnydCuk17HmOYzAk116DnMXEOcZccwlPmR
+s33UkN2h3gLfg2ZQdqhrY4bBOpYDGktE5lAerSGPapZxAdz+yT22ff71OYCB8E/NZ7n9XXB/ozSA
+ZlAsUctXv3e3j1fI7SIfasUKvWIP9HEWKX+icGkFKJmDZs6rNbf67G1YWKYguLjTBszrT4/B7Y0y
+MYImUJeVRKsteW0gbMbhGhKkPrNqPJ6QCWHWHB5XkjaM2eAP/Z0ZgvkyolESyUraiueqR/HGy2L2
+RLVgH15SXIBro5pRjc1NFbMD0dixqEw8i9GoRu8rVldGo0MvOjyCnBKHwbBMK0pxjxb1RrRkDi3Z
+OYeyyzobFjVRFHzsGlz4Cvi524zqwZ5FFFNw2J2yzZKNzY37G0BuEKLLHK54XN/f/0Vvw7jAToeb
+O8w3MZBOdO6Rs/P4I4dmzqEaphDIKM0UdhA3ngSfYDHA1BV4IYN8Bg40uRrV2FxupiuOgYYyH1FM
+m/usgbzqD5HsEQn5/HCTSRikhP+SOvfoloZDxtiUw9QdtVP4dA9xoSNcYo5aDC8yzD3VFOxZ9Kl7
+AIcITsY0g/ONythg/PE/dgTpIZglZg6DWKVb9PbQTxcOveSYqOuyn59lMQR2hOrcI7GKQyal4vO0
+y3GcIrZhWz6sFY6rCIsM0+cLMDi7jOAYrbhUnyubC7qSRwXiQ2DCWm1TyVlfoPTc6wVDktPI0WXu
+cLofkJ17FCqeb1jK63ADe8WhHKfw5xOEmLJNzBwi7dULMaX53GdNwASoz3xYgUU4VKtPcGVzCesM
+XIOGxqMoiCSA2CRM2h9fFzmNzxxEaIxc1O9Zz22eLRweWqLWPcomlrUwNOVQ4DgFd+nio0qWbfu9
+pmjI2XkA52Q4A6fUhyc436j0BfT3r1BG7QiaPC5d+RNPWQ02Xm/sXfp4j2HHbShJdLpHI5p8aC5q
+CqlmiqqkpEdEKSPZ0lFbWaF6MDE8N9iBRcotQYgZfNrcTV6AjnXrdPcD1owG080laAiNoAj6O9wj
+6tJjG2f8/pib12Wqp/D7qRplMLkPZrwOtoLqwUK0PqUGlwqMB/i0uWff1q/I+KT/+wHTffekrMmm
+kPPhfSsPuvXrYv4ArjZkJwqeeWzkaiCNKG0uV5yFo3z/UZUSNxQ++XIGH3ijYV57NcVb4P6ABpCe
++TB6+22yvUsHz74XaPbAH6Jo8rIioxqwxjLoKfBypMj5ijR/SaLffJ38M8+t2WvqBbrW/FvgByC4
+eM+h+Xu7/7TXJ/9t/AUoaTi0Oiq23wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/38b9f5f2fad5e9a66fb53c9ec7381042fc35480d0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

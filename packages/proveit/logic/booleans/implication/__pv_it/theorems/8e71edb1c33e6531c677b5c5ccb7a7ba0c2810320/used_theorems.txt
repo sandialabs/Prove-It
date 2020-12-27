@@ -1,0 +1,10 @@
+proveit.logic.booleans.fold_forall_over_bool
+proveit.logic.booleans.implication.false_iff_false
+proveit.logic.booleans.implication.false_iff_true_negated
+proveit.logic.booleans.implication.true_iff_false_negated
+proveit.logic.booleans.implication.true_iff_true
+proveit.logic.booleans.quantification.universality.bundle
+proveit.logic.booleans.true_is_bool
+proveit.logic.equality.substitute_truth
+proveit.numbers.numerals.decimals.posnat1
+proveit.numbers.numerals.decimals.tuple_len_1_typical_eq

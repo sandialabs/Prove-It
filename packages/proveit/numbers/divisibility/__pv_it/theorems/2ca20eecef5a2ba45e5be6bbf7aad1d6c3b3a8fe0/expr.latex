@@ -1,0 +1,1 @@
+\left(x \in \mathbb{Z}\right) \land \left(y \in \mathbb{Z}\right) \land \left(z \in \mathbb{Z}\right) \land \left(x \rvert \left(y \cdot z\right)\right) \land \left(gcd(x, y) = 1\right)

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.addition.subtraction.add_cancel_triple_21 theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.addition.subtraction.add_cancel_triple_21-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">addition</a>.<a class="ProveItLink" href="../../theory.html">subtraction</a>.<a class="ProveItLink" href="../../theorems.html#add_cancel_triple_21">add_cancel_triple_21</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.addition.subtraction.add_cancel_triple_21-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> add_cancel_triple_21
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="add_cancel_triple_21">add_cancel_triple_21:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ee727b79908c8013815a55b9dd763827e5321f160/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOcAAAAVBAMAAABPgOQBAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAvdJREFU
+SMe9VktoE1EUPfmnk58LwQ8osdWuXIS6EawaEelKGhf+Vi1BEUElCrpQF1VBElQYEGxBF1MLWoI0
+Q0UkUmhpF4KizM62oAT6EauMpShoq+J980nyZsbUWPDCffPmvjdz3j3vvDsDLG8Niu51Wkh0DBfJ
+S6zztubT/YbXYf1rqDlpjQpXMoCf1vKS3c3VfMMHw+uxKfIBWzSaIGRKs4fx11Xr+UhCdwcC47bQ
+oHFdIg/bhmMyNaMELtGoXAs0IOpeD6h3kbG5yjraTmDopRxe5PPdNZnqNrwe0HCGtdPW0ecax0ng
+WzZ7uSZok+FlMbe2rLeA3h7bJHGg0XQTsTdmfdVs4w5aEG3VcSBnBr2qA+gtw03bI0bneVDvOnzm
+My3MCd+Bd1rSqmZMFMIvqSAiQkraq+nJsPLaQjdPpI3uJcNN3W+Ap4sH7VWwnQcdlrAAPLVuxyJi
+cYSI+gDclYP/kb11aJsiHJF8n4zYat0FfcUpzyICcT2D9xtVtZO6uyWcYzNfq+pZVZ2l3i4IP4AO
+C6inhMIIfMRTWAlUwsQJxot5RO4BQzyoaa4uFFJ8pmshfOUznYJ3yQ5Kx7Rd1kAbSofovq95hlrf
+QrPkZezve0IDzvTSWod59VJSoXke9CeIELRV7SljJKYwUrxM2blj9Nx5HztZ7ovuRJTNnJz4o5AK
+Ms4YZdUEXYK/VORAv7B91oVUXRuSJAhNSHhMyJ6Ej+EH45FSHxt+VgQnrirx05wLYZ7eq3jTOcKB
+nsY1alstoH4lSDR62FQSFFyym+XvSno6D2ez2fjdg5WpbYab6k1vubOZB33QeDSd5ED7tjJxzlgL
+fssrtrNMERE61wUxOEmXmOSS/ZrO7tOUFZRBHSPjWGweliUpduxHjxSQxhFOaVUnxQrzMgVfkGyh
+fFXfXvA1Gy2XovTgThyQfaeI7xss8Ei9njIHc6gqWnXYgGO0qhRppn9s3LSnK/2Ilxdrt6D4N/8X
+//q7EnF+3YRlFv6T/QblidrsVxmeswAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/7308b87768b9473275ac991b506db3a1e6f3d11b0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

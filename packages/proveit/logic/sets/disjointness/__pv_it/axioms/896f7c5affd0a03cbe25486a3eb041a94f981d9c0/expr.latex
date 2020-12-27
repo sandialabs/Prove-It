@@ -1,0 +1,1 @@
+\textrm{disjoint}(A, B) \Leftrightarrow \left(\left(A \cap B\right) = \emptyset\right)

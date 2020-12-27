@@ -1,0 +1,13 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}} & \gate{\cdots} & \gate{A_{1, n}}   \\ 
+  & \gate{\vdots} & \gate{A_{i, j}} & \gate{\vdots}   \\ 
+  & \gate{A_{m, 1}} & \gate{\cdots} & \gate{A_{m, n}}   \\ 
+  & \gate{B_{1}{\Big \{} \left\{m + 1, m + k + 2\right\}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{n}{\Big \{} \left\{m + 1, m + k + 2\right\}} \qwx[1]   \\ 
+  & \gate{C_{1, 1}{\Big \{} R_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{1, n}{\Big \{} R_{1, n}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{C_{i, j}{\Big \{} R_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{C_{k, 1}{\Big \{} R_{k, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{k, n}{\Big \{} R_{k, n}} \qwx[1]   \\ 
+  & \gate{D_{1}{\Big \{} \left\{m + 1, m + k + 2\right\}} & \gate{\cdots} & \gate{D_{n}{\Big \{} \left\{m + 1, m + k + 2\right\}}   \\ 
+  & \gate{E_{1, 1}} & \gate{\cdots} & \gate{E_{1, n}}   \\ 
+  & \gate{\vdots} & \gate{E_{i, j}} & \gate{\vdots}   \\ 
+  & \gate{E_{p, 1}} & \gate{\cdots} & \gate{E_{p, n}} 
+} \hspace{2em}

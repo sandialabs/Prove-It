@@ -1,0 +1,2 @@
+proveit.logic.equality.sub_right_side_into
+proveit.logic.sets.inclusion.subset_eq_reflexive

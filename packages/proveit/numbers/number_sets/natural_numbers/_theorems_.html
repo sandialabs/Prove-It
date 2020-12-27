@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.numbers.number_sets.natural_numbers</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.number_sets.natural_numbers">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.number_sets.natural_numbers</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.number_sets.natural_numbers">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Operation</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">P</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">ProperSubset</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">frac</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Rational</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span><span class="p">,</span> <span class="n">Complex</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">subtract</span><span class="p">,</span> <span class="n">Greater</span><span class="p">,</span> <span class="n">GreaterEq</span><span class="p">,</span> <span class="n">Less</span><span class="p">,</span> <span class="n">LessEq</span><span class="p">,</span> <span class="n">LessEqOnlySeq</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Pzero</span><span class="p">,</span> <span class="n">Pone</span><span class="p">,</span> <span class="n">Pm</span><span class="p">,</span> <span class="n">P_mAddOne</span><span class="p">,</span> <span class="n">Pn</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.numbers.number_sets.natural_numbers&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">interval_is_nat</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Natural</span><span class="p">),</span> 
+                                       <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="interval_is_nat"><a class="ProveItLink" href="_proofs_/interval_is_nat/thm_proof.html">interval_is_nat</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/629cd2e79834f499ade3b8d717ebd980980766070/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPEAAAAZBAMAAAAS8tXVAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA5JJREFU
+SMfdlk1oE0EUgF822fztbtODiFHUxUIvIoT2IEiVgFjFH9h6MIiFBrFopUguJShSgx66rQhLwZqL
+drWgmEMa6kEE0YVepKWytBZKqxLBXirUUirYnpyf3exuN01S6MmBMJmdee+bee/NmwdQvV1PK7DD
+7XRaq2VZCna+hZL/HflphTlOoeQiHnyrQq7DnaDXDA5nyn38LS8Bf3AXdFHyJP64VIXMF1BXp9ZM
+risbkkH9EsAoQJ6Ss7jLVCGTBdnajT1T9qu/hxHBA8CLhIxPQo5U0c/YKJO1k287RkJfupeQz6id
+EEBmrydkYSKXe1I1wr7mcq9rD7SQYyl733CT/3EyryIy/KSx/VeW71YlR2S5T6uZzMQAzncNNohk
+lDfjw6+MsUlMHqfkToB+U8S3vAXZL0HQGTXtjkjHghcLVigBaLIYXiejrpKfFT4+jcnfKfkkhIsl
+DeNGn2iJM7ttZF+MRKTNoHudu8OC3eYgUAC20AuhP2SUschw059Af95ScgAYa/u/8L1736xzmQk4
+Zs8kKThSupdoHriik4wFP5gDTxzC4TUQVoibDyyjZpBfwg/0p4OSeT1gKcD2mXuXA27aC5qdPGVl
+MjzvIq9vIgO3An6yJmQ/M6u1WeRQEd1vGGlcxPtbbVSRYZHclcuig/yMRUtnZg/FgMwTcrjplmTG
+LxK0yMja4C1CRCexVW8jw0IQv1RG3u6/hpT0sBs4KO8wMZIpOWli1kEODqFzfNkPUZpJCfmV1GGG
+LRa0yDjCPBp8VImKphIZ7ZPPWhEGb5Bmb4wl+kWhOELJPB+zk7mjaPWLFGzACNWClDZDosRCgvDc
+jH4sOhyHz4JkWoDmVPznBPq1GOQIunaeApMkDvImE7Isi5wU0lOOt2oV40RfPZB59gEa7oNGy7Pe
+JLBmXvCliEWHFmhE3jhLPXJvD9CkvWiQBWSyUSU4j7qI6in46ZnhlOggz2P9kleT/OaZ0XV9lDOW
+YEHrzJuyp+8TzZ6ly5Gyvc8epeMCZNWAOgc8NpEQB0Fzvc/DEDgnkXni5yi7pocGkFhoAAtaft7i
+xTCb8WIY27o6dhzaCmw3wj3E0YdSa9JFbgVmis4TcuvhBp2NQpvCRomgRQ5WLNzy7pqEhgKD/Fip
+JiHzm+8z2O9z+cqg1PpdZE6pvRqqTK5YDQmKiyxsow4LR93fune8AkyXq7cHXVVZe2E79XbyHwzv
+/eWE8+hsAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">natural_lower_bound</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">GreaterEq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="natural_lower_bound"><a class="ProveItLink" href="_proofs_/natural_lower_bound/thm_proof.html">natural_lower_bound</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/dfb8c9358fe2ef7c33ede94b2295c004fcb9789c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHcAAAAUBAMAAABFd79NAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAghJREFU
+OMuVVE1I3FAQ/lY3u+aZ7J72HhHUQw97K5QKEQ9eiooH8SC4lHrwIoItrVBERCTiZVHQIojxpChK
+QBb0oAa1FBQkRUFKLd1ze1moFgUPzkv2ZX/ciA6EzE++mW/mzQvwqCwGh3boyXLlV8AHbKyy/+Cy
+E5E0cMKNPwHgWLqgr7wquC02AkZlv5AhBxTAWbGxNyC078AplacsJqBYAeCREqu9P69MAvsmlgH1
+eG1tPgArD5XaPRPe+z/QYSGmAzeG8TkAXJUE3gzM1GvCMffXHeM/AmtQKEpcpgLANQ5gGxq79T2z
+vBH5DujToNLEWt25+SINH6Eu5elRC5I1Cvnaj14kOZgq99mopaaiqHJEbP2wGduKWW16ZkgHY1dQ
+cyLeeFxEWyK34kRFTJ1eMLGrJRX4YNTmEMkzY980f2D7lguWs90Ea+6q5x2QZDIzAky0UZ1F3HGZ
+yC8FQwP4bSLMz2LqHYFbnFDaW9WMstFbNLCQTWdqc+ygVbokfGDYogwLjYibLOmCYR/mP+KHsaTj
+VO0kY1X3xxa1WII48ZRx3slbtED6ZBjjBF4UQ+DE2uh0f5bfl4MGShfjKVXeUQKvJaS8yuGuyutZ
+Jiv+IubwPoOvXD0HLitejAf3UijhFF44qKGRhEd1RPwVK7qSmx+5fChwz5Yla6Ken/IzKE/87N/Q
+D+AedmGII95pMHkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">natural_pos_lower_bound</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">GreaterEq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="natural_pos_lower_bound"><a class="ProveItLink" href="_proofs_/natural_pos_lower_bound/thm_proof.html">natural_pos_lower_bound</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/f516c3b397f8a2554625a3766f023aa8bad5e62a0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIMAAAAUBAMAAABc0JOuAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAfpJREFU
+OMtjYCACzMUttROIH4AYd/GawNWAW45tAgPDaRDjFV4j+CYg2MutEGxuKaDxQCfMALI5G/AacRmZ
+sy8Txlp27BeQPAS0YgEDA88GvEZUovD8UmEsXpARC4H0qVWrpuM1gbMAlR/RgmwEnwMDw4+Ojhos
+Gg/AWUwGDAw+mZOUFWAC014jGcEDlAW6qxOLEQZwFscFoIEdClw/4SKTKxFG8ALD0xkcqniMYN/A
+wLqhjoHzK1zkugHCCG6gN9kZmC4gaWUtPsKgmIBsBKMDAxfXFwbeDzAB9VNIHmEFCvNcYIerXn3Y
+lmEHzwLmBYeNi403IIxg4P7AwAZ1K9dxBQY0IzgfhMFjqXvWAoa9CgY86B5hYH7AwH9hATh+zC+g
+RCoLKL46U4A82yBlULAAwdatk3gwgpPxAMP+BaBI4sxDpCF4cDJsBprD63iBcQIkv2zlWRuDYgQo
+2uY7MJzjDQByVjgggo0JZAQzyGB+oN9mqTPwL+ACa9vKcOAwihEgp7oDU8NttDhjTvxnC0xaIIN5
+QX5MYnBkYK3o6GgCGjEXFL4BuBI4GlgOZ4ky2LAyJEBcwRKEJ5uhg0PwfPCBoWQrw1EQ8woDwx1U
+VRxImX1dOQiUIsoSeLJkSWDQucDAAQxtljoHBjbiixxk48FAAxgWpBV8NxkYAPRqg/K9yx+QAAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># proven</span>
+<span class="n">non_zero_if_is_nat_pos</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">n</span><span class="p">,</span>
+        <span class="n">NotEquals</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="non_zero_if_is_nat_pos"><a class="ProveItLink" href="_proofs_/non_zero_if_is_nat_pos/thm_proof.html">non_zero_if_is_nat_pos</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/c2186d5efeb4c9c442288e1b6ba119c8b28d8e970/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIMAAAAUCAMAAACZIH6vAAAAOVBMVEX///8kJCQNDQ0oKCgQEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAD9T1yxAAAAAXRSTlMAQObY
+ZgAAAhBJREFUSMetVguWpCAMZHcg/Enk/oddEtBR25aZdnmvUdtAikolUan/NBJNDDBf/FkSz8v2
+TPQAQo4zjMsBkCF0fOMZBJb1/yU/wLCkiYG3e+vmNAdekhlaWg+Q4gMIBDMa9ruTFi6Wzsju+N+E
+fDDClAa3e4hetFDZc2Y8hJlHCk8EGX5Dg6qCwVY59cJBqpFHwJ+5uzQzPRQWfUrGgHkxiHsacoWO
+QewQNppi+hmGy8BHGvhiNOxj2wsXGV9/eV6XpioHcR0DsSwsrPr8GEMQVl1RQWRe3R0N7T10DAKl
+SBx5Mm+LgwuALWRG+/cYtCRebgzwDdXzFv5YSw6xcGKN1HGcy05BgPaqRKlxkFvoAEL7lWsMLHXJ
+gTOn5zjXkRflG0MrYSekEqdYUubsKWT49DiNRXsp3iupvNfDH91VsfmIkiUkualsGDhHFSMgZ7rI
+7easuOKSucUwNKk0jrzH2xq6r1Fdk20VjFCQ1W03nQ59pLgWC3J3GBCG2Gzfm/YatHDJW9bdCMbG
+XR0qZcNgmKMMewztXMPNNYbBZ78kTwfBXPShjMaslXMZV1rNfANjtWSDVC5Od8bQOvOgyv22Vpf7
+VpJfsoH5aeS02R94UNaZD3vWpB3jed/EeRKssL8dmESvdF/L35bZcr/utTZaPr1BUXksa6ylqyj/
+2TfMhIZJizBDD8++5ez9dwdD+AeZ1hXoyOOJvAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_pos_within_nat</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_pos_within_nat"><a class="ProveItLink" href="_proofs_/nat_pos_within_nat/thm_proof.html">nat_pos_within_nat</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/352861b5f1186a3c7e2756602565db1924ac54ed0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEcAAAAUBAMAAAAthD11AAAAMFBMVEX///9mZmaqqqrc3NyIiIgi
+IiJUVFTMzMyYmJi6uroQEBB2dnZEREQyMjLu7u4AAAA1o4RqAAAAAXRSTlMAQObYZgAAANRJREFU
+KM9jYCANsBGjiIceit7+OfuAYdevCdgUIeROsCcw8H1gyL176+7dBjRVUDkGhtQCFwaGBditg8tl
+nmMrYAhAUdQTGhoazoAsl1zGdw9Vke1mGAsul8zkUIaqKBhuJFwumWEnhwOyIkYFhCKYXDID24N0
+EIMZKsPKgKQIKpfMwJfAuwDJS2bIiqByyQwM1ezIit4gK4LKARkcCgeQFKFYB5VLB+LNyIq4HeBM
+uNwlkIcuIIfzJRQWSK70F1AlH4qiZ5kPIAwscghQfRQaLVAAAIRnSmUaYQ4LAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># In progress</span>
+<span class="c1"># For Natural numbers</span>
+<span class="n">nat_membership_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_membership_is_bool"><a class="ProveItLink" href="_proofs_/nat_membership_is_bool/thm_proof.html">nat_membership_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/10f7171c3c7bbd862895e657918deb9c2d3559cd0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJoAAAAUBAMAAACHazmMAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAixJREFU
+OMuVlD1oFEEUx/85bj9uMxtTpEgVg8HYCIaAVkZOUkQEUVPERvAKA4mFBCFaKOawyZ0g2UJJGnFJ
+cYQUZ9DCIs2RpJCocIidH2xACwN+dWrlzLzZdWYvm+iDPzv3ezv/m7czb4CWKDRJWdEeZPNIDN7r
+dEkpHd63yjbY/i5MphKHuue2rhch+Avxe1tPflZqCbc5BjwG6ulENOrdHZJ8QdRW1lL+AKk17Olc
+L9oA1ptKlM/goCt5R8gfK1rKCUia/+yN29LtVDgOh5fcaXLhtupK7m8uL8/rc+eVkrDuhGptD0r1
+kLvho8mF28YS8Z+Vyi19cp/SYv/9w7KkejzJDp5YJeG2DoNzt/z0OHH+qOpu90hew7/myA1PttAO
+WPG1cPsAg6N8cuZHkfgwvEh3u0liIfudl5+v/NcNV+wLfPAMBheVvnpH3EHOOKpdJA8uvW71fOWh
+3GrY4oNLJhdubr4pOWs62MEN2EcHoaCvzWqcj90KxtpclCQvRPxMYu1o/zmjUp5ToFNzw1t+EjBi
+cuFmi6YSvHoZyIVXnaKxC+3hEU4FGEzcuD1bSHZh0Fib3yD+dIp/BHyJU+uksytzeEjHOT7bHWJw
+guu4yRFdxMtjitP3+RWnRki1A4tDtDvexGnajpluUJN+MnjS9ZL7oh7ru5XZWfnnqoPiy2Rqd45H
+LGJ7dn0cLV2f5rU3a5sxrCLVHemo/w/Pui2h/90/871ucj/I5H8AFOie/mc16OgAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># For Positive Natural numbers (NaturalPos)</span>
+<span class="n">nat_pos_membership_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_pos_membership_is_bool"><a class="ProveItLink" href="_proofs_/nat_pos_membership_is_bool/thm_proof.html">nat_pos_membership_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/8d47adeae2ba47ac7f0c4c1469ad76d6ef13cb9c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK0AAAAbBAMAAAD8EhIYAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAArZJREFU
+SMe9VkFoE0EU/W6yu9l1E3PooSBotKiQUy5KEZWoIAoWEw/qQegi9qAH6SUGbLF7EEy92IuYm3sK
+UqQp9qaXEj1Fi1VEBStsPRYao0SwevFPdmdmd7OTnPTBvtn8V97M/PnztwD/D3KekhgmPhmBJgni
+FxiJYeFzSqDFzej4BqP+vsaqQFyJjMYylAb4wi2BqNoADnn54o8+simFoX+rbICxe4j6joT0A8P3
+12/iuUg5gFc9m37BqAeJVUx7HZRWa1drEycP6855/d5RAK0NUMWfmuUXdzLqgVKSMrCN5UFdDGdn
+DPYlcJwCSOGGDb+u/abE8alc7uZLOW1PgMp8Y1ZIR9/nxHcUINmcn3/o90imKTFcytL1PjAXbO4r
+pUM6+r58jOMefH5VKtOBcnA80vdeO9HoHhdLvzL3VDa5b9zdFdetsXhpAsdzmAQcZwNnY3n0BD5m
+brtu3NfIv+O+8k8I6tbxme/kno4XAE6C7vh9U6ZHTXhjn+nOxM9tDq4rF8lb10rrQFDHPKyskSpF
+cxWkwL1Rcx7ZUHEjxRbC8XxrsM7ruRPS0TcRR7d6ntxGNXD2qRwl+OFGqv71ystFXjqdkE58SUsi
+69Uc0mIaB/cXvPyalLz0uQXLMvmZb1veCunoq5AbPE7SNHsVK8a+oXqNUbE8eia1IQuBXqHg3AZf
+nlcPXCfrTS679QBLkzgzbLLumXYp/ifR1tzMT7EckQt0LFjqft25DK8P4fiW/NjRnW4rsAgk/Up2
+xOtHtTtuF5JnhpEXeKlbQZ32HXLfcFYSlNsy/eshRgxn75adiHaRygj0r6w3Go5B348wGoS6HR3X
+WXepvW806XuR0SB8EMSTkR8iZZHSIJRE34tC5C4cSgNAKioSa9HhJUb9URXEg58Jju15Sv1xWBCP
+2f/uf5u/wZq9CYTQE20AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fold_forall_natural</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="n">Pzero</span><span class="p">,</span> 
+                                             <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P_mAddOne</span><span class="p">,</span> 
+                                                 <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Pm</span><span class="p">)),</span> 
+                                         <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Pn</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="fold_forall_natural"><a class="ProveItLink" href="_proofs_/fold_forall_natural/thm_proof.html">fold_forall_natural</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/7e44aa3035ebe06468bec14eaa5a4827defb14930/theorem_expr.html"><img src="data:image/png;base64,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
+5wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fold_forall_natural_pos</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="n">Pone</span><span class="p">,</span> 
+                                                 <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P_mAddOne</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">,</span> 
+                                                        <span class="n">condition</span><span class="o">=</span><span class="n">Pm</span><span class="p">)),</span> 
+                                             <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Pn</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="fold_forall_natural_pos"><a class="ProveItLink" href="_proofs_/fold_forall_natural_pos/thm_proof.html">fold_forall_natural_pos</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/598ab91a7b4d702643de82727ebfd75a28ef6d430/theorem_expr.html"><img src="data:image/png;base64,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
+qgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.numbers.number_sets.natural_numbers
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

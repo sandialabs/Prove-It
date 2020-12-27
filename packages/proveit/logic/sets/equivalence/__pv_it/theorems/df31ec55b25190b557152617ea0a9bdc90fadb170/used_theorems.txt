@@ -1,0 +1,4 @@
+proveit.logic.booleans.implication.modus_tollens_denial
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.equivalence.set_equiv_is_bool
+proveit.logic.sets.equivalence.set_equiv_reversal

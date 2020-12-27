@@ -1,0 +1,1 @@
+\left(A \in \left\{\top, \bot\right\}\right) = \left(\left(A = \top\right) \lor \left(A = \bot\right)\right)

@@ -1,0 +1,1 @@
+\forall_{P, x~|~P(x), \lnot x}~P(\bot)

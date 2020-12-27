@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Show the Proof</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Show-the-Proof">Show the Proof<a class="anchor-link" href="#Show-the-Proof">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when only showing a stored proof:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Makes files smaller.</span>
+<span class="o">%</span><span class="k">show_proof</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[1]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>
+<tr><td><a name="proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step0">0</a></td><td>instantiation</td><td><a href="#proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step1">1</a>, <a href="#proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step2">2</a></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../2571ffa606b412d41a1dedbfc382a82601d09e9f0/expr.html"><img src="../2571ffa606b412d41a1dedbfc382a82601d09e9f0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../../../../__pv_it/common/a0d9d672aa5e272d907247690c152cc2c6daafb70/expr.html"><img src="../../../../../../__pv_it/common/a0d9d672aa5e272d907247690c152cc2c6daafb70/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../common/ffe778243736806f1127a291e1939ca0eecb77070/expr.html"><img src="../../common/ffe778243736806f1127a291e1939ca0eecb77070/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../../__pv_it/common/ff7dba4ef0bbe791ab573bf2d9c220a304399ac80/expr.html"><img src="../../../../../../__pv_it/common/ff7dba4ef0bbe791ab573bf2d9c220a304399ac80/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../../../../numbers/numerals/__pv_it/common/ba3b059982e8b49413dc653e957beb11e974e4bc0/expr.html"><img src="../../../../../../numbers/numerals/__pv_it/common/ba3b059982e8b49413dc653e957beb11e974e4bc0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step1">1</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../../numbers/ordering/_theory_nbs_/proofs/reverse_greater_eq/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../../numbers/ordering/__pv_it/theorems/1d7a0657d7dede0a9fe982b7a65fc90c31658b040/expr.html"><img src="../../../../../../numbers/ordering/__pv_it/theorems/1d7a0657d7dede0a9fe982b7a65fc90c31658b040/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../../../numbers/ordering/_theory_nbs_/proofs/reverse_greater_eq/thm_proof.html">proveit.numbers.ordering.reverse_greater_eq</a></td></tr><tr><td><a name="proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step2">2</a></td><td>instantiation</td><td><a href="#proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step3">3</a>, <a href="#proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step4">4</a>, <a href="#proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step5">5</a></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../0950064676b3cfff035c9ffd420d969024ab0ec40/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../532d4cb74b949ee974dfa2c518c06178442e2ece0/expr.html"><img src="../532d4cb74b949ee974dfa2c518c06178442e2ece0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style="text-align:left"><span style="font-size:20px;"><a class="ProveItLink" href="../../../../../../__pv_it/common/c06c606ec12678c58933ac85412ecadc2ae28be60/expr.html"><img src="../../../../../../__pv_it/common/c06c606ec12678c58933ac85412ecadc2ae28be60/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../../../../../numbers/numerals/__pv_it/common/ba3b059982e8b49413dc653e957beb11e974e4bc0/expr.html"><img src="../../../../../../numbers/numerals/__pv_it/common/ba3b059982e8b49413dc653e957beb11e974e4bc0/expr.png" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../../../../../__pv_it/common/195236b98c6c564a75b5dbada74b173bc52d5c3e0/expr.html"><img src="../../../../../../__pv_it/common/195236b98c6c564a75b5dbada74b173bc52d5c3e0/expr.png" style="display:inline;vertical-align:middle;" /></a> : <a class="ProveItLink" href="../../common/977cc67717328e22c93f8ab84e6a45e8cadce7790/expr.html"><img src="../../common/977cc67717328e22c93f8ab84e6a45e8cadce7790/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr><tr><td><a name="proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step3">3</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../../numbers/exponentiation/_theory_nbs_/proofs/nat_pos_to_nat_pos_lower_bound/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../../numbers/exponentiation/__pv_it/theorems/4ff45b7192bda38a4dd7efddaa81f3e0a62af54a0/expr.html"><img src="../../../../../../numbers/exponentiation/__pv_it/theorems/4ff45b7192bda38a4dd7efddaa81f3e0a62af54a0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../../../numbers/exponentiation/_theory_nbs_/proofs/nat_pos_to_nat_pos_lower_bound/thm_proof.html">proveit.numbers.exponentiation.nat_pos_to_nat_pos_lower_bound</a></td></tr><tr><td><a name="proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step4">4</a></td><td>theorem</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/posnat2/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../../numbers/numerals/decimals/__pv_it/theorems/5db1fd392f01abb5a4164fcd36996a76cd3c48920/expr.html"><img src="../../../../../../numbers/numerals/decimals/__pv_it/theorems/5db1fd392f01abb5a4164fcd36996a76cd3c48920/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../../../../numbers/numerals/decimals/_theory_nbs_/proofs/posnat2/thm_proof.html">proveit.numbers.numerals.decimals.posnat2</a></td></tr><tr><td><a name="proveit.physics.quantum.QPE._proof_two_pow_t_less_one_is_nat_pos.563947da911da19019988c0d0e7a01daf3993ee40_step5">5</a></td><td>axiom</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../../_theory_nbs_/axioms.html#t_in_natural_pos" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../axioms/249ccbb8df63ad7ab092e115e2f46207217f645e0/expr.html"><img src="../../axioms/249ccbb8df63ad7ab092e115e2f46207217f645e0/expr.png" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../../_theory_nbs_/axioms.html#t_in_natural_pos">proveit.physics.quantum.QPE.t_in_natural_pos</a></td></tr></table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

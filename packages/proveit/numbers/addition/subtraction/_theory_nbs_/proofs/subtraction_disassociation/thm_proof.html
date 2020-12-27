@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.addition.subtraction.subtraction_disassociation theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.addition.subtraction.subtraction_disassociation-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">addition</a>.<a class="ProveItLink" href="../../theory.html">subtraction</a>.<a class="ProveItLink" href="../../theorems.html#subtraction_disassociation">subtraction_disassociation</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.addition.subtraction.subtraction_disassociation-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> subtraction_disassociation
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="subtraction_disassociation">subtraction_disassociation:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/73ee043a950c88f48e919e3dc7f3fd3b6b1602010/expr.html"><img src="data:image/png;base64,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
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/588ee9a91b0634783289a475e0e4624a91935cf00/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

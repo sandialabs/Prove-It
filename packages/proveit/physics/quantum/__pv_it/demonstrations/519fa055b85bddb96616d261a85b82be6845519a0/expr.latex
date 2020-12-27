@@ -1,0 +1,51 @@
+\left(\left(\begin{array} {ccc} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, n}} 
+} \hspace{2em}  \\ 
+  \vdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, j}} 
+} \hspace{2em} & \vdots  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{m, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{m, n}} 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{n}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{1, 1}{\Big \{} R_{1, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{1, n}{\Big \{} R_{1, n}} 
+} \hspace{2em}  \\ 
+  \vdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{i, j}{\Big \{} R_{i, j}} 
+} \hspace{2em} & \vdots  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{k, 1}{\Big \{} R_{k, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{k, n}{\Big \{} R_{k, n}} 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{1}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{n}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{1, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{1, n}} 
+} \hspace{2em}  \\ 
+  \vdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{i, j}} 
+} \hspace{2em} & \vdots  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{p, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{p, n}} 
+} \hspace{2em} \end{array} 
+\right)\right)

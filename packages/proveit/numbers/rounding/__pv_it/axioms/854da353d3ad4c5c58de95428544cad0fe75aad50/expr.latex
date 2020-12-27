@@ -1,0 +1,1 @@
+\left(x \in \mathbb{R}\right) \land \left(\left(x - \lfloor x\rfloor\right) = \left(\lceil x\rceil - x\right)\right)

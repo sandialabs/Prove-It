@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.not_in_enum_set_is_bool theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.not_in_enum_set_is_bool-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#not_in_enum_set_is_bool">not_in_enum_set_is_bool</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.not_in_enum_set_is_bool-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> not_in_enum_set_is_bool
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="not_in_enum_set_is_bool">not_in_enum_set_is_bool:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/c1380cf895eae906452b0489177dc782321f10970/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXoAAAAWCAMAAAD5P6c3AAAAQlBMVEX///9jY2MJCQkNDQ0rKysP
+Dw8WFhYQEBCIiIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAADRR/RZAAAA
+AXRSTlMAQObYZgAABLhJREFUaN7lmdmWpCAMQJlV9t3//9UJKEgUtLSnus+Z4UGq7QThGrIgIf9K
+E7u/Awvvexaj9guXSmMUn/IgE3A/aAr9ZaN/66T4tC7emVt6q3iIipO4mck9K/Ef0L3TrMb9yBAl
+tvn5zQbByuLlOXuqJq3nOCnJkTjg864IRXsX/WPdOy0a3I9QcDw79Wb09QE2Xi2ACAqGYxcHWMQB
+nynGZDS5i/6x7o0WGO5f8zefiJ54ei6pCQfoVBDdigO+arCbCb+M/rHujaYM7ruvR6vfv1T8IvR2
+2k8GWtyjd25Fv4onfMHb1MzduX5E90aMVbjveXkN6YY2X2b1JPLdZHpW73kJVot4wkdmnZryD9A/
+1b2RRzHcE0upNJxuu9ymrXdwuCsZS1kSNNPjWDQawW+27hlBk+mh50pI0YpnfMstbZ6gf6j7etMB
+9xbeclCUbDs6pwx072/l8n8PWWD695wN8pF1NyMMUqiwvfdeugPoJzXPE0fiGR9np3FaKJbE6CQ7
+6C90/4Krd7j3YFV+toSbbWWdDMstabdxSxKoNVRB7IkPakbYJy7V1p0iaDJ9hxOCb8Uzvpwc0GNi
+bp1nKSFyOi+Y2Q76ke5fa8VWSm/3GMQUY/z5Ay6xcbhrUAbpKe2HOV34E/RohN3GUus9MaPJLG2P
+vnRFfMHnwyE3y5HaGZtW6gIlLO28Hvq+7vvQkz2GnNceMqxabHLYIbBY8RQ9GgFbffUCG3oztvq0
+IeQBvYmlFgwsCLpENL7tJ+GEoQP0my4krEzQEks4TXfVdXS7ENw7HHLAMJHey5e6KTppDokP0dcR
+GjjY1zcDT2P0kqzVP28cDoTJtcoNfAKpyRDSHBI4AQ4niD76TReSKohtipfoBMYi0kykvQhjRfCl
+MOvsEvG2FA4SEM6GuZ+W5fIUfR2hgYMznCbMMnpi9auzb8IsrGeNQMbS9CPtMMta9ADIsz76optO
+DmN1+samhVKIbv48r6uCozfDUM9nqExmfJSmnBRD9EwmpdCit3O8/NH8KiM0cHZ5PfPHXYoPEkDA
+eyZb8RXf5j0lJUsyJVTO2DVd0MNSVR9963nnJrVKD0ijXTqdKtj3Rwr1VlIKmTY6rbPyO7cj9EmB
+LfOqVq/KlFRx18cfm9A2QoWzL6lEOxmNJ7M/PiviBV8o0ik6AQtRQkKxesIFHaCvujl+1Fkkz5Nj
+3RX6VTAwV9OvmwcJ4ZvXuHbH1SyLO5fsXimwWqFlhA0OPkjARsmPk8E5k0L46vafM4vsYirEkIXC
+wNc3qj7mPMjoNGklYJuSDX2+iy9I0CWnox4dn/UqutUVp8rKznyXfr9UfHuyG6GBc+v4bD8u7aLn
+ydapz9tZu7LVl0MHeY7eysA9TQWAmFweiurYoM93RQpS9YIFwWF3680Cdlgydw/y1wREwVJ0Xqth
+al79mn2FVRHaRmjhNOf1NwvK5tD45Phk9fVnBwmDvQpPMCUrqQ7HnQumaBv4mOzwU0m/olu+UnHw
+04cY/FIFGGry2xkh+XxOLkzifIueor862FKjD4TpI5j0hKf3K+jMXL17ImjBppzvUbn6QDh4Je5z
+vs2Ge+RXcRoVf8fE0pJ58P7S1vqC/0v7A0LFSRAHdXfRAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/aada298883518582bbadab069b6710a2fdf1e6b10/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

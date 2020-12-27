@@ -1,0 +1,1 @@
+\left(\frac{1}{2^{t}}, \sum_{k=0}^{2^{t} - 1} \mathsf{e}^{\frac{-\left(2 \cdot \pi \cdot \mathsf{i} \cdot k \cdot \left(b \oplus l\right)\right)}{2^{t}}} \cdot \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k}\right)

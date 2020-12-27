@@ -1,0 +1,1 @@
+\forall_{A, B~|~\forall_{x}~\left(\left(x \in B\right) \in \mathbb{B}\right)}~\left(\left(A \cap B\right) \subseteq A\right)

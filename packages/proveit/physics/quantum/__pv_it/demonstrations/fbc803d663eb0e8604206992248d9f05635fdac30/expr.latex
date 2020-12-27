@@ -1,0 +1,6 @@
+\begin{array} {ccccc} 
+ ~ & \lvert 00 \rangle & \lvert 01 \rangle & \lvert 10 \rangle & \lvert 11 \rangle  \\ 
+  \lvert 00 \rangle & 1 & 0 & 0 & 0  \\ 
+  \lvert 01 \rangle & 0 & 1 & 0 & 0  \\ 
+  \lvert 10 \rangle & 0 & 0 & 1 & 0  \\ 
+  \lvert 11 \rangle & 0 & 0 & 0 & -1 \end{array} 

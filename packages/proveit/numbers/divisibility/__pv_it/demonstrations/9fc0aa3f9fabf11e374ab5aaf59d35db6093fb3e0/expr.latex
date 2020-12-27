@@ -1,0 +1,1 @@
+p \mapsto \left\{\lnot \left(\left(p \rvert x\right) \land \left(p \rvert y\right)\right) \textrm{ if } p \in \mathbb{N}^+ ,  p > 1\right..

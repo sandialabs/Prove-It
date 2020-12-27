@@ -1,0 +1,1 @@
+\forall_{a, x, y \in \mathbb{R}~|~x < y, a \leq 0}~\left(\left(x \cdot a\right) \geq \left(y \cdot a\right)\right)

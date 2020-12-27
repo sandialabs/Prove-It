@@ -1,0 +1,1 @@
+\forall_{a, b, c, d, e \in \mathbb{C}~|~b \neq 0}~\left(\left(\frac{a \cdot b}{c} \cdot \frac{d}{b \cdot e}\right) = \left(\frac{a}{c} \cdot \frac{d}{e}\right)\right)

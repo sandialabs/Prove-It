@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}^+}~\left[\forall_{\Psi, m~|~\lvert \Psi \rangle \in \left(\mathbb{C}^{2}\right)^{\otimes n}, m = \mathcal{M}(\lvert \Psi \rangle)}~\left(\left(\sum_{k=0}^{2^{n} - 1} Pr_{m}[m = k]\right) = 1\right)\right]

@@ -1,0 +1,3 @@
+proveit.logic.booleans.implication.iff_implies_left
+proveit.logic.booleans.implication.iff_implies_right
+proveit.logic.booleans.implication.iff_intro

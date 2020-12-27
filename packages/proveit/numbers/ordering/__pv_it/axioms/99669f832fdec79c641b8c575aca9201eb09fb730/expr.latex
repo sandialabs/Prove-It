@@ -1,0 +1,1 @@
+\left(\rho_{1}, \ldots, \rho_{n}\right) \mapsto \left\{\left(x_{1} \rho_{1} \ldots  x_{n} \rho_{n} x_{n + 1}\right) = \left(\left(x_{1} \rho_{1} x_{1 + 1}\right) \land \ldots \land \left(x_{n} \rho_{n} x_{n + 1}\right)\right) \textrm{ if } \left(\rho_{1} \in \left\{<, \leq, =\right\}\right) \land \ldots \land \left(\rho_{n} \in \left\{<, \leq, =\right\}\right)\right..

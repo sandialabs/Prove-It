@@ -1,0 +1,5 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{ Output(U)} 
+} \hspace{2em} = \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \rstick{U} \qw 
+} \hspace{2em}

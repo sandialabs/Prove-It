@@ -1,0 +1,20 @@
+\begin{array} {cc} 
+ A_{1, 1} & B_{1, 1}  \\ 
+  \colon & \colon  \\ 
+  A_{1, j} & B_{1, j}  \\ 
+  \colon & \colon  \\ 
+  A_{1, n} & B_{1, n}  \\ 
+  \colon & \colon  \\ 
+  \colon & \colon  \\ 
+  A_{i, 1} & B_{i, 1}  \\ 
+  \colon & \colon  \\ 
+  A_{i, j} & B_{i, j}  \\ 
+  \colon & \colon  \\ 
+  A_{i, n} & B_{i, n}  \\ 
+  \colon & \colon  \\ 
+  \colon & \colon  \\ 
+  A_{m, 1} & B_{m, 1}  \\ 
+  \colon & \colon  \\ 
+  A_{m, j} & B_{m, j}  \\ 
+  \colon & \colon  \\ 
+  A_{m, n} & B_{m, n} \end{array} 

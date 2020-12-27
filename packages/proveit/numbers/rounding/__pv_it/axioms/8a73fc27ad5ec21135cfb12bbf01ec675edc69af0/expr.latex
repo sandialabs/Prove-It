@@ -1,0 +1,1 @@
+\left(x, y\right) \mapsto \left\{\left|round(x) - x\right| \leq \left|y - x\right| \textrm{ if } x \in \mathbb{R} ,  y \in \mathbb{Z}\right..

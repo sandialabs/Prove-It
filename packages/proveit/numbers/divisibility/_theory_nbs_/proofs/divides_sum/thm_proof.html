@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.divisibility.divides_sum theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.divisibility.divides_sum-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">divisibility</a>.<a class="ProveItLink" href="../../theorems.html#divides_sum">divides_sum</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.divisibility.divides_sum-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> divides_sum
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="divides_sum">divides_sum:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/4a62d28dee49cc4a15299eb160678fe522a98ba50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOQAAAAXBAMAAADpf/4JAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAxNJREFU
+SMe9lk1oE0EYht8mu0l2s0mKKIhCiQZKKR6CIAgWiRUsgj9bDypeGoI9FGrpoR4qWoIHaQuVXGqL
+IK5SlFbRgKAoFEK8taLBCiq0soeKUDAEQbAVwW92uz9jtr1scWCYefNN9tmdeeebAbauiBr+V7mz
+3ioZTtaVl1SjBUBnYskPUc5zSFvWlRDh0APMM7HiBxkvcEhb1r8b+7wnwCQ1Ut4PcgEccsEdiybd
+qswGJRGnNVeKfpCDPHJwY+Q99qmNiM3NzEz4IUr9HNKR9cg4G7AM/BoevuoHGUjTq+/taS+bSCbv
+74e0i0d2bBcrUCiG10A3MLLB0wSnm+ECbhWpAI/xMTlkIpksHUGgxiHlsdRBIMb88wU4ajrJq0Sc
+Lm8wtwqTEebwTjtuIklKxcOI5HmkYdEom/QXNAaBih9kA4E0DFtrSVLGNiSIpVSr35qq1awx7DzZ
+VGSf3kWBShh+kcAPFxLCGrpUfi0FBraQkn6WbZkDzTRIaEaYJcqJlXEHqaTOdBOkPYsrjpKGplVn
+YiH+tJBMBnXs+cexzw0um9gOqiMXyWdaX5j+oCS0ThY7tJh0kK0hfYAgpTWx0VHB2bLLPq/ILa2O
+fSJZ3OCR0TRCjn3wjNgivrPI7Q60GEMeuSZWjdNT8tJUfyBvKzKElT7I+cLvSE2qmEi2EYJZ4Q+P
+PLf4nvZjsETdNqoJ4+dVI9SGnGGwjHstEwUGCZZCSUdhyt5J/ZBzraml9YllkyfnUqs8Mh1romCc
+rcVXqjHNWFmRhQawgzXjuOBCdkElSDjToDpKUu3T0SvhBXWv7POQfY2Vne4quoJJDZeFGjVS72ze
+Rkq1tygxpHoa0qilbs1/2jit9+HperKQNY+0bpYHH8pz6CziWItOTUzcqdlI+dKJfRpBhNxNiLst
+VekctbcSf3iRvIbrmx1e7lKUC8xwRc99OY0xmiiPXVp/RLenVM9tzt6NT67RQqh0yrwreCB7Bd28
+S9QlBuvmEVA3v4h8ZsbhD/AYhMUSazyRJ99QU/FCbmUJOt00F0j7eepfXgfStPPcnqEAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/9985969cc0e83c0ca829b18fba31dc792dc46de80/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

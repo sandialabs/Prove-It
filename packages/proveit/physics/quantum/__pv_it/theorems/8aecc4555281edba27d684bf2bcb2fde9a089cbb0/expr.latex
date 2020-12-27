@@ -1,0 +1,9 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1}{\Big \{} S_{1}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{B_{m}{\Big \{} S_{m}} 
+} \hspace{2em} \cong \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{1}{\Big \{} S_{1}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{D_{m}{\Big \{} S_{m}} 
+} \hspace{2em}

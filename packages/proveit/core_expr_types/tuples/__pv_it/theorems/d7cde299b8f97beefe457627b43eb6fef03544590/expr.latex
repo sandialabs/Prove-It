@@ -1,0 +1,1 @@
+\forall_{f, i, j~|~\left(j - i + 1\right) \in \mathbb{N}}~\left(|\left(f(i), \ldots, f(j)\right)| = |\left(i, \ldots, j\right)|\right)

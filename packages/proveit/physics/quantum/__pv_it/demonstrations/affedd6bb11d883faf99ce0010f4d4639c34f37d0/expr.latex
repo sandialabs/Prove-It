@@ -1,0 +1,3 @@
+a \mapsto \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, a}{\Big \{} R_{i, a}} 
+} \hspace{2em}

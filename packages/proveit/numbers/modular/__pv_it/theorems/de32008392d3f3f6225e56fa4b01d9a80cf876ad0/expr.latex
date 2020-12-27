@@ -1,0 +1,1 @@
+\left(N, a, b, c\right) \mapsto \left\{\left\{\left(x + c\right) ~\textup{mod}~ N\right\}_{x \in \{a \dots b\}} = \{0 \dots N - 1\} \textrm{ if } N \in \mathbb{Z} ,  a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z} ,  \left(b - a\right) = \left(N - 1\right) ,  N \neq 0\right..

@@ -1,0 +1,4 @@
+\begin{array} {cccccc} 
+ A_{1, j} & B_{1, j} & C_{1, j} & D_{1, j} & E_{1, j} & F_{1, j}  \\ 
+  \vdots & \vdots & \vdots & \vdots & \vdots & \vdots  \\ 
+  A_{m, j} & B_{m, j} & C_{m, j} & D_{m, j} & E_{m, j} & F_{m, j} \end{array} 

@@ -1,0 +1,1 @@
+\forall_{l \in \mathbb{Z}}~\left(\left|\alpha_{l}\right| = \frac{\left|1 - \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \left(\left(2^{t} \cdot \delta\right) - l\right)}\right|}{2^{t} \cdot \left|1 - \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \left(\delta - \frac{l}{2^{t}}\right)}\right|}\right)

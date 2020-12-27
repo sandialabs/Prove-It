@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for the theory of proveit.logic.sets.equivalence</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-the-theory-of-proveit.logic.sets.equivalence">Demonstrations for the theory of <a class="ProveItLink" href="_theory_.html">proveit.logic.sets.equivalence</a><a class="anchor-link" href="#Demonstrations-for-the-theory-of-proveit.logic.sets.equivalence">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Set</span><span class="p">,</span> <span class="n">SetEquiv</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">four</span><span class="p">,</span> <span class="n">five</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets.equivalence</span>  <span class="k">import</span> <span class="n">set_equiv_def</span><span class="p">,</span> <span class="n">set_not_equiv_def</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets.equivalence</span> <span class="k">import</span> <span class="p">(</span>
+        <span class="n">set_equiv_reflexivity</span><span class="p">,</span> <span class="n">set_equiv_reversal</span><span class="p">,</span> <span class="n">set_equiv_transitivity</span><span class="p">)</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Set-Equivalence-$A-\cong-B$-[Under-Construction]">Set Equivalence $A \cong B$ [Under Construction]<a class="anchor-link" href="#Set-Equivalence-$A-\cong-B$-[Under-Construction]">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div style="line-height:1.4; font-size:14pt">
+<a href='#introduction'>Introduction</a><br>
+<a href='#simple_expressions'>Simple Expressions involving set equivalence</a><br>
+<a href='#common_attributes'>Common Attributes of a set equivalence</a><br>
+<a href='#axioms'>Axioms</a><br>
+<a href='#theorems_and_conjectures'>Theorems & Conjectures</a><br>
+<a href='#further_demonstrations'>Further Demonstrations</a><br>
+    <ol>
+        <li><a href='#demo01'>TBA</a></li>
+        <li><a href='#demo02'>TBA</a></li>
+        <li><a href='#demo03'>TBA</a></li>
+    </ol>
+<a href='#misc_testing'>Miscellaneous Testing</a><br>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction-">Introduction <a id="introduction" /><a class="anchor-link" href="#Introduction-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=3>The Set Equivalence class, <font style="font-family:courier">SetEquiv</font>, is intended to capture the membership equivalence of 2 structures A and B. $A \cong B$, coded in Prove-It by <font style="font-family:courier">SetEquiv(A, B)</font> is a claim that all elements of A are also elements of B and vice-versa, and uses the congruence symbol $\cong$ to distinguish the <font style="font-family:courier">SetEquiv</font> claim from the stronger claim that $A = B$.&lt;/font&gt;</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Simple-Expressions-Set-Equivalence">Simple Expressions Set Equivalence<a id="simple_expressions" /><a class="anchor-link" href="#Simple-Expressions-Set-Equivalence">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=3>Set Equivalence expressions are easy to construct …</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Common-Attributes-of-Set-Equivalence-Expressions">Common Attributes of Set Equivalence Expressions<a id="common_attributes" /><a class="anchor-link" href="#Common-Attributes-of-Set-Equivalence-Expressions">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=3>Let's look at some simple examples of set equivalence expressions and their common attributes.</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">SetEquiv</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/theorems/8a813364298b90e0ab506025bdfe092744d338d00/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADsAAAAOBAMAAABjvHmeAAAAMFBMVEX///92dnYiIiIQEBBERERU
+VFS6urqIiIjc3NxmZmaqqqru7u6YmJgyMjLMzMwAAADiRdoGAAAAAXRSTlMAQObYZgAAAPVJREFU
+GNNjYACBt2CSQTYOSLCBmTzxX2eGuEGEGe6DSd4Y4QMMDKwQIWYHBob5DyBK728AUccZuC8yMLRC
+pN8DVeZPADN3zW8AUQEMDCweHPcg0vVAofMFYOaB+gQQBVIr/38BRNqZgYHbCGwo24b1B6COYOB+
+AGV8ZWB4FA1mbWN4X8CABvi+ninRgjATGPrBbpC9CwI3wWLsPxgYNgeAFUbOjHdA181iAFTyiwES
+DswX0KX5gTrZv4NYQKcyGaBLg7zN+g3I4ABK835A2H0V7u33ICubQDb9QNd9GWipCdDbW/7fZuDy
+/zQBVTb2f+RUF6CxANDgSAVVKmfiAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Axioms-">Axioms <a id="axioms" /><a class="anchor-link" href="#Axioms-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=3>Right now we have a single axiom in the logic.sets/enumeration theory, defining what it means to be a member of an enumerated set. If $x\in\{y_1,y_2, \ldots,y_n\}$, then $x=y_1 \lor x=y_2 \lor \ldots \lor x=y_n$:</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">set_equiv_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="_axioms_.html#set_equiv_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/axioms/cf9c5d456c7f17112978a98ad1fda6deb1c418670/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAY4AAAAVBAMAAACj/BR7AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABNlJREFU
+WMPVV11oHFUUPu7vzOxOkgfRglKGBrSEtlkM1BfFVR/UUsnqQ/Wti7WQCLGrDQatllYK2a3K7oPU
+gmgnFaoGiYE++PMU2wEl1XSpoFZtXakVFEmXxIaYUuO559zZ3dl7d7vtmwfOnNmZu9/c7/zNGYB2
+8o7UdvKZciU0n7kBKBUHzHKb9YkS6/lRMhVx7Zx+qbWPFSVa4UtzO/EQodPvVndszqchVmr+WzLd
+JYxd1kNpRKCrOPCBdrG9a2lg6ADAMLB6ZE6JW3/q4btKrOK0ymbkC9xdjG+vAQhfBqui8khOi7Wu
+Hkr3IERXceAP/eqb0B/3ZWAKT6eYB5rDIn4tHPWtVJTzK2TOgPUXwCF24lWMzCLACZUHAR5uAaUR
+Qldw7JR+9XZ05WAKkg6QemSE18h9GnlRKjrr+D9kswBGwbzIZYCX7AWACZUHBfiUHsqXH8bG/Agw
+uoITD8TPHh/by2f9eP0XB6weIPXI2LOTk2/paZg5VgES+pus8NDpVaZtIMbES5gUaZXHz5OTH+b0
+UFKe7GvYIqErOIFtRV+tpel+3Pit+Os3IPXYLOfzL+t5hFKsKFsSV+slK7tRdxaiL4hoplQe3fn8
++IwGylo3/ADlj9VYkoyu4PSiHr3jzQ2O+DFVr7YlgCeeQXuS1WODDahAt/n48OLJIRlPo8yKT01H
+F9Q0HTkzLiJjU3rMzQu5IHnEMmA0ZoUP9RF871B2NHYniU44SYKZJ0pv4K0Z+/k44Q/XI7N0bv0e
+qipWj82DslPYnDl2DyR7ZH5Os4pGay5C025Fmlq3iEaeU+MRSVErqae6hJqF0+4jRKzhpkRXcHCz
+STe5EiHK9VYk6nICCxU+YfXYxCFEPn+PMyechcSK7G9pVoBtA5uXlXjsF1xwb9GqygNysDHQKiWU
+C3m+8Jjwh6xzia7g3IzxAEO+v9aKP9TqMnRFJASrxyZZjtPt2d3sOQfClWYeeFir8FgSPJwWPL6B
+nI4HgMzPxqYs0XU8sAodbhT1eGBdQmhB4WFWthFhhz31cQY2uU15lUB9TnkHi/jtwj1EcvWM+93n
+8W4Un5bsfXxnE1T0siTWMGBIdMKR9ZGVeYU7lF2lJ/D6iIkieIjVk6eFp6nw4G5aNbhxfbapOOFt
+1EvQtFuRptHlWp03xcM4hIe+WGU0CPV5qArUcMNObbmPruBgnSfcfgiRW++qXRavj+37lDqH4+TP
+n6Cfdwpwp7+fFCs1/mLzUNGFHrr/oNjSjIZHQngl01UOQkWuGFU5/O1pfLUQuoKDzXRwuiiny3jt
+Xf0rhm6N4HYPqydPKQOtC18XiffrAEfkX0SgUa3ivy58uro7+JDYJZzWXiNCGQ0ProNun7wP9VRf
+r5xJjx3g7K2jKziYLMfWHb2XeVtDW/jqs2I8pR1eZPXkqS0Awy4cIRxsBIOllsOETt4HHY8fKZUh
+0xJq6/hYpT1OcC6JfOXPJf5rJ8fqsWF5FJ1XNg+CuQLm7Z0Nd76c0PIQGVOdg5nOoTqeE/3HBOZE
+WYfLYBZfid4GXy4ODNXmHPFKNkrXoKGb2+Wdka0b3I6hNHN7oe2Dg3N78Bur5XdUazFKrXhcH5TR
+6XdUI8sC8yhc49uyk+/as+p8ufdGvmvPXud3rV1i3TRKJiBl+L/KfzsFnGr1z7ZrAAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">set_not_equiv_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="_axioms_.html#set_not_equiv_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/axioms/926dab8731bf8910c8cef38eb6d18d3764ec65940/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARkAAAAVBAMAAACAi4frAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA8ZJREFU
+SMfFVk1IVFEUPs74Znwz89SFlGDFQIvalAOCbQIngpRAnJW1agYqsKBUDIfSSCFwtGRmZxDlSEVi
+UEGLapXkQuiPoSCIskYqIRcpav6FTeeee+97zzdvJqNFH3zvPu7vd88599wLkA9qijMfvAn7cTqu
+5R8Pj01Ms4qJHB2HBRFHjFpNFM2LVU0XAU7Yj5PwdFGh0ELgmwrhN0j/bzNHq2NBcOF2JJ+z+ukc
+ar4JImaM2sOiLMB1akJw136cRDG3XfEsFVMftuI3wpvKAZw/wIM6Ja8ww3bZi9ECnOx3JsmKwgud
+uJaPN4fRHw0B8Pntxul4w4uPq9Tih7ujoHI1yhpOOA/wFHQW4yq++/Zq3AlOxJ0aKg89PlChBYQj
+KrHqkx88pXbjdJzl/nqwwgoXMpa4HqI6B1ZpcwBDoFN7NjIykMNRA4KIVCX5+iQKmqw/w+u6cZHN
+uJkvduP0gG7h5nIssMLJQifzkzcV4TaGzqFBggaXY7HOHGq2C6JBk0/omDCn9GzjQQiLKA3lwZjd
+OAkH99pB75pedUuUJRFQ2plrAgaPA/RSI//WzY81SUP3CwLchLCMDjUtfpTFiZ0dFBJ0WL4TAqCP
+EQagXXiCylzWZsOnXvewGNHSBvdTMOP/AjdpKfhkIHQIsiM5KCPTFZS7RrcPsXh8aF0GxzijDKMY
+QxSThaDOWzWzuPNsYhmrxaAbHCT/BjelMwLeVTFrmSAoR6uauyznm9zuYCEQtqopk2ZErQUkvrGq
+ejnLNt1MEYpVZg36Um5qe9bGz4MfnGmrmkKclSrHo9GlaLRduh0ccxtTg59tWWoWmRr/ejVqupG2
+749Rl3sh2J20ego34Bbu00Z1t6NJXcy9tSYfRED3LldDnvIiW61iWLqBZtRZ2GIQeo/xTLCH+jTs
+2hkBSxSr9/VcCm4pldJNuEtGsRn9JjUUxVdlMjdrZnGnLFuiGB5QRngPlTTDK4AdctYxQZY/ilZ4
+3Ut9zUncTTnTtteqRj/yIX5sKefErbdrMVp7Xx8L1VGDUMLOrufzizjt+jLAoEzNtZzDmWnwxpfY
+QRhvxbDhcXOa3XnU86tVTa3pH83vif9KwqNM2/pOrhm8dC+RrJBB0JgKZxIGKV/jIWlIZN8MYD3f
+pku6ZQM3Qz7cNpGjHm2UUvtAXQV1i82tKVGXPdnGbs08MN2aIncsgxo/r1TA+HxVk7H9Xj1F270V
+BGxeFOYxRYk/iDG/KNa/43K/tgSS+ZfO/drKDSZXMutR+LcvUe1fX6LvTFyHFPxf/AayoiqRoMJc
+BAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Theorems-&amp;-Conjectures">Theorems &amp; Conjectures<a id="theorems_and_conjectures" /><a class="anchor-link" href="#Theorems-&amp;-Conjectures">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=3>The `logic.sets/equivalence` theory already has a number of related theorems and conjectures established, many of which are related to set equivalence being an equivalence relation. Some illustrative examples of the theorems are shown below, and the remainder can be found in the [set equivalence theorems Jupyter Python notebook](./\_theorems\_.ipynb).</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">set_equiv_reflexivity</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="_proofs_/set_equiv_reflexivity/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/theorems/3d2e982d5fd6782747be9a02000c6f7fb111697b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGwAAAAUBAMAAACaOcVSAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAcRJREFU
+OMuFVDtLA0EQ/oyJyV1ymj+g3D8wENBGULAQBCGVpRHUwsqIlaCQMqnuOgVRD1SQCEGw0E7BLloc
+WPog4KOwUFHBqGic2bsV10QzMPtNdu6bnRcB6sgy/pWoDZTZOFeu9ayAkHAhdpOis086R0gngSO2
+bxVaq+3Bg4Cbs3Y6R6XznrQILBJoWYV24sHFG5+GieIBNEkz7h1KwEQrw7ZCm/VS3XllaCHN2Ssp
+37fVS6nocRilQmFBYWkZL27gmaGZy6u+S6fbyVVeAZVcbk6hBRICBqMf31cb0gg6+y7BITAB5MVV
+3ndFXJFjX+ixtvfrSJtcNtAPXXTaePZdYVFpENqT6P+dEC8DmsMqW7v0FQIi/JrMqUnMaDjZVal5
+LDSWnOKupymcGxZXpRmFRkdHDS1I3rJH08rDIpCZ+5lklHS6hkaecJxwgFsx7s2n+2dLlvyFkLWJ
+cWvb/u5QS7Aj5nSKTp8WS/izs+xfj/F8I7wEPaRt3FL98thy/AIy0K1PB3vVGZW1Wb1F1HqhqNfc
+ef682cFqSlmuf0TPSGuIXnXVVf5bYqZsQwWaNS9/2A1oxfo5ZBvQ8vWvG/wpGDa+AFcIdm0gvh3x
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">set_equiv_reversal</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="_proofs_/set_equiv_reversal/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/theorems/4ccf326ec99bf0db9a4912fcee6354f59da56b5c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAAAWCAMAAABADnZWAAAAM1BMVEX///8/Pz8QEBCIiIhmZma6
+urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAtmB3VAAAAAXRSTlMAQObYZgAAAoNJ
+REFUWMPNV9m2pCAM9LIIYc3/f+2wShTtdk5PO5cHD41dUEkqCS7LfxgmfLiBM/kZt98hPMTcQjtQ
+ISohFIAkb31Ua5vKCbo2uipz964vR/sQ9Wj6jFUjBK7jpQqeNSeqGYrN+myCgR5FeIh5EJsPsXKU
+uC0FXoj5wmiiHiI2/3pOnD3c/+WhN6dzrNOAvC81tgBmMXE9Ks2Jhlgsyzhv8zD6qRwdBwFrNPSm
+1e5+j4iTL0Mytus/5glCHto/RJ1v4liw+HjV6iTL7DotSbs47LXE521qQoMZ/6FzCSh8qgJ0adqU
+vn0BrP8NQ+oqBA76plKtzBC+yT6fIXrK9lWk5EKJqmfk8CmQKM/ScQJWqbuD1C1TtDSSIfa+yGrb
+EtoV3eUHH0XdCqQVXpSNHdpL6h0gQRgSlhlYC6I8SD2ZcMfva2oBQiFsISuWhkq/G241NVeXEIl4
+7fUGkCBDdam/AB6oo+rU+Q3qFcbijrqJyaRhHU+libi0tAtO+9WBegcU3YG3LYInwL1gelVf1Kne
+jr2/obv+pG5ZpgY4GSFIDCTylEq75nCg3gHVdZ4xcQXcp2mv6ivChdYJ2Lh9O61pmiwiXIPLm9K9
+yjH6kvoAqFJl4QcKuxPgqGqFRXWgZGDvNwPoPUm0Yj7EZqPwHmhO1p5MM2lHfQK8ANJIq9jvXu9z
+1AJiEZ5Lk5aIvdWG0c1sOW/0g3q0RHNBfQK8AB4vAp/cPqdoyirEnEAGKqnyZP5CMASQHNlHOAce
+r18fDH8sSlAyxgDqsKwsuc1rzNV0d6Gm1Clgv/UZ8EXv/Vunx1v1aD76H31qfDDeWO/Ml6h//oEX
+3sTtcv+nvkm+MMTvoPEH82YZleTWRgoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">set_equiv_transitivity</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="_proofs_/set_equiv_transitivity/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/theorems/ac95db979ba075b4c38fbdf02bf5764e10955a400/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPcAAAAWCAMAAAArSvpGAAAAM1BMVEX///8/Pz8QEBCIiIhmZma6
+urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAtmB3VAAAAAXRSTlMAQObYZgAAAv5J
+REFUWMPVWNminCAMpbKG/f+/trJJELhOp32oPDiYiSdkjxLyuqX93z1vdbqG6977V6htAN+JMPzp
+ghR1y8enKEgmPdGOEJkUd7b9Fcwr9A56uIvDnfTuqO6T+A9aqJalX5NspZv5NLxCbc+GuxCRtzxN
+ng0uqyNxiKjKxWL2NUVu7o7/r5fC7ja2KEIGFwNoooNAYXA04/AjP5au3pm0tHpHURuO6QmNKI9b
+KLgYI/Ii6zeisIT0UIS0lHuF3hSHOTfExlU1NgKbKnZbmRIdLqGUCggoXvCeQ2SOSRiqiT+LoyP0
+ovFJ8si/xVqib4QUXKSmOcWKSJ9M5WYWnyobZ6TWuEbFsUN8Tgl3IAOGXD+gk6aSOEL8gDVTtkJK
+eqP45dmZDHcxtC66imJq4TkC0oV2Oxo2xA7L1cL2uqmrTh62ejcIDkzjgJiwMGVgXgjJ6+j2FJIx
+JuNjGzqQuLoTufs5X3RvVjMKJ5HKUcJ6PLRKIOhW7wrBgfviILfBQpSReSHkrnfZHeGxA/QWbwXW
+W4fTdt2M9GwEyHU5SmgfamgznzE7vRtETiBwpkXThIUpA/NKyC3O60YdT3qjVtdqN1e1CEmOmyBD
+3ueR+nPGQ5IXgXUjNYjiK3ccbIOFKQOz2kXvVde0nQe2Ib9lz0t6hSGua2l864p6m6yNsfKhOkN0
+T3p3CJlbJPyCctwJC1Mq78ns10J6B8J9HKJ+fBGJdUi9YodV+F7pTWDOAaoEUKa+3vpb5hm/0XuC
+2GMtKHshKEINxJizxZ6boRqtX2UYSMlQh2nDnO+WMPkcvfKXI/FuVQZjrkx6TxB7rAVlL2Qxp377
+SjfNprzYNwWGhnL+fD2KXzJJJR7j9EZvBEHklW3+hjWjj7wLIav3ku+Wuw8ykLuhhniKFcfpC6di
+apJQYiSTTuI5R1GzyW8McZOGsRboN+5JyE+T4J+5+6H12Y9Iy3ntk88e/+S7wzfrwXJWf0L6Vm/7
+tdv+9juTf5DsPyJ9q/c7Pmo9jUSvO/Fv/PghaSjPWp0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Demonstrations-">Demonstrations <a id="further_demonstrations" /><a class="anchor-link" href="#Demonstrations-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><div style="width: 90%; border: 3px solid green; padding: 10px; margin: 0px;"><a id='demo01'></a><font size=4><b>1.</b> TBA.</font></div><br>
+<font size=3>Under Construction</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><div style="width: 90%; border: 3px solid green; padding: 10px; margin: 0px;"><a id='demo02'></a><font size=4><b>2.</b> TBA.</font></div><br>
+<font size=3>Under Construction</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><div style="width: 90%; border: 3px solid green; padding: 10px; margin: 0px;"><a id='demo03'></a><font size=4><b>3.</b> TBA.</font></div><br>
+<font size=3>Under construction</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Miscellaneous-Testing">Miscellaneous Testing<a class="anchor-link" href="#Miscellaneous-Testing">&#182;</a></h2><p><font size=3>The material below was developed to test various SetEquiv-related methods. Some of this material could be integrated into the `_demonstrations_` page eventually and/or deleted as development continues.</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Some-Example-Sets-For-Testing">Some Example <code>Sets</code> For Testing<a class="anchor-link" href="#Some-Example-Sets-For-Testing">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># some standard enumerated sets</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">e</span>
+<span class="n">set_12345</span><span class="p">,</span> <span class="n">set_abcde</span><span class="p">,</span> <span class="n">set_1a2b3c</span><span class="p">,</span> <span class="n">power_set_of_ab</span><span class="p">,</span> <span class="n">empty_set</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Set</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">four</span><span class="p">,</span> <span class="n">five</span><span class="p">),</span>
+    <span class="n">Set</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span><span class="p">),</span>
+    <span class="n">Set</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span>
+    <span class="n">Set</span><span class="p">(</span><span class="n">Set</span><span class="p">(),</span> <span class="n">Set</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">Set</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">Set</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)),</span>
+    <span class="n">Set</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="set_12345">set_12345:</strong> <a class="ProveItLink" href="__pv_it/demonstrations/38a11ebeae978542ea46343294f4662de69f56ac0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGsAAAAVBAMAAACzuQ2OAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAa9JREFU
+OMudlL9Lw0AUx79p1dg2Cf0P7OQccFLwx+Ao2MG1IKKiINhJHBR0EVyq4KKgmEFEBaGjdNB0Uxcr
+6KQpujiqKAhWMd7l3uUHlEq94d0nL3xy7+4lAWBU0cxovbb5pJXQ3IhN8Gi8hnOaM5gVFD/ay8ts
+juZTO8dydxyT6yyoM3TjHMk3Qb1Qf6S2SfOsW2PxUGrnB9904x6YFNSRxycllSmC0rIZ1mBIbRpY
+Mz3qzOCLkn0nBEterKOd2VijzQVFWn9qbOzaBBeWmA1TaoXHWxb3ObYXo1qsRtCzQ34ZUhtCfwZ4
+4TiXjWqJJUnKGNXoa0ALqy1VAUY2ENWcoNxJbzk1G9L0dxZW0+zEoqspFYIuYNjr9yWkxvbDu5ri
+9bQPRLRFxEUDXJu0ecf5uPZSbUXo37S36Em2WlCENh46U2q3znZepJP0NIVpV/xIu4+OVwU98755
+xB+h8dbHK3gyQ33TV76qSGzzdrvup6CYc5MRhD23gC2+cu/BfaTd3lhAA1JtPye0UXlpoQElEdX8
+701LowGVA+1OfA10Zfj5evQQvH3i5VH/8S/5BR+sidboQXJrAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+<strong id="set_abcde">set_abcde:</strong> <a class="ProveItLink" href="__pv_it/demonstrations/08c681610fc43114f69d995313fdaf32b6f921490/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGkAAAAVBAMAAAC3TN2zAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAY1JREFU
+OMuVVDFPwkAYfdIKBY5STBhJmEic6KgbEzODP8CYGBdDmJxMxNG4mLgY4wCLCQ6G0ZiY8AdIYTLB
+RPkBBtwcZPDu+1q4Jq2GG+7efe973/Xe3RWA/Y412uZ4oAbxjLVa4lD19pceE/WriPr1kTZ7U10m
+nJYdRdTPt7RJL0IVSghadfCPKpQQSvxL1Yty4CVaZUzGxxx7Krz6bLfQoNGYFL99q7olF7hX0OrL
+ruJm2UrxM/BcQrsts0+g4poLVm27RgeYK3giK4omcjUiUgvkHUK3sMgYxbFcHGHYYJf3ruU8t0Ca
+c2WC1wGHuCmOIrCahU81XsjUipQna/AawXFVaYlkzVcprsyH0uYUNViSluXP/OOa4oO85xUR4jg0
+Dzz0WrhMkQn5styHLwctuuLUhzq+h0plOvZNBp7ctDU1RwRybbl1BVbcRh9DVzsvcV7c2UL6TqLx
+IwjgYeZwZMmhNJtG3I3TeKAhVu0v5514oKFe+H0JJxZoiN8Xlm/ZjgcaShzwJVr/v/ELQQhyN2KQ
+K64AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+<strong id="set_1a2b3c">set_1a2b3c:</strong> <a class="ProveItLink" href="__pv_it/demonstrations/2bdd9e143d7f6d7f6e4977782d26361e352d1a480/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAAVBAMAAACZCfwhAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAdxJREFU
+OMtjYGDgu8dAFmC9eABE8exiIBMwpYJIvg/YZXnuugRAWEcyoULMq5YUICu5DSK4JoDIsgPo+k8w
+cH2CMvdCaVsG9n/ISlbC9PN09WPov8PAkAZlfofS8gUMP7HqZ2B4j6Ef6Oh+A4g//0CF1BQYfhOt
+f/8Bhn5IAEBUgAEO9yPpt10rBjdqPoTF3SgLC7aTC6AMLkFRBoZlIBbHBmT9TMkM++Hx8wtCn9/D
+8xnCspoLVcY8ncEbqAkc8gHI+o89YLgC08/ZAKHrDzB8hAoxJkGlFjC0Ax12gYEhZDIDsv77Bxgm
+wvTfhUczzy+YWNoBmDIQ6BQABiqK/SkMPF9hdl2ARz8TJAaNGRj8C6DKwAEDciCHA5J+oEXssPRY
+y8AMib9/DLyQGPx/AKof6p73GOHP8x0YnsWQ7LGAgRGi/xMoVKC2QqMEGI3s0PCH6Jc/wMADShuO
+DC8bFoBZlqvWdjKcB0VOH4MvRPIdKP7BQjcYeK4ix/+N/L0PGGYCzT4hGNyoAGbt////JwPnHKDk
+WSmg9SAhprtXFCBCXOseoqYfcOI6gMmqwSME1Z8A43IxYLIW4BGC6Efk/4MMGCweATxCkPzPAC9/
+HjBgsPjwCTFBEiM7JeUfAMKSofO0V7FjAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+<strong id="power_set_of_ab">power_set_of_ab:</strong> <a class="ProveItLink" href="__pv_it/demonstrations/61abe4b62482787f45aecba34469fe7eda65f71e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAL0AAAAVBAMAAADhtvKAAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAjpJREFU
+OMudlTFIXEEQhgejvvPeevcMmMriKluvtAlcmkA6QVshJNqFIAipPFRIE2wiNgoprhKuSLCUgPhs
+JJDieSAICvraFOI1IqhFdmbfezuzrlfcFu92v39m2Nud2QGAyiXocZ0OdWKww1AASbUZ/cxPeKAd
+JGee6jd+/7YABhathaE4OCUzGpMzHmgHycaz0sXvDX4u2Pa7xZRRNFNvv+vJ6J6AbGNMJs8yrqFd
+fMwwFBxK8/BE6sJAyO2+4leXesZncn/xp+Ke8ZncX/w29IzvBmXTXSf+65+vYkHJbH/sTOvvJXxx
+3vlkVkwmzxJd9YaTCEgHPsKhkx7aTD3ESZ3nF/lO1kNDuEyeXzBVg8Xi6s1AepzCqaRoFjxCNQI4
+EFB9htGGWTEZPee2sNTe1Un8FmU+RK9i2BSUzHRqJ7qgSpsCPsKIsRIyerJSC9dEAS6AupUUzfSm
+pnQK7gs43IBkJk//QibPEv2vr+75N0DdQ9B1zl+bVVP8Y/z8NdRbXs3Sn8k3PfNH3elbXn6SP9Wa
+Pmw3f5Il2AjojLm868t/9ZDTN/BvrSUozkvp4EnulexlcDCqbJdpyWV/fe3kBfhnbHa9JijOVedX
+4TXyI4fr49Mvacllf/wg9tVvEItSzfQVWb8rUjbx7VEZw7Kl4FB7F1n8lry2lif+k/f/yPv+H8mn
+3jzwKhJQRVI2ntSpQuxfH2idWkrpzWlY9K8a7ULCii2fmvUMqNM2nf4b+Ptv09d/m8/33/+ipevT
+8xNZuwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+<strong id="empty_set">empty_set:</strong> <a class="ProveItLink" href="__pv_it/demonstrations/51a63c6948ca32dff9082611296c287a87c2bc8f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAVBAMAAABWJ8jiAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAF5JREFU
+CNdjYGDgu8fAevEAAxDw7AISTKkgJt8HEHkbRHBNAJErSWAuAxEcG0DkexBRFgAiuS8wMIRMZgCD
+TgEGBjWIaANIrQNcLZIJhG1LgDOR3MsA9kUSmMkO9RsA2nceY29T18EAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># some non-standard enumerated sets pretending to be multi-sets (but not!)</span>
+<span class="n">set_12131</span><span class="p">,</span> <span class="n">set_1a1b2a</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Set</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span>
+    <span class="n">Set</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="set_12131">set_12131:</strong> <a class="ProveItLink" href="__pv_it/demonstrations/ed3e06bf7ec827688cf59bad974f7db0f1a926b70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGsAAAAVBAMAAACzuQ2OAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAW1JREFU
+OMtjYGDgu8dACmC9eABE8exiIA0wpYJIvg/IYjx3XQLQ1Vmtckfh3wYRXBOABHsOVOgEA9cnKBMm
+xnyBof4BVKwM5MCVMG0nVvyBit9hYEiDGgATY/zOwD8B4pSufhRtDHwwbZkMDP0GECZMjCmJgX8D
+VPo9Dm37DzD0B6BqAwK4I3FpA4L5B9C18cxiQNa2DMTi2ICqjekXA5o25pV3ULS9BwdOAKo2zgYG
+DEeKKSBr477AwBAyGU3JXQZMbWw5yNoYOgUYGNRQbWO8gK6N2YCB5TuKbSD3cDigaKsFKUPRxv8H
+Tdt7zJBkXcDAiKaNzYGB8w9GSIK1MQLFz4OC1HLV2k4ICy7G9wAYbzy/wdrkUeKNt+33PQbOOaDo
+/v//J4SFENO968TAMBOk4Ub+3gfI0Q0GNQx4WOwH4GIQbQkw7gIGPCwuBlRt8PzGI8CAh3UQLb8x
+wHI3H1wcG+sBIvUlQVxNRlkCABmCiRBKMfwWAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+<strong id="set_1a1b2a">set_1a1b2a:</strong> <a class="ProveItLink" href="__pv_it/demonstrations/1953e7f045329d732d0aab162483410a9ed057ba0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH8AAAAVBAMAAACd/CwcAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAaRJREFU
+OMullL1LAzEYxp+eSL/Soy4Ogujk3NVBUHAVCvoHiF8gCAqCk2K7CHWwipMg2KmoUHAWSyOIdJFW
+cBBqa1en1ooUrViTu8Tm7qSFmiF57s2TX95cPgDoJXRXeu8pb8glui3aIq/1aiffzbIQpDgZtvQU
+eOXb5/UGdYxzr0iVFm0WvprFciYBZDfuAGRPv6Ssi/YJWPobAFScGegSoEnBlhIPdQEwHaxkKOLh
+ToCxVD+1AfzRwTU55ISqtiSXngsVoM0jY88gd0Xe5Go+LbaK8f/DKuC2jAc7YJviVUhvxGLz54GZ
+Q6iAZ4oDO6AAIiZGEVZbLAiMWDJYAHm3A9LQxEa68rDY/Dwhz7gCYFO5q3bANwJCbqEnpNoqjl0g
+dfZT122AGl+ycXsScIVUW7IFGKIgDdZO4CWSMBRcDJDjW7SHKbNz9DwVM0OGTT0Hj6vpMo5YFtm+
+6eiwoQI7jRK8x6zzboAlwEOZZvPDDJk29SAZt4c61WabkATMyk8fnCrRJiQArffgGg5Fgm1C4j3A
+74tUhkPp7ULQ5szV/etN/AGTuKTS3QUgKgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Testing-the-TBA()-method">Testing the <code>TBA()</code> method<a class="anchor-link" href="#Testing-the-TBA()-method">&#182;</a></h3><p><br/>
+&lt;font size =3&gt;The <span style="font-family=courier">TBA()</span> method has the following format:<br/>
+    <div style="width: 50%; border: 1px solid green; padding: 5px; margin: 20px; background-color: gainsboro; font-family:courier">TBA(self, assumptions=USE_DEFAULTS):</div>
+    and does something interesting.
+&lt;/font&gt;</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

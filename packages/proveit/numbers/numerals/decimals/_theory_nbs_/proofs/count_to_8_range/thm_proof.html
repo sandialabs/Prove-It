@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.count_to_8_range theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.count_to_8_range-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#count_to_8_range">count_to_8_range</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.count_to_8_range-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> count_to_8_range
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="count_to_8_range">count_to_8_range:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/0a569f07249602cb038b7670f3e83796fae4eca40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ4AAAAUBAMAAACOpc7fAAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAAzBJREFU
+SMetVs1rE0EUf8120yTd3Rb7BzQgPVTQxgZET/ZmPbWHUFDEj4OgIFiQIvFglxSKaA+hsUL9oBV6
+UYpEUBGkdfEitofuufhR8KIXwapF0+g6M29mdrOzSat0CNkfM+/33m9m3rwZAMuFHWvxNbVvG/4Z
+bTnY8+bOY44+Zp+JzqYiflNvm27xLu3yfhwqlLJZ7Hp96SbAPjXIcmMNkvaICjqBnUYaDvfhLIpw
+UUwkkcav7nkZbjcHtxkwPc9bx74ixE7DkhqI+j/r1NUhaCaZ7KveKnYmHdAHGWrZgDabm45wHane
+q7yntQgvkEBWFEfjLhizoA2H4xD/xu6eujokLUH3xuQ6dBtifxhqzkHbLN/gVa4jJtkDIg808mtH
+VAbDBmMwHIj5/1BXh6R9goCOVBViX4WJ2Bctpeh4GvB0BD/Nm45GCHPhQMx/fR2Slg/qoPoFNMY4
+eC91vMvj3KHSke8ThDL/9vw+QP4PhQPlG+uQtIWQjgGeitbBu1zPsNDR6ljfsaviwrhYWJHNmjdP
+/lcZfMgaO2YLW+gQtPGQjoJEI308BYQO0p6jDg9girteEUPn+38QwrlwnPEtdAharlZHsigtdDzM
+Z4I6ZjBBfxLXfGOuiHORhlFC6AzHyTXWIWkhHXlRBdegdYPNPSN17AFRXa4T13w/bgjVDjRt/LsO
+Savdl3gRvjDQVuU64t3TM8ewKhwn64EOu/z14FWM7c9egP5AfqS3sS+SVpunHQBYq/Syf3L0tCh9
+dCFo63Rgitf8X8KI7Ngiz9Ng2yJPJY0dtBYScoWULWssO2kbFarMJfWDIaaJDsJnME8iimWMIUTx
+b/T40EIwDyZZtlI4EPM/6qAR+6M8CSSNLmSyq3IPEhOkjpHrwoZrVP3R6SeASHu57tJBsErdDjMj
+3nvbEVlDwM12lciFBffDOqj/yVMPXDQqiOuKgYkALSGv6guy5jsqkoNRyDcz7Mi6XmukOiA0Ux7U
+DPiXhoIyjVCAEHXPhY0iHAyzLOF1Uz4JQEH+YBTyCRH3/qJipDpYCrxTTDnuqsgfjEKuEjTiHaQ+
+y8wa2k6+C83/excS2l8qmA1zRkzfEwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/aa299452bd37a307ca15f95593b3461cb623e7340/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

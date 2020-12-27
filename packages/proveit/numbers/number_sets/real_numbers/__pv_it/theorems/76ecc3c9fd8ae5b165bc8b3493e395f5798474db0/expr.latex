@@ -1,0 +1,1 @@
+\left(a, b, c\right) \mapsto \left\{\forall_{x \in \left(a,b\right]}~\left(\left(c \cdot x\right) \in \left(c \cdot a,c \cdot b\right]\right) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  c \in \mathbb{R}\right..

@@ -1,0 +1,8 @@
+\begin{array} {ccc} 
+ A_{1, 1} & \cdots & A_{m, 1}  \\ 
+  \vdots & A_{i, j} & \vdots  \\ 
+  A_{1, n} & \cdots & A_{m, n}  \\ 
+  B_{1, 1} & \cdots  & B_{m, 1}  \\ 
+  \vdots & B_{i, j} & \vdots  \\ 
+  B_{1, k} & \cdots  & B_{m, k}  \\ 
+  \end{array} 

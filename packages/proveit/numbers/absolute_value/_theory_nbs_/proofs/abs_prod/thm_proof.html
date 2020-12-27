@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.absolute_value.abs_prod theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.absolute_value.abs_prod-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">absolute_value</a>.<a class="ProveItLink" href="../../theorems.html#abs_prod">abs_prod</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.absolute_value.abs_prod-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> abs_prod
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="abs_prod">abs_prod:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ccab81afc02a70270bc50904ad2af7fb4f68f0660/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdoAAAAWBAMAAACVl0DnAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABDhJREFU
+WMPVWFloE0EY/k2zptnsWh/0QUGILR6IR6GILy1ERUV8cC14IIKhKKIPUrQUUZHig6QeGERQPHCp
+UKReQQkeVCjN+lIRF1rxQCUP+qCoFEXxAHGObTK7M7uTxAj6wz/5M/P9/8y3M//szAL8VdlYgY9i
+ygIJEX6tZQ5h/psKqUZtsCpw0xKyQDwioNWCWBqIvuqAPK55GeRtlYARyiWoEltvoDLZwnagasED
+XPMumK0cI5S31WL79g/ZXgOqFpzGK6UrmK0cIxK9sUpsuUDlstXiVC2YgHJaywSzlWNEEklXiS0X
+qFy26kSqFuhDfX2nIJitHCOSU1AltlygctnCa6rI/JZK7Rf4DLBwH0ywNFDfnpkn58alYAbFceEC
+Sdmq9duXDDJsc1SRuRWgW+DTyLL1wQTLMeKrDui7InlQgtPeQRW5aB+JNAoDSdlegSfxAwzbV1SR
+uRTUvIytD0YgsaPb2hxzH/HVTO1HOK00tZM6wbFAJSMkKJ+55QJRhG+sBAzBI3Mlw/YWVWRGIGSz
+J5HdFkxPeth6MD7z099kqxtM5b3zfxKdEqjF0xombNVfvNv1PBlmbZdvVnKBCMI3Fmo1IeXK281U
+8fZsRwotl3MtcFsza8xc0+6mDLOFMxhfeXqnD/RzAP2uQQLUxQtsoVOwdSfJT11cwpYJRBF+sUjr
+Jx+20fy6wovtyBkT7sUbNe9KppjBhTMNroNCZRh7LMsisGsBom6MIlt/wSi9pbXBnbdJYSD5nqx8
+Qcbw43rnTb2CKja7t4z1sxSDs9kTHFuCCZk7IwnY4Q5NK7FMwMXzZ95dKmYuQCAZW4rSF9vj0jwX
+LpCU7d3QKMyBkWkwxbtLwU3kT/shO1FWu7qJY4sxCnwA2DTVc+HAlUQu4uLunWJTjviuzhyH8665
+JQlHiuuFrY+izsyCOpPnwgUqIgphmCzWEuGftaNRO9rTDj/o8JupjqUD6UclDLMwkOPY0qz6jnSv
+91F+d37Xp1Kp+Nm1xYYVxLe3vqfFdq/kzrHCSVkkDqoNFgtmjgvEIAphOhm2atucBnSJGR8PT6TD
+f0MVmzreynE/yp5U6iBiex5vSYaLLcEoowrPFlcO33uBYuN/NT3Oa8B74JPmLZHJ0KxITo6l5S2R
+cUbNgEFOju1ULVc/STq34Vbu6IXlgpbXCNvTZvTwWEEqb3Sh56Ph5xNtNmBQdJiPlcI2OgodWcmt
+IFY62wsQWWW4bwVsP/exOQLwQsi2d2RwiLBdk1GmwJo0LjKkcryxAbUfwaArHw8VVkU3E3/RV/np
+EcJJmGsLuHgDlch2OYQeem58bD+16BUbPpCgi5JjSwWv5OJ1iFoRmId6CKG8/Tdv8930iXlHMxvl
+LSez2C81rZ8z5KuHs6yo1Qv9tvhLzYwK2IYMWSAeEdA6A3Q0SqzzOyr53qQLrP9DfgPEtY50Pqya
+owAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/598aef591998afca540e84d7e2f886518ba582020/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

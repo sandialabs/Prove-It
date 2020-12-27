@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.true_for_each_is_true_for_all theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.true_for_each_is_true_for_all-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#true_for_each_is_true_for_all">true_for_each_is_true_for_all</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.true_for_each_is_true_for_all-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> true_for_each_is_true_for_all
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="true_for_each_is_true_for_all">true_for_each_is_true_for_all:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/dff2c5c12b7e2dd5431a2d39ebe9f8f678858a660/expr.html"><img src="data:image/png;base64,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
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/a21e02cc3d73112898e849dd8b051ddb75468b0f0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

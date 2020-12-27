@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{f, x_{1}, \ldots, x_{n}, y_{1}, \ldots, y_{n}~|~\left(x_{1}, \ldots, x_{n}\right) = \left(y_{1}, \ldots, y_{n}\right)}~\left(\begin{array}{c} f(x_{1}, \ldots, x_{n}) =  \\ f(y_{1}, \ldots, y_{n}) \end{array}\right) \textrm{ if } n \in \mathbb{N}\right..

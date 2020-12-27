@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Minimal axioms of proveit.logic</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../index.html"><img src="../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Minimal-axioms-of-proveit.logic">Minimal axioms of <a class="ProveItLink" href="logic/_context_.html">proveit.logic</a><a class="anchor-link" href="#Minimal-axioms-of-proveit.logic">&#182;</a></h1><p>This is a reduced set of axioms for an initial consistency check.  Perhaps we can reduce this further, but this a a first stab at it.</p>
+<p>A couple of these axioms use $\neq$.  We did not include the axiom that defines $\neq$ because we can regard it as a shorthand notation for the negation of equality.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit.logic.boolean._axioms_</span>
+<span class="kn">import</span> <span class="nn">proveit.logic.boolean.implication._axioms_</span>
+<span class="kn">import</span> <span class="nn">proveit.logic.boolean.negation._axioms_</span>
+<span class="kn">import</span> <span class="nn">proveit.logic.boolean.conjunction._axioms_</span>
+<span class="kn">import</span> <span class="nn">proveit.logic.boolean.disjunction._axioms_</span>
+<span class="kn">import</span> <span class="nn">proveit.logic.boolean.quantification.universal._axioms_</span>
+<span class="kn">import</span> <span class="nn">proveit.logic.boolean.quantification.existential._axioms_</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">trueAxiom</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[1]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/_axioms_.html#trueAxiom" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/__pv_it/b5b8ce0f03ab68a7c7bb937dfeb4112a686e3cbb0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAAG1BMVEX///+YmJi6urqIiIiqqqpU
+VFQiIiJmZmYAAAD2GhH1AAAAAXRSTlMAQObYZgAAABhJREFUCNdjKEsDgVQGIHBmgABa0YpADADk
+ogYfXGfJdgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">falseNotTrue</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/_axioms_.html#falseNotTrue" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/__pv_it/9232c35b58f1471872c4bdc53718ee27a9be34610/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAUCAMAAADrw95cAAAAOVBMVEX///+YmJgkJCQNDQ0oKChE
+RES6uroyMjLc3Nzu7u52dnZUVFQQEBAiIiJmZmaIiIiqqqrMzMwAAADQJR+6AAAAAXRSTlMAQObY
+ZgAAAIRJREFUOMvFk9sOgCAIQOmiqJjp//9sS9sqp6m8xINzwNkZGwC0wujvevC1isL777ZH0JX0
+ew0lmWey3iqqBHBRCly0IO1FRRhGDcZYl/N1HGtJ2ocGAi4qFAONs842TUzjVixKe1Dp4BtNK23t
+a6WTtHIycmodm3fADdRc0psfpCCbHQeFUAaWF4Tk8gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">eqTrueIntro</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/_axioms_.html#eqTrueIntro" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/__pv_it/7bce5e3cff7f8036cee68d8befe33a38fe32f5c10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAAAWBAMAAADgE2koAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAaJJREFU
+OMtjYCAMOC/gl+eewMDwAMS4i1fZCggVhy7OXA4GCQyZDAynQQKv8BrzEkK9x+YQBRC5joFhBsjV
+DfhM4TWAUO8X4DKGR4GBDyjJswGfMewTwNRq+wm4jOESYOA9tWrVdLx+gspe0HfAZQzDEwaGHx0d
+NXiNUQaTLAv2X8BpzGEGhlQGhk4wG0KywFR0whi9YHIJQzwkHN6BgQGKMfcYGJwZuMCRzvsFLMIB
+C9gvMGOqwaQDw3wDnK7ZDgxBBiawaxf/RTEGygUCERDBmmyc34DTmHigKy+wg5mnilGMgXJhxgD9
+yvgAnzGcD8LA1il0IBsD48I8BUwS7AJIYZOAYow7KCxTQCw2BnNkY2BcaBBzAo3h+4DTNcAgZthc
+AGLdZtBHNgbGhcQmOO1w/MRpjA0Q84OYXI/P9C9AGAPnQly84v8rBu7+75hRxQJJS09BUQtSz7yA
+YX4Awhg4F5EZ8ACuAhjLF+iqCwhj4FxE1sQDeBSgDI4fDJz9tXBjEFyU9IwLrMMU4sBZbOEGnUQZ
+Q6gQ5Z1AlDHkAGaydAEA+qlrXgbLZpIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">eqTrueElim</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/_axioms_.html#eqTrueElim" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/__pv_it/6ff60b895e13190b9801f0a9e710e21dbccdfd7f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGgAAAAWBAMAAADeGsQjAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAUpJREFU
+OMtjYCAHPAARd0nQwArUcRrEeEWCJr4PDAwzgDRnAwma7v0CalzAwMCzgXg9XJt/MjDwnlq1ajoJ
+FvEyfQGSPzo6akjQ5MX9F0imMjB0grkQkgUmyzEBq+scWD8BKWcGLnCw836BqIVJ33eAMng6OiQ6
+eqAcFgbOz0CKnYHpAoi7+C+KJi77CwjzEaEbZmz2A2TQBXYw91Qxiiae5QbYNAGtlwNF0oMwcEQr
+dKBoCuJowKKJG4gLwQGQAiLZGMxRNCUwFzBkdADBBWRNs4H4PYixuQBE3mbQR9bEu4HpA6ZNnCCl
+/aBg5VcA+fvxmf4FSJrW2Zz4haGJq//fAoYd/0Ge5wUpZl7AMD8ASZMVA+dXhrx3QIDiPFTgC7Tx
+AkITC5D9F1voIQOOHwyc/bUITf0NDDO+IyIqgUDa4iAnJ9NPEzMRagC48VUODJp6sgAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>While the next two are not actually axioms of the system, they are derivable from the axioms (notice that we are able to prove them automatically) and replace a number of other axioms to defines a simpler space of derivable truths for an initial consistency check.  These define what are in the set of Booleans.  They do not define what is not in the set of Booleans.  This will be fine for our purposes right now.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Booleans</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">InSet</span>
+
+<span class="n">InSet</span><span class="p">(</span><span class="n">TRUE</span><span class="p">,</span> <span class="n">Booleans</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/_proofs_/trueInBool.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/__pv_it/54ab6b8ddaa531831870dd80fb2d17566675a46a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAAPBAMAAABdHiGLAAAAMFBMVEX///92dnYQEBDc3Nzu7u7M
+zMwyMjJERESYmJi6urqIiIiqqqpUVFQiIiJmZmYAAABV8JwGAAAAAXRSTlMAQObYZgAAAJVJREFU
+GNNjeHsXBO4wIAOuS+XfdE+CmbsY0AEb6wJ3vwbscuycDVwBBahy7XfvJkDluDegyoUvQehjnIIi
+x5KCZObcmABkOR4DhJzuf00Ud7Iju4WxQwBZLigNCGBuYSiYgSxnjqyPoYAHWY4JRe4AG7Ic3wIU
+fY0o/ruNCDMBRrkDINYMmJBPpQN6WCPAxFpImEEAACptMtKk+o6sAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">FALSE</span><span class="p">,</span> <span class="n">Booleans</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/_proofs_/falseInBool.html" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/__pv_it/05f9092134d7f41a46dc315acb203c11685a8bdd0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAAPBAMAAABdHiGLAAAAMFBMVEX///92dna6urrc3Nzu7u4y
+MjJERESYmJhUVFQQEBAiIiJmZmaIiIiqqqrMzMwAAADwFAjMAAAAAXRSTlMAQObYZgAAAJtJREFU
+GNNjYGBgeMuABnhWpn2d1QRm3kGXY2DlO+DmXYBdjo2pgOdBAqpc2apVAVA53guocs+OIPQxqqDI
+sYQgman14gGyHIcBQm7W/0ko7mRDdgtjuQCy3MtQIIC5hSFBHVnODFkfQwIHshwnilwDK7Ic9wEU
+fYUo/luLCDMBRukGhl2rVs1ctWoFWMgjyQE9rBFAMQsSZhAAAHA/MhEUp0UxAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">implication</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">impliesFalseDef</span> <span class="c1"># required for proof-by-contradiction</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/implication/_axioms_.html#impliesFalseDef" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/implication/__pv_it/8cd06fe0e7906fea7c352dfbb750668f1ab9fc910/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAAAUBAMAAABmACzdAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAmZJREFU
+SMdjYMALOC8gMArgnoBbE245kMwDEOMuLhUrkDACxAFxJlb1rBsYcMpBdZ0GsV/hsvAlEkaA90C8
+DrsXFBhwykF1zQAFXAMO+3gNEBhJ9P0CBgYeBdwWYpWD6eIDURtwWMg+AYERYLU9kMslgBDoRLMQ
+WQ5DF++pVaum4wrR6UgYAS7oOwDJJwiBCDQLkeUwdf3o6KjBZaEyEoYDlgX7QWn2MGrIo1h4GNMo
+hK5UWJB0YqrqRcJwsIQhHmTsPRCbuRwMPqNZCJbjeQcGBui6nBm4wFmD9wvUuY8eF8PitBqBIUYf
+AHIcGOaDDNmOnFZeo1q4HdPtCF3sDEzgXL34LyhmD9syKByYuxWqSgQJg8uBBGBWSzbOB6XqeGTj
+1omgWBiPmUERungusIOFThUDfdc9awGDggLPWjwWsjAwMD5AM5QzZwIBC5F0cT4IAztBoQMUvECg
+oOB7EjNI4RYCg5sdlOzdwXEIiad3E1CD1B0pDhPAIsi6OlNAImwM5tByTsFYLgBHogFayAnUyvcB
+ljCgzn+ALdGglMnIujYXgIRuM+gzcBlAfMg8FaruMBIGgwBwluT4CSRskGJwAZqFNtgyNFwXP0gR
+1+Mz/QtYKzo6mkBxyARV546EoaX5/1cM3P3fgS57ijAuFUIBE3KheHl5AoocFl28IPcxL2CYH8CQ
+APEhDzPeog0MuAoQ7Al45HDJ+AJ9eoHhKNjCAzxn8BbeDDgLaIJycBmOHwyc/bUMHMC45a153HcB
+uVjuxFoKrcNTba8jXkYDGIeEK2AcBSERcp0MDGQ2MXjxNDFwywFlALhDyc0NCUwnAAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># An implication is vacuously true if its antecedent is untrue.</span>
+<span class="c1"># This will allow us to prove nonsense implications but only when the</span>
+<span class="c1"># antecedent is untrue and cannot be used to prove the nonsense conclusion.</span>
+<span class="c1"># This is our &quot;harmless nonsense&quot; principle.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">implication</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">untrueAntecedentImplication</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/implication/_axioms_.html#untrueAntecedentImplication" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/implication/__pv_it/9b57b4c358e5744d386098c1a354654cd7680b0d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAL0AAAAWCAMAAACi0m0vAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAAAoBJREFUWMPNV4u2nCAMtC0PeQf+/2NLQCWoqLd3a8s564GVyDCZhDBN/6BZ+P43vMVn3MYA
+L4F3ho7m+NQOVEpKCGWMzCOF8INfX0b3Evpou1F6bsnqvkWaMwe4a7sSYc1L4EF0o5geszanKg+Z
+8BOBE8qbE/5y05R650WyZ7PMyb98mQoJgTuG3eCwWf1WyHYLQYYkT3k+kYJhdcdMF8YjGiaDTYeX
+0HMqHOkmn+CBwEpLquxLqyqXgDPUvPcU7UuTRMhxTv+6cfO1jg0B6ySKmW9joUlL4iB7BcCN9lvI
+IBic5Ujegs6XUNwVGFn/QFNnIJCNgP5k+Nj7VPueB5vEKKVHfyZ7x9TyvmgQH7wx4kTnS1HmepIZ
+9uh7A6vG2yxZr+10ztlbqDRMdi4yeZR93oVffFF4hbqDpQWnKRu6OFbEMfe9gXGP0dceGx1XVgV7
+lD2i5wS9jZmFRgifDFnW4ckwcXqU7UD1BjJM1+ibcpaObqIUsWv2NNtPahGq1EvQqUaIwuAh0kw8
+R4rq4q6Hsxqokrt+5R9cod/eWn952Mo4yPbzKjWoMzyBCx7nEVmUKVwP0fcG3E833Aexy/vm9Lhy
+h8IlVh9JtmpTLG5uSctFEYKhIVqm2OQHoHqDvgA7RV/97UxKBZ/PHX2SdWoeJ+O4lmitMFumwIZW
+uIK1mVbYkvLTgWoGKiv15w/U66Vy+kphfCTfl6qH6kDWhTE+rKm4ypOFAaXEoM+WY/QgPnNoB76P
+qBIQ1iQN08wy6yGfeOguOQBFDfpsucTz0wLsD24JN/eCUdE5PF38s1rJfaQWv+HA26+if3pL+sTN
+EG4cOFxihB7euiF8q4n/BslvQhscDi68I44AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">negation</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">negationIntro</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/negation/_axioms_.html#negationIntro" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/negation/__pv_it/60d41099a84ffe4c8d1c633bae08f2fab3d7c5640/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIUAAAAWBAMAAAAcBkLiAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAchJREFU
+OMtjYCANzEUX2AnED0CMu8QawdWAzGMFamabwMBwGsR5RawZfBNQeB+ApgLNmQFkczYQa8ZlFN69
+X0DiENCsBQwMPBuINaMSxWObfwLJhQwMvKdWrZpOrBGcBcg8XqYvIA85MDD86OioIdYMJgNknhf3
+XyDJAxRLZWDoBAtBSBaYCo4JmGZwXED2igPrJ5BrgIHqDA5aIPsLRBlMyX0HhPIEKM0ODDjzciCo
+AdvG+RlIcQP9x87ABDZ98V8UM7jskeyExRsjzNxpQBxmbPYDlEiAEcxzgR0sfKoYxQye5QYEzACy
+5aBmcD4IA6c5hQ4UM4I4GjDNYN+AMIMbSBWCvASKq84UkCgbgzmKGQnMBQwZHUBwAckMeJgCzZgN
+pN5Dw5RhMzjSbzPoI5vBu4HpA6Y7eGD+Y4UklX5g3DEfADL4FUBB+PhM/wIkM9bZnPiFaQYLPI1x
+9f9bwLDjPzAM+QJAVoL0Mi9gmB+AZIYVA+dXhrx3QIDsF9S0DgHL4SxfoHsuIMxgAbL/YroDLc+B
+wSF4AvzBwNlfizCjv4FhxndoAPJ0dEh09OBKvJAEipacSSiDcGYJEsvCmwwkm0EUYCZdCwB363LP
+gacX1AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">negation</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">negationElim</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/negation/_axioms_.html#negationElim" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/negation/__pv_it/22bd342d68dbc19f9504d702df4ef3f4fe1381ad0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAAAWBAMAAAA/XRM3AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAbRJREFU
+OMtjYCAWcF7AL78TiB+AGHeJMGwFhIrDIhUNItgmMDCcBjFeEWHYSwj1HovUJhDBBXTWDJAPGgib
+xWsAod4vwGEYwyEGBj6gJM8GwoaxTwBTq+0n4DJsIdCqU6tWTSfCl1A1F/QdcBnGB5T50dFRQ4Rh
+ymCSZcH+C7gM4wEGRCoDQyeYAyFZUNV1whi9YHIJQ7wCiD73DgQeoxjGC4wBZ3A8ANlfwEIcqMH+
+BcaqBpMODPMNcLmMuwAYsgxMYJcv/ovFMKggEIiACNZk4/wGXIaxfgB69QI7mH2qGIthUEGYYcAw
+YHyAzzDOB2FgpkIHpmEwQZg3gUmIXQARZs9QDGMpAIVxCjg3MJhjGgYThEYAJ9Awvg+4XAaKAIbN
+IBMZbjPoIxl2oqOj4wFCEAgOQ9Max09chjEfABL8oMjmenymfwGqyxIQgkDgDszq/18xcPd/R4tO
+8/JywfLyMqCbA0DOA6lnXsAwPwDdMLggIjvhAcvhLF+gCy+gGwYXRGR0POAQjMHxg4GzvxbVsAkI
+QZS8gANwYUkzHAQKR5yAYwIJhhEqtm8ykGAYOYCZAr0AOed5gytoZ+0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">negation</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">doubleNegationIntro</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/negation/_axioms_.html#doubleNegationIntro" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/negation/__pv_it/d4b5a7ad1d6d7b7899396f426b449cfd0e03f8720/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIoAAAAWBAMAAADtDRlvAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAc1JREFU
+OMudVEFLAkEUfrmau+pah36A0A9Q6BCEoNDBUyAdOqZQHToldOhQgUf3IHrTm0JBYiBCh44FXsI6
+7D0qoTrkRQ+FFki92bfbztayih984zfOvI+Z994OwFhIqp0k+IvEDps8OLnUbCViE7lLvGXzrpPL
+m61E9JANYpkdNOtgIkfsJJv1qgCBkMYgk00HF2/RTiLOYzj1zWuU2/V6yelCJVuJUMNxHF+Iw1zu
+yMll0VYCuKtXrGIt4g6Aov1No9vYJerHz5uBed7lFFKYE3gkroJPq7b8TsHGrqc4/R4CCAcM17wE
+iEOFJfuS6AWX1ksnI4uLL6Z32ILRcWlegmdraY+VNkUMqF5tqb1vcQmcRRxd8OYzHdNF6mywFU8o
+Z3FZF7O/NzJCOQnYHF6sMiR0KttsZRaWLS5pIWNNKYZyUkKXYN/MLlxo2+8hzLvITVefVMtId5KX
+rHXETxyiOudYwXzPd4Uq59KI3nyRSpjFNWXtuwv+wgBT9wpEmUULVagkOZcVkD7GfAFUygyRsIZn
+Uk0XN+rRmK+RSklfo96oQ5AKx6ZLIQvlgd4wihmj/HPRX4a/ECd/pQxfZRIXpxdTLhLHu0wDYZqg
+H8j2eoNyIuULAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">boolean</span><span class="o">.</span><span class="n">negation</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">doubleNegationElim</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/boolean/negation/_axioms_.html#doubleNegationElim" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/boolean/negation/__pv_it/415aecbc3f15f15ffc3173d45773a3dfeabb44460/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHEAAAAWBAMAAAAFoW4BAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAXpJREFU
+OMtjYCAbPAARd0nVFQfEp0GMV6TqfA/EM4CYs4FEjbzvFzAw8AExzwYSda62nwDUfmrVqumkOvaC
+vgOQ/NHRUYNLxQRkTgCcxbJg/wUglcrA0AnmQ0gWJLU8CCZQcgucs4QhXgFIOTNwgWOG9wtYlANJ
+ZyYiSICSzHAXODDMNwBS7AxMIKsZFv9F18l6AM4ESXIlwMSTjfNBscFzgR3MP1WMrpMN4TOw5EuY
+NxkYGEHO5HwQBjZIoQNdJzvCdrCkLpQHjEN2AbDnU8AWMJij60REFkRyG4TDCdTJ9wHE2lwAIm8z
+6CN08nR0dPQxeDAwnAAyHsAkPRAGcvwEsfhBIcz1+Ez/AhQ72RjcIIwEmGQcmLvi/ysG7v7voMDl
+BelgXsAwPwBNZwRMJ1TSDWtq8QXafQFN53KYTqjkHWwaOX4wcPbXoujkZGBfAEmCMEkT/IkZKWyZ
+NmApBIjSyYCabbkvEK/TF0VmMYGsx4xsC0ou00JVCAC211tZTJMxOwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># probably not needed as a basic axiom</span>
+<span class="c1">#proveit.logic.boolean.quantification.universal._axioms_.forallInBool</span>
+
+<span class="kn">import</span> <span class="nn">proveit.logic.equality._axioms_</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">equality</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">equalityInBool</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/equality/_axioms_.html#equalityInBool" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/equality/__pv_it/c86b08677f78e079f4e8aae4f0f6d8106d6027d60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKYAAAAVBAMAAAA++IifAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAkxJREFU
+OMulVT9oE1Ec/oyX3OVyZzMoOMmRYuwgVIR2aqsiGBA0rYOTYBAFXaSI1UGxoYMmgvQEoUURHx1C
+6SABBweX0DpIVbjBscoJOigoVRTUqe9f2t7LezTgD768u++997vf/wAmyUYCBsmFZj5mD+81m/MS
+JrmkvO/bPf3x2mHOv2bvXzV3vkiY5KlKxKfcu8Ocn2VuVjuv+AcEjOIFClE9gb0O53cQujQ7r9ih
+gFHcvPz4neu32jpfOJz3lxcWZjRXZiTM8on/pqfIhp0v5wX/p1a7qbnRKzFXfLBf8dLtDXCfYEmE
+lWz4bk1coCvl6VLX6Lwn4Lb8KzarDe87FxZhz8qjH/igpL96ZPIHzTvjj8KNNTpvCHjE+2cpYX20
+PUYNeC40bc7R2xVw3kZKV9k7BVw4HUVBtgX4CZzl4dzDrG/rdKyI815kw6wT6Ak69sok/VvqzCbs
+dFDhfDY+TYnFgeIoYBVhk4Tv9MioKEcRzwp7HkGKFlKJ8/nNOjOsLRlfPw+kyGWbxtfrIWPJHOVI
+P91U7LwNp9LO0cGEnX5L8M/GaVjwjdEPS+iTJ5YEys1pPFZ9H0SZxm1I9MZ6v8Rn8GYQghcB+8v5
+IZyTJ0oCjcLccEcKG4VDtBQ+i2K9eDw5QzjvM9fSq2m2cRW7uurNEapsXDxar2RvtjtC8njixR5m
+CSas1a1nSCZ2f2lmiDpbGu8WlzHWxLG+9fqvQ99g1PzICTSzTj8Dm27oRFvPZKswYPyeyufCTOtk
+t/8dftgV78NaaeH/ZQ3wb6WAciBaNgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">equality</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">equalsReflexivity</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/equality/_axioms_.html#equalsReflexivity" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/equality/__pv_it/3580c570dea9cff591db97db2d7abd66a33477f40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAAAUBAMAAACE8PXhAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAUFJREFU
+KM9jYMAAnBcYcALuCQwMD0CMu8iiKxjwgEwGhtMg+hWy4Et8OtYxMMwAuaMBSYzXAJ8OHgUGvgVA
+agOSGPsEfDq4BBh4T61aNR1ZbDoDXvCEgeFHR0cNspAyEC9Sm6KjgKYUKnaYgSGVgaETWaYXaPUB
+3iJ2UCDyvAMDkM9gYvcYGJwZuB4g66gGKlzA84sFzTswse1AnzIwoUSZCNA8Bo4GDC9DxeKBmi+w
+M6DpYGDgV8D0M0QMqIPzQRiQcchULQDuKqA4hAP1RwIDQswdiDtTGBiYFuSxO8B9zr1AHyiClqKg
+YkCfM2wuYGBgZXgLkwIGn/+Gfoa5aG6CidnA3fcTJgW0dpnSIlv0BAwTewpKSCD7WT+wEpdKCqCM
++TwPeIhNiVA7rxw6BRPsJJDaMQHeHIXVOHy5lncCAwDGgVl+SYhJvAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">equality</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">equalsSymmetry</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/equality/_axioms_.html#equalsSymmetry" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/equality/__pv_it/31cdd49381a5bc0613437bed3e59e09327e2e73f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN0AAAAVBAMAAAAwUfbwAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAmVJREFU
+SMe1VjFoFEEUfbns3W42e5cU2i93EEIa08RKzhDBYGOSxjoELWwkhRaiiJXcFcJaJSiSsYkSLA6s
+tDrO7gRdUJCAwoIgKBiOoKDYuH9ndr2Znbk7kXx4cPvf+3/m/vz9s4DJJkIOkz3X+B4OlhMievio
+ETwRMFkpyLnc24PlhFf08FUj+CJgMjfKuSrBYDlhm0qn2Vd5nsNsnZzn7TB5jAoDvFaetgMOsz3K
+ea4Pk8cod/f2tjT0loDZKotqh20OkxN+Nho3NXSNw635uMeUo6heXoor46nVLsxnnCTnKUhOuAQ0
+Nevd5fCsaZyg59cHZJ/o51O892/FlYkUvxNmHLzEfUBbEilITjij6zTgBseD8QgNheriDTsHTKrl
+s1sZ128iBckJNgq6t/oYBxvzcahQjO+g2FP8Y4sZJ8l5CpITvNCGeT2ssOKPHHloXA+53aUp0vUm
+ogv0ZizMrALWDGwm1RN1FKb/ntPnhOM7sDYVP9VTcOn5rSNLQfIkpHkxbi12xY53502xNblfcAfO
+urLfF4Ue5tJ+6TPqF8FJxlOk/YJn8aJFfCPm/jJmheilwEmsKMdr/XZ6NMjH20reuNtTTjKeguRJ
+yJRPzl8JdQobQrQssFs9rUwZd2OuRgO+sqrkjauVcpLxFCRPQsosOfwiUVdxPDfP6oaB8Xj0eVYX
+8ixkx4s8bDNcs3ryvC5F7vf/nNciRac/ZPddp4u1Fs7OZk3QTGCHjj/yfeRo5ztPkd5H/dZyAyeU
+71urumD4e86o9y1PQXIlZDIotc+P/D2x/2/fE/v5kDKsD20crf0BIWnW/FCMiDQAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">equality</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">equalsTransitivity</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/equality/_axioms_.html#equalsTransitivity" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/equality/__pv_it/62a78d8298863a1032c900aff4af282587b901b20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANEAAAAWBAMAAACs+WTQAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAnJJREFU
+SMetVU1oE0EU/prsTzfZJB4UBEGCgVKCh1wEQQ+hgkXwZ+NBxYsl2INQJYd6UKTkmBYiudQWQVyh
+KK0eAoKgUFhyTKUGFVSIsKB4KFSCIPhz8c3sZrOu2djAPFi+mfeY+d6+980MIM7uhYee02ezwUcR
+RLFyeEypARtssCWCKVkbkAX90DKhVhbB9GZQsEGZmIBeF8F0Y1DwAZBorq0tiSDSSgNLmwd+VCq3
+RDBFctSOA1cmGsHA5G65BZ2i08B8yGJpGKbRFvAE79JzbLL5ldknLoZq5jCVjiRxjAuj/+JhmFRq
+dhOvzBNB2XHBxam2KiItEUwj1AkTlT6RCyQ6uUPCa6kQxQR869ODKThMmn2O6f3QmEHOMaiUAJa2
+FntMeubstLtoYgo3e8AVN7dq9KoH+bszcfr0hY+fcTqmzPnLJBzzmko56SmzwPxH2ukeU1axZ5UK
+WRXWL3kXeRi4nuh6w6eIF5EOsoFfiuegOIrAU6KTsc28dycxzsOPfdUzkt0+aiulSNkDt+HdU086
+ln6PdrRg08+3X38GohYNUzz/n9x9FEW+PO/vU8q70KKWku4BtxWvHSXEitnMP5d1LrGfdkuyGidM
+3jGZuWexh8EiLvqYLsFQWNm3oeZH2AoGrkczZHMnt9Gj7uC+butYNnFd6hBoM+tlj0nrbMLqnhnj
+DLQFDq7d2Xi/0xvWsYdvG00U6jg+bhMk5L2mxxS7evJgN22peBvyPg6utQoL3pn4z6vht3qsxhRU
+Dz1Pq6iSmBwY6iUMZBGvKdZpBqFMM5LNXmoOQ73uH/6eJiC1LQahTKdesoI5INSiIjf7A4jqrxun
+Ivq8AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proveit</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">equality</span><span class="o">.</span><span class="n">_axioms_</span><span class="o">.</span><span class="n">substitution</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="logic/equality/_axioms_.html#substitution" style="text-decoration: none">&#x22A2;&nbsp;</a><a class="ProveItLink" href="logic/equality/__pv_it/227f37bc1ee52abe3a92ac5130dc32c91fd40c720/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOcAAAAWBAMAAADJFJavAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAuNJREFU
+SMe1Vk1oE1EQniSbbLLZ/BwUD70sCXiQQsWiINga9CCIkuDBa4PoQVBYxJN66EmSQG0EQUGEtYg/
+PdiCB/Fk0INiRQKC6EHZgx4UKkEsSLz45s28/XHTlgQ68L1M3nx5X/bNm3kLMKpluv972fZm3GcM
+F798HkH0IQ7Gnv3soZ0dQAsxUm3CCn75MYLod7nKyl/20B4PoIUYhku4hU8/O7xmbjeOS0cr7KGZ
+VpQXZrwg5B1BXh5eVJcJfO558kGKUV6YcZeQe7O4eHOE3aXfvPI8aV+jvDAjXyH8aTSujCBaxuH9
+jknyFnbeGBd7+zJCUwyjbMF1B0yx0YgzAE0MH+hGfqFtIDonx1/kGZ3cBV0ckC8ysz+lcR6ZYWpF
+mBD76hIOy/MEZqkTWTi9gehlWX9r5JmO2ddE4p5GK5QZtxMuNEQp2wQd4l3e7WFEt8l20CPPgLQs
+gJkITTGcmIUPnewRzK6O0YIzgqhpK69gDRb1GFUnueaLZtyTWHbzU0gpnxAphkN1uOSL8iQEAmp7
+03XlzdRwPBLIaR1CjGmIi4LSbAI0T2P0Iw67Uu5F8dHpJ4u+KE6mGsLmvIA6SDGLvKwzAXGHD1LI
+FAOuSn11kOAJKsMkDrU8pjdzz47P+qI0CcEAcHUsVcirLs/DHayAaENiBuyDqlgm0SFwOqgECrJ3
+JDopK5DTgtdQVEDtZJW9+6WFKfxn3yKiiiEoB8Uy+RoBcvIIbQc6CTijV2K1gKiYTGGWVr2Aam2v
+IdwG7YhogDEt8IDB/D5kWpneO+hkWqDXqv7plZNKiQPU8LP1Vb/1D2z4PiPlGr/9hq+ajw3JMeP8
+sXEnOQbaqWu+qJxULA6gNUFvueytd7X5DL2btvyrLXBTZfnvwSPOcKROVYAu8Vy57V/nIXVvVY+h
+lfbigm0Cd/8PNXqRkO8T5zR3sKgKDH5dyW36uvKJwdkoiYEjXTj+dp2OpAJbaYktWvcfpC3c9HKM
+He8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-09-02 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

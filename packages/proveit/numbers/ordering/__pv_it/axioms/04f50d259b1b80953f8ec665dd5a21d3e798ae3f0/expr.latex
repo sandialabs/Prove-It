@@ -1,0 +1,1 @@
+\forall_{x, y}~\left(\left(x \leq y\right) = \left(\left(x < y\right) \lor \left(x = y\right)\right)\right)

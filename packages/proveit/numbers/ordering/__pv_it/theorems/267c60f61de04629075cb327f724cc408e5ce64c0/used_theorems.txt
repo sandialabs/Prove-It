@@ -1,0 +1,5 @@
+proveit.logic.booleans.disjunction.singular_constructive_dilemma
+proveit.logic.booleans.true_is_bool
+proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.substitute_truth

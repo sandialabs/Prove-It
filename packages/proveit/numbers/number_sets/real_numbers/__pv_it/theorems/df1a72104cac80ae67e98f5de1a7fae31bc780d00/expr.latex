@@ -1,0 +1,1 @@
+\forall_{a, b, c \in \mathbb{R}}~\left[\forall_{x \in \left(a,b\right)}~\left(\left(c \cdot x\right) \in \left(c \cdot a,c \cdot b\right)\right)\right]

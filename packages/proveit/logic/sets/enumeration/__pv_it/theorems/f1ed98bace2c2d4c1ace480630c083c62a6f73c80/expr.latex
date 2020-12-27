@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{a_{1}, \ldots, a_{n}}~\left[\forall_{P}~\left(\left(P(a_{1}) \land \ldots \land P(a_{n})\right) = \left[\forall_{x \in \left\{a_{1}, \ldots, a_{n}\right\}}~P(x)\right]\right)\right] \textrm{ if } n \in \mathbb{N}\right..

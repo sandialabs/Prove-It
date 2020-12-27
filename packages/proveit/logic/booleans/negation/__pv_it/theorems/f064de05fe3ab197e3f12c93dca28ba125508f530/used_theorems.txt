@@ -1,0 +1,2 @@
+proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.sub_right_side_into

@@ -1,0 +1,1 @@
+\forall_{m \in \mathbb{N}^+~|~\forall_{A_{1}, \ldots, A_{m} \in \mathbb{B}}~\left(\left(A_{1} \lor \ldots \lor A_{m}\right) \in \mathbb{B}\right)}~\left[\forall_{A_{1}, \ldots, A_{m + 1} \in \mathbb{B}}~\left(\left(A_{1} \lor \ldots \lor A_{m + 1}\right) \in \mathbb{B}\right)\right]

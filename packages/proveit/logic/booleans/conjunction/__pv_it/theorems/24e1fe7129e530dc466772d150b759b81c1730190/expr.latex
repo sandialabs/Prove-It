@@ -1,0 +1,1 @@
+\left(A_{1}, \ldots, A_{l}, B, C_{1}, \ldots, C_{m}, D_{1}, \ldots, D_{n}\right) \mapsto \left\{A_{1} \land \ldots \land A_{l} \land C_{1} \land \ldots \land C_{m} \land B \land D_{1} \land \ldots \land D_{n} \textrm{ if } A_{1} ,  \ldots ,  A_{l} ,  B ,  C_{1} ,  \ldots ,  C_{m} ,  D_{1} ,  \ldots ,  D_{n}\right..

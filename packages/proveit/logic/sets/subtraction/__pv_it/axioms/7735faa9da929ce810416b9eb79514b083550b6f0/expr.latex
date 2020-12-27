@@ -1,0 +1,1 @@
+\forall_{x, A, B}~\left(\left(x \in \left(A - B\right)\right) = \left(\left(x \in A\right) \land \left(x \notin B\right)\right)\right)

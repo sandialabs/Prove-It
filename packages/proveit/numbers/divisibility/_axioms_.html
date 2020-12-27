@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.numbers.divisibility</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.numbers.divisibility">Axioms for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.divisibility</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.numbers.divisibility">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Integer</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Divides</span><span class="p">,</span> <span class="n">frac</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.numbers.divisibility&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">divides_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+        <span class="n">Equals</span><span class="p">(</span><span class="n">Divides</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">Integer</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="divides_def">divides_def:</strong> <a class="ProveItLink" href="__pv_it/axioms/cfb16c37ea0a2e96e4a8ff0c13e475c3a71bd0510/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANwAAAAmBAMAAABdfejNAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABCRJREFU
+WMONWF1IFFEUPurs7uzs7CpR0Q/ZoiQikRZYEGWWkNRDrgQ99JJIRb6ERFJRiBmYCtYKlVKEow8q
+ErnQU724mQ+hUFsEFfSzFggFhVlCalH3Z2bu7Mzc8R7Yb4a9d+937jn3fPfeBfCw9yBq4ZRHo1LH
+0MOy08J0W9BwhVHo1lxbD1mQb3s1UTZpHYAq5UEpx+86hvwYrBKeXH8M4E5OGto57d8syDN/nTDd
+SfTRsqIwx2mnQe72jNaxuCibbwFjjeab9/Tc2/8Z4clFyDgVkJ3H82eRIceCC8J0fSQObSBz3f9k
+QXfLySyDox5dKwhuhxpu9b2woLuhzOM5GiNM6M+HLl1XEBws2MPNdl+ljmmefPTFMA6Djc7vHDI4
+nzFLi1VvzJ9u3oB9TwLFKfz86kL3keAXO53ilJrwLPEjrfyytxSXQwRaSCPtAr3YvRYXuh1kpDI7
+HYw7s9yIMZCSo/aWXQBTKo5jNvEIYQTVnppwoTtPxog76PodPQPEW6mgnM336rlm/NwJwbrD+CW0
+oGN4cmSkxy27PzGwFpMuUmnvmVtmL7NWUz9krZN8s2Tg7/b2S250RJAK0Weg6MbmKKLTJV8tc9DZ
+g3ifqdVLujUpfw08AdDhJtCkQxd6SYbPBNKITpf8MMn6s+/YPpOuo/Zya2CjtAxbnMdY5bbY0PIh
+dBdRYjV1UYojOl3yQ42OkrHTsZXnj+nUfwwMQLabGNBor0QOgtxCcqdLvm/WoeV4peX+w0bafPl4
+5qSpSkpaVgJGNRUALzo9NxOG5HPorIFhs0vLODxWumD6CK6m8iKkIlIRBDRbMNFwMUpHJV9qZLmb
+cQ+muTGoCfSzLJxDEkyCHcdRAWqnA2iBq7larZHkOX2phLRS1IzpqOSHHZketa/MbcbLrSD6wVbT
+eYIPkLs+urPfroZioyvx5wkKYeI63CWzo5Kfk3QUgv2bgBHdTlmDwTcZdaeXzYKuOvXGb1YTjcVC
+P7A7Reio5Edijr3Dvs0ppw7SE9Oa6fbLP67gNyKnBMM4W75ZH/7iLJjnoWsuIoYlf8ixqmRHeKWn
+VMSYqi0yxNlW0yr0atAkmevusV2idcl3SrSat+x+T7uYHQdfjU9CbQL2F5uejpEl2sHoqOS7aEJo
+UfA0E8mMekKJy+aiptJk2V6p5Mtxjt55Gh0sU+1CcX+SnazpOcc8PGzSn29dBmtblm4sztDMJ0jv
+2JoOL5+RjIOPUtCwb9z78FThdWZfEqYbxXV2D15Hm3k91luQf6sRNHJVmoTn2gFehzyG3JNfTJgP
+F6vGvZCgoVIMuVdE8evdB8sWyg/UMuFqFaYjZzDuhQSCaxnybUg4mkoTwCN0rCvhDJRg6HEpuSA8
+vZ64tCTPBjnJ6bKgh90UpgvGlPqSQs5fB0qlif8BmJM0CfLsRSsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

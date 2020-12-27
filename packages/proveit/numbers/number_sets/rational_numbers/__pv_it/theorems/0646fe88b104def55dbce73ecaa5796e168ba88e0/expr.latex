@@ -1,0 +1,1 @@
+\exists_{a, b \in \mathbb{N}^+}~\left(\left(q = \frac{a}{b}\right) \land \left(gcd(a, b) = 1\right)\right)

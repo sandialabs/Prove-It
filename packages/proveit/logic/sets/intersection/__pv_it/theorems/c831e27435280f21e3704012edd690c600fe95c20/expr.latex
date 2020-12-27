@@ -1,0 +1,1 @@
+\left\{\forall_{x, A_{1}, \ldots, A_{m}~|~x \in \left(A_{1} \cap \ldots \cap A_{m}\right)}~\left(\left(x \in A_{1}\right) \land \ldots \land \left(x \in A_{m}\right)\right) \textrm{ if } m \in \mathbb{N}^+\right..

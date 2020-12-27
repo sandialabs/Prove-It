@@ -1,0 +1,6 @@
+proveit.core_expr_types.tuples.empty_range_def
+proveit.core_expr_types.tuples.range_extension_def
+proveit.core_expr_types.tuples.tuple_eq_def
+proveit.logic.equality.equality_in_bool
+proveit.logic.equality.equals_reflexivity
+proveit.numbers.number_sets.natural_numbers.zero_in_nats

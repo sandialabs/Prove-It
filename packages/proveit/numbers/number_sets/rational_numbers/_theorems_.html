@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.numbers.number_sets.rational_numbers</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.number_sets.rational_numbers">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.number_sets.rational_numbers</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.number_sets.rational_numbers">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Iff</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">ProperSubset</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">frac</span><span class="p">,</span> <span class="n">GCD</span><span class="p">,</span> <span class="n">Less</span><span class="p">,</span> <span class="n">Greater</span><span class="p">,</span> <span class="n">GreaterEq</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span><span class="p">,</span> <span class="n">zero</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">Rational</span><span class="p">,</span> <span class="n">RationalNonZero</span><span class="p">,</span> <span class="n">RationalNeg</span><span class="p">,</span>
+                            <span class="n">RationalNonNeg</span><span class="p">,</span> <span class="n">RationalPos</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.numbers.number_sets.rational_numbers&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">zero_is_rational</span> <span class="o">=</span> <span class="n">InSet</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">Rational</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="zero_is_rational"><a class="ProveItLink" href="_proofs_/zero_is_rational/thm_proof.html">zero_is_rational</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/f3ca85b6453a3e05b5c98d440d2232ad694764b50/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAARBAMAAABgN5JdAAAAMFBMVEX///9mZma6urpUVFREREQQ
+EBDc3NwiIiLu7u6qqqoyMjLMzMyYmJiIiIh2dnYAAADXmt2vAAAAAXRSTlMAQObYZgAAAP5JREFU
+GNNjYOC785oBDWx08TIC0SsZ2hNQZZrNEzgWezAw8AQw8C1AlXKSBkrvamBgMWDg/AEW4XEvrwLR
+vAeASlmaDBj4DRiYfoJEuH0bIJq42ASA8goeDP0CDEx/QSJdUBmGZO4DDAxMBx4x5D9g4AZLmcGs
+0uWcADTjwhyGfAEG7n8gEQeY1F6I1Ey4gdxRq4AAJMUMNnDCM5AzOEHOYIPrYoE4w4CBxYGBB+z4
+AJgU0wEHkOMPILwsC/fyI5CXNwIZlQytG0AC7BNgUjziCRwLgfYx9N21BgtwmGjA5X6tn4ASdExP
+IAEFMpLTgAEH4Hs2S/YBDrlEl4UKAN1tP6uqSdoaAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_within_rational</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">Natural</span><span class="p">,</span> <span class="n">Rational</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_within_rational"><a class="ProveItLink" href="_proofs_/nat_within_rational/thm_proof.html">nat_within_rational</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/07c59b01eca6851c125d1a7a395b46ab3d59da9c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADsAAAARBAMAAACRPMnQAAAAMFBMVEX///9mZmaqqqrc3NyIiIgi
+IiJUVFTMzMyYmJi6uroQEBB2dnZEREQyMjLu7u4AAAA1o4RqAAAAAXRSTlMAQObYZgAAAQxJREFU
+KM9jePvn7AOGXb8mMKACdpkz18BiJ9gTGPg+oMnypQUzvM15AGSlFrgwMCxAk+aZWMDAl34PyMo8
+x1bAEAAR7QkNDQ0HMTx4gcS5aUAiuYzvHlTadjNM9wVDIOHJAzQ9mcmhDCodDJNlTqgAkjO4gY5L
+ZtjJ4QCWZlSASXM6KAHJEqYGkDTbg3SwNCvCW1BpBZA0XwIv2OVmCJeDDZ/EbQCSZqhmB0u/QUgf
+ADuNjQEszaFwANVwhhk8II/NABLpQLwZLM3tAJfmBgeLAJB1CeTmC2DBSwjtjcBAlQDSpb+AOvkg
+0s8yH8Dl++9+YkAH1UehgQo0foIaAz6w2+iiNx5pZpmzkgwAA2pGYS22kLMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_within_rational_non_neg</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">Natural</span><span class="p">,</span> <span class="n">RationalNonNeg</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_within_rational_non_neg"><a class="ProveItLink" href="_proofs_/nat_within_rational_non_neg/thm_proof.html">nat_within_rational_non_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/4c3822c773f597daebd61d0b9aa87d56f85850750/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAXBAMAAABuYtVKAAAAMFBMVEX///9mZmaqqqrc3NyIiIgi
+IiJUVFTMzMyYmJi6uroQEBB2dnZEREQyMjLu7u4AAAA1o4RqAAAAAXRSTlMAQObYZgAAAW1JREFU
+KM9jYCAGeHsTUjHNAERybGBKIKCQWawASLJOYPhHyEhmGaDK9wUMiwg6j2/PBIZ6A4YIwh7h2/ug
+/gFDCMPbP2cfMOz6NQFNml3mzDWIGMsNkIlLGBhOsCcw8H1ANyYtmOFtzgMg68khsBt/MjCkFrgw
+MCxAU8gzsYCBL/0eA8Prk3BfZ55jK2AIgMj3hIaGhoMYHrxA4tw0hocnwbYLgMIxuYzvHlSh7WaY
+iRcMgYQnz4NyaMxsBBLJTA5lUIXB8NBLqACSM7hRvJjMsJPDAayQUQEmxumgBCRLmBpQFbI9SAcr
+ZEUEDlShgs4ZIHgAU8iXwAv2tRlCN9jqSdwGqCYyVLODFb5BCB4Ae4aNAU0hh8IBVKsZZvCAgmcG
+isJ0IN4MVsjtABfkBge4AIrCSyD/XoAzoaARGIUSKOpKfwFN44MofJb5AC7ef/cTniRVfRQahUDL
+J6gxEAd2G130Jkohs8xZSSQuAEEPZIXQ+pNQAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_pos_in_rational_pos</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">NaturalPos</span><span class="p">,</span> <span class="n">RationalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_pos_in_rational_pos"><a class="ProveItLink" href="_proofs_/nat_pos_in_rational_pos/thm_proof.html">nat_pos_in_rational_pos</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/312b4b3d34cab0787d8ff442c103305cbe8aa3670/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFQAAAAWBAMAAACs1aaVAAAAMFBMVEX///9mZmaqqqrc3NyIiIgi
+IiJUVFTMzMyYmJi6uroQEBB2dnZEREQyMjLu7u4AAAA1o4RqAAAAAXRSTlMAQObYZgAAAT9JREFU
+KM9jYCAHsOGTTEDh8eBTeoBmSt/+OfuAYdevCdiVFp45m4kw9QR7AgPfB4bcu7fu3m1AU/ks1YDv
+2jkGtrt31969wcCQWuDCwLAAuwNOigOV1z6AmZp5jq2AIQBZKcfR0NDQAiCDpeECUPhlAkxpchnf
+PRSlzLcNoCxeZgGg+gnn4EqZHMpQlLLCVDKYsQMdz9mwE66UYSeHA7JSIbhTpzApMDCwO2gglLI9
+SAcpZYYqCIArLYEoVQIyDSBK+RJ4FyB8zYyIbjawAxQ2w/jJDAzV7EhK+RBxyAPxVgKSUg4F5ChG
+OICz4QAosOARkw7Em5GVbkEwd4KioBDOvQTEjBeQlPIqwJkcogZ8F+GGlv4CmsiHrJQvbR5C7d/7
+CvgSHPseaMSCnMCUQGwu4t6sK7KBSLWGZy5OgLAAk1xY4GVOf/AAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_pos_in_rational_non_zero</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">NaturalPos</span><span class="p">,</span> <span class="n">RationalNonZero</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_pos_in_rational_non_zero"><a class="ProveItLink" href="_proofs_/nat_pos_in_rational_non_zero/thm_proof.html">nat_pos_in_rational_non_zero</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/278cf62dd21daf8baa4415fbe618a1ed6b37d22d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF4AAAAXCAMAAAC1Wwj4AAAAOVBMVEX///8oKCgUFBQNDQ1mZmaq
+qqrc3NyIiIgiIiJUVFTMzMyYmJi6uroQEBB2dnZEREQyMjLu7u4AAAACptgAAAAAAXRSTlMAQObY
+ZgAAAYtJREFUSMe1lYmSwyAIQNldLzzR///YBU2aHtpOpykzcRI1j0NAgPOlymCzzfANUZ6HwGyN
+ix34Ad30n13kodX5lvIBvgizNnEh6dPxsUfcNyMuhBPxWET++AmMFx+chUqtFJKPnFqK7+G9Yhhh
+PGbsiMewPllhsbJ+HLWJDcSSZAgvExDRMaUSlv0M62bYiH0Tveg8WNED6b3glNhzkNV4cV8M+/3Z
+DDsyByMrR9nonuBDcUP8JQ4BaE+WiFdJ2RfVnvdoODZV9K/xhrK5nyMwamPFkY5QjkS3OY9VNKBt
+D/8a78ysfPx2PDFAlmDoWRtgvKwGu8arSX1EC3qb9vwauj8LPKCE/4K/t9XNkvIWz69BL/GVY0Pp
+aRt5bEyX4Gh4PJobPPgMfoWvZV7aV0e7boIDL64t091Nu0vYf+DEXNcgbpmczRKf7XT2KCu1Lj7a
+T0TR6z23paZGU1Br271raW8U9Ky9xNndEBpR0ydccT6Xu6awBWh9550hORtN6kvXthQF93xScb74
+DyjJEHD/QUqiAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_pos_within_rational_non_neg</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">NaturalPos</span><span class="p">,</span> <span class="n">RationalNonNeg</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_pos_within_rational_non_neg"><a class="ProveItLink" href="_proofs_/nat_pos_within_rational_non_neg/thm_proof.html">nat_pos_within_rational_non_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/d780e1f13d8c59d970ffcf4bd6673209a87760ae0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF4AAAAXBAMAAABwq+X5AAAAMFBMVEX///9mZmaqqqrc3NyIiIgi
+IiJUVFTMzMyYmJi6uroQEBB2dnZEREQyMjLu7u4AAAA1o4RqAAAAAXRSTlMAQObYZgAAAYZJREFU
+OMtjYCABeHsTqXCaAYjk2MCUgCTIhls9s1gBkGSdwPAPSZAHjwXMMkAN7wsYFhGpnoFvzwSGegOG
+CGLVM/DtfVD/gCGE4e2fsw8Ydv2agF09u8yZaxPALJYbIPOXMDCcYE9g4PvAkHv31t27DeiGpgUz
+vM15AGQ9OQR2/08GhtQCFwaGBdjdwzOxgIEv/R4Dw+uT8PDJPMdWwBCAor4nNDQ0HMTw4AUS56Yx
+PDwJdpIAKPyTy/juoaq33QxjXTAEEp48D8qh8bsRSCQzOZShqg+Gh3pCBZCcwT0B2Y3JDDs5HJDV
+MyrApDgdlIBkCVMDqnq2B+kg9cxQAVZEaELVK+icAYIHMPV8CbwLkAwwQzDB7pnEbYBqPkM1O7L6
+NwjmAbB/URMiUD2HwgEkAYR7GGaA/HRuBor6dCDejKye2wHBBMeXAIr6S6AguYAuAgWNwPQggaK8
+9BfQbD4U9c8yH8DZ/Xc/Ec5+1Ueh6QHooglqDCSB3UYXvUlRzyxzVhKJCwCfNGlY6CvOpAAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">int_within_rational</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">Rational</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="int_within_rational"><a class="ProveItLink" href="_proofs_/int_within_rational/thm_proof.html">int_within_rational</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/d0ee9e9dcb2457ba71ee3d95f19e9848bd9b40450/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADkAAAARBAMAAACVyRntAAAAMFBMVEX///9UVFTc3Nzu7u6qqqp2
+dnbMzMxmZmZERESIiIiYmJgyMjIQEBAiIiK6uroAAABqpg13AAAAAXRSTlMAQObYZgAAAQlJREFU
+GNNj4LvzZ/fZPQsYUAFbRcfGB0Casz2BYQMHmiSz4CUGawkDBgb2AAZWhzg0WY7nCQzMYpuBsgYM
+imwFEMEVd+/evQZizOIGEs0PwYLNHAZgWjsIpneDOpCYBxbmmrAKInYJJskkkAUkX7GC3GXB3AAW
+Y3eAyfJNcAGSmSwgn4gxKoDFeBH+gcoClfMVPIWIKSLcDDb5CStQFzcD0OBgkA0I2QawqxiBRAjI
+8gMoJjO8AgVP8yuQ+4AmsoNkWSfAZVnBoQEMBQ6DZgZmKbCrtyA0LweGZBWQftN9ouP8CXBgGcoZ
+wKXX7/6CFroMqb3QkASa/cCRAQ8IVdk+FbcsU0V3HQMAQThBdx6juCoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_non_zero_in_rational</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RationalNonZero</span><span class="p">,</span> <span class="n">Rational</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_non_zero_in_rational"><a class="ProveItLink" href="_proofs_/rational_non_zero_in_rational/thm_proof.html">rational_non_zero_in_rational</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/7fa7336bce7f896a18e78ccdff02578990a42b7d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFIAAAAXCAMAAACvZ+h2AAAAOVBMVEX///8QEBAoKCgUFBQNDQ2q
+qqp2dnaYmJiIiIjc3NwiIiLu7u66urpUVFQyMjJERERmZmbMzMwAAACsI8m3AAAAAXRSTlMAQObY
+ZgAAAUVJREFUOMutlQmShCAMRemZIWENy/0POwG1VcDWLqVKpFCfIfwfhDhstnQKFIinWkzcIfOk
+f4ioK8g47rJ9BhkKx+YS6ks+QnQ1gynrEirehPlQ2h9fyMgSq1HfU1JkAHm3zqhprVOUL/UtwXpv
++EtLPiz7YMN8r7nM7gTYEYKreuEHiXjGE9HvD3eEV3e8IQiFgpZNdn4joJqA2OkSg5laer/UEkjo
+OD9yk3REWMNSAHEnVwLdBtkSOKI0i8ShgLJQ+cGCRo9MsSc4JeQs5cRDrH89dulA9R0h7Sd4iB/M
+YkYC6gibsKXoEzUwfmeOlhC2yT0pOoteGw21BE5peEvgzM1mWA86AqxCjWfGg6E3ewLGyU7xQsWh
+4d4NCJiJ8qWqyHZ2I3/2BBbo1fMgQWgMeUAA0JLinaOrJ2iueBTdjdq9EP4BhDoRMpV4Bf4AAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_pos_within_rational</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RationalPos</span><span class="p">,</span> <span class="n">Rational</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_pos_within_rational"><a class="ProveItLink" href="_proofs_/rational_pos_within_rational/thm_proof.html">rational_pos_within_rational</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/0cec9ea28501d4db94902c61f6a7382a84c054130/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEkAAAAWBAMAAAB+hazNAAAAMFBMVEX///8QEBCqqqp2dnaYmJiI
+iIjc3NwiIiLu7u66urpUVFQyMjJERERmZmbMzMwAAAC8H5PlAAAAAXRSTlMAQObYZgAAAT9JREFU
+KM9jYCAVLCBK1QF6qXp75vRKXKr47pzZNQHE6FqewLHrBAPX7t3Su7egKeJYVcbQvaYByDp5D6jy
+dQNWs3jmPmDgWLeDgYHVYQOQ17kAWRXL8fLy8gdARgg3kDgxi4GBm+0CUOmEE0iq2DYnQFkbcoFE
+JE8DQxafAwMDp4Mlkip2mCK2BU+A5BTmCQxTmRSAXglQQVJ1CWYzZ4ASkHzK5ADEYFUgLsyIAng4
+QFUpMHCBbVQwQ3iMDRGfYBsnMScw8EBcjxTTHIgQOQB2PRfI4QdAIeGAFEpwGxmm8IBCYgqQsASF
+6lvksDSFs5jBoXoBFITXEzj2IhvFwK0AZ/oCY+gKJKR/71dAi70ZcLb/7k9QliUTWirls4HGENDO
+CVow2820rxrgSlfGSXuDIazcM3sn4FLFduf0TQYATw9doPM/tfUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_pos_in_rational_non_zero</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RationalPos</span><span class="p">,</span> <span class="n">RationalNonZero</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_pos_in_rational_non_zero"><a class="ProveItLink" href="_proofs_/rational_pos_in_rational_non_zero/thm_proof.html">rational_pos_in_rational_non_zero</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/459f6e42cb54b256032ded814ae9ea98b6bd91ed0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF4AAAAXCAMAAAC1Wwj4AAAAOVBMVEX///8oKCgUFBQNDQ0QEBCq
+qqp2dnaYmJiIiIjc3NwiIiLu7u66urpUVFQyMjJERERmZmbMzMwAAACLGs+PAAAAAXRSTlMAQObY
+ZgAAAVFJREFUSMe1VYmSgyAMpbtyQzj+/2MbDu2KYJVxM1NGbd4jCS+BkOdNp0Uwwch/mA+4cOSm
+duRi59llxiqDS9QDHzdP7xKnjimFhT5Ob3LFQ5QpBf4gvXXJfvHHkT7loET+I3j8Btbcpj8CRalH
+iX5J9NpahS8abC6bBbQlLfybAPfA/KnGVWof077OZCmhdwB9J/oGmOL6edW4NuUITmA9c2OH9Nyp
+YmGrwxEoN0ELX3UPRPr6yZA1y5ZeApPthh2g+whdMObLhqEW2XDCTJ9eyV77tEB6HANGEFrVH/CR
+d+l9pz86QOhoa+9VH5tgFbkC5LQ7XrYcKTlWeH9iN4G5Dn9OqD/KtJsElnNxm74GnaRmgWjs0x1+
+5CImgbljfOltPw4B6CSw+EWASM/Hi9EzwDXPk6uriI+5ZihcBBY3Jin4idv3IlDi6AZvJu7WM+Ab
+sVwSWsQfsuYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_neg_in_rational_non_zero</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RationalNeg</span><span class="p">,</span> <span class="n">RationalNonZero</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_neg_in_rational_non_zero"><a class="ProveItLink" href="_proofs_/rational_neg_in_rational_non_zero/thm_proof.html">rational_neg_in_rational_non_zero</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/cc406244dc8cbd5de82fae941f4de44dec544b180/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF8AAAAXCAMAAABamWPGAAAAOVBMVEX///8QEBAoKCgUFBQNDQ2q
+qqp2dnaYmJiIiIjc3NwiIiLu7u66urpUVFQyMjJERERmZmbMzMwAAACsI8m3AAAAAXRSTlMAQObY
+ZgAAAURJREFUSMe1VYuSwyAItNfzrYj+/8ceGpvJGc3DaZipaQ27FliQsQfM5kUJJdgjhpEWSeTc
+P0GvC6txtCT7AH/IpDblIF78+/SuZD0mnYOQ32T2IdsvfSTx5yiMKi8i0h54d59yj1RLSpb//8r8
+1ntDPyz4kjkXPnZanAZZtkJ9lvynfHBwRVDkHeFevRukB4D3Dy0gN/pRksGn8O5AsDKYxeKaij1S
+rwQKq/6Baaxbjg1zokHodq+D3OCVELicGKuKnGRiVGOje33UIvl+IjjFeO2CSF8HgsVOo3SQ0FHY
+f69Bwxl2BSl76E2UnO2T3JTtLpJKsq3SQD8fVd9HltqEVWWjeWGmkYwqv3YJDn3ULDJ3Di5djgfT
+DvgssvglgMRPRo2zU8ga6ellFkVo5sNVZHETmgPO3MgXkZomOeDEFXCM/ANegRHQows6BwAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_pos_within_rational_non_neg</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RationalPos</span><span class="p">,</span> <span class="n">RationalNonNeg</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_pos_within_rational_non_neg"><a class="ProveItLink" href="_proofs_/rational_pos_within_rational_non_neg/thm_proof.html">rational_pos_within_rational_non_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/f516a0697e740e920b808d49374d2297975190300/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF4AAAAXBAMAAABwq+X5AAAAMFBMVEX///8QEBCqqqp2dnaYmJiI
+iIjc3NwiIiLu7u66urpUVFQyMjJERERmZmbMzMwAAAC8H5PlAAAAAXRSTlMAQObYZgAAAaRJREFU
+OMtjYCABBAcTqXBWAohkMWBagCy6AKd6tlsPgCT7BIYfyKIHcFvAdgeoof8BgxCR6hk4bCYwvE9g
+KCFWPQOHdcP7BoZSIOvtmdMrcannu3Nm1wQwi3ULyHxRBoau5Qkcu04wcO3eLb17C7qhq8oYutc0
+AFmth8Du/8nAcPIeUM/rBqzm88x9wMCxbgcDQ/NJWPiwOmwAincuQFbvU15eXgdihHADiROzGHpP
+gp10ARj+3GwXgKwJJ5DUZ5vBNG7IBRKRPA3voPFry8CQxefAwMDpYImkvgwe6gueAMkpzBOQnDiV
+SQEYDAEqCPW8CjA5zgAlIPmUyQFJ/VOIepBEAkSEHRGaUPUKOmeAoAEsxgV2j4IZwoQspBQFcs8k
+5gTkIIP4Fymt9SDFONi/XMhBzOlwABSeSE5EuIdhCg8oPKegxIklKL7eIgkwByCY4Pi6gKKe5XoC
+x17kEGDYhGD6AtPDFbRIZ/m9XwFFoGtlA5ztv/sTRiqxZELLWY+PQ9MD0EUTtDDUM5tpXzXAle6N
+k/Zi5PLcM3sn4M6Jp28icQFMbXsQFWxgNAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_neg_within_rational</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RationalNeg</span><span class="p">,</span> <span class="n">Rational</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_neg_within_rational"><a class="ProveItLink" href="_proofs_/rational_neg_within_rational/thm_proof.html">rational_neg_within_rational</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/e3dde4f21041b00eb6121365b33d515d5f1a4a040/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEoAAAARBAMAAACItyd2AAAALVBMVEX///+qqqp2dnaYmJiIiIjc
+3NwiIiLu7u66urpUVFQyMjJERERmZmbMzMwAAAAPPdWlAAAAAXRSTlMAQObYZgAAAORJREFUKM9j
+YGC4s3vXDAZcACZZOS2AfeV2Bo7dQLAdXRFUkoFhx1kg51YBdqNgkiwGCxgYuCsmIMsxb0tLS7sA
+ZMAluVgPAHkNyHaxLgqAsuCSkbwGDAwcBhpIqthgihCSLYwCDAy8DsJIqg7CWXDJKxCGIJKqBDgL
+LskJNlRAFclZCJ/AJbkhDkTyI/sGOBMuyWGwAeRZA6w2IiQ1QAF3Bzm4VBBMuCTzsQD2NchGMXAJ
+IMIXLsn8ap0ASrSwz2xHKINLajBOQI09Xm1oDCFLMqlKHVHAlXQQkjG71zTgTGEgSQCgHEp0keGd
+/AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_non_neg_within_rational</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RationalNonNeg</span><span class="p">,</span> <span class="n">Rational</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_non_neg_within_rational"><a class="ProveItLink" href="_proofs_/rational_non_neg_within_rational/thm_proof.html">rational_non_neg_within_rational</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/282d2f1300cbbd15bdc04a0335d25956c8b17b420/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFIAAAAXBAMAAABqlwV3AAAAMFBMVEX///8QEBCqqqp2dnaYmJiI
+iIjc3NwiIiLu7u66urpUVFQyMjJERERmZmbMzMwAAAC8H5PlAAAAAXRSTlMAQObYZgAAAUBJREFU
+KM9jYEAFrKYGDAQA5zIw5cygRUglQ+46EFnJwN9AWOk5BgaOfwyMCgRVMjSfZOD7xsDuwECE0h18
+PxjYA3DKvz1zeiWEFe0ANJMxAJeCruUJHLtOABkcMQogd/JPQFMIV3DyHpDzuoGBw2YCdr/DFLA6
+bGBg4OlcwHEHbFYsLDxZjpeXlz8AxQVUAQM32wUgb8IJvgeQODK+AKbZNidAjYQpYMjiA4YKp4Ml
+mpXsMIUIBVOZgCHNF6CCpvISnAVX8BTCUGI6AwQn4PIFcBZMAQMX2HAFM1Qj2RbAmXAFPBAHL0BV
+yXEAzoQr4HQ4AAoE9MhG2I5QYAkK2LfoMWiKYMIVsFxP4NiLkX64EWkPoYDl937MJMmxagZCKVyB
+JdMCzBTGZwONTWQFzGbaV/HmM4SC3DN7J+DPOEAFAI7padStxDtWAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">in_rational_pos_iff_positive</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">q</span><span class="p">,</span>
+        <span class="n">Iff</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">RationalPos</span><span class="p">),</span>
+            <span class="n">Greater</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">zero</span><span class="p">)),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Rational</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="in_rational_pos_iff_positive"><a class="ProveItLink" href="_proofs_/in_rational_pos_iff_positive/thm_proof.html">in_rational_pos_iff_positive</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/835365d0ff18b81d871808395fcffbcf1f9b89220/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPsAAAAbBAMAAABIGOQXAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABD1JREFU
+SMfNVltoVEcY/rP3nd2z5kGpog3bKKIWIQSkPqjd6kOhfcimKX0RmiUoaltaMVQtSglBdKMYDgr2
+QiFrWtKStskB+yJFE5K0JC3RbV9EtE1IYNsK2QQrXlIR/39uZ3d7Tjbd+uDAbCZn/m/++zcD8DQP
+fwJ/Xl9QJIXTU8nZiwC9QSakFhRpw+lLVaB+EaBbOGOZsuphvBL3y4K8cfyph/Lqg44mhrNuoIsK
+NEmL31ykulAgPO+41ZTu3GWr99Q5yXzliBy6mYSAKUE/qxg7jWGcUceTe/aYLHcSAvl8TX4GbZxz
+EvrL6WPMYh8AI68J9DH9bXNRvxJnleW0c2wTmvBmRnkPRxxkDNtwNqOXvwBcwRBIEBVW1HLWzuPe
+VZhW48ShD3mws2h+6IuUVr9Z+SbbhefWtIHfHFCr4wADGTgvQcZPvb0fuThvVAtrbRpol7bEwuiZ
+J3FSq39OSmzEGUqKddGxnqMSehegwYJYQoLup9NH3QqfMrSNVp/92k3yfSoS5/xY1L7siFbfIHb8
+9B+TpbSaAji+YY30pZWLsL9ROC4qikC7ATpc1IfosDQxxAp4jz7sUzvbI5gvf/ySVt8sPG585hCO
+GmHLaZwvmQFVlZEcJSP8EIXjYExK0A5RhrpIfhzWSmKU2xzO81l4VzcZjdeE+u9xKRLcleARfkvE
+4JQqR/YsBPTpvhz1MXrfPAiR/RIUxDqS+18Pb4UzKRhXlRikCLXifBFgFR1bk8dBOwEefGtMW91P
+6tlBBeR2LsX0zUHVoFb/Z0YH3z8nQdFsUFXaqU8zsD4L3ReV96R+GudyCN8patCQKD2btYX354Qq
+9g5I9VVtckcHn0pvwBLqaSs8SY3yee2rmAZ0cKcJHkMpSYlGYbfB4Bms1o5k26jxbFJtFjm4RuHJ
+/5FUwe+PwwQUlR7V0kQGfPsVqAPJk73vf8D51/gWvVJXYYC83Yu7/0CIZ9Cm/xGinSa7ZGTlc6Zh
+ku2w9Pot6CxpPEE7vPQ46AIa4q3zVzOCekh9VPVqtWzOKZjgYQ1qfjJeMNl0wY2i2IHuAa+lKTsW
+Nx6W0E7QYstQZlCBlsSJWT0p/+F0uj1CwVfqffPSxJ7aAZ5BtvcVrf/RbCFXKtbrA8HjNF5GQMvz
+d0pIlw2txdzEkgpk4Pn9ZijO3y1sH5beDSW6lDifK5YZ9I0K0qXwRwqfC1OKp3H2FpKu4XgZwZeF
+IKgykQJ+4FSVgiFd4FtAhkm0fdGIjl2u1z3F5t2unMCk861bBPK1XMVKpmh67o3e1UKN1Au83Ff9
++4Sz6emE1uT4cCI2tdu+cHCmKwT9jnNdup3aSR8KATLobZxX7tUt+OQJJl2eG9HZVkc6N0tAW/Qt
+23HjkyIj+xbxbLsJ/+2xdb0E5H2kTeke3qA/XyC2qiur3fW98j9BEUrEd2XFvJkK1FcEerLjMZAE
+J2DQ1tnYAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">non_zero_rational_is_rational_non_zero</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">,</span>
+    <span class="n">InSet</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">RationalNonZero</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Rational</span><span class="p">,</span>
+    <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[18]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="non_zero_rational_is_rational_non_zero"><a class="ProveItLink" href="_proofs_/non_zero_rational_is_rational_non_zero/thm_proof.html">non_zero_rational_is_rational_non_zero</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/a53dff083b52b98852f6f5628b152ee9f477d13f0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAL8AAAAcCAMAAAAHvJ50AAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAAAxpJREFUWMPVVwmS4yAMZHctLnH//7ELmMsHjieTZGqoGieVseym1ZIaQn7R0ukCFiz5lYvy
+eHERvBE/A4Cz70SrjFqmZ4SYCfg8/O/Rhkk+OqQkLIYQ9vEkeP2daJZVz4NKSXDxYt2H5ftsxgWm
+9S/+uYg/kSDzo2T66ttt7r37UeEL9HMa0Xox1AsY0vlfMn6gKQvmNel9uCy93yeFkBGm9gIrJo3l
+M+s/sJWRdMHKD75XPou5X6kst8q4D55IFd77v3/ixbuh/yQBmYF2a35KPg5lXF3I4KqqUZcuo1qz
+SaKp/Z9iHgg6LSXfS79bZlJH2O3ME1W0BmztmgT7LWCbEiE/M+Tylm8eyrTxq6wDDbU09aHsIte8
+tBLmiE03mnNwLOdUZK2hut+Jn7EoWMuLLfFNIrTmeHgvA2KKlnn86jZNcpu6XMyMZhpmgKywdPsS
+fMai+PKDXhIg4ecP41v88aszs5rKVMq1ZrawjaU0/qZA5FFnbuHfWZRxySJamplfan744uvq86rr
+xxB7oQu94k+DWO5bglE6IQCVHqXBqDv4dxZlw3/Bv2AnbtK1caxfcdnT1jngm7XSFCBumtUK53wF
+DsSd4y8BE4syghKFsjQ6Xehj4aS+XH1F7J9XpmB9U6rdMqm15PnHlkun13gY7eqAvwbMLMpoYgr+
+tFn0l67I9vl1ObRZEamhRT6UJkVGUluzbfjtKf4SMLUog38pd3lI9A9PkyfF6ejqH6i7N1MC9Bkf
+C5bLTCfG6m/6OcdfAqYW5ciVFgBm/KcWyI6j2QXvwyNHQLHJpLw5go2oe9FoUep3bEA4NIAaMLMo
+w1bZAG7n7HHjH4qGHh8T/V57cbTkmWB5txu5fwKe988aMLUoA1k9g8Lf8atWGU+vzur6wBETYDM3
+2OiGIC0GMZlfLWBmUYZm0TvNcsurqHgG8PRi2Luz/LiVG1j1X5oYI/P5WwLMQ0yicGJ9kPfPAhdL
+8rOaOOBQqJxR0/lVAh5LQnvy0uXOGKPBH3alwdLR4+JJgLtxejD0lfCfP289DcOwF+Kn7z3ufmj9
+B+qcI2kLm3HTAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">positive_rational_is_rational_pos</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">q</span><span class="p">,</span>
+        <span class="n">InSet</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">RationalPos</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Rational</span><span class="p">,</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Greater</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[19]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="positive_rational_is_rational_pos"><a class="ProveItLink" href="_proofs_/positive_rational_is_rational_pos/thm_proof.html">positive_rational_is_rational_pos</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/3243b748176bfdaaba331d78ae7d9cafd8ed5ae50/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALcAAAAbBAMAAADMngM5AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAyRJREFU
+SMfNll1oE0EQgKf5zyWpxSdLi5xFitSIIcVaRGxQ8UXR1PrTJxPEX5QqivTBCkGLXivogah9sPS0
+UqGIDagPwb+Aeaminj6Jfw0t9kE0FqloFYoz97N3SUNiCoIHe5md3fludmdmNwD/37Ol4GgUm2XW
+bHu04HAMmy06W3i5VBQOz2YLD0JxuBMdSJPwvjS2+1dedYtwbpcBtwQAnpLwqTS4N5BPO7BX5Ma7
+wZHJzM98QQ8mAHrIk1hp8LJ4Pm3nMvzADkn3HI6rsfHGS4P3ZcXzdXs77a1FxrfrepTBGwF8TwYH
+L5cYz5fmTmudlkFu3CxLqJvBF2D7KQgdJcJX0evKq2sh/OH0eF2yy5jdcorBN+H6dgN05SPYchV+
+vy4JNFwJh0h2iJpytQc3184/YPBIGGANcGkT4ubBBnW6i6kuKm9f0qMX3Ti2qzK0ZU3brMLvoagC
++nBhTgyFOszdr5fdteB9mwMfUFbmDIGe3kexNQFUk9ycwYe8cyjbEh9mZkMI98pOPeyJQbD0ArdY
+zIZDz36aG4YqrT+GbR64J5UxfZJLDahxpJDn7vQ2lPpr1tuoNLYmAHjZgHPBhbja1hW4hSKc0MxO
+o/4b+CaUnGcxkmOUijKDR8jHLqxZ7ph9qpw0b3CQ5w34jbAyZyMPEQmOaGb70OA3uJRQWXkdlqIi
+ajHWS9kCtw/jlIC9op80dQRPGvB6aFZTW8SPzNXMKINHYSSpF6L6+JaL3JicUw1zeCpoS3S7IAj8
+3UQ2vApq6cczSns+afJpoOZRSA13p16vvumv5lJvVHQ4OCS6eIcyFQO6JM7g3BScpP38LJmzpUzB
+jmi9DWfatVxOecw3xCg7isRI2BumE6IBvItMqVhp/47Ze0qiI5SZWpWltc08LYcfBpN6h2Pnsm3n
+C4CzJC3tOB81wdf5J8C9R8lN/2N2y1XQu3pmVV8QxkIsBKZVfEDfcM8ButeCuYh8aWgN50IOYHv+
+I1DwAHKarFayiulNmIvImsxjeOsvTrd3hmid1j/E+YOSCd70MY+hJ1D8Kix4AVkLDd4pCrdK//iv
+0x8F+sm9Q/vVJQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">negative_rational_is_rational_neg</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">q</span><span class="p">,</span>
+        <span class="n">InSet</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">RationalNeg</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Rational</span><span class="p">,</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[20]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="negative_rational_is_rational_neg"><a class="ProveItLink" href="_proofs_/negative_rational_is_rational_neg/thm_proof.html">negative_rational_is_rational_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/84ef059d46d5a1d53a6cd6e8e90217a413bd1c6f0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALcAAAAaBAMAAAAHwtCcAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAwBJREFU
+SMe1VUtoE1EUvc0/k0ktrhS7GLsQqRFDxJpF0aDuFEytv5UJolhRqiiShRW6qHUSQQcEzcJitNJF
+EBNQF8FfwGyqWEdX4qcNjXThQosU/EHx3vm8mXxImoAP3sx959135r77G4CWxt6GGhZoddijDVVs
+0VbJ21ONdV63Sh5Ygo4TDSiS8Lk5bvefmnC/eOWIyel+gFckfG2OnPfXQieOSdxcAmwijgRaMA+Q
+JEuGmyNvy9ZCRzbhBw4Z0TivxobPNkd+qyye72Mx8q1FxqfrrpEkQQDvy3T6RpPxfGteHOzWMsiN
+zrKEEmxjNc5fojjUJPkWetx8dyeEL06P13W7jNktF5jWbrzfUYB4zSqoBHw+XRJpeyWcItkhaeA2
+DzrXLjxl+pEwwHbgiiaKeyd7VHVX+adS3rxH9+ccztsyDJap7VHJHxuRwYs5MRTqinuyUXavAf5j
+Nbl9FJwh0NP7LM6tAJ0k933DQdY5FLdkJ9mZDJLzslMPey4NljHg1kmV5O4BCTJhWKUtSzhXgHuB
+5KSu41IDGi2z3F3cj9J4104blca+HIAgG+SI45WC6L6IBBe0Y6MI/QDvvJLzzHHyMKWibPicbIxj
+zXLn7L/bCfmAm4LAyAkHborSIpKCM9qxAdz4Cy4lVFZBJytQEfVDWbbAg9Oo4rd3jBPSTeR5Rk44
+9MmaIctNGTwLM3m9ENXh3SxxJbmiGpYJVNCW6AHsCcKjXBk54cB/UeIThgWTTRNdz0NqSxnR69W7
++N1c6kEFw82M5BIciioGdH2WkROOjr9ILdTIljaFdkZb7boU03K54DH/IWZZK5IiYT5MHaIH+LVG
+KhJO1RenFsqOWpWrDVZ3y8lngby+4Fhfth1+A3CZpA1DV6MGuYJTwh3HCn3Bsr6Dnp3VVX1NLIVY
+CEy3mEbb0OcAiR1gLqJprT1JZpITOKd++uv/icKG3KsLybGcuYh6ax28v4Tu9skQrYv6hzhfIGWQ
+G7h5ePyNf4V1f0DWepsPG5JbU/B/xz+cJMJvOFdEkQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">non_neg_rational_is_rational_non_neg</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">q</span><span class="p">,</span>
+        <span class="n">InSet</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">RationalNonNeg</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Rational</span><span class="p">,</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">GreaterEq</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[21]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="non_neg_rational_is_rational_non_neg"><a class="ProveItLink" href="_proofs_/non_neg_rational_is_rational_non_neg/thm_proof.html">non_neg_rational_is_rational_non_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/02f4cb71d22da09f7fe35eaa026c687d4c04a76a0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAAcBAMAAADFDq1gAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAyxJREFU
+SMe1VVtIFFEY/nfWvczszCbRS0iwpESZwVIREkoTwr6YsAZFELGLZORbFGJXWERoVJChHrJ6cNEo
+sMsOCFH0Ii2FVJYQRCDlQNRDkO1DNy2i/5y5nVnH1TX8Yc/+Z86Z//uv3wCsltTVrZblhEpWaTyS
+/g8jAXnxM35XEteQDPMQWzHAwVKHfD0i5JJQBYkVA3wueSpMyJBS4QKIUyu0718iduFlNpWFkwBn
+AXTy4F2ZAENZz8LUK5+M2nBfSARrAaoBni8d8ULJe7p97AzcO06gh/tpDb6hJwCDpCqZMgGqvB6G
+m5IgtKOvd3qsLoKQBlGEFLXy7PPz7O5tVxfN87YoLn0JGOmhWYqTOfBnQHo2OnqlzACkSmZzqNZU
+9Mu41ISzB8xJJnnk8OYvRTlfbhMRj/nJ2hqSeat+fPoIri2iawQrMNZ2gF5PM/Ki5BImNdurBgv4
+F1QtW7FHuO6PuFo/8B2gCQSd7YWn+Q5DyyxKLlFUhA0QJO+FbVsmgPZAQTH7mMdOCgFngd7ON8Kl
+NExqbgCGXAwJxTFNBfCNo946i0I9pClqFlVX6yKAOBWyatd/LQtbpmD4oRuAIRczAgTwZWCIJHHQ
+vpWhRQ66+w0BeJ0w18jGZkwWBnpYBU5yAITtNRpDLmYNMEW5GMwQ3WcbayHZ6mtxD/ccLr1H0UIn
+qiRQ6S72FucA3EqmVJZcqATxKKfBgJuWRDpocSjuIhg7gdfigUqBnHEEQHQAdkCri1wMqsHujsak
+P3Rzzrb2Gqmi0WNi1qAPPo1LB04rSneEpIgBqIJNLnKx/RLathrbmz02883M/i6eGGJEwgs5NRwD
+0oVCBxZ52gYQ5qDbRS6GrKPeFYzNvotdZp+L8v0igKiVQJ+aSsITolWn4XHGiWA9jgpLLoY00Ero
+C2bzxfUP7k99zoquou0VNgfpf+7nxA9m0BJ1BWDJxRBaFzoGxR/LgZ2uB28c9T3+NiuYj/ANmZ1k
+SfdgkSC6In49tTRrdTpqg+1F7/RVBsA/7vVt0ZdJu87L/r9JSx3O1zIAez4CSy6mjC0PYLDkabzE
+WUReFsBuWH35BwgN280GwRYvAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># in_rational_non_neg_iff_nonNeg = Forall(</span>
+<span class="c1">#         q,</span>
+<span class="c1">#         Iff(InSet(q, RationalNonNeg),</span>
+<span class="c1">#             GreaterEq(q, zero)),</span>
+<span class="c1">#         domain=Rational)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_ratio</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">q</span><span class="p">,</span>
+        <span class="n">Exists</span><span class="p">([</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">],</span>
+               <span class="n">Equals</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">frac</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)),</span>
+               <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">]),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">RationalNonNeg</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[23]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_ratio"><a class="ProveItLink" href="_proofs_/nat_ratio/thm_proof.html">nat_ratio</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/536b075e4781de1f55d3d3dcd11c8c66987e27470/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQoAAAAmBAMAAADO/MgDAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABGlJREFU
+WMO9mF2IE1cUgE8yk6yZzGR3QS34A+PfVvxr3IUtlFVS2tIHaRsK6w8Kmy66D1ZFWeraKm3YvkQF
+HQttbWFxSqSVrSWDktIFxcjWl+1Kh9KK+NeAPw8+2MXug5t1tffcm7iT5E4yCd25gcxw5uTeL+ec
+e865A+BoSM3NGahr3K7w7Hv6vbZ5nsO5pKb6GMCb5YoDHa1kaTH/0DHF3jopXtf5Yi00Ri4t7lBI
+c/jihSDEyTVkukLhj3HFQg4aVHTMPFcoujSu2BOHVBRvelyheMAXpzJwiVHqLlAEJmwoDNgTRDOF
+VBcoBP4+hVmqsl/GG6WpRorAN2TUSOFRbabrXvbVUmqscUaRrZbgChRCT0/PB3ptFKei1TQWMIrf
+8PLQoUf8Wm0Uf1fV2MMoTqJd4jNE8WpVjVcYRYgYWTZmiOJAVY1LGqVQRgYHv4YZovi3eloz2B55
+kkgc+j8prB3AY7oPrq5YaqudMhnFDoDDpc98dOWrI1YKua+v7zMHFGEL+xSrn36sn/IjOsLF2o0q
+o3gDpLLconyIqUU/48QW72ZtKQJTrH76s7bMjRlG0QBe0yI+u6udLCXuJimHfCpQbOqIeOfif8wv
+6+v9FRbFiih8k5g/x8BT2qc9xzFGKcKMQjYbCktdaDMDLSDfxAla9RPQELWhQM1gfARew1KA8fXj
+8Dr4RdYFfbitt80ooiD181TE3hZ5ikB2Y15yfWgQvAMgrcS1NhsVKFAz+IdAI7GRyJSj3+pwUQ3L
+HI+kVJa88nERK6uurI4c3k6+kos3iPj7ziEAlXjoZxMawaOXUyRb7gPVDG7douIUXYt3ktgiI53+
+ooRCeszq57EKOT6/R+A8WUH6yDcRQukNIlVVuGbYRCdRzAHVDEZH/kKKl/UlrBil5Z+2FVPAU1q8
+lafV8wXdLELY15RE6QqkyAjR8p0aIjt1n04U90KSUcg0MPvhjkRXTkNmuIRiLq2fK8ftKd6L5CkU
+YneP4Y1tSiQSaho9krHvL1ARqGYwGjBROhvafQcSiX5CMYBxbi2jzBXKWNl8Z14q1Dvd0l+ktFmq
+nx5USHSuNs6Ojo5GuBRE8YbuZ7aAtzDl5GA+xJgtxPdLFrvM/MhJF3etGgUKj9YVlfFfeNtBXl6h
+1yKK7wDVVCKgZAJH4BMlDlfw0Z8At0prFQ1vD+dYN2ltTAsUYvfvAEdpqT10PFaBQuw+t45pvn0P
+IOabDxtHSSCTGBM/jYCfVyXkf3rL5hNz1hw/3fHdIXYg3gY48mb1vpNpUr+wy3ISF7z+MmYTlHJ+
+vuBEMUVH4ebkwJDmvPsdqljZFLvjbah7iTHdHr+gEJ4VYlta1ao7pzArNwSTdgX9oTTBtpwbp6I1
+di2WznqPRa6czTw2Tfh6kGhCXegKhWLTWdwFcXL67caMv7/o54un8NgOcEJzh+IHvkvG4TsS19LB
+Gt+iPEmo9Z2XP+aKd8PnmE5MlmtyTmfr7NTqM8aXXGlyFQKcZhqd0f8AX3Q/DstE3B8AAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">reduced_nat_pos_ratio</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">q</span><span class="p">,</span>
+        <span class="n">Exists</span><span class="p">([</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">],</span>
+               <span class="n">And</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">frac</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">GCD</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">one</span><span class="p">)),</span>
+               <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">NaturalPos</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">]),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">RationalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[24]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="reduced_nat_pos_ratio"><a class="ProveItLink" href="_proofs_/reduced_nat_pos_ratio/thm_proof.html">reduced_nat_pos_ratio</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/af4bb50ec6a6397689f5fa753ceb4e2b94c68cfb0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZ8AAAAmBAMAAADpfouuAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABoJJREFU
+WMO1mH2IVFUUwM98z7x5M7uWUa5Fr13L0rBlF+wPzcaC+iPQIdCSghmWWthIGxCzTGIyqN3CfBlk
+BuZbjVYMnRey1Aqxy26lpNITgwhzHbQPFKylto8dP+p+vLn3fdw3Oxtvzh/nvZl358z9vXPuOede
+gOmlf9bNUL+kDK7FIuXBb6EmQ7NmafWM7p+R7UUW7ZLE0o4WgBW+A1VNBuoCGpiJ5XAL125ZrqYn
+AIL+u8g02QCg/izX7si4BUJFdL3kv4suNQqo26JdEqpATEHXtzXfgahJ/4EiU1y7JVCEEvZd1P+Y
+oyb9B0rnuXZLaQSGCXDFdyBq0n+g3SrXAiAd1iXxs3P+L6JzjQFaZtFuiSup52V8c9J/oJMzAtqJ
+RK1n7HUWLchyXbe/O4+4MON8tEtQtJzFeUhoNEknRkwioDL+cGY6oMXd3d0tdfAk/uS6lgRGnKhF
+++fHrwfYZ33+SgEtfPE77eEmEdAx/OFiPSHXU0/fM8F1zZxUNm+qU0w753oZ4IIt27QjqrLL0Cco
+xg5ykwjoPfxGi34BhQpc1yzsVeTz5vWUs+GoQKrd+kWTjtSo06/PPoeAZIWZREBp/I3uF1CsyHUt
+SZqFKvK6uYpfdAyQCxCzOW2lJuwqz6KvpWZmEgGlvt6/fwf4BdTUznXNqnHZDL0HFLr2nD5FEWaf
+1RHybUYEBD8ykzjL/dPbu9n9j/IMgCwLvEnhOnFiwTzPdv8qvR4EShLEryDZsRC5drQ1C++M5nRo
+Y905lp9bl6BZtQuBxphJDPQ0QJ9gMdiBjmzcuHHKa3aWfykZXC9Xozis5V+JOKbyO70co0kJ4vgX
+R2E38oseL4fnwDYNtrLuHE/3mlZSIVV2GiRA48wkBnpQlDycQDYPrSh7Au02mEaddbTsGXNX6KUA
+H9C1h1ZxsoJX/maI6v0GLs0v8e6cPlQgWRB66FNmEgPFIGgtYNJXYz3TAFUdH1n/BdyWtwHldKZD
+E+5q8y8W8sr/oFlegSjZaAQypHPNaSHckt2vIS6YzbtzdFfGjWBkQgiUg6pJDCQbserTj8fug+15
+OKHLnfd2LvEESuvm2M9kLaSNda7v1AVAaH7ufoAJBYppEMlXgXIGzMe/ArgJpEkCVO3OSZJYqdcH
+lCivrlbFN9/X4C4D9gzV9lCTao79XGmXPUOupMBZ4CFv778lGnKHwCyfOOTOqvAqdgN+mJwgIVft
+ztF/Gthv4YLTIAF6mJkkvVzfU0jtbX0ErSYURk+oEEx5AEkd6/D7yrU+Q8bC4OB2B1BJYRp11m95
+t0g0y10woUhSGMbtAZo4HL6MVt8QTgqsO4emDFpPNCm4PTTOTBKgQwhb2oD2ZHh06gDKoUEPoIFs
+Dv9gvtZGW8BB+cCTdqCmEabTSurKNHUoUqRhR5dlSY1WIJSHvdkt8F1+BCdj2p2X0J9FjTgaEnIu
+SrgH/3qprQ6RqhFqjzRLeGJBDCS7gH5BabsFOuEx/HkLjJOxMAgjY3agQJ5pqWvhpPdRCnkUxWss
+iN2JYyncdRzp42cU+Kh1TVcGBxLtzmOb0F3HCfySnEcVi289j1z6EzNJgFJIBfRgPvJCb++WJA45
+BBQR7Yfmwh34MhsWk7EIaBdOKJZ/iZe5FvWo+240lyvZX4bJfZa1PnFbseKtz+HaOzOpwEyy/VBJ
+jStA3msPSgqnxRs8aQq27kfXCiLLUw+FH3U0GM1cC8vQees4i5zCYCVbVuTNKQu0USEQbU6JSQYU
+UHNZ+BLfteVhtOixY50TmTQSb8CmVJGO/RbgB0fTWeHaXYborkB46BBX5QpKcjapNjCSUr0RF+qD
+3CQDCnd9g4zi8hH8++hfXlvwhxa2GZG5sPo4HRt+OQNRUY9GtfzbevfaqVhbJNsGL7y2zdH0Vzd4
+KU4tBOrjJi1bcJz67kTrAuIfZmqeKSTphYx1y2sWLYoOs3cZVv/PFvx78aZS5SYtQEuZmb7TO2sB
+DU1/VOF9BpLuom5Y5v8hyTL7IUnoGstVe8YW1AIyapot6VyLHl+Upmi+9F3mNuYYK1jmWiDDGuny
+g83+n9Y3N+hs+waLFsUFbbkM34GoyQYAjVu0qAyFceJe5H/EUZMNAIorXLvlKt7iQGKO7zymyQYA
+SRu4dsskoN0oDOi+A5km6wMqiUuOh+xQuXbJWtINbPU/4ojJYO+2uoAiq9bMxPlZrl2y927kICnj
+Ow81mVi1Cv4D1KUVETCDh8oAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ratio_of_pos_int_is_rational_pos</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">],</span>
+        <span class="n">InSet</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">),</span> <span class="n">RationalPos</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[25]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="ratio_of_pos_int_is_rational_pos"><a class="ProveItLink" href="_proofs_/ratio_of_pos_int_is_rational_pos/thm_proof.html">ratio_of_pos_int_is_rational_pos</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/e0fb425375545d21685dd9724f2eda7c015ae4b40/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKoAAAAmBAMAAACmKh0SAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA11JREFU
+SMeVl01oE0EUx99uukn2I0kRVFSUgLWnKqEVLNqWSFFBiUQPFhFpKbZU0NJLFUUkKGhaUSKCLXjo
+lh6UHpqgIIhCA16keoiKUAQ1WvVQMZRawTYWfbO7yX60u5sZ2Jnd8Pa3M2/+770JQOUtkKvASOgA
+urYDL76pfqOz1WE6aBXB7U0F55zNWLrJjsZxfZvBk3Cx+0lF7cbLswS+sIvdbZkCyi1ixyQgHXcx
+9NK4IEiM01mYdOCpn1+ioI6kCDUDvWLKzsSvDl8oqC3Ke+HAOQlcqK8pqGsUjXduu1vjRh2JQp6M
+H9yh/G/7fWxMfo8aqEwWXpJxtoJwtRW/0H0BJnpk6C18LhRIUHvzMEzmkXCnevps190aB6FrVp8r
+OwdB1KyUcaf6Vnw5cP38ZTJuD2I3uF+niosQmBofH6pgs0IRqzevaDGUv4NdjV8uU7kiwJ9k8pId
+yiCikDVQJzQo33ES+5gULVOFZYAugAFbZ+q3aWtyPV1KZeGn2B8Vc2UqzAO0gpAvJ7uCLXXESi35
+mdOouDe89tNf3AZg9Reea2NbU5RdZ6K2Kzv6jzRFY9yWAjZyp3jgkGSI41/ou5xPf/5B3PKsIScm
+pmC31LCrYY+ZaoiKsiYSym55wUTl88f0Z5Ltpp+Mg/jGA1lnD1SXbmLEnYMxQ1igB2DgFHZjtd/I
+suZr5SoiIfHE8bCZmrZqoL4sFCUKDMLjUQPwCKNG6FeyInuRjQQVIcen3pmpoaw1LMoueYsR22xU
+clFToifC9amJLj+mUiUpYqIy1gwv9Bws3X4qFE1lc4FEHsqZySilkYl6OtqSyWRYjPM5/AxniHZV
+fg/W6y+/UCMWfRB9bArlUjFIp/zvER6SmYxXnSvsMztS0nZnZrVoeXVvpm6lKTCp9hgMyz55GiRS
+7QJRCJgdKWoTKK6afBtv7bRUOGU1nQ+b4UiGO4OoG/h84Cuq2+zGZdWwglJnCW51V1n06yq219TV
+9blTJ03l0r546jUu2LnVNRm3mNOw87oUWnpWWHSjbqKosawirUmZ5Dlnw2qac9ZadXVKlDs1JkdD
+/ajKtapYwTG38uYnylgmx0Lng8MGKqrQj90CjLos8H6GigpDqLyzcNXF6ibl/wIeY3mszmWqAjkb
+/Qdr39NeRLzBhQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong><em>A set of in_bool theorems, which are accessed by the respective NumberSets to implement their <code>deduce_membership_in_bool()</code> methods, covering the <code>RationalSet</code> and <code>RationalPosSet</code> NumberSet classes (defined in proveit.numbers.number_sets.rational_numbers/rationals.py):</em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_membership_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Rational</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[26]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_membership_is_bool"><a class="ProveItLink" href="_proofs_/rational_membership_is_bool/thm_proof.html">rational_membership_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/29b1ac995761fb462e26fbff21b1f535db5302310/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJsAAAAUBAMAAABoqVKyAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAntJREFU
+OMuNVE1oE1EQ/oy7+dls1h6E3iRY8NCTBIoXD6EeigUhWOhRgyjai9STiCJBBLeCEhDUi7iiaClS
+Ah5ERQlpDzYeXFAQwUqgKiioQRAUofab3Wz6ntlQB3bz8s3O976ZeW+AHsv4fN1Af8tW4/FHfFqy
+WFbRWT5WJTZgwr18mD9TOpo44a4OEk9ymxcCfFG9n/k4sQLuHq1any4C8//gjpmfve3DorTrkp6q
+JbeTr1ex4s6PkPKABzuv42nDT5TI0SCzB9g1xZcSYafUr3MXTp4NkvK5ffpOGdaA7iBdtka6W4Sa
+c3PX1GD5k5lWAPOc18kpQ+GJIrP9oDtIZ4+TzikCv1z3jEo3JDoYZ22fGm0IMN8JwlWTPTf8RWAB
+moN0Y5MlZsmwI8CMSndJ/Iy7jzf5IJVuH0ezLIqZfwq8h+ZIG4N/t0ryLMaeoCPrdlrqx7gmXnp7
+Bej2aX9I9wR4CM0hyS7XeSBZoxRLrNLJNptYBA9uWKFt32iySgbJ1paAg7qDdKjsI9Jmwn4KcXTA
+j/CSrIsIW1Hu0GVUdagkQ7pMa5JIY2RHSU8W5s8QGIiiDL8iB4USx3SH0JUdfiAHYob3I+EdTxX1
+VjxOtDEsQKErfFGO8QSiVhQ0de/CVuABOU18jXxyCNhx40+6HQyDUGp4bHdVrRXBdkNzOGbdXmAN
+NrMd2BJcmd9RjCRC1dah4aFwMljHxrt8q98Dio+aIxoBcKReOTmNZtvse8mM5+FdknSzZeGZ7nEE
+di9a3LRb9sYjgFVYelao94yAyBrd0fO60YzWckfSfSYkrrgrxZ4B1TH9OvzH+FQ2jLF4DRsO91wf
+6W+BNUhEtAQLSZ7kAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_non_zero_membership_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">RationalNonZero</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[27]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_non_zero_membership_is_bool"><a class="ProveItLink" href="_proofs_/rational_non_zero_membership_is_bool/thm_proof.html">rational_non_zero_membership_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/f91c12250b921ba90bd4c5cc3cd8d807cc47a1d70/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALcAAAAcCAMAAAAUa96AAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAAAvlJREFUWMPVWImSmzAMdbv4vv3/H1vZ2GCEMSHN7rSaCVFmeEJIT4dDyM+LzRfqqSf/lTAB
+lwBOO/kDTxMcK2+KKd6qbCVB5OlT/DOAkFh5V3SmiU056IsjhD+19wwQLVbeFF5YLZLJQQ9w8eGh
+hScARrHyXKTO8gWfAH7n11fFmHoaiQKI289w/R4mWaS8yC4GXkbZVQR1ZI/3Uvym7IbQatE6xUU1
+OwXgHblngGdYeanfSanAPRulbqatrt+F34mvsbglKREUoJYFsgGMbjHV18DFYeWlCuSl5YH/IsdE
+xhh//4JLDF0/yXm/M6oJBwgVpLpYAC3M3v0lTYJWIDvvaGgk1LY2AbP1gpzr1r+ZnhuqfjvX/C6A
+4G0WoyYeLVgZUFlTi7NrKqsoX7sf0fst1G+co8vcUPXb88ayFZBKnavJ1GURK5ZSaTjM6o3Lp+qA
+2Ipa6fBUn3nhxs/gfRbtoMyK31wJKXrA+kubCb80Uiw4EKCL7cmUJzinObNrCEENh951TFUSXbc0
+Q34vKqWFHwCcldec1bNEiof39fDS3OymT94c/QY1uKvy4b2PV3XpQ/AHgFqLaNLoGVJsn4Ti2RKb
+7JHbeeKIn6TTdn6PDFW/29cGyINTTfsnw0oui35yjpqo7utytlT08TbX8c6pkD3AxG1b8pQJKgXG
+SawgUkJjH5RbaEmHPjhL5zo8rw01v2WrkAbQpo5Q6EAyrjPhuFkgxVlC03r/ZG/x+9yZjtlDPxkZ
+2uJdCd4AjlWawGPiIDJbg60KTzACwG/T3TsaeoGtc57NN7jjVBgYAj6Aw9DwJQJ0XE1mEpCqWEmp
+peywiFmp+bnzhhRjuhvjx3l5MnTaq3ZAsDvXStTxfsKxMtys9XE8r1y5P45F+oKhGQAWLQ+3n6ca
+81h5fcv3xkU2OwPb9HABPwGsDByO2WczYsHKg/Mk7OCRTfIUnp7UHgCkw8rnRInvA2xrwHQfeEuC
+/06AY1j5kMyOK58AOI6VD/0LZL8b8E/JHw/GIm+6BsHGAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_pos_membership_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">RationalPos</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[28]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_pos_membership_is_bool"><a class="ProveItLink" href="_proofs_/rational_pos_membership_is_bool/thm_proof.html">rational_pos_membership_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/2879cad18e8d76eb8eaa5cc16a21f3d6f51e6f120/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK8AAAAbBAMAAAD458IlAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAxZJREFU
+SMe9Vk1oE1EQnia7+dlsag8eBEFSfypIxSIqQYxECj2ooWkR8aAkBysRoYhSg1a0iNg0BxtQMCDS
+pYcgPaSBipdeSvUgtYWKIh4qbi30UDBUULDx4szb3be7Ybfmog92XjLz8r2Zb342AP9zncFHjG96
+xEci4mL0uOjFNIqzm98dINHlYhTSzvpmBcVaA8Dyoot1wVl9EB9vpAFguOVi9aNrKn34bNUGayjG
+FGeWornVuAm8q868d9vo8g20ezoA3kJ93DJq4ZUjrnTpJpQzCvRXl6tV5GGs/oDaK+Vj6Ns6QJF8
+HLIamyootjsT0JkEqW+Ne+yv1B0YSsAeMg1qmZJtdmKB0WGuT9kso2x/M4p8Fwf26h6Fh7N3DOBp
+MkVRNzcx8cSG8o5Otlg15/YZkT5CsTugGMAe7Zh4TzE9fv0c91Z8fuVyt23Ax8kVcnC87XE7FYdk
+pCCYvoAyIccNYEELrKyYVAgDfbh3owb3ERtwjiLFGKWZ8DU/XeArGIUfmUbZG1o0gMWfbLtscnzi
+7neqmlQSoBMk1Qa8Sj2CvSMrck0ocD4JRwfGlAS1EH5ocNbkLSxRnhDdDx57A12ndGPJScxvXD1V
+XOxyRsUpucDLjwGLO+iAARwQEG4yTn3pt5fMCnlMtQxbtPYrmg6x5PnMXmLAQZvHAUhrHgdVmjez
+h9uSuvEBRc/GSEpTNfHfJYiVfMJsxA22tViBfdTMKQpq5CLWjdLvN+ZkhvKFToSUA6i3zQ2ZNUiH
+OcZqfLiYHodntKqAqat4NXzjxla9QLsro/CMaQa57T22dMxkTS93swHV8zB/RO8FnckNfppuI1dK
+O8djWlpL93mhfqn+tqRD7zwpc9I+hKjz8Fr6lbgu8llBlq22fJ4ezuolKcdfWie3TpLwRm9pY33l
+80FWZe4GcgTH3Abx/NOVdv5l0nm4gsRHTenD7BxPNRHX4wYcjD48xL98dDkUdn43XaGyqDTy1h1w
+e4MkHdVlCkZtAJcKy3EtOatDVKhTDQAX3egacjG8IPT434GPuui9yj/80/MHU9C+Iwj3fvYAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_neg_membership_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">RationalNeg</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[29]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_neg_membership_is_bool"><a class="ProveItLink" href="_proofs_/rational_neg_membership_is_bool/thm_proof.html">rational_neg_membership_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/5222661b04d8a396fae0d4037470852e767dc0f70/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK8AAAAaBAMAAAAzuxGAAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAwVJREFU
+SMe1Vk1oE1EQnia7ye5mU3vwIAiS+lNBKpaiEsRIpCCihqZFxIOSHFqJCCJKDVrRIGLTHGxBwYBI
+lx6C9JAGKl56KdWD1BYURTxUXC30IFgqKNh6cWZ/3u4LuzQXB3ZeMvPyve/N3wbAQ07jIyZhQ4n5
+2AM+djGL6szGuHDMxy5kve3NGqrvDQCrb30cC97mTnyCsQaA4aaPPYzUdPrw2W2V11GNad5RiheX
+XcHfUefevWXk63X0BzoA3kD9vVW0wktPXOXCDajmNDheRMGjx+o36L1KKYHcVgHKxLHgdjbVUG31
+BJa60qD0OzTCtboNhRTsknAdNDOlcn6KghEORz7l80bI9jajKjnFELQYRYfyt23gaQKOo21uYuIx
+h/KOdra4LWf32Dd9iGqnxOIfMLeJdzWH8atnuLbi86dYvMUBHyEqRHC87VE7FYdi313OnkedUln6
+BPNiVc0JhTDQj2s3WnAd5oCLFEy8ozITvRqmA0KjNk5sGnVvhJWv+NtYLjoxPnrnJx2bSQN0gaJz
+wMvUI9g7qqauC4QpMRwLmKVE/mXCuZO3sEh5QvQwBPgGukbpxpJTDN4oPSsoxuFGKE6qo6z8DGBx
+G22wgSUB4SaT1JdhvmSWiDHVMmwy26/sEDKSFwKescwxliBrMpZ1mjezB9rSlvM+3d4YIxnT1MR+
+l6KolFJOI64ZS4sbOETNnKFLDfdh3WiXw3auc5QvJBHR9qGdmxuq0SAdUFcVnRzj6IxZFTB1BY+G
+H8zZahVod20EnhqWQeZ7jy2dcKJmlbvTgPo5mD9o9YIVyTW2m04jKpXt4wkzrZV7rFC/rPx1pcPq
+PCV3gh9C1Hl4LP1KXBXZrCDPZi6fp4byVkmqyRfuyW0FSXhttbQt39h8UHWV0cAYwWG/ETz/ZKmd
+fZn0Hq6gsFFT+TA7x1JNgevxA5bjD/azLx99NkW9302XqCxqjbxBBvzeIGlPc5UuozeAS4XlKYve
+5ggV6lQDwGW/cBV8HM8JvYH/FYd87EEN/p/8A7M/u+trUjGgAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_non_neg_membership_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">RationalNonNeg</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[30]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="rational_non_neg_membership_is_bool"><a class="ProveItLink" href="_proofs_/rational_non_neg_membership_is_bool/thm_proof.html">rational_non_neg_membership_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/48601214e3280121ee2edd3a4fcdac88f2a0819d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALcAAAAcBAMAAADRmzOBAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAyJJREFU
+SMe1VV1IVEEUPq37d693N4keAiG27AfEYIkSiYQtQehnaRWKHopdIkNfIgJbyn6WEFwNaqGHhB66
+FEiIqCBE5ItYD2JaRlI9GN0KegiULQxSXzozd2b2znonNsIP/OZ69txvzpw551yA/0BNDawBGnOE
+Q2PlqX9+1RfjpIJWm0AOxGAZIgoXj8J+QpBavQ7VhxJQCY0KD6/iUN8FqaFPxCCZg2tgzCg8pl2t
+ZRFOf1V/ZSZNuAhwReEQMAEs8vDRaX1gcnK5jrrsN/syPPMk8g0AVUUuOzfd+XwJfTxRgJercvBc
+0Opwz12GwVay78NbNOeLGEaxk9Ws99TjteQBesn1ZJw/VgpahWBDAvQWDGWgk1cLBIaLnDJx2B7E
+tQMgjHEYzt+1ZU4FfEinafp2hZF6GuFRJ81MlNR5GYss1JW+zsVHiXgd2ib7++85hUIVnAROVvMT
+30XaFjSPsw4lyfPYrr6bZiHyF49x3YJ/v7PZq1KxWIz0rW0Hx2mm+ZVoqdPIcUPqL699yEGzkBZv
+ewuux9CCa7eU1wyjAXgfoQf157hOZBS5uVwqbd8vurQVcn7gxg+yfRL7rAF0y+kcTjGahNfmIbqd
+0GHiw0+zCBaqtmhLOi90eo5UM+4QAI8USSDKyISsbWlaQNAAaFqOGDmpPKm4bzNx4uJBL0oOobgx
+E5AqIxzlBD9tS28hKHqhfnnMUHFNijwIKTtyzSIzanzvjgTLeYoTyyasE+/FSYZ64nLTLtGlwinu
+J42fJAfsPov1ZJ4PsBrwZxg98+ShGqQ5Y9AmioJLteyWIg+N2dUCIxdwe5gXg7jCJu9KMK/Zt9Eh
+XnyL7V8vNyRriUKjWqdgqhbXN+Sf9TSwJSkSJP1MdRUbaH2doog/LawUD1E723rrYXlwkQ7Frcmb
+vryPe28UJHC0K83K1Yg9KRIPs6R5J1j7c3wRY9awDP68X5Abpu5/lT/LQ6Zi4Ivx1Dc7PsmfmwS5
+f+Bu75EM7xSOIdfvnH+YU0loV32JEq7nsTiVAlJ0rphzN48IKgG9qvRl3O3lMU4lYJ/CXmbC2uIP
+JUXSwmhGFEIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.numbers.number_sets.rational_numbers
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

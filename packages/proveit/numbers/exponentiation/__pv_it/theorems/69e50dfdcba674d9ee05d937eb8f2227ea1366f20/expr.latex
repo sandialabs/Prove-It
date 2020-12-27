@@ -1,0 +1,1 @@
+\left(a, b, n\right) \mapsto \left\{\left(\frac{a}{b}\right)^{n} = \frac{a^{n}}{b^{n}} \textrm{ if } a \in \mathbb{C} ,  b \in \mathbb{C} ,  n \in \mathbb{N}^+ ,  b \neq 0\right..

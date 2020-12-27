@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theory of proveit.logic.sets.enumeration</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theory-of-proveit.logic.sets.enumeration">Theory of <a class="ProveItLink" href="../../../_theory_.html">proveit</a>.<a class="ProveItLink" href="../../_theory_.html">logic</a>.<a class="ProveItLink" href="../_theory_.html">sets</a>.enumeration<a class="anchor-link" href="#Theory-of-proveit.logic.sets.enumeration">&#182;</a></h1><p>Enumeration provides a simple way to define a finite set via enumerating the containing elements.  For example, $S = \{e_1, e_2, e_3\}$, is the set containing only $e_1$, $e_2$, and $e_3$.  That is, $x \in S$ if $x=e_1$ or $x=e_2$ or $x=e_3$; otherwise, $x \notin S$.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Local content of this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="_common_.html">common expressions</a></th>
+<th><a class="ProveItLink" href="_axioms_.html">axioms</a></th>
+<th><a class="ProveItLink" href="_theorems_.html">theorems</a></th>
+<th><a class="ProveItLink" href="_demonstrations_.html">demonstrations</a></th>
+</tr></table>
+<h3>Sub-theories</h3>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Axioms contained within this theory and its descendents</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#enum_set_def">proveit.logic.sets.enumeration.enum_set_def</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/b01212efd6e28480519640e6f97d2066a14ba12d0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#empty_set_def">proveit.logic.sets.enumeration.empty_set_def</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/3b9d3c9283635556da5095a1308c9d36b6eb08250/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAVBAMAAADlb+D4AAAAMFBMVEX////MzMwQEBDu7u66urpm
+ZmaYmJhUVFQiIiLc3NwyMjKIiIh2dnaqqqpEREQAAABVi3StAAAAAXRSTlMAQObYZgAAANRJREFU
+KM9jYGBg4GPAAKkJDKKbQQze0+cwJK0OAAknASBxmmEXhmw+iGBdwMDA2cDwfAO67AkQwdPAwMAW
+wNDSgFOWbwNL8GecskwJrM4fccryX+Bg+IJdVgEkO4/hL4i9CgwCwLJVIILtA1A2YRtYFhnwKoKp
+pSB7F6ObzPhiAphm72bg2LyAGd1VLBC9y4EKzh5g/ICwtwAsXgezl+25ANsDnG5m6GDgcsDpX4Yb
+k08z4JY95jYBj+wFzLhnOASXxQbg8YsVcIHThgMOWYarkHQFANuAQxxgY/+kAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

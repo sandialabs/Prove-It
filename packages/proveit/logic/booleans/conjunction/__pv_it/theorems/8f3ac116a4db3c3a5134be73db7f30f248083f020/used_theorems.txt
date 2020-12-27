@@ -1,0 +1,5 @@
+proveit.logic.booleans.fold_forall_over_bool
+proveit.logic.booleans.quantification.universality.bundle
+proveit.logic.equality.equals_reversal
+proveit.numbers.numerals.decimals.posnat1
+proveit.numbers.numerals.decimals.tuple_len_1_typical_eq

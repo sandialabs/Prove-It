@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Context: proveit.number</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../index.html"><img src="../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Context:-proveit.number">Context: <a class="ProveItLink" href="../_context_.html">proveit</a>.number<a class="anchor-link" href="#Context:-proveit.number">&#182;</a></h1><p>Covers all generic number concepts: sets of numbers (integers, reals, and complexes), number relations (&lt;, $\leq$, &gt;, $\geq$), and numeric operations (+, -, $\times$, /, mod, exp), and operations over numeric functions ($\sum$, $\prod$, $\partial$, $\nabla$, $\int$).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">context</span> # toggles between interactive and static modes
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="_common_.html">common expressions</a></th>
+<th><a class="ProveItLink" href="_axioms_.html">axioms</a></th>
+<th><a class="ProveItLink" href="_theorems_.html">theorems</a></th>
+<th><a class="ProveItLink" href="_demonstrations_.html">demonstrations</a></th>
+</tr></table>
+<table>
+<tr><th><a class="ProveItLink" href="sets/_context_.html">sets</a></th><td>defining standard number sets: integers, reals, complexes, and important subsets of these</td></tr>
+<tr><th><a class="ProveItLink" href="rounding/_context_.html">rounding</a></th><td>rounding of real numbers, such as round, floor, and ceiling</td></tr>
+<tr><th><a class="ProveItLink" href="absolute_value/_context_.html">absolute_value</a></th><td>absolute value of reals (and subsets) and norm of complex numbers</td></tr>
+<tr><th><a class="ProveItLink" href="numeral/_context_.html">numeral</a></th><td>number representions: binary, decimal, hexidecimal</td></tr>
+<tr><th><a class="ProveItLink" href="addition/_context_.html">addition</a></th><td>adding numbers (repetitive counting)</td></tr>
+<tr><th><a class="ProveItLink" href="negation/_context_.html">negation</a></th><td>negating numbers (subtraction from zero)</td></tr>
+<tr><th><a class="ProveItLink" href="ordering/_context_.html">ordering</a></th><td>ordering relations of numbers: <, &leq; >, &geq;</td></tr>
+<tr><th><a class="ProveItLink" href="multiplication/_context_.html">multiplication</a></th><td>multiplying numbers (repetitive addition)</td></tr>
+<tr><th><a class="ProveItLink" href="division/_context_.html">division</a></th><td>dividing numbers (inverse of multiplication)</td></tr>
+<tr><th><a class="ProveItLink" href="divisibility/_context_.html">divisibility</a></th><td>divisibility operations such as x|y to indicate x is a factor of y</td></tr>
+<tr><th><a class="ProveItLink" href="modular/_context_.html">modular</a></th><td>modular arithmetic (i.e., remainders of division)</td></tr>
+<tr><th><a class="ProveItLink" href="exponentiation/_context_.html">exponentiation</a></th><td>exponentiating numbers (repetitive multiplication)</td></tr>
+<tr><th><a class="ProveItLink" href="summation/_context_.html">summation</a></th><td>add function evaluation instances: &sum;</td></tr>
+<tr><th><a class="ProveItLink" href="product/_context_.html">product</a></th><td>multiply function evaluation instances: &prod;</td></tr>
+<tr><th><a class="ProveItLink" href="differentiation/_context_.html">differentiation</a></th><td>rates of change; calculus: &part;, &nabla;, etc.</td></tr>
+<tr><th><a class="ProveItLink" href="integration/_context_.html">integration</a></th><td>summation over infinitesimals, inverse of differentiation: &int;</td></tr>
+</table>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-11-04 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

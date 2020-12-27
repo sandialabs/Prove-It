@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{P}~\left(\left[\exists_{x_{1}, \ldots, x_{n}}~P(x_{1}, \ldots, x_{n})\right] \in \mathbb{B}\right) \textrm{ if } n \in \mathbb{N}^+\right..

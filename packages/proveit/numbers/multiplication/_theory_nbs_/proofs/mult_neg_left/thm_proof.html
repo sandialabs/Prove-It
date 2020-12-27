@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.multiplication.mult_neg_left theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.multiplication.mult_neg_left-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">multiplication</a>.<a class="ProveItLink" href="../../theorems.html#mult_neg_left">mult_neg_left</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.multiplication.mult_neg_left-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> mult_neg_left
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="mult_neg_left">mult_neg_left:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/bc7d1469df5f550565f4089236cf482065da40c70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAR0AAAAVBAMAAACJYCeRAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAyZJREFU
+SMfFVk1oE0EYfU032WS7SYvoxdPaQOlBaFDqqdaqaG82PfhzayiKeJEiKkgVioeSomIEocUqrhVU
+itiAiFR6CO2tXgJ6sKKyBz0oWoIo2ILizP5kvtluN6kXH7wlebvvm29nvm9ngDqQKAtSNBVQQ4Df
+dCco/iyhxYX34fk8IpRwqqbgM2kjQfFjBcGXXPgSns9nQglPago+U6oQFF+zBCf4lI6EppPMCMrQ
+jVqCz/QqeIR5wZTJohRD81ELgr4Xa6kl+EwXgke4J5hcnJ4eD1+ucUIfPtYUJFNiKHiEVI/gr3z+
+Yng+aUIPU203t7O1WRDCDiS2UoGYq4hkhNWZz7SBGyZ0pns8AYyF53ON0ItTSp5RWfV9qCqlvYhU
+XEFftpGBbALiZWF16k1pQQdbJEtwv13Wa9B09eSg+3OY0Itj6qsKq4zndnJ8JYrdiI+4AsWwVExF
+YQUrXEw2WsizwYYEVUR8nzltbmdZO2ZGv7r/NwtqzptnNXtwYIBfZnirYhOaDVegICagoYc/6Vi1
+PzynBgPfgWhFUC+rvhBvZqeRvA3Mrc1HoNmo5qPm2EVZxUA2OB8Bno9nxXl+6TOjP+V8EtYR3vmd
+bSya0gbVVPi6H3jG7qy/XrAHB3qr/9nEb/MEt35ygevlWR10I8I+EcqQIMaOs8I3T6ssd73Z7EeK
+P/d2KbSem8wO5qH1HM9hFFQgZqmePauDUW6U6hlPWVJRfON3b/WiHff5rxezIsoCoYu+4nV7a+wS
+85NTfksCMYs2yAirg13oYzk2lgTd5Vyxb3dhEEfz+bwxeVhE6SV08aB1ajfvgk+iCQbTK5JAzFXw
+9fCsXqA9rNdSWUEk+eRFK1F++yy2IGa/7pTTxzX2C/q9bbR8Qn37RTfjQ0Ibd3VLx4SJc0oFOk8y
+0ZW1d7i699PTmOnZ+H4as7Qf8n7qTtvr+UX0F3Gwnb3kFa48Xh6ttsEY4XrHi0u4HHzekExx3xSr
+5bghnzcoilqBd0CE1U995zEy1r50FoE7T+h5TGntdLP0KJ02Y6VDGzmvJv0Flfy38+oSIY0G5V0J
+/xd/Ae/ACvM7xq2kAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/fdebb34fd1c0643c8e8727dc4af3eec7ebda32ab0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

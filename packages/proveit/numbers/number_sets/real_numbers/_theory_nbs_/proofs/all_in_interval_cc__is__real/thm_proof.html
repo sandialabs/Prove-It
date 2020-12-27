@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.real_numbers.all_in_interval_cc__is__real theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.real_numbers.all_in_interval_cc__is__real-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">real_numbers</a>.<a class="ProveItLink" href="../../theorems.html#all_in_interval_cc__is__real">all_in_interval_cc__is__real</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.real_numbers.all_in_interval_cc__is__real-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> all_in_interval_cc__is__real
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="all_in_interval_cc__is__real">all_in_interval_cc__is__real:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/b8ad0cdadab20e9b2e5e3602bae3407d6e528c1c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN4AAAAZBAMAAACspI2IAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA01JREFU
+SMfVlk1oE0EUx192s8lms5t48FApSGghSr2EFr1ZikVBQYmX1oPQUD8rUnpQo6WU0ItpRVw9aA8V
+VwotFNFFD6XiIcSLRNHFFloLliD0olhLUbD14puZTXaSpskKvfgg2dl5j/3tvP/bNwNQ2y4kddgW
+8yYH3IT1wbbZ/f+b97CKb4bx8uTyuQbPRRAxJVVhcr7uzkqdBeDTKe8tmftag+ciiFioYl3lJ+DU
+ggFKnvJG8T+QqsFzEURstuJsagzkQAIgS3khA0A1a/BcBBG7wd9oN5ODBZ6o4+IeU56Wm5p6UKte
+XASRDPCFJQ0ZzvpEHZMTaqP1+TudHqhZn+VB1zmllmL2QMCB0tBziCQOnhpcPn1ezKcao7xzAMPF
+BrCyBY8PIpYoDE5gogrCyliFT2A+QtPYw+s33Yp0LU957axymL22r9N7z3zheSVBPI+8dIHnR4Vz
+8ME4SikO725ykGgf7KM8PwhW0feNfEWvWixBhVyE43FBxO3wQqbzaA8KZECaybd7Bc1eX7tMkiut
+Up5q+Z33XsffwswUIG/R4nhcEHE7vLBeygNYY7XDrW9MPJxyeIF8B96MR5fJ1FrU8BL5CS/D8VhQ
+dn80Tt3IU5p74zjoarhUkk+QfrGbHbx+Ix9JcbB8wvBZTNJVaYNg+oVYCBivJcb3TxIkGL3+tpCt
+32S8iyRpj9FYUi8vhVVoIjfNPK9DjBfrBV7g88SYRJ4qR7T8OOWJ56+U9GsSJMF3TITNa4FOMhiC
+pSIPa8f7R14NWMXFFvqZamKBixnGC2NheEwhQRUQE53pdDoiqPfmSnjhiC0vdSOvHqJkZiccKPIw
+YUp3UyPr68rFY8V+vQzpHyaE4oynYV6e6fIiXsKGx/SxfAZPGzxPYxUmgY+tT1mH21g3sIHgVMV+
+5n1j97OCTXL7n0fvOg6jht9YADXO9Mtlyve/R2peZW5c3y7ppxUYgX4t5fBmq7apLMfzdj8/CCdN
+6TJCbpHv/X1mvLWcNzGXzTE38o7sa7Skeuh4x33acrVzjr0f8cYkFohAW+/vAtOPWhBKWolSbcuS
+9XJeUHd9nkhwZwSudVU7T3zadH7R4F95Vhlve85Lyc3nz8FK+5GL8+e1vxIuBeyZTCizAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/ccbfc2c02ed7419e50ef9e6924359a8a916ff2b10/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

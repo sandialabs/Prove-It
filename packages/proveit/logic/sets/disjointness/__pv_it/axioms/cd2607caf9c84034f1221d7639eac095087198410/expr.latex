@@ -1,0 +1,1 @@
+\left\{\forall_{x_{1}, \ldots, x_{n}}~\left(\textrm{distinct}(x_{1}, \ldots, x_{n}) = \textrm{disjoint}(\left\{x_{1}\right\}, \ldots, \left\{x_{n}\right\})\right) \textrm{ if } n \in \mathbb{N}^+\right..

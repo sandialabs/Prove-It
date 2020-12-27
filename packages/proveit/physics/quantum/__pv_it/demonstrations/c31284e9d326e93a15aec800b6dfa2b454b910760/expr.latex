@@ -1,0 +1,8 @@
+\begin{array} {ccc} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{Input(\lvert \psi \rangle){\Big \{} \left\{1\right\}} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{I{\Big \{} \left\{1\right\}} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{Output(\lvert \psi \rangle){\Big \{} \left\{1\right\}} 
+} \hspace{2em} \end{array} 

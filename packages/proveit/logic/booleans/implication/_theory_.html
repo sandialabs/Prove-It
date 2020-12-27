@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theory of proveit.logic.booleans.implication</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theory-of-proveit.logic.booleans.implication">Theory of <a class="ProveItLink" href="../../../_theory_.html">proveit</a>.<a class="ProveItLink" href="../../_theory_.html">logic</a>.<a class="ProveItLink" href="../_theory_.html">booleans</a>.implication<a class="anchor-link" href="#Theory-of-proveit.logic.booleans.implication">&#182;</a></h1><p>Theory for implication operations: <code>Implies</code> ($\Rightarrow$) and <code>Iff</code> ($\Leftrightarrow$).  The <code>Implies</code> operation has an <code>antecedent</code> and a <code>consequent</code>.  For example, in $A \Rightarrow B$, $A$ is the <code>antecedent</code> and $B$ is the <code>consequent</code>.  If an implication is true and the <code>antecedent</code> is true (e.g., $A$), the <code>consequent</code> must also be true (e.g. $B$).  That is $B$ is true <em>if</em> $A$ is true.  <code>Iff</code> should be read "if and only if" and is defined to mean that the implication goes both ways.  That is $A \Leftrightarrow B$ means $A \Rightarrow B$ and $B \Rightarrow A$.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Local content of this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="_common_.html">common expressions</a></th>
+<th><a class="ProveItLink" href="_axioms_.html">axioms</a></th>
+<th><a class="ProveItLink" href="_theorems_.html">theorems</a></th>
+<th><a class="ProveItLink" href="_demonstrations_.html">demonstrations</a></th>
+</tr></table>
+<h3>Sub-theories</h3>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Axioms contained within this theory and its descendents</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#implies_t_f">proveit.logic.booleans.implication.implies_t_f</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/4c83645082a9307612e46e4a98ddb3a0aa838d9f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHoAAAAUBAMAAACwiTT9AAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAAPBJREFU
+OMtjYOC7wEAI5OGWOs3AMKMDBJqwyYqBCKYHuGQY1oHJdBxmg8V5FuCS4Z1AWDeDOS4ZjgeYuveh
+6z6KS/cLBkzd0ui6uRxw6K7EohvqG4Q48wQcuvei6OYEh37HTzTdvOBgs1oFAiuRZdqw2M3AtgxV
+N1sDDrtDsOlmOBWCopvxAym6+ZQfEKcb1eWcqyDgAarLWRoQ/l6EO9QggGUB1lDDYrclFt2nDqDp
+5jTAodsDwvZFllCE0sDcEwrOPVwCaFphMhxY8g+G0AlcGZR3AgNhYI5TZh9hzVhzKLx0IAS4H+CU
+IqJkuodLAgBplkw0aZ95ggAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#affirmation_via_contradiction">proveit.logic.booleans.implication.affirmation_via_contradiction</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/5941627c1e75bc665dce1f7b3265ea647617da820/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJkAAAAWBAMAAAAhlCOEAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAidJREFU
+OMutlE9o1EAUxj832W6SZqsHD55kwIso0oUVBFG6IIiXwuLBk+hCrVcLvYhUWDxNsXRzUYsgDVZQ
+IkrBP+BBXBCh1h5yV7G4J3upB6VVEH1vZk0mi12wZGAyf/K9X2a+vBkg17LKj495kM5RfcedtTxo
+61TnqLrNHGDl9RAYouov5kB7OBIQcjmKbuWx0Xi4Rs9NKaf6ylxzUN9KZYevYmrGgWk1nu4V1HTT
+TiacAE+3ot3DeUHNCXgqS8rfum5+7kxqH/W/GQiSiE81WIGJaJifnq9QU0KBl4iFX2zl6+MQ7TvP
+DNrZJMAbieE1TFqaC8Wx6iUe+XFJjZcnaV3Xb4cQwn9kaMeTCP8+ff2L6r7spdnADt6iu3pGwYXk
+XVMRYvStoZ1IIk47NHPI3H5KI29Ku5T7F9R7HOkeM1HdW0+1bkprWNR/jiUp5ezuLM0l2tBX7j1R
++vcYhlfRa7NupFq7CZ/DyYbFAulP6fDC4QyNM9b5wb2d/Ge9zkorLF6W8hr7VjBo2vYB4PGxpZ/6
+bLP+YmjQHvxew2BrgxdT5nkrxHxd/3GiWSmt2PxLOwr3O3AS+6pUxsKsb9kySmuM8UbR2v5KSvMm
+ujSb8oiS6AO8KIruCvShOZtwW1fhkJnlqc5sbGivdI9Xq4m5jRjKL9zkhJFyj5zpdyb3k289uXnw
+H7crgv+/FTTNycwNxtu9YzTNzsQvbPvGqujmhTl3oG/EH4NyiW+J0iaOAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#denial_via_contradiction">proveit.logic.booleans.implication.denial_via_contradiction</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/3ba42e63897df1b59e5482fb39e92b105a4e201b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ4AAAAWBAMAAADDSDj9AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAh1JREFU
+OMullEFoE0EUhn+TxmTT3dqDZxnqxVsDAQWpGPDQUyEnj7bQ9qAXCz0otIJ6miA1uYgiSBcUkYil
+UEqPDYRCW3vYe6lEowd7qQfBehB9b2anmQnG0vXB7L43b+fbN++9GSC5eFHXRH8NaLGyl4j3xrFu
+0LgJvGd9PxHvq2Md0FgCnnHg95PggoJjHYSALzDAr+UkvGzNtt5eJTM/iGC7Xn+aaLvuqmi4RM/P
+wKGU84l4522jL1znajeBaaCipirdC0pGqfyVt2AbrzAu6PUBuIa86pnge5zYT+1ZnU9TJePRctoo
+c0D6DktD/XuRy7NGaUVK9eXLX5zV5hWIxotVh6c8R5IzylnT1hNAZrJ4mz8fp+JGWTW9PUuRPHoe
+Qgj/ncNjD3d/1JvXB5xqaZ7Xus6zGSF57yRCjG3ZPOWB7n6bN2fxKEHZQdJHOdtTOi2X4sMniufK
+No89viT5WHJ4Cx2eR7yBb7oeWJnh2V0MI1/Q8aWf2Dz2xB1SsnlNo5RVK+Z+0mOExhkudL69Uw0z
+d6V8yPlLWTzl0Qtf37J5o52L4fc++qs/KJov3A78dTrEYhkTOj4/bfGUJ1UkuXjZ2a973vS/Z4w2
+RnFG2FC8hr9j8bSnTjLk1sO9D5T4wjTVIbzqPeQor8F8+3HU4cWeuI7YlA+kbPQ6NkvdExcof0fS
+dYt5/75Pex/MHrzj7/ug9l+8k0ohwZo//2aLn6xV0D0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#iff_def">proveit.logic.booleans.implication.iff_def</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/0cd5738fd7a3109ea2cf798d3a1f4edab4dd47c70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXkAAAAVBAMAAABRbIObAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA8xJREFU
+SMfVl09oE0EUxj+TbNNNmrQHUUGRgAe9aAuFetOoB0VQ40U8aUALRRQrQgtWUU+2/iF7qoJgVxQs
+FarQi15U9CBakaCgFFEiHqQKtjRaa6XW+fdmk+0kTVsvfvC1Yd/8Zt/OvJnZBcrJzkrPovv/jqyQ
+Ief4hfclGvYqM+0zxd9MH2jqTKLK+WdkrxczyWLpcoY8yC9+KZH9sDLTiLHBMiD4A5HcgkmngFMx
+k+KjEAz5Cp+uM+bkYw3S/OeIaxqKKSCUBx4vmPzkcTpm0IdJSEY5zvquuWvOPuxIM93eqEYnzryH
+GgR+sRuOAdcrIbm6SpDWOVdzOqZU7fGRARYSjHLseV/f5RKFc1mZKVuvCnEt7y9FHdexPk6wR0pW
+QHLthZms2pzQnI7RNHmVEQt8h2TIE52dJ0tkv0qZTaT7MOt1FaF1UpuG1cYnr2F20qsMA9mPVs3p
+GOm1/rU9yopKMORmmk/5d1v+SQtN1SVl4Cb2y8HZvbSdaaXqe/+RV+d41cX44qv5JtRgJoPtQlTO
+RSTfOwb1HXUMWC+Y0/TIkaQ1phjyFrXwY9/l6NShpk617lAGkugRXQQOyRm4IBvUO4gsYf+jrb6x
+n0kqRb8ayVZc05yOaT1Q6zIEO68YchgBMbU3pkSLYBrRSUUtVoZ1oPGoKJk2WpWyFs/ye7GurVFf
+9jNIrf7FBjKWQFWKOB3zFutHuTr2NDZNQDLkmmxYhJ4fl3klEMz5cwgBi8TF7keyu8OywTi/T6Jc
+9pqks/SwYyDDLqy0zp5iWt3PoOYRK33Z2zmxAVqJTtHiTgrrXP/8s4EIy3J6K2r7c0pv2jjK+gy1
+enWfNpNBGf3mGEgM0DnVURgDNkhGHXtR5mOQDBldB8WehfWiya61a9LwrVr7rjzlaNOIDHubtjXh
+rT1PBlJWbs5IDqsnEIyOkXaq/1fVwV24ajEgHv8d6kWTl8Bqwp4o8124+pe8xh81qIoyzkZ103l+
+4ZEvexMpqt41kWIbDruK0TGqerU/2zzPjCMZMmp5iUU+vciIni8CPbRitkr3Tn9BNPOTdmb5dsGn
+a2S8sUXsPvGUL3sTydVsJKt4mQQSkvFiSnI9I5L54+Le9HHJkBHjWQdd9IhWv1nxODPPe2/ZMff5
+j7VbZd4UiuQYyZD4mYKZsU3MraK77mBzkLXPw56EvcLwrlVe5d7S5kRWzDwuZKsnYGdOWcvxNN/Y
+kix6qeqavTvDG/J8yQoZcpGipb8xyqm67NfJnMgKGXLZD7UKv++G5v1lODSPL8OhAhcpi/9LfwF9
+GoUpN6fzvwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

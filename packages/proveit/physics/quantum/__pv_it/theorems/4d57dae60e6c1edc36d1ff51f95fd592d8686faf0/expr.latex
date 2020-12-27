@@ -1,0 +1,8 @@
+\begin{array} {c} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1}{\Big \{} S_{1}} 
+} \hspace{2em}  \\ 
+  \vdots  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{m}{\Big \{} S_{m}} 
+} \hspace{2em} \end{array} 

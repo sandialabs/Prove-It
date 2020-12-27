@@ -1,0 +1,2 @@
+proveit.logic.booleans.disjunction.empty_disjunction
+proveit.logic.booleans.negation.negation_elim

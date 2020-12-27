@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{\forall_{i, j, k, l~|~\left(\left(j + 1\right) - i\right) \in \mathbb{N}, \left(i + a\right) = \left(k + b\right), \left(j + a\right) = \left(l + b\right)}~\left(\left(f(i + a), \ldots, f(j + a)\right) = \left(f(k + b), \ldots, f(l + b)\right)\right) \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z}\right..

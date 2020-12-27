@@ -1,0 +1,1 @@
+\left(a, x, y\right) \mapsto \left\{\left(x \cdot a\right) \geq \left(y \cdot a\right) \textrm{ if } a \in \mathbb{R} ,  x \in \mathbb{R} ,  y \in \mathbb{R} ,  x < y ,  a \leq 0\right..

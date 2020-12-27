@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theory of proveit.logic.booleans.quantification.universality</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theory-of-proveit.logic.booleans.quantification.universality">Theory of <a class="ProveItLink" href="../../../../_theory_.html">proveit</a>.<a class="ProveItLink" href="../../../_theory_.html">logic</a>.<a class="ProveItLink" href="../../_theory_.html">booleans</a>.<a class="ProveItLink" href="../_theory_.html">quantification</a>.universality<a class="anchor-link" href="#Theory-of-proveit.logic.booleans.quantification.universality">&#182;</a></h1><p>Universal quantification is a general expression about <em>everything</em> (<code>Forall</code>: $\forall$).<br>
+The <code>Forall</code> <strong>Expression</strong> derives from <code>proveit.OperationOverInstances</code>.  As such, it has instance variables (<code>instance_vars</code>) with an instance expression (<code>instance_expr</code>) and may be restricted to a <code>domain</code> and have zero or more <code>conditions</code>.  For example $\forall_{x, y \in S~|~Q(x),~R(x, y)} P(x, y)$ means that $P(x, y)$ is <code>TRUE</code> for all occurrences of $x$ and $y$ in domain $S$ given that the conditions $Q(x)$ and $R(x, y)$ are satisfied.    The <code>conditions</code> may be any <strong>Expression</strong>s involving the instance variables.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Local content of this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="_common_.html">common expressions</a></th>
+<th><a class="ProveItLink" href="_axioms_.html">axioms</a></th>
+<th><a class="ProveItLink" href="_theorems_.html">theorems</a></th>
+<th><a class="ProveItLink" href="_demonstrations_.html">demonstrations</a></th>
+</tr></table>
+<h3>Sub-theories</h3>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Axioms contained within this theory and its descendents</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#forall_in_bool">proveit.logic.booleans.quantification.universality.forall_in_bool</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/de5bd4b76e133fdc5f4be7d7ae8e6f2f717df2950/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAX8AAAAVBAMAAABccvPcAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABMBJREFU
+SMe1l21oHEUYx/+93N7L3u4lHyqlgnIm0Eho08MgBWnkqmC0It3mQ/FDIUdQMX5oT1uMqBxnBXtR
+pIeICYXaNUKtUdtDOarF4nFXQdJWFxoRJS33wVIUrIfB0LSSOjO7O/t6ex7qA7c3O7v/mec388zs
+M0BbC11TfGrjGgavoHMjuk4sUQIu7/d99AUgX82gQcuXgtqQMkn6Jzt7Pg6c/Qdi0+S915/ac5+u
+68gmQDtyDOizxdV1TwCREvUN52jdr8EAUpn8JVVH7S+03fZibt0E9hWV6TqyEx4AJIXU8fc1iA0G
+MEOntRAMwJ7POEc0TdttL+Y2VgW+SjFdRyalPACxsBZSSK81BkAHlo1wAAAb5HOOymiJtttezG1z
+hvyqTNeRiT0cQD44mTcAEmUC8B7zTZ6fm5tGG4DFubkPc47KaTaz7cXcDpHf3gymO171P5sAwgGV
+z4C0nQAkM9Q3XC8WX/bRVe0A3cXiwarjcZ8emi3EPrZKgm1J181ueHtjKnDUeyceqJk3dRPghGqF
+0MgusjNKaQbwJDDl00jaDhBRECNz//By/TWjlTd1gBZirwl/AaeqTCdW5eeiDQit187H+CGVN28u
+mwAT1hpYd2stDakGA3iQLedggHCa7QZyDyQjkl7SAVqIfT4my+frA7pOUqUb4ZIwlGv58jy+Ux8x
+b06ZAAXbIpYukcFI5BhAFCH7Di/sO4u7si4A5LCJlCJZhJp65VodwCVubbEbXCciRn0JtwZQUbRt
+XwaAcOc1YgYACo+RmibzTdKi/OWP6sP4XFK71PrQvqGyDeACaHdRTe/bArCLgz8DOUuH7lQwAPCH
+FyBunwEUIhwg3tjFN/c3Dqs4k0pL7hDCuwKZFJwsoV91hJAurt27wZttOCvH0pYOY0obAOFPcrn4
+fS8VjZgh1GMHyCZZC9Q3TJHPsjw82kcjmlil8pYXIPYOfXNH7bw5LcYiZuKQuieawTOuoGeVjs+A
+oUuom8nTIIDTJFAHsHAH1tsX8T2OGVjkixifkZbkbdqakp7aVKRPdnsAElto6Vurj7oBQMUCfgN2
+3+4aRFpp2e8q1+0oH8IRfQZOkh7FVegFfhe+GWvGtfhsDnThbDUBomWeSlSlOomIrqoOQCPycD+6
+VZE5XUG17gHQg/JVy6ERA4CFM1bI70X3OK7YyvffGue6Y72zw5oOEKWi56lzWfMyqUIcH+gjGWIk
+FaZRc8UEEJ/e7kjmkFR032Q6OOPYBuGFYvEAAThCF6biBPiJlm66UwlDLDQFLwCtvHhm0VVrpRIs
+hE5782eeM65RuqoKxBxPJcLfTObtr35g+MbsNmwVkNVnIDzqTiUMl1bcyZxuR6WGxABm1Pjr5oVV
+flpwb1JWMpfIOb73vDdeOoroo4pfMse3CZtv8Sb2V/A1LS4Ai/4Ag0u2TGzKavfYQm2eAewsC+ux
+s0QvZVYZUR5392p+uONbllMQvRnFLC89hNAF33TaTDgaNt/CWWwkmzxZJuE8yRz8AbwHGrvRELIS
+U70UxaaMV2ebD2+7mg+wP0Cs5PXtbrIGvFlAvsWRst9+pBxdKrPzn3USpHODL7V/d6SUSUOD/kfK
+H4lrVzP4L00OGtr/yf4GGa1t6rYvMiUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

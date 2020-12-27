@@ -1,0 +1,1 @@
+\left(m, n\right) \mapsto \left\{\forall_{A_{1}, \ldots, A_{m}, B, C_{1}, \ldots, C_{n}~|~\left(A_{1} \lor \ldots \lor A_{m} \lor B \lor C_{1} \lor \ldots \lor C_{n}\right) \in \mathbb{B}}~\left(B \in \mathbb{B}\right) \textrm{ if } m \in \mathbb{N} ,  n \in \mathbb{N}\right..

@@ -1,0 +1,1 @@
+\left(a, m, n\right) \mapsto \left\{\frac{a^{m}}{a^{n}} = a^{m - n} \textrm{ if } a \in \mathbb{C} ,  m \in \mathbb{N}^+ ,  n \in \mathbb{N}^+ ,  a \neq 0\right..

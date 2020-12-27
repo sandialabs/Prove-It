@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.logic.sets.unification</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.logic.sets.unification">Axioms for the theory of <a class="ProveItLink" href="_theory_.html">proveit.logic.sets.unification</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.logic.sets.unification">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Or</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">y_1_to_n</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">,</span> <span class="n">Q__y_1_to_n</span><span class="p">,</span> <span class="n">R__y_1_to_n</span><span class="p">,</span> <span class="n">S_1_to_n</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets</span> <span class="k">import</span> <span class="n">x_in_any_A</span><span class="p">,</span> <span class="n">general_unionall_Ryn</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">NaturalPos</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.logic.sets.unification&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Membership in the union of sets is the same as having membership in <em>any</em> of the sets being unified:</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">union_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">),</span> 
+                            <span class="n">Equals</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Union</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">)),</span> <span class="n">x_in_any_A</span><span class="p">)</span><span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()),</span>
+                  <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="union_def">union_def:</strong> <a class="ProveItLink" href="__pv_it/axioms/105cc26bae07cd7018f40409d1fb941fbe6ad7a50/axiom_expr.html"><img src="data:image/png;base64,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
+Af8+kJiV/IheAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">intersect_all_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> 
+                           <span class="n">Forall</span><span class="p">((</span><span class="n">S_1_to_n</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> 
+                                  <span class="n">Equals</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">general_unionall_Ryn</span><span class="p">),</span>
+                                         <span class="n">Exists</span><span class="p">(</span><span class="n">y_1_to_n</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">R__y_1_to_n</span><span class="p">),</span> 
+                                                <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">S_1_to_n</span><span class="p">],</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Q__y_1_to_n</span><span class="p">]))</span>
+                                  <span class="o">.</span><span class="n">with_wrap_before_operator</span><span class="p">()),</span>
+                          <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="intersect_all_def">intersect_all_def:</strong> <a class="ProveItLink" href="__pv_it/axioms/e399a53c4fcc44b7db76a385da7bfd8ac5f1c5300/axiom_expr.html"><img src="data:image/png;base64,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
+2v8BXoq8fO4ETf0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for the theory of proveit.logic.sets.cardinality</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-the-theory-of-proveit.logic.sets.cardinality">Demonstrations for the theory of <a class="ProveItLink" href="_theory_.html">proveit.logic.sets.cardinality</a><a class="anchor-link" href="#Demonstrations-for-the-theory-of-proveit.logic.sets.cardinality">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">Card</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Distinct</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">GreaterEq</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">four</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">NaturalPos</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>enum_set_card</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Equals(Card(Set(x_iter1l)), Len(x_iter1l)).prove([Distinct(x_iter1l)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit.logic.sets.cardinality</span> <span class="k">import</span> <span class="n">distinct_subset_existence</span>
+<span class="n">distinct_subset_existence</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="_proofs_/distinct_subset_existence/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/theorems/a6ae3035e90daecfdebb327b23a7d4b307b29a8c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnIAAAAZBAMAAABHrN4WAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABvhJREFU
+WMPdmX9sk0UYx7+0ffvj7dvOKMYgECsLiBOlOA3gQAsmooKhLHH6B2GVuJERMcURikhwGoUCQRox
+MEmQN1tEnNPVyBRQpGyYCGzY8CMSA1oTNcEEM2AiAxHv7n37/ujb9qVdBMctu/fufe95nvf93HP3
+3F0B8zQvEkN/kj3yMm6gNC2SgC2y7GqahvtpyoEbK7lCJNtwjci53iXpOnzk+0+aUUgWpM8dU8ml
+6I2TJuS89OJJFk/OWltb+5x47cl93QvXcBXTcEODbQUqrFPJHaT1303ICXFy8Yr9G6322HUYWL3g
+/paKNihFOQXI/6kCFX6ikmukxQYTcqxBIwYeOfQqpebMR7yfjCN/gfoEn0KOehJzqbzzHHXKgwOb
+3JHMR5Sao9B34m9SyHkOtLRsNI0QJ1paPgwPTHKup6W5/RzSRTntIeQ2FqzwFzW2XohGl5mSK4lG
+VyYGHLnWjpG9aDwP7p7DqSN/lcdJcc4tlaPIgGvuqvA8Ul+BUtKqadQ7Y3x5/WxE3dSOdKVTJVcD
+rMrSPKEjZw/CGesHOSESibxatAIzwWCOLx4KgYzW32gADaMetIglPlcfXEMxK+YgPreWtEp4XnKk
+8nYAvvctT1d+VMk9Cj6bnF9HzuZnUYXrOniMev66JKYNkwOWnM/u2h20KSI7LsO2MFGcz1FN6dDH
+csFMYnv6RfSmnSkaW7ECU0T4GLkVwGvAZXhT+DRIyb1CtIvCRVsMXO4oeQDfiU+kK1+o5BywaBdq
+XP0+3BnKJEf+7wWl7O6hd46HYWFf54ScE7R7yNVWJ8++K4GRxY1WpommhnReZyZijckvojfdlgDP
+yDku3I00ubeAs2ijX0fJDSY+ByexwZXnnsZFRNVKtUpOSKq7o486J2OHIFpFA7luli+Vv2d/L6zQ
+kXOIJCfX9TVS8N4SUDVcNTn+q/KkpElLjjOdYPmQhpxqutonk+MPXfGnyUUpuWqfSo5M4rRmyxcA
+z2Yl50pVKd21ZpOI3T6/gM7y+vK4ltx7HG3eB7C7iWgmuZIY3Ky2/k32+qQfCyd3fGeLrElLzh40
+9dNTWnKK6bY0uU3w9BJyPoWc7HMWOloJjKAJOe5PzX5fs29d9TxhNrmylA5Gktrb3xYM8xycG+i0
+8/M+qY99M2NNenLeYQG51voGjVe2Pt5nJNfx4CgDBqG0skYZp5A1ack5tG2yCpKZRCWnmvY2yPPc
+VGABiQ5+hRyZ5xD3hqw0QrjFsbCI+cjtsvSgDEeOjfDrIwQ+IzKeKclBMWkP2y58PNtIzj2ercPv
+YO7tJrPrdj05ftyZgFxrJcvmdtS7AwZyFvFFRwDz9e9VZk8tkkpeqVuoJi25jXIbu5hLEJ8T0/Yo
+SWu1pl2DYT1LWZEIsQoPk0+KyuTIBlaIWVNWusaYGV+HzZLPtREA/D+Qs3TNdsnZ40ri6HAMIXcn
+acjRYb7pLpSIPKPVjkSnkZw81F3zWG/DczGhJ0dUheXafUm6pvmpVbsq8ZJVyUKRw2kSOm/PWFJ4
+kxn7ow1hHbnHpTbcXjGXIGni1CynFNPN3SPPhKquzJ9x+EQA9hdipFh1pWbHmRC23r8fqN1Px97W
+EU2TkxI5B5nHsRhy5qCAIiL4uWWlJ+FqCuMiufGrhpyHvtFcTAG3JBp9nZDb7MhC7gd6ZkM6gsUy
+4Ga/jhwfBN/DavzoOJMeVJrtfK5PCjO6VJKe/54hTuOTNGnJPSa3cYi5BDFHQ05n2nSpqahgo3WX
+8VhJMWr32cjOiw9nns/dikkcQpLP2Sr1q0tlBvgSqJJ8Dnv1PueOg2MBjv82IHW8MCwLOa6HM5Kr
+RtBTcZLos7NXZZq05J6V2hjJKYIELhmtf5B0OsO0WVJ3/IycMYqra8lBQWsiqN3xy6cxPVjUjm9o
+8SjZpeY42ZwAfjUaRUwnvhfXkbM2YBtdTfATGDhbHPwlI7ktQkpg5BpF12qWkb+eQ0i4R1MjAu0t
+SZOW3AdgbRi57ILkhRWf05s2Tcr2yR2mkc/wvEkpbYFjelB7yiTbC2FMEk6Cw7Y8IHV+FnITJ3WK
+mBW33hagi08dufVdD9ErJ7nqODJ1TzSS23q04wAjNyvODSH7H24IN5RfMGOMiBq2hF9DyTFNutgq
+Sm0ouRyCD6jk9KZNU/pk0zX+vA8e43N1k/AYLN0S6Wyn6aPJPGd6mq49ktJECM01/+8QS7U63LIJ
+C3F1WMg8p7ZLk7PIjdlozS6YymXa/OizsINuT6wfv0O4Y/0jV3kurtGxU94EuLsNYsruSypwYyuQ
+Q9CdLJpcUbSLJKdz6UxybrqoWp3f53Q68nS5Qu4pM8Fm/E/JRXL/3mrV5Oo1k1xxv7f607nbbNtW
+ltP0f5GmRUKwRRb/C0JnGfeUU/t2AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">distinct_subset_existence</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"><a class="ProveItLink" href="../../../numbers/number_sets/natural_numbers/__pv_it/theorems/2c629b73e558dcaacbf71c0a050e9fdf89a4ad830/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEEAAAAUBAMAAAAgmk0yAAAAMFBMVEX///8QEBCYmJgyMjIiIiKq
+qqrMzMzu7u5ERERmZmaIiIjc3NxUVFR2dna6uroAAABXsXCEAAAAAXRSTlMAQObYZgAAAO5JREFU
+KM9jYKAM8BBUwUFDFcU/mgsYLn58gMeMJrYDDOwfGA4bGxobK2BVcSRhFQODADZbNFxcDED0uXae
+BAYHLCoylkMZp3PYzREq+O7sXjULLA4UhalgXZCDUMHL0cVQvwEcgBvgKhjuMS2Aq0hlMWDYn4Dq
++dMMPAXHQCq4QbyC+gcM+mDxRGMgMICoYD/ALADXEM/AcBjM2IFkBkMuG0LFZAaGT+wgBiOyCqaA
+BjhXloH1Oy+IwbkAJnQMiG/DVXD/Y+A1UAMzXWFipiD1BjAenwMD96EAMLOmrwBMp3wE6mc3wBYf
+b1tcMMUBZP03a848vAYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="__pv_it/demonstrations/41922dcc566a998d158ab17c9d298ec8540adf690/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/theorems/314e90129c091e8520704a52e5602aab3a486a540/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>distinct_subset_existence</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Card(S).distinct_subset_existence(elems = [A,B,C,D], assumptions=[Equals(Len([A,B,C,D]), N), GreaterEq(Card(S), N),  InSet(l, NaturalPos), GreaterEq(Len(S),four)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>distinct_pair_existence</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Card(S).distinct_subset_existence(elems = [A,B], assumptions=[GreaterEq(Card(S), num(2)), InSet(l, NaturalPos)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

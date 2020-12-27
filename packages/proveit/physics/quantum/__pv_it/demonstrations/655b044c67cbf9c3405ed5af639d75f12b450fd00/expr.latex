@@ -1,0 +1,9 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}{\Big \{} S_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{1, m}{\Big \{} S_{1, m}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{A_{i, j}{\Big \{} S_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{A_{q, 1}{\Big \{} S_{q, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{q, m}{\Big \{} S_{q, m}} \qwx[1]   \\ 
+  & \gate{B_{1}{\Big \{} S_{1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m}{\Big \{} S_{m}} \qwx[1]   \\ 
+  & \gate{C_{1, 1}{\Big \{} S_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{1, m}{\Big \{} S_{1, m}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{C_{i, j}{\Big \{} S_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{C_{s, 1}{\Big \{} S_{s, 1}} & \gate{\cdots} & \gate{C_{s, m}{\Big \{} S_{s, m}} 
+} \hspace{2em}

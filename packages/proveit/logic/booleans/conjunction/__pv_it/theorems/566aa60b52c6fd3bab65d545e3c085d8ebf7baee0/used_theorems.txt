@@ -1,0 +1,2 @@
+proveit.logic.booleans.conjunction.false_and_false_negated
+proveit.logic.equality.sub_left_side_into

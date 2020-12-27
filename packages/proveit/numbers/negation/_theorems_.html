@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.numbers.negation</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.negation">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.negation</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.negation">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">IndexedVar</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">x_1_to_n</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">subtract</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Less</span><span class="p">,</span> <span class="n">Greater</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.numbers.negation&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">negated_zero</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">zero</span><span class="p">),</span> <span class="n">zero</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="negated_zero"><a class="ProveItLink" href="_proofs_/negated_zero/thm_proof.html">negated_zero</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/1f348fcfa45584629e691d07bf8f22750f7a84650/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE8AAAAUBAMAAAA+U32BAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAShJREFU
+KM9jYOC7wIAM2B4w4ACnEUzmWiMGBjlMJeaXFYDkOoTAMoYTDxhOYajjSuDpY2DgnQAX4A1gYF7A
+wFyArvAqA4MVAwMHwk3cAgxsfxh4AtAVbmRgyD/A8AIhwC/AwPKNgWEJusKPDAz+CQyVCIHzExhY
+vjMwWKKp4/kJVFjAsBch8t6AgQmo8BaYY7UKBFYCWXyfGRj0CxjakBROYGACCmagmcgHNFHfgCEE
+aDZY8yoFqNX62K0OQfEM2zdMhSDP5CcgW829gYH3DwODB5IbF4KYuxkY7h9A9gwkwKGewQhw5MBo
+YzgKjNTJ6Ao5EniCYBZBwOFyISC5CF0hj3mhAkoUQoUbsKcypEQBTWsFONLjPjT+KSISLlaNiBhC
+zQq8OLICAI09TmI5XMYOAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">int_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">Integer</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="int_closure"><a class="ProveItLink" href="_proofs_/int_closure/thm_proof.html">int_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/6fa6dbbae150cb4462f1231abf2a7ed3428a1acb0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAUBAMAAACdV9kCAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAjZJREFU
+OMtjYMAH5kIxEuCegF0pSPwBiHEXuzxXAwSjgEw0Pkvhx3fiDy+AxE+D+K+wm8U3AYJRwDo0PlNz
+AMMDDrD4DCCXswG7WZehGAXwKKDymQ8w8Gw4AhbnWwCkNmA3qxKKUT0uAKF528vrwGYtYJjGagAW
+5z21atV07EZxFkAwGngCJlmbFsBFujgWQMR/dHTUYDeLyQCC4WDyYUWgpsOQYEMYxasAjjugeCoD
+Qyd2szguQDA8xiQZ3gOpe+jRuQIS10BxZwauB0gGsEkcboa6hX0DBMPAwgsMFkBqO5iDFF2pbOC4
+BoqzMzDB7ObaY3yBfQLPIqjzGR0geN07EHjKYL+AoQgoHA8OLjmQGMS5Bj5gGijOc4EdZsGNnasY
+uBliYSkdZhYMSDBwfYWZhZSM+EBuPAUW53wQBhRYrPYUaAFYzuAAA1Y/cv1h4P4ApN3BPAG4+Gke
+BzAXJN6ZAlRXyvoLaAE4VmYHYA97rt8MbA92wsLeCJ5yEqYBE5kARHwzMAkxG7AWMCwGyy3igadw
+AwiGgSaG6wlAN9vAHQ2xcUEXA1duA0ScH5gpGDcwJTCEd3R0KDAcOMUwC5oGCiAYBpYpRSYBvfMU
+4soML4ioY59Eh7yEAUScFxht6ydw3FrABjZg6wWGk3jzENR0lhOQPIQuzsA4Id6XgQcUUMzMCLcQ
+lbcxxFmSNtkyMHQDWdfSzjxPgAXFBAjGW+bgEGcChRehshBHhsMpjqeM5sVRRgPFAQXOmo6YKTO0
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">real_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">Real</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="real_closure"><a class="ProveItLink" href="_proofs_/real_closure/thm_proof.html">real_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/030c7e372ea6d81ccc6e34ba9907234bc7ca18b60/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAAAUBAMAAABylbI8AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAjBJREFU
+OMtjYMAHOC9AMDLYiUMtSPwBiHEXh4IVUIwM2Cag8q9L9L+TuAARPw0SeIXDsJdQjAy4HqAJPFjG
+EHFjAVh8Bsg3DdjN4jWAYFRwCI3fMIeBgzMBLM63gIGBZwN2w9gnQDAqWAilb5SXP4AaxjzhAVic
+99SqVdNx+HI6FKMCPgcwFaGFcBnzhAaI+I+OjhochilDMTxybYykgP4Ae5zrFZI32VgSIOKpDAyd
+OAzrhWIYcJzA9wHolweokQo0bLvdAoi4M2r8bNdIfgRjV0MxLB5lGZiB3uEuAHE4EBEwsbwOFOgg
+cXYGJliy5NpjfIGJh+GUApQvAsFc78AggPkXAztQivUDSC4QJASNAGcOoMPA4jwX2GF23Ni5igFo
+2K0LqIbBAGMDw/oAmGEzkJIGs2sD1DDOB2FA1mK1pwwsoJAFGXYAuzfXH2DYD6RYwN5kRE5nXZdg
+4p0pQJ+Usv5i4GOAGGZsgD0C1m9gyOOeAI0AZgUkw8KYA6ARsxloIrMBawHDYrBhzGklMGWHoRgK
+OBR4y3iAag/AnQ3LTjwbUqHi/EA7GDcwJTCEd3R0KDDxTLoCU+YOxbD4SVKdpgJMnAFg3rKWBbCM
+/pSh4/0GiDgvUHD9BI5bC9gg3uSOWYA3Oy2H0j7t5Q+wiTMwToj3ZeAJgITZqQMkZXQMcZakTbYM
+DN2gRHvuwGI7mHAnA2b2wCiCcIgzAcOMYOHIMQG7YbjE8RbbN3GoBYoDAA7/qZPzga4CAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">complex_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">Complex</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="complex_closure"><a class="ProveItLink" href="_proofs_/complex_closure/thm_proof.html">complex_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/8781ce9cc02f04a86a880eae636f7ff65b7adaa50/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAAAUBAMAAABylbI8AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAi5JREFU
+OMtjYMAHOC9AMDLYiUMtSPwBiHEXh4IVUIwM2Cagq2J6/l68GSx+GsR9hcOwl1CMDLgeoAmwxm/g
+sr8MFp8B8k0DdrN4DSAYFRxC419IAqr6DBbnW8DAwLMBu2HsEyAYFSyE0jfKy0GO5A2QApLJYHHe
+U6tWTcfhy+lQjAr4HMBUhBaEywz21yKI+I+OjhochilDMTxybYyAruABe5wLFs7LWKEBARJPZWDo
+xGFYLxTDgOMEvg9AvzxAidQ5LArQEAaKO6PFD3dPehKUWQ3FsHiUZWAGeom7AMThgIlOhhkGEmdn
+YIIlS649xhe4IhawvoHyRSCY6x0YBDD/YmAHamT9AJILBAmBXLGC9QA0iQDFeS6wwyy5sXMVA+8c
+BoY9qIbBAGMDw/oAmGEz4PGxIAFhGOeDMCBrsdpTBhZQSLpuBQph9+b6Awz7gRQL2JuMiMQIMowL
+Kt6ZAmSXsv5i4APJ3bqJMwLWb2DI454AjQBmBZhwkxOQ8INGzGagicwGrAUMi0FSu5Ay8mEohgIO
+Bd4yHqDaA3BnQxLai1NcO7qg4vxAOxg3MCUwhHd0dCjMDkXododiWPwkqU5TAQZSACR9tSyAigc/
+/G7KABXnBQqun8BxawEb2J5F4ADAk52WQ2mf9vIH2MQZGCfE+zLwBIBTeQA8KxOX0THEWZI22TIw
+dIOYa961BcCEOxkwswdGEYRDnAkYZgQLR44J2A3DJY632L6JQy1QHAAGE5pPhGzl1QAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">negated_positive_is_negative</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Less</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">zero</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Greater</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="negated_positive_is_negative"><a class="ProveItLink" href="_proofs_/negated_positive_is_negative/thm_proof.html">negated_positive_is_negative</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/cc0f78555381224014c3525faa85e21e55350db70/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMUAAAAWBAMAAACCvEVCAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAq5JREFU
+SMetVUtoE1EUPZlkmmTy2+iiijBQDYKb0OxERRF0pc7KuhAi9YNuStBWECsUxJIghUGhdTkSsBKE
+DAqVgpgQd1FKBBe2VAyFLlSQgh9sceH7zSeTETqlF27ezZn33pl3z71vgK1YvM3dbfP+UyncocGn
+gBxPhbutT++Z1lzWGPyW/vkakOOLcLcpHe+stKncYvAjevSJYBSpHHfPWzthYpX+vgcWGJw2gKQZ
+jCOqc++2x8473GAPJ4G6QeFUq1qdCZiqGeGe1BwVgTRusPE3cMZk8J9SaTwgx4Bwu8wODe4i2RDZ
+e3ZdCPSDcKgMvgyU/TaKeAGp2RDRlHDLjunpNZIRLnrljsX8FyioDD7eXREv919cYUHMeU2NDcuY
+E8Bt4VZF7UGYVE2iyEr4m72MnKPQYHAUktVNyqt8W0qipXZzKFeZhKPI8DxjB3flOzMtvIEoWSKv
+0WdPbA6RKwon21EL/ThfBeFYandzID5JSJRfCJldHJaFJlDTLA48tHJFNa+bDI53ztIsZlcRoaJR
+jobDoQyO0OV3DcjriLZ9c1VroE4FLHZrjhLw2eBw+RLZakzeQBqcI59zOGa1Ak1QZAUyz4iP5jUT
+Iwnd0typXd6DDH5BiMI5uYgKmxC+MurSPI8h3lb95BwhwfFGuLCYmrqZJHs0PD0YNZWdAs6QlSFT
+uoChUqmkSskHH1wcu5Fl42uV6JERXXZSuCXu8L7pvaQHNc9dojSzmoBT5GQ1PbZk9PFcJc4bNoey
+jqkqGU+33HXlf5fM+jesDYf0wikkNa5Hy6V5v/yTCH3uIOvsuc3eib5wZPj5YeA+7cGFRuWIw3Hi
+wEAb09fYCd/Z25bRezn03u2+sET0cJS0I/neZr5RMd2X4z+wl2Nz39pF/6mL2CLHdll423b6B2do
+vKrNBe1CAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">neg_as_mult_one</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">Equals</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">one</span><span class="p">),</span> <span class="n">x</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="neg_as_mult_one"><a class="ProveItLink" href="_proofs_/neg_as_mult_one/thm_proof.html">neg_as_mult_one</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/88546ae82d1bee39ddac3f98d6e6185cd689f7470/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAAAUBAMAAACJwkfjAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAl1JREFU
+SMellk1o1EAUxx/bTdPNJquH3l0UehJaED1VKBTZo7n4cWsRpQhii1c9eCoJKt1DYQUV0xVUFtGK
+iKz0UHZv7WUPHlRoXdAeWmrpse3J95JJd2Yy06T44G2Sl9/b/+TNy0wAjrJCJ3LeitVMXBKjSBOP
+XbpY0yi+ZS7Y7WxcEsNIP6qu0vmWRnGTuWDv07mPgQrDiIUP+JSK8lAt6IxELppdTuGsO9OBCqNI
+C6BENxfVimY1ctGsk6ncr0CFUWQBx7bSaNQ0Ra0xl+xPKkeKSYwipTGAPc97oFE8wzy2+tD8WaxM
+O42LFNuqRBuLfwvA1yg+YR5XZdm5Z+LUr4eTshPaiIJjiuuqRAcP42EDca/N46kb7PQ+83jmA/sg
+j9P1RR6ZxDHFELOkxOIMTjnk4nfXWjrXsa4Hxja7Hozcih7HtWAgbOoJWVHimGKIfeiGsoeJxi4O
+oGPGmd+bDXCeAyyJ/9SzE+WjFKVnDDFzUkwkxUL3Kl60zg+5eZqUS58xpKvWhEu/FW4eJ/VVragS
+81hV8G8C5IK75liJoj9/aDunGAwjyLeEmkt0DpdInQOfUNaAvwCv6O7XZi+xLfb45cU5eIHHUVlR
+4gCGAwHjEvuWD2u8D3DN87zysyu9xIpYm9en6xepyTZkRYmDC6d+d3iMSyxReR0akLFrQD/d7auz
+ltavcjOZVsMkRpE38cVLu2uDTfqFUZeW2/9ZyXUYW8nZc39rrQA8otN3O7NuHPZBsSApdisVp92t
+eMvhPKbvyH62HdlXjWugCnDsrw4n21dHEqMIvnr/AEN200a0tELHAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">distribute_neg_through_binary_sum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span> <span class="n">Add</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">b</span><span class="p">))),</span>
+                                      <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="distribute_neg_through_binary_sum"><a class="ProveItLink" href="_proofs_/distribute_neg_through_binary_sum/thm_proof.html">distribute_neg_through_binary_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/4b724637bbb622ad76ab20dbd0bb5a830d0650fc0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARoAAAAVBAMAAABrvDzoAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA0lJREFU
+SMfFlk1oE0EUgF+z2STdZBMPgj8gxFZ78hDqRbBqRKQnaTz4d2oIiggqUVDw51AVJEGFBUELKmwt
+aAlilopIpdBiDoKiLHiwLSgBbcEqaykK2qr4ZmeSndk0G1oPPvh2M2/fTN578+YHoLHcYYiaBWWI
+4ZJms8FfhDVKmTTeeVkqPRRRU2t2IQsQ0CguGfAaf2AFPo5QXhLFtJd1VKOImgXsEuhSmeKST56J
++YA8pPSSRPZ4Gb9hiBpHBtk7ZuDjGUMQNeHpzTwSidtEdXwZXsZnGKKm1psuHAn6GIIENa/x/XNk
+npfZqC8KhZtexs1ZiqhZwJvn9nQlKYJ4jg8Re7iPlB+53HkvY1+CImrgemmtLnoz1bIZh05QBGnl
+Q+loX+2qt0wrzk0JbA4B5KtJs2q9CZkUUeNfBV/F3Ch/9KIGKpYwASKWLbZj17jO27XojPgHxWnl
+J8B7sNnBL4JSdQO4ejjDJt2gcGWArT4TNonehOcgFocwpj2cdQV0jtsH1oDkWjMjOswCPAGbIPic
+yD+TDsMbTWW/Ln+hqqYkRaHBpmhrmw4nydfXlnXCsqbwl1SG4ijIGLjsCh6WO72lOQjGgR8NtoLy
+C6AbbCJm0OmHKYOxoQKotwGGRW8cIa2VoHwXc4PbTZdR15tq3x4optzbjX++6k1zeS/+6G+bxKc8
+26b7yVTvfIwfPGYKownPiN7ETJIwP84SoVI3addMYfpGXL7+BkwYdAIlfxATd0omq9531peIEouJ
+ce8qVuYhUB4SvUliTThVzAtXxUUDjofF7ecbKcJKFcMjDEVKyCSgUFwt9xOLp87RV7tmSesivE2P
+Ct4EzBDqpVGKICUukrh6OiJ+PQaX8NnBwJUATYYvbVeElN6Xy+Xit/Y4W2Ul94LmXsuBTFJc4e2v
+SPWkKIJ0cmsqs/7GOvFr/waS+UmGirtYUQtN4CumNxkBYiHdxY6LPBlsuc9YxMlAvcxSaKlr3bug
+Vw/qYxBJ2Ttmqnr4NTo1C3xjKacmOKcmS35mcAvsNuSjOOVXiOKBdbmS75BG4Sa/bqx1bhT5ht6w
+GwUvdB37sG6WcNuq43nj21bV33zNdfAfb6LjjMXeRFWNwqvgf8tfNYgOnaB38tUAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">distribute_neg_through_subtract</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">subtract</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span> <span class="n">Add</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">b</span><span class="p">)),</span>
+                                      <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="distribute_neg_through_subtract"><a class="ProveItLink" href="_proofs_/distribute_neg_through_subtract/thm_proof.html">distribute_neg_through_subtract</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/b7d8477932cb552f3d20c0892bd0f95ebaa448c60/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARoAAAAVBAMAAABrvDzoAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA0xJREFU
+SMfFVktoE1EUvU0ySTrJJC4EP6CMrXblItSNYNWKSFfSuPC3agiKCCpBUPCziAqSoMKAoAUVpha0
+FGkGRaRSaDELQREGXNgWlECtYpVYioK2Kt73yWTeTDoxuvDAmcy7ue/Neffe9wGoj1ucoqUmhjkd
+aDbrfCKiMZZI47WXp5xlFC1ut3MZgKDG6MCA1/gDy/BxmPE5Mcx4ecc0RtFSwy+BkkqMDnzwDMwU
+coixlwQy6+X8klO0uBE38PGEU4CSqJkdlb8sIKMqZUzHH8NLzSlO0eJGN44EfZwCQpqXmsA8yfMS
+SuXZ4OB1LzHNGUbRUgNPabo6GQXUHr+iJkqHe8v4LZc766XGl2AULXC1uEYXHd+1bMKhE4wCWu1T
+6WhfKaqJpVsxN0WgPAiQr7gGym41YZNRtARWwGfHmvqlFzRQsIQJIVqmoMKu2Ny2abFZUU1hRv4O
+8AYot9sXQdEK4+VDaZ50g9FWBtjqM2GjI/DzEFchgmGPODN5xqZ5FfizoppRHeYAHgFlCHzVmX8k
+HUY2mPI+XfrETE2djDKbbJK1tupwnPw7RI3T+OYvQWEMJJy4NOtQs7Ta2z8PIZWF7v3qcjmFr1tA
+/gHQA5RRM1TthyGD8eFBUG4CjIhqqiCt5SB/dW033caiaqy+WSgkxdhMQWDBUtNc2oMv/W1kftJc
+mx4gqd7xEP/wyBTOJuL4ZtwkAQtglggrdZNyZArDN+pYUz8BAwZdwJg/gIE8IZFV7zvtS8SIx+SE
+dxXLCxAsiQdSvBNrolrFdtiquGDAsYgmqPlCirBSxfAAp+JPSGRCYVUp9ROPx9UvudcsaZ2HV6kx
+4ZNBM4x2/xijgKJtJqpyMirG5ihcwGcHJ64EaDJ8KVoR/tTeXC6n3tht9bdiL1jutOxPi5uc3P6C
+VE+SUUCXzSu97tpaUU3/ehL5aU4Fd7GCFp7En7jeZASJh/82dmzwZKC4y9nAycBUZhhZqWs9O6FX
+D+njEE3SHTNpHX5/empSNHBqyva9nJ+aPPjp+5thlyEdwZRfIoZ75YuVeIc1RlvytUXvQrVvFPm6
+Nzp+o7CDrWMf1s1f3LYWUV7/tmXpzbuug/94E53gbPQmqmiMdhP8b/wGr4QH4KdXBLgAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">distribute_neg_through_sum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x_1_to_n</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">x_1_to_n</span><span class="p">)),</span>
+                                                        <span class="n">Add</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">Neg</span><span class="p">(</span><span class="n">IndexedVar</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">)),</span> <span class="n">one</span><span class="p">,</span> <span class="n">n</span><span class="p">))),</span>
+                                           <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">),</span> 
+                                 <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="distribute_neg_through_sum"><a class="ProveItLink" href="_proofs_/distribute_neg_through_sum/thm_proof.html">distribute_neg_through_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/5ee92ea35b55948c231e652a40507a4e993cd2140/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlYAAAAWBAMAAADwTM9pAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABSVJREFU
+WMPlWF2IG1UUPpud2Ukmk60P9aGCEnehSqkaWKQgXUgtWMQHpyuIYNGw2If6UKJdilpZF5+yleJg
+hZZC6bjgWra2hpXQViyEbOrDFmtgV8pCW/Jg1QqGUFFsBfH+TebOnTt/G5/0g5PM3DnnO3e+uf8A
+kUh1TFgfTjLrIdOCPpC1qInArFLmi/G55TW7yGW9OQVtXHYjjMYoRvtIoc9Qc3Ea+sI+ZgJOBzEP
+WbGp5TUjBE7WJlzBZb+EaxXtI8WwRc3F7f60OsdMwO0gZr0dm1peM0LgZG3CcdwAZ8K1ivaRYoVZ
+D7mCv1/lgzqc5IGRp+YFZpUwYzSisiwG16xH4GRtwrCNrqrhWkX7SPE2sx40qz+t9PuoeYFZNXlv
++ySuVgHxhMDJ2oTc8sLCMQjXKtpHOlyWqbk4Bv1pBT8wA5E1oHbDxZhaBb0dIWBZmwB/VirvRmgV
+7SOdPwvUXIzirzSy7+lGAq08/kvMQGQd5e7nNn+8lQUbhZhaBcRTApYVabUXYFbCUue1CvAJR7pF
+zcURZJ/Dtfx0Aq08/jeZgdEhKDisR7iOWs+9qbFBPdeOqVVAPCVgWZFWO+XTRYHXameSKaU3jlSp
+uTiEbBm+s58FeCmuVsyf4jwzEFkPcd3ANu4pFqh4LsqWY2rlj2eBZTcr0kqDFP/x1QNNeLgkaCX4
+hOHCNwdZxQaK1M6RJnALlWxEZkMF/b6wjbWOnx7qdEr+bu8+oP4MrzLzYCM1nTY1U4c0kkkdw2+p
+dsOyXO103uh0fgRZvKNG182KtDJaWu/RmaVxuGDYg7agFe8TDBz96WF4pe7VyvtWAHfwz674Y/ud
+eFq52IBDlZ5WcdqVP16qVab9Ym+l8sEJGy7lCwYsjR0Yq7pacT7BINFrdcjWw/ogqL8n04r6U+xy
+Itl4VZL0QfRepqOVso4+yOIpCAHLirSC2dfQe45PjOKhC6FW+8gQxyviA40nN/t3hm4hjlZeRjdW
+2Nj+VaoLWxJoRf1Xvh8p8GO7yMqNzVn7CUjZ9C3XM7bTeCqIOLbDl4g1t6M1YNG9Yc04u8enFfZJ
+2fu1IrwuLAxIIQGOzp11F3V4vjU8awY08Sp/pbt4nypq9QWK1v9mF9wD5r/6IGxCd9uZgcDKLySe
+r36IN+xEq8F6RJZFjsMTTwWhBCxrk3XPE4/ABlsnL1aD+pJPK+yjwq8Aex7wVpQU0rkWR2TPWJ72
+q3jWokggfXLL6A1JH9RwdzroXLgPqH9mrgz30N0tZiCw9ugQ5kfmxlss87AZkWWR4/DEE0EYAcuK
+tcqhMpiEHaC+Vam8j7Q6qfm0Ij5wF9k7YlXvOqrh6EzNjLfHSTC2kw1/XsE7jTK1OHscotVn69/j
+YEEogZO16Ty6H7arUKLtSplAf6ZHKzYpqH6tcOHKpevoikQ/lcfTfPTe2dFKt4MOdDwPBszBuplo
+70y0akRlWQjcOxNBhL0z27t1YaoGl/HlKsB1cY9DcMpoG0Sr43bmsPNDChdncEsk0Ucvu2+Ttqi5
+cBf/55Ota0+B9pwZdCYzC5JtBV5FJlhAi/FUEOFMhn2FEmxtQRrN8Mp0EYakWs2vNpaJVrur6ibY
+beGfKikcMvEyHEeDfvXnvTHO+o6+N5lIq2cg9W2AKPKzvsy2P/LCh0p01scEsbhP0fR6PIrGK/8e
+eJpfKeA+6C6a6JUGjxVl0f/yGXLOohb7DHmt3zPkNS7r41NJ6zvxW5U782ZX8/B1XyL8h5GTXP0f
+8A9BetUBCViu1AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">neg_not_eq_zero</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">zero</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="neg_not_eq_zero"><a class="ProveItLink" href="_proofs_/neg_not_eq_zero/thm_proof.html">neg_not_eq_zero</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/e32439effe7c0dde78af57c59b91b983a38ec59c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMUAAAAWCAMAAABHTKhDAAAAPFBMVEX///8kJCQoKCgUFBQNDQ0Q
+EBCIiIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAChkoCbAAAAAXRSTlMA
+QObYZgAAArJJREFUWMPNV4lyozAMzXaLb8vX//9rfYOMIbAtndVM40n6ZPR083r9nmiHzwMx+uAf
+Fg7Rvn937lkSoPB5KGJOQ3tEiTjLO9qa9ruHZ1l4jc9jun5Ojm0vi2aD1A2tm2e0epaEo/g8EUtm
+odja55aM8x3dQrAG5RmRGp9nwVhmoeCbL0rkmgjQ0M5CEi0fLm2Jz/PkY+eheIXMggXT0UElkfZZ
+FoTic28mtZQsJTHsHqS2oYBACwvS0SVUSl82iJ1mQzbVktEpyuFzd+kSDfChpv1a39Zn+fhMn42c
+Dvl6XlhkNKPHfaG0ZGWFFGvFnbUBynOSRiUxlIXB564UEjtarzbyNBSRBS0s7IpOH2TnIjCW0vgr
+cBX9y729wkJn22VOVNy4F4ZO8BuJFtIMl9VVPAz3cuwTnFEFbV1hghujMhrSzU4XwpdYqNw0QnLc
+Ys5YjLKorjhjMeZ7qD3KrOg4FBtXoEQk15Q0y3y5KVfrKYuuUMA1XRNWuhsZBTk3TDOeSVwXf5YS
+tB4RlW1wJd4VrXSdiyB5tAG2i4kDN9b9hkVXELnRfcY/V2+Q5EZ1Q/aq8HUtcn4+9qdTr6ENrdxp
+jACX2cW9tMGcsOgKpYua1xqLBbNozdPOO62KaCfFq+QtxR2O7XVSSGHhCB3qE1MukxQ2LrNv493a
+cH7MoiugdS+nd8AF0JKEzaceCEK4FqQoefzIyYYHlpA2zRvaQX28TiFPRb32BApkHQQDi1VBxKz9
++5Fy18171K0NBDM19A46ulbHdGApcy3fzFSONzQ1U2hdts3ncV58Yxt8s2zvdkcmiCE0G6XMGjzv
+1XYXU1OF0mUrDTvbIfS8a77bzI39lz2+WVLqYlaJ8wn/bhG7/JY00HwTihur0wUW/qfeWMfOzm6h
+v8fCPfx68uNC/zuLvgAHNSKy7PYEKwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">mult_neg_one_left</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">one</span><span class="p">),</span> <span class="n">x</span><span class="p">),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="mult_neg_one_left"><a class="ProveItLink" href="_proofs_/mult_neg_one_left/thm_proof.html">mult_neg_one_left</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/7a68650925bbfa992c44200dfe120eba3209bfee0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAAAUBAMAAACJwkfjAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAApRJREFU
+SMedVk1o1EAUfm6zTTZNVg/eDS30UIQuiJ5WKBUpnszFn9tKUaQgungTRXqSLCrmUKigYlxBZZFa
+EZGVHkp7W0EXFLSCGqgrKLosgqD24vxlZzLT6Y8PvpD3Zd58yZs3bwKwluWaHIL1hfJAlQG4Jfl1
+hhg7HzSKDwSINqGMVBl7UiJ6Q4oX2PmmUfwqILHHEcCMMlJl8vJn2zHFdZy8ydUF3QJHEnbqDFJ0
+PHmoyrxWplugyOMJZldXNEOOrn1CAfY2JYcKc06Z7g6F26jVpjVJnRaQUoTPyliZyZXVPI9Q/A6C
+CxrFAQFpxUXuVwendnophlimICSgf2IUpdMpUJwAqGgUrwpIK37ks827Z82YMS/b2JbxrSVsqIfw
+1ruI0hlT7CMFJGytKyfH2e15AWnFZ0SMlEzk/DVCxog1INRGA15FB9DMZQoTMsnr2HO7mvbRKPud
++ds5bPL2bZ8plvDjRzGRtUillyTFLWjBZkhMCyIIMJXtUDhNMxn1rl4D9ybAnKoofSOZ3zxGiK2e
+TpHbT1ExFx/G+2T3oG/gxd7/FFHrZnVMIEo+JAxdxy9yViH7C1+NMgVUjqPKik6bI3lMv1/aXOX0
+RcMoWmSoiZXzPNOBIV458ATJZuEHwF3ytM5HLgro2jBWLHbdg7PXSM8uyk2I7w5jxergs6BnnoKt
+wx+AI0EQeDcO8agxAYnt2bGMgltd/15/dS/+nJakaPAOYI8PDeCzIu9TgBuRVc1CL37cU2Vlr+ty
+ZA6loaiM2uXuMxC77cQOOFg/V/RJy9V0cl3f3kQnZ7l5s9AAuEwaRPuSn9AVAWufTSpj6U6rVC9E
+67ihE1lti5X1T2T8ClYI8D9/Ha4S527gr2OJ4h/VxNpdSPE3uwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">mult_neg_one_right</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Neg</span><span class="p">(</span><span class="n">one</span><span class="p">)),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="mult_neg_one_right"><a class="ProveItLink" href="_proofs_/mult_neg_one_right/thm_proof.html">mult_neg_one_right</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/f14119e7aec6d3010c226b8c03716a651200244c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAAAUBAMAAACJwkfjAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAqVJREFU
+SMelVk1oE0EUfqbZ7mazGz148hRa6KEIFsRbC0GR4slc/LmpRZFepHgTRXqSDVbMQaig4jZCK0Fq
+QEQiPZQUPETQgIJWUBa0gqIlCIJWEOfNm3RnJrtJig++YWf22/lm3nvzZgE6WapBUO2O2q0ypIvt
+H2s0zkME2Hkfo3hfQDF7Wu33o9okdKNxHuI5dr7GKH4RUCwj7Se9i02Ni16ETjRaQkC4ic6bjhZ0
+RwiqvQof559tsLbG4GQ70ITVCBmf0SvRimaRoNoFeU2oOIcb2NGJRjZHcOvl8myMU2cF1Gya0hUz
+OdZ86kQTfs4RfnnepRjFQYHS0I3dm15LjOiKDo6saN/KNHtgcn+NeIgzAIUYxWsEe9k9bwatQauh
+K7r47gN2X6yjfdRpD+BN9jLxEAco2cL0mzk7IR4vEhzf2UhiOG0e3IqumEYHPtFzQKLV4aV/iHgI
+ExKt5dhLexv2cd/4Jvo7CTZYlMwPcWnbWCQW+V7WhKLRZM0JTVGm+eCB4CGchtliva2Wwb0NsKQq
+AmynKJonxVTqHmMVQ/shK6aCo3hO9g3lkxjsg4/ZkOpVNl0+2l2kmESvjodx/NxGM36C4HFu4TTL
+LP+cmcvg8LvVtsxJ+3sYoZfMkUymPU00YTjMHHjEZA34DnCPv62GzBXC4cp1qSw78ulIoGLfMmtG
+NUWJlvxjNfE+QB7nUpB+AxzzPC9760j41ThhfqA0Fq44KR3tvlN/x9ipRp+vaYoSzZ4YHsS7Anmc
+6/o8qgb080lK4hT0VOW4LeCsU92r3IIAt7tO4ICD+qnRPC+5PVXysEJvoZKLS+B1rQ5wlReI9Sub
+mVmAiIJkFdtvoYjbyoq7rZRayOK49RuZT13ofiMjzyoC/P9fBx4nt4e/jlXCP6AX2fQbmGx8AAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">neg_times_pos</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">y</span><span class="p">),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="neg_times_pos"><a class="ProveItLink" href="_proofs_/neg_times_pos/thm_proof.html">neg_times_pos</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/a82e88760e12328be457d7cd964abe2ca7384af10/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAR0AAAAVBAMAAACJYCeRAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAyZJREFU
+SMfFVk1oE0EYfU032WS7SYvoxdPaQOlBaFDqqdaqaG82PfhzayiKeJEiKkgVioeSomIEocUqrhVU
+itiAiFR6CO2tXgJ6sKKyBz0oWoIo2ILizP5kvtluN6kXH7wlebvvm29nvm9ngDqQKAtSNBVQQ4Df
+dCco/iyhxYX34fk8IpRwqqbgM2kjQfFjBcGXXPgSns9nQglPago+U6oQFF+zBCf4lI6EppPMCMrQ
+jVqCz/QqeIR5wZTJohRD81ELgr4Xa6kl+EwXgke4J5hcnJ4eD1+ucUIfPtYUJFNiKHiEVI/gr3z+
+Yng+aUIPU203t7O1WRDCDiS2UoGYq4hkhNWZz7SBGyZ0pns8AYyF53ON0ItTSp5RWfV9qCqlvYhU
+XEFftpGBbALiZWF16k1pQQdbJEtwv13Wa9B09eSg+3OY0Itj6qsKq4zndnJ8JYrdiI+4AsWwVExF
+YQUrXEw2WsizwYYEVUR8nzltbmdZO2ZGv7r/NwtqzptnNXtwYIBfZnirYhOaDVegICagoYc/6Vi1
+PzynBgPfgWhFUC+rvhBvZqeRvA3Mrc1HoNmo5qPm2EVZxUA2OB8Bno9nxXl+6TOjP+V8EtYR3vmd
+bSya0gbVVPi6H3jG7qy/XrAHB3qr/9nEb/MEt35ygevlWR10I8I+EcqQIMaOs8I3T6ssd73Z7EeK
+P/d2KbSem8wO5qH1HM9hFFQgZqmePauDUW6U6hlPWVJRfON3b/WiHff5rxezIsoCoYu+4nV7a+wS
+85NTfksCMYs2yAirg13oYzk2lgTd5Vyxb3dhEEfz+bwxeVhE6SV08aB1ajfvgk+iCQbTK5JAzFXw
+9fCsXqA9rNdSWUEk+eRFK1F++yy2IGa/7pTTxzX2C/q9bbR8Qn37RTfjQ0Ibd3VLx4SJc0oFOk8y
+0ZW1d7i699PTmOnZ+H4as7Qf8n7qTtvr+UX0F3Gwnb3kFa48Xh6ttsEY4XrHi0u4HHzekExx3xSr
+5bghnzcoilqBd0CE1U995zEy1r50FoE7T+h5TGntdLP0KJ02Y6VDGzmvJv0Flfy38+oSIY0G5V0J
+/xd/Ae/ACvM7xq2kAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pos_times_neg</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Neg</span><span class="p">(</span><span class="n">y</span><span class="p">)),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="pos_times_neg"><a class="ProveItLink" href="_proofs_/pos_times_neg/thm_proof.html">pos_times_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/a7b28d7c595ce85d5413ca30a92c4c77dbcdf7000/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAR0AAAAVBAMAAACJYCeRAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAy9JREFU
+SMfFlk1oE0EYht8mm7/tJi2iF0+xgdKD0KLUU61V0d5sevDn1lIU8VKCVEGqUDyUBBUjCC1WcY1Q
+pUgNiEilh1Bv9RLQgxWVPdiDoiWIghYUZ3ZmOzO72bXtxReebHZ232+/nflmZ4B1KFFlqLqjnjYW
+GfXMviamOQmLNrwPzuchR5E+5mo4w6lj9jfZihYFL2nD5+B8PnEUpdx9McupY/Y3sSwtwSTt0rHA
+dJIdDFWv3A1GmuE1B5iYFgQpk0QpB+YTKzJUXfC8ZTPDaw4wMd0TJBdnZiaCh2uCo5ZpznPfR47H
+HGRiw9gj+JnPXwzOJ8Mptd7cuTYeIWkcSruQ2A68AMNjhmKSw+iZNG6YMEi7wymgEJzPNYZeSZ6N
+WU5jXJrGlf0I1YAPYMBYsdXhmCGblDCG1ox2MkiW4KBd1h41Xj09xP+OMgzTWNVoNZh2XYiaS5S7
+ESdT4hkYikaVYiq7wkyFLeTJw3KCGEKuT50+v7uqnzAjX/j5VoZuP5Qc/9DfBjLUs3Y3LOvYgiYy
+AgNgKKJG1l1ZZlLCmA1pfAMiNYFRjblCvJmbQfI2MK/mA/uhROedfBxpqxjI+ucjxExymD4z8kPN
+J2EdozO/s5VE1FoRMzU67oeekivqeMF+qNz1jkin7yCHXo5TP4N1x0sN040Q+URoOQEKJ0nhm8Mx
+krvRZPYjRe97u+Sp50azndxXr57jgxiHVM/uyaDUsxpmnJqVesYTklQEX+nVW71ow3367/mciMLn
+cV/5urQcGtJ8Dw9qv8mhi6NI+QBQkxpmD/pIjuGKgA/nL/tyF4ZwPJ/Pp6eOiih8HKZbSntFp2jS
+p00fylD7MkdRr3xCTWqY6ZZ9ZK6lsgIkaedFahF6eQTbELVfuURnwrrXizBdDXOMDa4X3YQHErbu
+GpaBSRPntBoMmmSiK2uvcOtaT4fxuGdz62nU0r+r6ynvttcLi+gv43AbedErtOXRyvjaNCigzjc8
+Ll78Ei777zcKPibWe9V4Wt1vyCrrRToDQqR+NrQfO5DJ+mX9j/2Y1tLJs3RQdpzRypFN71eTRcYm
+9qtLEnJEaO8q+L/6C6weDFvtgz5oAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">neg_times_neg</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">y</span><span class="p">)),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="neg_times_neg"><a class="ProveItLink" href="_proofs_/neg_times_neg/thm_proof.html">neg_times_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/9800329f4801001bc82f7e2ddbbe245d42cd51b10/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARoAAAAVBAMAAABrvDzoAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAu9JREFU
+SMfFVkFoE0EU/aYbN9nsNiJ68RQNhBwEi+BFUqkWzE3TixfBhGIPvZQgWpQqhBwkUcQFhZaCuAQs
+0mINiNTj0lAPFaSgF0FlDw2ooORoC4ozszOZ2d3ZJT354LMz+97//J35f2cABkByi5uIlCnOngRJ
+r4AHC4CJHTz5Ep3Nc8E8mBbGWk1CTsuDBUHF7/D4R3Q23wXzYFUYD5sSclUeLAgqXsCLV4tMxhjh
+5oWe4eMPMlIU8GASUPGwhR7tyGxUk5sX2gE+viUjRQEPJgEVG5vLy/PRGzUvmA/bvDirUnJbFkwG
+Kv7daNyOziYrGEMr9/g4WtxO/0VM2IHWSUgeccmOLBh1lomnAJrR2TwQjC2sbVxTUTt+7b9JCI1r
+n4VYzyWJQP9FMEKDMWeZeBw0R5LCm7ezLP05wVjRWfqugipgDU8sUg+89pLtM5CoueSaP+4cdyaO
+PrEKMd//aKUzCs/uwRWbzg9x09yvLGkkAkAZr9NfPNo3hlqUkF0NDkI645JlfzY4CHUmjj6xvqX6
+evD+ogWfbEhJsuFIZ1g2MMuyYVB2oVwKz4Y5u45ecdK5hAbrp3LolZID1RrHkstoZobvFJAIAEXe
+ucJfYsiBo5QsCnVTYcGos1TcvIo6wppR0cfpaWuCnBXGCzOyilPWCeQTVsWJCtwFoYp9LcGcpeJX
+6E8Rh5+YWSxCXsOln1oRsulAoFsvth+SU7LA61ro8KGK8oeSBX82He4sFbubuEOoAkzGbzYa9eRr
+YS2L4qq7WDrWGsWL0eW1Ivz9tMnsDiW7/myK3FkqNvCixXtxTF2Hw0C293SGdm70yVANORlQMRBS
+qw5wMgTET3VHhwULbig92MAvHm3wE2/Pp+YMvBwb+NSUiJc+rm/CRBvO5x1I4O7Q3n+b6js0BQu9
+UST4R9+BeviNwh8kVNzWTNwa+UZ9wNtWU37bOpctheUfDBImTpn77Qt7uYkaUTdRTBqD3kQlYgOU
+zzb8T/wD5UoFNfDJPkcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">double_negation</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">x</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[18]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="double_negation"><a class="ProveItLink" href="_proofs_/double_negation/thm_proof.html">double_negation</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/73b9ad71f0805b8e3a9909ce570a015e24f779b20/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALwAAAAUBAMAAADFKEobAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAfJJREFU
+OMutlc9LG0EcxR/RdM1mVz34BwSFnASF0lsKhVI8mos/booopRcJvbaHnsoubWkOBYUqLhFEgkhA
+RCIeJN7iJQcPtqDkYA8trXhUT53JfLc733S2GOqDDzvz3u6w35nZWeBfSjUU3NGVLipMkn5TNs5i
+ht8kuMP0gjBJ+Mfy+iMm/05wh2mbMEn4y7LiN+bYHVVwh8vJKEwSfm8gLhVzbBUV3OGy+xUmCd+t
+l8tLMcUtEdxp0wVhkvCvPe91TDpEcCdUKftpWMzKERRMUbYA+DHDfyC4E1Z+6L60xL47hwLOZUuj
+PHsKu8l26/vnc9R8RUTSek7g3HaLpdiDgq1plFlIhJ+KffCwYU8HyZ/UH1DY6rXyvGejp7XhZgi2
+plHmNKzQPa2W4a4AB3x4TazXl4kbXstSzUnRqD3K5rvltD3bFdZdJkc8LOvBGBHO/Wxb5s8DiWDR
+etIrna9f7ri06WBEPKYtLczZTgFI4hewLpP9anTX33tO641XPmJVXHOELj1T03QDTHmel/k8Ed31
+p27mkDYGS4/lnvhG6NIzV1SB5FUSD2TSVZIL38GhUFAYD4XQX3OaDhy5HKlcHrX7O9KompNaHXgn
+m1uXb/Nh7qP9k/Y7PJB1JcTcd/o78RF/qPjAf/4M3aLC+Lso4jcsyqZMfWs8egAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.numbers.negation
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

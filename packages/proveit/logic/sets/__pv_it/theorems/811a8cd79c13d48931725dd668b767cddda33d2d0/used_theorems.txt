@@ -1,0 +1,5 @@
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.equality.lhs_via_equality
+proveit.logic.equality.rhs_via_equality
+proveit.numbers.numerals.decimals.posnat2
+proveit.numbers.numerals.decimals.tuple_len_2_typical_eq

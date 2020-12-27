@@ -1,0 +1,1 @@
+\left\{\left(\left(0 \in S\right) \land \left[\forall_{x \in S}~\left(\left(x + 1\right) \in S\right)\right]\right) \Rightarrow \left(S \cong \mathbb{N}\right) \textrm{ if } S \subseteq \mathbb{N}\right..

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.inclusion.unfold_proper_supset theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.inclusion.unfold_proper_supset-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">inclusion</a>.<a class="ProveItLink" href="../../theorems.html#unfold_proper_supset">unfold_proper_supset</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.inclusion.unfold_proper_supset-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> unfold_proper_supset
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="unfold_proper_supset">unfold_proper_supset:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/0314ba4b33302a852ad23025782df794114b59fc0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAS0AAAAWBAMAAABnB9cHAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABD9JREFU
+SMfFVk2IW1UU/pq8meRlXmZmIShUygMXdqMTiESQwRkc0CKUCS5aV06gCqMLm6r4lFaa+tdElMSV
+BdF5pUKHEWNgFtpVo12MdFSi4kKkNqW6mNm0zLTzJ+147j333vcyiYFm0wPn5tx3cu797vm7F+iZ
+PiO2G93/M1DpZNWNziluismlHmAlCjTMsvxcmzZ5eC09/S7wYgcrrdN/NVIfgemvMC+KD8s94BoU
+rlhi+Zocq57nva3VuwjAWBZVNa2ErZRO0bPBktcJeJP5lIhGoQdcv4mjpvjE13z99au/lTBFEZ5M
+wXF5ejVkpXWAdfwYnc3Rxn9t0fA98yAt6dR6wPUmcYzd8OVYkEZVJY7Q72UXiWGO0Ek/sNI64OC5
+J3cnU7M6xvObNJ5mTl6cm/ukB1h2ngZl2BgZb8kRQSdon3sJDPuv/wk3sDI6vETQrux/TSda5IYI
+5jjzRrF4rAdcERGHB6Ro+edDZalSbo22pG1xgb2IfGBldBBgT+7Rh3p64BaNTor5BaAkP/O4b/XC
+NIdC/z1ugmSVRzMl/VVA+UiKX2DKDXAtstvWLu09KnNGfVwMrIxOerBpSnW8b0V4rck8IdOf5Bvs
+zGE4nBO6GC4HQfoF+E6JMZGTR9UBZlIBrkfYMZQqp3MkfCOneXweWBmdjLBZ3YK9KlpenjmGiIzC
+mVtSG81hYCuMKzHWwJl0+nchZ4DzKoF3ifXuka45lD4cKmg+f5zOFvlX1J48rIv+rLEyutYucSCd
+2RDLXWd2GjH5+eKrfCIX0WYYl3M2hcTc3IRwySvA49iJy6JJM+jw7Igh+omsaFwxH305Y2V0WPC8
+dc97HTpv9oRw2c0D8tRuUWq/zuJhP4zrmTgLE+S6m4gst8WRhNiwwXXQN+2rX2TGU2I2r+tBWhmd
+8GTdHIj4iDhmnhml52Wc8ahUTz60V4Ve4cpFuZScLKyVX9/Hzry3a9yoOegTpaB9TRV03i8pbGxl
+dOxJRZ+qe0PnPeblvn9iRKp/Bh4M40rWIryp5cJpIpJXy4hSlk1A9LD4prqH3lhU6itkcJ/Yc1TE
+oqARSCujI/qppR+WCXG0zowhUeSJqz+W5V8/BGZqIVzV0R+4DOw64nXYOl+lqylIs9vLGCivp1q7
+28vbhzJFucw/uuYirrIKdFg4Qukl8ytRvu3j223K8cEsM5ICT9THjKwY2neyEsL1GOybynEYqsHa
+7HAPdXt15LkyiLLmHgoo6BKGzipm2k9+a9gfwN6CfX8ojhYlBDeQODnSx8f1Dvd2F3Lc9ts+RPva
+LdS9rbJ4A3b5rb7dWFhNT4+HcJULOLUuktV+D87xdCZ4NslroBReUbxzPC/Xskt1x67xVg8vtTtY
+vXNan5fhSahXzhaL7/hd3oX/T6VOVgH5bQYCeLzS4RHbCVfP7+jkHb+j/1DcQo07wXW3KHU3N/8P
+UAg/TlEDGrYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/45b21ba8dc94dcbf2a9270c032e2596a53dcfb990/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

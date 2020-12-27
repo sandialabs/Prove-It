@@ -1,0 +1,4 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.equality.lhs_via_equality
+proveit.logic.equality.sub_left_side_into
+# THEOREMS AND THEORIES TO EXCLUDE:

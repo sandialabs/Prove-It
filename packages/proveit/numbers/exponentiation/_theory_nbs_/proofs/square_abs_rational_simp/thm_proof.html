@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.square_abs_rational_simp theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.square_abs_rational_simp-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#square_abs_rational_simp">square_abs_rational_simp</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.square_abs_rational_simp-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> square_abs_rational_simp
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="square_abs_rational_simp">square_abs_rational_simp:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ab41f27342e7932372eba11b7e14d60dd159b9f00/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJwAAAAmBAMAAADDx+9tAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAspJREFU
+SMeVlk1oE0EUx99u87WbD4sgWL2sgkX8qEGheFED6k2lFxW9NBT15KEIvfVQKsi2Iq54aC8lKQWF
+ICQoHhYFA/WkIOtJqShB0YOiBrVgm5Y6X5tmtzPO7Fyys++/v7w38+a9AZCMrAdqwyyqqPpAdZxR
+0MS2Babz18tCqa7g3uxA5yzjJBpi7Xc57kpglnTiS1wZ8fpOWUYLfZ0sGH94Mup1QhptLqxIL/Nk
+1Ov4sgxXcsIfWlwc9fqjDHcUB+wvyUW8SAIh8fq1DLcZL0yBTZ6jpM4LhMTrUgHIxr8XiIzFEO4U
+nOQriddaHV7i36+iE9YM4uLfnkzyhcRrtL3T2IkxAa5rOIjT1taaXCH1Wm9CDi10piZakbFQsKL0
+pF6nlyD7olKZEsk25dVwzOt4C+CvbY8KcRbD3Z3fURbgiInVqFWAywATIlzVo7hYD/zs9O7VDzw+
+kZJDTGz8AjgOZqBKPLja3z4KJYab9eCwIFhqYmMFLTfofsE1nx7yjF7IvPPNgzWKO1aGawIcNbHx
+G6m9pD9761ZAnwFzrxPCbQVzUYCjpnWc0TiHHuZ6P0MM7+NZF8DygsGaK5Bubly7LzggamLRoWBh
+4hJ6GEHVJYdfLSCC5ZeNKt1Zs4US3uV6x0zsTKKdhUco9bvy8WGYw6/2YFzdT5Q6DXYc3hTr/GCp
+iWVziyWXVkON47xt29ZjtwOnFSnu3s4LQwU+jppYn8JFL4uysOqkFsoJYkZbsd8/dKmG2qnwC4Ff
+jjVn8DRkcNfS+yGzu90DuiPhiJy4OfTwCMBN/Hhg9HYxUGPVcaHOoqO1A5g8sb5vq5FwVd4FZHrG
+bZ+yG/hP/M69S4Z75vBSad/Bdv+VNpMNjer/7tei4LbLBHojAk3vlkq2RMBp8qvghwg4hatgylKm
+GT0KV9QRZdx9lW2bclRxt5RCGFC9auPD8w+KL9IWct20CQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/2ec079ebbe4746ad30f9c986213da8d4d6ce180d0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

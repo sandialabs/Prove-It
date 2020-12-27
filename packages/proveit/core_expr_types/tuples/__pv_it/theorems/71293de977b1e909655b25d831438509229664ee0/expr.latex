@@ -1,0 +1,1 @@
+\forall_{i \in \mathbb{N}}~\left[\forall_{f}~\left(|\left(f(1), \ldots, f(i)\right)| \in \mathbb{N}\right)\right]

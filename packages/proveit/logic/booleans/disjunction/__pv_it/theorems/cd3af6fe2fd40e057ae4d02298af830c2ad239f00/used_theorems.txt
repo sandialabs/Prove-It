@@ -1,0 +1,5 @@
+proveit.logic.booleans.disjunction.or_if_both
+proveit.logic.booleans.disjunction.or_if_only_left
+proveit.logic.booleans.disjunction.singular_constructive_dilemma
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.unfold_is_bool_explicit

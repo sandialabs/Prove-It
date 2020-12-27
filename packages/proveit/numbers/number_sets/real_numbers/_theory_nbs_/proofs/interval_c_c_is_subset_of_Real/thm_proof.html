@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.real_numbers.interval_c_c_is_subset_of_Real theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.real_numbers.interval_c_c_is_subset_of_Real-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">real_numbers</a>.<a class="ProveItLink" href="../../theorems.html#interval_c_c_is_subset_of_Real">interval_c_c_is_subset_of_Real</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.real_numbers.interval_c_c_is_subset_of_Real-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> interval_c_c_is_subset_of_Real
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="interval_c_c_is_subset_of_Real">interval_c_c_is_subset_of_Real:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/92585295e41d8630ca81646f70e4a502d2a700b30/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKMAAAAVBAMAAADY0UPbAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAqtJREFU
+OMutlU9o03AUx1+TpknTJL14GIJQ/DM9SdiO0zkZIgiyepkeBMfUnUR20BWmSD2ZKuJPD7rDDpGC
+Si8JehgTwTAHSkUJIlgHQhGm+IcpnrQH8f3yS9qkf9KLD0J+eS/55L33/f0B6G9pF3avR13q57Hu
+7y7jVaeDD7HIBwCroUf58iyA0oZ8N3BjY8AFSBGAl9TxNRb5JYoETe9EQv0eHKuZIGOKC7SyYhxR
+1duQWbsLsrgIUnoKYAV/aWLcjkOKpA05YTaR6pVCoZD3kTzBFO+is1qp3Imtm0YjyOcQINPfSShL
+nmC1GgZ+G8bFWOQ2hkzvGdrMHJ+2jvhIkYQLTyWxcAXbdBqgFPiTG12Q1xlyP9F+MsX/mhZhyJFI
+L5dGsSMqFj/uqeTbM/++tOvkx8B3wUPKW4BnKmYakM0x5GwIebNwiUqSQZ8InNsMfKNZPBl2OQWq
+Od+3yUPyDRCZh6+D5XhIqnAry3EJkwQBS1FcsRX4g1dtuQKIXHMjyEQRrHwwLSdsDykXw0j+QNFH
+puuTOCoP0iUn/Bo0k9hfD+lECrcceOpPSxf2mZ2FL8LVN1QO6iudwv+dFxqUNM/pGjDksB6Rx7Lh
+bMYTODuGfWXIlQhyks8zeeARcnldoHQpp9bLHpKfOReWbJWG5hSw8IOUK+k+UrPDC1KxcfbwtLgs
+dj1hc7TViTF+6qhhGDlOufU2ePkgU3x6x+3tIM5jRUOvgqkuzxxqbRvrYPywQaMNV1Eoi0hreMua
+CTvFCs8cN7styMf+3V+QwotgQQZ2PxgkyInDsGCKZg2UPOtl1em2bThRZKc125ucfrgXjtjCGfzk
+Gp3qr53yaBAstZByrg8ytGw8Y83msJe9tmAV+iAlEnnMkJ4Hxc62g4LrdVC8b9tr4b/YP7Osw9Hk
+e6ucAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/674a1d0b23239b6d2f84bf8027c768606c56012c0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

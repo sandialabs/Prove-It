@@ -1,0 +1,1 @@
+\forall_{f, i, j, k~|~\left(k - i\right) \in \mathbb{N}, j = \left(i + 1\right)}~\left(\begin{array}{c} \left(f(i), f(j), \ldots, f(k)\right) =  \\ \left(f(i), \ldots, f(k)\right) \end{array}\right)

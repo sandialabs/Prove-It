@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.logic.booleans</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.booleans">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.logic.booleans</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.booleans">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Boolean</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Or</span><span class="p">,</span> <span class="n">Forall</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">A</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">PofA</span><span class="p">,</span> <span class="n">QofA</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">PofTrue</span><span class="p">,</span> <span class="n">PofFalse</span><span class="p">,</span> <span class="n">QimplPofTrue</span><span class="p">,</span> <span class="n">QimplPofFalse</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.logic.booleans&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Comparisons-between-Boolean-values">Comparisons between Boolean values<a class="anchor-link" href="#Comparisons-between-Boolean-values">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">true_eq_true</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">TRUE</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="true_eq_true"><a class="ProveItLink" href="_proofs_/true_eq_true/thm_proof.html">true_eq_true</a> (established theorem):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/7eb41a1351e1fd6a9b2fe1bf10818fd7c20cac2b0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAOBAMAAACMfhKgAAAAIVBMVEX///8yMjJ2dnaYmJi6urqI
+iIiqqqpUVFQiIiJmZmYAAAAYAVJeAAAAAXRSTlMAQObYZgAAACtJREFUGNNjmNEBAu0MqABJNJUB
+G0hFowdKVlEQBCQHyF5xKprsjFUWJAoAeuASqfAPxAMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">false_eq_false</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="false_eq_false"><a class="ProveItLink" href="_proofs_/false_eq_false/thm_proof.html">false_eq_false</a> (established theorem):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/72d920fd48be86e00f5d8f4692f0e634aca3c3b80/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAOBAMAAACMfhKgAAAAIVBMVEX///8yMjJ2dnZUVFQQEBAi
+IiJmZmaIiIiqqqrMzMwAAAAsw9r6AAAAAXRSTlMAQObYZgAAAC5JREFUGNNjYGBgmMGADcBE27HK
+tg8SWUVBEBAbIHuFqWVyamioS2hoMJoUVBQAPnsTjiuM4g8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">true_not_false</span> <span class="o">=</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="true_not_false"><a class="ProveItLink" href="_proofs_/true_not_false/thm_proof.html">true_not_false</a> (established theorem):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/8a120e961689a246871797b0e7d68e776c2fbc850/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAUCAMAAADrw95cAAAAOVBMVEX///8QEBAkJCQNDQ0oKCjM
+zMxEREQyMjLc3Nzu7u52dnaYmJi6urqIiIiqqqpUVFQiIiJmZmYAAADZ9py9AAAAAXRSTlMAQObY
+ZgAAAIFJREFUOMvFk9sOgCAIQLHymkn+/8+2bGtlMJWXeHATOJzxAEArgucqeX8EfuvO1hmdXt+0
+caMx1pmql0WdASmKWooS0l7U6GE02BLLfL5ZYqWkfahGkKLGCdCy66SujXHcaklpDxoz9KBxJaSe
+PhWluFO5h2eQhvVSMoUfpBCbHQfq2wZjnRBGFAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="TRUE-and-FALSE-are-in-the-Boolean-set:"><code>TRUE</code> and <code>FALSE</code> are in the Boolean set:<a class="anchor-link" href="#TRUE-and-FALSE-are-in-the-Boolean-set:">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fold_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> 
+                    <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Or</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">))])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="fold_is_bool"><a class="ProveItLink" href="_proofs_/fold_is_bool/thm_proof.html">fold_is_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/d55255459db4ebb1968a365bb3154eda68aacb310/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO0AAAAWBAMAAADeNgZmAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAArFJREFU
+SMe1Vs9r1EAUfubH7iabTXso9CYL/gEtiognFwpWCoU9FU+6YAU9WfHgwR9EL6aHsjlZb41U2lJB
+Fzx5EJfWQ6kKuYoWFjxZ0PYgWA9a38wkmZc2yYrEBzsz+b5Mvpk338wswH8JI8hjX+KvxxpbReuu
+iOpCElWuu7+HpwFKHsBbBmwXrftFVDsHYFuvrywGYOJkH7GsOAXL1kZFteMn8YoWKE0UW8MhIGV1
+CtYte7x6esYLx/Hg5t1Qt9pB3ccIba6uzhed5vCDwUiD1/p9P56vNYG6NuJ7rns7pauXgul/Sx/j
+pea/FrZ+5ss8j081McG4DpcBZjkoSk28YREojmojavWh53j5BC7WeeOqXN/h/SGWdzTWGLcXtr8L
+CuSrIYSx4d5z3S6cjp4P0Lg1WBHTt3jZgAXhL4f4ytrq4ghn0AOg8Gws/iK6epdAEl+CGtPLpsMY
+4t+4dOIaV9SPfsMIdcGZRGQXUxaU+bubN4huqUkgiduegrl8mE1TXVyxIzyTBp0vOCWha/Sm+KDq
+LtEtU0jimBmHpTObJnnGzVke5I+DVLdl45BmmDumxQKdIrrzEVRyMeYivNqCN2C0cmjpKwN17V3+
+eDwx30/CV/CCicNHGCG65ygkcc3Bk1f1cmgR6+HQKz9F9jrxOdm11nFwKvPHADO7+fld25e6Zykk
+P6z3wGos5dEixvFm2N+GavsHN7R5ZSJxL4DN/FFjvVUfFppS93wElZgVv8YTaoHpnMyjE+dkHNqG
+OCejWI5baO6BQOouU0hOqIb5ed/Kpem9kBlrcbc9MNp3iJ99AsmDQcVd9Lx5mA6PFTU+sGZzZc3e
+YUzoKuk3lM065dOJez8jKl6WLqTfyK+iRh+6z/+cD5CpO5man1Fihzz6H0IN75a0i06J900fun/8
+AW+5zeQvOwB3AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">true_is_bool</span> <span class="o">=</span> <span class="n">InSet</span><span class="p">(</span><span class="n">TRUE</span><span class="p">,</span> <span class="n">Boolean</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="true_is_bool"><a class="ProveItLink" href="_proofs_/true_is_bool/thm_proof.html">true_is_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/eb78e0cb86a973f4fef14a7303150bb99b6fb5140/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAAPBAMAAABdHiGLAAAAMFBMVEX///92dnYQEBDc3Nzu7u7M
+zMwyMjJERESYmJi6urqIiIiqqqpUVFQiIiJmZmYAAABV8JwGAAAAAXRSTlMAQObYZgAAAJVJREFU
+GNNjeHsXBO4wIAOuS+XfdE+CmbsY0AEb6wJ3vwbscuycDVwBBahy7XfvJkDluDegyoUvQehjnIIi
+x5KCZObcmABkOR4DhJzuf00Ud7Iju4WxQwBZLigNCGBuYSiYgSxnjqyPoYAHWY4JRe4AG7Ic3wIU
+fY0o/ruNCDMBRrkDINYMmJBPpQN6WCPAxFpImEEAACptMtKk+o6sAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">false_is_bool</span> <span class="o">=</span> <span class="n">InSet</span><span class="p">(</span><span class="n">FALSE</span><span class="p">,</span> <span class="n">Boolean</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="false_is_bool"><a class="ProveItLink" href="_proofs_/false_is_bool/thm_proof.html">false_is_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/1d6c5fb12b9e32b50bd07963a37b6b2a485645bf0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAAPBAMAAABdHiGLAAAAMFBMVEX///92dna6urrc3Nzu7u4y
+MjJERESYmJhUVFQQEBAiIiJmZmaIiIiqqqrMzMwAAADwFAjMAAAAAXRSTlMAQObYZgAAAJtJREFU
+GNNjYGBgeMuABnhWpn2d1QRm3kGXY2DlO+DmXYBdjo2pgOdBAqpc2apVAVA53guocs+OIPQxqqDI
+sYQgman14gGyHIcBQm7W/0ko7mRDdgtjuQCy3MtQIIC5hSFBHVnODFkfQwIHshwnilwDK7Ic9wEU
+fYUo/luLCDMBRukGhl2rVs1ctWoFWMgjyQE9rBFAMQsSZhAAAHA/MhEUp0UxAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">in_bool_if_true</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">A</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="in_bool_if_true"><a class="ProveItLink" href="_proofs_/in_bool_if_true/thm_proof.html">in_bool_if_true</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/621fc3b239e5f06a454a85b30f3fb0e228e1a8270/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIgAAAAWBAMAAADp+MlSAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAgxJREFU
+OMtjYCACzMUnyT2BgeEBiHEXrxlcDWCK9QGqsLpE/8MyBwaGTAaG0yD+K7yG8E2AUB/QxB8EcXXZ
+MjCsY2CYAeRxNuA15DKEuvcLTbzBl0GVg4GBR4GBbwGQ2oDXkEqIpzb/hHB528vrYIbsBhrCJcDA
+e2rVqul4zeAsgOhl+gIJmqYFCJccWQGknzAw/OjoqMFrCJMBmPLi/gum1y1AeIelNBVIH2ZgAFKd
+YDEIyQJTwjEBxrgA9o0D6ycwNxMRJo71Hx1AgcXA4MzABY47XohrOWBK7jtAGewbIIZzfoZoRQ7Y
+s3eA9HagGgYmsFWL/6IYwmV/AcpiBJsWZmz2Axwkcu+AAGYIBwtQVTwwai6wg4VOFaMYwrPcAMUQ
+ICHHgJocQIYwJIAN4XwQBrZBoQPFkCCOBmTvcANxIZgrgGwIGyjFu4MCNAUkwsZgjmJIAnMBcsDO
+BuL3YK4Rikt4D4ADlmEzWPVtBn1kQ3g3MMFSOY8BNK30T0CEMzjZxzCcMQPSNkDMrwAKx8dn+hcg
+GbLO5gQslbMUMHD1/1vAsOM/ONS4MrxQMyDDU5ClIM3MCxjmByAZYsXA+RU12cMBywlosofFI8zf
+DL5AF11AGAKKub9oGRAX4FGABd4PBs7+WoQh/Q0MM75fQE+72ME6TCEOnIUSLtBJlCH4i0feCcQZ
+QjJgJkMPAIOrgzUczSzjAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">in_bool_if_false</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Not</span><span class="p">(</span><span class="n">A</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="in_bool_if_false"><a class="ProveItLink" href="_proofs_/in_bool_if_false/thm_proof.html">in_bool_if_false</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/f4c37d8bb5d12d584a97ceba8c7b87f9b8800e810/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAAAWBAMAAAA2trNNAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAgVJREFU
+OMudlL9Lw0AUx5/9nbZGB6GbFPwDFB0cFRyEgpDJUQsq6GTFwcEfBBfjIM2mmxEFRUEKTk6KLkUd
+sooWCk52sA6COvjj3bv86MVqUx/k7vK95JP3vncXAL8hmX/NnuJVZoOSD9QB78ZENTCnfaYmASI6
+wDUTKj5Qj7yremQ5nD7YNSGOKW2x3NXGpNYe3lUNUY+FzICC718gFaeShcaoqE7d0YBuodcWVixU
+ooCoHZSuDg83fdRnPWN2D1IfXjWcrJIZRMmov2nakg9UF7Uh44wv5LHhFjg8qmBlaMAUwDqJvA2J
+hHV7sEHtHoynaTDjepX66mAFo+9D5D6OX/iUaPaLPVqkdhC2uf1qje3J0jlAIod+QoBy3v2og7JE
+jA5yaKJvliDhzicMCwXqCCrPWKQZpWev5uugLNFGYfUtVIJUmxWoEY6SyqP0nbT2E2WLdoG4aaLt
+dNtei8rK+JUcc3aSSRHo/4myRct2CVHyM932Clndc9vhhPHgDrprUEVN08quiHFp7a3YO9+xBefg
+nCcvswBBtB7a2PLGH27yhphV1hUxhvFAf1UgkX+lJYxPZ4TjDLLCFpw9HTRgW/GiHNE9OE6Eivzg
+2LHvjHA520wvyhHd4/xrXDjmvYGUXxZRuisK+75u8G3u+Wk0+PX9EjG9CdTfP+RbaALVfAT//eY3
+SaaJBrh1E0EAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">not_equals_false</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">A</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="not_equals_false"><a class="ProveItLink" href="_proofs_/not_equals_false/thm_proof.html">not_equals_false</a> (established theorem):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/df76dccf2be8ad199c01812605a92c555b7cb4120/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAAAWCAMAAAAl44QpAAAAOVBMVEX///8kJCQNDQ0oKCgQEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAD9T1yxAAAAAXRSTlMAQObY
+ZgAAActJREFUSMe9ltt2hCAMRWkrAQn3///YCjoaLip1ZjUPCgZ1cxICjH3GtB8Y5Mypy+p0DXvf
+++csBmlPhj5w81javTknGrf3g3kOE3TRi91Bs2j04Md0Eql+zUnjcxYPRS/E3rw6PyAwzHEiyCHR
+301RYYyFqHvCyEsYM6V5OJNMqzeyt3jXMx7FkDAFDAvppYjJlHsOw2mUhGE2dtYCyhsYB7t8SJSl
+bdZMEpsYIPm3WcbLSHMhZPv5Tle4gPEphQW8kvn1tFC5Vte3MVC2ZNcRhoQpYWwOdrrwY3IGCpUr
+mMqbbTrw5AwAc2zyQ87sDkbmguD8CrTXSQXnMJW3hllbU7iP7QnMUhkJuOQM8RSm9lZh2hpqqnLm
+a1ozZ76AEWrDJsVxGQ/qFKb2lgms7UkJDprdKuNXOS35vl++x+MZTOM9FiWtN1hVPQHsHga24nIs
+RRPAOaTlnMK0XiKwwRhzObdLo0ysdtsDlWya8m0NXtjWm98Hg8lLU/ZhWm9nO+gIACMbfxN9sUaf
+rl689PY2ynZPHzkPOF5nYi4QGqPyHZie93LlvoQZ2WlMGNl4hk4WBt8VBvXHYC6PnWLkRDTEwt44
+c33e4P9+9Qt0rxOicyeldgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Must-equal-TRUE-or-FALSE-if-in-the-Boolean-set:">Must equal <code>TRUE</code> or <code>FALSE</code> if in the Boolean set:<a class="anchor-link" href="#Must-equal-TRUE-or-FALSE-if-in-the-Boolean-set:">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong><em>The first form of 'unfold' is a more direct consequence of the Boolean definition.  See also 'unfold_is_bool'.</em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">unfold_is_bool_explicit</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Or</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="unfold_is_bool_explicit"><a class="ProveItLink" href="_proofs_/unfold_is_bool_explicit/thm_proof.html">unfold_is_bool_explicit</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/2043ae20fbf8ba8ccd7f9d74ec767e81647e7f520/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPUAAAAUBAMAAACnh2ZxAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAApxJREFU
+SMeVVktrE1EUPubRvGaq/oEyuHLnQMFuFAIuBKGQVRFcmIUu3EUCRkuFIggJgpmNKEpxxEWhYgkW
+UXfB4sJaJNSViGUw6sKFFnURBR/n3nMmcZI5t/WD73Bvcr/57rlvADMWmAYUvDiRCU+Ygaq8lVrl
+54mIdDD0X7KmUYYzMaI4gcIJFcY84gtV+SR5j3tEVdyKSdlRcVmXS9ovFAkCeKA7FxBvYDk3L3m/
+YiI2f0relo6nVdgAs4C84Slx3EdxS/K+wMR+rvyQvPN7VJxRYRbMAva+Q7TXlpauS9a5ChFhJ75L
+3vA+HOmUC2YBe48Xib16fU7yTrhExLHCL9F7VZexXdYDs4C9LZeI89TQPzRGW2Y7RBzBYvqrVn3W
+cCPemzpiusdD0UAAL7WgG/G2A+IRveSwzENkv+tWw/nPtIg4mpD7Jub9SMd9AKdCkSRg70KFmIGE
+7uhdNUT3Vg+D0154yC13FYm4kiYP9kTvkzouchImAXunt4hWJ6Pra1XM+cpNHxzHuj/ijWFiG+9k
+i/aLSTDknQv07kg7dTX+CMeZfj485gXk2X/muxzxPkqbIsj0RQMBz/fHiHeqQoSGnqUxmOID1pmc
+KA2vtVvIL2LetNbg8kZfJAmG1hqs6P34Bg5A3qW8k9e4ZbgX9JZtepL3IarNzPZFkoC9k20i7FYf
+yHfXm376fL1+Sc13glvy2OSbv314/Kc68qWUXqXwgQ9/NxQJgqlabW+tdg5blohg+6onPtwuQZny
+tpKjZ6oB+Qqfgv5AZMYikzCN+XfgmfZuW+sxd4kMukuiF5AZfJfwoupBrnkRsrhE7bnu1U7/d48P
+ShOWh0/D7QThHRrFfpxv4e0goxH/dpCxo4x29Gay//vN9Jr4F3oK30v5unkqAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Folding-$\forall$-over-the-Boolean-domain">Folding $\forall$ over the Boolean domain<a class="anchor-link" href="#Folding-$\forall$-over-the-Boolean-domain">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fold_forall_over_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">PofA</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">PofTrue</span><span class="p">,</span> <span class="n">PofFalse</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="fold_forall_over_bool"><a class="ProveItLink" href="_proofs_/fold_forall_over_bool/thm_proof.html">fold_forall_over_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/701df4d82faa728f3a9335809f5b50e03b8229a50/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAAWBAMAAAAfsUzKAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA4JJREFU
+SMetll1IVEEUx//d/d69V33oIXoKegj60C0DtQKFoHzLeqiX0IVKKIL2oSf7YCGoKxW7T+VTLRRk
+G9hCUQhBkkGhJttLRZktlA8JpahpmmVnzsze3XtzzdgG5s6cM+fOb+bMOXMv8D+K9rVpOWaBTK4X
+SgDDJ5EV/fclwvWGMtEYmcWHXy2cb/2YBDql2Ez1KNWn6BfiaMlwPU1NWbLI+C/Avxr4LKUxql0M
+7xDuiJUM5yk6igx75snREzDCLBljtEZ9jYCL1fKyS4Oz8/qLhcQU1Xn4Eizdqac2WCHgRl8qdRWl
+w4dSqdvRIsP+ccA7BYXJVDXQ85OA47tpni4en6ptWlpL8HLTvNBTZJZyiurrYaxlwZ18LOKyl+FH
+gHZSxY/XHuMxad843XueDiQ33X35njKyayXc2wQ/u1U+baWlByHa4GUWbqKFzhvDDN+JoEi3l8Az
+flfaGxXQo/AmdNNcZV6CS84ojbxCiFB1JfJwd5gjGPjQIHXDlTXb1XDV8YEttJNTLDQIJwAPGe6D
+JtzQSjYFcG8E2jgOiq6I42CEtdLIqWU4otgkusF6mi34qDqj6YF36lziMgVXcuQfqj4h3m1huJ7x
+CeUZwCyA+zLwx8SRSIxKUWnk1Er4C3C86bdoX2+6U9A09KlLZwZ5OB3riqwFD2T3iwXPQmsrgN9N
+YF1STscYuStp5NAq+DUP+2Efrdkt/Kpp7iF5LJ5JacVup6z2UZphN8PRflgsaH6jzFIF3/NkII1A
+HvMAlpFTq+D+K3zYEVcUfNdqrs0j+TQXRQRcgOBl41bA4Z6YTM/mclI2gwyLWZhGWEZOrYKHajhQ
+0xQqNxipoU6eedmctKLs4lz3z9Jjh4SXi8j3h+3wc4yJWJhmWEZOrYJjQvS6djyfwwHTNNcQvEfM
+DNfYNLfC050LowjFZ2ieEQk3RCyWp+3wH3xY+T3ugmXk1Obgb0VvGwLf4FU77wnb0t1XcAMEoxIu
+74GEDe6ZzVkozBA6ksrIpi2As1covn9CF+7WdAzYrzyjYC3yw6JiYqzOBq+cZA7HP3t5K/amc0Zt
+UFcPaR3weAwdMxlcpO7rwdovjpuuPd+Vn9Q/PgKFwgarl+UkWURrh+f2Qme+yB3faV/HX+CWEMrw
+n8+fWgU7+4+/UQZNVnlyabg7Z03JYyyq/b/FZZO6Vbt+Gdp/L78Bj63+YiYwFhMAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fold_conditioned_forall_over_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">PofA</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">,</span> 
+                                                      <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">QofA</span><span class="p">]),</span> 
+                                       <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">QimplPofTrue</span><span class="p">,</span> <span class="n">QimplPofFalse</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="fold_conditioned_forall_over_bool"><a class="ProveItLink" href="_proofs_/fold_conditioned_forall_over_bool/thm_proof.html">fold_conditioned_forall_over_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/f0c4969abcc97c9340b0dc77cb6cdd1ba2c2326c0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">from_not_false</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">)],</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="from_not_false"><a class="ProveItLink" href="_proofs_/from_not_false/thm_proof.html">from_not_false</a> (established theorem):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/ffed0307fe951cde946533dfb2eb64955798524f0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAAWCAMAAADabWOOAAAAOVBMVEX///8oKCgUFBQNDQ0QEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAArQGDrAAAAAXRSTlMAQObY
+ZgAAAaVJREFUSMfFVglywyAMpK2RuSX4/2PLZY4kuNNOhygTBkxWK6QVMWNvNd9mRDt5RSZG1+Kw
+W08d0mh0XbbJFiMf7HjknoQNZh0Ek6NAm8yorUdnPJx5FnQyhRvJT8tcKCKXIo3a9M1xvoA/PZkx
+9wK2ES4CL54gPfBDWsL5oBDuQcGoiyeFzhgQ10yuYjcByiJVnPdmt1CTErWBAHHOGTJDTqzZOya3
+j1yHmVpdAoAMdQupRFANrSphkXbGphzy+ImPac3eMGXX3rKXLB0128bHcHpknGndKpItsZ+EZsne
+MMU7sjv2WkF1NMXIXrUYB6j5DuYM4PBiXfcLI3P7fMUvLdmNGy+7FA30xFPc5CGXko1nZ2CWdW+Y
+8utbebZ7RYcrl1X9WfuAqNMtKFQ+iOZX3RlfOO2YvJr2HtitDiFfri5OLqlQkwnY3A1iapbKDgun
+HSO9958fcfB0o7r1LVJQuX1QdPaoI8SFmEbM1G2/Zde5CY0OKrnStYCk0IP29NrpjBm6DVPdjjT8
+7RLnte4vwlxB3I6/C/3zq9Ib2GnLSwL8j5tv6EoSMhn4XR0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Evaluation-of-$\forall$-over-the-Boolean-domain">Evaluation of $\forall$ over the Boolean domain<a class="anchor-link" href="#Evaluation-of-$\forall$-over-the-Boolean-domain">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_bool_eval_true</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">PofA</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">),</span> <span class="n">TRUE</span><span class="p">),</span>
+                           <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Equals</span><span class="p">(</span><span class="n">PofTrue</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">PofFalse</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forall_bool_eval_true"><a class="ProveItLink" href="_proofs_/forall_bool_eval_true/thm_proof.html">forall_bool_eval_true</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/2d9afba854b962af53b7b67b1007d167a8c8f5af0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWcAAAAWBAMAAADun0BuAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABAtJREFU
+SMe9V0loVEEQff5MMtufjAcPHgPeXEcU4oYOCOpFUA96ERPcUBEzB1FcGU/+oJI5aS5qRME4ggwq
+iiA4qKAYlREPbjEGXMCAJiiuuFVV/z9/mfk/ERwLOtPVedX1urq6fjdQazkK7f2SkQCjJasXzwF9
+W31gV6j1c+d57TjHstDTjdxLlKoCEm1f12+ZRZ1upa+itpHaTQ+ueTvLNjTQinp4YKB2pBtzRFov
+cK+rOiJJcdtH/3ur1EFq56qQJjkvUSB4J29MtnakH4JIi4NOH0RLEbjWhERKBX6Q+OtN/qRxXa1f
+AlEj2cGkZSt7fBBT0tSKCOdEOzuPfmOjA0ifoJXdyeeP1I5zNCOke/P5MxkfSAe1tjRMEiVeA14F
+kG4kwFfD2O3v0/wNOP7BEC0lpJOGsb/oM8EvmuMjME6UUNc1Pq83AkjrNOU6oJ3AHZtnbJKxtDJW
+uuXoYuUMlkUAhCRSEtINSxCR7Vd/nVL/A7hMkxwS7RRaKJ/RZ5K+/57lpYt0gk7ifDmPeADckjHz
+UIrekNMNY6xxEHWWL1MvI6QCoZVaNQgQLgjpUEoqAvBCxQR9k5tnm3vx+e6N8fS7ywzZcT6QlwMi
+Hac8C0PjDVlPp8FJWvSV1kCs1Ta1So2yCIQAo9JCGhlMkno1j3zFrk4raXr0mUqoyHeFHCNhXzOt
+jY1bAkjXD9GUpTB39wCG06Ho68oDbysZKYtAiE36HuQc6qcpjo+v5KFpuKM+NsmMg3SILPpHQDra
+v5xD8A3aTodDpWfKA5MqGJkWQRA7PXCsXjZiWSTLqUJJoYV6VT61qPqs0oPQYSp3WOjK6Tcu0iF2
+2b6Wez8m9jgdih61GV3CBoOkZDNSFoEQ+yAicliSubUuA/mma3VTX9tlmoUPYpRINw45DmK1SPNB
+xAX2q/e7oyR6KFseWFQRRmURCDHrE5OON4u/gjaEk0Jaw0yV04Pm152qnNTqyDf6MyeAdB3XqyTX
+mEjK7VD0UGt5YFUFI2URCDH3kknjA2vn5tz+jhW0HU1Eush+Mff3aoWkjOj+PYB4xxea+HVV0ovV
+x4UXm+ClJgtuh6LX22FcgC2cXY69VxaBEPszDjxlZRain9BgRrqYcjEKOyp4LFOVtJLT9q0l5yYt
+esxO2F53GDu7TAt/iPPCZIWdFvQTOkdK03HX/YlMONbgc2GCdWEyK/zgTJdDU5d6Igkw3TZifWnB
+sthZ/ph4INZJzNmkO7Lo/FLCAeo+uj/jnYdMu931uZrCuppWiPOaOqHc8yILw0McjwDPfYRyugqy
+283fj3TlRcBDOlJ+AHleHfHcsBDHc2vvXz63EjT7ZL/n1hMMQzpkzXPS+0YaHvJfJeV9RbKM98eP
+APKv5Q8f+E48VJuVXAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">unfold_forall_over_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">PofA</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">),</span> 
+                                         <span class="n">And</span><span class="p">(</span><span class="n">PofTrue</span><span class="p">,</span> <span class="n">PofFalse</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="unfold_forall_over_bool"><a class="ProveItLink" href="_proofs_/unfold_forall_over_bool/thm_proof.html">unfold_forall_over_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/d0a18ce2c8ea3fcc5d8bdf0095a978078d186db70/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUsAAAAUBAMAAAD2NgI7AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABApJREFU
+SMeVl0FoFFkQhmtnMpOZTM8EIScP0uBhRWRtFHQVlKCHhYXAnETwoMgmhyWsI4IaN0L0oBNEZy6i
+7JJNiwdFMQSDqKcdjCKaHGYRBBFlcBBRwYgGjSFrrHqvXvd73S8hFlRP99Q3r/+uqvf6DYDFsnX4
+6SUsxYaCs9sA+VediyIRfClDBt6gL56Z5GWAu9aAsvy+mZ4/NgO0DYjLFLLpKoBjkUmIhm88RHZQ
+4IY9nj/R0/TVkLvoQIzyCfrijfmT1yTTFgisHYUd86Egb1Z4j8M37DIFYuDXhfoGxwO5XwEyyyHK
+KD9PRR4wc+WRTEsgtN01gH9deCSvns/i4Y5d5qMYLiQQLqzJn6k5gNwHiDHsBUy0M2qM3FolmZZA
+aGtR0Noa9Mm6jn3B4wVD5qA66YvhUsIFVnfSlyeJafQ5iDHs+YdXrpwzNdDlXVsgtAr6vs5sSWaf
+bgGFTl3mTjUbSzFcSihINr3NlWAGGyc9DTFG+Uy53G9qWClkWgKhYSNlP0LCExe/5v7Ho+PpMvMe
+J8mL4VKCIy9GoBR2+7AXZ5R3iwq1VHp//p1vcVrK7FalG4yppEa6WYNMXdS8M/WBhDWkzKSYy4c+
+cpLqUZwl5OUcmpBTVbRvrh/ijPLtctb9B3CfRfwpZXIA8tOcoBfNA9yriU+T46uxicVlC2UK+79k
+TKHcW9nno1GcJeRkFkvwD3d77+Q638Iob4UEPUEPknyHDimTA3CRSnp1fAu4taEbnKNZ8fGDkLVj
+/YYZStl7c6aPdASIgbMExOnRXUgXZbf7dka5U2+lr44ClE2ZHICHB3C4U3/54LrONW6kkjYmHlbE
+ZWZ7qwFi4IbMVh9Se8T1Z1hcZraxgxrsCySOmEWXAUi5ZWoANNftesCN5IUVzaHvp9pz0ZPvpFVD
+RMeVhBYhfUy+TPAu3MsxRjkM/kbfzK2ZAHMKyQCkYSO/Ut31K4rhsqnmx9/oU9oUktbS0KaQjptT
+6DVLFcumlVEOY6TVaYT1GmeZIgBPsWfbPJnN5FlJTPnBgiEWugqmLlnTZY7wqi3WHQ0PJCCOORyQ
+hcelcRbsjHJopwU244Uyf2GZItDWnKz4qcPl8nHqzYQAts7vVUVpq3z14dY8tm+hqMvsVlktGThZ
+l1y6qTBp+kECb5Oc+uQGDG5PltH2RDDKIU9P0z4afVlyIOnDcBH2yGw6SXP97NPOLxkvy6oNieC0
+lpEVFxkycJ4U1ejWgw2fvb0O94TMmjNp2VewLbb1sONWizJ3dDYxtUkLD4YyMzOQrRyFDCY73988
+UzfHzIQPt9BGTkOiuNUijHKbXdayybYKe9O+59WGX2hbvAButQijfIE/GT9+75+MJ1iS7/iT8WRp
+Qyr/BncQej609drgAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Various ways for a $\forall$ expression over the Boolean set to evaluate to <code>FALSE</code>:</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">_forallBoolEvalFalse</span><span class="p">(</span><span class="n">PofTrueVal</span><span class="p">,</span> <span class="n">PofFalseVal</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">PofTrue</span><span class="p">,</span> <span class="n">PofTrueVal</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">PofFalse</span><span class="p">,</span> <span class="n">PofFalseVal</span><span class="p">)),</span> 
+                             <span class="n">Equals</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">PofA</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">),</span> <span class="n">FALSE</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_bool_eval_false_via_f_f</span> <span class="o">=</span> <span class="n">_forallBoolEvalFalse</span><span class="p">(</span><span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[19]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forall_bool_eval_false_via_f_f"><a class="ProveItLink" href="_proofs_/forall_bool_eval_false_via_f_f/thm_proof.html">forall_bool_eval_false_via_f_f</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/a57729bdd53a292ddca639ca103f444c1bef7d680/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAf8AAAAUBAMAAABxKyl4AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABS5JREFU
+WMOlWF1oXEUUPu5P9+/upkJA8EEu7YuI2It9qErVBR/yVMiTBAS3aBNQgllpMfZPog+yi9TdF4kI
+oSsKLRXDokjoU5fuFbENsioIRRoWVwUrJMGGJpVqnDMz986ZuzO3KQ6cZXa/e7/zzbdz5s5cAEPL
+9VSEbSHsXQRbu2hiGu4XmjYCRCzoAiRWx2EHTc+zcixGK0Yfv1zXsfMkftp+d2rQAsjPwYFZbG/A
+LpPCF/BjCKEM2Id0Gz9fMRAoxIRifqdsEhu04szW1GtPyZysvSiZ/BitGFfxyw39gj9IwL8A2QcB
+SnxsX3AtfUN+DclRpoCB9wsufi6a/vwQMaGY3ymbxIZthCV/uyXzAKxJJj9GK8aHqHdO99JTAek7
+TNtfAD+qW+GyzYAAKXmKKWDgfTlMx7UZgIgJxfxO2SBWtUoH4JIr80BxrSWY/DitLEp4XVvDM00V
+kNhgwYZwnNz6sdUAiUycUEwBA+/LYeZ32wxAhKL1oHMcDTCIVW1fmUVH5oHPnm0KJj9OK4vilQsX
+5nV8ngRk11mpbECuSm4tlW2kEjmyRzEFDPNkmPCrzQCOEHQiWNmqaIBBrGoNFjNlmQd66Acy+XFa
+MbZqtVM6vpcEr6yzHiQ8cqvj2UgFku9nFFPAsJcOs2s1oKujckLz/E7ZIFY1ttTkbsqckGpd6gkm
+P04rxiSfZ6nG9BOvSvwMCaysAsuZ7ZFbi3yt+24V20AjFYjTlvOUMpyhw1zhl3GCVQ+iCEeT/Jkz
+e1OgmJ8ZMBkURX34KcLqdKkT5PkUKq5g8uO0Yjwn1u7vAb6R+EkSsG96+XFWeZk2ubVQtbkqkAzk
++iFTwHCSDnPJOgOWImjhT7GatLkBUiwUN+QE+WVwVK4JiVvL3UeCnFDGSceZ/DitGBlI4L87xZRK
+fJQENFr8t/vK5Nb0uo1UID/weRVhGKXDrFgNqETRxdEgPzNAioVP/sF1rvs0uJ2Fr+Qc+Vuph/TL
++2fmBJMfpxXD6fGCPQ1QMxmwCfduAHsGPK/EbML/MSA33SQGSLFw5Sj799/7qAWu63wutwFVkifF
+7ujv0IBcH8Xmb0PihKEE0rIGtRJIVVVd/a6RcqTgBfsmyqCVwBhZAw5DFOFoUqCrTVoCQiyk3RrW
+Lmuue+hbuQ3wSB52dWa3YPLjtHK99SP47c6jV8GwCCY21CIUWepMrnIEB1/wIMIwvAgaZ8CKjqb6
+2iIoxMIuOCA38e7+h8bVNiDIk2MGlNbJImjTyvV+iS44ZExdEiVZWQ59DCY7NlKOTMgy0Bm6dJgH
+rQYc1NHFlsqPBnCx8DNbr/KemAHJD+TWt6Xy4F4ge1sw+XFaud4RzJwlj/YxFcm1Wy6Z9XBIbCGi
+pzJ2TLofj0kC4X/SHogwjPEn2+sPzM6yOf9bhEBHCDoZzISqMICLzQ+WG630m7XaO7gGJPgFz2y/
+FKo/v30DCo1NjzP5cVq53iJaN9K2bIXJVjRs56xH0XPiEYRlGm6FCWt4tKvaCBChaFPbCkuxyRac
+HYfDYgY4SRjayFM2P06rGkmlaTkMkcNI2C5bDYgglIH2jccduPthSPbZPBzpwdfcgI6zbM9pOQwB
+PQzJXcTak6CfQOqR7VZWOWQ8DpuRurm/aHXQehzONkMDsluQa5yGLJu0xVOD93v2nJbjMNDjsKnR
+FyLkhYTBi2GVw0yGft1qQN2G8hci+k8PszXAop6w+TFabSO5yyuxa1b513b2SqxodRCRovWV2Fv3
++EoMmR47FqOVxX9VTe4/UiWb+gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_bool_eval_false_via_f_t</span> <span class="o">=</span> <span class="n">_forallBoolEvalFalse</span><span class="p">(</span><span class="n">FALSE</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[20]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forall_bool_eval_false_via_f_t"><a class="ProveItLink" href="_proofs_/forall_bool_eval_false_via_f_t/thm_proof.html">forall_bool_eval_false_via_f_t</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/9ac369fcabc2090b7beba15dfa1572f693643ebe0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_bool_eval_false_via_t_f</span> <span class="o">=</span> <span class="n">_forallBoolEvalFalse</span><span class="p">(</span><span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[21]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forall_bool_eval_false_via_t_f"><a class="ProveItLink" href="_proofs_/forall_bool_eval_false_via_t_f/thm_proof.html">forall_bool_eval_false_via_t_f</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/112b18a83caedd1214ac2a2ce5f3a51d6d825e940/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAf8AAAAUBAMAAABxKyl4AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABS9JREFU
+WMOlWF1oXEUUPu5P9+/upkJA8EEu7YuI2It9qErVBR/yVMiTBAS3aBNQgllpMfZPog+yi9TdF4kI
+oSsKLRXDokjoU5fuFbENsioIRRoWVwUrJMGGJpVqnDMz986ZuzO3KQ6cZXa/e7/zzbcz585cAEPL
+9VSEbSHsXQRbu2hiGu4XmjYCRCzoAiRWx2EHTc+zcixGK0Yfv1zXsfMkftp+d2rQAsjPwYFZbG/A
+riGFVoQyYB/Sbfx8xSBIISYU8ztlk9igFWe2pl57SuZk7UXJ5A9f+gJ+oFaMq/jlhn7BHyTgX4Ds
+gwAlPrYvuJa+Ib+G5ChTwMD7BRc/F01/foiYUMzvlE1iwzbCkr/dknkA1iSTH6MV40PUO6d76amA
+9B2m7S+AH9WtcNlmQICUPMUUMPC+HKbj2gxAxIRifqdsEKtapQNwyZV5oLjWEkx+nFYWJbyureGZ
+pgpIbLBgQzhObv3YaoBEJk4opoCB9+Uw87ttBiBC0XrQOY4GGMSqtq/MoiPzwGfPNgWTH6eVRfHK
+hQvzOj5PArLrbKlsQK5Kbi2VbaQSObJHMQUM82SY8KvNAI4QdCKobFU0wCBWtQaLmbLMAz30A5n8
+OK0YW7XaKR3fS4KvrLMeJDxyq+PZSAWS72cUU8Cwlw6zazWgq6NyQvP8TtkgVjVWanI3ZU5ItS71
+BJMfpxVjks+zVGP6iVclfoYErqwCy5ntkVuLvNZ9t4ptoJEKxGnLeUoZztBhrvDLOMGqB1GEo0n+
+ZJm9KVDMzwyYDBZFffgpwtbpUifI8ylUXMHkx2nFeE7U7u8BvpH4SRKwb3r5cbbyMm1ya6Fqc1Ug
+Gcj1Q6aA4SQd5pJ1BixF0MKfopq0uQFSLBQ35AT5ZXBU1oTEreXuI0FOKOOk40x+nFaMDCTw351i
+SiU+SgIaLf7bfWVya3rdRiqQH/i8ijCM0mFWrAZUoujiaJCfGSDFwif/YJ3rPg1uZ+ErOUf+Vuoh
+/fL+mTnB5MdpxXB6fMGeBqiZDNiEezeAPQOeV2I24f8YkJtuEgOkWLhylP37733UAtd1PpfbgCrJ
+k2J39HdoQK6PYvO3IXHCsATScg1qSyBVVevqd42UIwUv2DdRBm0JjJEacBiiCEeTAl1t0iUgxELa
+reHaZc11D30rtwEeycOuzuwWTH6cVq63fgS/3Xn0KhiKYGJDFaFIqTO5yhEcfMGDCMNwETTOgBUd
+TfW1IijEwi44IDfx7v6HxtU2IMiTYwaU1kkRtGnler9EFxwypi6JklxZDn0MJjs2Uo5MyGWgM3Tp
+MA9aDTioo4stlR8N4GLhZ1av8p6YAckP5Na3pfLgXiB7WzD5cVq53hHMnCWP9jEVybVbLpn1cEhs
+IQynMoLwP2kPRBjG+JPt9QdmZ9mc/y1yt44QdDKYCVVhABebHyw3Wuk3a7V3sAYk+AXPbL8Uqj+/
+fQMKjU2PM/nDB7f78eDGtXK9RbRupG3ZCpOtaNjOWY+i58QjCJdpuBUmrOHRrmojQISiTW0rLMUm
+W3B2HA6LGeAkYWgjT9n8OK1qJJWm5TBEDiNhu2w1IIJQBto3Hnfg7ochNdtGevA1N6DjLNtzWg5D
+QA9Dchex9iToJ5B6ZLuVVQ4Zj8NmpG7uL1odtB6Hs83QgOwW5BqnIcsmbfHU4P2ePaflOAz0OGxq
+9IUIeSFh8GJY5TCToV+3GlC3ofyFiP7Tw6wGWNQTNj9Gq20kd3klds0q/9rOXokVrQ4iUrS+Envr
+Hl+JIdNjx2K0svgP08Lul2eEvcsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Must-be-a-true-statement-or-a-false-statement-if-in-the-Boolean-set:">Must be a true statement or a false statement if in the Boolean set:<a class="anchor-link" href="#Must-be-a-true-statement-or-a-false-statement-if-in-the-Boolean-set:">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong><em> The second form, known as the 'law of excluded middle' can be more useful for unfolding the meaning of being in the Boolean set </em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">in_bool_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">in_bool</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">Or</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[22]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="in_bool_def"><a class="ProveItLink" href="_proofs_/in_bool_def/thm_proof.html">in_bool_def</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/ae44538eec8c5624aa0e2bcf8c88dc3c1926c20a0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVMAAAAUBAMAAADCT8MnAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA4ZJREFU
+SMedV01oE0EUfs1Ps9lsUoVCbxL05qWBgr0IBjwUikK8lIJgC9aDJ1sKLlaFHBSTgyS3FkSaUrGl
+Qgn2oJ4s7a2KhHqxaEugKthDKyrYClrf/O3u7O5M0AffZLMz37xv3sy8mQUIsWSDQW0vQt495NBY
+qhpGauVIoElebMr18xxol+SayFjpT9cIQHvAJ5hFBrR401cXtakNw9UQUhiB2EVSEEcCr8iLHbnR
+Fw60PR8/E8/OzzbADPadqTKQx68hAc2ScpE+F6g8QVIQ4CkdS9PFFJnwotQmnWMgj3s1mW/EGpEC
+Nl8J9PyWA23rl0qqRcsrpFgHPYFJpY44MqjFqkttElUGtCdn+Ey/s+0ml5qqo9SZQM83ODACSwcq
+qeYRUg6QYgL0BC51xkV6bWFhUm4zyYHW6M7T38GTblStfpSayfu34igDmYrID5VU+CimPZYDPYFL
+JY4E9kulW3KbExzYX+0lTQTmjmcB9A3gWrNyvo4jOQa0/tRvpdRV+oztjCroCVwqcSSAC6dMX5ZF
+m/scAI9gKCv2oZDaddhJAkGXw5tdYtu0osGA48rHv1EntHI3J0ndoiUGc1CQXIK3O0cqcSRwlm/n
+tDMJNzkA8jBNPRnebWVtLqPnUV8MEnUGnApIfldG9RktjwOMCJKKwKUSRwIJiNCxzTqT0MkB8cs9
+12hyuEBGK7YVFM9jlT+9tOUZcNP0nNpXSh2i5RwPj47ApRJHAlYjQd+tjQekxrAz2uWUN6pQbNdK
+xeJYC6nROks6OkKI1GST5o54thRYAGROaXZpk6QOZ3AUo+7i+iwtgBRizLNWhyWpfSxdNBPOqnEJ
+3u4cqcSRAJTpsmmHXv+2StbFORLNSlH9ILaV92wQ2+pByBnn31Zwd90hqQgh2wqWaIDeQ7dos8pB
+cqtx4ASaH6zL1ioGKrrs61gkFJoqK1WV1NPs38CEQ1IRuFTiSAA6SCfm9uuKOEP7GOYPdyBV+UlT
+wOM7Nem6ApmCr2M+SWblTw2eH44HHMfYTe0TH3FOkBSEXts+atvXmSMBSBMV0RpMF4IHq2Pn7tnS
+lM9pDlaNmTzHJWsuSW9zHjDD/NPRCF5XlKa9rqjNygZJrR2teB0a+5Cs3Bb/yt6zKzw6wUsgOSmN
+agvHiyGklo4EwsxztVaYob1aq60cfrXWO9IFofUHy8b/fbCk//mDZcPFXwUnQf2viAHxAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">unfold_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Or</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span><span class="n">A</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[23]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="unfold_is_bool"><a class="ProveItLink" href="_proofs_/unfold_is_bool/thm_proof.html">unfold_is_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/04ae6681801af4230b98cd1d4f7b2c518265bb270/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJsAAAAUBAMAAABoqVKyAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAjFJREFU
+OMudVM9LG0EUfiZZk0120/9AFk/euiDoqRDwVhByEo89tPeUHNpKBBGEDYLJpVoq4pYeBEtBkEK9
+BYsHfxyCnkpRFnPrpdJ6SAutvnlvJrNbMyI++Gbyvm/z5s17MwNwu63dkd6RiIRzaoqWn6PJivrS
+0oQ62GQcCuK7KVyxydOFGMv03xitPkI1HzHeoG/PmcKd8HT2R4zPxHAcoyGm7jKKIYCzZQr3ive2
+/VtMU2KY0bTaOanvGO7B5uaKKZpdoclNXaotZnxNS2O1WGJ0g6BmCpfyaXpc+CumAnq5pqalser4
+DKxInej6zXC5Nu2mZP0kF5Oa1rTaK6tuxJigjuDvS5n7eaeqapmlHxmwf5E7DPBU0eMv0GpaLVQY
+WUjRYu9Fyh++PAKvtfZJhhsoUQtGx7rkbsiVmUZb1qp1wXDaWZIOqpjZ4tsQPM/5mAiHwxC56S0+
+A4lwUlXh7IgOgOUFYuNonje5H99sAfGcGx1lYzXgcErNVBhQp3oMwri8cd7oUDneilXED/YXjiHR
+imWtqlbANp2ib/AQ8j5nl34tPxedp0PW4Fs1NdOj+bZqNd1iwANPtLtz1Aitl0EwL2qXkp9j9vnG
+vxA+X1X5dvqKVqekpxbLDHBDUeUQ1svwhLNz0slLpm9J2JfmrjPYJjHLNuxRuJZz9N8TYHgZ4iaf
+AFnzLtiNWchhy9xaZ6l36nPNvuFu0uqBStoI1s78Tt5CiwUMa9/ncf/KuAadcqSbKmjdIwAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">from_excluded_middle</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">,</span>
+                                            <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Implies</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">C</span><span class="p">),</span>
+                                                        <span class="n">Implies</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">C</span><span class="p">)]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[24]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="from_excluded_middle"><a class="ProveItLink" href="_proofs_/from_excluded_middle/thm_proof.html">from_excluded_middle</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/25c04760a7b246480b0f2a07c647fde6c30b88430/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAAZBAMAAADqEi4iAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAzZJREFU
+SMfllk1oE0EUx/9ukibZbFrPQiHoyYo2orS1FloQxIsQe9CLSKF+oKeCYEVaWC9timD3VHOQNljw
+I2gJVIWCYPAg2lbZm8VWrYoHBaGIpbVY8L3ZTXeyu6lQjRcHkpnZeW9+M++9eTOATznTbaDyJdjd
+4/u9C/+mDP3X9Hmu3rjp1VzFzUphb/Q1mNeZPsW9L266lqeqOlshuFILjNcyPUO9qO6miy+ZCsHV
+ftpW4AfTeYNip6V+Z2tMVYhevYXP22amxydzuWveqJvL5e5UKvhaebOhpIj55XS6x0uvSaf7CxuY
+OSp3Uv4iS8L8hqCfAgY4wPtaFMOhV6UQEd2IO+21FRsD8teZzsJ2rp0Vk+J9+Ilo36TzfgAqnbro
+B6iXpb0HkxgT7Xc27e2uxv2iUYzQ+Hdp5uEEbpMjUeWslRQDho8IwosSPQyFzvUIQWbkbNOFncJA
+rTSoPtpjKlp0NiXTR1clY9JK4jxw3AlsUlQ7fESwaUWMW3TNDFODXd8u019YGU+7RdExM5GDomDS
+lOmT50UV449hMngoAeFGuwjFzz4iCC/w/wOLHp0/Suef15OT6cMhsfD2iM5eIAklOGdI9FAibTXO
+0q+ejq2aLcnRrGiZzyUiTroVIJznB07SenR3no8MCYd3BOy0qwR2f5L9XoVGaGkq70nuYtG8Dp0V
+8dArQkIcdVrWpo/zASu46bFGEVp5ZQGjgq5gn+z3WdTb0tva8LN4ZesCd9VWxCGvCJXHJmLNxTuu
+JmF5RTVL7jhxLsZanq3gGE2YIHoh4dDVj9OD9jVw85yImntM77DtYiniBDwirNt0eu/aDRvnrEtz
+aqU37Gv+a0Z0kScTey8kHXogi5GUsodKA22jyXZkSC/ShSIOwiPie7/3Qn3uvd+DZI5VaGxxRcN0
+waEfJpuZyFHZymFs4q6BTFbtsumWIubgEilD1zqfZL30QR2ZJRNXqPnqZdNXJ+oiy4gO9ooYEsZ+
+2lIHHMnjkp1ubUXLwJLIRt42Cvl9raOXT+x57CgdnPfm/j98WellR2IGIqUfzL/+ritPj1uB4pTR
+Db0qu9d7zyfXnXBC7tT95j1/4Rcm8fakHlyqSwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong><em> New facts may be derived via the 'law of excluded middle' through dual implications </em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="The-claim-that-$x\in-\mathbb{B}$-should-itself-be-in-$\mathbb{B}$">The claim that $x\in \mathbb{B}$ should itself be in $\mathbb{B}$<a class="anchor-link" href="#The-claim-that-$x\in-\mathbb{B}$-should-itself-be-in-$\mathbb{B}$">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">in_bool_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">in_bool</span><span class="p">(</span><span class="n">A</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[25]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="in_bool_is_bool"><a class="ProveItLink" href="_proofs_/in_bool_is_bool/thm_proof.html">in_bool_is_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/20b377f4ea1360e32df356620e720371113b81160/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAUBAMAAAD4uit9AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAhhJREFU
+OMtjYMAC5kIxTsA9Abf4AxDjLoowVwMEAwHrA1Qd6hL9D8scGBgyGXCKnwbxX6HI8k2AYBDzA5rO
+B0FcXbYMDOsYcIrPAPI4G1AkL0MxENz7haaxwZdBlYOBgUcBpzjfAiC1AUWyEoqBHt/8Eyp2o7z8
+AVTjbqBGLgGIMG97eR0DqjjvqVWrpqOYx1kAwSD1TF8gYhFaCJccWQGkn0CCuGkBpviPjo4aFAOZ
+DCAYCLy4/0Jc+grhNZbSVCB9GMxbtwCLOJDqBIt1QuU4LkAw0BwH1k9gITZ4MmlwrP/oAApcMA8R
+2Ujizgxc4NDhhfqOgX0DBDMwsDBwfobYgRz4Z+8A6e0QHjZxdgYmsHMW/4XKMTpAMANDmLHZD7BQ
+4DsggEUKBwtQfTw4COVA4gxo4jwX2MFCp4oxDAQScmChGcgu4WBIgBrI2YBNnPNBGNg2hQ50L3MD
+cSHEDmSNbKDc5Q7mCWAV70wBhzuDOXqkzAbi92AhZgVkl/AegEWKEQM28c3gNHebQR8qx2MAweC0
+2A+J32p4FothOGMGpG3gnsEU5wdZz/X4TD80UbEUgDFX/78FDDv+Q0J2WcsClEKA4SkkfWZ4MWCK
+84LUMi9gmB+AkfUQwKe9HLng4SqAWn4CmvXQxBkYfIEuvYBZOOACGIUDujjHDwbO/loYZwIE4wHr
+SBJHKmBxgU7SxAlWAbwTcIoDAOFcsb5rLLYBAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.logic.booleans
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

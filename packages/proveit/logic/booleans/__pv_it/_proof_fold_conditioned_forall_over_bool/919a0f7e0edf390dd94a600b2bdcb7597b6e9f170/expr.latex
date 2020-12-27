@@ -1,0 +1,1 @@
+\forall_{P, Q~|~Q(\top) \Rightarrow P(\top), Q(\bot) \Rightarrow P(\bot)}~\left[\forall_{A \in \mathbb{B}}~\left(Q(A) \Rightarrow P(A)\right)\right]

@@ -1,0 +1,6 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{Z} \qwx[3]   \\ 
+  & \gate{H} \qwx[1]   \\ 
+  & \gate{A}   \\ 
+  & \gate{A} 
+} \hspace{2em}

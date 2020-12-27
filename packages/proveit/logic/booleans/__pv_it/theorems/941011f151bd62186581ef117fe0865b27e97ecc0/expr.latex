@@ -1,0 +1,1 @@
+\forall_{P~|~P(\top), P(\bot)}~\left[\forall_{A \in \mathbb{B}}~P(A)\right]

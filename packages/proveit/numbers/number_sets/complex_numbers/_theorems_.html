@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.numbers.number_sets.complex_numbers</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.number_sets.complex_numbers">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.number_sets.complex_numbers</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.number_sets.complex_numbers">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">ProperSubset</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span><span class="p">,</span> <span class="n">RealNeg</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.numbers.number_sets.complex_numbers&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">real_within_complex</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">Real</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="real_within_complex"><a class="ProveItLink" href="_proofs_/real_within_complex/thm_proof.html">real_within_complex</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/9c95c26cfa63bf75b3e52f38b42e7c09799582e80/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAPBAMAAABHIsEFAAAAMFBMVEX///+IiIiqqqq6urpmZmZ2
+dnbc3NzMzMxUVFTu7u4yMjJEREQQEBAiIiKYmJgAAACIyPRpAAAAAXRSTlMAQObYZgAAAONJREFU
+GNNjeHt6/6rTDxgwgNStP7cdGBgWzGCofj0BXbL8E8OUf0DZDakM3GwNaJJ8HAIMDO8hsiwJCyCC
+r+/evXsdxHjOAzSNAya7ASyZFQbT65ANJDgFwLIczBCTr8EkORtKoCygrK4X2FUsCjBZtgBDmGzO
+3VsQYV64o9gc4LKpJtwQD2XAZTk3lMJlWcwhjpqN8NFKDoS9Ox+imczwBCw7ASxbwVIA4rAKwGW5
+hYFs5gXgkGRVaAeLLUJo9to6YdLuCQzAWFjOsHs92NUzmuHhze51/koBWvCW7oWGJBQAAGgURyiB
+GqKtAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">real_pos_within_complex</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RealPos</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="real_pos_within_complex"><a class="ProveItLink" href="_proofs_/real_pos_within_complex/thm_proof.html">real_pos_within_complex</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/fd8c7c54a6b0b7f89d5a4eb24ab244b6601e53cd0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEcAAAAUBAMAAAAthD11AAAAMFBMVEX///+IiIiqqqq6urpmZmZ2
+dnbc3NzMzMxUVFTu7u4yMjJEREQQEBAiIiKYmJgAAACIyPRpAAAAAXRSTlMAQObYZgAAAPtJREFU
+KM9jYCANcBCjiJseit6e3r/q9ANcihjXrj+7BUgvmMFQ/XoCQ9eqNatWPUBTw16vwOn/BMjYkMrA
+zdaA3aQHjQwMfF8gilgSFqAoen337t3rQJqv4CSQbIEp2oCsKCsMymBhA4lPhCjiYEax7hqMMYPd
+AcoCKtL1moCkiEUBpiiVWQCmKOfuLbAwG1SAF+62FISiVBPuCcheyoCzZrMHwBWxmG9AVjQbzuKa
+0IBw086HyIoQ1vE5gBRxQhRVsBQgKWIVgDM3GgIJK0i0sCq0Ixu1CM5iWR3Jqb0THMHLGXavV0BS
+NKMZ7pGSNX/dcaSM0r2QaIEBAGRtSetrpWkEAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">real_neg_within_complex</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">RealNeg</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="real_neg_within_complex"><a class="ProveItLink" href="_proofs_/real_neg_within_complex/thm_proof.html">real_neg_within_complex</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/1943f7b11dd8507e313156751f1c01859975f12d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAAAPBAMAAAC1npSgAAAAMFBMVEX///+IiIiqqqq6urpmZmZ2
+dnbc3NzMzMxUVFTu7u4yMjJEREQQEBAiIiKYmJgAAACIyPRpAAAAAXRSTlMAQObYZgAAAOtJREFU
+KM9jeHt6/6rTDxhwAalbf247MDAsmMFQ/XoCg/VuIJiArqb8E8OUf0BFG1IZuNkasJvDxyHAwPAe
+ooglYQGK3Ou7d+9eBzGe8wDN5oAp2oCsJisMxnLIBhKcAmBFHMwo1l2DMTgbSqAsoCJdL2QXsyjA
+WGwBhjBFOXdvKSAbxAtnsTnAFaWacKN4PQPO4txQClfEYo7i7tkI5koOhJt2PsRuHcMTsKIJYEUV
+LAVIilgF4ExuYSCbeQE4WlgV2pGNWoRgem2dMAkYWcAIXs6wez2y/2Y0wz3C7nX+SgH2KCvdC40W
+KAAA4VNK37TZLg4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">int_within_complex</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="int_within_complex"><a class="ProveItLink" href="_proofs_/int_within_complex/thm_proof.html">int_within_complex</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/2357dc530ddcf3488095656607acbbc2d4211eeb0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADkAAAAPBAMAAACsFXoGAAAAMFBMVEX///9UVFTc3Nzu7u6qqqp2
+dnbMzMxmZmZERESIiIiYmJgyMjIQEBAiIiK6uroAAABqpg13AAAAAXRSTlMAQObYZgAAAOxJREFU
+GNNj4LvzZ/fZPQsY0ADn3v1n24FUewLDBg50SbZ8B+b65QwM7AEMrA5x6LILJBkYuL4DZQ0YFNkK
+IGJcvXfv3k0AMRIOA0lxsGAzhwGYZtqqANXKztQAJC3BOiasgojxwiQZDGGmMTBYMDdAGCVwa1X5
+JsCYYoxQPRfgsupwWb6CpxAGkwBc1oItAMriZgAaHAxkwCwAiRnAVIawPmBgOIBqMlcBSJYZZJ4i
+0Adg2UhEaHS+BBKvGRg4DJoZmKXAhnI7wGXZdwQzezQzMLzpPtFx/gTYe8yCj+HS6Xv+lqGHfQQ0
+JGEAAJvONZBYk+5SAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_within_complex</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">Natural</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_within_complex"><a class="ProveItLink" href="_proofs_/nat_within_complex/thm_proof.html">nat_within_complex</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/78f655fc2dc045be2d58bc4d3f1b2b140cda62750/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAPBAMAAABHIsEFAAAAMFBMVEX///9mZmaqqqrc3NyIiIgi
+IiJUVFTMzMyYmJi6uroQEBB2dnZEREQyMjLu7u4AAAA1o4RqAAAAAXRSTlMAQObYZgAAAO1JREFU
+GNNjePvn7AOGXb8mMKAB39hfMQIMDCfYExj4PqBLln9iePgDKJta4MLAsABNkoPNgYGhHyibeY6t
+gCEAItgTGhoaDmK0cz1gYGADyiaX8d2DytpuhukVsAESfED9yUwOZVDZYJgkX0IhlJXMsJPDASzL
+qACTZd4wBS7L9iAdLMsKdxSzAEKWL4EX7GYzuCzfgWq4LEM1O1j2DcJH99gQshwKB1BNZmgEywJ9
+lQ6kNoNluR3gsjyeQDbnBQaGSyDXXgCLXUJolj394NGZBwylv4D6+CCyzzIfwGTZZdcHFqAFb/VR
+aEhCAQAV6z3ys43ydQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nat_pos_within_complex</span> <span class="o">=</span> <span class="n">ProperSubset</span><span class="p">(</span><span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nat_pos_within_complex"><a class="ProveItLink" href="_proofs_/nat_pos_within_complex/thm_proof.html">nat_pos_within_complex</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/5c4a98b2536ecef34fe5360a21882c6cd9abfc080/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEcAAAAUBAMAAAAthD11AAAAMFBMVEX///9mZmaqqqrc3NyIiIgi
+IiJUVFTMzMyYmJi6uroQEBB2dnZEREQyMjLu7u4AAAA1o4RqAAAAAXRSTlMAQObYZgAAAQVJREFU
+KM9jYCANsBGjiIceit7+OfuAYdevCdgVsVy9v/QgkD7BnsDA94Eh9+6tu3cb0NSw1yvwyTcCGakF
+LgwMC7Bb15DCwMDxEcjIPMdWwBCAoqgnNDQ0HEhzFKwDkolAnFzGdw9Vke1mKIOR+QCQfAJSxORQ
+hqooGMZ4xi4AZSUz7ORwQFbEqABTZM3pAFfE9iAdpIgZKsAKd5shkiK+BN4FSF4yg7PesG+AK2Ko
+ZkdW9AbO4n2QgFDEoXAASRHCOg4BkCI+IE4H4s3Iirgd4MwjU4DEXCC+BPLQBeRwvgRnMd7Zx6dz
+joGh9BfQFD4URc8yH8CYhbe+iuNIGdVHIdECAwB26kJ6lhEUHgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong><em>An in_bool theorem, which is accessed by the respective ComplexSet NumberSet to implement its deduce_membership_in_bool() method:</em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">complex_membership_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="complex_membership_is_bool"><a class="ProveItLink" href="_proofs_/complex_membership_is_bool/thm_proof.html">complex_membership_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/2ac38dbb7a99d4886c5ea6c7f2a9f46a92a79d880/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJoAAAAUBAMAAACHazmMAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAihJREFU
+OMtjYMAAnBcgGBfgnoBb/AGIcRdZdAUUYwF6dR8rDBgy0UTVJfofljkwgMRPg/ivkCVfQjEmCP3N
+sPivAcM6dPEHQVxdtgwg8RkgvzUgSfEaQDAm4GVTYGC4b8DAo4Am0eDLoMrBABLnWwCkNiBJsU+A
+YCRT2svrQPRVRqBaNgMGLgFUcZBpu4GmAcV5T61aNR1Z73QohgPWpgUQhgHIH1xAhz1BFQeZdgQU
+0kDxHx0dNcialaF4kdoUHbCX1kE1cSUEQ5UcZkAWB5nGUpoKEQdSncim9UIw1wHeInZwhMOikPOA
+E5R1jwFZHGiaY/1HB4i4MwPXA2TTqiGYZwHPLxZw8MGiiNMAZtp2BmRxsE/P3oGIszMwoSRVEQjm
+YuCAKGeVewcEIJ82xECVxKOIg03jYLkAFue5wM6AxTQGBn5IQkAkn1dsyKZxoriNgyEBLM75IAwo
+cMhULQDFp0A5qIAATNNlsGnAsHdHFQeZxgbKVCDxzhQGBqYFeewOKLHAvUAfKAoSMIJp4lABupbl
+ASwWjFDcxnsAIr65ABgIDG8ZkKIfiP039DPMhSRneNq261mwugNogw2a+IMYhjNmDBBxSPj8hEm5
+Q/AypUW2kNjhyvCCpWM7+WKQ95+iisNyPVicF+Qf1g+sOHMWywloDoICrgL84gzzeR7wEMz1MICR
+69HFl105dAom2MmAljvQwTpSxPGUlgjriBYnVJLzTsApDgBQr51K3/T46wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.numbers.number_sets.complex_numbers
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

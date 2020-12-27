@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.numbers.absolute_value</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.numbers.absolute_value">Axioms for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.absolute_value</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.numbers.absolute_value">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Forall</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">two</span><span class="p">,</span> <span class="n">Abs</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">sqrt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.numbers.absolute_value&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># this axiom might be shifted to theorems once we have</span>
+<span class="c1"># the Conditional class to use for a piece-wise definition</span>
+<span class="n">abs_val_def_sqrt</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">Equals</span><span class="p">(</span><span class="n">Abs</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">two</span><span class="p">))),</span>
+    <span class="n">domain</span> <span class="o">=</span> <span class="n">Real</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="abs_val_def_sqrt">abs_val_def_sqrt:</strong> <a class="ProveItLink" href="__pv_it/axioms/7ca581febf762605b399cb9583677499cb662da00/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALgAAAAmBAMAAACFcUzHAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAztJREFU
+SMelV01oE0EUftn8bHe7iTmoIF6C0uJBrVDEkyUi4kVsTgpFMKD2KCKCVj1UvaRKNYpSL9LYQlty
+sIUepCi4xp4ilBV6qKK4KAgqStEKpkmp87tp2t3OMA5smJn95pv3vnnvzQZA0D6AUjOzEiDNVSOH
+oxKYAwVFck1surkJVNsPISImIx2El9c2uCv0+WRehvyhml1fpBQ47TcZXRSsMioy3MbKiHp1g8vx
+SSQmXtbFR11BqHS9b+VjfKs3AvJQCv1M89F0AOoJtt6hfT0frcAU6Q6mwV0vDQczMuSv0TPG+nra
+WIAYCYOQTd7At4BlH0GC3MT2ffWGzYt0BpA+OIyM3gDyfTLkFlIkvscb6kjKEsnReUigw7UmAsgv
+yZDrROp6uKDnMXGhAvFysTgQdKC/Zch3oafOQHxI4PiJVgH+5nJXg8h/Mc6h1vs7U0Hk59CzHTjo
+CBxCUuAdzCWAMwB9QWVriZKbdvy87lLymZ+4faYAnC8aDtd+YKDo92c3kfkuM+0gO1zWnu445aWW
+wcitgrUYya+1fMBmksMVYKDQ8vI8kht7AzX8UnO4pc/bHc2CcoqXhyqzHJp6fTSPzCXR73vc3Qgc
+RBfOsxOzHJ3PzU0VAZG/c1aRA2xI+R1oBHt2mZEzUCO54R5DndLe1kwEHwMmt1fJgkqvl6pUc1Yt
+LyIFbCYLA9FdsSwmkgX6UMXUCmf1dAIoeTvPCJNFS3OhDSF8oqUtTfKEHCgD0Xh0uWmTaJsovpWG
+CXm4+4K3uEbJOyfuwCO/OB/PwiTPHAaiddLmolKpUOU+nsvlUpp1b9ZbvJmSj2wb2u/4kYcrrKgc
+Bg4iLYEFiixgHwrkCKIQo7I0n/Buv9uCDDVqkSyrtA3zo0QbfhUNWq4FVoZqXuYHCi9F6X+tKV9P
++nojhctKstHIbKkMcAsn0Yw93MFBLwoC8s5u1ulbU4Qh0XhDa0jzxgNzBOT6H9YZWzlL3Rl31r/m
+mvDmLXzU4vNdxZPSWMn0lrot+CyJJ0G9dYi+5qr/Qb5VBNitzq0JvQ5llMlDjggRd5XJJZy+rspt
+bBFjRlV1GZ2QMKBHkbxfBvRA8Q8X/rj4BzLvA+8W7c1EAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

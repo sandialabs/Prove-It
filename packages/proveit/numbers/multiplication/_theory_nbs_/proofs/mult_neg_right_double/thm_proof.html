@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.multiplication.mult_neg_right_double theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.multiplication.mult_neg_right_double-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">multiplication</a>.<a class="ProveItLink" href="../../theorems.html#mult_neg_right_double">mult_neg_right_double</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.multiplication.mult_neg_right_double-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> mult_neg_right_double
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="mult_neg_right_double">mult_neg_right_double:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/18fa85b27fae92c2fc4505013db1247e48374aef0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAR0AAAAVBAMAAACJYCeRAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAvtJREFU
+SMfFlk9IFFEcx7+tszu74+wqUZdOmwviIVAKO5lZUd5yPfTnpkgRXUSiulQQHWSXijYIlCyaNrCQ
+sIWIMDwsdrPLHjpkVMwhD0XJEgUlFL1/u++9Ud6YBf3gw8z7vt/vzW/ef2ANlqhwdAUmobEgQYgv
+sxmBTwtvzfk8EOiKWTipEOZLLVbgvKCFj+Z8Pgh0xSxMK4T5UnN8zjjtwIvGdJIdHF2BUYCbloT5
+MpvjpDwSUzLmYxc4ugKjAKdZEubL7C4nOT81NWYerjGBrpgF4L1CmC+1VA/ney533pxPRqArxdYb
+29KqULPidiS2AM8hMQY7mTSue3DJMFKOA3lzPlcFmuKUk6dsX3WpWXkPIlXgHSRwl5h1rBbsWs1o
+JwPlc/axab3CGq+cGBKv5wTSSMn13GWLzgQPenWi1I04WSBPITEGTzT4yJEPjnBsRAL7kzO7o+Ic
+9aKfRHkTx+H/mBUl9lHy/FVzmWbViw42oomMxQAkmgWDvQ1pfAGiVY5bsQMBr2amkLwFzOr56E2C
+fZTYWQSqrWUMZM356MF9XvSbzCfhH6Yrv7OVtGG1wvYsOsr7n5Aa03iBfVQThJHu30oevQq1+TO4
+anA3ImRTsEY4yB8DIt6wTdaa2+T1I0V9Xi+EzOdGr51ErTaf44MYRWA+G4NHaUh9PuMxSSqKz7Tm
+Zi/acI++PZuRDaxctaTUV7qG25pLvX8GrZ/k0aVgDt6JPjKDG8ocMZQ/WFUXhnAkl8ulJw7JBuq9
+riqTLcVdFc2lvhyGMrSxRQVz8GTLbrLWUlkOkrTjotUorTqNzYixnyzSVbDO86KBno0jktDzoptw
+X8Dsjuu7GPdwxqrCpUkmurLshFvHeTqMRz1/cp7GfOerPE9Fl72cm0d/CQfayK9dpsrDpdH6Esgj
+uIev2NEV4QIume8bgWC7Ek/L+4ZqJacQJ8MaIfPnL+5jezNZ5R/yofcxq6WTrsoCR7tjxsoH/9F9
+NVmQrOm+uiBQ24D1poz/a78BV5IHUSDutVIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/50b8fe78627a1ebda8a5a7bb712e34407b45d95a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

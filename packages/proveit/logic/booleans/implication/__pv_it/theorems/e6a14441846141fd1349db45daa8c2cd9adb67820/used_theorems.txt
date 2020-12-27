@@ -1,0 +1,1 @@
+proveit.logic.booleans.implication.modus_tollens_denial

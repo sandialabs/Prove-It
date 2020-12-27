@@ -1,0 +1,1 @@
+\left\{\forall_{x, y_{1}, \ldots, y_{n}~|~x \neq y_{1}, \ldots, x \neq y_{n}}~\left(x \notin \left\{y_{1}, \ldots, y_{n}\right\}\right) \textrm{ if } n \in \mathbb{N}\right..

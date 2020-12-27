@@ -1,0 +1,9 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{1, 1}{\Big \{} S_{1, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{1, m}{\Big \{} S_{1, m}} 
+} \hspace{2em}\right), \ldots, \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{s, 1}{\Big \{} S_{s, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{s, m}{\Big \{} S_{s, m}} 
+} \hspace{2em}\right)

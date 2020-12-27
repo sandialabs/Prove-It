@@ -1,0 +1,1 @@
+\lfloor x + y\rfloor \leq \left(\lfloor x\rfloor + \lfloor y\rfloor + 1\right)

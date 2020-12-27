@@ -1,0 +1,1 @@
+\left\{\forall_{f, x_{1}, \ldots, x_{n}, y_{1}, \ldots, y_{n}~|~x_{1} = y_{1}, \ldots, x_{n} = y_{n}}~\left(f(x_{1}, \ldots, x_{n}) = f(y_{1}, \ldots, y_{n})\right) \textrm{ if } n \in \mathbb{N}^+\right..

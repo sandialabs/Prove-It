@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Common expressions for the theory of proveit.physics.quantum.QPE</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Common-expressions-for-the-theory-of-proveit.physics.quantum.QPE">Common expressions for the theory of <a class="ProveItLink" href="_theory_.html">proveit.physics.quantum.QPE</a><a class="anchor-link" href="#Common-expressions-for-the-theory-of-proveit.physics.quantum.QPE">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when building common expressions:</span>
+<span class="o">%</span><span class="k">common_expressions_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Variable</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="c1"># for testing; delete later</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span> <span class="c1"># lower-case letters</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">eps</span>        <span class="c1"># greek letters</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">subtract</span><span class="p">,</span> <span class="n">Abs</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Neg</span> 
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum.QPE.phase_est_ops</span> <span class="k">import</span> <span class="n">SubIndexed</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining common sub-expressions for theory &#39;proveit.physics.quantum.QPE&#39;
+Subsequent end-of-cell assignments will define common sub-expressions
+%end_common will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># U: Unitary operator to apply quantum phase estimation.</span>
+<span class="n">U_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;U&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="U_">U_:</strong> <a class="ProveItLink" href="__pv_it/common/977758a9490d187b2ff100fdbc53911d78995da80/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAAMFBMVEX///+YmJjMzMzu7u5mZma6
+urp2dnaIiIgyMjKqqqpEREQQEBAiIiJUVFTc3NwAAACfk0VHAAAAAXRSTlMAQObYZgAAAGJJREFU
+CNdjeHt+1wSG9T8KGBjyAxgY2IE0Qz8QsxgAiV9AzAvErN+BhBkQs30CEqJAzLMBSDgAsf0FIAHC
+8wUYGPhAuvMVgOoegBhQ3QzzgWbdAzE4HBjeKoAYDFlXQEoZAObmFQYiC7jRAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># n: Number of qubits which U acts on.</span>
+<span class="n">n_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="n_">n_:</strong> <a class="ProveItLink" href="__pv_it/common/2727e03becf585d99b6b7de1f9bd63ac87e235100/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAJBAMAAAD0ltBnAAAAMFBMVEX///8QEBCYmJgyMjIiIiKq
+qqrMzMzu7u5ERERmZmaIiIjc3NxUVFR2dna6uroAAABXsXCEAAAAAXRSTlMAQObYZgAAAEdJREFU
+CNdj4Luze9UsBgZeji6G+g0MqSwGDPsTGArqHzDoMzAwxDMwHAZSkxkYPrEzMMgysH7nZeD+x8Br
+oMbA58DAfSgAABUwDxmEwURaAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># u: Eigenvector of U to apply the quantum phase estimation.</span>
+<span class="n">u_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;u&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="u_">u_:</strong> <a class="ProveItLink" href="__pv_it/common/f16713aca6175fe1c8060edbfb057fd642a25c160/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAJBAMAAAD0ltBnAAAAMFBMVEX///+qqqpUVFQiIiJ2dnbM
+zMxEREQyMjKYmJjc3Ny6uroQEBBmZmaIiIju7u4AAAB7S4HXAAAAAXRSTlMAQObYZgAAAEZJREFU
+CNdj4LtzgeH1AwYerg0M9xkYZvAUMKQxMDzgvsCwl4GBYf0D1q9AypmBdwOQSmJgS+hjYDjEsPqA
+AwPDo7uSugEAaZoSviMHvVMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># phase: Eigenvalue phase of u w.r.t. U.  U u = e^{i \varphi} u.</span>
+<span class="c1">#        This \varphi is the phase that is the objective of phase estimation.</span>
+<span class="n">phase_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">,</span> <span class="n">latex_format</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\varphi&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="phase_">phase_:</strong> <a class="ProveItLink" href="__pv_it/common/d5e43a4a06cc3c8384d7262f5d019bed24f240ea0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAANBAMAAABvB5JxAAAAMFBMVEX///8QEBAiIiKIiIjc3Nxm
+ZmZUVFSYmJh2dnbu7u5EREQyMjK6urrMzMyqqqoAAABb/SrcAAAAAXRSTlMAQObYZgAAAFVJREFU
+CNdj4LvAwLN/JQMHA8PtmlSGEgaGBAY2hgAG9gkMrAwNDMwMDJOBvLMMDJEM7UDGtAsM3Nv3PtVh
+YGAo+q8BJBlYC0AkA+MFMHUeTDKYgQgAgRsRGmH5lh8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># t: Number of qubit registers for the quantum phase estimation.</span>
+<span class="c1">#    We prove that this is the bits of precision of phase estimation.</span>
+<span class="n">t_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="t_">t_:</strong> <a class="ProveItLink" href="__pv_it/common/977cc67717328e22c93f8ab84e6a45e8cadce7790/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAANBAMAAACX52mGAAAALVBMVEX///+YmJhUVFTMzMzu7u6I
+iIhERES6urp2dnYyMjJmZmaqqqrc3NwiIiIAAAAtjhwgAAAAAXRSTlMAQObYZgAAAEFJREFUCNdj
+YGC4w8DAwP0ASHBNABK8DQwMVXlZAQwM+4A8hpUg4gYQszwHEuwPGBwYOCZwGzBwKbgyMPAkCjAA
+AGrlCqGl123JAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Psi: Outcome of register qubits following the quantum phase estimation circuit.</span>
+<span class="n">Psi_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;Psi&#39;</span><span class="p">,</span> <span class="n">latex_format</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\Psi&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="Psi_">Psi_:</strong> <a class="ProveItLink" href="__pv_it/common/3643a38f1b5829804897e160fdae76d2c23c7e4c0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQBAMAAADUulMJAAAALVBMVEX///9ERESYmJjMzMx2dnbc
+3Nzu7u6qqqoiIiIQEBBUVFQyMjJmZma6uroAAADMwE9NAAAAAXRSTlMAQObYZgAAAGJJREFUCNdj
+YIAB3tPvdl0As2aAiOsJDB0MbOUMGROANPdUBpbHQDpvAQPTWyAd58DA/hxI31NgYH0CpPWAGruB
+tCRQo2VBB+9bIM0qMtPRAGQS28wEBoS5DLyr3+25ALcVABxCGv0QYDzXAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># psi: indexed intermediate output registers inside the quantum phase estimation circuit.</span>
+<span class="n">psi_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;psi&#39;</span><span class="p">,</span> <span class="n">latex_format</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\psi&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="psi_">psi_:</strong> <a class="ProveItLink" href="__pv_it/common/3cd01098f6477695c5f95f3614ef4302a3a569f40/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAATBAMAAABSLiGnAAAAKlBMVEX///9ERES6uroQEBAiIiJm
+ZmaIiIju7u6YmJiqqqrc3Nx2dnbMzMwAAACYxXCqAAAAAXRSTlMAQObYZgAAAGhJREFUCNdjYAAC
+HgYI4EajV0Lpdii9AYjZUxMYNrA5MHBzGnBNYLvOsJLVgaOAwYChgDkBqC2AgUF3ATcDewIDwxaG
+kwzcBQwMgQzpDJMYQOIbOBSANKe0RBbYNJ4JEFPZClBtZQMRAKAGEDMkoGXKAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">psi_k</span> <span class="o">=</span> <span class="n">SubIndexed</span><span class="p">(</span><span class="n">psi_</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="psi_k">psi_k:</strong> <a class="ProveItLink" href="__pv_it/common/43e7bf7aeb560240dadf3e39a8bdbc6c49a689a20/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAATBAMAAACJlYuFAAAAMFBMVEX///8yMjJUVFRERES6uroQ
+EBAiIiJmZmaIiIju7u6YmJiqqqrc3Nx2dnbMzMwAAAD5VKrUAAAAAXRSTlMAQObYZgAAAJdJREFU
+CNdjYAACPgYkwIuTcxqZsxKZcwHG4GxvYLjAkQDVzB3As4HjJ0NrA0gzewLXBIYABjYHIGcCawPQ
+5AKG+RNA6vwP8DJwNjC4gTVdY3jNwDuB4TpfE5BTzNDJsIWBQWoLSKH/gQtcQM2fHoCUcdta9QAd
+HmEN1sS3AUhwGDzlAXE4QIYyNzzjgHuA8QBTH1gG7mAAaQohX8xG4j8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">psi_t</span> <span class="o">=</span> <span class="n">SubIndexed</span><span class="p">(</span><span class="n">psi_</span><span class="p">,</span> <span class="n">t_</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="psi_t">psi_t:</strong> <a class="ProveItLink" href="__pv_it/common/5f7d2cef59b6cf4d21e3efb5b998a024f0fd5a7f0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAATBAMAAABiojCGAAAAMFBMVEX///9UVFQyMjJERES6uroQ
+EBAiIiJmZmaIiIju7u6YmJiqqqrc3Nx2dnbMzMwAAAAiCvCzAAAAAXRSTlMAQObYZgAAAIhJREFU
+CNdjYAACPgY44MXKPI1grkQwL0AozvYGhgscCWAt3AE8Gzh+grWwJ3BNYAhgYHrAMIG1AWhWAcN8
+oLD/AV4GzgaGbUDmNYbXDLwTjifVMTAUM3QybGFg0AYruMDlwMDwB8jktrXqATouAOzEDUCCQ2AO
+iJwAJNgbLsCcyCfxACQKdRQAO1wdUU0HO2cAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">psi_next</span> <span class="o">=</span> <span class="n">SubIndexed</span><span class="p">(</span><span class="n">psi_</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">one</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="psi_next">psi_next:</strong> <a class="ProveItLink" href="__pv_it/common/0cf637d8a3e148d5221fb5bc2e338ba01ac78c410/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAVBAMAAAAtAwouAAAAMFBMVEX///8yMjJUVFRERES6uroQ
+EBAiIiJmZmaIiIju7u6YmJiqqqrc3Nx2dnbMzMwAAAD5VKrUAAAAAXRSTlMAQObYZgAAAMhJREFU
+GNNjYAACPgasgJck4dPYhVdiF76AKcTZ3sBwgSMBwzruAJ4NHD8ZWhvgQnwGQOvYE7gmMAQwsDnA
+RcuBeiewNgDdV8AwfwJIiAlEsICM9D/Ay8DZwOAGVskMF77G8JqBdwLDdb4mFOFihk6GLQwMUltA
+xjAjGXKBC2jdpweohnDbWvUArY+wZmBQFBQVFFwAEWbg2wAkOAye8qCoZuAAOY254RkHTJg7AR6s
+jAeY+qDCPGWfQD7mQAoKZuxhiUOYB0oDAPHCKM9ySuv9AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">psi_1</span> <span class="o">=</span> <span class="n">SubIndexed</span><span class="p">(</span><span class="n">psi_</span><span class="p">,</span> <span class="n">one</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="psi_1">psi_1:</strong> <a class="ProveItLink" href="__pv_it/common/ecc533a750ac01d3aeeadcb3fb14a6a00d40423e0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAATBAMAAACNYFu4AAAALVBMVEX///9UVFRERES6uroQEBAi
+IiJmZmaIiIju7u6YmJiqqqrc3Nx2dnbMzMwAAAC11oxJAAAAAXRSTlMAQObYZgAAAHxJREFUCNdj
+YAACXgYE4MHB3oXEnoHEPgClOcoKGA6wB0D0cTlwL2B/wcCrANTHFsDZwODAmwaUamApABqZwMAM
+Uma3gYeBowDCPspwi4GnAcJOYqhgWMwAU3OA0wDK5tLRrGaAshl4FzDA2ewNIJIrAO5i7tSHBSBx
+mBMBS4QX2FVG14gAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">U_pow_two_pow_k</span> <span class="o">=</span> <span class="n">Exp</span><span class="p">(</span><span class="n">U_</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="U_pow_two_pow_k">U_pow_two_pow_k:</strong> <a class="ProveItLink" href="__pv_it/common/c7939787b64fa31758be013ead1986f4442b57860/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAXBAMAAAAB04lnAAAAMFBMVEX///+YmJjMzMzu7u5mZma6
+urp2dnaIiIgyMjKqqqpEREQQEBAiIiJUVFTc3NwAAACfk0VHAAAAAXRSTlMAQObYZgAAALlJREFU
+GNNjYEAGHgxoYAq6gCcyJ2WJAcO5QAc4n+0BbwPDxscCcAGeB0z/WNsRChh4Avi+shc0T0AyhPMz
+ywOxACQBngIw9fb8rgkM638AOSlQiXygKnYgnxFmYD8QsxgwMIQxBEEEfgExLwMDU+fMxWA+63cg
+YcbAwP3//weICz8BCVFkyzYACSQHMthfABIXkATmA73DV4AkkK8A8imyAMRWJC1AN91DFuBwYHir
+gBKOWVeQjWQAADM6KknYn9FXAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># m: Random variable for the measurement of Psi as an</span>
+<span class="c1">#    integer from the register&#39;s binary representation.</span>
+<span class="n">m_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="m_">m_:</strong> <a class="ProveItLink" href="__pv_it/common/e097c22fce1538921545f46791cd58610a5211030/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAJBAMAAADN8WE8AAAAMFBMVEX///9mZmaYmJgyMjIiIiIQ
+EBCqqqru7u5ERETMzMyIiIjc3NxUVFR2dna6uroAAAAPJcEmAAAAAXRSTlMAQObYZgAAAGNJREFU
+CNdj4Luze9UpzlvnGBh4OboY6tcxpDIwTGMxYNh/gUGfgaGg/gFDfgHDCQYGhnwGBhEGhiggS5iB
+wZeB7zc7A0MsA/s/BkaDbQzc/xjYPjAwX7jAwOfAwCXAwCa0AQBn+hZiKtaxkQAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># phase_m: Random variable for the phase result of the</span>
+<span class="c1">#          quantum phase estimation phase_m = m / 2^t</span>
+<span class="c1">#          (I wish the subscript appeared a bit lower)</span>
+<span class="n">phase_m_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;phase_m&#39;</span><span class="p">,</span> <span class="n">latex_format</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\varphi_m&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="phase_m_">phase_m_:</strong> <a class="ProveItLink" href="__pv_it/common/3d5706ddddfc3058f6a4dd462ac75ec81902a20a0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAANBAMAAACqdQjgAAAAMFBMVEX///8QEBAiIiKIiIjc3Nxm
+ZmZUVFSYmJh2dnbu7u5EREQyMjK6urrMzMyqqqoAAABb/SrcAAAAAXRSTlMAQObYZgAAAJBJREFU
+CNdj4LvAwLN/JQMMcDAw3K5JhXNLGBgSGNjg3AAG9gkMrHBuAwMzA8NkJNmzDAyRDKW1xgHGuQwM
+7UCBaRcYasQZxCaYMTBwb9/7VIeBZbICwx+GCKDqov8aQJLNgFeAQQ/IYC0AGcF4gXkBy4cLIAaI
+6w+UZ1/QwMBwHmzBMQZuB5aMCQwMZgxIAADuCx4bIMfY+wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># b: The &quot;best&quot; outcome of m such that phase_m is as close as possible to phase.</span>
+<span class="n">b_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="b_">b_:</strong> <a class="ProveItLink" href="__pv_it/common/87526152547440e0f166da3fc5e89091dc5afc6b0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAOBAMAAAAPuiubAAAALVBMVEX///+YmJjc3NyIiIhUVFR2
+dna6urqqqqpmZmYyMjIiIiIQEBBERETu7u4AAAALjtrwAAAAAXRSTlMAQObYZgAAAE9JREFUCNdj
+4D29gAEIOBtAJF8BiMy7ACKjQATDFON2BgbelxfuKTCwv2XgM2DgmMBwLwCkPK+AgU+Aoe8CA18C
+70YGBhYBHqARvM2BDAwAqXgQspq5HJAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 2^t</span>
+<span class="n">two_pow_t</span> <span class="o">=</span> <span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">t_</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[18]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="two_pow_t">two_pow_t:</strong> <a class="ProveItLink" href="__pv_it/common/ffe778243736806f1127a291e1939ca0eecb77070/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAATBAMAAAC97EqZAAAALVBMVEX///+qqqqIiIgyMjLc3Nwi
+IiIQEBC6urp2dnZUVFTMzMxERERmZmbu7u4AAAAQI6y7AAAAAXRSTlMAQObYZgAAAHdJREFUCNdj
+YAADKwjFwPsAymAMgNAsR20WQFjMAkDpM7sXMPA5MDDcZOB4zrAMKHqWgSGNQZPXgSGVgWGewyEO
+Bga7CwzzFqzUAuuJuwDRy/4CaizrBCjjDJRmOgBlyDCwOIBorgYGJjDDtaNnKljG7t27pyAaAOXm
+GU9MDlD9AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 2^{t-1}</span>
+<span class="n">two_pow_t_minus_one</span> <span class="o">=</span> <span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">subtract</span><span class="p">(</span><span class="n">t_</span><span class="p">,</span> <span class="n">one</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[19]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="two_pow_t_minus_one">two_pow_t_minus_one:</strong> <a class="ProveItLink" href="__pv_it/common/1c3f5ab7d3aa21e21d9d800ffeb2976af952a5420/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAUBAMAAAD1iJl/AAAALVBMVEX///+qqqqIiIgyMjLc3Nwi
+IiIQEBC6urp2dnZUVFTMzMxERERmZmbu7u4AAAAQI6y7AAAAAXRSTlMAQObYZgAAAJVJREFUGNNj
+YEAFXBtgLCuYyJkAKIv3AUyOHSbEGIAuxHLUZgG6KmYBZFW8Z3YvYOBzQBa6ycDxnGEZA0P1biC4
+ABY6y8CQxqDJ64CkKpWBYZ7DIQ4GJLvtLjDMW7BSiwFm90sFEB13Ac1XDOwv0EUYWCdgCJ3BEGE6
+gCEkw8DigBZmDQxMaEKuHT1T0fTZvXv3FFUEAIXSI+qW9+0NAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># amplitude of output register as indexed</span>
+<span class="n">alpha_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="n">latex_format</span><span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\alpha&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[20]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="alpha_">alpha_:</strong> <a class="ProveItLink" href="__pv_it/common/91bf0c8711f0cb198093da4362dda6021bfd02790/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAJBAMAAAAbVLtZAAAAMFBMVEX////MzMxUVFSYmJgyMjJE
+RESqqqoQEBDu7u4iIiLc3Ny6urpmZmaIiIh2dnYAAADsbLlPAAAAAXRSTlMAQObYZgAAAEtJREFU
+CNdjYGB4e2cDAxCs3MBRxZHAwDCPgSGGt4GB5wcDwxE+Bgb2AAaG5y8YGPofMDC8B0rzGwD5QOU8
+CgzM7xmBjHfGBjxvGQCYMxGNK+jLuAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># These are subscripted with letter l (ell), NOT numeral 1 (one)</span>
+<span class="n">alpha_l</span> <span class="o">=</span> <span class="n">SubIndexed</span><span class="p">(</span><span class="n">alpha_</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[21]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="alpha_l">alpha_l:</strong> <a class="ProveItLink" href="__pv_it/common/6e08a8a2f3c86121dbab563f2e28e11a4ac211fe0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAMBAMAAACdPPCPAAAAMFBMVEX////MzMxUVFSYmJgyMjJE
+RESqqqoQEBDu7u4iIiLc3Ny6urpmZmaIiIh2dnYAAADsbLlPAAAAAXRSTlMAQObYZgAAAGpJREFU
+CNdjYGB4e2cDAxis3MBRxZHQ9IGBYR4DQwxvA/cEBp4fDAxH+Bj4DjCwBzAwPH/BwGrA0P+AgeF9
+AgP/AgZ+A6AYA4M4AwOPAgPze0aGq0BT3hkb8LxliGWAgUIBGOvDBRjr3AYA9pkaVOlsNbMAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">abs_a</span> <span class="o">=</span> <span class="n">Abs</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[22]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="abs_a">abs_a:</strong> <a class="ProveItLink" href="__pv_it/common/c232bdceb005ae3c1a30733bcb9bdb031d5928990/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAVBAMAAABWJ8jiAAAAMFBMVEX///9UVFSqqqoiIiJERESY
+mJgyMjIQEBBmZmbc3NyIiIi6urp2dnbu7u7MzMwAAABs7OAJAAAAAXRSTlMAQObYZgAAAFlJREFU
+CNdjeMsAAXwXGE5DmTwbKGBy9nTVQpnbJ7B9gDB5Sxk4HCBMjr8MzAsgTHYHhvsPIMz7Bxj0oSbc
+V2AQY5oAZrIsYDXkgZogtW7ialKdsw7K5HoAAMcCLyafaf37AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">abs_alpha_l</span> <span class="o">=</span> <span class="n">Abs</span><span class="p">(</span><span class="n">alpha_l</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[23]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="abs_alpha_l">abs_alpha_l:</strong> <a class="ProveItLink" href="__pv_it/common/e92c4f61651e5c09b86078c54b967f254f65d52e0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAVBAMAAACnLJNvAAAAMFBMVEX///9UVFSYmJgyMjJERESq
+qqoQEBAiIiLc3NxmZmaIiIi6urp2dnbu7u7MzMwAAACfs0bCAAAAAXRSTlMAQObYZgAAAH5JREFU
+GNNjeMuABN4ynEbmnqY299TKDUjc9g28GbwBFz9AuTUMDJ5cF7gLIFzOvwwMk3kYeCZAuGwODAzH
+zjKwKEC49w8wMJwPYOBvgHD5gcLHGBieQU3mFGBgOs/HsARm0RklBc5TDF6orsp7gML9sACFO2cD
+Fi+sQ+auAwDLyzq3Pj120wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">alpha_l_sqrd</span> <span class="o">=</span> <span class="n">Exp</span><span class="p">(</span><span class="n">Abs</span><span class="p">(</span><span class="n">alpha_l</span><span class="p">),</span> <span class="n">two</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[24]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="alpha_l_sqrd">alpha_l_sqrd:</strong> <a class="ProveItLink" href="__pv_it/common/7c0982becc0ee95eb0753094a315969b80f329cf0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAbBAMAAADi9+DuAAAAMFBMVEX///9UVFSYmJgyMjJERESq
+qqoQEBAiIiLc3NxmZmaIiIi6urp2dnbu7u7MzMwAAACfs0bCAAAAAXRSTlMAQObYZgAAALtJREFU
+KM9jYEADJz0voAvxNDAaoIuxN/D9wBDbwPGbAQOw/sUUY1/A8BaZD+KcZGA4jSwG5DBNwBTbw7AP
+XYzPNNQXXYzt//8PGHqRKAyxUys3oIu1b+DN4A24+AFZrIaBwZPrAncBkhgn0IOTeRh4JiCJsTkw
+MBw7y8CigCR2/wADw/kABv4GJDF+oIJjDAzPkO3lFGBgOs/HsATFLWeUFDhPMXhh8UfeA0yxDwsw
+xeZswBsG65DFIBwA3G1I9JNJvqcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># delta: difference between the phase and the best phase_m</span>
+<span class="n">delta_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s1">&#39;delta&#39;</span><span class="p">,</span> <span class="n">latex_format</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\delta&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[25]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="delta_">delta_:</strong> <a class="ProveItLink" href="__pv_it/common/d6b97444617188a78c398568a10ac4dbe1ffa6590/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAPBAMAAAAv0UM9AAAAMFBMVEX///9mZmYQEBAiIiIyMjLc
+3Nx2dnbu7u5UVFRERESYmJjMzMyqqqqIiIi6uroAAABeGh1sAAAAAXRSTlMAQObYZgAAAFhJREFU
+CNdjYGDgu7OBgYFhzcvfQLKBoQBIZjGAwPsAEMliACTY734DklsK5gOZ2gzrNzAwTmDYv4GBaQHD
+/gKG+g0MixkY+DcwzGJgYLvANwGoMvciAwMAt78V1IFUpeIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">full_domain</span> <span class="o">=</span> <span class="n">Interval</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">subtract</span><span class="p">(</span><span class="n">t_</span><span class="p">,</span> <span class="n">one</span><span class="p">))),</span> <span class="n">one</span><span class="p">),</span>
+                      <span class="n">Exp</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">subtract</span><span class="p">(</span><span class="n">t_</span><span class="p">,</span> <span class="n">one</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[26]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="full_domain">full_domain:</strong> <a class="ProveItLink" href="__pv_it/common/18ae072ebc2a3e8487e4ef5d9e6a89774a98bb920/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALMAAAAZBAMAAACIvQJIAAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAX5JREFU
+SMdjYMADWB0YSAd4NW2FKbo7gXgTidLE8wHGYiLeaOI0sU8gw2jsmvjuoShivrk3gGSj0TSxXjwA
+9souNGXcBWS4Gk0TUyrY0R+QQuyuSwADvwFpRmPVdBtEcCHpP8HA9YkhjIFBxQUIDmAzuuwAhhBW
+TSvRjb7DwJDGIMFjgOHqQqgDu/oxjcaqCcPoTAaGfoOLXJjRXghjvMc0GqsmDKP3H2DoD4gQhUf7
+DwEijMaqCcNoIJh/AFtU4TMaq6ZlIIJjA7IQ0y8G0o3Gouk9OM4DkIU4G8gwGosm7gsMDCGTgYzT
+u0EAVMLcxaJz9e7d03bv3oHbaGyaOoEhrobsasYLDKS7GpsmbpBHOJDL11oGZgOSjcam6T16CmFd
+wMBIstFYNS1DN9py1dpO/AEiDzKa5zeQOL8BysCqCTPL/P//E6/RN/L3PgBSM2DJYgYuTdiyDIFo
+JBZAjE4gQuUZsoxGLq+pB8DlNcMuGpjMlAQpBe9R3WRw3QgA7vaTtDc494cAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">neg_domain</span> <span class="o">=</span> <span class="n">Interval</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">two_pow_t_minus_one</span><span class="p">),</span> <span class="n">one</span><span class="p">),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">one</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[27]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="neg_domain">neg_domain:</strong> <a class="ProveItLink" href="__pv_it/common/81d38905196efe3668901f29ce4079fb20dc575d0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN8AAAAZBAMAAABDZua2AAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAhZJREFU
+SMe9ljtIA0EQhifGGL2smkaw00IFEWRbGxEf/RUidoqgIAgmjWAhCIKgTQKC2GklPgiIEJAc4hWC
+QkRj5yvBQisRxcoX6M4ll6zn7iV6moEMuxdmv92Zfx8ANubpgKJY1OQlw0XhkUezVVIcoDf8z8Cq
+1Jeu+3xX/R+g51Q3MhizfPcFHKywXZY2iuMNGwt85MqX7Fahmv4eSKS6nkF3iU7hRj0E5Qn6ABq6
+mekCoHfMHuijoq8TLJVxbKxbgVcAI1BL6LcVBjMTWnu3B97znUwQmQ8xoOIXAUcBQvRU+a7XoCmw
+PMAFARDggQHJoAi4p0NI7a/J6vXZ/zOgOywFwrYIyGxZF41UINCVYO5mpFMEjLDfKvbKt/iQkldw
+ACy9Bqi8hVYR8A4bhoRUPqRiugAgQadnHRfNtnCjJKWTKGKWgV6sc1xDw0M7KaBtatqipu3kgCcs
+KeQNTGcEazjvsnqAg/2EJSgNHMDWHBNFk2otQt4VGmlYAtPlDIFHkhUi0IeB5fzhMAVu6qCGLKVE
+lQCbzRryKvWsgIs6E42XAalMNKtWYNtGZM42pS57oJIAdxSOAxZgHQIvhBv/4+PFDlg5+5ayA+JZ
+2DLaY5nl2fjudfodIdr49qLJZwvSIBLOAgcLGOioQOC9NCh3ePP3oWMrpbJ/4tn7EGJ/+QCTXsBd
+WOKh9CWU+kOi7IlRRTNvmk/hOa3g+vEAPAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pos_domain</span> <span class="o">=</span> <span class="n">Interval</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">two_pow_t_minus_one</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[28]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="pos_domain">pos_domain:</strong> <a class="ProveItLink" href="__pv_it/common/e61f6a9a710b5ccc21c0a65f2314bb74ce521c100/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIUAAAAZBAMAAADtUPA3AAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAWhJREFU
+OMtjYCAfhJCtkzsAyoi9SbYZ5+EsTbLNqMRmBt89UoywnX0VyQzWiwdALJ5dpLljO4o7mFLBzvhA
+tPazV1wZGD6j+uU2iOCagFV92QEMIZ4GhvUKrAkMTC5A4AM1YyWmGYVQ5V39mGbwHmBgS2BsOIzi
+DtxmMDC8xzSDbQIDx2degQUoMUSiGdx/GDi+sjbC0pjt/EYUM56kORE2Awg4/6CLLAMRHBuAPn3K
+oEeUGfoL0EXegyMA6DZVovwCBDMwPXgBmPkmAxnHj1wA8Vfv3j1t9+4duM3gvYAp1inAwKAGdMcZ
+It0hiyUbN4DCw4GBJ4A4M9gvMBhjDQ9gvLADzTAgwowoBgZhrPECNIN5K8O5AjQz5EFm8PwGFRgb
+oAzmWatuYGQMePrQznRF88uN/L0PoPHA2QBlcP///x+3GVjSKbEAYkYCstAZsswgofzABsDlB8Mu
+SoxgSoLE+j3yjQCXpwCOB2+VUf9gTQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">eps_domain</span> <span class="o">=</span> <span class="n">Interval</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">subtract</span><span class="p">(</span><span class="n">two_pow_t_minus_one</span><span class="p">,</span> <span class="n">two</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[29]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="eps_domain">eps_domain:</strong> <a class="ProveItLink" href="__pv_it/common/57edd91e76cb4ce915e6c9c5791c44f67d483de40/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIYAAAAZBAMAAAAGZ0s0AAAAMFBMVEX///+IiIi6urrc3NxERETM
+zMwQEBCqqqpUVFQiIiJ2dnYyMjLu7u5mZmaYmJgAAABN0h6tAAAAAXRSTlMAQObYZgAAAVRJREFU
+OMtjYCAWsDowkAu2woy4O4FcI3g+wFhMZJvBPoEoM/ju4ZZjvrk3AK8ZsTJg1+7C5w7uAgLuUAPZ
+wfcBV1DcdQlg4DfAaQZYnoF3A5DJBZJjz8E04wQD1yeGMAYGFRcgOIBpBlgeoh1EnFjxB9OMOwwM
+aQwSPAa43AGWR5jBwIfFjEwGhn6Di1yYMYQsT8CM/QcY+gMiROEx9EMAizwBM4Bg/gH8qQcoz5UA
+pDk24DSD6Rd+I0Dy4GgtC8BpBmcDfjPA8nsZGEImM+A04y4WsdO7QWArQp5jIiyhYTOD8QJ+Z0Dk
+d4DMccBlRi0DswE+M8Dy4PDAGS+sCxgY8ZkBkQfHC9gMRrAZ5zdACZ7fQIblqrWd+JwBkYenD962
+3/dg4QwmZoDS0P//P/GZAZFHpDHyAcSMBMrNwFl+EAfA5QfDLorMUFMAZ+p7FBgBKk8BF+VudCZl
+IagAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Common expressions may be imported from autogenerated _common_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

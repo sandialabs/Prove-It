@@ -1,0 +1,1 @@
+\left(a_{1}, \ldots, a_{i}, b_{1}, \ldots, b_{j}\right) \mapsto \left\{\left(a_{1} \cdot \ldots \cdot a_{i} \cdot 1 \cdot b_{1} \cdot \ldots \cdot b_{j}\right) = \left(a_{1} \cdot \ldots \cdot a_{i} \cdot b_{1} \cdot \ldots \cdot b_{j}\right) \textrm{ if } a_{1} \in \mathbb{C} ,  \ldots ,  a_{i} \in \mathbb{C} ,  b_{1} \in \mathbb{C} ,  \ldots ,  b_{j} \in \mathbb{C}\right..

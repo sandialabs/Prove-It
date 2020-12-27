@@ -1,0 +1,1 @@
+\forall_{P}~\left(\left(P(1) \land \left[\forall_{m \in \mathbb{N}^+~|~P(m)}~P(m + 1)\right]\right) \Rightarrow \left[\forall_{n \in \mathbb{N}^+}~P(n)\right]\right)

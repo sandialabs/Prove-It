@@ -1,0 +1,1 @@
+m \mapsto \left\{\forall_{x, A_{1}, \ldots, A_{m}}~\left(\left(x \notin \left(A_{1} \cap \ldots \cap A_{m}\right)\right) = \left(\left(x \notin A_{1}\right) \lor \ldots \lor \left(x \notin A_{m}\right)\right)\right) \textrm{ if } m \in \mathbb{N}^+\right..

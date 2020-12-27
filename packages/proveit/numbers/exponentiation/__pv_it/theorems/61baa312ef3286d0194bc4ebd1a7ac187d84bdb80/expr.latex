@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{a^{b} \in \mathbb{R} \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  \left(a > 0\right) \lor \left(\left(a \geq 0\right) \land \left(b \neq 0\right)\right)\right..

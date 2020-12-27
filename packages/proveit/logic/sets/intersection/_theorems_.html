@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.logic.sets.intersection</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets.intersection">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.logic.sets.intersection</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets.intersection">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">NotInSet</span><span class="p">,</span> <span class="n">Intersect</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">A_1_to_m</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets</span> <span class="k">import</span> <span class="n">x_in_every_A</span><span class="p">,</span> <span class="n">x_notin_some_A</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">NaturalPos</span>
+<span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.logic.sets.intersection&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">membership_unfolding</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">),</span> <span class="n">x_in_every_A</span><span class="p">,</span>
+                                       <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Intersect</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">))]),</span>
+                             <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="membership_unfolding"><a class="ProveItLink" href="_proofs_/membership_unfolding/thm_proof.html">membership_unfolding</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/11e4379a1a6bd2a852ad17e62aaa0e56eddb5f7e0/theorem_expr.html"><img src="data:image/png;base64,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
+sG+BUAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">membership_folding</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Intersect</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">)),</span>
+                                     <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">x_in_every_A</span><span class="p">]),</span>
+                           <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="membership_folding"><a class="ProveItLink" href="_proofs_/membership_folding/thm_proof.html">membership_folding</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/afa4832320f249ed1104e96bc60bcb865850360b0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAjAAAAAZBAMAAADd4wmLAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABgpJREFU
+WMPtWXFoW0UY/5rkJXnv5XX9Yw60OEIrUyvah9ksrpVFxW4OBumEVtlwoVqwVTQyWHXqCCIsrUjy
+11YU6dPKOqrMYEWtdFgrwoiCwW440c2A+ocDXXCd6ybdvO/uJbmXd8+8bljEedCXu+++7+67333f
+d99dAdwU/+CzcDUV3+Dz7hgDcLWVff8D898C5nUhVc5f4bBqhnymGDAF/DlRGxhXfMtVlKSQfJD9
+PLy0waRCpd6PATVDgfkC26dqA+OKb7lKfUZI/oX9nOYhNBygrdDrixXyIewqUGBG0ASTtYFxxbdc
+ZU5I1XT2c7qy6E3P7H1JxMrTT16o0ENh8pmlwNSTUULZ2sC44luuYkketL2De5iWzI7e3lC2p9AQ
+QLdul+fpyuR5zpAayOcNCoyWm5jY7yL4uuJbpiIn+BDxYslATPXyrVGLZT3uYHEmXfPMcz0/oW9F
+6am0kEqJs5mQ9VRy5HOxEHHQc+DOOA0TK1U8ZLOVpv57ZmlYKDtOM0vOjE/Kh9MwfkbsI/H0zeoi
+1/MZLlynwPQBDAn18FqBqeYTCwUtyzK3bsbKY0qq0Vr7UTXP++VJyMrfgW/Ce0oHCSuv0O9bsIME
+ComGw4RDrsHRlaj0O9dzEm2oQIG5l4XhmsBU8WnzQqEfLKtlwdpvtYGy5J3CEfpBzE0UKo0TILEu
+B18Z91fmwPKcuRmjOkiRhEtgfCCf4Xo+xB1LUGAC4KnKi3o6op5VNmCq+MYWhafghrwdmO2lzulI
+npc8gF7Bs2NDmnHgJpS4Wakj6BuQYg65+jdSaHUlbT8SeYpM63MLTHfkjgWuZwcOUaTAhPK8JKqj
+JnOwPhRpi7TzwFj5ILdT6Afjuh2YPrN1fGrCIonZSA8PJDb8MQfuSp5CgQFgHsClECuZBUBdYQnA
+kKFWi4GRC91cB6qjfu3FsFBlMYxvdt0aqrkUTomA2RpM2oFJMDEfw6wiiRY4zLsnNgLgwE3KrZwr
+gXSWNRqsrkS6Ag3ugVHJ39PkmDrWpDfhBm4EJot3paFHiSfftbXZQ5ZM1VG3PRS2A0P5PMaTAbpd
+fmgjH1taGfcmbMCQw5WK1ZtPGCgJAzhPnDgOd8ugjf0g4DbLB1zw/dhThBZs3G4JvnKWpbJugXmN
+ZcpHr4dVxhpr8IVJwqbdna8b8MSBqqPGcscEwCCfBL8yynfQCtKn1cBoWU/RBowvycTGKpKw/TrW
+ETSC3ImGjU1g5y7nqyWH1cH3Z7DI7oyBLH/UYi4TPG8DRrlIPu8WzEqFTjOidEZ+MwHz0EHq+Oed
+YcCsIKfbqzfCiighjDFgQniUVwODfAAsTVR+/DJtQKAamEMdRy7YgYkzsZ5UKhU2JWE3u709QLAs
+c9NGJwi4wXo7JKtWeluambEpj202ycQNDl46BWr6nG6zmF1YiZuVMl1JXzTgo0s7wR+WGqgr/oyx
+L8aA0XDmXuhC7Kk6akzOJywJGB2b8klFSvYaMBqzA7Me5LMwd3hu2+ccMJhSoJgfKpIUGILYAH/c
+0saDYOPW2k+sm8bI1im8EviOWK8EJewwCaZ6213JRq+LeZJyMQYKio3z7zHXwE0waqqjxuC+sPg9
+ZjRUCMGIAVuIAeURGHmYNEsfH5lwEd4r1GWnOWDIZFQsRKM2k6TAaDOSjs5iDsAa42DjVm+DRhVP
+8e9dXSJZ9phYUm4+SmxGS87wl0gzaS8SmzluqqNFic5iYA4cnc1BVza4AHL6BQRGaoSujHQtfhoh
+nYSRc3l/bBzW8qfSbiYGL6P/M0kKjDeK0TtYGoA1yJg27j4l4cWQv1acXwuSZLntj/BSgOkkuYP8
+hME/O5iWFydJwj5TnY3kJhX/uxe8UlhAV1Irm1RmnoRElgPmltLxjFHDLAhMPSioRzmFon+erJ07
+oeoBHL3g7qHqCspQCXXb0yavvBMwqrlfUmu7+RBIy1Q5ob0BejMcMEFBvnOGrP+wUDf7mpW4J+q/
+mcyb/6efNjVU+9vLfvPVbHGsqla1SJ9YX0UXkrc4ajH2L3wMv8z/K+lWW6oyTsP5QVpYWpYNFt/g
+rr8ACvTNtNtUP6MAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nonmembership_equiv</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">),</span> 
+                                      <span class="n">Equals</span><span class="p">(</span><span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Intersect</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">)),</span> 
+                                             <span class="n">x_notin_some_A</span><span class="p">)),</span>
+                           <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nonmembership_equiv"><a class="ProveItLink" href="_proofs_/nonmembership_equiv/thm_proof.html">nonmembership_equiv</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/accc56ac389e3f88899fda21b9088d304a5fdf3c0/theorem_expr.html"><img src="data:image/png;base64,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
+mJ94/bSs/QMQ8XgzlW2HFQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nonmembership_folding</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">),</span> 
+                                        <span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Intersect</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">)),</span> 
+                                        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">x_notin_some_A</span><span class="p">]),</span>
+                              <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nonmembership_folding"><a class="ProveItLink" href="_proofs_/nonmembership_folding/thm_proof.html">nonmembership_folding</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/a018379b0f1404feed548fba58155021406c37a20/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.logic.sets.intersection
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

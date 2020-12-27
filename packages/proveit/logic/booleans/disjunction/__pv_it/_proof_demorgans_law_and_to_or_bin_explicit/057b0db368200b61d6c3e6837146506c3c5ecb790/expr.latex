@@ -1,0 +1,1 @@
+\forall_{B \in \mathbb{B}~|~\lnot \left((\lnot \bot) \land (\lnot B)\right)}~\left(\bot \lor B\right)

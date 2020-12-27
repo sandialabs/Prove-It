@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}~|~a > 0}~\left[\forall_{n \in \{a \dots b\}}~\left(n \in \mathbb{N}^+\right)\right]

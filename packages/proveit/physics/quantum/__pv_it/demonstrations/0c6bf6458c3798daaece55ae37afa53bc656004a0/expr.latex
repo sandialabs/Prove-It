@@ -1,0 +1,5 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{1}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{n}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em}\right)

@@ -1,0 +1,1 @@
+\forall_{A, B, C~|~A \Rightarrow B, B \Rightarrow C}~\left(A \Rightarrow C\right)

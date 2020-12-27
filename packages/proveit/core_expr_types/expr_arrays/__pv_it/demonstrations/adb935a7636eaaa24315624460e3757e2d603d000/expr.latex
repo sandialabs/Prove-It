@@ -1,0 +1,7 @@
+\begin{array} {ccc} 
+ A_{1, 1} & ..A_{i, 1}.. & A_{m, 1}  \\ 
+  \colon & \colon & \colon  \\ 
+  A_{1, j} & ..A_{i, j}.. & A_{m, j}  \\ 
+  \colon & \colon & \colon  \\ 
+  A_{1, n} & ..A_{i, n}.. & A_{m, n}  \\ 
+  \end{array} 

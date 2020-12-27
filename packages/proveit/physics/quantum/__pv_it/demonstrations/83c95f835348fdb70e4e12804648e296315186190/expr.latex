@@ -1,0 +1,5 @@
+i \mapsto \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{i, 1}{\Big \{} S_{i, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{i, n}{\Big \{} S_{i, n}} 
+} \hspace{2em}\right)

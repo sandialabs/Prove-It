@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{\left|a\right|_{\textup{mod}\thinspace b} = {\rm Min}(a ~\textup{mod}~ b, \left(-a\right) ~\textup{mod}~ b) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{N}^+\right..

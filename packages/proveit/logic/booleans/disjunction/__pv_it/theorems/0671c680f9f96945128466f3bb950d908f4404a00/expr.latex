@@ -1,0 +1,1 @@
+m \mapsto \left\{\forall_{A_{1}, \ldots, A_{m} \in \mathbb{B}~|~A_{1} \lor \ldots \lor A_{m}}~\left[\forall_{C~|~A_{1} \Rightarrow C, \ldots, A_{m} \Rightarrow C}~C\right] \textrm{ if } m \in \mathbb{N}\right..

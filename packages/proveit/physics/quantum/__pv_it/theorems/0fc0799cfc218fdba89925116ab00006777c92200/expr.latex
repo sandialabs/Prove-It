@@ -1,0 +1,5 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}{\Big \{} S_{1, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{1, n}{\Big \{} S_{1, n}} \qwx[1]   \\ 
+  & \gate{\vdots} \qwx[1] & \gate{B_{i, j}{\Big \{} S_{i, j}} \qwx[1] & \gate{\vdots} \qwx[1]   \\ 
+  & \gate{B_{m, 1}{\Big \{} S_{m, 1}} & \gate{\cdots} & \gate{B_{m, n}{\Big \{} S_{m, n}} 
+} \hspace{2em}

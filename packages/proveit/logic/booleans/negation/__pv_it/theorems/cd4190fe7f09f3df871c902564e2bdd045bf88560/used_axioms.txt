@@ -1,0 +1,2 @@
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.not_f

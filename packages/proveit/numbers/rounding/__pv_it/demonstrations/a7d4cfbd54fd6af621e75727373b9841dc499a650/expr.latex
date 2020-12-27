@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{R}}~\left(\left(\lceil x\rceil + \lfloor -x\rfloor\right) = 0\right)

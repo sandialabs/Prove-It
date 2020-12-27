@@ -1,0 +1,1 @@
+\forall_{x, y \in \mathbb{R}}~\left(\lceil x + y\rceil \geq \left(\left(\lceil x\rceil + \lceil y\rceil\right) - 1\right)\right)

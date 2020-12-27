@@ -1,0 +1,5 @@
+\hspace{2em} \Qcircuit@C=3em @R=2.5em{
+& \lstick{\lvert \psi \rangle} & \qw & \qw & \control \qw \qwx[1] & \gate{H} & \meter & \control \cw \cwx[2]   \\ 
+  & \lstick{\lvert 0 \rangle} & \qw & \targ \qwx[1] & \targ & \qw & \gate{MEAS} \qwx[1]   \\ 
+  & \lstick{\lvert 0 \rangle} & \gate{H} & \control \qw & \qw & \qw & \gate{X} & \gate{Z} & \rstick{\lvert \psi \rangle} \qw 
+} \hspace{2em}

@@ -1,0 +1,4 @@
+proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.sub_left_side_into
+proveit.logic.equality.sub_right_side_into
+proveit.logic.sets.inclusion.subset_eq_equals_superset_eq

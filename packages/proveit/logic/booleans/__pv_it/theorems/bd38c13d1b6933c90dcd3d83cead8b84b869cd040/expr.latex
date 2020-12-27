@@ -1,0 +1,1 @@
+\forall_{P}~\left(\left[\forall_{A \in \mathbb{B}}~P(A)\right] \Rightarrow \left(P(\top) \land P(\bot)\right)\right)

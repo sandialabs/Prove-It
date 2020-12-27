@@ -1,0 +1,2 @@
+proveit.logic.booleans.negation.not_false
+proveit.logic.equality.sub_left_side_into

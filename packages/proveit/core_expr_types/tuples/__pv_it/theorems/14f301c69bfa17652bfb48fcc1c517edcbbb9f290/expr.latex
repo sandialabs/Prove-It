@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}^+}~\left[\forall_{f_{1}, \ldots, f_{n}, i~|~i \in \mathbb{N}}~\left(\begin{array}{c} |\left(f_{1}(1), \ldots, f_{1}(i), \ldots\ldots, f_{n}(1), \ldots, f_{n}(i)\right)| \\  = \left(n \cdot i\right) \end{array}\right)\right]

@@ -1,0 +1,5 @@
+A \mapsto \left\{\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{U{\Big \{} \left\{A\right\}} 
+} \hspace{2em} = \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{U} 
+} \hspace{2em} \textrm{ if } A \in \mathbb{N}^+\right..

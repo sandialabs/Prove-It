@@ -1,0 +1,1 @@
+\left(\left(x = a\right) \land \left(y = b\right)\right) \Rightarrow \left(f(x, y) = f(a, b)\right)

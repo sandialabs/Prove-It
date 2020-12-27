@@ -1,0 +1,1 @@
+proveit.logic.booleans.implication.affirmation_via_contradiction

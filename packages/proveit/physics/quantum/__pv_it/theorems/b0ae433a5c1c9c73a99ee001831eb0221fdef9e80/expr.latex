@@ -1,0 +1,5 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{1}{\Big \{} S_{1}} 
+} \hspace{2em}\right), \ldots, \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{m}{\Big \{} S_{m}} 
+} \hspace{2em}\right)

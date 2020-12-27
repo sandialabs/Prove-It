@@ -1,0 +1,1 @@
+\left(f, i, j\right) \mapsto \left\{|\left(f(i), \ldots, f(j)\right)| = |\left(i, \ldots, j\right)| \textrm{ if } \left(j - i + 1\right) \in \mathbb{N}\right..

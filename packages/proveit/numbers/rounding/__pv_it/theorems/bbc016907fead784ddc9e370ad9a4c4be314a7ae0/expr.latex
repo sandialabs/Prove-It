@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{R}}~\left(\lfloor x\rfloor \leq \lceil x\rceil\right)

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.logic.sets</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="_theory_.html">proveit.logic.sets</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Boolean</span><span class="p">,</span> <span class="n">EmptySet</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Intersect</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">NotInSet</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">SetEquiv</span><span class="p">,</span> <span class="n">SubsetEq</span><span class="p">,</span> <span class="n">SupersetEq</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.logic.sets&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Nothing is in the empty set (everything is <em>not</em> in the empty set):</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nothing_is_in_empty</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">EmptySet</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nothing_is_in_empty"><a class="ProveItLink" href="_proofs_/nothing_is_in_empty/thm_proof.html">nothing_is_in_empty</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/a9a5fecdd347a2bfa6c6c1e0268954b23a3cad7a0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF0AAAAVCAMAAAATpBLwAAAAQlBMVEX///9jY2MJCQkNDQ0rKysP
+Dw8WFhYQEBCIiIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAADRR/RZAAAA
+AXRSTlMAQObYZgAAAcBJREFUOMutVduypCAMZK9GJBAS+P9fXQLe0JH1VB0eplSg0+l0MsZ8w1ou
+7/5r14MMt/H0HBlY0WPQt7R/l0cIGpNZ3PHMYAxUTKfwHLeNRE/XUxiiz/ZIUtPwDpSSxggbr/BI
+UGbzVph6FC1uaeyUjyRutwfUxePfP7jL6wuinSkrJk26z6Qr4GNJ8VlxD2T8KfgkKhTl6qKkimWv
+C/kJAlZhCMAFCzXh9YvmTel0NscqVK6VYL3oaiD/mL5vXqISXhDMIUOzBUCPrvXLVWXRk3Y2FwYX
+2VtBuPDkIqgNfdd0VstiQDb0iFvN4blfpmY4BfGdr5YppfT7V/lJJ901WlNmyZWV9O32Gb1Sg67c
+/mY1BBVhrWpDD2lvN4Z5Abd8UqYe73cmc6XlOPIGa5rtS0Vd41f85VLphk9VjWQgtzN7k0Ir2tn+
+Sk2agNIEizPuwy7dClCNZWyplM+XgYbxkqdB3IxegvNNz3xzZkuQHADB3I86cj9tP50iBto6Iq2R
+hQ5p7+N6MAnkB3vEUwuwWFmP08UpIRsuB/n9FLv1YOyHcZ+o2DL86b8Ybwb/oD9fggx6cDBa3v7z
+DahX9f8BCuUWgBfXvsoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Identities-Involving-Unions,-Intersections,-and-Equivalences">Identities Involving Unions, Intersections, and Equivalences<a class="anchor-link" href="#Identities-Involving-Unions,-Intersections,-and-Equivalences">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">union_with_superset_is_superset</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span>
+        <span class="n">SetEquiv</span><span class="p">(</span><span class="n">Union</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">S</span><span class="p">),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">S</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="union_with_superset_is_superset"><a class="ProveItLink" href="_proofs_/union_with_superset_is_superset/thm_proof.html">union_with_superset_is_superset</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/d2c955cc800246cb0192de8f63808da38d89bfde0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOcAAAAWBAMAAADJFJavAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA0tJREFU
+SMe9VltrE1EQ/sylzW4u9cEnFVvwBzRaaW0JNCj4IIhBsC8KRrwjQsQnRSEvSlooCQi1IGJEtKVo
+GymCRcRaL9Q21OANRNRIUUREW7VaqzXOnLObbrZJmwg6MGfnnO/sfnNm5kwC/KWc0bSQ9M0FpNl4
+UTKnGpZKYk+bwd5k/+OymLRHdtFgk7bTl3T7GRjm2fuSST0xqWyO8RgXrogFRwqdY6p0xXPgVgoo
+ky+1Qo2CgXaaKOGSSR9pSvJyCnrEPGKhBnCnMSDsh1A/AG3CtnppMxjwkIuuRMmkhzWl0/X+4EeI
+h3KxMEHxrMI5gQbp4M3KG2H3BIA1YMA91NV1qmROJSSVxG35mktqm6Y8B+Dx84QOhwcZeaiNFOjN
+EMBkJHK0ZFKLVyrJeue06aSZu/xwebNFF5DPnl8BHaDqahZrcrQnh59gpuAoOrEs1dbkDe19qhWh
+9EW//XMuKaoz32IirWZPM5l9kMBayEJziyjR1Cmq0aFvfUXRuBSJnCA/vLipLZYnpLJzyhcTqfq0
+cjHdD7Ey8pFlVL51eft4XALlsAiXz4so4QgQNpKqjSnYj0umeHZ1gV8q0FRTO2kipTr9SSEby5OW
+xoQEXCm5deiQeFApJoykrg6vblfE4JxFSsOyXNJ+8jQfqYvTqpEq6SaRy6qIgF7f0bKmbd3kCOO6
+1hCW+mEOL3txMHtPuzk0dEvsdHVtIRPpRdJtcQ1o3slLZagT0PnKRTmkQWsI9VqkV4zrrNlCOk36
+iVdWif7Hbiyk8PbrhSRz+pbNK6Q+rZDQK1x6jmrtCu4xkroTljHc151t073nsmcVdzXK9d1NdW3j
+dmqlNN2DJM6ROi9cQR2oqOJTjCaj3D4vUNyNpN2+wSluI/K6qXqeOESkavR3HNcyXA3Ku6tb9vIX
+rLYduznwnoCJ1Luudj90wC22xnGWJ5S+JiNpA5QJ7ao6E7AHZ7dBXezLV8aM845CjWUG2EAnTikt
+WA21xUBqo7xNQ23lz1nD6IznafgFZGBewDEJJXrMvgT1vttxA2k0jPbvKTgHqTlYTyYbYOxTjthc
+P7jpYgHnjOko+kc8vxT0aBbQVzTpvH9XnhUNpPKTtkdI8B/E+g+//QeGce/AeteLIAAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">intersection_with_superset_is_set</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span>
+        <span class="n">SetEquiv</span><span class="p">(</span><span class="n">Intersect</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">A</span><span class="p">),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">S</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="intersection_with_superset_is_set"><a class="ProveItLink" href="_proofs_/intersection_with_superset_is_set/thm_proof.html">intersection_with_superset_is_set</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/11b69a1ea254a62616176871fd2eb1d706d524a20/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOkAAAAWBAMAAADX3aYcAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAz1JREFU
+SMe9Vs1rE1EQH7PZNrubtB48qdj+B40U1JaCQQ+KIBQPPQkW/EJEiPSiopCDH0lBEhBqQMRIkZYi
+NdCDFhFrq1LboItfIGKNtPUgovWjWis1zsx7u242WWsEHZj3Nb+3v3nvzUwC8JdyXqqXGCkvyyBq
+ngYvKibVY0JR1LzbOJAbegz7xPj+bmz8loWwVejPOE3eVMxakxJKwxnpSEbaAib0zkC/MB64ZSKR
+vQ2xOjKncazFKmZ9JBVlYp67zYdOHRcLjQChPATrafwQ9LcAXdY2xg4jO3oYzFbMelgquj7wjbpg
+AqAtzAuzeKX1oC+lSTsePaFNW+/C2Ivo1Vhf39mKSbWoUJSQ77N1eNhPjX8B368VYIom5MeDgnUq
+ga2JAMzF40crZvWFhaJsMRao66QmzQcq3GHDiB15rdZIYIO4EWMswUuiVXPjT8AZdoFfKbA9d6PV
+DhhW/GRE/Ug9H7yajQ2FL7RnojTwBRYfHTZyUOGYLwqnBsdkwIK+xPu4HI+fREfCcFMuVmeFknfa
+Jxer/rRuOXZXOXHekUyKXRJrRAnpY6e7+aLgCEDMyaqvN0E9Iagy9uqSiFCMoMY1cy5WAOU7NjtK
+ziqxKh4raArsWAd3GGRZJ2uwJ2yNa1NglLBis6qYdQhdLc8qscSq5dv4PevjbHl1W76cRG4LxOC6
+TPGVEXDfMLlxsIhVx2RRKS03lRRJifUTNrGLlqpgLZu665YVsbYrUWiSl736QwRc0XQO9X0Rq4F5
+qgxZ0STe9TVvsrAUTTDAG55Dg0zFvU7WUNY3A/csb7ui1r2HhXLOJlNOVgVf6i5NWsrkOGPZp1oq
+XfpkLkl19BLAFSdrf8voPGyw0k6XJZcvCVVP/sjAtUJHEat/5x6OjGlX2tjYGkq/ELEpGbhAE3zC
+NidrM2izMmWNLKjtpRVRCudByMkS9SoxPfZoK57Z1DphHeidDlY/fmwB9NNEq8SgN1Om+nuIqP7l
+ZNguQHOgJY+pK6CpZSTjYE3GIP3VBGMUq4RyJtcMzooVSP2Otd/zpzlfJrahOHMW/1X3kISXocTZ
+wT9mXfQfTMjzIp65F8zyrOk4CvwPUf7lx38CFl3qAvOYsjsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">set_subset_eq_of_union_with_set</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span>
+    <span class="n">SubsetEq</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Union</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+    <span class="n">condition</span><span class="o">=</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Boolean</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="set_subset_eq_of_union_with_set"><a class="ProveItLink" href="_proofs_/set_subset_eq_of_union_with_set/thm_proof.html">set_subset_eq_of_union_with_set</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/7f574f37587840c51ec788287920e572b251c1870/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATMAAAAWBAMAAABeYGZcAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABE9JREFU
+SMe1V2+IVFUUP86bP+/vuB+EhEIe+MHNXHdgTD+IuBDoIto+hKwP4Q6YuS2UGxuMpcIUfZjVdOaL
+JYbuE4PEiAYsqU8tu4RlIo/6FKW9WvqgBC5urNtKrueec+f9mZkdopgD59577j333d/5c897D6CD
+dHapBc1rt+0ryb4QbnYEmV6iLuU3rVzkbm/DtHVwLj/0LqSrQPy9mLvTEWjZKncz8uADxWLRoeFt
+nrlLBtDQpXYZGrPV0dEWwaeFf0sdgfYjd7cWOIh/VgPv5Li7KwBlacyeHcRAD+RgEofIWVw2ax2B
+9iaH9fLfUR8KyvDwk62iz9B4hNpenPjVhvM4RLauXbr0QUeQaXyclfiL+s3hijzP6+1rgPY2WvKY
+C1mcFzxfLh/516chV5tmndZSgsO2w/gncjjRamqT7tdeA7Q5gOeHMYo55v0AYzTPbf/s1BCdnmwB
+bQK3RGVW/jymE0gqVQi9L3WPrCqEKieo/QgG7Ti01NzN7sPC0T7zM3QbcMx+t7rA7KIni0bBTEwH
+jxQ3+pXYbSdlRTrS+n16tBZIkKmxhdpspJIQHaa2D8ZzcWgJzMrzaIIxwpyBBJl3gf2uFMBYCKCl
+0E/vB498kSc4h6e21JX1gpTtibNfsESVQGQS7MlvnG8M6Ap69L78wVIcmoo+STzApRlm0+PFa6Ns
+qw2KH0AD3Px08EiMfVqmknX8jBso35aybZufBkVLQsNmFYmTDdAwYZb5cWjL0arEvRCa5u8hI+wy
+6XzmwHo3hHarXA4jQT4Gc/Xu/ZgGEeUeYNm2d31HUhhQA/l1Lh61eEBRzHTV6xrnlChracyr5Agz
+jL1EeQSbaNtATzdHRJWtVYtWA7z3a9P+G7JESuUrsmTa+VUOSeE1+LBe9EF/eUf0Gmg1+Z5QhHON
+XL2sDZbCawCXyZk/Qy9tuwGwJgLNdNTA2CTu6sfqkPVAz0WV+6Vs28opUuGtOVnbKnwxUt/WX1RT
+srapohjrf2DzLAXqNzxjJY6UCWZYLq6wPn29QsvvAYzXQmh6YWcIDT20TWyoQupQufxOoLxXyphr
+ifCljSHRKw9d+HJxtKEGbccX/OIdMCr3hUXnjj935ZiYfm1x38ayODvrMIPlcpUYJ4vwggxUQ2gw
+PAzauh6KcQq99oJICSyrHHSpjHgL7DVTYfSRF1ULysTL9u78k/H1jyUz7UJneNox0BZAeyISUNiG
+9SFZopKhj4gd2swNLL3fUPJJ5V+AZXvCvE5S7PXeTPL1viRNRi+0Og9a5Wjqcbg6mx/qi0LLoC8T
+No/fQtHVX925zgVVOL6uvAFIto5Mn/RIkg+NOedqsRh8FI21/87z61c2QkZkHKa/qTr8VfoUoqzf
+126Ra5L8mOw3fEq2oIttoQmT1GqLT99maMoPk04w1eI4w1tC+o8f4D9JjpHXElp4RT1Kyka60Ebq
+CCmtfyiM5o+itW2k/0GPAAMRKz0uVe91AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">intersection_is_subset_eq</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span>
+        <span class="n">SubsetEq</span><span class="p">(</span><span class="n">Intersect</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">A</span><span class="p">),</span>
+    <span class="n">condition</span><span class="o">=</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Boolean</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="intersection_is_subset_eq"><a class="ProveItLink" href="_proofs_/intersection_is_subset_eq/thm_proof.html">intersection_is_subset_eq</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/811a8cd79c13d48931725dd668b767cddda33d2d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATQAAAAWBAMAAAC8vH0lAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABC1JREFU
+SMe1V11oFFcUPu5mNzOzMzFvChYZ8KHBmmZhW/tgxYWCDaJk6IP1oZgFa40p1pUU1lqFVYRubHH3
+xR9aJFsstFhsF+yfTw0Gsf4ggz5W7bZpHxRBMZLGSBvPPefOzJ3N7DZQ9sCZ2e+ec2e+Oefcc+8C
+tFFOSW0qqUorS138uN0WZkaRFSVRD5us3dOZocMAOyMnbgWyXBW/77WFWleFVfx8KNlWpW0RUl7n
+wDce1R2FQsHxJj5ARctJvOnFtlC7KRXlzizd+vd+dJgHBl2AgTSYNiH9vppZ6wF+AFq6xK3WFmof
+SMVgnXsibuYowOY0jfQhl99sMLr9+Aby9TqEaLGunDlzoi3M9DyriEPssRdGeJdGDuLLl2BU/iS0
+JjTR7csCWWZKpf0Lfhvq/EXlRKNYmhVlQ+ofcTsiLidpZBrgzWG8TxDKqw/oqP7ssmU7wCgN8bV/
+amKI3t4RQW0ck6Jidv4u5OMjzWXF+GQTj3wGnbRip2/3fEhFSF+cUx/wBQzabHkNDFrZ1mOOfTeY
+VACauMQx5kl/UrLSsNzZOS4Daf0xOVLzEXTWWMVX6lNhajGsvc8FoR+9LhNIFsbSbOmEGH3aaYo5
+xHOQmvWpJTBOx/1Jb/EA1+rEWs/ZyElsj5/6nhH1hywrln5m9UyYmoZfH3sqVuq8hCa2ZXYX2WK6
+5AxXRvhbbYjXfWqATi/7szD3SVlK1sefVn3nuxLbtnmWUAM1vCwPU1uM/GOPfGoX1FLDWXW26PXN
+RNYukeVbB16sBtTulEpBtPP0YHPFG9uxDBTnXmBs25suEwonNIW6J0xNtLWkqKDXuXko3UvM6paW
+0bepjuAVsgz09nBGNHm1amo3wD6zMll/n/c3z/kHud/ZmeUOofAy+Ew2eIWaaGuDRW8ZgPHOBv8l
+Nbl3CMs5mvEr9JHpOsDzCjXT0YJQ47P6sTt0uWCkVed+iW07foxceGqalXpbuRKi9js+balIzquy
+wH7xNirRY7Un0rJYLFVj8lqZ8vgJwFgtoGbkNgbUMELrxYQKJPaWSod8560SY63FeHMm9zypUf63
+Cj/NjajU3pvbtrpEb/mroT19NXcPUuW/02yxqtwlxog1LpuBSkANhodBX9VLOU5g1LZQgTrASZfO
+yDfHUTPjzL5ho/LaPC2g0OEk3/TY4ls2YTBc/Qjos6A/pyQU1mN/6CiOe95fgv7wOrbei1QX0vkW
+MLbHzWuE5m3vzURu760s2gzo5QOJZXBpKjOUVal1Yixj0m0fwqqxa+OqKmgiHZ7zS0DY2j951CUk
+H1phbSHyUHSpUFAPRYolOFsqv4PyNzWHUgEvIEtvvfaIWpNSD+F6xFGymYwu2HI+klr8xgXHH4p4
+Vcptgv7zAG5VFmxxI6kFS9SlomyU0y1QWyQeMXY+8p/Gyhbof8gzcxslEbLxAfUAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">intersection_subset_eq_union</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span>
+        <span class="n">SubsetEq</span><span class="p">(</span><span class="n">Intersect</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Union</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="intersection_subset_eq_union"><a class="ProveItLink" href="_proofs_/intersection_subset_eq_union/thm_proof.html">intersection_subset_eq_union</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="__pv_it/theorems/4ef4c101bfdea6837689223c53770dcb0beaaf970/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO8AAAAVBAMAAABcV6T1AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA4RJREFU
+SMe9Vl9IU1EY/9x25+7dH/cQJRQx6CF7KAcDewlc9GAEpQTZS7SBBhaUi6hlFigETi22pwwinRQl
+BiUIlU9FPlQWMQqCCGtRPmQPipqpYfZ93zl3273zCr30we/c8//3ne/PORdgLVEzAtbiThX33Vxz
+zxGJLDXGLSYNSKAcNQ15m+dDTZcBjhct0tr4o2RN/e9XGqoSYXCiqoRX1DdpQfxdAmVKdg3qYyW4
+f3Ud3Ne3jcfjZ7nmE0bwTbMWXE9zWQ5g/wkaKkS4ThZtW53XGxSg6hQvdnQkzofFYARdUBsET4Bb
+vS9zq96Jz6clpuc6H15ZxvWzAM+A4cMNPUOrE5emBFDuVfP3RQqUBjFYiR2fA6D5c7aR0iIMPrzI
+W3AjRoUNO7wzAP3A8I4NDvZYWLpHAiVTGZYmAKdQsx0334Baf6OGPa+6GhMmss2ZiF2oYv8FPGpY
+YCGRuGhBvEUCTZR+QsHtSucdMw9w+AR+R/P7s9iEb/a5l03EZVFQzpF9gwLHADp5VJR7Z0eb9BS5
+KgFwGyIB4zbK/HhFK/uSimt5YhennxZWZkzEkZNvO8gw3qzAHo4xrM8JE/nB45d7tEoAhKEvWOyx
+/ihWHkE+55iKre4AddZEjEGhrafUjwmUgo11vMWmAXsU3Etyj3USGFCh5rZij9l+00FMpi7hqK8P
+VS2YiNuJHLVSpgU8GTE4dkYoHAB71kzswP2yRR4D24xOLJMqT4zFZhPxPBEH8sRqtp4PFUjwnAd1
+sCNtNjXqWeo3eQzN5CTv1HDfD6Op3YjTuTxmX1IaQzMq5IgJQGcjDTphJ6+r3V4RBVNwqUPyIjJ6
+DCJtenDBncZ0YXDd0O86O53fHZRBoSwUBBcM80YfoZLXvQHYqhOPSlAuuxaNxF9Q7XIi2yXmHumQ
+VyZlCudykpJDm8DiAM3zocl2d5EuTwWgjPyjfX2dZJ2vAPTpt0GNwMDKJLiTv4KFxKfoxud5E6bk
+RytqyT9peLzCQdPbfegh0Tmn8FHpZuvXCYCXCO1p6KMGYKDWpoqvTHl5i1vM8BbFzNdOi7F5MLTN
+2HFXQsh+PHlG7QJ1CdRNqzwSllIQz8ZHwlLkIyEjYgHU5CVlIzyfDTWFc3M6cxeapYhn0ROP555F
+V2rNBfqzaPyfsP4RsJJOqx8BKyG9inQb+edfH+8///p8kDBIBv6b/AVsXfrTCtxVNwAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These Theorems may be imported from the theory package: proveit.logic.sets
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

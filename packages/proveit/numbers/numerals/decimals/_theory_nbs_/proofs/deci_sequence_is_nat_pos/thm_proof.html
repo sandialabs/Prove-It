@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.deci_sequence_is_nat_pos theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.deci_sequence_is_nat_pos-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#deci_sequence_is_nat_pos">deci_sequence_is_nat_pos</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.deci_sequence_is_nat_pos-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> deci_sequence_is_nat_pos
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="deci_sequence_is_nat_pos">deci_sequence_is_nat_pos:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/7397ccfc192c34e9015a8c996f0c82386d9403670/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYgAAAAbBAMAAACU6AVMAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABKFJREFU
+WMPlmG2IE0cYgN+7ZO8uu9nc/Sn1uD85hVbaisGzKLW2EcFfglHK2YLQRTz0FCT01PQLCVJqtFiO
+FmwQ1PXPSVNaj7aBChaiZ3+oCCuKXyhEClUUcmfR1i9K33dmNzvJfuQ2R/zRDmRmZzLvzD4z78fM
+AvxPUkfmo5kN8E4rXoqyOP7CmU+n079zhvNJWgsguihbwR73Pw+ImN4qiKjx3CAWiJWDgUSP+0PA
+xxyiTMXNBhAxKlSjOYbIE1ZkYQxzORtM80dr6z88+lKHk/eTFsQcDnGOirsNIKLjM9CKaIJyuQwn
+aJDRQLJyua5hHxqYPAVbK7cqFVzUwxwiT2uVbQDBOuSb1KY2WgFQSrAQi4sBhU/V1TemZgP0VNWp
+c5xB0Pqyhfa1Cdqqc01CHGY7GEpCGougzvqIWV7NZNimbNjbkWIDcYhQlkGoZwuFbxoa9o1C4dt0
+kxAXzEFINSJBB4klWfHuK2Z9eFC+K0C093Dv9CiXc4sWpRqI7lxudynI5ELnt7hJkkJBO9nH1xP9
+/uYldDANqmq0w0p8UIAIP+EQQwB7XAZK1EDgHnYFMklBPMfyHyGUwqnRGMO9MIkR0NsOeQee1HKt
+kxqG02rchpAecojlThfghAgncCmbhPgD17NSebEyWbnDDPGIAYtBGvBWLNbBTEraDgocokMforYI
+d98POEQntIsBQBo5Df1aPQTu4LzpHTGc4iMsT7PA2oYq/rYOH+CyeEPwDuZ4U5SvrmAqcwhZi/XY
+LtiEiBp2RP5uYin8EtVD+sTAyMC4CHEepmGS7uK/syXTWEQliFkgP/SF4B1EiLywE7BOsiGsnYiU
+B6sK+MUBHX6NJ6IOdYJD0zjFeYh/ztyIwSwP1Ul+BsqUHwTvoC5dQ+GYd2sTIdRx25ykx+bZac8G
+MEWWU3ux+JULRNd+XEN5wdaUc85qo4f4JrKJyZ23/0abQMOWn0JH+bgfBOugLjPaRi3DDsWtP9EN
+wRkbwvJO8BMOx0WYQDH6/TonhLIIs6Op93U0rNo5WSNLHuL9zN+Tb+Aecxdc0Uo2hPwPZsfKVgZm
+hwMvQzeOG+K++hNrsHuEZDsi1YwT0I2YTERmMxehNOGEgD/xNwBrQTpZB0GN/G08xFeRwAkK2Vw7
+xma/tz4p7MQOmkKzMrA6rIdlBM93eewzPuva+9maA5UZsZGG/icR6cNcbhe+xUF661QdxHX89cFL
+WKuDYI1MPz3EyZjhdfNAXz12hBs5ihfgTQn32ayt3J1xCwSxuHifYCIaX8rwGvf7hPwY9hXqIVij
+uuQmbruHONOItOlhLtYGAJ8D/BRsKzoPgHXpmC5AcJHf6PESnpQ8LkW90gODICJ7Ia9bGTUqc8kD
+e4iTR0TfxuOMFfcji/6K+75eWIPXDPc4LKTL4s2Oi3Shbw/vTPJLuAvEilfnMAipD1aPSr2U9fHG
+ITpFeIjDFnKLsJlvXLBLUaOzznaX6+lcVOpG11NSJ6VaM5/S7Zc8xWsPLMGup9caRKZSc3dsaf4S
+8erLn2RNOe8tryRa9TEpH+Brh+O7k+Hy5JN+bhXEG+y7047/xNe9fwHaDFin5qC6ZgAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/cfdf4b4d6126e2947b1f13a525bd01d197a47a1a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

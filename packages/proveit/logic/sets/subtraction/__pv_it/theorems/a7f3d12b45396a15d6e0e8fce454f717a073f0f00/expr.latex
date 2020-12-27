@@ -1,0 +1,1 @@
+\left(x \in \left(S - \left\{y\right\}\right)\right) \Leftrightarrow \left(\left(x \in S\right) \land \left(x \neq y\right)\right)

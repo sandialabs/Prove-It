@@ -1,0 +1,4 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} & \control \qw \qwx[1] & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert \psi \rangle} & \gate{U} & \rstick{\lvert \psi \rangle} \qw 
+} \hspace{2em}

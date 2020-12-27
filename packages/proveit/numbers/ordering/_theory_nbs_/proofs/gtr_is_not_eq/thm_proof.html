@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.ordering.gtr_is_not_eq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.ordering.gtr_is_not_eq-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">ordering</a>.<a class="ProveItLink" href="../../theorems.html#gtr_is_not_eq">gtr_is_not_eq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.ordering.gtr_is_not_eq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> gtr_is_not_eq
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="gtr_is_not_eq">gtr_is_not_eq:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/9cc3ab85573d23569fa71ba78ab9bc5ad24aadc70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAAAWCAMAAABXLOafAAAAOVBMVEX///8kJCQNDQ0oKCgQEBCI
+iIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAD9T1yxAAAAAXRSTlMAQObY
+ZgAAApJJREFUSMfFV1mW3CAMdBJL7Ov9DxvE1sa4cWfejMNHv7ZBoiiVhLxt/2dov553Zn5nNf2G
+/uz9c3iNujlPOK7dZfknCLGzbSKY5wAHvZ4XbFiNFTodQ7ezavUcXo83BI9YYiPVwYHYF9U/P+Qd
+wfz4xGKLvdnptM7Q0PLBjJP/RLB7LQ8klahoSPccYGiK0OgQ9il3FB8FLwCwxN9h51/NUWIh3O7N
+bhdcOFG1HrE9bRrii8qQx5/f9NtlbmJSrYkZnydnDFsCTsXwlBtWghIY4Lj3VUT5yglJ2FZFEnBU
+NwTbLOEIBUG2pyhdFeHQ8tBYh5hWwOaopsMasBHHcIU5mfcSF8xIJJxmuRifMWSas2R5DofzBfQ0
+Yt3XK6sNOc+AvfFrwJQ1Qp+dzIB3lZHwM8EngywOVkpbAZyulXYqgyBC88AjgDBVMyVbCmB3Dfho
+zBWawcksiUKajduo4V97UXLnOfoejY3JeqZ6sxjJ0w7NPUiTE/ol7wwYES8Bj8Yp2+DoZE46k0kT
+ofYIby/ByJrca9KlU2JVBEHhXR0K8gqDB8AohGTXSTcak3cqAtXJVTLnKSm2oaCyKUdFwqrqW6xr
+YxX+ns4M4ig1FAlELtTkPjGswb8BPBonGjLF1clY6mRNTgCuBYx9w1SVk9Jcy5qmOG9qxSNKvKk2
+FF5CIQZJWH5s/V6AT8YslGXNyYdXs112GeZcG1IMeWSe0jztk9TnCZDjg4bdm6Trxsec604+bH7W
+LaM7l0AmwAIVXE6kcOEKNGXbxeGCSyHCcAW4G29avKpad7IsXZ3gZYNgVjfvEEWoGr7Y+eIdV/yr
+DfyaYLVo8qz+rI/5ahP95hNp2Zr4FaZPP5ce7Pq/Z+DTG/4FKHkcRpX3BTwAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/b4d8d2399c610559f0847762952334fe0d7b3fdb0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

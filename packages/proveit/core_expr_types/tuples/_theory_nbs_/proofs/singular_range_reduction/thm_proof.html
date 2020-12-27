@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.core_expr_types.tuples.singular_range_reduction theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.core_expr_types.tuples.singular_range_reduction-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">core_expr_types</a>.<a class="ProveItLink" href="../../theory.html">tuples</a>.<a class="ProveItLink" href="../../theorems.html#singular_range_reduction">singular_range_reduction</a> theorem<a class="anchor-link" href="#Proof-of-proveit.core_expr_types.tuples.singular_range_reduction-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> singular_range_reduction
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="singular_range_reduction">singular_range_reduction:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/c9afdcb1479f1c75c10e70eb46e085bf4b7c6a890/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ4AAAAVBAMAAABF+R16AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAwNJREFU
+SMe9ls9rE0EUx79t06TZ7CYeFA9eQvsPlPYkVKl6KHhpT4Inc1DQQyEnxR+HnKQpiL1VECEW1FLB
+BDyIHmywB6u9BAqiByWHelBQiiBICuJ78yY72Z3JticHvpO3u595+/Lmzc4A7pZtiXR7wF1uCfu2
+EHTBxqFYL7WYbfONz9aQVS14E8epqwDpCq4kRRAHHbBxyNZlpOn9LGa3+Nl3a8g3LaS39oA8D2jh
+WVIccdABG4dszcOjJLCYvcdZqsRHBOMioH52GtiWu34xIY44aMPGoVjAGy1i8zX6acSHZJZEwDp3
+13XqDyXEEQdt2DjM6OJ5qEVs8H5tbdlyuqwFvOV8lfXtnYQ4LHDH5VS47gvz0yJm/yws3LKcjmlh
+++gkMEhpXJmgq43+YdjghsupcGR5Yzx34yJmLwFVBqZaXZTaHS3gF2mEHjVPkfElIR8WqGD/p2rj
+iDgky0/RvAVtEbNnpGT90Sb157XTm1rI/ubpbCDbOEnGi/5h2KAFG4dk3R+it+bKImYzGGzpqTLt
+sBZyu9QNTMNT/+NC/zhs0IKNQ7JqBZqX4V0Rs34rw88LNWccflncI9dJjsMG3XEojq31WjSObPsc
+r+27J6g/XYrPy0hJ0i3GTP84bHCmpz5KiDhk6zYpVRYptnqRn3/krtmJ1+lAUZdfvdFMrFMbtGDj
+kCxvz4/WKZ6rRT/JNfS0u/7DdVfnsuGlNctb0xS8v3yzrTtzZYGiSDMOyUrt0pY41BQptlAMgx3p
+fovDvM5Cpy/Ne+FX4BpNa0bNAXdX2bjhBJUizThka57Czc+JFBuoCj2ign0U/65vovdzzcusZk3J
+K7hAr+z8rm+i57v+RMuwXgfZRbz2o/tcrvRDPpY925ddGpRYF+ja5zTn2Od0o4wOH8Pjd93rqlJm
+sS2LQeLnrXzFPniQEwfo2PeNw6qM7Nn3exKQs85BwZj49Srh6JblPWDZYNV1Dupyq2HUKvKQzX+Y
+kyNa0rkwOOi5kMHgAOfCT1qG9Uedf/X/tX9bwBGThc8xUgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/cc738369d534ec555c309e362d73a47f6ec3a81d0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

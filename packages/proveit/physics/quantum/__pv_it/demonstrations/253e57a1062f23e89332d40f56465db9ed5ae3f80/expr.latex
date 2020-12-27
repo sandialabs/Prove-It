@@ -1,0 +1,7 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{i, 1}{\Big \{} S_{i, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{i, 1}{\Big \{} S_{i, 1}} 
+} \hspace{2em}\right) = \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{i, 1}{\Big \{} S_{i, 1}} 
+} \hspace{2em}\right)

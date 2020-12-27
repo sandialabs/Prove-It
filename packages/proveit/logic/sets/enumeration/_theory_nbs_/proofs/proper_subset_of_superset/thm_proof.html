@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.proper_subset_of_superset theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.proper_subset_of_superset-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#proper_subset_of_superset">proper_subset_of_superset</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.proper_subset_of_superset-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> proper_subset_of_superset
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="proper_subset_of_superset">proper_subset_of_superset:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/87c64bc5f2e365cf353073c55b1f0acd55c699e60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAAAZCAMAAABZy1twAAAARVBMVEX///8kJCRlZWUoKCgtLS0/
+Pz9RUVEvLy8QEBCIiIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAABvI+bm
+AAAAAXRSTlMAQObYZgAABrtJREFUeNrtXOl66ygM5c7cmTGr2ez3f9QBbBabJSSmbm++8KN1iXyQ
+4CBLMikAAxtljHHwaZ/2Axs25FRDEdlnUrubRvqLRyAIih+jzO2tZD2nH7rf2/jGK7GoGwbDE+kR
+u0eZ+935br3kCd2XuMX1ELqPBHy7JuZ9atZbhkNLl29f752C6Sa36K2nPNJdSf/pIobQfSTg27Vl
+n3l1z4r3DaNufiovCNxqvVgi3fnsr+cxwcxIwPcL2MGH7mCV99IdKBhjd++DlRxD95GA79ZC3eq7
+6K5ntjXyfXTHq7iZ7mKKdNdK2MYH2LxBDAR8tzyVgW+lO18U/37vfttwcaAFB7qDdbZtRE1yhx8H
++GYNomwlOFIITpfcXQNCTeWHS40W17XpQFgohOj05FcQQnKJ2gWAaL1Cke7Uic18GN3HAd4aV+Mv
+H2IOpSq6Z094MrO0XKqMtCCONRdUiS69MgO06UAQq4l2xcoPTz2j2bxc2GRFgGi9XiLdMUqz1wF0
+Hwe44y3jsACu4frEmqgR9VMCC9xivk/uJWEx2bHQNjR5KbU/QLSLIJUgwiszQJu2MvtwLnRfYaqY
+DQSofHkOEoCy9ZJFurtpgE+tMWFIGd7AiZbo/gLggyfVwMrVXMHl+zWfBiVSNA/mJrwzyUcVyC09
+s0tPEHoppk0gilrET8rvFKMyA7R5oMwmszgXr853XZ6DhvVkTWbAurPOYYRUyL5wljNQZggkinR/
+ArCrLfJr6B5wjVn//bvtTznqSVIAmnB45m8OdZrd0m9/4Jem7ABRiJOTtZtrAQgBg7RpK5O4XJwW
+I6eo2IU5aFl/oDtfAOk7TaBnyYWluNQQGLVVMZh5ArCvrfxr6O5xrVn/CPDldA/BDKAzCD5OrheW
++gjRjt1r+JsyA7RpK+MnXZ/8cerpL8xBy3qcBjMmq6Sb39FIE5M2Awhp2KG+zwfl21oSSTis0T0C
+AoEgXXpy7oYgWY0+Is3Be3P1Nt09rjWLqCNLu/WuShboHlPVrRginI8zmaI71vHiUkeIfPWOlRkF
+mwW769q0lfF0xz7GP2wAM2Eve/cAkHD1YH2aqho5HzJpbPWYDAcgjRUL12enIC6gJCaY0aRG9wAo
+GDGsclSlzZg4Eczrd0zEGh7DgEwP4aJcg+4e15qF+IGl3XrXFS/QXZ0LkbMhoGZ0cxvYs26JNYyH
+FylEvnqnEnclKPRSTW0KQ+ddDWWCDDXdM0p7EHVegyR07zE9KhIAEq4erEfqkL3seTIXkO37D3km
++z5hAVO6G5vOKWScXJ94I+s4mat3tFPAIFhiKAz7c8v6yUM4L9ek+47rzJqPGWa33nXFxZSFYPj8
+mklQCAmnEKefMuZHZLR+4YUiRGH1TnQXlGJRp3tbm1yHXJuWMkEGwb32FaCV0hoeZ6gxbD4HHiDh
+6tH6/enr6a79fdTc5JxiDDNdH55cPca9P7IssXTn+hwNxj894GRgdlfDmrRJBIsZHqJRrgMuyjXo
+vuNas37/7cwCZEbP6d1QnOQv2pqHCMJSy57aUEkoW71sGKLmzkMEl7XJlMll8p7oEHqGzWUCVw92
+CVapTdkkHRpG8DW6Rttndqj5SQ/eHWACa3QPjztuI1aX3TZpEwU1klojIlVcELtbPX1D1vqAhbuc
+Q1MVuntcmkYszrt3691QvODdkyNiU4NgXa+jS0LZ6nUeEZvAF2iTK9NxV/L8e2nUyFVQOSKWNr7u
+O0TPFovPYu9j2IUvMX91DzytHtDdhlFkxTrwc0Ms/AiCEi6OhNJhu8/MnXrer93pBxRYWMXb5aSd
+cFah+45rzBL0FHKf9X5a8UqJx79qLh0xlz6m6MnES0Kn1QOXzrtf1SZTJpcp3CUZ6B82l0m4mlif
+HgA+bi77tz2TzaktqxPr+1zfHm7N0m/C7dANfUR3TKGEKNLGIRLr99IfMhU0ibx9+CA3wCZPlfLX
+HEENo9Ot4nk5g3Z8U5dWZjZc0/eXPNH9rPfTilfoHmrf2ReIOGIrdevX9X6uJHRaPftY7zsYkX+b
+6bo2mTL68V1x1K5hdXlQnxoE62deoXu+285Fkj12r1RDmqUSUUTM+pgt7NhfMvtM5nCP8Jh9v4sr
+dffQfkWzMpZ2DpQrXvSsXIfi1Q/6rqp85++q6vTLe+1peO79ToPuBK7uhFIJ8dBn4wpbG6CQnz9L
+rj3cIzyLJg+HYEp056haP+wdKFN83PuqTxvVHtH9yT3fkRjpJ0fRL9zb1LpEd4Wb9cPXBqKfA9B/
+Gt2fbOwP+D8zpdNmh1ngQw63kc93uX5Ys/9nhv4PNK1/NOhVXIMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/866574fa8bbe9e85926e2bd99e7838dcc749c6f30/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

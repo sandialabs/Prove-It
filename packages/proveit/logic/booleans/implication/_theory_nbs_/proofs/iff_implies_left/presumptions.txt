@@ -1,0 +1,21 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.implication.false_implies_false
+proveit.logic.booleans.implication.false_implies_true
+proveit.logic.booleans.implication.iff_implies_right
+proveit.logic.booleans.implication.not_true_via_contradiction
+proveit.logic.booleans.implication.true_implies_true
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.not_false
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.fold_not_equals
+proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.sub_left_side_into
+proveit.logic.equality.substitute_falsehood
+proveit.logic.equality.substitute_in_false
+proveit.logic.equality.substitute_in_true
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.unfold_not_equals
+# THEOREMS AND THEORIES TO EXCLUDE:

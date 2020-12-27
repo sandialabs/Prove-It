@@ -1,0 +1,9 @@
+proveit.logic.sets.inclusion.relax_proper_subset
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.logic.sets.inclusion.unfold_subset_eq
+proveit.numbers.number_sets.rational_numbers.zero_is_rational
+proveit.numbers.number_sets.real_numbers.nat_pos_within_real_pos
+proveit.numbers.number_sets.real_numbers.rational_within_real
+proveit.numbers.number_sets.real_numbers.real_pos_within_real
+proveit.numbers.ordering.gtr_is_not_eq
+proveit.numbers.ordering.positive_if_real_pos

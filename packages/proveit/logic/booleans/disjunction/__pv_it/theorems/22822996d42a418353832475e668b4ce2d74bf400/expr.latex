@@ -1,0 +1,1 @@
+\left(A, B, C\right) \mapsto \left\{C \textrm{ if } A \in \mathbb{B} ,  B \in \mathbb{B} ,  C \in \mathbb{B} ,  A \lor B ,  A \Rightarrow C ,  B \Rightarrow C\right..

@@ -1,0 +1,1 @@
+\left\{\forall_{p \in \mathbb{N}^+~|~p > 1}~(\lnot \left(\left(p \rvert a\right) \land \left(p \rvert b\right)\right)) \textrm{ if } a \in \mathbb{N}^+ ,  b \in \mathbb{N}^+ ,  gcd(a, b) = 1\right..

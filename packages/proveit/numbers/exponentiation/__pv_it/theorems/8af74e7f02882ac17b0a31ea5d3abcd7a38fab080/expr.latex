@@ -1,0 +1,1 @@
+\left(a \in \mathbb{R}\right) \land \left(b \in \mathbb{R}\right) \land \left(\left(a > 0\right) \lor \left(\left(a \geq 0\right) \land \left(b \neq 0\right)\right)\right)

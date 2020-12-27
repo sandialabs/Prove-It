@@ -1,0 +1,1 @@
+\lnot \left((\lnot A_{1}) \land \ldots \land (\lnot A_{m})\right)

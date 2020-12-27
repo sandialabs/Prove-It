@@ -1,0 +1,4 @@
+proveit.logic.booleans.conjunction.and_f_t
+proveit.logic.booleans.conjunction.and_t_f
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity

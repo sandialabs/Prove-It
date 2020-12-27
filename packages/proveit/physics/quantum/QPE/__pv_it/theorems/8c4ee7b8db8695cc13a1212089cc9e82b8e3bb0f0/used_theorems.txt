@@ -1,0 +1,7 @@
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.number_sets.integers.nat_within_int
+proveit.numbers.number_sets.rational_numbers.int_within_rational
+proveit.numbers.number_sets.rational_numbers.zero_is_rational
+proveit.numbers.number_sets.real_numbers.all_in_interval_co__is__real
+proveit.numbers.number_sets.real_numbers.rational_within_real
+proveit.numbers.numerals.decimals.nat1

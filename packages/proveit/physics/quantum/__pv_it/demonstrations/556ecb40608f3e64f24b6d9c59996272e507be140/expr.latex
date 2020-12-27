@@ -1,0 +1,13 @@
+\begin{array} {c} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \control \qw 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& Z 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \control \qw 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& Z 
+} \hspace{2em} \end{array} 

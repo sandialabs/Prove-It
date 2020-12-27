@@ -1,0 +1,6 @@
+\begin{array} {cccccc} 
+ A_{1, 1} & ..A_{1, j}.. & A_{1, n} & B_{1, 1} & ..B_{1, j}.. & B_{1, k}  \\ 
+  \colon & \colon & \colon & \colon & \colon & \colon  \\ 
+  A_{i, 1} & ..A_{i, j}.. & A_{i, n} & B_{i, 1} & ..B_{i, j}.. & B_{i, k}  \\ 
+  \colon & \colon & \colon & \colon & \colon & \colon  \\ 
+  A_{m, 1} & ..A_{m, j}.. & A_{m, n} & B_{m, 1} & ..B_{m, j}.. & B_{m, k} \end{array} 

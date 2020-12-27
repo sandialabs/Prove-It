@@ -1,0 +1,19 @@
+\begin{array} {cccc} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \rstick{\lvert 0 \rangle} \qw 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 1 \rangle} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \rstick{\lvert 1 \rangle} \qw 
+} \hspace{2em} \end{array} 

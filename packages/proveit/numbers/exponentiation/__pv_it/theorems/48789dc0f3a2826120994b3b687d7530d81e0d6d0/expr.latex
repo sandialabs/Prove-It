@@ -1,0 +1,1 @@
+\forall_{a \in \mathbb{C}, m \in \mathbb{N}^+, n \in \mathbb{N}^+~|~a \neq 0}~\left(\frac{a^{m}}{a^{n}} = a^{m - n}\right)

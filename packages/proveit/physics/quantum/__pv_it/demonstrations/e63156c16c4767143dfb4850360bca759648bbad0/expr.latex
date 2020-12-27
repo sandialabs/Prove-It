@@ -1,0 +1,6 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{X}   \\ 
+  & \gate{X}   \\ 
+  & \gate{X}   \\ 
+  & \gate{X} 
+} \hspace{2em}

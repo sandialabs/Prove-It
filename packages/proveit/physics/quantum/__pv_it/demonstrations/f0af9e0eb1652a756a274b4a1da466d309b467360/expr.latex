@@ -1,0 +1,7 @@
+\left(\left(\begin{array} {cc} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H} 
+} \hspace{2em} & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{H} 
+} \hspace{2em} \end{array} 
+\right)\right)

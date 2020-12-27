@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.inclusion.subset_eq_is_bool theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.inclusion.subset_eq_is_bool-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">inclusion</a>.<a class="ProveItLink" href="../../theorems.html#subset_eq_is_bool">subset_eq_is_bool</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.inclusion.subset_eq_is_bool-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Variable</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Px</span><span class="p">,</span> <span class="n">Qx</span>
+<span class="c1"># from proveit.logic import iter_q1k_x_iter1l, x_iter1l</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">Or</span><span class="p">,</span> <span class="n">Boolean</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">x_1_to_n</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets.inclusion</span>  <span class="k">import</span> <span class="n">subset_eq_def</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.booleans.quantification.universality</span>  <span class="k">import</span> <span class="n">forall_in_bool</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> subset_eq_is_bool
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="subset_eq_is_bool">subset_eq_is_bool:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/8b26103cf8468a9da71c4f144174e80b2ab6406f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALcAAAAVBAMAAAD2lGJJAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAuRJREFU
+OMutVU1oE0EU/sz/JmnaQ6GCIgEP9qIJFvQiNOChUpDmVC9iAq2QerARkRyqsorQRJTmZD3ZlYqW
+CrXgQTwZmoNaRfYkiFYj6sEKbbES24rWNz+72WyzAcEHb2fmvZlv3nzvzSzQTBRdaDMJFRvbH5NW
+WGfBYeGUVJITW5wtw9WuzBVgqN7sOpP/0zEI+GjTF8yw6AD+VSrJsjS9zuVy50R3mwp0JzFjWxTx
+RqcmdQQp7Jvs9Gpj7Ja4UNZd1nh763nNnSLC+uIIR+tXBTy6K0mIc7QPLQrPNgb3F4WS3O8ummcx
+JEamD1EE22Qoo7mLEjw0S+C3yTQ/PT3uwMq4VBI9lmCN2xrGJSDYQbF95iPvZc2MPNxL4BFasZbP
+n3cA3y0V8GhPeNH4re4qcOwUtWU+mtFqtPT0J4kPIvQkUOBG8T2yWs4YxXVdKnAHKc7sDQu2t7rQ
+OcI67/lwqMZ5x2Y7o4kyepjnlfo/BHNtCEsSMSIVSGAijlpdippbJ17T1HnEh6oloeGFEl2ALDup
+i5948jd3udMIbchp7VLhHegaVu20BCgG1y9WNXzKriUSCQ71KFlWiBpdrJg/KyokCnfFDu6houZG
+a9m1UtSu7wa4Yo0cqk+AK5V+vnM0z10Pktin2WmhGvELrr7Vl7mPcdnDh21W8HSEIsqyRA4ykw8H
+uatvb2catoQqBB5Z4aa7g5q1zFOqmdD9dZG/EwnFQ7YD3iLGXa+APca0slRW64F1YTs+alz/jxTc
+drbVIcHnrHn9S+EyBeguMe4Yj8FPL8d4TNeACWNaj9CpzUWExn7G6y/B6c2BA3k+8wsfBzO9dQ8X
+IklWfAzUrWGCDUDp7ytuvf5NJJgVreeZuP6G3DN7VDqtunIVygaUnQ0eriZif7gMmTOTsAZl7IJ3
+B56udmUSpr9gXlwDKJerPblSZhwOVLH/VZx/Fs5SaGwOFBv8mv71N9fikJQ3doOO/yp/ATApxewe
+JdHZAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/cd7e44dc86b73f7d5d49a3cca404ca1093c2d98e0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subset_eq_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../axioms.html#subset_eq_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/axioms/7a59274882f4df50c95c1e6d7694eb9e867fca2c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATUAAAAVBAMAAADV6mS1AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABCZJREFU
+SMfNVk1oXFUU/jp/mf90ISjoYjCLhmCbgYAFqWTQRRUqGbtQF2IG20Ja0A40ZZSojFLIxB8yqzYI
+Nk+UpqZSCy6kbgxNxDapdaDgT39HtAsj2KG16R+lnnPufTNv3n1vFN144Lzz7s/73nfuOfeeC3SS
+WE1pJ0lUja51lzp/8kGnwaOkF0bF1Ll93mfeQa0kLxiDqZ0rAyN7gO3GyEJaxv2cipc9uzVehH1d
+ELPE3cs+KL9pJbmsu74vlUq71esq+sdgHodNbskj9ExbPqjpqne/wovXhRubKQ6dtyNIZZXy62X1
+p/0nWsPDtDBDWSQzBjcBnPKL2mmffo13TLixYe/ETQ/pqiolOTRYba6kLf3UdTGD+GqDmwRiyY/b
+q22tH0ulehveh4obmdTi7Ow+H5B9Wklq/Tk2QacXb1Lq3Euu/WpyOzc7+0nRb4O1DTzX58ZL54Qb
+mxuVyms+KD1agZD1lWR2l3N4BXh2B9l5k1t3pTI+54MaoCyJP7j9sWOyL5YNvGRWuLHZBkzIkHo+
+cXV+xM7V97QCH2NYsmqv4x/hlfO9Y/xygR/JP0Syilskj6gr45vtKHn5KX7IvMGNSNXAS9WFG5vH
+ZUvQ+58q6VcjaSfQmFYgh+ksWgeK8v8mJUWBXr4w1y2UNbbvxZydxZQXi/jOelKImniJonBj04WA
+hOujOzIjWEDilp59j1aEtwzsLLtjGiUXArd5f5ncUMRau3Vo/lEO3qB93K0ikhYqqvE0L3a9DS/c
+EAQ2yZr64eIu5VUGwbqbW4gQpdN5XnSTj4ErPty+hZ3xqXfe5+MnOZN1cAOuqMaUiefgFqs/I0uT
+UZ58lsc6yx1TikKXCvTv7cdRhBNhoyPfCprb/jC9JXs2b6OcEdkcLTtiivA1TdTEC6mYssHEVklK
+rJcZQ2t7C3DthRihpRvSdWCr5Tzehsv2XnCtW3QvrU5fpD4KHYRCsOjYC18GGpDDI5iBG8+xF/C5
+fHQW/TLjFLDGnj2vlc+46E3V9/y4XbN+Jt/uY6YbPLgl2NN8uoa4ritHAg09SodD6Ha0oe8QY82v
+bLzgnCCwQTdTj/9yclJW5F1g2j5gNyo9eHcZicnr2XYCL9/d8nBFZl7y4KbyqbuK8CuVylvA4Q3H
+7R1GwYq/2Nej7xcH9lguvHRenb15dokHgxamuQHaKENVs2Z1kHjRi9sZSSHkoTLkEcSuedesTeN2
+zdIyoxBmmh1PkZO12NuI3ULsAY9a30E8ar0uTo1TmMPXslYUwDt/V+u1tGq9zs8biE2+Hr4f31wd
+GMk1p000y4XNo1Rq3ZG0eNyR9IK+tOkhC1GO02QZU9dr7grhHYbWHan9Dut/t/SXCT9uWno53/7B
+3dLJfMF04Oi/uJOnzFVY81/u5D/xpX5UTJvU8H+SvwBVZVBM8dnIYQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subset_eq_def_inst</span> <span class="o">=</span> <span class="n">subset_eq_def</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="subset_eq_def_inst">subset_eq_def_inst:</strong> <span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/7763170098839520014278572d2a1ab9443cb7e90/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/axioms/a6f3aa05c468a933e5d3e8ac39533ce8cd53e55f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAAAUBAMAAAB4yRxuAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAwJJREFU
+SMelVk1oE0EUfsnGZk12Y5FeWsVGRCh6iOBgEYIUvOhB6sGD4KXgRS+a4kGtQooWXQ9C1Is9SJei
+glLbHKoUFpsNqEXbQwTx0FKs4KFYpA2ICtXWNzO7zXRnNhV8h8zkvcz3vXl/E4BUBepKw5yk6hms
+f6QuJMWb7gOY5F/3SD8wW6v920YBdkgWAjZdZsOgJ5VaEY8ADHPtiGd9b1nWNb7dVAQYSMM7Be8B
+ugyF8Q6r1QIeAbPAnRlx2fr1UO13GQxXZwG0nMy7QKNZDKH1ICUR8AjoPH1vBuYkV/Oo+pQD47jM
+m0Avta4QXn1dRcxYli3hEZjnukq+gy6bRaznAMZJJHgo85rZqan5sDCvM+y9qsIjcJmpYu55VoO6
+eKQK0LYd14MyLyw7zvUwXgo50f3lAs2PMaTEI/CSqV5BhmXxs3A8Wp29coNupumH9pRJwePdCjAe
+oFv7jpDGPvOmTsMbmVPiEWA76IDFQrAD4isArxtxc0Zx36Ng2IFq+u7vEFJztd8xSplU4xE4wVxp
+7m8tBuOcxPzHf9A6VPDqEPeHg3G6n27f/vHNCGlAklf7bhokW8LzeGPYXMwo9swW9C3+M4RXq6y5
+OHNuii7ZWwIvnuZIC2o8L85YxTrvlsfr2y1Cg3dEyG+jx5uyd+Km/W53Osa7NZpzhDjj6TSfFWo8
+Xlcp5E0sMWO5yRXbN1P06ypwXxhvQu/dFr0jwXURuC/UVYObRyttzByo8AhrEtpwyRVu3TXmz8lH
+GP9T9Ow9Fe/ZXrwjPMO8ct1HyPtmhOzsKsG32uUlPEIvPbk6BA2lX4Hp1rLafMdhY2RQxcvzh862
+OY6DQ+jJ/pIfKYQsX5x4wOuuPOoq8EhgqKnE6FXxmhQuuhTFALNB58JiWjknD49ZtoRHQod4TVTv
+ApdFzdZAY3THMAKVDd4FAY8Exo5mWbV30BPVO8il/KE9C/CCVscypEq3pcmlFP4OhjzSqvkn8Xpz
+iOb3H959EY/Ahv9zTLkALv3P/xyK19P3F/6h9LAXumChAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subset_eq_def_inst_rhs</span> <span class="o">=</span> <span class="n">subset_eq_def_inst</span><span class="o">.</span><span class="n">rhs</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="subset_eq_def_inst_rhs">subset_eq_def_inst_rhs:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/9c6550aadf9fe10610740c2fb2b7f2f4ad4b948f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHwAAAAUBAMAAAC9l0S6AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAgRJREFU
+OMtjYMALOC/gkeSewMDwAMS4i0vFCqyivPnfjDNaGBgyGRhOg/ivcGl/iV2YsYGBwT6AYR0DwwyQ
+Extw6OY1wC4eD/STvwEDjwID3wIGBp4NOLSzT0Dm3SgvfwBh6QPF7yswcAkw8J5atWo6LrejSERo
+wZmNDAxc4kB7nzAw/OjoqMGlXRmIF6lN0VEA0lxIAfSNgSE8C0gfZmBIZWDoRNMF5/cCdR3gLWIH
+uZkN4RHWb3c1qkGMewwMzgxcD9AC7AuMBVTDs4DnFwtIJwdCAdNPBoaFCUDGdmDwMDDB0gbXHmMQ
+c/FfmDoRoBgDByReAt8BAcQiDgGgEb9BMQA0/gI7PGh3rgJRp4qRtDMw8CuA2TMQtvMDbWb6BNHO
++SAMyDhkqhbAAollVoUOJMcD1QRAkgpqtLOBfOgOCqgUoFkL8tgd+CCSbAzmSEHHvUAfKAtkMyvA
+tYOiPb4BEnQMmwuANjK8BfoZInmbQR+mDhgx/hv6GeYinAIGDxkYWCRARtrA/QYMzPCOjg5gUnp8
+pn8BVB3QccuUFtlCgnZZC1Q473+yWQc4oT4FxRNIlPUDK9DVIMC8gGF+ANZE69NejhrFXAVQxnye
+BzwMPGBdvkD3XCCQZaCABxYcy64cOsXA0A2K0x8MnP21GOkPK1iHymUC+Z2I4oI4wwkVVrwTGABA
+6n+UZZo/5AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># this somehow loses the domain A for x</span>
+<span class="n">subset_eq_def_inst_rhs</span><span class="o">.</span><span class="n">deduce_in_bool</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/3bb6c00736b0789ec33fbf79205b453d92b6a3c50/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/45082d44ab7a661216a627ad6dbd42f6d0f7718a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAUBAMAAACdV9kCAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAAkdJREFU
+OMuVlMFLFFEcx7+kOzuz7822UBeDIOoSFLKECxFJI+xWXmoPHapLU4o3ZenmbaGLFIoiFCrF1kHy
+1CJh0EEW/APcSxFhNOQpwozU6KDZ783Me/N2dyx9MMz8vr/3PvP7/d77PaytoGUkyth7JIvA6HSs
+6y3q4jWia/3xlAe7507lK8j5q/SRnsjvdFwQ6hthvtd97/YI6ShwaBuDLSzY3Ou/Vyb1hsjK0Tzm
+iXgU/w2kfoJ5Laz2VDldc0i1XYCVNI9V1OeZvVNPw1S2yPoDI6NY0kesZEmwzIWBgVv66gaDX3PV
+3wly9zHwUbKUj1hsVrCwmc/P6Mu/0DO0evubJ4xBhcLhLPgkmfOSpXzEmluqCfUiUNBZVwGjaj6z
+/A3ORfry+bFeUYtRycpF9erYPearL2DUddYTqp/LfqX8smmbsl6EcYTew5LlaLVnI1WhWkg3HE76
+g4H2YCI//olGoPcIHgW2HLIiH7HgvBQqK1toYlFxvKAFtLg2BMuLWAk9LjhtQk3Ul8hePLtaUznS
+gtDINBwvXKoAczLHjM7K2r5aoPOfdrutiqp90l0nRRidUafQ8eKbeu07G+J65Kv3x2kWPkgP7fmr
+0nXcDA6uOsU2hfH8Mn2ckSzls3mVzWd9NajNllxEOfR9Hzod7IfRNRuobZ83TnZdEV8rkiV9UW9T
+K4hs+A8e20Op17KHwmGMqx5q8skuvcPq7D+9HY6Y3m5i9T1cXJBa4Z+smDunibWPu1D7Uzzr60Hv
+aJOquRZ7R/8FE96kp5e/H2EAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># addition 20200730 by wdc</span>
+<span class="n">InSet</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">A</span><span class="p">),</span> <span class="n">Boolean</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/bb3a05413563d71006fa752cdc53bbd4dcdd741f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK4AAAAUBAMAAADmcxvOAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAApdJREFU
+OMullU1oE0EUx5+m2WQzu9scvEQQSr0oSg3SeBCLK2zx42B68KBeurYlt5YgeBAvOQgGpVi9+IUi
+Hkp7aigSQaEs9NRTo6CIVFisF5EaIVWLoPW9nczuJNmtggNh5/3fzm9m38cE1lZgyxEvbeFMDAFM
+3g91PYcaPcpRS8dC1eTRRm//KYCcR5CHccv6lTlM6jMy30RxX4fL20yAAw6Md3BB19yxkRKqZ+hr
+zQhssidcX8bwzPUAczu4XamS4Zio6jYAK0Zw1aGWXU7ee8hnddRvuqCkfa7wITdRJG6yWiiciwpD
+i0M7bYvpMQAlg9Y7wfV9yGXTxIV1y3oQxf2Av4nV859dMsZ9LDQAlg7hc15wfR9yZxcdUo8ADLbh
+fPsEnquSfKR6RZMLTt4of7xDk0nBzQXxzWzu9NQnoNTasvVTzHAxs9n3lBfmILnGN4ALWZxcFlxT
+yhsrV0hVwRDFr1zppenIhngLd1agiy/Sdr3HwRdjvowfVBdNbuBDLpgzpLKSKjBXLxXoUb0tcQG6
+Xd56wXm78azGb4kbl88LZozUeG0R7YX9q06KV6vmWlIccLHDjXRL+cYoWLMiDmmZm9U9dRD7zrAH
+1Mc6d8Vgr5S3hF1HLxl9PpfKd9mU89bXct4bnnpxCs8IbzGu3HUN6uItrKO5Yh7O8ibxu+clQGoH
+7bVPcH2frlXYfNZTefwwxUuWZWETvXqRF9WI3zn6ZWIPz6vSP83Vgc2Duy0PtCK4whfcO1hWRNG+
+ahgAGtttGHZC+zj1VPSxqJ8pv4/bfOLWGGY1BszDzeAXlP5y7zRHyL3Txh29vlAFOE6BX4d4/m5H
+54WOkHuyjdvsI4rvP9zr8q7h3E//8z+UxOivhf4P/QEK5rqIkl5FAAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># addition 20200730 by wdc</span>
+<span class="c1"># still loses the domain A for x</span>
+<span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">deduce_in_bool</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/3bb6c00736b0789ec33fbf79205b453d92b6a3c50/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/45082d44ab7a661216a627ad6dbd42f6d0f7718a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAUBAMAAACdV9kCAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAAkdJREFU
+OMuVlMFLFFEcx7+kOzuz7822UBeDIOoSFLKECxFJI+xWXmoPHapLU4o3ZenmbaGLFIoiFCrF1kHy
+1CJh0EEW/APcSxFhNOQpwozU6KDZ783Me/N2dyx9MMz8vr/3PvP7/d77PaytoGUkyth7JIvA6HSs
+6y3q4jWia/3xlAe7507lK8j5q/SRnsjvdFwQ6hthvtd97/YI6ShwaBuDLSzY3Ou/Vyb1hsjK0Tzm
+iXgU/w2kfoJ5Laz2VDldc0i1XYCVNI9V1OeZvVNPw1S2yPoDI6NY0kesZEmwzIWBgVv66gaDX3PV
+3wly9zHwUbKUj1hsVrCwmc/P6Mu/0DO0evubJ4xBhcLhLPgkmfOSpXzEmluqCfUiUNBZVwGjaj6z
+/A3ORfry+bFeUYtRycpF9erYPearL2DUddYTqp/LfqX8smmbsl6EcYTew5LlaLVnI1WhWkg3HE76
+g4H2YCI//olGoPcIHgW2HLIiH7HgvBQqK1toYlFxvKAFtLg2BMuLWAk9LjhtQk3Ul8hePLtaUznS
+gtDINBwvXKoAczLHjM7K2r5aoPOfdrutiqp90l0nRRidUafQ8eKbeu07G+J65Kv3x2kWPkgP7fmr
+0nXcDA6uOsU2hfH8Mn2ckSzls3mVzWd9NajNllxEOfR9Hzod7IfRNRuobZ83TnZdEV8rkiV9UW9T
+K4hs+A8e20Op17KHwmGMqx5q8skuvcPq7D+9HY6Y3m5i9T1cXJBa4Z+smDunibWPu1D7Uzzr60Hv
+aJOquRZ7R/8FE96kp5e/H2EAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># subset_eq_def_spec_r_h_s.deduce_in_bool()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_in_bool</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../booleans/quantification/universality/_theory_nbs_/axioms.html#forall_in_bool" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../booleans/quantification/universality/__pv_it/axioms/de5bd4b76e133fdc5f4be7d7ae8e6f2f717df2950/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAX8AAAAVBAMAAABccvPcAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABMBJREFU
+SMe1l21oHEUYx/+93N7L3u4lHyqlgnIm0Eho08MgBWnkqmC0It3mQ/FDIUdQMX5oT1uMqBxnBXtR
+pIeICYXaNUKtUdtDOarF4nFXQdJWFxoRJS33wVIUrIfB0LSSOjO7O/t6ex7qA7c3O7v/mec388zs
+M0BbC11TfGrjGgavoHMjuk4sUQIu7/d99AUgX82gQcuXgtqQMkn6Jzt7Pg6c/Qdi0+S915/ac5+u
+68gmQDtyDOizxdV1TwCREvUN52jdr8EAUpn8JVVH7S+03fZibt0E9hWV6TqyEx4AJIXU8fc1iA0G
+MEOntRAMwJ7POEc0TdttL+Y2VgW+SjFdRyalPACxsBZSSK81BkAHlo1wAAAb5HOOymiJtttezG1z
+hvyqTNeRiT0cQD44mTcAEmUC8B7zTZ6fm5tGG4DFubkPc47KaTaz7cXcDpHf3gymO171P5sAwgGV
+z4C0nQAkM9Q3XC8WX/bRVe0A3cXiwarjcZ8emi3EPrZKgm1J181ueHtjKnDUeyceqJk3dRPghGqF
+0MgusjNKaQbwJDDl00jaDhBRECNz//By/TWjlTd1gBZirwl/AaeqTCdW5eeiDQit187H+CGVN28u
+mwAT1hpYd2stDakGA3iQLedggHCa7QZyDyQjkl7SAVqIfT4my+frA7pOUqUb4ZIwlGv58jy+Ux8x
+b06ZAAXbIpYukcFI5BhAFCH7Di/sO4u7si4A5LCJlCJZhJp65VodwCVubbEbXCciRn0JtwZQUbRt
+XwaAcOc1YgYACo+RmibzTdKi/OWP6sP4XFK71PrQvqGyDeACaHdRTe/bArCLgz8DOUuH7lQwAPCH
+FyBunwEUIhwg3tjFN/c3Dqs4k0pL7hDCuwKZFJwsoV91hJAurt27wZttOCvH0pYOY0obAOFPcrn4
+fS8VjZgh1GMHyCZZC9Q3TJHPsjw82kcjmlil8pYXIPYOfXNH7bw5LcYiZuKQuieawTOuoGeVjs+A
+oUuom8nTIIDTJFAHsHAH1tsX8T2OGVjkixifkZbkbdqakp7aVKRPdnsAElto6Vurj7oBQMUCfgN2
+3+4aRFpp2e8q1+0oH8IRfQZOkh7FVegFfhe+GWvGtfhsDnThbDUBomWeSlSlOomIrqoOQCPycD+6
+VZE5XUG17gHQg/JVy6ERA4CFM1bI70X3OK7YyvffGue6Y72zw5oOEKWi56lzWfMyqUIcH+gjGWIk
+FaZRc8UEEJ/e7kjmkFR032Q6OOPYBuGFYvEAAThCF6biBPiJlm66UwlDLDQFLwCtvHhm0VVrpRIs
+hE5782eeM65RuqoKxBxPJcLfTObtr35g+MbsNmwVkNVnIDzqTiUMl1bcyZxuR6WGxABm1Pjr5oVV
+flpwb1JWMpfIOb73vDdeOoroo4pfMse3CZtv8Sb2V/A1LS4Ai/4Ag0u2TGzKavfYQm2eAewsC+ux
+s0QvZVYZUR5392p+uONbllMQvRnFLC89hNAF33TaTDgaNt/CWWwkmzxZJuE8yRz8AbwHGrvRELIS
+U70UxaaMV2ebD2+7mg+wP0Cs5PXtbrIGvFlAvsWRst9+pBxdKrPzn3USpHODL7V/d6SUSUOD/kfK
+H4lrVzP4L00OGtr/yf4GGa1t6rYvMiUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_in_bool_inst</span> <span class="o">=</span> <span class="n">forall_in_bool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="n">one</span><span class="p">,</span> <span class="n">Px</span><span class="p">:</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">x</span><span class="p">:</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">x</span><span class="p">)})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forall_in_bool_inst">forall_in_bool_inst:</strong> <span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/3bb6c00736b0789ec33fbf79205b453d92b6a3c50/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/edba590bb48d95caf2f41ac98b567991d237d0e70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKgAAAAVBAMAAAAgMbgsAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAAnZJREFU
+OMu9lU9oE0EUxj9pkmazm20PIkQQgp5EqUGaHsTWFTYHPUgRD3oy/qEXKQQPQm+Lp1gpxoMVK2IR
+LOaipUiEHmKwXkSw8SIiFYJKwUM1GKUg2vpmtzM7mc1qT77LznyP+c17M2/eYmUJne0k/mHdw8DE
+VEfXPOrsU1T1mBVKix9q7ew/CmTd5bKZ1+3fqQNMfcKmb9SVyeHwGLfQhvtqGA1AkTQa5886pJ6g
+STQQ1+W/JL7oAI/S0BsBaCThmDWL1GQe0AvqwhvBrI/cuuONvlIW1xqI9Qoo9xG0u8Cg8crIyCmV
+EC2pinEsz4eH6chTNHvHocJHUH2GQfHdtm+rCDNNC79kH1aFMiqYaAEvBug7x6HCR9DyQo2pB4Gc
+Co3QsV3AlQYl9dxTsn7MreKnm2wwwaFZ/0xT69td9R5idRWq0SFX8DR/H892e4p/leYP4EyGBmMc
+akkXpRdnmarBdAJVMw3kYbNh2Qtvx3sybyVdkLnKqmAD6vsICusBU3VHQycosOZDpaLroSjNNQka
+lSOF1cXUaH2B5tW9H2vt6cP45UPR21amXT89z3y7j0EzSVfN0csy84PaNAbki7pkNrEsoH0Cysp0
+0ZIvqq8t0quuepGK0sBb4OU27tXTSKxGmlFHQDXxPl4Dia2siPZwqPAljVl9LuOqPQ0m0J1iki9M
+lBAbWv5Q9NOP9c94g8H1/btsl7LEodznNxR6ZGxbo2lIUOmZlvk+j/kz5Y2sJJ6p4uMd4bRe12Wo
+31DGwvpKh4aiQM+NVysyNMJb3/G7QyHQDq1PgXo2uZkmzS0XCv0s/05efSts/ncSp1xWpvC/7A/8
+obTQWfAWHAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># from the original, kept here temporarily to guide update</span>
+<span class="c1"># forall_in_bool_spec = forall_in_bool.instantiate({k:one, l:one, Px:InSet(x, B), QQ:[Q]}, relabel_map={xx:[x]})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># in proof.py we would likely use the same check_param_var method used in lambda_expr.py</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_piece</span> <span class="o">=</span> <span class="n">forall_in_bool_inst</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forall_piece">forall_piece:</strong> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/cd13c8df26572b6a8f93b2369e6b0ed63ef1e0f10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHYAAAAVBAMAAABh6QfWAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAd9JREFU
+OMulVE0oRFEU/ox58/PmDbNQZPWiJClK2BBlYaNmWGChKBQWyGZqWIxSZhYyC2U28sxikoWmLGzF
+js0sLGyGp1hQJDT5WXDe3N68N3fMUE7d3rnnO98993733Af8aM4kfjFXBFA1J8Uju4VJ7rl0y9QK
+MA2cafN7PuGuSMWSINDlwz4Q1XYY5NduLsIdpfN4myHJKFMAKcHB9kge48LvV5nXROCVDNED9+ne
+3iafmBfAcEPWXQbESqp4A7yFQkt8Zi2NWN1Go6wHRJMiaWBohr4nwCQQ5rlrlH3kXrCrEJgUNuMQ
+QjpVv6g5l0APRJXnEiYp0oc1IrTMZwIOA7O8Aztj5BySLrDkNUIF1YVDK2ll3P5HMlbC4SH+p6Y3
+FUja8QMXKJcNbtTAyqmm5ZlxneogOcetdb6cPRPmM7gluddreyWnl0Z4ghZSZu3dmDFp5VKaKKpz
+S7OKZ653NMi0wgHBAh6AkWodJ/m9iXVsZeuynWTsmoJVdL3o0M8FUg8BHaftxGtinUmDG19RmDP7
+Nd4WyvThrda8WlR4Ekxcoyd1LvpW/blXKerItqRKJq7xFlzzhZ6EpEsQPz8+NXGzneZsT8sFuPu5
+08Bf3j6/PLOBl8Tf/znuCP5j38J6c8jmB9aeAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x_1</span> <span class="o">=</span> <span class="n">IndexedVar</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">one</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="x_1">x_1:</strong> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/12b0a8510ae9ceee996115aa3b726bdd836499b60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAMBAMAAABy/puxAAAALVBMVEX///9mZmaqqqrMzMxEREQy
+MjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAACJHQtQAAAAAXRSTlMAQObYZgAAAFpJREFUCNdj
+YLhzeuWJAwwgwNvAnsMWwMDswMDAcYHjLecCZsEEoCgDC1CAgTMBpITvAJxpZwBlMl04x8BzAcyc
+p+DHsBwievvMHfECmFowQGIywZlcYq8PAAB5LRYu6/PK5gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># updated/adapted from original; not clear why this is being done</span>
+<span class="n">forall_piece</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">x_1</span><span class="p">:</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">x</span><span class="p">)},</span> <span class="n">assumptions</span><span class="o">=</span><span class="p">[</span><span class="n">forall_piece</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/cd13c8df26572b6a8f93b2369e6b0ed63ef1e0f10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHYAAAAVBAMAAABh6QfWAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAd9JREFU
+OMulVE0oRFEU/ox58/PmDbNQZPWiJClK2BBlYaNmWGChKBQWyGZqWIxSZhYyC2U28sxikoWmLGzF
+js0sLGyGp1hQJDT5WXDe3N68N3fMUE7d3rnnO98993733Af8aM4kfjFXBFA1J8Uju4VJ7rl0y9QK
+MA2cafN7PuGuSMWSINDlwz4Q1XYY5NduLsIdpfN4myHJKFMAKcHB9kge48LvV5nXROCVDNED9+ne
+3iafmBfAcEPWXQbESqp4A7yFQkt8Zi2NWN1Go6wHRJMiaWBohr4nwCQQ5rlrlH3kXrCrEJgUNuMQ
+QjpVv6g5l0APRJXnEiYp0oc1IrTMZwIOA7O8Aztj5BySLrDkNUIF1YVDK2ll3P5HMlbC4SH+p6Y3
+FUja8QMXKJcNbtTAyqmm5ZlxneogOcetdb6cPRPmM7gluddreyWnl0Z4ghZSZu3dmDFp5VKaKKpz
+S7OKZ653NMi0wgHBAh6AkWodJ/m9iXVsZeuynWTsmoJVdL3o0M8FUg8BHaftxGtinUmDG19RmDP7
+Nd4WyvThrda8WlR4Ekxcoyd1LvpW/blXKerItqRKJq7xFlzzhZ6EpEsQPz8+NXGzneZsT8sFuPu5
+08Bf3j6/PLOBl8Tf/znuCP5j38J6c8jmB9aeAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/963554a435ba1162784b56891eb82b4ab6ac93c20/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/0cd8ce5f20cb137ec40a27d204c0c2a55d5237ca0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEMAAAAUBAMAAAAkb50PAAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAATpJREFU
+KM9jYOC7wAAGbA8YcIHTMIYeugyv/qeZ2luAjHUwkVMYulk3MDDMF2DgnQATYC5AVyIPdIP/BAYO
+uBN4AiD07Y6OBRBWPVDufgHDC4SmJWBSugYusBWoL+IAQyWQebzoSTHQFkuwWWsQej4xMEjoMDDs
+BYoa8LZzAM2+BRJmQvid8dPd6jYgDcTMB5j/sABlMkDi3AhD2P8xMBxVYGAIAZrCwL0B7AEQIboK
+CCDO5Qa6n/0bWAkDA38BXMlrhCn8QBPYv4MtAkoKgEgPcHChBgvTF7Bz2Q7UM7AfgDqXExGAoGCR
+3wD2qX/Cfoa3QKHJYIk2uJKlDAws0QfAph8qPz4XFN0LwRKHthyAqND6rzlpdwKQgRQBDRDaeQcs
+AmAxjicaYWAf7sSAkaT24VQCS5i8uBImAKeFUisAqbDtAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># recall:</span>
+<span class="n">forall_in_bool_inst</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/3bb6c00736b0789ec33fbf79205b453d92b6a3c50/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/edba590bb48d95caf2f41ac98b567991d237d0e70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKgAAAAVBAMAAAAgMbgsAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAAnZJREFU
+OMu9lU9oE0EUxj9pkmazm20PIkQQgp5EqUGaHsTWFTYHPUgRD3oy/qEXKQQPQm+Lp1gpxoMVK2IR
+LOaipUiEHmKwXkSw8SIiFYJKwUM1GKUg2vpmtzM7mc1qT77LznyP+c17M2/eYmUJne0k/mHdw8DE
+VEfXPOrsU1T1mBVKix9q7ew/CmTd5bKZ1+3fqQNMfcKmb9SVyeHwGLfQhvtqGA1AkTQa5886pJ6g
+STQQ1+W/JL7oAI/S0BsBaCThmDWL1GQe0AvqwhvBrI/cuuONvlIW1xqI9Qoo9xG0u8Cg8crIyCmV
+EC2pinEsz4eH6chTNHvHocJHUH2GQfHdtm+rCDNNC79kH1aFMiqYaAEvBug7x6HCR9DyQo2pB4Gc
+Co3QsV3AlQYl9dxTsn7MreKnm2wwwaFZ/0xT69td9R5idRWq0SFX8DR/H892e4p/leYP4EyGBmMc
+akkXpRdnmarBdAJVMw3kYbNh2Qtvx3sybyVdkLnKqmAD6vsICusBU3VHQycosOZDpaLroSjNNQka
+lSOF1cXUaH2B5tW9H2vt6cP45UPR21amXT89z3y7j0EzSVfN0csy84PaNAbki7pkNrEsoH0Cysp0
+0ZIvqq8t0quuepGK0sBb4OU27tXTSKxGmlFHQDXxPl4Dia2siPZwqPAljVl9LuOqPQ0m0J1iki9M
+lBAbWv5Q9NOP9c94g8H1/btsl7LEodznNxR6ZGxbo2lIUOmZlvk+j/kz5Y2sJJ6p4uMd4bRe12Wo
+31DGwvpKh4aiQM+NVysyNMJb3/G7QyHQDq1PgXo2uZkmzS0XCv0s/05efSts/ncSp1xWpvC/7A/8
+obTQWfAWHAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># updated this from original; not clear why this is being done</span>
+<span class="n">the_inner_expr</span> <span class="o">=</span> <span class="n">forall_in_bool_inst</span><span class="o">.</span><span class="n">inner_expr</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[18]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="the_inner_expr">the_inner_expr:</strong> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/5800739b5bca6206da5885b3fd915d89de89022f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARUAAAAyCAMAAABF7r/qAAAANlBMVEX///8oKCgNDQ2IiIiYmJgy
+MjJUVFRERETc3NyqqqrMzMwiIiIQEBC6urpmZmZ2dnbu7u4AAAAKyl11AAAAAXRSTlMAQObYZgAA
+BaRJREFUaN7tmuu2oygQhZkp7nfe/2WHmwZEomkT5/Q68U+vk8428FkUuygRqpd3Fv3uizOx/cho
+JX85FYQ1890HIrweKdLw/gMvjT/QACEfgI+JMm+JFqXaCfDAhjlT4p5DoWHzBUHC0eCc+cxjftN9
+eaDNXzSMD9lrenAP5Yab/uVUkA1NKAey8w12RGUMpr+eigzQzIb+VCrAb6Xim/zqfy4VYW+mQk9R
+EQAuRZUk2koACsgAsDwIYjGAFdXuOABZqCySNf/Q56Pn1lnQa2brE796lhxX4c1UhIohbPN/KwYp
+oYJJO3umolN4M5tTc4LjMpVGUtM2eUrFpNuQMOEg2HQKjfBuKjomZZO3KJZR5D1chsSD0JKg4ogY
+eexBjeRMpHuNU/Jns+gANjFBrfDuFYQkOJshlJlnk8LzBkbKmo8Jyhfr4mteWSVnqNjMTz2W3L//
+kO4Kk2zVCm+m4gnjNTRYfip56+qpsGVDK1QayRkqmmXlwyeoPjbMzLe2wpupMFUWjH9CJcVKQ6WR
+nKBSwkyEWX6VZLaAWuHNVOpPcyN3qGSVSSgIe+SVRnKKSsrTlCDBd6kQPp1AI7yZSg5TFyT2LRVZ
+qOQRZ9fCtckrHXrJmT0o7Ww4bt6r+cHd+pn7lVZ4F5VY/AXKEacWnAeC899SsBDLI0dCqoEYSn6l
+jMdbh6NfSbXTKpn5FcOWK3HzNBodTmGSUtuAmwvvi5WfXK/8f972N1JpK0Ie3JcKQqtJrfktmC+V
+uuU1lYe6CQoC9YkTSnjTCWV2FMsm4QJH32s9liwwnDZfGA2WhMMT6r8oukUUC06v7JdK719zGW61
+/KJotrOaUKy+nm05LpvBi1sMx9cDvgz+tU6ZmM7YrWca13dmzxbb8KgEMT4re/HCqSSzlrJyfEz5
+Cc8CSjMWiFa0fItOsJhH6wMuu7ha78eBubWFTfxZ2cuXLjRLT8uTU06OIBmzKPM2PyxPJoV4eJ/j
+x3YdGF8eP2enZS/nw2q1TOne1IbCARWGTFSBrD2ErgvROH7SVIcX39JQTRAvIeLEadlzdEzFq3u0
+UJ0WrkeAeo/KVleoCFGpVNEHa2aumnIEO58urs7LnoUFg3Ehlm5DnFg94iVmoDLqChVnllxGzDuo
+bHpZ7VkS2LZIC/lcSB0vykXmASg3sBfTfjc5leFKtfjP8kJSS2VHl6kYJalsRRepbHtZ7bkjwy2V
+8rPseHVUmXfppBFQiXbZpaPdrUIGijEwtS5RTLZUdnQsvbkUwlreYHKdytDL6vKDaKnko9ZZjt+R
+OZ9cgkfpJSFpreqnshdjJa08XiURakuFzbKtw9i1omtUhl5Wt1Ga7pgj/RycsGdVlvuS6zRMO1ip
+117ZmFYiHbEEz4bKnq5QWf5ZRNeoDL2sJ1Qcft40H2S1czBS2d/dl9HCohqo8GmspCii76Iy9rLm
+KwjxaJjqDR1YCVQeyGonZaSC9BO3guhiPs2wgvSUCkXVfhv1BirbXtZO2lwHxnj11XF3jJpcoOyc
+V1SZ8PGply8Pg7UwTSuRDptm2x3dGis1sbwj2w69rK73ZXsqYkmZMQJKW0g6PVIpMhOBJ59dC8XN
+I1SjFyS6borrywrWDX5l1MUAjl9zbnmHxLo/oXLUy2r8ilE9lSZNoOX0U41Uiizd2YNdaskNFU9Z
+/7oqJUtp+Jg3GTvwW922OlxEH/S2nePP0ekfSSBHzC6VXcc/LHfj2Nbxb6ei9hz/gc6rI8ePrlJp
+qsPODgfk4rDcjMpedSheP9U4Vx3uiwYqzZA0uUZlcbKbgXmKjQPnZ1RGA8ytChRePNs5d5KwLxr2
+tybb0Ku9j8ep03SR+bedOk3QvkRlUpBA68j45UZzPaGcNcEkBCs+c0KJy/xe65RhPjEgrGcE6Ht5
+tfEPOHzbQkIP5w/e0l8OhT/eQ/oPKctIvNKoy4sAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_in_bool_inst_expr</span> <span class="o">=</span> <span class="n">forall_in_bool_inst</span><span class="o">.</span><span class="n">expr</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[19]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forall_in_bool_inst_expr">forall_in_bool_inst_expr:</strong> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/edba590bb48d95caf2f41ac98b567991d237d0e70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKgAAAAVBAMAAAAgMbgsAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAAnZJREFU
+OMu9lU9oE0EUxj9pkmazm20PIkQQgp5EqUGaHsTWFTYHPUgRD3oy/qEXKQQPQm+Lp1gpxoMVK2IR
+LOaipUiEHmKwXkSw8SIiFYJKwUM1GKUg2vpmtzM7mc1qT77LznyP+c17M2/eYmUJne0k/mHdw8DE
+VEfXPOrsU1T1mBVKix9q7ew/CmTd5bKZ1+3fqQNMfcKmb9SVyeHwGLfQhvtqGA1AkTQa5886pJ6g
+STQQ1+W/JL7oAI/S0BsBaCThmDWL1GQe0AvqwhvBrI/cuuONvlIW1xqI9Qoo9xG0u8Cg8crIyCmV
+EC2pinEsz4eH6chTNHvHocJHUH2GQfHdtm+rCDNNC79kH1aFMiqYaAEvBug7x6HCR9DyQo2pB4Gc
+Co3QsV3AlQYl9dxTsn7MreKnm2wwwaFZ/0xT69td9R5idRWq0SFX8DR/H892e4p/leYP4EyGBmMc
+akkXpRdnmarBdAJVMw3kYbNh2Qtvx3sybyVdkLnKqmAD6vsICusBU3VHQycosOZDpaLroSjNNQka
+lSOF1cXUaH2B5tW9H2vt6cP45UPR21amXT89z3y7j0EzSVfN0csy84PaNAbki7pkNrEsoH0Cysp0
+0ZIvqq8t0quuepGK0sBb4OU27tXTSKxGmlFHQDXxPl4Dia2siPZwqPAljVl9LuOqPQ0m0J1iki9M
+lBAbWv5Q9NOP9c94g8H1/btsl7LEodznNxR6ZGxbo2lIUOmZlvk+j/kz5Y2sJJ6p4uMd4bRe12Wo
+31DGwvpKh4aiQM+NVysyNMJb3/G7QyHQDq1PgXo2uZkmzS0XCv0s/05efSts/ncSp1xWpvC/7A/8
+obTQWfAWHAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># from original, but this no longer works:</span>
+<span class="c1"># the_inner_expr.operands[1]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># from original, but no longer works:</span>
+<span class="c1"># forall_in_bool_spec_expr.expr_info()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_in_bool_inst_expr</span><span class="o">.</span><span class="n">expr_info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[22]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>
+<tr><td>0</td><td>Operation</td><td>operator:&nbsp;7<br>operands:&nbsp;1<br></td><td><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/edba590bb48d95caf2f41ac98b567991d237d0e70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKgAAAAVBAMAAAAgMbgsAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAAnZJREFU
+OMu9lU9oE0EUxj9pkmazm20PIkQQgp5EqUGaHsTWFTYHPUgRD3oy/qEXKQQPQm+Lp1gpxoMVK2IR
+LOaipUiEHmKwXkSw8SIiFYJKwUM1GKUg2vpmtzM7mc1qT77LznyP+c17M2/eYmUJne0k/mHdw8DE
+VEfXPOrsU1T1mBVKix9q7ew/CmTd5bKZ1+3fqQNMfcKmb9SVyeHwGLfQhvtqGA1AkTQa5886pJ6g
+STQQ1+W/JL7oAI/S0BsBaCThmDWL1GQe0AvqwhvBrI/cuuONvlIW1xqI9Qoo9xG0u8Cg8crIyCmV
+EC2pinEsz4eH6chTNHvHocJHUH2GQfHdtm+rCDNNC79kH1aFMiqYaAEvBug7x6HCR9DyQo2pB4Gc
+Co3QsV3AlQYl9dxTsn7MreKnm2wwwaFZ/0xT69td9R5idRWq0SFX8DR/H892e4p/leYP4EyGBmMc
+akkXpRdnmarBdAJVMw3kYbNh2Qtvx3sybyVdkLnKqmAD6vsICusBU3VHQycosOZDpaLroSjNNQka
+lSOF1cXUaH2B5tW9H2vt6cP45UPR21amXT89z3y7j0EzSVfN0csy84PaNAbki7pkNrEsoH0Cysp0
+0ZIvqq8t0quuepGK0sBb4OU27tXTSKxGmlFHQDXxPl4Dia2siPZwqPAljVl9LuOqPQ0m0J1iki9M
+lBAbWv5Q9NOP9c94g8H1/btsl7LEodznNxR6ZGxbo2lIUOmZlvk+j/kz5Y2sJJ6p4uMd4bRe12Wo
+31DGwvpKh4aiQM+NVysyNMJb3/G7QyHQDq1PgXo2uZkmzS0XCv0s/05efSts/ncSp1xWpvC/7A/8
+obTQWfAWHAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>1</td><td>ExprTuple</td><td>2, 3</td><td><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/19ef0494270b6c9d75a559854b856e6c4e7df61f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAAAVBAMAAACqHiFtAAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAApZJREFU
+OMutlU1oE0EUx/+bjdl1s0lDPYh4aAShaDXmZCgGzEWMUKWIh6IecqwgErxIoWBQlCJBox7UWwRP
+4kcvamG1LEpR2x6CCn5AJMeKiGkPlrZofTPT3Z3dNLUH32F35s28376Z97FAvIbV5Qf+IZFGUHOG
+PaZQZa96cNEcbY96t7zjhpVDyplrl6zFge1AiH3iEfYy3YOgkdFYw7kTwMZZTHqbleLU2xpM8i1W
+wXfSxFv8+bwGT/kNhBegFh1FNFzTEoTIAHoDhg2ohaDR1RZMbGzkysoR/9BsHma/BIwUCDgBzNBS
+dnp6JmgdL7W49cx27Yk0UQbuSUC1j4BGDkM0XbKsi0FzrUJxOZc6mHE1ky4PHUkoF2jaKwHznQk6
+aAUvaLoNGA8Co5RNr/CpSIfcKjQpb7Fr98cxdkdfPODA8jF2K1VcptchHh6/6GSQxX77CLbcFhop
+bOcbMI/Se1A+cj1NqVkC4+rQWrJ7Qw6wYbFhXlzh8fskYvEJg9IXuyQgRg/TpiYHqjUdqwGBeQ8o
+J9YcAxaDwBAHsiPHq530zFw/m/AfGcqsB0S/Lw2xJ+euCGDSoOQs8aBgnMpGs3fqOeySg3Jaa2LY
+NbvlZQClobLkDwp5+J4HhUf+FCWdgofAppPOFkqA8K9ok7WOvOSzKDRy9sBzGtxkNb/ISy+t9iap
+HtNidwevIfouyo4ROW92Dw/VvSObPX1iEHo8d6fnKRvdZY8R220OMBKs9MhTlrNKU5GAUuk5NxXe
+55Se05B4NUW8hMcb3hyE/FSrqgz0msNgux4hmoMqaVhdOTXy8kMmKwOjTvv6dq27DVC0r9eSy1Xe
+YGUpr6vBrojwRaoJ7oTvF7B5obD+X0CspQV/xf+XvwnZq62wPe05AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>2</td><td>Operation</td><td>operator:&nbsp;4<br>operand:&nbsp;5<br></td><td><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/cd13c8df26572b6a8f93b2369e6b0ed63ef1e0f10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHYAAAAVBAMAAABh6QfWAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAd9JREFU
+OMulVE0oRFEU/ox58/PmDbNQZPWiJClK2BBlYaNmWGChKBQWyGZqWIxSZhYyC2U28sxikoWmLGzF
+js0sLGyGp1hQJDT5WXDe3N68N3fMUE7d3rnnO98993733Af8aM4kfjFXBFA1J8Uju4VJ7rl0y9QK
+MA2cafN7PuGuSMWSINDlwz4Q1XYY5NduLsIdpfN4myHJKFMAKcHB9kge48LvV5nXROCVDNED9+ne
+3iafmBfAcEPWXQbESqp4A7yFQkt8Zi2NWN1Go6wHRJMiaWBohr4nwCQQ5rlrlH3kXrCrEJgUNuMQ
+QjpVv6g5l0APRJXnEiYp0oc1IrTMZwIOA7O8Aztj5BySLrDkNUIF1YVDK2ll3P5HMlbC4SH+p6Y3
+FUja8QMXKJcNbtTAyqmm5ZlxneogOcetdb6cPRPmM7gluddreyWnl0Z4ghZSZu3dmDFp5VKaKKpz
+S7OKZ653NMi0wgHBAh6AkWodJ/m9iXVsZeuynWTsmoJVdL3o0M8FUg8BHaftxGtinUmDG19RmDP7
+Nd4WyvThrda8WlR4Ekxcoyd1LvpW/blXKerItqRKJq7xFlzzhZ6EpEsQPz8+NXGzneZsT8sFuPu5
+08Bf3j6/PLOBl8Tf/znuCP5j38J6c8jmB9aeAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>3</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../../booleans/__pv_it/common/97424376de9815ad99f7180e3191b1cf4ab2a5710/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAOBAMAAAAGUYvhAAAALVBMVEX///92dnaqqqqYmJhmZmbu
+7u7MzMy6urpUVFQyMjJEREQQEBAiIiKIiIgAAADLM1dYAAAAAXRSTlMAQObYZgAAAE5JREFUCNdj
+uLNr3ewTBQwMDBNyWZc6A+kFxQzXuCC0EpQWjwLT7MfaQHT1udcFEHFhQwjNxW4AoRkawDQHwwQI
+n1kAaG4ig6AHAwPUHgCe0xzmuIDRVAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>4</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../../booleans/quantification/universality/__pv_it/common/083d2baa0b8ecab1d230f9ec29a15aa1355809fb0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAQBAMAAADQT4M0AAAALVBMVEX///+IiIhmZma6urrMzMxU
+VFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAACvZ3rBAAAAAXRSTlMAQObYZgAAAFhJREFUCNdj
+YICACyDiDMMuEHWToR1IchQw8E5gYOBewMCzc+bMNqDI8/LybCAVwsBQAaSMGDhBmtgYGA8AKe4D
+bCCtHBdcwcZVBIOpRQlgik8ATPEAjQMANugRR9JsrroAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>5</td><td>Lambda</td><td>parameter:&nbsp;9<br>body:&nbsp;6<br></td><td><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/4a7476b91347c33e6a61745357fdf3c4d07846cd0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIMAAAAUCAMAAACZIH6vAAAANlBMVEX///8QEBAoKCgNDQ1mZmaq
+qqrMzMxEREQyMjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAADPT139AAAAAXRSTlMAQObYZgAA
+AZ9JREFUSMfFltuWgyAMRWEGidwS8v8/WxQvjaK1utYMT7W6w0lyDCp1fyWvnq4uPeMz3KE8MqMx
+CBCHS3wmor+J66rdsB0S6Z9I8OYeZ7m2MPIYINAXLG3SdlfK4MGVJXIlrqDncfesv7GPzDu5CykD
+5d2fUDfN2tV7/eCLTIQpUqMo0nRyU5okHdOl17khjHGU53C6GUqgHEpdHKlaMQuHu3ZCEtSuntBt
+z1tG7wlct7SrkKHoCZxVLIQ1xh1qUARveU1BTmjVfHcnO2SNc2qFGeLC8nh8j/L704vFHNc3rP48
+oa1ewL0dipZuLszUI2pGcbKf0UW11XBCp2YdGGcNJDTYcVw0NMhOCoutDT2ilT6ZDgrnmg5Ml4um
+QVj+oEHOxcmTJ7QydGiHogVWT8bSF+DlABJRxJkU5XwIpg67Y/q9VmsitThRL/42QWUkymS8b1VT
+ZGU35hgteUpnhCgshf18YK3qervdKbqrc7M1q3d0DLCd1dtBtt+wu6yhdWZdp9eebk2TjGO8epBB
+ekIv8/wfvmE+JfL333J+kPACmXMR6KnG1YwAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>6</td><td>Operation</td><td>operator:&nbsp;7<br>operands:&nbsp;8<br></td><td><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/7ee1d25beb209a02ef02813943b44d1f0426c1bf0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD8AAAARBAMAAACY12mqAAAAMFBMVEX///8QEBBmZmaqqqrMzMxE
+REQyMjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAAA6P00QAAAAAXRSTlMAQObYZgAAAPVJREFU
+KM9jYMAFOM7/UToaxYAHMAYwMOg74FHg38DAsF4BQ7i1vDwBwrq/gYGh/wK6vOs9ODOQgYFP/AED
+w9s7u27C1fHlIdT+YWBwPwcUmsBRy57AwBIAFuTZAJdn+dNxtRhIcz7g/Me1gUWpACzKijCA9zcD
+w8MDQBMYWEGauSAKHNOAAOJIVgGgos8gFv8FhIKtCBP4gbp5/4L964BQwIgaDDy/GBiYH9xn4H0A
+U8CE8DcoGPyBtq83iGfYATeBoRiuIBEoKAoMhjd332o0IBS8iXoAYRz7f0gn1ABhI0wBw8pwWFCj
+AuYCBryAW/3PBewyAFEGQhNWaPKNAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>7</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../membership/__pv_it/common/477487d8796864d23d5810f83761435f25167f690/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMBAMAAACkW0HUAAAAMFBMVEX///92dna6urqqqqpmZmYQ
+EBDc3NxUVFTu7u6IiIjMzMwyMjIiIiJERESYmJgAAAAHpoBrAAAAAXRSTlMAQObYZgAAAD1JREFU
+CNdjYGB4e+bMBgaGtTMYgIBjB4hkYE8AU7xgkmHpbiDYwJAL4bFCKJYJEPowhGq/1ACmFe+c2QAA
+t5cQC4jqfWMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>8</td><td>ExprTuple</td><td>9, 10</td><td><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/832dc788d8f4ea03e30c8fd239311c0aab35bb020/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADsAAAAUBAMAAADB8VhjAAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAATlJREFU
+KM9jYOC7wIAD5IGI05jivPqfZmpvYWB6AGSvw6KPdQMDw3wBngVAlROwSMsDLfSfwGDOwMDxAIt0
+PVDwfgHDUQaGF9gctZWBgSfiAAOXA0MlkHe86ElxAbL0JwYGCR0GBuYJDHuBCg142zkWMDBugMky
+frpb3QbywQIGIMV8gPkPywPGmQ0wafZ/DAxHFRgY2BoYQoC6GbhBGlng0twBQCXfgKZ8AEkzMPAX
+oEjzA3WyfwdLt4H9KYAiDfI20xewCNBpbAfqGdgPIEmDvC2/Aew0S2D4JOxneAvRfX4BSHopkBN9
+gIGB04DBg4HhUPnxuRcg0hw9QFmt/5qTdicAGVwCSIEKNjwHOXROIEcJG0jaAFkaGCUM+6Bsvhmf
+Chh4kMMWFKGoyYEXmcMNshd3YrrHwAAAKkRP6pCnlIoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>9</td><td>IndexedVar</td><td>variable:&nbsp;11<br>index:&nbsp;12<br></td><td><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/12b0a8510ae9ceee996115aa3b726bdd836499b60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAMBAMAAABy/puxAAAALVBMVEX///9mZmaqqqrMzMxEREQy
+MjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAACJHQtQAAAAAXRSTlMAQObYZgAAAFpJREFUCNdj
+YLhzeuWJAwwgwNvAnsMWwMDswMDAcYHjLecCZsEEoCgDC1CAgTMBpITvAJxpZwBlMl04x8BzAcyc
+p+DHsBwievvMHfECmFowQGIywZlcYq8PAAB5LRYu6/PK5gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>10</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../../../../../__pv_it/common/a9162d1c3cc0470c02e5daf414500903a7a419230/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOBAMAAADUAYG5AAAALVBMVEX///8yMjKqqqoiIiLu7u7c
+3NyIiIjMzMwQEBC6urpERERmZmZUVFSYmJgAAACsPVCVAAAAAXRSTlMAQObYZgAAAGxJREFUCNdj
+YGC48+70nlUTGICgi4GB+zmQZn/LwMD5Gshge8rAwPsMyOBqYGDwMAEy+A4wsNs4ABl1Z68tVgBp
+ygtgYOkBMVaAOCChNyBGAsQYhnMTIMawvwJyGIHGzFjCwMAj92b3qUUMDAAXABxvZ4rl5AAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>11</td><td>Variable</td><td></td><td><a class="ProveItLink" href="../../../../../../__pv_it/common/a0d9d672aa5e272d907247690c152cc2c6daafb70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAALVBMVEX///9mZmaqqqrMzMxEREQy
+MjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAACJHQtQAAAAAXRSTlMAQObYZgAAAEJJREFUCNdj
+YLhzeuWJAwy8Dew5bAEMHBc43nIuYOBlYHFgAAG+A2DKzgBIMF04x8BzgWGegh/DcgaG22fuiBcw
+AAATyhBrnyPYZQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+<tr><td>12</td><td>Literal</td><td></td><td><a class="ProveItLink" href="../../../../../../numbers/numerals/__pv_it/common/2778428c7f555b2bdc06aa0530bc142c6e6335100/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAPBAMAAAArJJMAAAAAIVBMVEX///8yMjJmZmaIiIiYmJh2
+dnZUVFTu7u4QEBCqqqoAAAADAhFxAAAAAXRSTlMAQObYZgAAACBJREFUCNdjYAADznYGhrKw5UAW
+CykEM5BgylioAjYDAHBOCeDSSky9AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></td></tr>
+</table>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># original</span>
+<span class="c1"># Q1 = Variable(&#39;Q1&#39;);</span>
+<span class="c1"># Q2 = Variable(&#39;Q2&#39;);</span>
+<span class="c1"># forall_in_bool_spec_testing = forall_in_bool.instantiate({k:one, l:one, Px:InSet(x, B), QQ:[Q1]})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">forall_in_bool</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[24]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../booleans/quantification/universality/_theory_nbs_/axioms.html#forall_in_bool" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../booleans/quantification/universality/__pv_it/axioms/de5bd4b76e133fdc5f4be7d7ae8e6f2f717df2950/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAX8AAAAVBAMAAABccvPcAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABMBJREFU
+SMe1l21oHEUYx/+93N7L3u4lHyqlgnIm0Eho08MgBWnkqmC0It3mQ/FDIUdQMX5oT1uMqBxnBXtR
+pIeICYXaNUKtUdtDOarF4nFXQdJWFxoRJS33wVIUrIfB0LSSOjO7O/t6ex7qA7c3O7v/mec388zs
+M0BbC11TfGrjGgavoHMjuk4sUQIu7/d99AUgX82gQcuXgtqQMkn6Jzt7Pg6c/Qdi0+S915/ac5+u
+68gmQDtyDOizxdV1TwCREvUN52jdr8EAUpn8JVVH7S+03fZibt0E9hWV6TqyEx4AJIXU8fc1iA0G
+MEOntRAMwJ7POEc0TdttL+Y2VgW+SjFdRyalPACxsBZSSK81BkAHlo1wAAAb5HOOymiJtttezG1z
+hvyqTNeRiT0cQD44mTcAEmUC8B7zTZ6fm5tGG4DFubkPc47KaTaz7cXcDpHf3gymO171P5sAwgGV
+z4C0nQAkM9Q3XC8WX/bRVe0A3cXiwarjcZ8emi3EPrZKgm1J181ueHtjKnDUeyceqJk3dRPghGqF
+0MgusjNKaQbwJDDl00jaDhBRECNz//By/TWjlTd1gBZirwl/AaeqTCdW5eeiDQit187H+CGVN28u
+mwAT1hpYd2stDakGA3iQLedggHCa7QZyDyQjkl7SAVqIfT4my+frA7pOUqUb4ZIwlGv58jy+Ux8x
+b06ZAAXbIpYukcFI5BhAFCH7Di/sO4u7si4A5LCJlCJZhJp65VodwCVubbEbXCciRn0JtwZQUbRt
+XwaAcOc1YgYACo+RmibzTdKi/OWP6sP4XFK71PrQvqGyDeACaHdRTe/bArCLgz8DOUuH7lQwAPCH
+FyBunwEUIhwg3tjFN/c3Dqs4k0pL7hDCuwKZFJwsoV91hJAurt27wZttOCvH0pYOY0obAOFPcrn4
+fS8VjZgh1GMHyCZZC9Q3TJHPsjw82kcjmlil8pYXIPYOfXNH7bw5LcYiZuKQuieawTOuoGeVjs+A
+oUuom8nTIIDTJFAHsHAH1tsX8T2OGVjkixifkZbkbdqakp7aVKRPdnsAElto6Vurj7oBQMUCfgN2
+3+4aRFpp2e8q1+0oH8IRfQZOkh7FVegFfhe+GWvGtfhsDnThbDUBomWeSlSlOomIrqoOQCPycD+6
+VZE5XUG17gHQg/JVy6ERA4CFM1bI70X3OK7YyvffGue6Y72zw5oOEKWi56lzWfMyqUIcH+gjGWIk
+FaZRc8UEEJ/e7kjmkFR032Q6OOPYBuGFYvEAAThCF6biBPiJlm66UwlDLDQFLwCtvHhm0VVrpRIs
+hE5782eeM65RuqoKxBxPJcLfTObtr35g+MbsNmwVkNVnIDzqTiUMl1bcyZxuR6WGxABm1Pjr5oVV
+flpwb1JWMpfIOb73vDdeOoroo4pfMse3CZtv8Sb2V/A1LS4Ai/4Ag0u2TGzKavfYQm2eAewsC+ux
+s0QvZVYZUR5392p+uONbllMQvRnFLC89hNAF33TaTDgaNt/CWWwkmzxZJuE8yRz8AbwHGrvRELIS
+U70UxaaMV2ebD2+7mg+wP0Cs5PXtbrIGvFlAvsWRst9+pBxdKrPzn3USpHODL7V/d6SUSUOD/kfK
+H4lrVzP4L00OGtr/yf4GGa1t6rYvMiUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># new version?</span>
+<span class="n">Q1</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;Q1&#39;</span><span class="p">);</span>
+<span class="n">Q2</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;Q2&#39;</span><span class="p">);</span>
+<span class="n">forall_in_bool_spec_testing</span> <span class="o">=</span> <span class="n">forall_in_bool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">n</span><span class="p">:</span><span class="n">one</span><span class="p">,</span> <span class="n">Px</span><span class="p">:</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">x</span><span class="p">:(</span><span class="n">Q1</span><span class="p">)})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[25]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="forall_in_bool_spec_testing">forall_in_bool_spec_testing:</strong> <span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/3bb6c00736b0789ec33fbf79205b453d92b6a3c50/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/08888b2b35c81b72a58a289d2039968c5012c9c80/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMMAAAAVBAMAAAAJNkerAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAAv5JREFU
+SMe1lV1IVEEUx/+5u9e7u1ddSAz6INGXRLKlNKIit1BLglqjl57SEunFsF6ipzYiCsISDCszXHsI
+exOJEoOS7CUEXYV6EKWlNyG1/KIP0c6Zu3O/vGo9NHDvnDlnZn4z58ycweQY1ii+GP6upEeBxlZ3
+Wy8SXN12t9by72Jh9xqkG8u788viKBFz2cpE9snh5jirX3Hzk/v4j/QF24Biqi9Vu/fJBtIWUb8S
+gcSgUrGD1afZIRHX0WouoIyTUNOlHCh1R2g/gMAMgsmViEgnvnpZnUFDgw2uw/3k4YwcEjzfgHtW
+hFr56IkuZc5TawlKyEAYNkJcEQj1ZV3dGXcfsPotxyE4b0doJ4yGl+auaQFGJcK0EaK3Vqjnysoe
+uyO+kAt/spD2y46oN+WsMLRmanZLhGmLdAbaDgo1/ct5x4XdZHxvRRyj9S+JpS7qCC0VsxKzz9C+
+u5Xs5kaJMG2Rjvbv4kThKRQ6uL5RaDl4V2BFPKBwLIql6rHQ8ppSg80+01EoG6m+KhERa7h77gi1
+H5nk7yoKbT7w3IrYTJMvsHAtrO8ioCO0beNU9D6HGUPbGEohLDZCeAMxVgdjfmo/pO/6SoQ/xEJ7
+tQ1hPeOzjEiaCJ9tF16EWe1L9FMkeKppB4Ic5WF9JgfEgkDIdi1QGhcDex02QngoebC6fD8df3IF
+duqIvZZwawvKVN9QrgNRZEzD10Kbs4a7yLYLtUuoL9PArC4StgjEQI7sQwcRUyp6fou4WhB+46pm
+0KI7KkgolAjTlhjA63xdnUWu3ECfGtJ30SL7cEM7/+Z+VKOjsH0kZiCU4me64Pk8m1d8lKUxiTBs
+ZhqkqWl9nvCFhqq4A8EJBHxxbqYUEoHAC5lAUkVpMhKI0yZTl7I1eWtUP94mgtMglSMBeUrSm1bL
+6W5p0IHAueN7EMWp9kMWhLj1wK7lvtQLVTCbXAXhlsydCKBfvnEt9icJHzat/+yVr46YMB/Ws8N6
+Ahucafjnh1WlqE22rtvN24r/Uf4AGh7iZKc6NuAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># original; can&#39;t seem to relabel now in this way? Even using</span>
+<span class="c1"># a defined IndexedVar(Q1, one)</span>
+<span class="c1"># forall_in_bool_spec_testing.relabel({Q1:Q2})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># forall_in_bool_spec_spec = forall_in_bool_spec.instantiate({xx:[x]})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># forall_in_bool_spec_spec_spec = forall_in_bool_spec_spec.instantiate({x_iter1l:[x]})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># original</span>
+<span class="c1"># subset_eq_def_spec_r_h_s</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># new</span>
+<span class="n">subset_eq_def_inst_rhs</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[30]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="../../../__pv_it/theorems/9c6550aadf9fe10610740c2fb2b7f2f4ad4b948f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHwAAAAUBAMAAAC9l0S6AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAgRJREFU
+OMtjYMALOC/gkeSewMDwAMS4i0vFCqyivPnfjDNaGBgyGRhOg/ivcGl/iV2YsYGBwT6AYR0DwwyQ
+Extw6OY1wC4eD/STvwEDjwID3wIGBp4NOLSzT0Dm3SgvfwBh6QPF7yswcAkw8J5atWo6LrejSERo
+wZmNDAxc4kB7nzAw/OjoqMGlXRmIF6lN0VEA0lxIAfSNgSE8C0gfZmBIZWDoRNMF5/cCdR3gLWIH
+uZkN4RHWb3c1qkGMewwMzgxcD9AC7AuMBVTDs4DnFwtIJwdCAdNPBoaFCUDGdmDwMDDB0gbXHmMQ
+c/FfmDoRoBgDByReAt8BAcQiDgGgEb9BMQA0/gI7PGh3rgJRp4qRtDMw8CuA2TMQtvMDbWb6BNHO
++SAMyDhkqhbAAollVoUOJMcD1QRAkgpqtLOBfOgOCqgUoFkL8tgd+CCSbAzmSEHHvUAfKAtkMyvA
+tYOiPb4BEnQMmwuANjK8BfoZInmbQR+mDhgx/hv6GeYinAIGDxkYWCRARtrA/QYMzPCOjg5gUnp8
+pn8BVB3QccuUFtlCgnZZC1Q473+yWQc4oT4FxRNIlPUDK9DVIMC8gGF+ANZE69NejhrFXAVQxnye
+BzwMPGBdvkD3XCCQZaCABxYcy64cOsXA0A2K0x8MnP21GOkPK1iHymUC+Z2I4oI4wwkVVrwTGABA
+6n+UZZo/5AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># original</span>
+<span class="c1"># subset_eq_def_spec_r_h_s.all_instance_vars()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># new</span>
+<span class="n">subset_eq_def_inst_rhs</span><span class="o">.</span><span class="n">all_instance_vars</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[32]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[x]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># original</span>
+<span class="c1"># PxNew = Operation(P, [y, *subset_eq_def_spec_r_h_s.all_instance_vars(), z])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[34]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># new</span>
+<span class="n">PxNew</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">subset_eq_def_inst_rhs</span><span class="o">.</span><span class="n">all_instance_vars</span><span class="p">(),</span> <span class="n">z</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[34]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="PxNew">PxNew:</strong> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/b434c7a069511ce48c84452bfcb184f2339269b10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEEAAAASBAMAAAD2w64vAAAAMFBMVEX///8iIiKYmJhUVFTMzMxE
+REQyMjKqqqq6urp2dnYQEBDc3NxmZmaIiIju7u4AAACH5sGpAAAAAXRSTlMAQObYZgAAARdJREFU
+KM99kD1Lw1AUhh/bBKMx0ck5ujkIBcFFSnFwViwuLmZ0E3HXOos0q+BHJ3F0E5wCakabH5CkASe3
+gt9g1ZvcNC4hL5xzeA4v93BfkKo03hYWHymkTJM2bMbFJLXqwIFfTFK9liinmKS2RDVaRWQGPrfi
+4jvo35jh0vEZQ+LwSrEY0zr0QPmCXYdnZvzpnMz14AFuJmw2wHg5OY3gnIv4KCcTfQ3icZ8BqD/p
+zThx5wQryY/bsfIqApjKdoM0joy0WtI9jI4IwJW7xP1Pe2lvotZkAEL7Rp8op1GXqhh3tC3YSSPW
+PtS+nhPLc/PbYjyF3Wu833oaTj0KZhkSbuVSPuZRqqptfpY7RizVL3do4X254Q93EWEcJFf9lwAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[35]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># original</span>
+<span class="c1"># subset_eq_def_spec_r_h_s.instance_expr</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[36]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># new</span>
+<span class="n">subset_eq_def_inst_rhs</span><span class="o">.</span><span class="n">instance_expr</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[36]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="../../../__pv_it/theorems/2b6b67c6dcbdfcb6a177ea6eafd4c81308a6b77e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAPBAMAAAC2KZqIAAAAMFBMVEX///8QEBBmZmaqqqrMzMxE
+REQyMjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAAA6P00QAAAAAXRSTlMAQObYZgAAANpJREFU
+GNNjYMACOM7/UToaxYAdMAYwMOg7YJfzb2BgWK+ALNJaXp4AYd3fwMDQfwFJyvUenBnIwMAn/oCB
+4e2dXTdBSvjyEMr+MDC4nwMKTeCoZQcZxbMBLsXyp+NqMZDmfMD5jwskzIrQxvubgeHhAaA+BtYA
+sIBjGhBA3MIqAJT/DGLxQxy0FaGPH6iH9y/YMxBPMqJ6j+cXAwPzg/sMvEDnMjAh/APynj/QpvUG
+8Qw7wCLFcLlEBgYuUaD6N3ffajSARd5EPYBIHft/SCfUADUUV4bDwgwCAHpvO2L/i5h0AAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[37]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># subset_eq_def_spec_r_h_s.deduce_in_bool()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[38]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subset_eq_def_inst_rhs</span><span class="o">.</span><span class="n">deduce_in_bool</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[38]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/3bb6c00736b0789ec33fbf79205b453d92b6a3c50/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_subset_eq_is_bool/45082d44ab7a661216a627ad6dbd42f6d0f7718a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAUBAMAAACdV9kCAAAAMFBMVEX///8QEBBmZmZUVFRERETc
+3Nzu7u6qqqqYmJgiIiK6urp2dnbMzMwyMjKIiIgAAACRIo6iAAAAAXRSTlMAQObYZgAAAkdJREFU
+OMuVlMFLFFEcx7+kOzuz7822UBeDIOoSFLKECxFJI+xWXmoPHapLU4o3ZenmbaGLFIoiFCrF1kHy
+1CJh0EEW/APcSxFhNOQpwozU6KDZ783Me/N2dyx9MMz8vr/3PvP7/d77PaytoGUkyth7JIvA6HSs
+6y3q4jWia/3xlAe7507lK8j5q/SRnsjvdFwQ6hthvtd97/YI6ShwaBuDLSzY3Ou/Vyb1hsjK0Tzm
+iXgU/w2kfoJ5Laz2VDldc0i1XYCVNI9V1OeZvVNPw1S2yPoDI6NY0kesZEmwzIWBgVv66gaDX3PV
+3wly9zHwUbKUj1hsVrCwmc/P6Mu/0DO0evubJ4xBhcLhLPgkmfOSpXzEmluqCfUiUNBZVwGjaj6z
+/A3ORfry+bFeUYtRycpF9erYPearL2DUddYTqp/LfqX8smmbsl6EcYTew5LlaLVnI1WhWkg3HE76
+g4H2YCI//olGoPcIHgW2HLIiH7HgvBQqK1toYlFxvKAFtLg2BMuLWAk9LjhtQk3Ul8hePLtaUznS
+gtDINBwvXKoAczLHjM7K2r5aoPOfdrutiqp90l0nRRidUafQ8eKbeu07G+J65Kv3x2kWPkgP7fmr
+0nXcDA6uOsU2hfH8Mn2ckSzls3mVzWd9NajNllxEOfR9Hzod7IfRNRuobZ83TnZdEV8rkiV9UW9T
+K4hs+A8e20Op17KHwmGMqx5q8skuvcPq7D+9HY6Y3m5i9T1cXJBa4Z+smDunibWPu1D7Uzzr60Hv
+aJOquRZ7R/8FE96kp5e/H2EAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[39]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># %qed</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

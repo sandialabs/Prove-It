@@ -1,0 +1,728 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Add &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Ceil" href="proveit.numbers.Ceil.html" />
+    <link rel="prev" title="Abs" href="proveit.numbers.Abs.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="add">
+<h1>Add<a class="headerlink" href="#add" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="proveit.numbers.Add">
+<em class="property">class </em><code class="descclassname">proveit.numbers.</code><code class="descname">Add</code><span class="sig-paren">(</span><em>*operands</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="proveit.Operation.html#proveit.Operation" title="proveit._core_.expression.operation.operation.Operation"><code class="docutils literal notranslate"><span class="pre">proveit.Operation</span></code></a></p>
+<p class="rubric">Attributes Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.added_numerals" title="proveit.numbers.Add.added_numerals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">added_numerals</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.known_equalities" title="proveit.numbers.Add.known_equalities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">known_equalities</span></code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.all_canceled" title="proveit.numbers.Add.all_canceled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">all_canceled</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘cancelations’.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.associated" title="proveit.numbers.Add.associated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">associated</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘association’.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.association" title="proveit.numbers.Add.association"><code class="xref py py-obj docutils literal notranslate"><span class="pre">association</span></code></a>(start_idx,&nbsp;length[,&nbsp;assumptions])</td>
+<td>Given numerical operands, deduce that this expression is equal to a form in which operands in the range [start_idx, start_idx+length) are grouped together.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.cancelation" title="proveit.numbers.Add.cancelation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cancelation</span></code></a>(idx1,&nbsp;idx2[,&nbsp;assumptions])</td>
+<td>Attempt a simple cancelation between operands at index i and j.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.cancelations" title="proveit.numbers.Add.cancelations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cancelations</span></code></a>([assumptions])</td>
+<td>Deduce and return an equality between self and a form in which all simple cancellations are performed (where there are exact negations that occur).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.canceled" title="proveit.numbers.Add.canceled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">canceled</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘cancelation’.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.commutation" title="proveit.numbers.Add.commutation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">commutation</span></code></a>([init_idx,&nbsp;final_idx,&nbsp;assumptions])</td>
+<td>Given numerical operands, deduce that this expression is equal to a form in which the operand at index init_idx has been moved to final_idx.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.commuted" title="proveit.numbers.Add.commuted"><code class="xref py py-obj docutils literal notranslate"><span class="pre">commuted</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘commutation’.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.conversion_to_multiplication" title="proveit.numbers.Add.conversion_to_multiplication"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conversion_to_multiplication</span></code></a>([assumptions])</td>
+<td>From the addition of the same values, derive and return the equivalence as a multiplication.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_difference_in_natural" title="proveit.numbers.Add.deduce_difference_in_natural"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_difference_in_natural</span></code></a>([assumptions])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Add.deduce_difference_in_naturalPos</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_in_number_set" title="proveit.numbers.Add.deduce_in_number_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_in_number_set</span></code></a>(number_set[,&nbsp;assumptions])</td>
+<td>given a number set, attempt to prove that the given expression is in that number set using the appropriate closure theorem</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_negation" title="proveit.numbers.Add.deduce_negation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_negation</span></code></a>(rhs[,&nbsp;assumptions])</td>
+<td>From (a + b) = rhs, derive and return -(a-b) = -rhs</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_reversed_subtraction" title="proveit.numbers.Add.deduce_reversed_subtraction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_reversed_subtraction</span></code></a>(rhs[,&nbsp;assumptions])</td>
+<td>From (a + b) = rhs, derive and return b - rhs = -a.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_strict_dec_add" title="proveit.numbers.Add.deduce_strict_dec_add"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_strict_dec_add</span></code></a>(x[,&nbsp;assumptions])</td>
+<td>created by JML 7/17/19.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_strict_decrease" title="proveit.numbers.Add.deduce_strict_decrease"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_strict_decrease</span></code></a>(upper_bound_term_index)</td>
+<td>Deducing that all other terms are in RealNeg, deduce an return the statement that the sum is less than the term at upper_bound_term_index.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_strict_inc_add" title="proveit.numbers.Add.deduce_strict_inc_add"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_strict_inc_add</span></code></a>(x[,&nbsp;assumptions])</td>
+<td>created by JML 7/17/19.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_strict_increase" title="proveit.numbers.Add.deduce_strict_increase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_strict_increase</span></code></a>(lower_bound_term_index)</td>
+<td>Deducing that all other terms are in RealPos, deduce an return the statement that the sum is greater than the term at lower_bound_term_index.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_subtraction" title="proveit.numbers.Add.deduce_subtraction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_subtraction</span></code></a>(rhs[,&nbsp;assumptions])</td>
+<td>From (a + b) = rhs, derive and return rhs - b = a.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.deduce_zero_from_neg_self" title="proveit.numbers.Add.deduce_zero_from_neg_self"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deduce_zero_from_neg_self</span></code></a>([assumptions])</td>
+<td>added by JML on 9/10/19.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.disassociated" title="proveit.numbers.Add.disassociated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">disassociated</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘disassociation’.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.disassociation" title="proveit.numbers.Add.disassociation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">disassociation</span></code></a>(idx[,&nbsp;assumptions])</td>
+<td>Given numerical operands, deduce that this expression is equal to a form in which the operand at index idx is no longer grouped together.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.do_reduced_evaluation" title="proveit.numbers.Add.do_reduced_evaluation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_reduced_evaluation</span></code></a>([assumptions])</td>
+<td>created by JML on 7/31/19.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.do_reduced_simplification" title="proveit.numbers.Add.do_reduced_simplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_reduced_simplification</span></code></a>([assumptions])</td>
+<td>Perform a number of possible simplification of a Add expression after the operands have individually been simplified.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.eliminated_zero" title="proveit.numbers.Add.eliminated_zero"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eliminated_zero</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘zero_elimination’.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.eliminated_zeros" title="proveit.numbers.Add.eliminated_zeros"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eliminated_zeros</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘zero_eliminations’.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.equality_side_effects" title="proveit.numbers.Add.equality_side_effects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">equality_side_effects</span></code></a>(judgment)</td>
+<td>Record the judgment in Add.known_equalities, associated for each term.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.factorization" title="proveit.numbers.Add.factorization"><code class="xref py py-obj docutils literal notranslate"><span class="pre">factorization</span></code></a>(the_factor[,&nbsp;pull,&nbsp;…])</td>
+<td>Factor out “the_factor” from this sum, pulling it either to the “left” or “right”.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.factorized" title="proveit.numbers.Add.factorized"><code class="xref py py-obj docutils literal notranslate"><span class="pre">factorized</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘factorization’.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.group_commutation" title="proveit.numbers.Add.group_commutation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_commutation</span></code></a>(init_idx,&nbsp;final_idx,&nbsp;length)</td>
+<td>Given numerical operands, deduce that this expression is equal to a form in which the operands at indices [init_idx, init_idx+length) have been moved to [final_idx.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.group_commuted" title="proveit.numbers.Add.group_commuted"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_commuted</span></code></a>(*args,&nbsp;**kwargs)</td>
+<td>Return an equivalent form of this expression derived via ‘group_commutation’.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.remake_arguments" title="proveit.numbers.Add.remake_arguments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remake_arguments</span></code></a>()</td>
+<td>Yield the argument values or (name, value) pairs that could be used to recreate the Operation.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.remake_constructor" title="proveit.numbers.Add.remake_constructor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remake_constructor</span></code></a>()</td>
+<td>Method to call to reconstruct this Expression.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.remake_with_style_calls" title="proveit.numbers.Add.remake_with_style_calls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remake_with_style_calls</span></code></a>()</td>
+<td>In order to reconstruct this Expression to have the same styles, what “with…” method calls are most appropriate?  Return a tuple of strings with the calls to make.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.style_options" title="proveit.numbers.Add.style_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">style_options</span></code></a>()</td>
+<td>Return a StyleOptions object that indicates the possible styles and values that is available to determine how this Expression may be presented.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.subtraction_folding" title="proveit.numbers.Add.subtraction_folding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subtraction_folding</span></code></a>([term_idx,&nbsp;assumptions])</td>
+<td>Given a negated term, term_idx or the first negated term if term_idx is None, deduce the equivalence between self and a Subtract form (with the specified negated term on the right of the subtraction).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.subtraction_positions" title="proveit.numbers.Add.subtraction_positions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subtraction_positions</span></code></a>()</td>
+<td>Return a list of subtraction notation positions according to the current style setting.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.with_subtraction_at" title="proveit.numbers.Add.with_subtraction_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_subtraction_at</span></code></a>(*subtraction_positions)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.numbers.Add.zero_elimination" title="proveit.numbers.Add.zero_elimination"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_elimination</span></code></a>(idx[,&nbsp;assumptions])</td>
+<td>Derive and return this Add expression equal to a form in which a specific zero operand (at the given index) is eliminated.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.numbers.Add.zero_eliminations" title="proveit.numbers.Add.zero_eliminations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_eliminations</span></code></a>([assumptions])</td>
+<td>Derive and return this Add expression equal to a form in which all zero’s are eliminated.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes Documentation</p>
+<dl class="attribute">
+<dt id="proveit.numbers.Add.added_numerals">
+<code class="descname">added_numerals</code><em class="property"> = set()</em><a class="headerlink" href="#proveit.numbers.Add.added_numerals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.numbers.Add.known_equalities">
+<code class="descname">known_equalities</code><em class="property"> = {}</em><a class="headerlink" href="#proveit.numbers.Add.known_equalities" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="proveit.numbers.Add.all_canceled">
+<code class="descname">all_canceled</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.all_canceled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘cancelations’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.associated">
+<code class="descname">associated</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.associated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘association’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.association">
+<code class="descname">association</code><span class="sig-paren">(</span><em>start_idx</em>, <em>length</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.association"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.association" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given numerical operands, deduce that this expression is equal to a form in which operands in the
+range [start_idx, start_idx+length) are grouped together.
+For example, (a + b + … + y + z) = (a + b … + (l + … + m) + … + y + z)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.cancelation">
+<code class="descname">cancelation</code><span class="sig-paren">(</span><em>idx1</em>, <em>idx2</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.cancelation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.cancelation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt a simple cancelation between operands at index i and j.
+If one of these operands is the negation of the other, deduce
+and return an equality between self and a form in which these
+operands are canceled.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.cancelations">
+<code class="descname">cancelations</code><span class="sig-paren">(</span><em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.cancelations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.cancelations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deduce and return an equality between self and a form in which
+all simple cancellations are performed (where there are exact
+negations that occur).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.canceled">
+<code class="descname">canceled</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.canceled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘cancelation’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.commutation">
+<code class="descname">commutation</code><span class="sig-paren">(</span><em>init_idx=None</em>, <em>final_idx=None</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.commutation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.commutation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given numerical operands, deduce that this expression is equal to a form in which the operand
+at index init_idx has been moved to final_idx.
+For example, (a + b + … + y + z) = (a + … + y + b + z)
+via init_idx = 1 and final_idx = -2.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.commuted">
+<code class="descname">commuted</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.commuted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘commutation’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.conversion_to_multiplication">
+<code class="descname">conversion_to_multiplication</code><span class="sig-paren">(</span><em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.conversion_to_multiplication"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.conversion_to_multiplication" title="Permalink to this definition">¶</a></dt>
+<dd><p>From the addition of the same values, derive and return
+the equivalence as a multiplication. For example,
+a + a + a = 3 * a</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_difference_in_natural">
+<code class="descname">deduce_difference_in_natural</code><span class="sig-paren">(</span><em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_difference_in_natural"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_difference_in_natural" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_in_number_set">
+<code class="descname">deduce_in_number_set</code><span class="sig-paren">(</span><em>number_set</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_in_number_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_in_number_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>given a number set, attempt to prove that the given expression is in that
+number set using the appropriate closure theorem</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_negation">
+<code class="descname">deduce_negation</code><span class="sig-paren">(</span><em>rhs</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_negation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_negation" title="Permalink to this definition">¶</a></dt>
+<dd><p>From (a + b) = rhs, derive and return -(a-b) = -rhs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_reversed_subtraction">
+<code class="descname">deduce_reversed_subtraction</code><span class="sig-paren">(</span><em>rhs</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_reversed_subtraction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_reversed_subtraction" title="Permalink to this definition">¶</a></dt>
+<dd><p>From (a + b) = rhs, derive and return b - rhs = -a.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_strict_dec_add">
+<code class="descname">deduce_strict_dec_add</code><span class="sig-paren">(</span><em>x</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_strict_dec_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_strict_dec_add" title="Permalink to this definition">¶</a></dt>
+<dd><p>created by JML 7/17/19. renamed by WMW 9/6/19.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_strict_decrease">
+<code class="descname">deduce_strict_decrease</code><span class="sig-paren">(</span><em>upper_bound_term_index</em>, <em>assumptions=frozenset()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_strict_decrease"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_strict_decrease" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deducing that all other terms are in RealNeg, deduce an return
+the statement that the sum is less than the term at upper_bound_term_index.
+Assumptions may be needed to deduce that the terms are in RealPos or Real.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_strict_inc_add">
+<code class="descname">deduce_strict_inc_add</code><span class="sig-paren">(</span><em>x</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_strict_inc_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_strict_inc_add" title="Permalink to this definition">¶</a></dt>
+<dd><p>created by JML 7/17/19. renamed by WMW 9/6/19.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_strict_increase">
+<code class="descname">deduce_strict_increase</code><span class="sig-paren">(</span><em>lower_bound_term_index</em>, <em>assumptions=frozenset()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_strict_increase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_strict_increase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deducing that all other terms are in RealPos, deduce an return
+the statement that the sum is greater than the term at lower_bound_term_index.
+Assumptions may be needed to deduce that the terms are in RealPos or Real.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_subtraction">
+<code class="descname">deduce_subtraction</code><span class="sig-paren">(</span><em>rhs</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_subtraction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_subtraction" title="Permalink to this definition">¶</a></dt>
+<dd><p>From (a + b) = rhs, derive and return rhs - b = a.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.deduce_zero_from_neg_self">
+<code class="descname">deduce_zero_from_neg_self</code><span class="sig-paren">(</span><em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.deduce_zero_from_neg_self"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.deduce_zero_from_neg_self" title="Permalink to this definition">¶</a></dt>
+<dd><p>added by JML on 9/10/19. renamed by WMW on 9/6/19.
+Given x + (-x) return x.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.disassociated">
+<code class="descname">disassociated</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.disassociated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘disassociation’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.disassociation">
+<code class="descname">disassociation</code><span class="sig-paren">(</span><em>idx</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.disassociation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.disassociation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given numerical operands, deduce that this expression is equal to a form in which the operand
+at index idx is no longer grouped together.
+For example, (a + b … + (l + … + m) + … + y+ z) = (a + b + … + y + z)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.do_reduced_evaluation">
+<code class="descname">do_reduced_evaluation</code><span class="sig-paren">(</span><em>assumptions=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.do_reduced_evaluation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.do_reduced_evaluation" title="Permalink to this definition">¶</a></dt>
+<dd><p>created by JML on 7/31/19. modified by WMW on 9/7/19.
+evaluate literals in a given expression (used for simplification)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.do_reduced_simplification">
+<code class="descname">do_reduced_simplification</code><span class="sig-paren">(</span><em>assumptions=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.do_reduced_simplification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.do_reduced_simplification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a number of possible simplification of a Add
+expression after the operands have individually been
+simplified.  Disassociate grouped terms, eliminate zero terms,
+cancel common terms that are subtracted, combine like terms,
+convert repeated addition to multiplication, etc.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.eliminated_zero">
+<code class="descname">eliminated_zero</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.eliminated_zero" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘zero_elimination’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.eliminated_zeros">
+<code class="descname">eliminated_zeros</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.eliminated_zeros" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘zero_eliminations’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.equality_side_effects">
+<code class="descname">equality_side_effects</code><span class="sig-paren">(</span><em>judgment</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.equality_side_effects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.equality_side_effects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record the judgment in Add.known_equalities, associated for
+each term.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.factorization">
+<code class="descname">factorization</code><span class="sig-paren">(</span><em>the_factor</em>, <em>pull='left'</em>, <em>group_factor=True</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.factorization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.factorization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Factor out “the_factor” from this sum, pulling it either to the “left” or “right”.
+If group_factor is True and the_factor is a product, these operands are grouped
+together as a sub-product.  Returns the equality that equates self to this new version.
+Give any assumptions necessary to prove that the operands are in the Complex numbers so that
+the associative and commutation theorems are applicable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.factorized">
+<code class="descname">factorized</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.factorized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘factorization’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.group_commutation">
+<code class="descname">group_commutation</code><span class="sig-paren">(</span><em>init_idx</em>, <em>final_idx</em>, <em>length</em>, <em>disassociate=True</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.group_commutation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.group_commutation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given numerical operands, deduce that this expression is equal to a form in which the operands
+at indices [init_idx, init_idx+length) have been moved to [final_idx. final_idx+length).
+It will do this by performing association first.  If disassocate is True, it
+will be disassociated afterwards.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.group_commuted">
+<code class="descname">group_commuted</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#proveit.numbers.Add.group_commuted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent form of this expression derived via ‘group_commutation’.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.remake_arguments">
+<code class="descname">remake_arguments</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.remake_arguments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.remake_arguments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield the argument values or (name, value) pairs
+that could be used to recreate the Operation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.remake_constructor">
+<code class="descname">remake_constructor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.remake_constructor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.remake_constructor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to call to reconstruct this Expression.  The default is the class name
+itself to use the __init__ method, but sometimes a different method is more
+appropriate for setting the proper style (e.g. the Frac method in
+proveit.numbers.division.divide which constructs a Div object with a different
+style).  This constructor method must be in the same module as the class.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.remake_with_style_calls">
+<code class="descname">remake_with_style_calls</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.remake_with_style_calls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.remake_with_style_calls" title="Permalink to this definition">¶</a></dt>
+<dd><p>In order to reconstruct this Expression to have the same styles,
+what “with…” method calls are most appropriate?  Return a
+tuple of strings with the calls to make.  The default for the
+Operation class is to include appropriate ‘with_wrapping_at’
+and ‘with_justification’ calls.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.style_options">
+<code class="descname">style_options</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.style_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.style_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a StyleOptions object that indicates the possible
+styles and values that is available to determine how
+this Expression may be presented.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.subtraction_folding">
+<code class="descname">subtraction_folding</code><span class="sig-paren">(</span><em>term_idx=None</em>, <em>assumptions=frozenset()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.subtraction_folding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.subtraction_folding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a negated term, term_idx or the first negated term if term_idx is None,
+deduce the equivalence between self and a Subtract form (with the specified
+negated term on the right of the subtraction).  Assumptions
+may be necessary to deduce operands being in the set of Complex numbers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.subtraction_positions">
+<code class="descname">subtraction_positions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.subtraction_positions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.subtraction_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of subtraction notation positions according to the current style setting.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.with_subtraction_at">
+<code class="descname">with_subtraction_at</code><span class="sig-paren">(</span><em>*subtraction_positions</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.with_subtraction_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.with_subtraction_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.zero_elimination">
+<code class="descname">zero_elimination</code><span class="sig-paren">(</span><em>idx</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.zero_elimination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.zero_elimination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Derive and return this Add expression equal to a form in which
+a specific zero operand (at the given index) is eliminated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.numbers.Add.zero_eliminations">
+<code class="descname">zero_eliminations</code><span class="sig-paren">(</span><em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/numbers/addition/add.html#Add.zero_eliminations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.numbers.Add.zero_eliminations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Derive and return this Add expression equal to a form in which
+all zero’s are eliminated.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="proveit.numbers.Abs.html" title="previous chapter">Abs</a></li>
+      <li>Next: <a href="proveit.numbers.Ceil.html" title="next chapter">Ceil</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="../_sources/api/proveit.numbers.Add.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,4 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.equality.sub_left_side_into
+proveit.numbers.numerals.decimals.nat1
+# THEOREMS AND THEORIES TO EXCLUDE:

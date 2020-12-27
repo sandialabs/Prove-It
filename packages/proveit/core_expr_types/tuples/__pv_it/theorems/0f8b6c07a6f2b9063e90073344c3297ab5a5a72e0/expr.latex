@@ -1,0 +1,1 @@
+a \mapsto \left\{\forall_{i, j, k, l~|~\left(\left(j + 1\right) - i\right) \in \mathbb{N}, k = \left(i - a\right), l = \left(j - a\right)}~\left(\left(f(i), \ldots, f(j)\right) = \left(f(k + a), \ldots, f(l + a)\right)\right) \textrm{ if } a \in \mathbb{Z}\right..

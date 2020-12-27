@@ -1,0 +1,1 @@
+\forall_{m \in \mathbb{N}^+}~\left[\forall_{a_{1} \in \mathbb{R}^+, \ldots, a_{m} \in \mathbb{R}^+, b \in \mathbb{C}}~\left(\left(a_{1} \cdot \ldots \cdot a_{m}\right)^{b} = \left(\left(a_{1}\right)^{b} \cdot \ldots \cdot \left(a_{m}\right)^{b}\right)\right)\right]

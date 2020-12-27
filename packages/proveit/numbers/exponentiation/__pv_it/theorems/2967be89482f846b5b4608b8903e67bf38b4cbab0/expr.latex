@@ -1,0 +1,1 @@
+\left\{\forall_{a \in \mathbb{C}, b_{1} \in \mathbb{R}, \ldots, b_{m} \in \mathbb{R}~|~a \neq 0}~\left(\left(a^{b_{1}} \cdot \ldots \cdot a^{b_{m}}\right) = a^{b_{1} + \ldots + b_{m}}\right) \textrm{ if } m \in \mathbb{N}^+\right..

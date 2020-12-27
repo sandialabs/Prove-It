@@ -1,0 +1,3 @@
+proveit.logic.booleans.disjunction.singular_constructive_dilemma
+proveit.logic.booleans.negation.closure
+proveit.logic.booleans.unfold_is_bool

@@ -1,0 +1,1 @@
+\forall_{m \in \mathbb{N}}~\left[\forall_{A_{1}, \ldots, A_{m}~|~A_{1}, \ldots, A_{m}}~\left(\left(A_{1} \land \ldots \land A_{m}\right) = \top\right)\right]

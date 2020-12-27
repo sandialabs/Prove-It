@@ -1,0 +1,3 @@
+j \mapsto \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{i, j}{\Big \{} R_{i, j}} 
+} \hspace{2em}

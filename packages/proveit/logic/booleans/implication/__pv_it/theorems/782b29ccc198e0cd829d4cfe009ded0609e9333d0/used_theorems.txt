@@ -1,0 +1,2 @@
+proveit.logic.booleans.implication.not_iff_via_not_right_impl
+proveit.logic.booleans.negation.negation_intro

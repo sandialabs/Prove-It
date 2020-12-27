@@ -1,0 +1,1 @@
+\left(A_{1} \in \mathbb{B}\right) \land \ldots \land \left(A_{m} \in \mathbb{B}\right) \land \left(B_{1} \in \mathbb{B}\right) \land \ldots \land \left(B_{m} \in \mathbb{B}\right) \land \left((\lnot A_{1}) \lor \ldots \lor (\lnot A_{m})\right) \land \left(A_{1} \Rightarrow B_{1}\right) \land \ldots \land \left(A_{m} \Rightarrow B_{m}\right)

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.addition.subtraction.negated_add theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.addition.subtraction.negated_add-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">addition</a>.<a class="ProveItLink" href="../../theory.html">subtraction</a>.<a class="ProveItLink" href="../../theorems.html#negated_add">negated_add</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.addition.subtraction.negated_add-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> negated_add
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="negated_add">negated_add:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/977a84d8a2c0455c6ef971c4710519be9de95e6f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUAAAAAWBAMAAABDHljHAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA6FJREFU
+SMfNVk1oE0EUfk2yyWaTND140IMQI/QgCEv1IFixILa9lMaDWi82FEULIkX0oPYQPUiLFhY8WFBh
+NaBSpFn8pdJDsAfBH1j0YFusRFChKlEEQauI82Zm/2aTtJYIPnizu2++mf3m/cwMQN3lMteaMuE3
+RU0fIqYBlPBjro78lBzT6oBTAwBhzWe/4f2kiH6AJ/jxoY4EGzWmNRAqYVnymeeFdSBiHGAUnZur
+I8EXXKtL0iDNQ9GaUAUDIuIpaNTJw6gjweNcq0s3+SVcEa0R0euIUJog8Xhs7EId+UUHmNaQRzTO
+bYLVR4Ii3gJ8HxoaXOrfxUVm/JCAytSW81NrdC/kfXoziZoY0bWe8KYzDDEFsB9g2LKHylWYseXG
+3SbE3vEjZZOpDVsFn4Xs/60XNEhgDcTLVCjXEbc3DbnEEK8Btrkraso7V+zcgT76wqqo39NJsEF/
+tUYMpnYmmbBJmHQBkimIiWlw0vU+CGGDIe6T2SDgLPijs87JDabSo0ufHIJS0d6jOFbJ+gg2tDEd
+p755B1t1OIJ265usqgSFIkhfhIEryHTMoZngAv0dInqJm82Ig/phv01PjEHiEsCkQzBsp5xsYeer
+ErRkJSjffNtgt1GRoD1Hzk0wWtpFXvLNuDjpazMmdDydCmFebL9Luh2CERsnW9j11pxkSMUQK78g
+JlBJmujW0ICTg1khxAUaKoroIDq8j8xzTEK3Bk7QAjwqNTUiZHbGGpLjGwHHyRb2HhwcImLikIpF
+ovyEcMl78CbblNXASsAtI54lgGEXCdwmTIOqhHzlFFqDOcjkEfhgwkOw08FZ2E7ej0O4K1XvFnIa
+XmaL3kPWlEl/sCgQdNVnMAv5DEO0Il8SnAYjkKUJRPrIB8Bu4pfUxZ0egu0cd7j8plw2KXavlTV2
+UDEwIVeFXkvv6fPuyUrLM8xEcQ/tcL0/nUtxBCZUgqRdQZNnySOp45+SGq/T4FUynUOwx8ahBym2
+nbAlYia1vzjqqFxf9KhDhGIttUHr7YJRPaJPk5acMWoc6UdbM/xQz/ERFMcIIhZeOceSuuTLgn0V
+WNJlgQem79YW2GFIh4qkjbY81+Esmm+Wz2RcVawzHK9igoWN1gmMQ3iVaEwXuTX6r1vDla9bbjFc
+bYDkoNNDCQYMzz6IUlrGhdVeRu0LK0V4Scc0pxUk52pdBGPmcq/8M4te+RGR8HJJuNqKBLvsufgz
+D/+LqFDRuev+/Z//ALYLHdeoLr8DAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/a22d535f70d5326f7ebc65c564c0604452e80ec40/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

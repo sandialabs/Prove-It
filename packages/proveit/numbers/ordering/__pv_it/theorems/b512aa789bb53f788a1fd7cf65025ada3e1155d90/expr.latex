@@ -1,0 +1,1 @@
+\left(a, b, c\right) \mapsto \left\{\left(a + c\right) \leq b \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  c \in \mathbb{R} ,  a \leq b ,  c \leq 0\right..

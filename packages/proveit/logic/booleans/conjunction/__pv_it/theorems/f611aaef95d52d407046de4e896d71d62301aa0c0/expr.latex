@@ -1,0 +1,1 @@
+\left(m, n\right) \mapsto \left\{\forall_{A_{1}, \ldots, A_{m}, B, C_{1}, \ldots, C_{n}~|~A_{1}, \ldots, A_{m}, B, C_{1}, \ldots, C_{n}}~B \textrm{ if } m \in \mathbb{N} ,  n \in \mathbb{N}\right..

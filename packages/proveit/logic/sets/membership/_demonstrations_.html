@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for the theory of proveit.logic.sets.membership</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-the-theory-of-proveit.logic.sets.membership">Demonstrations for the theory of <a class="ProveItLink" href="_theory_.html">proveit.logic.sets.membership</a><a class="anchor-link" href="#Demonstrations-for-the-theory-of-proveit.logic.sets.membership">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprTuple</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">NotInSet</span><span class="p">,</span> <span class="n">EmptySet</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">four</span><span class="p">,</span> <span class="n">five</span><span class="p">,</span> <span class="n">six</span><span class="p">,</span> <span class="n">seven</span><span class="p">,</span> <span class="n">eight</span><span class="p">,</span> <span class="n">nine</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">Exp</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">RealNeg</span><span class="p">,</span> <span class="n">RealPos</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.number_sets.number_set</span> <span class="k">import</span> <span class="n">NumberSet</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Membership-$\in$">Membership $\in$<a class="anchor-link" href="#Membership-$\in$">&#182;</a></h1><h3 id="UNDER-CONSTRUCTION">UNDER CONSTRUCTION<a class="anchor-link" href="#UNDER-CONSTRUCTION">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div style="line-height:1.4; font-size:14pt">
+
+<a href='#introduction'>Introduction</a><br>
+<a href='#simple_expressions'>Simple Expressions involving Membership $(\in)$</a><br>
+<a href='#common_attributes'>Common Attributes of a Membership $(\in)$ Expression</a><br>
+<a href='#axioms'>Axioms</a><br>
+<a href='#further_demonstrations'>Further Demonstrations</a><br>
+    <ol>
+        <li><a href='#demo01'>$(x\in A)\wedge(A\subset B)\Rightarrow (x\in B)$</a></li>
+        <li><a href='#demo02'>$\forall_{x\in A}(x\in B) \Rightarrow (A \subseteq B)$</a></li>
+        <li><a href='#demo03'>$(x\in B)\wedge(A\supset B)\Rightarrow (x\in A)$</a></li>
+    </ol>
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction-">Introduction <a id="introduction" /><a class="anchor-link" href="#Introduction-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>Set membership (*e.g.*, $x \in S$) (along with the related concepts of subset $\subset, \subseteq$, and superset $\supset, \supseteq$), is often critical in proofs, either as a goal in itself or as a condition or assumption appearing in a proof. For example, one might need to define a variable $x$ to be a natural number, $x \in \mathbb{N}$, to be used in a particulat theory, or we might want to prove that a number resides (or doesn't reside) in a particular set, for example that $\sqrt{2} \not\in \mathbb{Q}$.<br>
+This ``_demonstrations_`` notebook explores such membership expressions and related methods. (Set containment expressions involving $\subset$, $\subseteq$, $\supset$, etc., are explored more thoroughly in their own ``_demonstrations_`` notebook in ``proveit.logic.sets.inclusion``)</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Simple-Expressions-Involving-Membership-($\in$,-$\not\in$)">Simple Expressions Involving Membership ($\in$, $\not\in$)<a id="simple_expressions" /><a class="anchor-link" href="#Simple-Expressions-Involving-Membership-($\in$,-$\not\in$)">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>It is straightforward to construct membership expressions. Here are some basic examples of such expressions:</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># set membership</span>
+<span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/demonstrations/0cdab0d18bbc19517ae2790158516d237f4206600/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAPBAMAAAC7N+rPAAAAMFBMVEX///8QEBBmZmaqqqrMzMxE
+REQyMjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAAA6P00QAAAAAXRSTlMAQObYZgAAAMtJREFU
+GNNjYMAGmDVncizAKsMQwcAXj12GSYGBoQ1FhCO8vAzMeO/AwLAWWYYl9gGUtb6BgcEFSL+9s+vm
+BZDAM5gMw/ufDiCKbwJHLXsCiHUarp/3/38Qh/MB5z+uDSCBAITZLw5+BBrBx8AKEWMRSwMCmKS+
+AYjkB9vEwA3XxQmyDizl7wAREYBJvQEJAg1kfnCfgRfsNl2YlCEQa4L8YBDPsAMswm4AlVJXYOA8
+ANJ9961GA1iE7+g6iJTCGp3DaEHHNRUaUBAAAFDXMplUllphAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">EmptySet</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/demonstrations/56ad3ce411779c1d93569ce2504b80edfe3eb7a80/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAVCAMAAADhGEdVAAAAQlBMVEX///9jY2MJCQkNDQ0rKysQ
+EBAPDw8WFhZmZmaqqqrMzMxEREQyMjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAAB85YEvAAAA
+AXRSTlMAQObYZgAAAQRJREFUKM+VU+1yxCAIpB/paVBQwfd/1ULTuagzybX8MEpWWGAFuLF9OSPc
+Wx72kYVf4Pd27lkAJN3jQ3luq6fCJn+lQ8HPJV9iCfPjKz8JoEUuQbteMEdRwHo6NnJ62r1jKtJq
+ET7JaVJfhgA9/tDrVpGyZc8CZ3JoHllkxlc8rrHFYiNW6jyXNHLtBEIH3t04TWLfUkqfH7akgb/f
+778d7lNjPTNwnForXs5RrwXss1K2RQtWEUd2nAtDQfwrJ98g1uxlHG331aZgNaDhK43pY1u0mT1f
+8nY2EZVAI9yc72UeZcxV+Vo+9MaY8zASpkL1Wmq4/ou3ytRXL2kxof/hr8N/A10uDK+YPmGvAAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="../../../numbers/numerals/decimals/__pv_it/theorems/f05a14f3b1e025929c966a4ccb020e28f34812b20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAPBAMAAABU9YHxAAAAMFBMVEX///+YmJiqqqqIiIgyMjLc
+3NwiIiIQEBC6urp2dnZUVFTMzMxERERmZmbu7u4AAADrYmUNAAAAAXRSTlMAQObYZgAAAOBJREFU
+GNNj4Lt7ZgMDMuDzP+PHwFlfwfCKgfMHigwDj8AuBob3DAz3GBjKUWW4spkNGNgZGMoYGNYHgEVk
+0tIcwDI9D1YzsDEw+D9gWA+2aI8dTE/0gicP2MDM/Acgi/3gpgUocy8Ay3D8hPARMpwNwmAZtgVg
+FyFcEMCwjmsbiHUXzN/uAgQOUJlXDO5ABvMFsEwMsh7uCduBDF0GVpAV7MgyDEJAw7knMDCDZHgN
+4DJAT3ACjQibOXcZWCAJJsOiACSuAH36//83sMCrEw/ANHd+DZB8ghxenccgoQMFAOa6NR2IZoaj
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">NotInSet</span><span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">),</span> <span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="__pv_it/demonstrations/a4de19f5fc7d95927c51e06df1f9a1946b9e7aea0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF0AAAAYCAMAAACvOgEuAAAAQlBMVEX///9jY2MJCQkNDQ0rKysP
+Dw8WFhZUVFTMzMx2dna6uroQEBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAABzaizdAAAA
+AXRSTlMAQObYZgAAAYVJREFUSMfVldtyhCAMhmm3LedTgPd/1QKiC1HUbacX5WJnR+OX5E9ICPmP
+h/4p3f/ye3aTHsOZnYrHz809OkyzYLZKeIhnm7LgkvcO8j8ukxSI7uKMbujy9dE7K7pAQ3MGqUTj
+8pHlJ2sS7Ayu5RIf1xfCUMOIrkYSK2NmocfgFjpI9CZ48/VpnilR4YFQ1vts9DitDieNTpwYFPca
+iO9jojELA0V6TNczYULc6Ly3qZSxFrnuSlfpMd1P2hGyjis9uBFFmsr9Iy5I0Du6UTNdnnRlcCfX
+Bhwd0iL9ZtiEaw0Krju5Pop1dJY61UuvfTyK2UiHbOxw/aU41IWTCT2W2PmY8HLfGM+ucd8eKqOo
+zSdJW/UVvTJyPwXabQ5qN7z8yZCRR1XNDgXqM9omGo+Yzu0JvRlbPmZL0Xx0a/4WDw0xv00+JVoz
+cwMN6LvoW4aZtIaxH0nTSfDEoQDCG/fGGHdnCwR7ZYGnmI/k/rkyxunCS1vtyhp71+GlDXm++UL8
++UL+Bj43EoUHrliLAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Exponentiated sets are not currently needed.  They will likely be resurrected later and moved to a more appropriate theory package.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(), Exp(S, zero)).prove()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A),Exp(S,one)).prove([InSet(A,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A,B),Exp(S,two)).prove([InSet(A,S), InSet(B,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A,B,C),Exp(S,three)).prove([InSet(A,S), InSet(B,S),InSet(C,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A,B,C, D),Exp(S,four)).prove([InSet(A,S), InSet(B,S),InSet(C,S), InSet(D,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A,B,C, D, E),Exp(S,five)).prove([InSet(A,S), InSet(B,S),InSet(C,S), InSet(D,S), InSet(E,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A,B,C, D, E, F),Exp(S,six)).prove([InSet(A,S), InSet(B,S),InSet(C,S), InSet(D,S), InSet(E,S), InSet(F,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A,B,C, D, E, F, G),Exp(S,seven)).prove([InSet(A,S), InSet(B,S),InSet(C,S), InSet(D,S), InSet(E,S), InSet(F,S), InSet(G,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A,B,C, D, E, F, G, H),Exp(S,eight)).prove([InSet(A,S), InSet(B,S),InSet(C,S), InSet(D,S), InSet(E,S), InSet(F,S), InSet(G,S), InSet(H,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#InSet(ExprTuple(A,B,C, D, E, F, G, H, I),Exp(S,nine)).prove([InSet(A,S), InSet(B,S),InSet(C,S), InSet(D,S), InSet(E,S), InSet(F,S), InSet(G,S), InSet(H,S), InSet(I,S)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Not</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">S</span><span class="p">))</span><span class="o">.</span><span class="n">prove</span><span class="p">([</span><span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">S</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"><a class="ProveItLink" href="__pv_it/theorems/a33a47943fdd32339621e532d76b56b41506f95b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAVCAMAAADciiYzAAAAQlBMVEX///9jY2MJCQkNDQ0rKysQ
+EBAPDw8WFhZmZmaqqqrMzMxEREQyMjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAAB85YEvAAAA
+AXRSTlMAQObYZgAAAPdJREFUOMuVU9t2xCAItJe0GBUMl///1arZNKF7NqfyQBIQZiBjCDe2hnkr
+8yUr++8IRBSw3tWAzyZsTpNNUAMYD8wvz2Mq31/lklfbN1Ll1SRJNKTtGqqGe2qUqghvVehsoFm7
+c23UjH53r9SYFAkXItwR5A8JsWa8Y1PrSaahnlRSdx3LIyEvtoxodym5aZac8+dHc087AovHqzke
+W+9A0R2mY6ojvJpX1vL0c5SPk4Nb1DZen/HkDxIqeNksjwzte4+h62HDqwIie2QoowfxA1VEBRA9
+lffq1gahMjDHO6nhG6VSSp65Bl43/zJN87dNcL7mHuYHMTkLlsNtzgkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="__pv_it/demonstrations/df254263cc3b4560847d2156c33c18d6eff5f65e0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/theorems/cb7a5f92b3efd8e444b1da338cd0feefa3a6a56b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFIAAAAUBAMAAADsA3fZAAAAMFBMVEX///+6uroQEBCqqqqIiIgy
+MjJERETu7u6YmJjMzMxUVFTc3Nx2dnYiIiJmZmYAAAAutVgsAAAAAXRSTlMAQObYZgAAAUVJREFU
+KM9jYECAHQw4AfMGZB57AnZVdmcONDKsRhZh3YBVIVsDQ9kHhlJkoT7sRr5jYOAIYOBxQBK6jSzP
+kXv3KsRNPxkYGB0Y2BUQctwXkBRyphRAWYw/gLwJDAyBCEmWB0ADXFaLHAFxSgvg/vx/EkyfQ3E5
+Qw1DrwPYUiSv+v//BfJqK8Pbu0BwB8jkNWBgOM5wvkAaJI0UYOxd+upAyhbC2wXETAIMDAUMaRBn
+qoYCAUwt32cgMR9VJQPDF4jvEGYeAJqKphJkOwPnT4gAPEzYFwAFvwMZsgiVIB+Zs3xgcAcJPIFH
+OFAP3wGwjyDuAmKeBwyMn9k+cDcwwCwAu/EeA8MpEOMNwo+MFxjYl7j7dUAsXSYOVcm4bhVYVySu
+2GQ8Bo1NmHsvEE4hEICSQtg24FFZSkxKBoNsFB6e3MGxgQEA029OXInzxmEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">S</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">([</span><span class="n">Not</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">S</span><span class="p">))])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"><a class="ProveItLink" href="__pv_it/theorems/cb7a5f92b3efd8e444b1da338cd0feefa3a6a56b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFIAAAAUBAMAAADsA3fZAAAAMFBMVEX///+6uroQEBCqqqqIiIgy
+MjJERETu7u6YmJjMzMxUVFTc3Nx2dnYiIiJmZmYAAAAutVgsAAAAAXRSTlMAQObYZgAAAUVJREFU
+KM9jYECAHQw4AfMGZB57AnZVdmcONDKsRhZh3YBVIVsDQ9kHhlJkoT7sRr5jYOAIYOBxQBK6jSzP
+kXv3KsRNPxkYGB0Y2BUQctwXkBRyphRAWYw/gLwJDAyBCEmWB0ADXFaLHAFxSgvg/vx/EkyfQ3E5
+Qw1DrwPYUiSv+v//BfJqK8Pbu0BwB8jkNWBgOM5wvkAaJI0UYOxd+upAyhbC2wXETAIMDAUMaRBn
+qoYCAUwt32cgMR9VJQPDF4jvEGYeAJqKphJkOwPnT4gAPEzYFwAFvwMZsgiVIB+Zs3xgcAcJPIFH
+OFAP3wGwjyDuAmKeBwyMn9k+cDcwwCwAu/EeA8MpEOMNwo+MFxjYl7j7dUAsXSYOVcm4bhVYVySu
+2GQ8Bo1NmHsvEE4hEICSQtg24FFZSkxKBoNsFB6e3MGxgQEA029OXInzxmEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="__pv_it/demonstrations/c4f403a2984ae4de179aa1fe7566bf8e10e55e0f0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/theorems/a33a47943fdd32339621e532d76b56b41506f95b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAVCAMAAADciiYzAAAAQlBMVEX///9jY2MJCQkNDQ0rKysQ
+EBAPDw8WFhZmZmaqqqrMzMxEREQyMjIiIiKYmJh2dna6urrc3NxUVFSIiIju7u4AAAB85YEvAAAA
+AXRSTlMAQObYZgAAAPdJREFUOMuVU9t2xCAItJe0GBUMl///1arZNKF7NqfyQBIQZiBjCDe2hnkr
+8yUr++8IRBSw3tWAzyZsTpNNUAMYD8wvz2Mq31/lklfbN1Ll1SRJNKTtGqqGe2qUqghvVehsoFm7
+c23UjH53r9SYFAkXItwR5A8JsWa8Y1PrSaahnlRSdx3LIyEvtoxodym5aZac8+dHc087AovHqzke
+W+9A0R2mY6ojvJpX1vL0c5SPk4Nb1DZen/HkDxIqeNksjwzte4+h62HDqwIie2QoowfxA1VEBRA9
+lffq1gahMjDHO6nhG6VSSp65Bl43/zJN87dNcL7mHuYHMTkLlsNtzgkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_membership</span> <span class="o">=</span> <span class="n">InSet</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[18]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="example_membership">example_membership:</strong> <a class="ProveItLink" href="__pv_it/demonstrations/05bad08b7523ac12e6ab9d76fc7b34b93594b0b60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAPBAMAAAC7N+rPAAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAANZJREFU
+GNNjYMAA07+GT2A49auBAQsIYxZg4PyATYZBxGA3A8MCFKFUF5cCEC0RyWjA4IAsY7oTypAz5KwE
+S/Hdub0SJADkwqSYNhiCpboesIOtZHwAl2I4wbYBKMW5jIE3ACTAyoCQYpwgDJTi/cnAsgEkYFUO
+BAUQKU4BdqALuQIY5huABJ4i6WKwYQZKzT/AoA8W4EKWYlMAWjJfgUGcCeQC3g0wKWEgPgeUYt3A
+5sgDFnGCSRWBFAJt5ZTe/HAHWGRixAQwbfILqIOzACWgekJckAUA35wvARSvnUAAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_membership</span><span class="o">.</span><span class="n">element</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[19]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="../../../__pv_it/common/c06c606ec12678c58933ac85412ecadc2ae28be60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAAEdJREFU
+CNdjYOC7c3slAwND1wP2DwwMnMsYeAMYGHh/MrBsYGDgCmCYb8DAMP8Agz5QxXwFBnGmBwysG9gc
+eYAqpTc/3MEAAP4BD32xAXDqAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_membership</span><span class="o">.</span><span class="n">deduce_in_bool</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[20]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/demonstrations/fbb8ebae3a18bb5473cf89698eadd4da8c9b16f50/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/demonstrations/fd593b80c2bb38a6112dcc898ce08f6be8d673cc0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGgAAAAUBAMAAACT0mUoAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAbRJREFU
+OMtjYOC7wIATsD3AIXEaixjP+t1rGJjjQxjkUMXZW3f/ihABMtZhM4n7giIDw3kGhlNo4lxMBadP
+XmDgnYBNE2MTewEDKwMDcwGaYSwX2BU2MHCgOPt2R8cCsCbvA0IMHEB3BkDEeXd0dEE1sSVsYHiB
+rEe7BmbTI4FTB4CaGJaAuUzbD8BtYvbZwFAJZPJNnh4D9v8auPMepDMJgDRZgrmnDiCc56GowLAX
+yHR9wPUBohShidnhOkjTLTBXDuGniP8hDAxtQAtiGTg3gIUQAfGAQYZRA8jIAHM3IAUE810DBqA+
+zj8MHOBQUl0FBAugmg4yLAUy9MFeigJJQDUxbPAFaWLdwHBeAST0GtkmJgNVmCY+ZJsYNjCCnHfe
+gCEfLMSKrInhGsi1HmBuALImAS5QQJxPYJACpzJOeFQyAm1mfg0PiOkoNl0GhSl3AW8jM1isDZ5c
+EoDELCCeDOZyJMCTkQGzpQDIfh7xooclYLGDWyARwtQfzQBJeIsgCVjaByXBoiYj5x2QZARP7g0Q
+msUakoygAHuChQH0BAsD+/BpOkVCJiRoIr7szos9uwMAu7lyUzVAhTwAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

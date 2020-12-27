@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.tuple_len_1 theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.tuple_len_1-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#tuple_len_1">tuple_len_1</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.tuple_len_1-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">var_range</span><span class="p">,</span> <span class="n">ExprTuple</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">i</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types.tuples</span>  <span class="k">import</span> <span class="n">tuple_len_incr</span><span class="p">,</span> <span class="n">tuple_len_0</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.numerals.decimals</span> <span class="k">import</span> <span class="n">md_nine_add_one</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> tuple_len_1
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="tuple_len_1">tuple_len_1:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/4dc1e25180f98a1474cbe841baf6941eaf284a150/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIEAAAAVBAMAAACTeZA2AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAActJREFU
+OMtjYMAGoogUwwE4LzAcATPmQvjcE8DUEWxqdwLxAxDjLrLoCqhqrgaoQCZuE9iApp8GMV4hi76E
+quabABVYh90EbimgLUAHzAC5uwFJgtcAqvoyTIRHAZsJy479ApKHgDYtACrZgCTDPgGquhImwiWA
+1Q28IBMWAulTq1ZNR5aYDlXNWQAXeoLbBD4HBoYfHR01yBLKUNVMQN8wTD6sCHTjYdwm8ABVpTIw
+dCJL9EJVc1xgYGCRZHgPZN6Dm3DuHQg8RpjACwxKZ3CAIkA1VDU7MHAWXmCwADK343YDN9Cv7AxM
+F5AlRKCqGYE+tF/AUARkxuM2gfUD0CcX2BlwmSDBwPWVsAmcD8KArMVqTzF9wfWHgRuogsEdLRye
+IUxgAcVYZwowyktZf2GGJNdvBrYHO5FDEsMNoJBk2Aw0htmAFRb9h6GqQfHUxHA94QADgw1WE5hA
+JjADpRn4gYmWcQNTAlTCHaoa5L5lSpFJwOB4is0E5sR/tsAUFQByCDDNrJ/AcWsBzlRdgDNvMiyH
+MRgnxPuSmLMg4BCMwZK0yRbG7oSq5iCQu8HOe4BNFKOE6cRtAtwW9FJOFbmU44WoUsWm9iYDAwB+
+QJRgJYkamQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/e6532f1c3adf5bf0a1cdabfe76cd8b36c11d52820/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tuple_len_incr</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../../core_expr_types/tuples/_theory_nbs_/axioms.html#tuple_len_incr" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../../core_expr_types/tuples/__pv_it/axioms/000f3e451cfa51382e293a2f95fe2bb9433967c90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYgAAAAWBAMAAAAodhaSAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAABGJJREFU
+WMPNV29oHEUUf8ndZu/29i5+EKQGMRoTC0oNKeiXtLQVzCcxreA/CglH/VBp64m11ih6tF9ySuGo
+YEKhMFrUkGJvrYSoYHtw64dWkAP9IGLbgzaFVghS+8Gmrfjezsze5HZmkyt+6IPZe3Pvvd33m/fm
+zRuA/5deuQveoNK6hXYt0nXwJdM+ZcrBjx8RHDXr0zi/Fxo0P6dT8mNkepqRLsy0C2DmPnzs1INw
+igBdRY3RTjF8+ImmV/UgzDI9XZEuXGk7DBdxnNCDyOFqd7WG9mvG9U8EFtMU/aIehFmmpeygcIGY
+NukmDrdXC+IXhT8pgrPrdcb1afiQo5mnB2GWackuCxfscrsYkkvk2j1aEO9EQQBcYFyfhg/Zs7Oz
+U6AHYZZpaUq6MNV2INwCPS/pQKQLJhCB/qXA4p/JyfcMIMwyLfVJF4hJDw/dH1/KVIVcvg8jXtOB
+6MTc/GxIC6LGB1q8ClDiqlEQXLZCJixK7pB0gZjN5dxfAC+Z7bhCH59Urjo3sFiGIH5eJKLdDinc
+09XNWhDn+UCLp8HBUmrxNLbe9OGh8RAEl61ANcm8K11AxnkAEkV4/imjFVeAl/nsNINrAPO6SNge
+pL2NWhDzfKCFDZ2ifh2vbYBvXZZgIYimLIb+lMy90gVkEktgY+EYMVoJBUEbwbkFMKYD0bEJHEIY
+hOeNxcXLTRBjfKCFW7dFhfzoCIMfegfdZjqFsji6oQPRUYTKaBwIoRAeE8mbZhCQWdJGogki3XgB
+E3uAcgdpbu6wAiKQwbGBaAPiDO0RLljXBlg0nSpVOA1xILjCFpG6tykyXFvZE5dFOkFqXAtihA+y
+KO3AJe9mvMmYc7/a3gQRyJy3LPzAa8t9+HJ0jEEuqB4TsiioG7viwR5sbGJABApVscTX4dO6urEV
+oo1d8arxGxu+wUJ8ZB6cwJU5qNYUECRLDFoF2N5SL9fDiwgv+EhvttHc4b5g8N99brBOzr/kckMw
+4SxQSB8v8H92w0F8DutAuOjXc7KjDEE8wYT+MLfopv11AKz9k5MHEMRRWwFBsg6vE6M5sfzVPTAQ
+5mxCBHtEukCu5/s/eYT/9TZ+zyaVfSAe9oRUSPVy+bHHycsFHYgkrmPXuZZ0evLBi3Wuv8AtsnSC
+L43COI9EcpsCgmSVcup31gICq/qh2czDxHazDs/YdhCIDIvk0vdhUn2uyJ3C6tsOqU9DWmQaVfiR
+mF8B/lBABEtdHnuWIpH+EKaZfKyxrtczWAqmmc1+MzeAVMnd6IaoSuaUq8hX0QDOLku0sAGUbWEZ
+Urigyfc3QVcLiGT+5AYCYfXA1rK1hh498MxjfXU60Ld61q7QpZI0ksf8xx/ksWeIlrbwgPjijCI3
+tOIpUzvZbMUVWot7YnnboRCmU6Z5qRLhxBLurXgpih6XWdDKS+ZLkZZKYvgxh9ij6umw7W8Pvgtn
+gsszeacMr6f9d349zfJX9a/2ekr6NNbtbecrdQ2XhbuA/gPNon1mxoL+PAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tuple_len_0</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../../core_expr_types/tuples/_theory_nbs_/axioms.html#tuple_len_0" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../../core_expr_types/tuples/__pv_it/axioms/cad25824d522c677f1203a28056fea2953be2a6b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD8AAAAVBAMAAAADRiu8AAAAMFBMVEX///9UVFQQEBCqqqoiIiJm
+ZmYyMjJERESYmJjc3NyIiIi6urp2dnbu7u7MzMwAAAADGpxCAAAAAXRSTlMAQObYZgAAAN1JREFU
+KM9jeMsAB0hMJHAaiDkbmCdAmdgVXGdgkMSm4FTPA4hoJgPDNSwK2Ax4PcGiHAEMDDwLMBU0MTAc
+A4uyAB3Aq4CpoJCBwf4CSHQKiJeNqeAjA8N+A5DoUhDvKIYC3q9ABQtAohUgbhtUwbE0EEgFef4P
+A8N7sAJnkIQJhgmcQBPeHwCJaoO47/FYgUMByJH2BnArtqC4IRHELGdg6L+A4UhsAXUUxIvBVMBi
+wKsHFt0C4uVhKuA9tfABIqgd8EQ3rshCpIdK7NGNkmAqcSpYB05yHBOgTAwAAKtiVVg5HIChAAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tuple_len_0</span><span class="o">.</span><span class="n">rhs</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<a class="ProveItLink" href="../../../../__pv_it/common/7d0a36793ffe8d307a5c120ee5598162e8cd2db10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAOBAMAAADkjZCYAAAAMFBMVEX///9mZma6urpUVFREREQQ
+EBDc3NwiIiLu7u6qqqoyMjLMzMyYmJiIiIh2dnYAAADXmt2vAAAAAXRSTlMAQObYZgAAAFFJREFU
+CNdjYOC785qBgWElQ3sCA08AA98CBhYDBs4fDPwGDEw/GfoFGJj+MuQ/YOAGkgIM3P+gIkBZzp8M
+LA4MPD+guhgqGVo3MDD03bVmAABi3RThwIkdoQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># tuple_len_incr.instantiate({i: tuple_len_0.rhs, ExprTuple(var_range(a, one, zero)):tuple_len_0.lhs.operands[0], b:a}, </span>
+<span class="c1">#                           assumptions=[InSet(zero, Natural)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># %qed</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

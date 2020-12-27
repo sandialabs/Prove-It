@@ -1,0 +1,4 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \control \qw \qwx[1] & \qw   \\ 
+  & \gate{Z} & \qw 
+} \hspace{2em}

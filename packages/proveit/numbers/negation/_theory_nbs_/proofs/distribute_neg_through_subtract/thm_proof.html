@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.negation.distribute_neg_through_subtract theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.negation.distribute_neg_through_subtract-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">negation</a>.<a class="ProveItLink" href="../../theorems.html#distribute_neg_through_subtract">distribute_neg_through_subtract</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.negation.distribute_neg_through_subtract-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> distribute_neg_through_subtract
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="distribute_neg_through_subtract">distribute_neg_through_subtract:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/26b1344c1d8c57b02d03c6113307677cb21de08d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARoAAAAVBAMAAABrvDzoAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA0xJREFU
+SMfFVktoE1EUvU0ySTrJJC4EP6CMrXblItSNYNWKSFfSuPC3agiKCCpBUPCziAqSoMKAoAUVpha0
+FGkGRaRSaDELQREGXNgWlECtYpVYioK2Kt73yWTeTDoxuvDAmcy7ue/Neffe9wGoj1ucoqUmhjkd
+aDbrfCKiMZZI47WXp5xlFC1ut3MZgKDG6MCA1/gDy/BxmPE5Mcx4ecc0RtFSwy+BkkqMDnzwDMwU
+coixlwQy6+X8klO0uBE38PGEU4CSqJkdlb8sIKMqZUzHH8NLzSlO0eJGN44EfZwCQpqXmsA8yfMS
+SuXZ4OB1LzHNGUbRUgNPabo6GQXUHr+iJkqHe8v4LZc766XGl2AULXC1uEYXHd+1bMKhE4wCWu1T
+6WhfKaqJpVsxN0WgPAiQr7gGym41YZNRtARWwGfHmvqlFzRQsIQJIVqmoMKu2Ny2abFZUU1hRv4O
+8AYot9sXQdEK4+VDaZ50g9FWBtjqM2GjI/DzEFchgmGPODN5xqZ5FfizoppRHeYAHgFlCHzVmX8k
+HUY2mPI+XfrETE2djDKbbJK1tupwnPw7RI3T+OYvQWEMJJy4NOtQs7Ta2z8PIZWF7v3qcjmFr1tA
+/gHQA5RRM1TthyGD8eFBUG4CjIhqqiCt5SB/dW033caiaqy+WSgkxdhMQWDBUtNc2oMv/W1kftJc
+mx4gqd7xEP/wyBTOJuL4ZtwkAQtglggrdZNyZArDN+pYUz8BAwZdwJg/gIE8IZFV7zvtS8SIx+SE
+dxXLCxAsiQdSvBNrolrFdtiquGDAsYgmqPlCirBSxfAAp+JPSGRCYVUp9ROPx9UvudcsaZ2HV6kx
+4ZNBM4x2/xijgKJtJqpyMirG5ihcwGcHJ64EaDJ8KVoR/tTeXC6n3tht9bdiL1jutOxPi5uc3P6C
+VE+SUUCXzSu97tpaUU3/ehL5aU4Fd7GCFp7En7jeZASJh/82dmzwZKC4y9nAycBUZhhZqWs9O6FX
+D+njEE3SHTNpHX5/empSNHBqyva9nJ+aPPjp+5thlyEdwZRfIoZ75YuVeIc1RlvytUXvQrVvFPm6
+Nzp+o7CDrWMf1s1f3LYWUV7/tmXpzbuug/94E53gbPQmqmiMdhP8b/wGr4QH4KdXBLgAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/b7d8477932cb552f3d20c0892bd0f95ebaa448c60/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

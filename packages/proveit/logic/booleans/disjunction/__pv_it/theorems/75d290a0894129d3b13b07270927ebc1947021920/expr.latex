@@ -1,0 +1,1 @@
+\left\{\forall_{A_{1}, \ldots, A_{m}~|~A_{1} \lor \ldots \lor A_{m}, \lnot A_{1}, \ldots, \lnot A_{m}}~\bot \textrm{ if } m \in \mathbb{N}\right..

@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}}~\left[\forall_{i, j, k, l~|~\left(\left(j + 1\right) - i\right) \in \mathbb{N}, \left(i + a\right) = \left(k + b\right), \left(j + a\right) = \left(l + b\right)}~\left(\left(f(i + a), \ldots, f(j + a)\right) = \left(f(k + b), \ldots, f(l + b)\right)\right)\right]

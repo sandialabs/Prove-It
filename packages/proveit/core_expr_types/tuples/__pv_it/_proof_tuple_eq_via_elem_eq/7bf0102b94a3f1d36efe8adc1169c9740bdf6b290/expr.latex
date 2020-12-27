@@ -1,0 +1,1 @@
+\forall_{a_{1}, \ldots, a_{m}, b_{1}, \ldots, b_{m}~|~a_{1} = b_{1}, \ldots, a_{m} = b_{m}}~\left(\left(a_{1}, \ldots, a_{m}\right) = \left(b_{1}, \ldots, b_{m}\right)\right)

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for the theory of proveit.numbers.number_sets.integers</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-the-theory-of-proveit.numbers.number_sets.integers">Demonstrations for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.number_sets.integers</a><a class="anchor-link" href="#Demonstrations-for-the-theory-of-proveit.numbers.number_sets.integers">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">n</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">two</span><span class="p">,</span> <span class="n">nine</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Natural-Numbers-$\mathbb{N}$,-Positive-Natural-Numbers-$\mathbb{N}^{+}$,-&amp;-Integer-Numbers-$\mathbb{Z}$">Natural Numbers $\mathbb{N}$, Positive Natural Numbers $\mathbb{N}^{+}$, &amp; Integer Numbers $\mathbb{Z}$<a class="anchor-link" href="#Natural-Numbers-$\mathbb{N}$,-Positive-Natural-Numbers-$\mathbb{N}^{+}$,-&amp;-Integer-Numbers-$\mathbb{Z}$">&#182;</a></h1><h3 id="UNDER-CONSTRUCTION">UNDER CONSTRUCTION<a class="anchor-link" href="#UNDER-CONSTRUCTION">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div style="line-height:1.4; font-size:14pt">
+
+<a href='#introduction'>Introduction</a><br>
+<a href='#simple_expressions'>Simple Expressions involving the Natural numbers $\mathbb{N}$ and the Integer numbers $\mathbb{Z}$</a><br>
+<a href='#common_attributes'>Common Attributes of NumberSet classes</a><br>
+<a href='#axioms'>Axioms</a><br>
+<a href='#further_demonstrations'>Further Demonstrations</a><br>
+    <ol>
+        <li><a href='#demo01'>Demo 1</a></li>
+        <li><a href='#demo02'>Demo 2</a></li>
+        <li><a href='#demo03'>Demo 3</a></li>
+    </ol>
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction-">Introduction <a id="introduction" /><a class="anchor-link" href="#Introduction-">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><font size=4>UNDER CONSTRUCTION. Something here about the importance of having and using specifically pre-defined number sets such as the Natural number set ($\mathbb{N}$) and Integer number set ($\mathbb{Z}$), the axiomatic definitions, and perhaps the distinctiveness from the Real numbers ($\mathbb{R}$).</font></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)</span><span class="o">.</span><span class="n">deduce_in_bool</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/demonstrations/712bda1eeef3553bb5a5f4008ae4acea671c862b0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/demonstrations/d617c4c7b464a14d146f826e3a1a114d3c5b56e10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGkAAAAUBAMAAAB8EA4WAAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAAaBJREFU
+OMt9lD9IAnEUx7/qIer9QRSqUaEhig4pQyIKl6AhQaipFqfGssnarCGiJWkRguCWGiLiNiOsbgmi
+Bo32cmwqh5wq6P1OT+5ndz44+PF597n37vHuAKUO91h3Szw5wcfvawNTrbS3wfOt1bvT3TQdLh2f
+deOJQWpC0nq4NihVTwC55GiNhAtAFkj1cD2DTREIcD3IV/sH5mG46g2jCNz3cLLWyHq3S56K0Tmp
+EemCWaE0z8lK0iS2AWHio1BuD8FKQvXnI8zylXiuZ4SdOL02ZcQKamajareqiqScJ0vWeK7PH7ao
+/B4wENDwGTaZzfIacbL8RZ5Th7MvwDJg1NJ4M9tfOafoWFIsRDP0NHlOlijUmYUNYJQhxV4LUY9l
+KVwtETHWIY6BX4mxrN2Sc3SzUOQ5WV5obBpYgv/Hx1i5m6U5YU63plHmaskJTFMDX/Bpz4wFclb2
+jK4gGcEEz7UoJo+ABbMLZdzk0thiOznUojpsCUNhjlvby2+UMNPZHCsenLnL9lqRcuG3/aR/X0rf
+r9IKseGS6PsHeHXGfwEZcs+yysBaAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">)</span><span class="o">.</span><span class="n">deduce_in_bool</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/demonstrations/496c0ce4cb1ca04ba7d24816762e4a8b7f9a842e0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/demonstrations/370b97e77c694ff6267356e96a2c5a73d5849b070/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAAbBAMAAABFKlYVAAAAMFBMVEX///8iIiJERESYmJiqqqoQ
+EBB2dnbc3NyIiIhmZmbu7u4yMjJUVFS6urrMzMwAAADZVrDbAAAAAXRSTlMAQObYZgAAAetJREFU
+OMtjYKAMvMUrewCIOXDK8h3Aq1kBiHlxKuFeQFAzQzIu2RkMhDUz4rCA/RcWQa79SrsY2OJjYZo5
+JqDKc4gq/Q48y8DANgGbkUwGbxgY1jPw7N4dvXsz0IYP6H7la1i00oCB1QGbZh45jgYGVrizGUTQ
+Dec14HigwFCP4h0jQcENYM2XFpxjYERonoQmD9TM4qDAYIqs91EXzOa6A6sXIGluRZMHama7pcAw
+G8SuzGwFOYBrF9zZBR58B5A03we7DyEP1HzxzQMGJVAiCGfYD9GC0Mx2wQJJ8/sHqPJMvIH/gXGx
+B8hcagDxFBMiwAoYTvE8BLEg6usvoMqDnG2cwCAJZM5fwCABEnq6Gwg2QDWvYdiKCIz1F1DlgZoZ
+FC4z7AQygxi4/oGEipBt5kt4itAMsbkI2WYGBR4GHWA4fGNgAacCVmTNDCYIVzK8L0CVB2k+wM1w
+CKj5CwPPBnegEGcDXDMwgNgQFkFDGyEPttkMHIMaDIYHElASEjco3c1GaIamBoQ8XwJb5gGwmWs6
+np8Ae2qNLiS98ckHAcnVCM3QFAaTh2UM1gvISeyaIiT5oYMd2OU5E4goqbh+4SiFAojQzIyrHDpC
+hGbGBzgkVhOh2QyXBMsEgnrZFXBK+RLUzLmAgfoAAE8ZfYG1xJlpAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">nine</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span><span class="o">.</span><span class="n">proof</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>
+<tr><td><a name="-0x36232aa4cb0ae1d8_step0">0</a></td><td>conjecture</td><td></td><td><span style="font-size:20px;"> <a class="ProveItLink" href="../../numerals/decimals/_proofs_/posnat9/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../numerals/decimals/__pv_it/theorems/ce79b405240982d842c814bef22f5605d57819230/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD8AAAAUBAMAAADIGvgZAAAAMFBMVEX///8iIiLMzMyqqqq6urqI
+iIhEREQyMjKYmJgQEBDc3NxUVFR2dnZmZmbu7u4AAABTw4smAAAAAXRSTlMAQObYZgAAAP9JREFU
+KM9jYKAEcBNSwEYlBW/P7EIVfv4t/QHDyZ8OUAV8MxhWPkBVkcG0gYHvA8P28sry8gYG7gkM3BdQ
+FWxUCGVgmACzgr+AgecDRKJNULAARG/J41ZgEIApeJ/AwPoLLK8WBzVhlzZfHUIBJ9CEL2DH1MGs
+2MUcoI1QADSf/Qc42BbAFTAc4QiAK2BIZbD5jBoquxi4H2wCKeACc5lbdT6BaM1yICiAKODbwD4B
+OU7+gchlSCYw6DAhK2DfAHYtsgIOgwQYj2Megz7YebwBMKFNQHwKroC1jq8CwhKGCRWDlBfADTxz
+1wHCeJ0CiRPFn0DdfAVYYtcnURBTGADyLz7l7FOxMwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span></td></tr>
+<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left"><a class="ProveItLink" href="../../numerals/decimals/_proofs_/posnat9/thm_proof.html">proveit.numbers.numerals.decimals.posnat9</a></td></tr></table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Integer</span><span class="p">)</span><span class="o">.</span><span class="n">deduce_in_bool</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<span style="font-size:20px;"> <a class="ProveItLink" href="__pv_it/demonstrations/6840cee0483699a9de21e113f33c756ef9fb7e5f0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="__pv_it/demonstrations/69874d196e23a3f531c7389d7c7f141a5793cbf00/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGUAAAAUBAMAAABmLO6YAAAAMFBMVEX////MzMxUVFR2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAACgK8IjAAAAAXRSTlMAQObYZgAAAcRJREFU
+OMtjYOC7wIADsD3AJXOagWdrA6oQS+vXVRFLLzDooSmtiN6/tMkByFjHwMA1AVWOfacAwwJuBoZT
+6OYvEOfZM5eBgReonj8BVYrTgIE5wYSBgbkATc8GX4ZCoFkcQEf7H4CK3e7oWADSc4DhESPQLJ4A
+iDDvjo4umJ40oJ4XQKYFVIt0DdzEPdwgc5aA2YzbDyDsMTnNwFAJZC4qnwYS4VkD18JbcBdEWYI5
+pw4g3MbSqMjAsBeo9teB86BgZUKE7WmeDSDqFpiDCL4Nrv1fgeHWBoyHPwz8IN9yIzyrCNGfAVGJ
+HAa2lxkYQoBeXsBw3gAoIroKCBaAI2iCM1iNPNg7USBxmB5ulgsgPcDo8QeF9mu4eVwgs22gevhQ
+7OFmUAC5jf8Cw3yQN1nhcmbMQFcDA9oDzAtA1sPEsAAUBvwOPLHgqIRFIZ/CIyAvABYG01Hs4TUA
+BSfTBW5I4mmDSnEf2MPAowt00mQwlwOeTBYIMxhPAlvPM90WInRoCyQmXHdF746PBpqzEMzl0fZB
+TaMcyAneeQc47cAADzS9s1hD0w4sxicw4AQYaRQG9uHWcwp3nsMJcBqHO2/z4sjbAJH2d41bPy/5
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

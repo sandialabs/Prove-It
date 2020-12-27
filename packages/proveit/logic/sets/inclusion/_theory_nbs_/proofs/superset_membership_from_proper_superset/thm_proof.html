@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.inclusion.superset_membership_from_proper_superset theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.inclusion.superset_membership_from_proper_superset-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">inclusion</a>.<a class="ProveItLink" href="../../theorems.html#superset_membership_from_proper_superset">superset_membership_from_proper_superset</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.inclusion.superset_membership_from_proper_superset-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> superset_membership_from_proper_superset
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="superset_membership_from_proper_superset">superset_membership_from_proper_superset:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/1f7a8da076fa3b45fd6a688d29bb4437b07b32480/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPYAAAAWBAMAAAABeHx5AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAzlJREFU
+SMe1lktoE0EYx//mYbLbTdq7HoKCSsG2sFhBqoZ6UEFpvKgnW9RCe9GihSJq7aFoqkLiyR6ULFiK
+RNGCB6kIra0iRNH4AAtiCaiXgm3oA/tA9JuZfUy0XWukA7uZ+f77399k5puZBYosnvGY+wM3XbSS
+JDDaihyrf/p3thZ1d6odSylH6Gqm6ylesOZYMWx3Zzi5lDJB1z3O7qa70lEM2935bikhNGGQO8LY
+YVbrK4bt7jxT0Bppa8uZ1Ts7aUTUMsYOZdLp6yiG7epUWuTW4XKnnq2M0v0LY2M2Hj9XFNvV6ami
+P7euuXaI552UFT5jIEs/w5zdCHTxqLjvmRpu4mnis57usn22JtiNssYciZpqKxAkwF18iLSzxmop
+73pQT3ONUc7eBZVPRWhapEIZtDLutnJj2kkTSxNsy2mXN8ATsxqgRMjgtbFXfhUrUaRoSPCQswPw
+sEHArR9c8zagZF42UFzV9e0xWRNsy8lG9bFO1WpgwBCBVTSpBuKicWCciuim/5h+kq2Nes7WsgEe
+zZwWHY7Am5PZLJ5O9+iyJtiWk+Vxf5rup4AdcNjApGh0S/NCUs5mK7mDvEMR0cn7MVQYEtuK+6ok
+TbCFc2jLhhgT6c/PwDMmjTn8M2ZHHDaFA2zadnM2uo7zfMBWLtZt3tQAiW3F8UzSBJs7PcaJQDQs
+ujf59iKkXHvkyYMvLm/EXnrEDuftXMMDvhQ/opKrr4CNMtuKo1bSTDZz+vGNckKEcvBYy1qrgm8h
+mFdEQpy1XGw/CM7RrUawS1mv1M8vE3w4rwKpPodtx3FD0kw2d4JedSgej0cQHISyYM1rC9Sj5evN
+o6a3U7zj9s8xlCS+0wx9FewQi3sNpPihSOa6pMO24zQAjmayudOf99PEsFLaB9/c4nvqvkttBctR
+bRFsXvaTNatchjIPZa005jzOax2SZrJZSWk5DRrvXsrAtcG/niXCHXHYwVkoifP+NXg+pTdFHbaI
+83USkzSJ3ft+KANcYZELenWn/fZg0o0tztDC7wmpLm1GKk3ntj/3c3n7ZvO9zG8Ha5/+jd2/OHvR
+w6L9P76ZQjQoFa2Fsezy2StavCtO+AVAdvZL2kuGHwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/d30b0618331e47172cd5b5bdf534ccbb887fe4390/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

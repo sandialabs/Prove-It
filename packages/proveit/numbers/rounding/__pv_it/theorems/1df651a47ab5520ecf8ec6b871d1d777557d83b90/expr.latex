@@ -1,0 +1,1 @@
+\forall_{x, y \in \mathbb{R}}~\left(\lfloor x + y\rfloor \geq \left(\lfloor x\rfloor + \lfloor y\rfloor\right)\right)

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theory of proveit.logic.sets.subtraction</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theory-of-proveit.logic.sets.subtraction">Theory of <a class="ProveItLink" href="../../../_theory_.html">proveit</a>.<a class="ProveItLink" href="../../_theory_.html">logic</a>.<a class="ProveItLink" href="../_theory_.html">sets</a>.subtraction<a class="anchor-link" href="#Theory-of-proveit.logic.sets.subtraction">&#182;</a></h1><p>Subtraction is an operation for building a set that includes elements of one set except those that are members of some other set.  For example, $A - B$ is the set that includes all members of $A$ except those that are members of $B$ and no other members.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Local content of this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="_common_.html">common expressions</a></th>
+<th><a class="ProveItLink" href="_axioms_.html">axioms</a></th>
+<th><a class="ProveItLink" href="_theorems_.html">theorems</a></th>
+<th><a class="ProveItLink" href="_demonstrations_.html">demonstrations</a></th>
+</tr></table>
+<h3>Sub-theories</h3>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Axioms contained within this theory and its descendents</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#difference_def">proveit.logic.sets.subtraction.difference_def</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/7735faa9da929ce810416b9eb79514b083550b6f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZ8AAAAWCAMAAAAo9GECAAAAQlBMVEX///9jY2MJCQkNDQ0rKysP
+Dw8WFhYQEBCIiIhmZma6urrMzMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAADRR/RZAAAA
+AXRSTlMAQObYZgAABC1JREFUaN7tWcmipCAMdFYB2Zf//9URECWAIjr95jIcurptSaoEkoDT9L99
+ZVv+mWdhIA51etaUgPgRii2HzxWx+2oi2v1/8+pZSQ5xqNM2t2y3g6HOUYwp58T/pJsUKj5GEVLr
+OurYXuiAmoBapbutfDM+VkAc6rT9cje6zPEBYOcjhdwem7QfowipVY7EpaKqYTKgJqBIAy74m+Ex
+GOJQp+2Xdf0Zsri4yokLfTWKlxP+dYoltdKRxReKuuGtoyZgWjbHQnrSmIDYVMnZ2mzdKc4WhV1/
+YqPtHuOCBjlvnecPUSypFY4WzmTLx4nt37+g7Y6agEZL3wR7VRwwiK2Zz5Fsd9ror2xJ1xGfN+bb
+c7FbF0s+QrGmBh1RgtCpoto2F2NqAjruG9NvxgdhiBIhKgjKooGs0xvKgwGRk3L9CsWFBLswmlY9
+hviXKdbUgCOfIVjDx4ntKnv11ASkoSbnpysz/4dwh/VacJQ3cwNQroNtGJqy1dyofHg2HJL4aNzN
+IoujxiDO1JEZIHpRNmv4HcWamsmfsc8JeV7o2EZoUE1Agi8rIAOijgkrUpfhPrnYUK/zQa8plRyK
+G9UHy5R5H8L1F0EM2HJOdapiEC/SzxOKNTXgyH8XtvJxZrtcn101Ef0HOgstEoOog4MpVVZaMwHo
+/+VwbzPvU7rqFPYFeN0HOJ7Fg6wtZcBelak0BSFeFOZPKNbUckcmrAe6lD5ObP/8UdjuqomozcW+
+VkuWz2oWKGF7LT7EVrCYW9V7dnP8Ntt76ccrQi/H5x7FmlruKGb1bM95bbuqkLtqIq4rNPnQCC8o
+mxDTgsBMkGEjhapEWgSPYBoeNc1X8S31nrvpZ1vLNAVdwiCW+Ye+o1hTyxwpXO5Jr22zYTUbckHj
+DWsJSO3EsoSz6sOZXeLQmtDoaarfUMl1TkR7e2BE5/WBUDcPENJ+YdnDTaM+OCtznlCsqWWO0rgo
+XPho2yZ4WM2GKg3BOuYWJCKjpuhqn5vBcBUNYWFI1njKXXFWyNRZp33XwHsbVBtnMZl5Uo41xPP2
+iGJN7XC0cBjnerbpMqwmYRYswSOSFmvNs2KAhw7ClULggpQUIYkwPHCVlBPZ6CS5cyFeqvULu6rg
+qE3HiYf7VDvY7sH9A4otaocjuoeZvW6+tP0dyr+jJqGRU5b+DqlYhtE4LsSBIfU8v3N4QjS/ON95
+dmrOIL4936konjncC4cUd7q2zbee7UpNqUq4EMC0rzf8yJA4A3waixdEWEpi1p84H33Svuh8tHY4
+roiLYTWlM0kN0cjvrpZZ+ZjLQ2nomIkXNHN+L8DJhXs+sib4ywU09n7hEcW2w3FFN146Nd8vnDXV
+vdD2/+L93Hgbe+Iv3s/dnlCntpEZVnPlrHqT2321+w/ebxsBcfoExZbDB4r4sJpLZ6Z74X/7ivYH
+3sdS30T0azsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

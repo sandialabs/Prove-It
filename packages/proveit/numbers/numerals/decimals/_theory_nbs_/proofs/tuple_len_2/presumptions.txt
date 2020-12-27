@@ -1,0 +1,24 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.equality.sub_left_side_into
+proveit.numbers.numerals.decimals.add_1_1
+proveit.numbers.numerals.decimals.nat1
+proveit.numbers.numerals.decimals.nat2
+proveit.numbers.numerals.decimals.nat3
+proveit.numbers.numerals.decimals.nat4
+proveit.numbers.numerals.decimals.nat5
+proveit.numbers.numerals.decimals.nat6
+proveit.numbers.numerals.decimals.nat7
+proveit.numbers.numerals.decimals.nat8
+proveit.numbers.numerals.decimals.nat9
+proveit.numbers.numerals.decimals.posnat1
+proveit.numbers.numerals.decimals.posnat2
+proveit.numbers.numerals.decimals.posnat3
+proveit.numbers.numerals.decimals.posnat4
+proveit.numbers.numerals.decimals.posnat5
+proveit.numbers.numerals.decimals.posnat6
+proveit.numbers.numerals.decimals.posnat7
+proveit.numbers.numerals.decimals.posnat8
+proveit.numbers.numerals.decimals.posnat9
+proveit.numbers.numerals.decimals.tuple_len_1
+proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
+# THEOREMS AND THEORIES TO EXCLUDE:

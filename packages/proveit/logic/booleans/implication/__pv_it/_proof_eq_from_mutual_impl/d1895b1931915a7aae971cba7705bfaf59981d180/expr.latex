@@ -1,0 +1,1 @@
+\left(\left(\top \Rightarrow \bot\right) \land \left(\bot \Rightarrow \top\right)\right) \Rightarrow \left(\top = \bot\right)

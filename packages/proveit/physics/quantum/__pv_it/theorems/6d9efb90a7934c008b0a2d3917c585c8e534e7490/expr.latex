@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}^+}~\left[\forall_{x \in \left(\mathbb{C}^{2}\right)^{\otimes n}}~\left[\forall_{\alpha \in \mathbb{C}}~\left(\left(\alpha \thinspace x\right) \in \left(\mathbb{C}^{2}\right)^{\otimes n}\right)\right]\right]

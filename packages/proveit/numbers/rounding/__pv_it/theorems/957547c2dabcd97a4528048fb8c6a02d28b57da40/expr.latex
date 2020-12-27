@@ -1,0 +1,1 @@
+x \mapsto \left\{\left(\lfloor x\rfloor + \lceil -x\rceil\right) = 0 \textrm{ if } x \in \mathbb{R}\right..

@@ -1,0 +1,13 @@
+i \mapsto \left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, 1}{\Big \{} P_{i, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, g}{\Big \{} P_{i, g}} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{i, 1}{\Big \{} S_{i, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{D_{i, n}{\Big \{} S_{i, n}} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{i, 1}{\Big \{} R_{i, 1}} 
+} \hspace{2em}, \ldots, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{i, k}{\Big \{} R_{i, k}} 
+} \hspace{2em}\right)

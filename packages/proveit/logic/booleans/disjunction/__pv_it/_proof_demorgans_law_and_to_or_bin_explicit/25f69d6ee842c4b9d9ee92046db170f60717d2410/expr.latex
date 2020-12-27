@@ -1,0 +1,1 @@
+\left\{A \lor B \textrm{ if } A \in \mathbb{B} ,  \left(B \in \mathbb{B}\right) \land (\lnot \left((\lnot A) \land (\lnot B)\right))\right.. = \left\{A \lor B \textrm{ if } A \in \mathbb{B} ,  B \in \mathbb{B} ,  \lnot \left((\lnot A) \land (\lnot B)\right)\right..

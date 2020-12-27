@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.numbers.negation</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.numbers.negation">Axioms for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.negation</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.numbers.negation">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">Natural</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.numbers.negation&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">negation_is_injunctive</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="p">[</span><span class="n">Equals</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">b</span><span class="p">))],</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="negation_is_injunctive">negation_is_injunctive:</strong> <a class="ProveItLink" href="__pv_it/axioms/797ac9eac53f3791277562ef87db7e7e47eccd510/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAAAWBAMAAAAMZgw+AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAx9JREFU
+SMe1Vk1oE1EQ/rL5a7PZ1IMoKkKg2oM/EFovSpWIqL0U1otVBLsUPRS09KIH9RDw0iqFnGyPKwEr
+OTRBRRGUBnqrIIsgFFEJ+ANWLFJ6sK2CM283+96mST1Ihtnd92aY9739ZubtAq2TdqeZR88DVR58
+aAnww8bW7XQbBl7xZLElwN8amz/RNQNMMSe5VuAamcb2dbqSaaRsepRbARzPNzRH1uiW2AJjvlic
+bAnTTVZNjvL9M/BrbOzWv1fJC/UlGnTVxFQ9nZzE3u6ddSulhjqJ4DngMjDu07C0gRhvm0KVfsjK
+N1Bin6ieCbqO51M/efx6iYXLCqXFxCrwETiBRNVfZc57DvRmtW08aHPnw0IVOeyPhpXYcF7x3KRU
+7ka4vnBnbSwDz6gGoMlG/86Jf9Hj6Ll5HJHA0QqrKg980itKbMJSPFtpI2uIp+uAjyHxGxgkqpy4
+tBIJWHhehP4mjIoEjpmsgUzVMivtq27r+h4CDuVQMje0cWRdALdXz9K00PWFt7/cZUe4/fQL59MK
+cFyoJ4nuEVOy5Ns5FgchPUR1qYJZyBx/5eEf5gGnaTR+iRa7FuX20m5omZQoHnP+rQI8qTbHtDlo
+Q7diYyQT0s6xeEqhliyuUhkjel07r+C+I4oLj6mxwpkot1db2qgWXOBkMiOB+4R60oMBquFazfh2
+juWZ75kTtuvJOqqv4jbde+nqoPSHyhpvNJQNWwP0ImndbHdGJfApoRF+xzvYhS4ittYJZO9ju82x
+uKh4iM3E0N57e+qACwc4F5xYgw7NUr7tHT067FA55r4xTqYl8DmhXopXMVFExIpx1n5IO8eK7Vmb
+H5nuIqPeIJQf7MeUHbcXkOQyNLIwlBxPC/VkR3TF8bxQ7ByL95CeZh8JuB8J79gZenQUZ8rRKxR1
+l2mis9RSqtpmrZG7v9NBOOvj1aqaYw9BeuSBuFFmglP3I6VRjn2TC6yVWQN97BdzwF5VPE1+BBrs
+SW+QFO/IzAlV5KU/Uu26o3qa//oYQSQDTYH7hSrFIfOn2gsBz39J2CcjwIdmN+RpX8CzqfwFJwjV
+TKVGthoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#double_negation = Forall(a, Equals(Neg(Neg(a)), a), domain=Natural)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Negation-is-defined-as-the-additive-inverse-of-the-natural-numbers,-extending-the-natural-number-set-to-all-integer-numbers.--This-will-extend-to-other-number-sets-through-the-definitions-of-the-operations-that-extend-the-set-of-Integer-numbers-to-other-number-sets-(division-for-rational-numbers,-exponentiation-for-real-numbers-and-complex-numbers).">Negation is defined as the additive inverse of the natural numbers, extending the natural number set to all integer numbers.  This will extend to other number sets through the definitions of the operations that extend the set of Integer numbers to other number sets (division for rational numbers, exponentiation for real numbers and complex numbers).<a class="anchor-link" href="#Negation-is-defined-as-the-additive-inverse-of-the-natural-numbers,-extending-the-natural-number-set-to-all-integer-numbers.--This-will-extend-to-other-number-sets-through-the-definitions-of-the-operations-that-extend-the-set-of-Integer-numbers-to-other-number-sets-(division-for-rational-numbers,-exponentiation-for-real-numbers-and-complex-numbers).">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># By default, Add(a, Neg(a)) will display in the subtraction style (the same as subtract(a, a))</span>
+<span class="c1"># By calling &#39;with_subtraction_at&#39; with no arguments, we override this default to explicitly</span>
+<span class="c1"># display it in the form of adding the negative, though it is treated as an expression with</span>
+<span class="c1"># the same meaning as subtract(a, a).</span>
+<span class="n">neg_def_add_inv</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">))</span><span class="o">.</span><span class="n">with_subtraction_at</span><span class="p">(),</span> <span class="n">b</span><span class="p">),</span> 
+                <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Equals</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">c</span><span class="p">)],</span> 
+                <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="neg_def_add_inv">neg_def_add_inv:</strong> <a class="ProveItLink" href="__pv_it/axioms/a65e3fa29ccfac084b5a84d623234685c4c473ec0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATAAAAAWBAMAAAC1V91fAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA45JREFU
+SMfFVl1IFFEUPu667c/sjw9SEQSDpg9RMNjPQ1htROqLML30Q5CLFCSVbFBB2cNCL0oU85S+BCM+
+GPvQLhaFELjkm1EMRmBRsWEFGgwiPaQmdO7cOzP3zrhgudEH352Z3e/O/e6559w7AFXHA0Yfoob4
+PM7oh6QBlMnNxyr6iuUo/Xjoed6kUXpUW7DpAXhJHuaraCypUfox551CmdKDWeQjgCES41wVjb1h
+dDDGrgnFK33BKGIFGZchqeOlWEVjNxh9xsK+MA4zCqhdJsGsg8RUPj9YRV/RLKXfmH+UZJpSQNzq
+/AXgZ3//rfWO6p2z6pcEFEqINzSJxhp5+60t21CiUIpuuxtxAScBzgMMOGE0Kzii04oLIUftE78y
+YlBG++CeaOwupzqiJRcw68qUAK9NApL2UJiPLQF8AjjKV8akMMjJ1nRgs3VHq6NH+Be1QX/1hYuM
+JbgoGuvj6nE7BPGVUpZSwIQOiwDP8A0QcDe+727f53sMKTcFB1xjoZKzAzFtLOMzVpOmPKwDC8UV
+0/xGbutRbwXGVIPLEJbxhQuUAg5B7BdAF66PEXZ/XXLuZsbzIE0HoeQa2+SkVMTWzlU0ttWX/PWc
+KAcFtYKxWahdsYxFyyfwcaT5K4nJYrNu5a1cS3JSOnNa5oyFHV3E1u52aqlBFpaSzBoqLmWhBBMk
+TbOUdo5ZgV0FjCe0493AOYzxtRDZPgI3rYK6GqpLWkeWOvWWMzbo6CK29ilc6EcYpIuY/KvYvWLy
+F4rQi+ehm/wcfsCwYSU/PEbPQSVEnEdkosO8VEeosTirZstYh6uztR3sbaQLCx3bAvZDbJ9ojCss
+7HsdSzxYohRwGW5j24pM4SLUFAMZK0GCGfKABYlxkCU1amRdY21M12t+Nk3D0p61k8Y5O+zlib+a
+9ixlO1eV3U33d+CWpVIKGNlFapEkTALTqqBF3uMlpZMRUhqrO0mFY7Jr7JSjIxGztG3oEmGktL85
+kkYZ1/hEsTeRGq2rE4b0sD6DLZ4SSpxMJJGGBJdjo0xHjREtfHAPF6XSIZ7/w0Mc6CHOFqB77CAc
+L4YulbCNtkzrcIcEH0+sDFeVOtWxqkQt7LWPGNKF5Y9G6cfA+j57gH728ChybQBzzP3HMhYoCvsY
+QXkjH4qVp+CZg6S5rQc5ruWMScZGPq3fMfqRED0kuHZNY53OEHYFwf+GAmsGc+e/G/E3hsMcL14M
+eK8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Axioms may be imported from autogenerated _axioms_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

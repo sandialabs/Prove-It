@@ -1,0 +1,1 @@
+\left(a, b, x\right) \mapsto \left\{x \in \left(a,b\right] \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  x \in \mathbb{R} ,  a < x ,  x \leq b\right..

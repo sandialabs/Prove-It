@@ -1,0 +1,1 @@
+\left(l, m, n\right) \mapsto \left\{\forall_{A_{1}, \ldots, A_{l}, B_{1}, \ldots, B_{m}, C_{1}, \ldots, C_{n}~|~A_{1}, \ldots, A_{l}, B_{1}, \ldots, B_{m}, C_{1}, \ldots, C_{n}}~\left(B_{1} \land \ldots \land B_{m}\right) \textrm{ if } l \in \mathbb{N} ,  m \in \mathbb{N} ,  n \in \mathbb{N}\right..

@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{\forall_{x \in \left[a,b\right)}~\left(a \leq x\right) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R}\right..

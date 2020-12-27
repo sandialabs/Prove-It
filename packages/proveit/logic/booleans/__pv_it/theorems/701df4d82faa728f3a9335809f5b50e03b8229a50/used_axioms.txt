@@ -1,0 +1,2 @@
+proveit.logic.booleans.disjunction.left_in_bool
+proveit.logic.booleans.disjunction.right_in_bool

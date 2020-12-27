@@ -1,0 +1,9 @@
+\left(\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert \psi \rangle} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{Z} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{Z} 
+} \hspace{2em}, \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \rstick{\lvert \psi \rangle} \qw 
+} \hspace{2em}\right)

@@ -1,0 +1,1 @@
+\left(x_{0} = f(i + 0)\right) \land \ldots \land \left(x_{j - i} = f(i + \left(j - i\right))\right)

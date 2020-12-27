@@ -1,0 +1,1 @@
+\forall_{\varepsilon \in \mathbb{N}^+}~\left(\left[P_{\rm success}\right]\left(\varepsilon\right) \geq \left(\sum_{l=-\varepsilon}^{\varepsilon} Pr_{m}[m = \left(b \oplus l\right)]\right)\right)

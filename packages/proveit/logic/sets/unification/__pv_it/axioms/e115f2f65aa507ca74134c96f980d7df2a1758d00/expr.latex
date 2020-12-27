@@ -1,0 +1,1 @@
+\left(x \in \left[\bigcup_{y_{1} \in S_{1}, \ldots, y_{n} \in S_{n}~|~Q(y_{1}, \ldots, y_{n})}~R(y_{1}, \ldots, y_{n})\right], \exists_{y_{1} \in S_{1}, \ldots, y_{n} \in S_{n}~|~Q(y_{1}, \ldots, y_{n})}~\left(x \in R(y_{1}, \ldots, y_{n})\right)\right)

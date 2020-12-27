@@ -1,0 +1,456 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Theory &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="TheoryException" href="proveit.TheoryException.html" />
+    <link rel="prev" title="Theorem" href="proveit.Theorem.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="theory">
+<h1>Theory<a class="headerlink" href="#theory" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="proveit.Theory">
+<em class="property">class </em><code class="descclassname">proveit.</code><code class="descname">Theory</code><span class="sig-paren">(</span><em>path='.'</em>, <em>active_folder=None</em>, <em>owns_active_folder=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/theory.html#Theory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Theory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A Theory object provides an interface into the __pv_it database for access
+to the common expressions, axioms, theorems and associated proofs of a
+Prove-It theory.  You can also store miscellaneous expressions (and
+their latex/png representations) generated in test/demonstration notebooks
+within the theory directory.  These may be garbage collected via the
+‘clean’ method; anything that is not associated with a common
+expression, axiom, theorem, or theorem proof will be garbage collected.</p>
+<p class="rubric">Attributes Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Theory.default" title="proveit.Theory.default"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.specialExprKindToModuleName</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Theory.storages" title="proveit.Theory.storages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">storages</span></code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.appendSubTheoryName</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.axiomNames</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Theory.clean_active_folder" title="proveit.Theory.clean_active_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clean_active_folder</span></code></a>([clear])</td>
+<td>Clean the corresponding __pv_it directory of any stored expressions or proofs that have a reference count of zero.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.commonExpressionNames</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.containsAnyExpression</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.cyclicallyReferencedCommonExprTheory</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.expressionNotebook</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.findAxiom</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.findTheorem</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getAxiom</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getCommonExpr</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getPath</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getShowProof</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getStoredAxiom</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getStoredExpr</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getStoredJudgmentOrProof</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getStoredStmt</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getStoredTheorem</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getSubTheories</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getSubTheoryNames</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getTheorem</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.getTheory</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.isRoot</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Theory.links" title="proveit.Theory.links"><code class="xref py py-obj docutils literal notranslate"><span class="pre">links</span></code></a>([from_directory])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.makeSpecialExprModule</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.proofNotebook</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.recordCommonExprDependencies</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.referenceHyperlinkedObjects</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.setSubTheoryNames</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Theory.set_active_folder" title="proveit.Theory.set_active_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_active_folder</span></code></a>(active_folder[,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.stashExtraneousThmProofNotebooks</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.storedCommonExprDependencies</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.theoremNames</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Theory.thmProofNotebook</span></code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes Documentation</p>
+<dl class="attribute">
+<dt id="proveit.Theory.default">
+<code class="descname">default</code><em class="property"> = None</em><a class="headerlink" href="#proveit.Theory.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.Theory.storages">
+<code class="descname">storages</code><em class="property"> = {'/home/wwitzel/Prove-It/packages/proveit': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febee2e2668&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/composite': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaf307f0&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/conditional': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febee2e2358&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/label': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febee2e2470&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/lambda_expr': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaf45978&gt;, '/home/wwitzel/Prove-It/packages/proveit/_core_/expression/operation': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeae575c0&gt;, '/home/wwitzel/Prove-It/packages/proveit/core_expr_types/tuples': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeb03e6a0&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeade8940&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/booleans': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeb043400&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/booleans/conjunction': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaf7f668&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/booleans/disjunction': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaf8cc50&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/booleans/implication': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaf269b0&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/booleans/negation': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaf1c278&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/booleans/quantification/existence': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafdf128&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/booleans/quantification/universality': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeb0530f0&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/equality': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaf77320&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaff3e48&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/cardinality': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafd50b8&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/comprehension': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafc9240&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/disjointness': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafc97f0&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/enumeration': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeb00b978&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/equivalence': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafafac8&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/inclusion': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafa1208&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/intersection': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafbf0b8&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/membership': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaff34e0&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/power_set': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafc9550&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/subtraction': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafbf9b0&gt;, '/home/wwitzel/Prove-It/packages/proveit/logic/sets/unification': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeafb8908&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/absolute_value': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea847160&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/addition': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea885550&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/divisibility': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea7eaf60&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/division': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea8290b8&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/exponentiation': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea833198&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/integration': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea83e7f0&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/modular': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea847518&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/multiplication': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea898c18&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/negation': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea88e438&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/number_sets/complex_numbers': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea8a5668&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/number_sets/integers': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeac17f98&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/number_sets/natural_numbers': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaba6048&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/number_sets/rational_numbers': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeac074a8&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/number_sets/real_numbers': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaa56828&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/numerals': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaa305f8&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/numerals/decimals': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febeaa49160&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/ordering': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea858e80&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/product': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea81f4a8&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/rounding': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea851278&gt;, '/home/wwitzel/Prove-It/packages/proveit/numbers/summation': &lt;proveit._core_._theory_storage.TheoryStorage object at 0x7febea83e128&gt;}</em><a class="headerlink" href="#proveit.Theory.storages" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="proveit.Theory.clean_active_folder">
+<code class="descname">clean_active_folder</code><span class="sig-paren">(</span><em>clear=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/theory.html#Theory.clean_active_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Theory.clean_active_folder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean the corresponding __pv_it directory of any stored expressions
+or proofs that have a reference count of zero.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Theory.links">
+<code class="descname">links</code><span class="sig-paren">(</span><em>from_directory='.'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/theory.html#Theory.links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Theory.links" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="proveit.Theory.set_active_folder">
+<code class="descname">set_active_folder</code><span class="sig-paren">(</span><em>active_folder</em>, <em>owns_active_folder=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/theory.html#Theory.set_active_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Theory.set_active_folder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.var_range.html">var_range</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="proveit.Theorem.html" title="previous chapter">Theorem</a></li>
+      <li>Next: <a href="proveit.TheoryException.html" title="next chapter">TheoryException</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="../_sources/api/proveit.Theory.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

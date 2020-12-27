@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.ordering.less_eq_add_left theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.ordering.less_eq_add_left-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">ordering</a>.<a class="ProveItLink" href="../../theorems.html#less_eq_add_left">less_eq_add_left</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.ordering.less_eq_add_left-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> less_eq_add_left
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="less_eq_add_left">less_eq_add_left:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/8ae3c42111f645ab9254aa715e0934abfb4f6f830/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAWBAMAAAD6Ct6PAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA6RJREFU
+SMe9Vl9IU1EY/3a36/7dbT4EURIMVxb9YyhEDyZGUE/FfNEegollUJSYaIEajCLYDOGSoD5e2YMx
+wl0MCiNw6IuYyIgeLFJGmpDSCDFILeg759y7e+92hxGrA993vu/s/Pnt+37fuQeg5M2ZZmLaJkxH
+3SJAhhiLpQTyVBHTViYWTN+L6gbAG+KslRLIF0VMmyuj2VwX7ZZRxgCGSTAjJcThCTLR2rjemcpZ
+zzpYv4Mi+MErYSeXEIhdZFIEyIhqDNxnvW2bBKocPLOJxFApMzOkSBEg3nrWD64rA0I70SsAP6LR
+3lICCSjirK3enwdkqjIEAsva5ZUcspYAJmQaoBUgpg7asuab2/IHLmWMPjeVUs1+Rc6K3m9GIEOy
+IwMeutLxKLc0uebaAlgCOKdn8rRh+5dHrn6ihsNY9RH1f+X8j/BC9XqYuA6ANWIE0gtlMrhpJrgO
+SZ0/KcEGHoXEAk67fda1Ontdk+YEmPUXAHEjOK9s9DvBp+68h4l1G+xk7Xw2eyebXQU6go1nYfL0
+qvPrwPUTIIxkSdu1Tbdy1sJEAhDIh3Q+EM9XVD7R4Lu+g0U2ArFEIBkyRMQS0QEB97KyxTLYdigQ
+Z6YR3XjVZzJro4oAFSr9NhJ7AiSlAXFVt4WAIzggXHmTsY/5/BbY08bUJFMwaayaJN3K1q7ybpXh
+/EVDdQGt2DU8o4sngeO6OQKgky/3AgNSE9SAjIbCkq2HmoclUhj2+gbm80oedGRNytDmFvVAfAhV
+VshKF0VpJW/CSJqSFZ4jRmuQJ0gdfjIPSRaKUyDW6506stZAE7hm6OoHdOVp4JmPEbH4dXyfplvd
+FQwRsTZDPATWlPZ1bCX6NjxEXUuQ4hYWmWsmaazH2TTdTdFo1M8JT97pgFRAFcZuRqYkOEUHFB85
+4lMuKhpkFFfLocGDxqqZW8STvKG8myB+nCSVEMODtEiKjg/Y+SQCgjCxjKXGfUXKAcFy709gfxKn
+bFMQjNrE11XNLlf8qPm3UGWORQxfhGHJLi2gxls4KIQYR2Z1ZN3Hb1JGLqWh2xNx9uG9bFX8gHaP
+FH70EuYfPX0T1MTaWsbPQIPM30qhdla/leAxudDmU/E6Dcj5YwFWGq+gcQ74Chg4cVTxuTnt6Bjo
+7uoiz4Cxe6R15YbHjLNkneaQI7kfHKbPqr95GDlE0+FYwYNN1XnL//zVt8tT8b35G8Z4pkeniwFx
+YzVF+6iZzvP/R7P++yN+A4j4Bu4tCvUoAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/fc273682987baa192157dcb3e42bcfc98b43b2580/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

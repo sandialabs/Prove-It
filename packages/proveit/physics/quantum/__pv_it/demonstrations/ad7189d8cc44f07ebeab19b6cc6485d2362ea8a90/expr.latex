@@ -1,0 +1,6 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{0} & \control \cw \cwx[1]   \\ 
+  & \lstick{\lvert 0 \rangle} & \gate{Z} & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{0} & \control \cw \cwx[1]   \\ 
+  & \lstick{\lvert 1 \rangle} & \gate{Z} & \rstick{\lvert 1 \rangle} \qw 
+} \hspace{2em}

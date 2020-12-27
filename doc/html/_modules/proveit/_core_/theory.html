@@ -1,0 +1,1077 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit._core_.theory &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit._core_.theory</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">A theory in Prove-It is a conceptual space of related literals, axioms,</span>
+<span class="sd">and theorems.  Consider, for example, a mathematics subject area such</span>
+<span class="sd">as trigonometry or linear algebra.  A theory could represent such a</span>
+<span class="sd">subject area, or a reasonable subset of such a subject area.  Such</span>
+<span class="sd">theories are represented in directories.  The directory will contain</span>
+<span class="sd">Jupyter notebooks for common expressions (_common_.ipynb) including</span>
+<span class="sd">literals, axioms (_axioms_.ipynb), and theorems (_theorems_.ipynb).  It</span>
+<span class="sd">will also contain Python scripts for defining Operation or Literal classes</span>
+<span class="sd">for building Expression objects specific to the theory with convenient</span>
+<span class="sd">methods for invoking theorems and automated derivations.  Proofs of</span>
+<span class="sd">the theorems are to be stored in a _proofs_ sub-directory as Jupyter</span>
+<span class="sd">notebooks named for the theorem to be proven.</span>
+
+<span class="sd">A __pv_it sub-directory is generated to store a distributed</span>
+<span class="sd">&quot;database&quot; of information pertaining to the theory.  It stores Expression</span>
+<span class="sd">entries along with latex and png representations for convenience.  It</span>
+<span class="sd">enumerates the Axioms and the Theorems, pointing to these Expression entries.</span>
+<span class="sd">It also stores Judgment and Proof entries for the purpose of storing</span>
+<span class="sd">the theorem proofs, and it stores theorem proof dependencies.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">._theory_storage</span> <span class="k">import</span> <span class="n">TheoryStorage</span><span class="p">,</span> <span class="n">TheoryFolderStorage</span><span class="p">,</span> <span class="n">relurl</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="k">import</span> <span class="n">ModuleType</span>
+
+
+<div class="viewcode-block" id="Theory"><a class="viewcode-back" href="../../../api/proveit.Theory.html#proveit.Theory">[docs]</a><span class="k">class</span> <span class="nc">Theory</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A Theory object provides an interface into the __pv_it database for access</span>
+<span class="sd">    to the common expressions, axioms, theorems and associated proofs of a</span>
+<span class="sd">    Prove-It theory.  You can also store miscellaneous expressions (and</span>
+<span class="sd">    their latex/png representations) generated in test/demonstration notebooks</span>
+<span class="sd">    within the theory directory.  These may be garbage collected via the</span>
+<span class="sd">    &#39;clean&#39; method; anything that is not associated with a common</span>
+<span class="sd">    expression, axiom, theorem, or theorem proof will be garbage collected.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># maps root theory names to their directories.  A root theory</span>
+    <span class="c1"># is one use containing directory has no __init__.py.  All theory</span>
+    <span class="c1"># directories should have an __init__.py file.</span>
+    <span class="n">_rootTheoryPaths</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="c1"># The current default Theory when a Literal is created.</span>
+    <span class="c1"># If this is None, use Theory(), the Theory at the current working</span>
+    <span class="c1"># directory.</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Track the storage object associated with each theory and folder,</span>
+    <span class="c1"># mapped by the absolute path.</span>
+    <span class="n">storages</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="n">special_expr_kind_to_module_name</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;common&#39;</span><span class="p">:</span> <span class="s1">&#39;_common_&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;axiom&#39;</span><span class="p">:</span> <span class="s1">&#39;_axioms_&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;theorem&#39;</span><span class="p">:</span> <span class="s1">&#39;_theorems_&#39;</span><span class="p">}</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_clear_</span><span class="p">():</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Clear all references to Prove-It information in</span>
+<span class="sd">        the Theory jurisdiction.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">Theory</span><span class="o">.</span><span class="n">_rootTheoryPaths</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">Theory</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">Theory</span><span class="o">.</span><span class="n">storages</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">TheoryFolderStorage</span><span class="o">.</span><span class="n">active_theory_folder_storage</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">TheoryFolderStorage</span><span class="o">.</span><span class="n">proveit_object_to_storage</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="c1"># externals.txt at top level to track relative path to external</span>
+    <span class="c1"># theories.</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">active_folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owns_active_folder</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a Theory for the given path.  If given a file name instead,</span>
+<span class="sd">        use the path of the containing directory.  If no path</span>
+<span class="sd">        is provided, base the theory on the current working directory.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">TheoryException</span><span class="p">(</span>
+                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is not a valid path; unable to create Theory.&quot;</span> <span class="o">%</span>
+                <span class="n">path</span><span class="p">)</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="c1"># If in a __pv_it_ directory, go to the containing theory</span>
+        <span class="c1"># directory.</span>
+        <span class="n">splitpath</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;__pv_it&#39;</span> <span class="ow">in</span> <span class="n">splitpath</span><span class="p">:</span>
+            <span class="n">pv_it_idx</span> <span class="o">=</span> <span class="n">splitpath</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;__pv_it&#39;</span><span class="p">)</span>
+            <span class="n">num_up_levels</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">splitpath</span><span class="p">)</span> <span class="o">-</span> <span class="n">pv_it_idx</span><span class="p">)</span>
+            <span class="c1"># if num_up_levels &gt; 1:</span>
+            <span class="c1">#    active_folder = splitpath[pv_it_idx+1]</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">([</span><span class="n">path</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;..&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_up_levels</span><span class="p">)))</span>
+        <span class="c1"># If in a _proofs_ directory, go to the containing theory</span>
+        <span class="c1"># directory.</span>
+        <span class="n">splitpath</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;_proofs_&#39;</span> <span class="ow">in</span> <span class="n">splitpath</span><span class="p">:</span>
+            <span class="n">proofs_idx</span> <span class="o">=</span> <span class="n">splitpath</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;_proofs_&#39;</span><span class="p">)</span>
+            <span class="n">num_up_levels</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">splitpath</span><span class="p">)</span> <span class="o">-</span> <span class="n">proofs_idx</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">([</span><span class="n">path</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;..&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_up_levels</span><span class="p">)))</span>
+
+        <span class="c1"># move the path up to the directory level, not script file level</span>
+        <span class="k">if</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;.py&#39;</span> <span class="ow">or</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;.pyc&#39;</span><span class="p">:</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># Makes the case be consistent in operating systems (i.e. Windows)</span>
+        <span class="c1"># with a case insensitive filesystem:</span>
+        <span class="n">normpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">normpath</span> <span class="ow">in</span> <span class="n">Theory</span><span class="o">.</span><span class="n">storages</span><span class="p">:</span>
+            <span class="c1"># got the storage - we&#39;re good</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="o">=</span> <span class="n">Theory</span><span class="o">.</span><span class="n">storages</span><span class="p">[</span><span class="n">normpath</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="n">active_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_active_folder</span><span class="p">(</span><span class="n">active_folder</span><span class="p">,</span> <span class="n">owns_active_folder</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">):</span>  <span class="c1"># just in case checking for &#39;.py&#39; or &#39;.pyc&#39; wasn&#39;t sufficient</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">normpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">normpath</span> <span class="ow">in</span> <span class="n">Theory</span><span class="o">.</span><span class="n">storages</span><span class="p">:</span>
+            <span class="c1"># got the storage - we&#39;re good</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="o">=</span> <span class="n">Theory</span><span class="o">.</span><span class="n">storages</span><span class="p">[</span><span class="n">normpath</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="n">active_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_active_folder</span><span class="p">(</span><span class="n">active_folder</span><span class="p">,</span> <span class="n">owns_active_folder</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># the name of the theory is based upon the directory, going</span>
+        <span class="c1"># up the tree as long as there is an __init__.py file.</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">remaining_path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">while</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">remaining_path</span><span class="p">,</span> <span class="s1">&#39;__init__.py&#39;</span><span class="p">)):</span>
+            <span class="n">remaining_path</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">remaining_path</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">tail</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="p">(</span><span class="n">tail</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+        <span class="c1"># the root theory tracks paths to external packages</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">path</span>
+            <span class="k">raise</span> <span class="n">TheoryException</span><span class="p">(</span>
+                <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> theory directory must have an __init__.py file&#39;</span> <span class="o">%</span>
+                <span class="n">path</span><span class="p">)</span>
+        <span class="n">root_directory</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">root_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">remaining_path</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># Create the Storage object for this Theory</span>
+        <span class="k">if</span> <span class="n">normpath</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Theory</span><span class="o">.</span><span class="n">storages</span><span class="p">:</span>
+            <span class="n">Theory</span><span class="o">.</span><span class="n">storages</span><span class="p">[</span><span class="n">normpath</span><span class="p">]</span> <span class="o">=</span> <span class="n">TheoryStorage</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">root_directory</span><span class="p">)</span>
+            <span class="c1"># if the _sub_theories_.txt file has not been created, make an</span>
+            <span class="c1"># empty one</span>
+            <span class="n">sub_theories_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;_sub_theories_.txt&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">sub_theories_path</span><span class="p">):</span>
+                <span class="k">assert</span> <span class="kc">False</span>
+                <span class="nb">open</span><span class="p">(</span><span class="n">sub_theories_path</span><span class="p">,</span> <span class="s1">&#39;wt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="o">=</span> <span class="n">Theory</span><span class="o">.</span><span class="n">storages</span><span class="p">[</span><span class="n">normpath</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">active_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_active_folder</span><span class="p">(</span><span class="n">active_folder</span><span class="p">,</span> <span class="n">owns_active_folder</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="ow">is</span> <span class="n">other</span><span class="o">.</span><span class="n">_storage</span>
+
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">_storage</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span>
+
+<div class="viewcode-block" id="Theory.set_active_folder"><a class="viewcode-back" href="../../../api/proveit.Theory.html#proveit.Theory.set_active_folder">[docs]</a>    <span class="k">def</span> <span class="nf">set_active_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">active_folder</span><span class="p">,</span> <span class="n">owns_active_folder</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_folder</span> <span class="o">=</span> <span class="n">active_folder</span>
+        <span class="k">if</span> <span class="n">active_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">TheoryFolderStorage</span><span class="o">.</span><span class="n">active_theory_folder_storage</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_theory_folder_storage</span><span class="p">(</span><span class="n">active_folder</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">TheoryFolderStorage</span><span class="o">.</span><span class="n">active_theory_folder_storage</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">assert</span> <span class="n">owns_active_folder</span> <span class="o">==</span> <span class="kc">False</span>
+        <span class="n">TheoryFolderStorage</span><span class="o">.</span><span class="n">owns_active_storage</span> <span class="o">=</span> <span class="n">owns_active_folder</span></div>
+
+<div class="viewcode-block" id="Theory.links"><a class="viewcode-back" href="../../../api/proveit.Theory.html#proveit.Theory.links">[docs]</a>    <span class="k">def</span> <span class="nf">links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_directory</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+        <span class="n">theory_name_segments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">theory_html_segments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">theory_name_segment</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">theory_name_segments</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span>
+                                <span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">directory</span><span class="p">]</span> <span class="o">+</span>
+                                 <span class="p">[</span><span class="s1">&#39;..&#39;</span><span class="p">]</span> <span class="o">*</span>
+                                    <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">theory_name_segments</span><span class="p">)</span> <span class="o">-</span>
+                                     <span class="n">k</span> <span class="o">-</span>
+                                     <span class="mi">1</span><span class="p">)</span> <span class="o">+</span>
+                                    <span class="p">[</span><span class="s1">&#39;_theory_.ipynb&#39;</span><span class="p">]))</span>
+            <span class="n">url_link</span> <span class="o">=</span> <span class="n">relurl</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">from_directory</span><span class="p">)</span>
+            <span class="n">theory_html_segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">r</span><span class="s1">&#39;&lt;a class=\&quot;ProveItLink\&quot; href=\&quot;</span><span class="si">%s</span><span class="s1">\&quot;&gt;</span><span class="si">%s</span><span class="s1">&lt;/a&gt;&#39;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">url_link</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">),</span> <span class="n">theory_name_segment</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">theory_html_segments</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">is_root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True iff this Theory is a &quot;root&quot; Theory (no parent</span>
+<span class="sd">        directory with an __init__.py file).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">is_root</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the directory associated with the theory</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">directory</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_setRootTheoryPath</span><span class="p">(</span><span class="n">theory_name</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">theory_name</span> <span class="ow">in</span> <span class="n">Theory</span><span class="o">.</span><span class="n">_rootTheoryPaths</span><span class="p">:</span>
+            <span class="n">stored_path</span> <span class="o">=</span> <span class="n">Theory</span><span class="o">.</span><span class="n">_rootTheoryPaths</span><span class="p">[</span><span class="n">theory_name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">stored_path</span><span class="p">)</span> <span class="o">!=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">TheoryException</span><span class="p">(</span>
+                    <span class="s2">&quot;Conflicting directory references to theory &#39;</span><span class="si">%s</span><span class="s2">&#39;: </span><span class="si">%s</span><span class="s2"> vs </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">theory_name</span><span class="p">,</span>
+                                                                                   <span class="n">path</span><span class="p">,</span>
+                                                                                   <span class="n">stored_path</span><span class="p">))</span>
+        <span class="n">Theory</span><span class="o">.</span><span class="n">_rootTheoryPaths</span><span class="p">[</span><span class="n">theory_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_theory</span><span class="p">(</span><span class="n">theory_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the Theory with the given name.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">split_theory_name</span> <span class="o">=</span> <span class="n">theory_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">root_name</span> <span class="o">=</span> <span class="n">split_theory_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">root_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Theory</span><span class="o">.</span><span class="n">_rootTheoryPaths</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TheoryException</span><span class="p">(</span>
+                <span class="s2">&quot;Theory root &#39;</span><span class="si">%s</span><span class="s2">&#39; is unknown (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="n">root_name</span><span class="p">,</span> <span class="n">Theory</span><span class="o">.</span><span class="n">_rootTheoryPaths</span><span class="p">))</span>
+        <span class="n">root_directory</span> <span class="o">=</span> <span class="n">Theory</span><span class="o">.</span><span class="n">_rootTheoryPaths</span><span class="p">[</span><span class="n">root_name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Theory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">([</span><span class="n">root_directory</span><span class="p">]</span> <span class="o">+</span> <span class="n">split_theory_name</span><span class="p">[</span><span class="mi">1</span><span class="p">:])))</span>
+
+    <span class="k">def</span> <span class="nf">get_sub_theory_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">get_sub_theory_names</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">generate_sub_theories</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield the Theory objects for the sub-theories.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">sub_theory_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">get_sub_theory_names</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">Theory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="n">sub_theory_name</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">set_sub_theory_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub_theory_names</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">set_sub_theory_names</span><span class="p">(</span><span class="n">sub_theory_names</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">append_sub_theory_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub_theory_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">append_sub_theory_name</span><span class="p">(</span><span class="n">sub_theory_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setAxioms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axiom_names</span><span class="p">,</span> <span class="n">axiom_definitions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">set_special_expressions</span><span class="p">(</span><span class="n">axiom_names</span><span class="p">,</span> <span class="n">axiom_definitions</span><span class="p">,</span>
+                                              <span class="s1">&#39;axiom&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setTheorems</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theorem_names</span><span class="p">,</span> <span class="n">theorem_definitions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">set_special_expressions</span><span class="p">(</span>
+            <span class="n">theorem_names</span><span class="p">,</span> <span class="n">theorem_definitions</span><span class="p">,</span> <span class="s1">&#39;theorem&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_clearAxioms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setAxioms</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_clearTheorems</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setTheorems</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_clearCommonExressions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_common_expressions</span><span class="p">([],</span> <span class="nb">dict</span><span class="p">(),</span> <span class="n">clear</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_common_expressions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr_names</span><span class="p">,</span> <span class="n">expr_definitions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">set_common_expressions</span><span class="p">(</span><span class="n">expr_names</span><span class="p">,</span> <span class="n">expr_definitions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">make_special_expr_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Make a _common_.py, _axioms_.py, or _theorems_.py file for importing</span>
+<span class="sd">        expressions from the certified database.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">special_statements_class_name</span> <span class="o">=</span> <span class="n">kind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">kind</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;common&#39;</span><span class="p">:</span>
+            <span class="n">special_statements_class_name</span> <span class="o">=</span> <span class="s1">&#39;CommonExpressions&#39;</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="s2">&quot;import sys</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;from proveit._core_.theory import </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">special_statements_class_name</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;sys.modules[__name__] = </span><span class="si">%s</span><span class="s2">(__name__, __file__)</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">special_statements_class_name</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">_.py&#39;</span> <span class="o">%</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="o">!=</span> <span class="n">output</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">TheoryException</span><span class="p">(</span>
+                        <span class="s2">&quot;An existing _</span><span class="si">%s</span><span class="s2">_.py must be removed before a proper one may be autogenerated&quot;</span> <span class="o">%</span>
+                        <span class="n">kind</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_axiom_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">get_axiom_names</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_theorem_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">get_theorem_names</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">common_expression_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">common_expression_names</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">stored_common_expr_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the stored set of theory names of common expressions</span>
+<span class="sd">        referenced by the common expressions of this theory.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">stored_common_expr_dependencies</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">reference_hyperlinked_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Reference displayed expressions, recorded under the given name</span>
+<span class="sd">        in the __pv_it directory.  If the same name is reused,</span>
+<span class="sd">        any expressions that are not displayed this time that</span>
+<span class="sd">        were displayed last time will be unreferenced.</span>
+<span class="sd">        If clear is True, remove all of the references and the</span>
+<span class="sd">        file that stores these references.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">reference_hyperlinked_objects</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">clear</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_axiom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the Axiom of the given name in this theory.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">get_axiom</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_theorem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the Theorem of the given name in this theory.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">get_theorem</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate_local_axioms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield each of the axioms contained at the local level</span>
+<span class="sd">        of this theory.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_axiom_names</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_axiom</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate_all_contained_axioms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield each of the axioms contained both at the local</span>
+<span class="sd">        level of this theory and recursively through contained</span>
+<span class="sd">        theorys.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">axiom</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_local_axioms</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">axiom</span>
+        <span class="k">for</span> <span class="n">theory</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_sub_theories</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">axiom</span> <span class="ow">in</span> <span class="n">theory</span><span class="o">.</span><span class="n">generate_all_contained_axioms</span><span class="p">():</span>
+                <span class="k">yield</span> <span class="n">axiom</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">find_axiom</span><span class="p">(</span><span class="n">full_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given the full name of an axiom that includes the theory</span>
+<span class="sd">        name, return the Axiom obtained the proper Theory.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">Theory</span><span class="o">.</span><span class="n">_findStmt</span><span class="p">(</span><span class="n">full_name</span><span class="p">,</span> <span class="s1">&#39;axiom&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">find_theorem</span><span class="p">(</span><span class="n">full_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given the full name of an theorem that includes the theory</span>
+<span class="sd">        name, return the Theorem obtained the proper Theory.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">Theory</span><span class="o">.</span><span class="n">_findStmt</span><span class="p">(</span><span class="n">full_name</span><span class="p">,</span> <span class="s1">&#39;theorem&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_findStmt</span><span class="p">(</span><span class="n">full_name</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="n">split_name</span> <span class="o">=</span> <span class="n">full_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">theory_name</span><span class="p">,</span> <span class="n">stmt_name</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">split_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">split_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">theory</span> <span class="o">=</span> <span class="n">Theory</span><span class="o">.</span><span class="n">get_theory</span><span class="p">(</span><span class="n">theory_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;axiom&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">theory</span><span class="o">.</span><span class="n">get_axiom</span><span class="p">(</span><span class="n">stmt_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;theorem&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">theory</span><span class="o">.</span><span class="n">get_theorem</span><span class="p">(</span><span class="n">stmt_name</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">extract_markdowntitle_of_notebook</span><span class="p">(</span><span class="n">nb_str</span><span class="p">,</span> <span class="n">replace_str</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given a Prove-It notebook as a string, extract the</span>
+<span class="sd">        title displayed at the top of the first markdown</span>
+<span class="sd">        cell.  If a &#39;replace_str&#39; is given, then replace</span>
+<span class="sd">        this title with the given replacement string and</span>
+<span class="sd">        also return this replacement.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">nb_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">)</span>  <span class="c1"># find the source of the first cell</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">nb_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>  <span class="c1"># find the following &#39;[&#39;</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">nb_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>  <span class="c1"># find the following &#39;&quot;&#39;</span>
+        <span class="n">end_idx</span> <span class="o">=</span> <span class="n">nb_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\n&quot;&#39;</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>  <span class="c1"># find the end</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">end_idx</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Notebook not in proper format&quot;</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">nb_str</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">end_idx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">replace_str</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">title</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">title</span> <span class="o">!=</span> <span class="n">replace_str</span><span class="p">:</span>
+                <span class="n">nb_str</span> <span class="o">=</span> <span class="n">nb_str</span><span class="p">[:</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">replace_str</span> <span class="o">+</span> <span class="n">nb_str</span><span class="p">[</span><span class="n">end_idx</span><span class="p">:]</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">nb_str</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">update_title_if_needed</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">generic_nb_str</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check if the notebook stored in &#39;filename&#39; has the same</span>
+<span class="sd">        markdown title as the generic version.  If not, update</span>
+<span class="sd">        it to the generic version.  Return the possibly updated</span>
+<span class="sd">        notebook string, or None if it file was not in an</span>
+<span class="sd">        expected format to be able to extract the title.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">generic_title</span> <span class="o">=</span> <span class="n">Theory</span><span class="o">.</span><span class="n">extract_markdowntitle_of_notebook</span><span class="p">(</span>
+            <span class="n">generic_nb_str</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">_f</span><span class="p">:</span>
+            <span class="n">nb_str</span> <span class="o">=</span> <span class="n">_f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">existing_title</span><span class="p">,</span> <span class="n">nb_str</span> <span class="o">=</span> \
+                <span class="n">Theory</span><span class="o">.</span><span class="n">extract_markdowntitle_of_notebook</span><span class="p">(</span>
+                    <span class="n">nb_str</span><span class="p">,</span> <span class="n">generic_title</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># The format is not correct; stash this one and</span>
+            <span class="c1"># generate a new one.</span>
+            <span class="n">existing_title</span><span class="p">,</span> <span class="n">nb_str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">nb_str</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">existing_title</span> <span class="o">!=</span> <span class="n">generic_title</span><span class="p">:</span>
+                <span class="c1"># Update the title.</span>
+                <span class="c1"># Remove the file before creating again to force</span>
+                <span class="c1"># new capitalization (e.g., in Windows where</span>
+                <span class="c1"># capitalization can be flexible)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">_f</span><span class="p">:</span>
+                    <span class="n">_f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">nb_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nb_str</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">update_proving_name_if_needed</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">theorem_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check if the notebook stored in &#39;filename&#39; has the</span>
+<span class="sd">        correct name following %proving.  If not, fix it.</span>
+<span class="sd">        Return the possibly updated notebook string, or None</span>
+<span class="sd">        if it file was not in an expected format to be able</span>
+<span class="sd">        to extract the title.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">_f</span><span class="p">:</span>
+            <span class="n">nb_str</span> <span class="o">=</span> <span class="n">_f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">proving_str</span> <span class="o">=</span> <span class="s1">&#39;&quot;%proving &#39;</span>
+        <span class="n">proving_str_idx</span> <span class="o">=</span> <span class="n">nb_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">proving_str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">proving_str_idx</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">end_quote_idx</span> <span class="o">=</span> <span class="n">nb_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">proving_str_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">end_quote_idx</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">existing_name</span> <span class="o">=</span> <span class="n">nb_str</span><span class="p">[</span><span class="n">proving_str_idx</span> <span class="o">+</span>
+                               <span class="nb">len</span><span class="p">(</span><span class="n">proving_str</span><span class="p">):</span><span class="n">end_quote_idx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">existing_name</span> <span class="o">!=</span> <span class="n">theorem_name</span><span class="p">:</span>
+            <span class="c1"># Replace the name with the appropriate name.</span>
+            <span class="n">nb_str</span> <span class="o">=</span> <span class="p">(</span><span class="n">nb_str</span><span class="p">[:</span><span class="n">proving_str_idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">proving_str</span> <span class="o">+</span>
+                      <span class="n">theorem_name</span> <span class="o">+</span> <span class="n">nb_str</span><span class="p">[</span><span class="n">end_quote_idx</span><span class="p">:])</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">_f</span><span class="p">:</span>
+                <span class="n">_f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">nb_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nb_str</span>
+
+    <span class="k">def</span> <span class="nf">proof_notebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proof</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the &quot;basic&quot; proof notebook corresponding to the given</span>
+<span class="sd">        proof_id.  Note, this is different than a &quot;theorem&quot; proof</span>
+<span class="sd">        notebook which generates the proof.  This just shows the</span>
+<span class="sd">        proof as Prove-It stores it.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">theory_folder_storage</span> <span class="o">=</span> \
+            <span class="n">TheoryFolderStorage</span><span class="o">.</span><span class="n">active_theory_folder_storage</span>
+        <span class="k">return</span> <span class="n">theory_folder_storage</span><span class="o">.</span><span class="n">proof_notebook</span><span class="p">(</span><span class="n">proof</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">thm_proof_notebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theorem_name</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">num_duplicates</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the path of the proof notebook for a theorem with the</span>
+<span class="sd">        given name and expression, creating it if it does not already</span>
+<span class="sd">        exist.  num_duplicates is the number of previous instances</span>
+<span class="sd">        of the expression that we have encountered.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">thm_proof_notebook</span><span class="p">(</span><span class="n">theorem_name</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span>
+                                                <span class="n">num_duplicates</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">stash_extraneous_thm_proof_notebooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        For any proof notebooks for theorem names not included in the</span>
+<span class="sd">        theory, stash them or remove them if they are generic notebooks.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">stash_extraneous_thm_proof_notebooks</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_theorem_names</span><span class="p">())</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">expression_notebook</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">name_kind_theory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">complete_special_expr_notebook</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the path of the expression notebook, creating it if it</span>
+<span class="sd">        does not already exist.  If &#39;name_kind_theory&#39; is</span>
+<span class="sd">        provided, it should be the (name, kind, theory) for a special</span>
+<span class="sd">        expression that may or may not be complete/official</span>
+<span class="sd">        (%end_[common/axioms/theorems] has not been</span>
+<span class="sd">        called yet in the special expressions notebook).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># use the Storage object to generate/grab the expression notebook.</span>
+        <span class="k">return</span> <span class="n">TheoryFolderStorage</span><span class="o">.</span><span class="n">expression_notebook</span><span class="p">(</span>
+            <span class="n">expr</span><span class="p">,</span> <span class="n">name_kind_theory</span><span class="p">,</span> <span class="n">complete_special_expr_notebook</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_stored_axiom</span><span class="p">(</span><span class="n">fullname</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Theory</span><span class="o">.</span><span class="n">get_stored_stmt</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="s1">&#39;axiom&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_stored_theorem</span><span class="p">(</span><span class="n">fullname</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Theory</span><span class="o">.</span><span class="n">get_stored_stmt</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="s1">&#39;theorem&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_stored_stmt</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theory_storage</span> <span class="k">import</span> <span class="n">StoredAxiom</span><span class="p">,</span> <span class="n">StoredTheorem</span>
+        <span class="n">split_name</span> <span class="o">=</span> <span class="n">fullname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">theory_name</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">split_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">stmt_name</span> <span class="o">=</span> <span class="n">split_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">theory</span> <span class="o">=</span> <span class="n">Theory</span><span class="o">.</span><span class="n">get_theory</span><span class="p">(</span><span class="n">theory_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;axiom&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">StoredAxiom</span><span class="p">(</span><span class="n">theory</span><span class="p">,</span> <span class="n">stmt_name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;theorem&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">StoredTheorem</span><span class="p">(</span><span class="n">theory</span><span class="p">,</span> <span class="n">stmt_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TheoryException</span><span class="p">(</span>
+                <span class="s2">&quot;Expecting &#39;kind&#39; to be &#39;axiom&#39; or &#39;theorem&#39; not &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span>
+                <span class="n">kind</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_common_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the Expression of the common expression in this theory</span>
+<span class="sd">        with the given name.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">get_common_expr</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_stored_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr_id</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the stored Expression with the given id (hash string).</span>
+<span class="sd">        Use the &quot;active folder&quot; as the default folder.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">theory_folder_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theory_folder_storage</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">theory_folder_storage</span><span class="o">.</span><span class="n">make_expression</span><span class="p">(</span><span class="n">expr_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_stored_judgment_or_proof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">storage_id</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the stored Judgment or Proof with the given id</span>
+<span class="sd">        (hash string).  Use the &quot;active folder&quot; as the default folder.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">theory_folder_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theory_folder_storage</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">theory_folder_storage</span><span class="o">.</span><span class="n">make_judgment_or_proof</span><span class="p">(</span><span class="n">storage_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_show_proof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proof_id</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the _ShowProof representing the proof with the</span>
+<span class="sd">        given id (hash string) for display purposes.</span>
+<span class="sd">        Use the &quot;active folder&quot; as the default folder.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">theory_folder_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theory_folder_storage</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">theory_folder_storage</span><span class="o">.</span><span class="n">make_show_proof</span><span class="p">(</span><span class="n">proof_id</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_stored_png</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">latex</span><span class="p">,</span> <span class="n">config_latex_tool_fn</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Find the .png file for the stored Expression.</span>
+<span class="sd">        Create it if it did not previously exist.</span>
+<span class="sd">        Return the png data and path where the png is stored as a tuple.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">TheoryFolderStorage</span><span class="o">.</span><span class="n">retrieve_png</span><span class="p">(</span>
+            <span class="n">expr</span><span class="p">,</span> <span class="n">latex</span><span class="p">,</span> <span class="n">config_latex_tool_fn</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_theory_folder_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the TheoryFolderStorage object associated with this</span>
+<span class="sd">        theory and the folder.  The default folder is the</span>
+<span class="sd">        &quot;active_folder&quot;.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">folder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_folder</span>
+        <span class="k">if</span> <span class="n">folder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;A &#39;folder&#39; must be specified&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">theory_folder_storage</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_common_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theory_folder_storage</span><span class="p">(</span><span class="s1">&#39;common&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Theory.clean_active_folder"><a class="viewcode-back" href="../../../api/proveit.Theory.html#proveit.Theory.clean_active_folder">[docs]</a>    <span class="k">def</span> <span class="nf">clean_active_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Clean the corresponding __pv_it directory of any stored expressions</span>
+<span class="sd">        or proofs that have a reference count of zero.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">theory_folder_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theory_folder_storage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_folder</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">theory_folder_storage</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">theory_folder_storage</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="n">clear</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">contains_any_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True if this theory and all of its sub-theories</span>
+<span class="sd">        contain no expressions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">contains_any_expression</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">sub_theory</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_sub_theories</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">sub_theory</span><span class="o">.</span><span class="n">contains_any_expression</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<span class="k">class</span> <span class="nc">Axioms</span><span class="p">(</span><span class="n">ModuleType</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Used in _axioms_.py modules for accessing Axioms from</span>
+<span class="sd">    the _certified_ database (returning the associated Judgment object).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="n">ModuleType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span> <span class="o">=</span> <span class="n">Theory</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__file__</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">get_axiom_names</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;__&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span>  <span class="c1"># don&#39;t handle internal Python attributes</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">axiom_truth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">get_axiom</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">proven_truth</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span>
+                <span class="n">name</span> <span class="o">+</span>
+                <span class="s2">&quot;&#39; axiom not found in &#39;&quot;</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span>
+                <span class="s2">&quot;&#39;</span><span class="se">\n</span><span class="s2">(make sure to execute the appropriate &#39;_axioms_.ipynb&#39; notebook after any changes)&quot;</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        try:</span>
+<span class="sd">            axiom_truth.derive_side_effects()</span>
+<span class="sd">        except Exception as e:</span>
+<span class="sd">            print &quot;Failure to derive side effects of axiom&quot;, name</span>
+<span class="sd">            traceback.print_exc()</span>
+<span class="sd">            raise e</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">axiom_truth</span>
+
+
+<span class="k">class</span> <span class="nc">Theorems</span><span class="p">(</span><span class="n">ModuleType</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Used in _theorems_.py modules for accessing Theorems from</span>
+<span class="sd">    the _certified_ database (returning the associated Judgment object).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="n">ModuleType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span> <span class="o">=</span> <span class="n">Theory</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__file__</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">get_theorem_names</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;__&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span>  <span class="c1"># don&#39;t handle internal Python attributes</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">theorem_truth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">get_theorem</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">proven_truth</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span>
+                <span class="n">name</span> <span class="o">+</span>
+                <span class="s2">&quot;&#39; theorem not found in &#39;&quot;</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span>
+                <span class="s2">&quot;&#39;</span><span class="se">\n</span><span class="s2">(make sure to execute the appropriate &#39;_theorems_.ipynb&#39; notebook after any changes)&quot;</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        try:</span>
+<span class="sd">            theorem_truth.derive_side_effects()</span>
+<span class="sd">        except Exception as e:</span>
+<span class="sd">            print &quot;Failure to derive side effects of theorem&quot;, name</span>
+<span class="sd">            traceback.print_exc()</span>
+<span class="sd">            raise e</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">theorem_truth</span>
+
+
+<span class="k">class</span> <span class="nc">CommonExpressions</span><span class="p">(</span><span class="n">ModuleType</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Used in _common_.py modules for accessing common sub-expressions.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="n">ModuleType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span> <span class="o">=</span> <span class="n">Theory</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__file__</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span>
+                      <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">common_expression_names</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">proveit</span>
+
+        <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;__&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span>  <span class="c1"># don&#39;t handle internal Python attributes</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">get_common_expr</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">expr</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">TheoryException</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">_running_proveit_notebook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">running_theory</span><span class="p">,</span> <span class="n">running_kind</span> <span class="o">=</span> \
+                    <span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">_running_proveit_notebook</span>
+                <span class="k">if</span> <span class="n">running_kind</span> <span class="o">==</span> <span class="s1">&#39;common&#39;</span><span class="p">:</span>
+                    <span class="c1"># Failed to import a common expression while</span>
+                    <span class="c1"># executing a common expression notebook.  Maybe the</span>
+                    <span class="c1"># other notebook must be executed first.  Return an</span>
+                    <span class="c1"># UnsetCommonExpressionPlaceholder.</span>
+                    <span class="c1"># If this placeholder is used in creating any</span>
+                    <span class="c1"># expression, record the import failure and raise an</span>
+                    <span class="c1"># exception so we know to execute the other common</span>
+                    <span class="c1"># expression notebook first.</span>
+                    <span class="k">return</span> <span class="n">UnsetCommonExpressionPlaceholder</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span>
+                <span class="n">name</span> <span class="o">+</span>
+                <span class="s2">&quot;&#39; not found in the list of common expressions of &#39;&quot;</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_theory</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span>
+                <span class="s2">&quot;&#39;</span><span class="se">\n</span><span class="s2">(make sure to execute the appropriate &#39;_common_.ipynb&#39; notebook after any changes)&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">UnsetCommonExpressionPlaceholder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A placeholder for a common expression that was attempted to be</span>
+<span class="sd">    imported from a common expression notebook but fails to import.</span>
+<span class="sd">    If it isn&#39;t used, don&#39;t worry about it.  If the notebook attempts</span>
+<span class="sd">    to use it, mark it as a failed import and raise an exception --</span>
+<span class="sd">    run the other notebook (from which there was a failed import) before</span>
+<span class="sd">    trying again.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theory</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theory</span> <span class="o">=</span> <span class="n">theory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_attempted_use_error</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_attempted_use_error</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">raise_attempted_use_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        An error occurs when there is any attempt to use this</span>
+<span class="sd">        placeholder.  Record this failure so we know to execute the</span>
+<span class="sd">        other notebook first (used in build.py).</span>
+<span class="sd">        Raise an exception.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># File to store information about a failure to</span>
+        <span class="c1"># import a common expression:</span>
+        <span class="kn">import</span> <span class="nn">proveit</span>
+        <span class="n">import_failure_filename</span> <span class="o">=</span> \
+            <span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">_common_import_failure_filename</span>
+        <span class="k">assert</span> <span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">_running_proveit_notebook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;Should only use UnsetCommonExpressionPlaceholder when &quot;</span>
+            <span class="s2">&quot;executing a common expression notebook.&quot;</span><span class="p">)</span>
+        <span class="n">running_theory</span><span class="p">,</span> <span class="n">running_kind</span> <span class="o">=</span> \
+            <span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">_running_proveit_notebook</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">running_theory</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;Cannot reference </span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2"> within the notebook that creates &quot;</span>
+            <span class="s2">&quot;it.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">import_failure_filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CommonExpressionDependencyError</span><span class="p">(</span>
+            <span class="s2">&quot;Must execute &#39;_common_.ipynb&#39; for the theory of </span><span class="si">%s</span><span class="s2"> &quot;</span>
+            <span class="s2">&quot;to define &#39;</span><span class="si">%s</span><span class="s2">&#39; before it may be used&quot;</span> <span class="o">%</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="TheoryException"><a class="viewcode-back" href="../../../api/proveit.TheoryException.html#proveit.TheoryException">[docs]</a><span class="k">class</span> <span class="nc">TheoryException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div>
+
+
+<span class="k">class</span> <span class="nc">CommonExpressionDependencyError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

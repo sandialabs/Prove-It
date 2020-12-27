@@ -1,0 +1,1 @@
+\forall_{A, B}~\left(\left(A \Leftrightarrow B\right) = \left(\left(A \Rightarrow B\right) \land \left(B \Rightarrow A\right)\right)\right)

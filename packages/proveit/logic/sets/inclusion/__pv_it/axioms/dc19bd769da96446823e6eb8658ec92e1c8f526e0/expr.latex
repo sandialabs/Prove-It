@@ -1,0 +1,1 @@
+\forall_{A, B}~\left(\left(A \subset B\right) = \left(\left(A \subseteq B\right) \land \left(B \ncong A\right)\right)\right)

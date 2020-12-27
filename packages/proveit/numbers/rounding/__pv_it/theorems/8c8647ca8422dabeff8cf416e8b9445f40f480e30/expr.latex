@@ -1,0 +1,1 @@
+\lceil x + y\rceil \leq \left(\lceil x\rceil + \lceil y\rceil\right)

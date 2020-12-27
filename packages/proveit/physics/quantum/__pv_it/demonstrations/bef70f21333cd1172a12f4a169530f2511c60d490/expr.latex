@@ -1,0 +1,6 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \lstick{\lvert 0 \rangle} & \control \qw \qwx[1] & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 0 \rangle} & \multigate{2}{Z} & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 0 \rangle} & \ghost{Z} & \rstick{\lvert 0 \rangle} \qw   \\ 
+  & \lstick{\lvert 1 \rangle} & \ghost{Z} & \rstick{\lvert 1 \rangle} \qw 
+} \hspace{2em}

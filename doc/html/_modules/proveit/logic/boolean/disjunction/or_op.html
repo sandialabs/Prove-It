@@ -1,0 +1,958 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit.logic.boolean.disjunction.or_op &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit.logic.boolean.disjunction.or_op</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">Literal</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">USE_DEFAULTS</span><span class="p">,</span>
+                     <span class="n">ProofFailure</span><span class="p">,</span> <span class="n">InnerExpr</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.boolean.booleans</span> <span class="k">import</span> <span class="n">inBool</span>
+<span class="kn">from</span> <span class="nn">proveit.abstract_algebra.generic_methods</span> <span class="k">import</span> <span class="n">apply_commutation_thm</span><span class="p">,</span> <span class="n">apply_association_thm</span><span class="p">,</span> <span class="n">apply_disassociation_thm</span><span class="p">,</span> <span class="n">groupCommutation</span><span class="p">,</span> <span class="n">groupCommute</span>
+
+<div class="viewcode-block" id="Or"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or">[docs]</a><span class="k">class</span> <span class="nc">Or</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="c1"># The operator of the Or operation</span>
+    <span class="n">_operator_</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="n">stringFormat</span><span class="o">=</span><span class="s1">&#39;or&#39;</span><span class="p">,</span> <span class="n">latexFormat</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\lor&#39;</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="vm">__file__</span><span class="p">)</span>
+
+    <span class="n">trivialDisjunctions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> <span class="c1">#used to avoid infinite recursion inside of unaryReduction</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">operands</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Or together any number of operands: A or B or C</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">Operation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Or</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="n">operands</span><span class="p">)</span>
+        <span class="c1">#deduce trivial disjunctive equivalances with 0 or 1 operand</span>
+        <span class="c1">#avoid infinite recursion by storing previously encountered expressions</span>
+        <span class="k">if</span> <span class="bp">self</span> <span class="ow">in</span> <span class="n">Or</span><span class="o">.</span><span class="n">trivialDisjunctions</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">Or</span><span class="o">.</span><span class="n">trivialDisjunctions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">proveit.logic.boolean.disjunction._axioms_</span> <span class="k">import</span> <span class="n">emptyDisjunction</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span> <span class="c1"># emptyDisjunction not initially defined when doing a clean rebuild</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">operand</span> <span class="o">=</span> <span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">Or</span><span class="o">.</span><span class="n">trivialDisjunctions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="n">inBool</span><span class="p">(</span><span class="n">operand</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unaryReduction</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+<div class="viewcode-block" id="Or.auto_reduction"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.auto_reduction">[docs]</a>    <span class="k">def</span> <span class="nf">auto_reduction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Automatically reduce &quot;Or() = FALSE&quot; and &quot;Or(a) = a&quot;.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">proveit.logic.boolean.disjunction._theorems_</span> <span class="k">import</span> \
+                <span class="n">emptyDisjunctionEval</span>
+            <span class="k">if</span> <span class="n">emptyDisjunctionEval</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">emptyDisjunctionEval</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">is_singular</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unaryReduction</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="c1"># Cannot do the reduction if the operand is not known</span>
+                <span class="c1"># to be a boolean.</span>
+                <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Or.conclude"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.conclude">[docs]</a>    <span class="k">def</span> <span class="nf">conclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Try to automatically conclude this disjunction.  If any of its</span>
+<span class="sd">        operands have pre-existing proofs, it will be proven via the orIfAny</span>
+<span class="sd">        theorem.  Otherwise, a reduction proof will be attempted</span>
+<span class="sd">        (evaluating the operands).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">trueOrTrue</span><span class="p">,</span> <span class="n">trueOrFalse</span><span class="p">,</span> <span class="n">falseOrTrue</span>
+        <span class="k">if</span> <span class="bp">self</span> <span class="ow">in</span> <span class="p">{</span><span class="n">trueOrTrue</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">trueOrFalse</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">falseOrTrue</span><span class="o">.</span><span class="n">expr</span><span class="p">}:</span>
+            <span class="c1"># should be proven via one of the imported theorems as a simple special case</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+        <span class="c1"># Prove that the disjunction is true by proving that ANY of its operands is true.</span>
+        <span class="c1"># In the first attempt, don&#39;t use automation to prove any of the operands so that</span>
+        <span class="c1"># we don&#39;t waste time trying to prove operands when we already know one to be true</span>
+        <span class="k">for</span> <span class="n">useAutomationForOperand</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]:</span>
+            <span class="n">provenOperandIndices</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_k</span><span class="p">,</span> <span class="n">operand</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">operand</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="n">useAutomationForOperand</span><span class="p">)</span>
+                    <span class="n">provenOperandIndices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_k</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaExample</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span> <span class="c1"># possible way to prove it</span>
+                <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">provenOperandIndices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># One or both of the two operands were known to be true (without automation).</span>
+                <span class="c1"># Try a possibly simpler proof than concludeViaExample.</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">provenOperandIndices</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaBoth</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">provenOperandIndices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaOnlyLeft</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaOnlyRight</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">provenOperandIndices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># proven using concludeViaExample above (unless orIf[Any,Left,Right] was not a usable theorem,</span>
+                    <span class="c1"># in which case this will fail and we can simply try the default below)</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="c1"># orIf[Any,Left,Right] must not have been a usable theorem; use the default below.</span>
+                    <span class="k">break</span></div>
+
+<div class="viewcode-block" id="Or.sideEffects"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.sideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">sideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">judgment</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Side-effect derivations to attempt automatically.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Not</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="c1"># (A or not(A)) is an unfolded Boolean</span>
+                <span class="k">return</span> <span class="c1"># stop to avoid infinite recursion.</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriveInBool</span></div>
+
+<div class="viewcode-block" id="Or.negationSideEffects"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.negationSideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">negationSideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">judgment</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Side-effect derivations to attempt automatically for Not(A or B or .. or .. Z).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Not</span><span class="p">,</span> <span class="n">And</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="c1"># No side-effects needed for [Or]()</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriveInBool</span> <span class="c1"># A or B or .. or .. Z in Booleans</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span> <span class="c1"># Not(A or B)</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduceNotLeftIfNeither</span> <span class="c1"># Not(A)</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduceNotRightIfNeither</span> <span class="c1"># Not(B)</span>
+        <span class="c1"># implemented by JML on 7/2/19</span>
+        <span class="c1"># If all of the operands are negated call the conjunction form of DeMorgan&#39;s</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">Not</span><span class="p">)</span> <span class="k">for</span> <span class="n">operand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">):</span>
+            <span class="n">demorganAnd</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">operand</span><span class="o">.</span><span class="n">operand</span> <span class="k">for</span> <span class="n">operand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">])</span>
+            <span class="k">yield</span> <span class="n">demorganAnd</span><span class="o">.</span><span class="n">concludeViaDemorgans</span></div>
+
+<div class="viewcode-block" id="Or.inBoolSideEffects"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.inBoolSideEffects">[docs]</a>    <span class="k">def</span> <span class="nf">inBoolSideEffects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">judgment</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B or .. or Z) in Booleans deduce (A in Booleans), (B in Booleans), ...</span>
+<span class="sd">        (Z in Booleans).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">deducePartsInBool</span></div>
+
+<div class="viewcode-block" id="Or.concludeNegation"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.concludeNegation">[docs]</a>    <span class="k">def</span> <span class="nf">concludeNegation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">falseOrFalseNegated</span><span class="p">,</span> <span class="n">neitherIntro</span><span class="p">,</span> <span class="n">notOrIfNotAny</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">emptyDisjunction</span>
+        <span class="k">if</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">falseOrFalseNegated</span><span class="o">.</span><span class="n">operand</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">falseOrFalseNegated</span> <span class="c1"># the negation of (FALSE or FALSE)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">emptyDisjunction</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">neitherIntro</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+            <span class="k">return</span> <span class="n">notOrIfNotAny</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)),</span> <span class="n">A</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.concludeViaBoth"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.concludeViaBoth">[docs]</a>    <span class="k">def</span> <span class="nf">concludeViaBoth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">orIfBoth</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">orIfBoth</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.concludeViaOnlyLeft"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.concludeViaOnlyLeft">[docs]</a>    <span class="k">def</span> <span class="nf">concludeViaOnlyLeft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">orIfOnlyLeft</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">orIfOnlyLeft</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">concludeViaLeft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From A being (or assumed) True, conclude that (A V B) is True.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">orIfLeft</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">orIfLeft</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Or.concludeViaOnlyRight"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.concludeViaOnlyRight">[docs]</a>    <span class="k">def</span> <span class="nf">concludeViaOnlyRight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">orIfOnlyRight</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">orIfOnlyRight</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.concludeViaDemorgans"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.concludeViaDemorgans">[docs]</a>    <span class="k">def</span> <span class="nf">concludeViaDemorgans</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        # created by JML 6/28/19</span>
+<span class="sd">        From A and B and C conclude Not(Not(A) or Not(B) or Not(C))</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">demorgansLawAndToOr</span><span class="p">,</span> <span class="n">demorgansLawAndToOrBin</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">demorgansLawAndToOrBin</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">demorgansLawAndToOr</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)),</span> <span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deriveInBool"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deriveInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">inBool</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deriveRightIfNotLeft"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveRightIfNotLeft">[docs]</a>    <span class="k">def</span> <span class="nf">deriveRightIfNotLeft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B) derive and return B assuming Not(A), inBool(B).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">rightIfNotLeft</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="n">leftOperand</span><span class="p">,</span> <span class="n">rightOperand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+        <span class="k">return</span> <span class="n">rightIfNotLeft</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">leftOperand</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span><span class="n">rightOperand</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="c1">#.deriveConclusion(assumptions)</span></div>
+
+<div class="viewcode-block" id="Or.deriveLeftIfNotRight"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveLeftIfNotRight">[docs]</a>    <span class="k">def</span> <span class="nf">deriveLeftIfNotRight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B) derive and return A assuming inBool(A), Not(B).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">leftIfNotRight</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="n">leftOperand</span><span class="p">,</span> <span class="n">rightOperand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+        <span class="k">return</span> <span class="n">leftIfNotRight</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">leftOperand</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span><span class="n">rightOperand</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="c1">#.deriveConclusion(assumptions)</span></div>
+
+<div class="viewcode-block" id="Or.deriveViaSingularDilemma"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveViaSingularDilemma">[docs]</a>    <span class="k">def</span> <span class="nf">deriveViaSingularDilemma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B) as self, and assuming A =&gt; C, B =&gt; C, and A and B are Booleans,</span>
+<span class="sd">        derive and return the conclusion, C.  Self is (A or B).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">singularConstructiveDilemma</span><span class="p">,</span> <span class="n">singularConstructiveMultiDilemma</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">singularConstructiveDilemma</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">C</span><span class="p">:</span><span class="n">conclusion</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="k">return</span> <span class="n">singularConstructiveMultiDilemma</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)),</span> <span class="n">A</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">,</span> <span class="n">C</span><span class="p">:</span><span class="n">conclusion</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deriveViaMultiDilemma"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveViaMultiDilemma">[docs]</a>    <span class="k">def</span> <span class="nf">deriveViaMultiDilemma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B) as self, and assuming A =&gt; C, B =&gt; D, and A, B, C, and D are Booleans,</span>
+<span class="sd">        derive and return the conclusion, C or D.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">constructiveDilemma</span><span class="p">,</span> <span class="n">destructiveDilemma</span><span class="p">,</span> <span class="n">constructiveMultiDilemma</span><span class="p">,</span> <span class="n">destructiveMultiDilemma</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Not</span><span class="p">,</span> <span class="n">Or</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conclusion</span><span class="p">,</span> <span class="n">Or</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">),</span> <span class="s2">&quot;deriveViaMultiDilemma requires conclusion to be a disjunction, the same number of operands as self.&quot;</span>
+        <span class="c1"># Check for destructive versus constructive dilemma cases.</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">Not</span><span class="p">)</span> <span class="k">for</span> <span class="n">operand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">Not</span><span class="p">)</span> <span class="k">for</span> <span class="n">operand</span> <span class="ow">in</span> <span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">):</span>
+            <span class="c1"># destructive case.</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">destructiveDilemma</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+                <span class="c1"># From Not(C) or Not(D), A =&gt; C, B =&gt; D, conclude Not(A) or Not(B)</span>
+                <span class="k">return</span> <span class="n">destructiveDilemma</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">C</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">operand</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">operand</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span><span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">operand</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span><span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">operand</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">destructiveMultiDilemma</span><span class="o">.</span><span class="n">isUsable</span><span class="p">():</span>
+                <span class="c1"># raise NotImplementedError(&quot;Generalized destructive multi-dilemma not implemented yet.&quot;)</span>
+                <span class="c1"># Iterated destructive case.  From (Not(A) or Not(B) or Not(C) or Not(D)) as self</span>
+                <span class="n">negatedOperandsSelf</span> <span class="o">=</span> <span class="p">[</span><span class="n">operand</span><span class="o">.</span><span class="n">operand</span> <span class="k">for</span> <span class="n">operand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">]</span>
+                <span class="n">negatedOperandsConc</span> <span class="o">=</span> <span class="p">[</span><span class="n">operand</span><span class="o">.</span><span class="n">operand</span> <span class="k">for</span> <span class="n">operand</span> <span class="ow">in</span> <span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">destructiveMultiDilemma</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)),</span> <span class="n">A</span><span class="p">:</span> <span class="n">negatedOperandsSelf</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span> <span class="n">negatedOperandsConc</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1"># constructive case.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># From (A or B), A =&gt; C, B =&gt; D, conclude C or D.</span>
+            <span class="k">return</span> <span class="n">constructiveDilemma</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">C</span><span class="p">:</span><span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">D</span><span class="p">:</span><span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1">#raise NotImplementedError(&quot;Generalized constructive multi-dilemma not implemented yet.&quot;)</span>
+        <span class="k">return</span> <span class="n">constructiveMultiDilemma</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)),</span> <span class="n">A</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span> <span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">},</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deriveViaDilemma"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveViaDilemma">[docs]</a>    <span class="k">def</span> <span class="nf">deriveViaDilemma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If the conclusion is also an Or operation with the same number of operands as</span>
+<span class="sd">        self, try deriveViaMultiDilemma.  Otherwise, or if that fails, try</span>
+<span class="sd">        deriveViaSingularDilemma.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conclusion</span><span class="p">,</span> <span class="n">Or</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">conclusion</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriveViaMultiDilemma</span><span class="p">(</span><span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ProofFailure</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriveViaSingularDilemma</span><span class="p">(</span><span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deduceLeftInBool"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deduceLeftInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deduceLeftInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce A in Booleans from (A or B) in Booleans.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">leftInBool</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">leftInBool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deduceRightInBool"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deduceRightInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deduceRightInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce B in Booleans from (A or B) in Booleans.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">rightInBool</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">rightInBool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deducePartsInBool"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deducePartsInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deducePartsInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce A in Booleans, B in Booleans, ..., Z in Booleans</span>
+<span class="sd">        from (A or B or ... or Z) in Booleans.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">deducePartInBool</span><span class="p">(</span><span class="n">_i</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deducePartInBool"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deducePartInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deducePartInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indexOrExpr</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce X in Booleans from (A or B or .. or X or .. or Z) in Booleans</span>
+<span class="sd">        provided X by expression or index number.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">eachInBool</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">indexOrExpr</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">indexOrExpr</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">indexOrExpr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Operand out of range: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">idx</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduceLeftInBool</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">idx</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduceRightInBool</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="c1">#attempt to replace with AA and CC over Amulti and Cmulti</span>
+        <span class="k">return</span> <span class="n">eachInBool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">n</span><span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">-</span><span class="n">idx</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">C</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">:]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deduceNotLeftIfNeither"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deduceNotLeftIfNeither">[docs]</a>    <span class="k">def</span> <span class="nf">deduceNotLeftIfNeither</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce not(A) assuming not(A or B) where self is (A or B).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">notLeftIfNeither</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="n">leftOperand</span><span class="p">,</span> <span class="n">rightOperand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+        <span class="k">return</span> <span class="n">notLeftIfNeither</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">leftOperand</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span><span class="n">rightOperand</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deduceNotRightIfNeither"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deduceNotRightIfNeither">[docs]</a>    <span class="k">def</span> <span class="nf">deduceNotRightIfNeither</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deduce not(B) assuming not(A or B) where self is (A or B).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">notRightIfNeither</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="n">leftOperand</span><span class="p">,</span> <span class="n">rightOperand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+        <span class="k">return</span> <span class="n">notRightIfNeither</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">leftOperand</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span><span class="n">rightOperand</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deriveCommonConclusion"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveCommonConclusion">[docs]</a>    <span class="k">def</span> <span class="nf">deriveCommonConclusion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B) derive and return the provided conclusion C assuming A=&gt;C, B=&gt;C, A,B,C in BOOLEANS.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">hypotheticalDisjunction</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">compose</span>
+        <span class="c1"># forall_{A in Bool, B in Bool, C in Bool} (A=&gt;C and B=&gt;C) =&gt; ((A or B) =&gt; C)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="n">leftOperand</span><span class="p">,</span> <span class="n">rightOperand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+        <span class="n">leftImplConclusion</span> <span class="o">=</span> <span class="n">Implies</span><span class="p">(</span><span class="n">leftOperand</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">)</span>
+        <span class="n">rightImplConclusion</span> <span class="o">=</span> <span class="n">Implies</span><span class="p">(</span><span class="n">rightOperand</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">)</span>
+        <span class="c1"># (A=&gt;C and B=&gt;C) assuming A=&gt;C, B=&gt;C</span>
+        <span class="n">compose</span><span class="p">([</span><span class="n">leftImplConclusion</span><span class="p">,</span> <span class="n">rightImplConclusion</span><span class="p">],</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">hypotheticalDisjunction</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">leftOperand</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span><span class="n">rightOperand</span><span class="p">,</span> <span class="n">C</span><span class="p">:</span><span class="n">conclusion</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveConclusion</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span><span class="o">.</span><span class="n">deriveConclusion</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.evaluation"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.evaluation">[docs]</a>    <span class="k">def</span> <span class="nf">evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">minimal_automation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to determine whether this disjunction evaluates</span>
+<span class="sd">        to true or false under the given assumptions.  If automation</span>
+<span class="sd">        is false, it will only succeed if the evaluation is already</span>
+<span class="sd">        known.  If automation and minimal_automation are True, it will</span>
+<span class="sd">        only rely upon known evaluations of the operands to determine</span>
+<span class="sd">        whether to try to prove or disprove the disjunction.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">SimplificationError</span>
+        <span class="kn">from</span> <span class="nn">._axioms_</span> <span class="k">import</span> <span class="n">orTT</span><span class="p">,</span> <span class="n">orTF</span><span class="p">,</span> <span class="n">orFT</span><span class="p">,</span> <span class="n">orFF</span> <span class="c1"># load in truth-table evaluations</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unaryReduction</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="c1"># First just see if it has a known evaluation.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Operation</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SimplificationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">automation</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span>
+
+        <span class="c1"># Depending upon evaluations of operands, we will either</span>
+        <span class="c1"># attempt to prove or disprove this conjunction.</span>
+        <span class="k">if</span> <span class="n">minimal_automation</span><span class="p">:</span>
+            <span class="c1"># Only do non-automated evaluations of operands</span>
+            <span class="c1"># if minimal_automation is True.</span>
+            <span class="n">operand_automations</span> <span class="o">=</span> <span class="p">(</span><span class="kc">False</span><span class="p">,)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># First try non-automated operand evaluation, then</span>
+            <span class="c1"># automated only if necessary.</span>
+            <span class="n">operand_automations</span> <span class="o">=</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">operand_automation</span> <span class="ow">in</span> <span class="n">operand_automations</span><span class="p">:</span>
+            <span class="n">operands_evals</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">operand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">operand_eval</span> <span class="o">=</span> <span class="n">operand</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span>
+                            <span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="n">operand_automations</span><span class="p">)</span>
+                    <span class="n">operands_evals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">operand_eval</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">operands_evals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">TRUE</span> <span class="ow">in</span> <span class="n">operands_evals</span><span class="p">:</span>
+                <span class="c1"># If any operand is true, the disjunction may</span>
+                <span class="c1"># only evaluate to true if it can be evaluated.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">in</span> <span class="n">operands_evals</span><span class="p">:</span>
+                <span class="c1"># If no operand is true and all the evaluations</span>
+                <span class="c1"># are known, the conjunction may only evaluate</span>
+                <span class="c1"># to false if it can be evaluated.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">disprove</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">break</span>
+
+        <span class="c1"># If we had any success proving or disproving this conjunction</span>
+        <span class="c1"># there should be a known evaluation now.</span>
+        <span class="k">return</span> <span class="n">Operation</span><span class="o">.</span><span class="n">evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span> <span class="n">automation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deriveContradiction"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveContradiction">[docs]</a>    <span class="k">def</span> <span class="nf">deriveContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B), and assuming not(A) and not(B), derive and return FALSE.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">binaryOrContradiction</span><span class="p">,</span> <span class="n">orContradiction</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">binaryOrContradiction</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+            <span class="k">return</span> <span class="n">orContradiction</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)),</span> <span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deriveGroup"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveGroup">[docs]</a>    <span class="k">def</span> <span class="nf">deriveGroup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beg</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B or ... or Y or Z), assuming in Booleans and given beginning and end of group, derive and return</span>
+<span class="sd">        (A or B ... or (l or ... or M) or ... or X or Z).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">group</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="k">if</span> <span class="n">end</span> <span class="o">&lt;=</span> <span class="n">beg</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span> <span class="p">(</span><span class="s2">&quot;Beginning and end value must be of the form beginning &lt; end.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">end</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;End value must be less than length of expression.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">group</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">l</span> <span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="n">beg</span><span class="p">),</span> <span class="n">m</span><span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">beg</span><span class="p">),</span> <span class="n">n</span><span class="p">:</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">-</span> <span class="n">end</span><span class="p">),</span> <span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[:</span><span class="n">beg</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">beg</span> <span class="p">:</span> <span class="n">end</span><span class="p">],</span> <span class="n">C</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">end</span> <span class="p">:]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deriveSwap"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deriveSwap">[docs]</a>    <span class="k">def</span> <span class="nf">deriveSwap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx1</span><span class="p">,</span> <span class="n">idx2</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Booleans and given</span>
+<span class="sd">        the beginning and end of the groups to be switched,</span>
+<span class="sd">        derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">swap</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">idx1</span> <span class="o">&lt;</span> <span class="n">idx2</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">swap</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">l</span><span class="p">:</span> <span class="n">num</span><span class="p">(</span><span class="n">idx1</span><span class="p">),</span> <span class="n">m</span><span class="p">:</span> <span class="n">num</span><span class="p">(</span><span class="n">idx2</span> <span class="o">-</span> <span class="n">idx1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">n</span><span class="p">:</span> <span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">-</span><span class="n">idx2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">A</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[:</span><span class="n">i</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">C</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">j</span><span class="p">],</span> <span class="n">D</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">E</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Beginnings and ends must be of the type: 0&lt;i&lt;j&lt;length.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.affirmViaContradiction"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.affirmViaContradiction">[docs]</a>    <span class="k">def</span> <span class="nf">affirmViaContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From (A or B), derive the conclusion provided that the negated</span>
+<span class="sd">        conclusion implies not(A) and not(B), and the conclusion is a Boolean.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean.implication</span> <span class="k">import</span> <span class="n">affirmViaContradiction</span>
+        <span class="k">return</span> <span class="n">affirmViaContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.denyViaContradiction"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.denyViaContradiction">[docs]</a>    <span class="k">def</span> <span class="nf">denyViaContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">        From (A or B), derive the negated conclusion provided that the</span>
+<span class="sd">        conclusion implies both not(A) and not(B), and the conclusion is a Boolean.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean.implication</span> <span class="k">import</span> <span class="n">denyViaContradiction</span>
+        <span class="k">return</span> <span class="n">denyViaContradiction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conclusion</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.deduceInBool"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.deduceInBool">[docs]</a>    <span class="k">def</span> <span class="nf">deduceInBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempt to deduce, then return, that this &#39;or&#39; expression is in the set of BOOLEANS.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">binaryClosure</span><span class="p">,</span> <span class="n">closure</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">binaryClosure</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">closure</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)),</span> <span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.concludeViaExample"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.concludeViaExample">[docs]</a>    <span class="k">def</span> <span class="nf">concludeViaExample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trueOperand</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From one true operand, conclude that this &#39;or&#39; expression is true.</span>
+<span class="sd">        Requires all of the operands to be in the set of BOOLEANS.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.number</span> <span class="k">import</span> <span class="n">num</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">orIfAny</span><span class="p">,</span> <span class="n">orIfLeft</span><span class="p">,</span> <span class="n">orIfRight</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">trueOperand</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">orIfLeft</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">orIfRight</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">orIfAny</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">m</span><span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="n">index</span><span class="p">),</span> <span class="n">n</span><span class="p">:</span><span class="n">num</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">)</span><span class="o">-</span><span class="n">index</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">A</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[:</span><span class="n">index</span><span class="p">],</span> <span class="n">B</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">C</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">:]},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">concludeViaSome</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subset_disjunction</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From some true (or assumed true) disjunctive subset of the</span>
+<span class="sd">        operands, conclude that this &#39;or&#39; expression is true. This is</span>
+<span class="sd">        similar to the concludeViaExample method above. For example,</span>
+<span class="sd">        we might have a disjunction such as:</span>
+<span class="sd">            exampleDisj = A V B V C V D,</span>
+<span class="sd">        where we know (or assume) that B V D is true. We could call</span>
+<span class="sd">            exampleDisj.concludeViaSome(B V D, assumptions=[B V D]),</span>
+<span class="sd">        which will return</span>
+<span class="sd">            {B V D} |– A V B V C V D</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Check that the subset_disjunction is an instance of OR</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subset_disjunction</span><span class="p">,</span> <span class="n">Or</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">((</span><span class="s1">&#39;subset_disjunction arg should be &#39;</span>
+                             <span class="s1">&#39;a disjunction (Or)&#39;</span><span class="p">))</span>
+        <span class="c1"># Check that each of the operands in subset_disjunction occur as</span>
+        <span class="c1"># operands in self (otherwise throw a ValueError).</span>
+        <span class="n">self_operands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+        <span class="n">subset_operands</span> <span class="o">=</span> <span class="n">subset_disjunction</span><span class="o">.</span><span class="n">operands</span>
+        <span class="n">unexpected_operands</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">subset_operands</span><span class="p">)</span><span class="o">-</span><span class="nb">set</span><span class="p">(</span><span class="n">self_operands</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unexpected_operands</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;the disjunctive subset (subset_disjunction) you &#39;</span>
+                             <span class="s1">&#39;provided contains unexpected items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
+                             <span class="nb">format</span><span class="p">(</span><span class="n">unexpected_operands</span><span class="p">))</span>
+        <span class="c1"># collect the operands not present in the proffered subset</span>
+        <span class="c1"># (in using set() we are (temporarily) assuming no repeated operands)</span>
+        <span class="c1"># and let&#39;s assume we get a non-empty set</span>
+        <span class="n">complementary_operands</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">self_operands</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">subset_operands</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">complementary_operands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">complementary_disjunction</span> <span class="o">=</span> <span class="n">complementary_operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">complementary_disjunction</span> <span class="o">=</span> <span class="n">Or</span><span class="p">(</span><span class="o">*</span><span class="n">complementary_operands</span><span class="p">)</span>
+        <span class="c1"># the following produces a permutated, associated version of the</span>
+        <span class="c1"># original disjunction</span>
+        <span class="n">binary_disjunction</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">Or</span><span class="p">(</span><span class="n">subset_disjunction</span><span class="p">,</span> <span class="n">complementary_disjunction</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">concludeViaLeft</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># remove the extra parentheses (not yet un-permuting)</span>
+        <span class="n">permuted_disjunction</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">binary_disjunction</span><span class="o">.</span><span class="n">disassociate</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">disassociate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concludeViaPermutation</span><span class="p">(</span><span class="n">permuted_disjunction</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">concludeViaPermutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">permuted_disjunction</span><span class="p">,</span>
+                               <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From some true (or assumed true) but permutated version of this</span>
+<span class="sd">        &#39;or&#39; expression, conclude that this &#39;or&#39; expression is true.</span>
+<span class="sd">        For example, let thisOr = A V B V C V D</span>
+<span class="sd">        and let permOfThisOr = S |- B V A V C V D.</span>
+<span class="sd">        From permOfThisOr, conclude thisOr, using the following:</span>
+<span class="sd">        thisOr.concludeViaPermuation(permOfThisOr, assumptions = S),</span>
+<span class="sd">        which will return S |– A V B V C V D.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># Check that the permuted_disjunction is an instance of OR</span>
+        <span class="c1"># perm_disj_expr = permuted_disjunction.expr</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">permuted_disjunction</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">Or</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">((</span><span class="s1">&#39;permuted_disjunction arg should be &#39;</span>
+                             <span class="s1">&#39;a disjunction (Or)&#39;</span><span class="p">))</span>
+        <span class="c1"># Check that each of the operands in subset_disjunction occur as</span>
+        <span class="c1"># operands in self (otherwise throw a ValueError).</span>
+        <span class="n">self_operands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span>
+        <span class="n">perm_operands</span> <span class="o">=</span> <span class="n">permuted_disjunction</span><span class="o">.</span><span class="n">operands</span>
+        <span class="n">unexpected_operands</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">perm_operands</span><span class="p">)</span><span class="o">-</span><span class="nb">set</span><span class="p">(</span><span class="n">self_operands</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unexpected_operands</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;the permuted disjunction (permuted_disjunction) &#39;</span>
+                             <span class="s1">&#39;you provided contains unexpected items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
+                             <span class="nb">format</span><span class="p">(</span><span class="n">unexpected_operands</span><span class="p">))</span>
+
+        <span class="c1"># NOTICE we are assuming no repetition of operands and that</span>
+        <span class="c1"># len(perm_operands) = len(self_operands)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">self_operands</span><span class="p">)):</span>
+            <span class="c1"># update the operands list each time for the permuting version</span>
+            <span class="n">perm_operands</span> <span class="o">=</span> <span class="n">permuted_disjunction</span><span class="o">.</span><span class="n">operands</span>
+            <span class="n">temp_operand</span> <span class="o">=</span> <span class="n">self_operands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">perm_operands</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">temp_operand</span><span class="p">)</span>
+            <span class="n">equiv_permuted_disjunction</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">permuted_disjunction</span><span class="o">.</span><span class="n">commutation</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">permuted_disjunction</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">equiv_permuted_disjunction</span>
+                    <span class="o">.</span><span class="n">subRightSideInto</span><span class="p">(</span><span class="n">permuted_disjunction</span><span class="p">,</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">permuted_disjunction</span>
+
+<div class="viewcode-block" id="Or.unaryReduction"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.unaryReduction">[docs]</a>    <span class="k">def</span> <span class="nf">unaryReduction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        For the degenerate case of Or(A), where A is Boolean, derive</span>
+<span class="sd">        and return |–[V](A) = A. For example, calling</span>
+<span class="sd">            Or(A).unaryReduction([inBool(A)])</span>
+<span class="sd">        will return:</span>
+<span class="sd">            {A in Bool} |– [V](A) = A</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic.boolean.disjunction._theorems_</span> <span class="k">import</span> \
+            <span class="n">unaryOrReduction</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="o">.</span><span class="n">is_singular</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Or.unaryReduction: expression must have only a &quot;</span>
+                             <span class="s2">&quot;single operand in order to invoke the &quot;</span>
+                             <span class="s2">&quot;unaryOrReduction theorem.&quot;</span><span class="p">)</span>
+        <span class="n">operand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">with</span> <span class="n">defaults</span><span class="o">.</span><span class="n">disabled_auto_reduction_types</span> <span class="k">as</span> <span class="n">disable_reduction_types</span><span class="p">:</span>
+            <span class="n">disable_reduction_types</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Or</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">unaryOrReduction</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">operand</span><span class="p">},</span>
+                                               <span class="n">assumptions</span> <span class="o">=</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.commutation"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.commutation">[docs]</a>    <span class="k">def</span> <span class="nf">commutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">finalIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given Boolean operands, deduce that this expression is equal to a form in which the operand</span>
+<span class="sd">        at index initIdx has been moved to finalIdx.</span>
+<span class="sd">        For example, (A or B or ... or Y or Z) = (A or ... or Y or B or Z)</span>
+<span class="sd">        via initIdx = 1 and finalIdx = -2.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="p">(</span><span class="n">commutation</span><span class="p">,</span> <span class="n">leftwardCommutation</span><span class="p">,</span>
+                                 <span class="n">rightwardCommutation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">apply_commutation_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">commutation</span><span class="p">,</span>
+                                     <span class="n">leftwardCommutation</span><span class="p">,</span> <span class="n">rightwardCommutation</span><span class="p">,</span>
+                                     <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.groupCommutation"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.groupCommutation">[docs]</a>    <span class="k">def</span> <span class="nf">groupCommutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">disassociate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                         <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given Boolean operands, deduce that this expression is equal</span>
+<span class="sd">        to a form in which the operands at indices</span>
+<span class="sd">        [initIdx, initIdx+length) have been moved to</span>
+<span class="sd">        [finalIdx, finalIdx+length). It will do this by performing</span>
+<span class="sd">        association first. If disassociate is True, it will be</span>
+<span class="sd">        disassociated afterward. For example, the call</span>
+<span class="sd">        Or(A,B,C,D).groupCommutation(0, 1, length=2,</span>
+<span class="sd">                                 assumptions=inBool(A,B,C,D))</span>
+<span class="sd">        will conceptually follow the steps:</span>
+<span class="sd">        (1) associates 2 elements (i.e. length = 2) starting at index 0</span>
+<span class="sd">            to obtain (A V B) V C V D</span>
+<span class="sd">        (2) removes the element to be commuted to obtain C V D</span>
+<span class="sd">        (3) inserts the element to be commuted at the desire index 1 to</span>
+<span class="sd">            obtain C V (A V B) V D</span>
+<span class="sd">        (4) then disassociates to obtain C V A V B V D</span>
+<span class="sd">        (5) eventually producing the output:</span>
+<span class="sd">            {A in Bool, ..., D in Bool} |-</span>
+<span class="sd">            (A V B V C V D) = (C V A V B V D)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">groupCommutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">disassociate</span><span class="p">,</span>
+                                <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.commute"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.commute">[docs]</a>    <span class="k">def</span> <span class="nf">commute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">finalIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From self, derive and return a form in which the operand</span>
+<span class="sd">        at index initIdx has been moved to finalIdx.</span>
+<span class="sd">        For example, given (A or B or ... or Y or Z) derive (A or ... or Y or B or Z)</span>
+<span class="sd">        via initIdx = 1 and finalIdx = -2.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">commute</span><span class="p">,</span> <span class="n">leftwardCommute</span><span class="p">,</span> <span class="n">rightwardCommute</span>
+        <span class="k">return</span> <span class="n">apply_commutation_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">commute</span><span class="p">,</span> <span class="n">leftwardCommute</span><span class="p">,</span> <span class="n">rightwardCommute</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.groupCommute"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.groupCommute">[docs]</a>    <span class="k">def</span> <span class="nf">groupCommute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">disassociate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given self, deduce and return a form in which the operands</span>
+<span class="sd">        at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).</span>
+<span class="sd">        It will do this by performing association first.  If disassocate is True, it</span>
+<span class="sd">        will be disassociated afterwards.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">groupCommute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initIdx</span><span class="p">,</span> <span class="n">finalIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">disassociate</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.association"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.association">[docs]</a>    <span class="k">def</span> <span class="nf">association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given Boolean operands, deduce that this expression is equal to a form in which operands in the</span>
+<span class="sd">        range [startIdx, startIdx+length) are grouped together.</span>
+<span class="sd">        For example, (A or B or ... or Y or Z) = (A or B ... or (L or ... or M) or ... or Y or Z)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">association</span>
+        <span class="k">return</span> <span class="n">apply_association_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">association</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.associate"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.associate">[docs]</a>    <span class="k">def</span> <span class="nf">associate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From self, derive and return a form in which operands in the</span>
+<span class="sd">        range [startIdx, startIdx+length) are grouped together.</span>
+<span class="sd">        For example, from (A or B or ... or Y or Z) derive</span>
+<span class="sd">        (A or B ... or (L or ... or M) or ... or Y or Z).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">associate</span>
+        <span class="k">return</span> <span class="n">apply_association_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">associate</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.disassociation"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.disassociation">[docs]</a>    <span class="k">def</span> <span class="nf">disassociation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given Boolean operands, deduce that this expression is equal to a form in which the operand</span>
+<span class="sd">        at index idx is no longer grouped together.</span>
+<span class="sd">        For example, (A or B ... or (L or ... or M) or ... or Y or Z) = (A or B or ... or Y or Z)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">disassociation</span>
+        <span class="k">return</span> <span class="n">apply_disassociation_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">disassociation</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Or.disassociate"><a class="viewcode-back" href="../../../../../api/proveit.logic.Or.html#proveit.logic.Or.disassociate">[docs]</a>    <span class="k">def</span> <span class="nf">disassociate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        From self, derive and return a form in which the operand</span>
+<span class="sd">        at the given index is ungrouped.</span>
+<span class="sd">        For example, from (A or B ... or (L or ... or M) or ... or Y or Z)</span>
+<span class="sd">        derive (A or B or ... or Y or Z).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">._theorems_</span> <span class="k">import</span> <span class="n">disassociate</span>
+        <span class="k">return</span> <span class="n">apply_disassociation_thm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">disassociate</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span></div></div>
+
+<span class="c1"># Register these expression equivalence methods:</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Or</span><span class="p">,</span> <span class="s1">&#39;commutation&#39;</span><span class="p">,</span> <span class="s1">&#39;commuted&#39;</span><span class="p">,</span> <span class="s1">&#39;commute&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Or</span><span class="p">,</span> <span class="s1">&#39;groupCommutation&#39;</span><span class="p">,</span> <span class="s1">&#39;groupCommuted&#39;</span><span class="p">,</span> <span class="s1">&#39;groupCommute&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Or</span><span class="p">,</span> <span class="s1">&#39;association&#39;</span><span class="p">,</span> <span class="s1">&#39;associated&#39;</span><span class="p">,</span> <span class="s1">&#39;associate&#39;</span><span class="p">)</span>
+<span class="n">InnerExpr</span><span class="o">.</span><span class="n">register_equivalence_method</span><span class="p">(</span><span class="n">Or</span><span class="p">,</span> <span class="s1">&#39;disassociation&#39;</span><span class="p">,</span> <span class="s1">&#39;disassociated&#39;</span><span class="p">,</span> <span class="s1">&#39;disassociate&#39;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../../index.html">Module code</a><ul>
+  <li><a href="../../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

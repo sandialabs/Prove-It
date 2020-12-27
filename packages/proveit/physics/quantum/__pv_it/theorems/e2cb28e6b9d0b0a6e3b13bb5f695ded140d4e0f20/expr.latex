@@ -1,0 +1,50 @@
+\begin{array} {ccc} 
+ \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}{\Big \{} S_{1, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, n}{\Big \{} S_{1, n}} 
+} \hspace{2em}  \\ 
+  \vdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{i, j}{\Big \{} S_{i, j}} 
+} \hspace{2em} & \vdots  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{m, 1}{\Big \{} S_{m, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{m, n}{\Big \{} S_{m, n}} 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{F_{1}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{F_{n}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{1, 1}{\Big \{} R_{1, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{1, n}{\Big \{} R_{1, n}} 
+} \hspace{2em}  \\ 
+  \vdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{i, j}{\Big \{} R_{i, j}} 
+} \hspace{2em} & \vdots  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{k, 1}{\Big \{} R_{k, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{C_{k, n}{\Big \{} R_{k, n}} 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{G_{1}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{G_{n}{\Big \{} \left\{m + 1, m + k + 2\right\}} 
+} \hspace{2em}  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{1, 1}{\Big \{} Q_{1, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{1, n}{\Big \{} Q_{1, n}} 
+} \hspace{2em}  \\ 
+  \vdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{i, j}{\Big \{} Q_{i, j}} 
+} \hspace{2em} & \vdots  \\ 
+  \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{h, 1}{\Big \{} Q_{h, 1}} 
+} \hspace{2em} & \cdots & \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{E_{h, n}{\Big \{} Q_{h, n}} 
+} \hspace{2em} \end{array} 

@@ -1,0 +1,4 @@
+proveit.logic.booleans.false_is_bool
+proveit.logic.booleans.fold_forall_over_bool
+proveit.logic.booleans.true_is_bool
+proveit.logic.equality.sub_left_side_into

@@ -1,0 +1,1 @@
+\left(f, x, y, a, b, c\right) \mapsto \left(\left(\left(x = a\right) \land \left(y = b\right)\right) \Rightarrow \left(\left(f(a, b) = c\right) \Rightarrow \left(f(x, y) = c\right)\right)\right)

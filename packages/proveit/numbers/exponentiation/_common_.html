@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Common expressions for the theory of proveit.numbers.exponentiation</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Common-expressions-for-the-theory-of-proveit.numbers.exponentiation">Common expressions for the theory of <a class="ProveItLink" href="_theory_.html">proveit.numbers.exponentiation</a><a class="anchor-link" href="#Common-expressions-for-the-theory-of-proveit.numbers.exponentiation">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the common expressions of a theory:</span>
+<span class="o">%</span><span class="k">common_expressions_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">IndexedVar</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">NotEquals</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">zero</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining common sub-expressions for theory &#39;proveit.numbers.exponentiation&#39;
+Subsequent end-of-cell assignments will define common sub-expressions
+%end_common will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prod_a_raise_ki__1_to_m</span> <span class="o">=</span> <span class="n">Mult</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">i</span><span class="p">)),</span> <span class="n">one</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="prod_a_raise_ki__1_to_m">prod_a_raise_ki__1_to_m:</strong> <a class="ProveItLink" href="__pv_it/common/aac050f52c811b4df08eb946e9f8fdf8bad7edfc0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHMAAAAUBAMAAABMnB83AAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAAUFJREFU
+OMtjYAAD7tUMRIJdG9BFPIjVytKAJsD5k1it8yegCXA4EKu1BV2A54K1AHFazzJvRBVgT+r8ycA4
+gQitZRpoTuYXZmBgPkWM1o8GaAJWWxWAgUeEVubVQWgiW5kXPCBKK3eAFR9Drlqu0WGYSDSzwwai
+tLJuMOFm0C7gUtCBidQxSBsQpZX9AeNmBkaDKQw3gBy+O7dXQhMKAa1vz+6CqGBh0GVwAAZO1wP2
+D5AQ2H8Jr06OdQz1ENZEhh0M0g8YOJcx8AagpEksusBisxIYrqKI8v5kYEHJDPMLsCRckNj9CQze
+KKJcAQzzUWKZBUuKBIstZeD8jGrgAQZ9ohIv5x8Gpg+oWhUYxJkeEKP1EwNjgR5qHLM58mCq+w71
+IZgBTTYMKQIHUBRJb364A9MOR5gPHeFCE3fbSSMXEQCoeEr8PaI+sQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prod_a_raise_bi__1_to_m</span> <span class="o">=</span> <span class="n">Mult</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">i</span><span class="p">)),</span> <span class="n">one</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="prod_a_raise_bi__1_to_m">prod_a_raise_bi__1_to_m:</strong> <a class="ProveItLink" href="__pv_it/common/d266f3d9d7291499101fce042946b7c85090a86f0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHAAAAAUBAMAAACnq6Q0AAAAMFBMVEX///9UVFSqqqrMzMwiIiJE
+RESYmJgyMjK6urru7u4QEBCIiIh2dnZmZmbc3NwAAABRgo0vAAAAAXRSTlMAQObYZgAAAQFJREFU
+OMtjYACD9gIG4gC6Qp4LRGpEV8iuQKRGdIX8D4jUiK7QfrckcRrRFW6ZsJeBcQIRGkEKkUE0Qzrz
+KWI0AhWi8FcwXGRgIUYjSCEy+MmwiDiNQIVsl9Iu6xhA+Z5sAcRpBCpk2s6wiOkAlG94hoE4jSCF
+wpwOvA0MDHx3bq8EixHSCFfowHSBhYmBoesB+wcQl3n/JfwaYQo5BbgbGPcxcC5j4A1AlsdmL0gM
+XSHvTwaWDUh8zu+Y+sBi6Aq5AhjmGyCrcsRioyMWhfMPMOgTlUrRFc5XYBBnIiZvoCtk3cDmyIOp
+qgDqs/kFuBRySm9+uANDI4sA1GdgBjaFAO49S1QUYeJbAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prod_ai_raise_n__1_to_m</span> <span class="o">=</span> <span class="n">Mult</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">IndexedVar</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">n</span><span class="p">),</span> <span class="n">one</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="prod_ai_raise_n__1_to_m">prod_ai_raise_n__1_to_m:</strong> <a class="ProveItLink" href="__pv_it/common/99923835ff1ce43db3b1e5b432e15f4d197a294a0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJgAAAAXBAMAAAAFCpsfAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAa1JREFU
+OMtjYEAHvHPVKxlIBjh08bpeYH1AumHYdb2pYOA/QLJhUF18FxBCbCDDxRlcCehE1oKq6zSyuBwQ
+BzFMZsJv2Gk0PkLXOmThU0BrPzC0JOE3bB0aH66LdwKyMHMBA4sAQ/EF/IE9AU0ArosDJQ54AogI
+bA70aIPreoEqvoQIw15giMB0gZIa3+TpMVCuJRGGoWlB0rUXiF0fcH1gYNAGcW8RYRhCCwzAdLUB
+vRzLwLmBQXMGiJuBUIEl5fKgaoEDmK4QBgbOPwwcBQwMHiCuPkLjL0zDzi9A1QID+gjDWDcwnFfA
+MIyhEUs8CqBqQTcM6ObzBgz5DFDDPIgIM7iWm5fKJ5QLIekChub5BAYpYP7yICECIFquxDIEHihE
+0gWMVe4C3kZmqPGT0UL8F4yABBeKFr7jDQxfwDpguoBG8IgXPSyBGrYIzRWNMAISXKhaGAuYAkCe
+hutC5A2QYTwNpGQnVgX2DXwfFBC6ELk2A5JliShVYVreA93Gu8EASdc+KP2yXxxcmBABYFocGbge
+8AkfQNJ1Gpsy0grHfVjLYF7iahK0YhuuCwAsE35BfhZengAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prod_ai_raise_b__1_to_m</span> <span class="o">=</span> <span class="n">Mult</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">IndexedVar</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span> <span class="n">one</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="prod_ai_raise_b__1_to_m">prod_ai_raise_b__1_to_m:</strong> <a class="ProveItLink" href="__pv_it/common/27f2eec8dcdecb0e92da7343fe821715be28042e0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJIAAAAbBAMAAABl6sutAAAAMFBMVEX///9UVFTMzMx2dna6uroQ
+EBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAAC+aOQFAAAAAXRSTlMAQObYZgAAAjBJREFU
+OMtjYEAHLKsYSAdeC7CJWpJhEvMEbKLLyDCJKwGb6D8yTOJ/gEWQ6XvhAZJN0i+XwRRk72GfQLJJ
+FQcqMQW5C3gXkGzSdoZbDAx8FxACbEDvsjpwCuDX9haVmwfEIQwTGRhOI4vKAQPvAGsCXoN4NqDy
+GYHW/2EIY2BYhyx6ioGB48BtAjGOFk88wMDo4d3AwIsSvMwFDEzCBvhNuokuYM7AoGgMdAKKDTwB
+hEO3D13gKIR6gSq6hKBBfA0Y3nUAU6B0wDd5egzRmQ6c2l5alh5Az3R7gdj1AdcHBgZtEPcWQZO4
+gamGJY5hPUIEmv7agIETy8C5gUFzBoibAQ8xLIaAncEBTCNHLzDMRkqFEP+GMDBw/mHgKGBg8ABn
+IJj0ecyEzvMLRLICQ2X+AYZ2pJz6AWYS6waG8wroJnFgSeiNMJOiGXg+YZgE9N15A4Z8BqhJHgTD
+Ceg7ns8MbB8YeOeqV7IXAp3A0gAL8fMJDFLAHOdBdIjzfGNgXJDH63qBVYZdAB7iluDc38gMdc5k
+FF3gwAIRkCCCx/l2hhsCBm8qGPgdOIEZghOSKYD6ecSLHpZATVqE6hMBGNGIqDGAfjlYrifuwCDO
+oAqOSS4FiGJ4bgGZxNNAQm4JYqhmeM/EwHACmqzgOTgDkoMJAlgO5vsAdNVtZnAOBoN9UPplvzi4
+VCEc5FBfsAgAS6SHNuBSBQxQSrp9RJiEXtLBTEYpfXkfEFNoo5W+9yAUAPtZfbmIGfizAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nonzero_a_1_to_m</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">IndexedVar</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">zero</span><span class="p">),</span> <span class="n">one</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<strong id="nonzero_a_1_to_m">nonzero_a_1_to_m:</strong> <a class="ProveItLink" href="__pv_it/common/b3c0f8e64b8f03aa5b20f7c1acb4156ab64bd8420/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALUAAAAUCAMAAAD8zYzQAAAAOVBMVEX///8kJCQNDQ0oKChUVFTM
+zMx2dna6uroQEBCqqqqIiIgiIiJmZmYyMjJERETu7u6YmJjc3NwAAABfYoQ1AAAAAXRSTlMAQObY
+ZgAAAfRJREFUSMe9l9mOwyAMRZkZs+/8/8cOS1KRBoITqeUhTQXiXJuLCYQQEgPBNebJN9sQJ2P7
+9Q45S7SHOVVg9JOiJzhosm1ETgO8+2NljlfHD6qe4HwNJhhs7P2aBFETYD+Y6hmOqfxA5wt6Pzio
+Jkufc/oU53MEUT+JnaQ6DU/yK6k+4iwnajdINMwoMc+d62P3ybRp1AM9C9ASxwxxW9njIjvFpvpO
++ziZre3vtzxfISZWBz5Q3YNG5W6NC5botsZeFPWmyKXG6EXseRrTpmF3RXcgdKrfcFIT0eqLqUbX
+LXX8rJrCkf3YIQfQtF3iaNpVC1c76Uy1e6s0advUt3fjATRP9RUuq24O8TX3cnPbQXU12o9odnul
+wNUlDrcrXw8KJlCVq4FSXZVD4LK8tht9jQJsO+bPuT6dn09PmR4UePG4AE8U3MHl3cjaPnXZMUED
+YUOH8PP5WdbIC1p02Jciu3zpQNGrwknZooahcaSO3hR6UIpGUHyo2p6N4Nm+sFrvvRrmL/ugHgQ5
+Aio2TVhc7qbDE/1dtbz+VJEYc48GldwpVwoboXic1+OvJ6mXqT4cDKiP5cEhmbZ8B3foXuHUqMpE
+oxP09VRey/KYmj0axGHbeBH6C8AKZ3G3gkXsqJtQwJeZBW5P8uoGxr9671rgQhH9D2lVGhBzavjC
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Common expressions may be imported from autogenerated _common_.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

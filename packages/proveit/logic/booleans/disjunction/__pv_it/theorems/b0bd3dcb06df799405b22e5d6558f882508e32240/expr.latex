@@ -1,0 +1,1 @@
+\forall_{m \in \mathbb{N}}~\left[\forall_{A_{1}, \ldots, A_{m}, B_{1}, \ldots, B_{m} \in \mathbb{B}~|~(\lnot A_{1}) \lor \ldots \lor (\lnot A_{m}), A_{1} \Rightarrow B_{1}, \ldots, A_{m} \Rightarrow B_{m}}~\left((\lnot B_{1}) \lor \ldots \lor (\lnot B_{m})\right)\right]

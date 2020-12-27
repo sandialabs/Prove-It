@@ -1,0 +1,1 @@
+\left\{\forall_{a_{1}, \ldots, a_{n}}~\left[\forall_{P, Q~|~Q(a_{1}) \Rightarrow P(a_{1}), \ldots, Q(a_{n}) \Rightarrow P(a_{n})}~\left[\forall_{x \in \left\{a_{1}, \ldots, a_{n}\right\}~|~Q(x)}~P(x)\right]\right] \textrm{ if } n \in \mathbb{N}\right..

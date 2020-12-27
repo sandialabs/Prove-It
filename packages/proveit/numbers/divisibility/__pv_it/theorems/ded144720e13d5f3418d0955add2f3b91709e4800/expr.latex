@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{N}^+~|~gcd(a, b) = 1}~\left[\forall_{p \in \mathbb{N}^+~|~p > 1}~(\lnot \left(\left(p \rvert a\right) \land \left(p \rvert b\right)\right))\right]

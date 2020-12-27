@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.absolute_value.abs_rational_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.absolute_value.abs_rational_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">absolute_value</a>.<a class="ProveItLink" href="../../theorems.html#abs_rational_closure">abs_rational_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.absolute_value.abs_rational_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> abs_rational_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="abs_rational_closure">abs_rational_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/cb95f31a1ae9e6f275a0ab26e9570a7241abe0ab0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ0AAAAcBAMAAACJ5KCYAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAu9JREFU
+SMetlU1oE0EUx//ZZLPJZJP24ElRVrSl+Fki1h4qxI+TIEaLCh60FEULIj34cbBIkIppBA0Uai/F
+QMVDKSZYFIJfRXto/YD1JrVCsOihB+1F0B7ENzuzW7bJJi30we7OvHnzmzfz3psFVkeUN+OrAwp0
+WZ8ZPFuOtZqoadJ/jr8voy6n1OadWMaa/bcA9hu+QqCjpu0ccMp2NedlNNoL9S80Ex9r4fwGMCHb
+uvfWR+fUBWgGNFqyxBVfPQwf5Krw2tN3z4rWDpP88xlQmoH3clsV5S28eY/OZ9mPDDVYU4GfX10C
+4XlgkDThlAdvXRVe725ins6BTSZkfIHrQIw+eqEyLrxQzovevnbDSmCTTir0sIO1WvpNVv610vi7
+kZH7Hu5F68t46k0Z5liYDktJZNSkqI8P1MVGev6k0z1e4S0JXrgtvlbyHttZM6CaVBzmhGvCERql
+9O7z4IVSgrcvG5uXvC57bH+EDkk1XromnCFnD4CVXMl0sSUrm7EOi8fWw5+SPCdyxwTveSRNkrHz
+i2w0OlrZZS92meFG6F9kX2u2eH4rWS2euuEnCR8LWvstTLn8y5ONbmp293NxBMoQ2FbpYEzwfCnk
+k4K3mFkhEQ93yXL/wiVe9MON3xHg048XAUM6HBL7zY/jtR3feueeMlM8X0z3+XFH+qhq2BWqwBhX
+TZOFYYjhoIhHvoBLkazgxZ25Ezyf21EWX4x1U2Y0q90Y5qotnCfvWkXkX8iIXtWlf5qT+tE9WTbr
+dg+f+KuOvPEVlA6cpEgZT4uLvICoD9bZMLBZ8tiFQw7w36+lddVq6cnJfDY0nQtaZU7x2G7brSmv
+t8CkqDc+Ell6gX6zG77smcPQeekoLdCbbHUbqt1/+tSruOsvxBacaHU+2Qvc4c2dPfecZY9W5aE/
+PetSRpf4q9D5AZmDjiJYWNb9bIuWrKQdHCraBccrscFeLFmTN1NRy7bFnV/P2Ep+xZ7X8qJEEivg
++XNYdfkPNDbFdH4wiy8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/d6ff2b08dcd98761f30650ab80fa99eeef00299a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(\left(A \cup S\right) \subseteq S\right) = \left[\forall_{x \in A \cup S}~\left(x \in S\right)\right]

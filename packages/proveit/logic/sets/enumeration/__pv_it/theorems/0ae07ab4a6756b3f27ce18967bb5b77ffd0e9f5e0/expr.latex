@@ -1,0 +1,1 @@
+\left(P(a_{1}) \land \ldots \land P(a_{n})\right) = \left[\forall_{x \in \left\{a_{1}, \ldots, a_{n}\right\}}~P(x)\right]

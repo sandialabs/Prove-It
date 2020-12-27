@@ -1,0 +1,1 @@
+\left(\nexists_{x_{1}, \ldots, x_{n}~|~Q(x_{1}, \ldots, x_{n})}~P(x_{1}, \ldots, x_{n}), \lnot \left[\exists_{y_{1}, \ldots, y_{n}~|~Q(y_{1}, \ldots, y_{n})}~P(y_{1}, \ldots, y_{n})\right]\right)

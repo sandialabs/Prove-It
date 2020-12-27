@@ -1,0 +1,13 @@
+proveit.core_expr_types.conditionals.condition_prepend_reduction
+proveit.logic.booleans.fold_conditioned_forall_over_bool
+proveit.logic.booleans.fold_forall_over_bool
+proveit.logic.booleans.implication.falsified_antecedent_implication
+proveit.logic.booleans.negation.double_negation_intro
+proveit.logic.booleans.negation.not_false
+proveit.logic.booleans.quantification.universality.bundle
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
+proveit.numbers.numerals.decimals.posnat1
+proveit.numbers.numerals.decimals.posnat2
+proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
+proveit.numbers.numerals.decimals.tuple_len_2_typical_eq

@@ -1,0 +1,3 @@
+proveit.logic.booleans.conjunction.left_in_bool
+proveit.logic.booleans.conjunction.right_in_bool
+proveit.logic.booleans.negation.operand_is_bool

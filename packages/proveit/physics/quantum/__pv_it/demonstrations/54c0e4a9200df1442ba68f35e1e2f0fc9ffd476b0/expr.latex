@@ -1,0 +1,7 @@
+\hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \control \qw \qwx[1] & \qw   \\ 
+  & \gate{Z} & \qw 
+} \hspace{2em} \cong \hspace{2em} \Qcircuit@C=1em @R=.7em{
+& \gate{Z} \qwx[1] & \qw   \\ 
+  & \control \qw & \qw 
+} \hspace{2em}

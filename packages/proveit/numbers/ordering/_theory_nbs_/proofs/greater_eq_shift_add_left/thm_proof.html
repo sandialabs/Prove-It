@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.ordering.greater_eq_shift_add_left theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.ordering.greater_eq_shift_add_left-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">ordering</a>.<a class="ProveItLink" href="../../theorems.html#greater_eq_shift_add_left">greater_eq_shift_add_left</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.ordering.greater_eq_shift_add_left-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> greater_eq_shift_add_left
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="greater_eq_shift_add_left">greater_eq_shift_add_left:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/3fe42bbd9a8bc5aeab3399332f8b3a70e31c89290/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASEAAAAWBAMAAAB9OzeJAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA7JJREFU
+SMfFVk1oE0EUft38bzZJDx7qQYkRi8fQYi34FxD0JI0HFUFoqT8gFqltRbQVonhIKZVFwfYibA2o
+lGKWetCCh9AelGpLqIK1UAliW1RcRRC0/uCbmd3s7JqttQF98GZ2Z96b+Wbe92YGoFwJ5LG47tAZ
+lB0cSsiIrgXyM1sGotuoYsqp93hpB5uIF1oBvDLTx6TlbRmI3qCGZafeO2zGdsXqYJdwHI0KTPvJ
+PqZWDiiEY8FTPlBRvltif8F52eJgyLBeR1QsRpmGEb2krhyRj0x11hGRWMlq93ySd7AjaiB7OMA0
+ND442FdG0IhvoNUREbzWa086YTr8hughDV2C6Zd0uqsMROtRBRIIKbbBiujq2Dpc+VgxxU6qRQcY
+jSUtiOZjW3CEONOjAN2Gl1tzmDdh+zcNe1H9mM+BTrhsQeReDR+wemlm/WbZcOhT/QUekfhTycoQ
+wjaiOynBdRmzzHtv4+FX7Muk/i7ZathJqIGr9+XghAXRQB7qyRhmDrQXHbrAq/KIgosQiUIQg0/U
+B4J5ZL0zKfmgNi9IMB61IQrUJS2Gq1ArcAt30PyWNG1hraY1AW1ow6rRMBS6FMPBtUi/JjXtlKbN
+45erANkceD4CVSnvM3fla/FremQQENFM3oYIAvVJ3tBAVGVndhWInzlEQ22mQ0XKxmw8jhrUIqJA
+YT+2ZarnSEJ8qlYoSaNuQlaCKMchYkbio4RhaEZN/G5DhA1BHB126zQ/z4U5m7MhiuTJlroxYkSh
++wj6n/aQnRTO0bTp8FSGgSGqjZuIdCMQJxXdkGP2D8RiQfQNvIURg9nXTDr0UgBg4VEkIa6BIrPh
+LsJyxT0EnD9KWlwpSGYoItexDo7ZuhEI73VDg+IkZetA3GSJ2kV43oR7sZXCuwR88riaIGPJfm/e
+j0O4ckwJy6FCFZooIdAYfwAOpNPpqCBdecYh0o1u9BiGoEeFbLU0MWXl0c3YwWbk15z9ICEOT2aj
+lqiJNROETUmmEEJGZGX/DFYRhaCJkEuYRS14SDERMaMhsl5muJxbpLXktWM/s6nc0pVKhdy4B/oV
+nzKNJZ7kcSnJeDTOMZsaZWgAiKHDTSsqJW5a+9VsyCDfo9+0+gHbPLwN9qqelhyWgZopBXrI6TaZ
+y2w3EVGjfeyWaimmCznw/X96jSycIZIsOpQS4zXCi8qVAvLI7Emt9MXWvawXGxWyLNvS2BO01EN0
+KURLvmpDf/GqfaEr786VjojuYxKmFfjvEv93U/0CZw8YoeJLUZgAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/106647080026fa10a4ac10073d73729071b168360/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

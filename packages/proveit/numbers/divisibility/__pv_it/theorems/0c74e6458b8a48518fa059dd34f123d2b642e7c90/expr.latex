@@ -1,0 +1,1 @@
+\forall_{x, y, z \in \mathbb{Z}~|~x \rvert \left(y \cdot z\right), gcd(x, y) = 1}~\left(x \rvert z\right)

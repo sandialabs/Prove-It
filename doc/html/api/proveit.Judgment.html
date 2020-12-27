@@ -1,0 +1,496 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Judgment &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Label" href="proveit.Label.html" />
+    <link rel="prev" title="InvalidAssumptions" href="proveit.InvalidAssumptions.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="judgment">
+<h1>Judgment<a class="headerlink" href="#judgment" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="proveit.Judgment">
+<em class="property">class </em><code class="descclassname">proveit.</code><code class="descname">Judgment</code><span class="sig-paren">(</span><em>expression</em>, <em>assumptions</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/judgment.html#Judgment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Judgment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p class="rubric">Attributes Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.hasBeenProven</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Judgment.in_progress_to_derive_sideeffects" title="proveit.Judgment.in_progress_to_derive_sideeffects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">in_progress_to_derive_sideeffects</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Judgment.lookup_dict" title="proveit.Judgment.lookup_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lookup_dict</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.presumedTheoremsAndTheories</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.presumingExclusions</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.presumingTheoremAndTheoryExclusions</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.qedInProgress</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Judgment.sideeffect_processed" title="proveit.Judgment.sideeffect_processed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sideeffect_processed</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.theoremBeingProven</span></code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.asImpl</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.asImplication</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.asTheoremOrAxiom</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.beginProof</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.deriveSideEffects</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Judgment.eliminate" title="proveit.Judgment.eliminate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eliminate</span></code></a>(*skolem_constants[,&nbsp;assumptions])</td>
+<td>Performs a Skolem constant elimination derivation step on this Judgment (KT), where this KT has the form S <a href="#id1"><span class="problematic" id="id2">|</span></a>– alpha and the set S of assumptions includes one or more assumptions involving one or more Skolem constants sk1, …, skn specified by skolem_constants, where the Skolem constant-related assumptions were previously generated using the Exists.choose(sk1, …, skn) method.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Judgment.evaluation" title="proveit.Judgment.evaluation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluation</span></code></a>([assumptions])</td>
+<td>Calling evaluation on a Judgment results in deriving that its expression is equal to TRUE, under the assumptions of the Judgment.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.findJudgment</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.forgetJudgments</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Judgment.generalize" title="proveit.Judgment.generalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generalize</span></code></a>(forall_var_or_vars_or_var_lists)</td>
+<td>Performs a generalization derivation step.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.innerExpr</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#proveit.Judgment.instantiate" title="proveit.Judgment.instantiate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">instantiate</span></code></a>([repl_map,&nbsp;…])</td>
+<td>Performs an instantiation derivation step to be proven under the given assumptions, in addition to the (possibly revised) assumptions of the Judgment.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.isSufficient</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.isUsable</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Judgment.latex" title="proveit.Judgment.latex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latex</span></code></a>([perform_usability_check])</td>
+<td>Display the turnstile notation to show that the judgment on the right derives from the set of assumptions on the left.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.orderOfAppearance</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.printDependents</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.printRequirements</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Judgment.proof" title="proveit.Judgment.proof"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proof</span></code></a>()</td>
+<td>Returns the most up-to-date proof of this Judgment.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.raiseUnusableProof</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#proveit.Judgment.string" title="proveit.Judgment.string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">string</span></code></a>([perform_usability_check])</td>
+<td>Display the turnstile notation to show that the judgment on the right derives from the set of assumptions on the left.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Judgment.withMatchingStyles</span></code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes Documentation</p>
+<dl class="attribute">
+<dt id="proveit.Judgment.in_progress_to_derive_sideeffects">
+<code class="descname">in_progress_to_derive_sideeffects</code><em class="property"> = set()</em><a class="headerlink" href="#proveit.Judgment.in_progress_to_derive_sideeffects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.Judgment.lookup_dict">
+<code class="descname">lookup_dict</code><em class="property"> = {[not](FALSE) = TRUE: {|- [not](FALSE) = TRUE}, forall_{x, y | x = y} (y = x): {|- forall_{x, y | x = y} (y = x)}, TRUE = [not](FALSE): {|- TRUE = [not](FALSE)}, forall_{A | A = TRUE} A: {|- forall_{A | A = TRUE} A}, [not](FALSE): {|- [not](FALSE)}, forall_{A | [not](A)} (A != TRUE): {|- forall_{A | [not](A)} (A != TRUE)}, FALSE != TRUE: {|- FALSE != TRUE}, forall_{x, y | x != y} (y != x): {|- forall_{x, y | x != y} (y != x)}, TRUE != FALSE: {|- TRUE != FALSE}, forall_{A in BOOLEAN | A != FALSE} A: {|- forall_{A in BOOLEAN | A != FALSE} A}, TRUE: {|- TRUE}, forall_{x} (x = x): {|- forall_{x} (x = x)}, TRUE = TRUE: {|- TRUE = TRUE}, forall_{A | A} (A in BOOLEAN): {|- forall_{A | A} (A in BOOLEAN)}, forall_{A | [not](A)} (A in BOOLEAN): {|- forall_{A | [not](A)} (A in BOOLEAN)}, TRUE in BOOLEAN: {|- TRUE in BOOLEAN}, forall_{A in BOOLEAN} (A or [not](A)): {|- forall_{A in BOOLEAN} (A or [not](A))}, forall_{A | (A = TRUE) or (A = FALSE)} (A in BOOLEAN): {|- forall_{A | (A = TRUE) or (A = FALSE)} (A in BOOLEAN)}, forall_{A in BOOLEAN} ((A = TRUE) or (A = FALSE)): {|- forall_{A in BOOLEAN} ((A = TRUE) or (A = FALSE))}, TRUE or [not](TRUE): {|- TRUE or [not](TRUE)}, forall_{x, y | x != y} [not](x = y): {|- forall_{x, y | x != y} [not](x = y)}, [not](TRUE = FALSE): {|- [not](TRUE = FALSE)}, forall_{A | [not](A)} (A = FALSE): {|- forall_{A | [not](A)} (A = FALSE)}, (TRUE = FALSE) = FALSE: {|- (TRUE = FALSE) = FALSE}, FALSE = (TRUE = FALSE): {|- FALSE = (TRUE = FALSE)}, forall_{A | A = FALSE} [not](A): {|- forall_{A | A = FALSE} [not](A)}, forall_{A | A} (A = TRUE): {|- forall_{A | A} (A = TRUE)}, [not](TRUE = FALSE) = TRUE: {|- [not](TRUE = FALSE) = TRUE}, TRUE = [not](TRUE = FALSE): {|- TRUE = [not](TRUE = FALSE)}, forall_{P, x, y | P(y), x = y} P(x): {|- forall_{P, x, y | P(y), x = y} P(x)}, forall_{P, x | P(TRUE), x} P(x): {|- forall_{P, x | P(TRUE), x} P(x)}, forall_{P, x | P(x), x} P(TRUE): {|- forall_{P, x | P(x), x} P(TRUE)}, forall_{P, x | P(FALSE), [not](x)} P(x): {|- forall_{P, x | P(FALSE), [not](x)} P(x)}, forall_{P, x | P(x), [not](x)} P(FALSE): {|- forall_{P, x | P(x), [not](x)} P(FALSE)}, [not](TRUE = FALSE) in BOOLEAN: {|- [not](TRUE = FALSE) in BOOLEAN}, forall_{A | [not](A) in BOOLEAN} (A in BOOLEAN): {|- forall_{A | [not](A) in BOOLEAN} (A in BOOLEAN)}, (TRUE = FALSE) in BOOLEAN: {|- (TRUE = FALSE) in BOOLEAN}, (TRUE = FALSE) or [not](TRUE = FALSE): {|- (TRUE = FALSE) or [not](TRUE = FALSE)}, [not](TRUE = FALSE) or [not]([not](TRUE = FALSE)): {|- [not](TRUE = FALSE) or [not]([not](TRUE = FALSE))}, forall_{x, y | [not](x = y)} (x != y): {|- forall_{x, y | [not](x = y)} (x != y)}, [not](FALSE = TRUE): {|- [not](FALSE = TRUE)}, (FALSE = TRUE) = FALSE: {|- (FALSE = TRUE) = FALSE}, FALSE = (FALSE = TRUE): {|- FALSE = (FALSE = TRUE)}, [not](FALSE = TRUE) = TRUE: {|- [not](FALSE = TRUE) = TRUE}, TRUE = [not](FALSE = TRUE): {|- TRUE = [not](FALSE = TRUE)}, [not](FALSE = TRUE) in BOOLEAN: {|- [not](FALSE = TRUE) in BOOLEAN}, (FALSE = TRUE) in BOOLEAN: {|- (FALSE = TRUE) in BOOLEAN}, (FALSE = TRUE) or [not](FALSE = TRUE): {|- (FALSE = TRUE) or [not](FALSE = TRUE)}, [not](FALSE = TRUE) or [not]([not](FALSE = TRUE)): {|- [not](FALSE = TRUE) or [not]([not](FALSE = TRUE))}, [not](FALSE) in BOOLEAN: {|- [not](FALSE) in BOOLEAN}, FALSE in BOOLEAN: {|- FALSE in BOOLEAN}, FALSE or [not](FALSE): {|- FALSE or [not](FALSE)}, [not](FALSE) or [not]([not](FALSE)): {|- [not](FALSE) or [not]([not](FALSE))}, [not](TRUE) = FALSE: {|- [not](TRUE) = FALSE}, FALSE = [not](TRUE): {|- FALSE = [not](TRUE)}, [not]([not](TRUE)): {|- [not]([not](TRUE))}, [not](TRUE) != TRUE: {|- [not](TRUE) != TRUE}, TRUE != [not](TRUE): {|- TRUE != [not](TRUE)}, [not](TRUE = [not](TRUE)): {|- [not](TRUE = [not](TRUE))}, (TRUE = [not](TRUE)) = FALSE: {|- (TRUE = [not](TRUE)) = FALSE}, FALSE = (TRUE = [not](TRUE)): {|- FALSE = (TRUE = [not](TRUE))}, [not](TRUE = [not](TRUE)) = TRUE: {|- [not](TRUE = [not](TRUE)) = TRUE}, TRUE = [not](TRUE = [not](TRUE)): {|- TRUE = [not](TRUE = [not](TRUE))}, [not](TRUE = [not](TRUE)) in BOOLEAN: {|- [not](TRUE = [not](TRUE)) in BOOLEAN}, (TRUE = [not](TRUE)) in BOOLEAN: {|- (TRUE = [not](TRUE)) in BOOLEAN}, (TRUE = [not](TRUE)) or [not](TRUE = [not](TRUE)): {|- (TRUE = [not](TRUE)) or [not](TRUE = [not](TRUE))}, [not](TRUE = [not](TRUE)) or [not]([not](TRUE = [not](TRUE))): {|- [not](TRUE = [not](TRUE)) or [not]([not](TRUE = [not](TRUE)))}, [not]([not](TRUE) = TRUE): {|- [not]([not](TRUE) = TRUE)}, ([not](TRUE) = TRUE) = FALSE: {|- ([not](TRUE) = TRUE) = FALSE}, FALSE = ([not](TRUE) = TRUE): {|- FALSE = ([not](TRUE) = TRUE)}, [not]([not](TRUE) = TRUE) = TRUE: {|- [not]([not](TRUE) = TRUE) = TRUE}, TRUE = [not]([not](TRUE) = TRUE): {|- TRUE = [not]([not](TRUE) = TRUE)}, [not]([not](TRUE) = TRUE) in BOOLEAN: {|- [not]([not](TRUE) = TRUE) in BOOLEAN}, ([not](TRUE) = TRUE) in BOOLEAN: {|- ([not](TRUE) = TRUE) in BOOLEAN}, ([not](TRUE) = TRUE) or [not]([not](TRUE) = TRUE): {|- ([not](TRUE) = TRUE) or [not]([not](TRUE) = TRUE)}, [not]([not](TRUE) = TRUE) or [not]([not]([not](TRUE) = TRUE)): {|- [not]([not](TRUE) = TRUE) or [not]([not]([not](TRUE) = TRUE))}, forall_{A | [not]([not](A))} A: {|- forall_{A | [not]([not](A))} A}, [not]([not](TRUE)) = TRUE: {|- [not]([not](TRUE)) = TRUE}, TRUE = [not]([not](TRUE)): {|- TRUE = [not]([not](TRUE))}, [not]([not](TRUE)) in BOOLEAN: {|- [not]([not](TRUE)) in BOOLEAN}, [not](TRUE) in BOOLEAN: {|- [not](TRUE) in BOOLEAN}, [not](TRUE) or [not]([not](TRUE)): {|- [not](TRUE) or [not]([not](TRUE))}, [not]([not](TRUE)) or [not]([not]([not](TRUE))): {|- [not]([not](TRUE)) or [not]([not]([not](TRUE)))}, TRUE =&gt; TRUE: {|- TRUE =&gt; TRUE}, FALSE =&gt; TRUE: {|- FALSE =&gt; TRUE}, FALSE =&gt; FALSE: {|- FALSE =&gt; FALSE}, forall_{A in BOOLEAN | [not](A) =&gt; FALSE} A: {|- forall_{A in BOOLEAN | [not](A) =&gt; FALSE} A}, forall_{A in BOOLEAN | A =&gt; FALSE} [not](A): {|- forall_{A in BOOLEAN | A =&gt; FALSE} [not](A)}, forall_{A | A =&gt; FALSE} (A != TRUE): {|- forall_{A | A =&gt; FALSE} (A != TRUE)}, BOOLEAN = {TRUE, FALSE}: {|- BOOLEAN = {TRUE, FALSE}}, {TRUE, FALSE} = BOOLEAN: {|- {TRUE, FALSE} = BOOLEAN}, FALSE = FALSE: {|- FALSE = FALSE}, NaturalPos proper_subset Natural: {|- NaturalPos proper_subset Natural}, forall_{A, B | A proper_subset B} (A subseteq B): {|- forall_{A, B | A proper_subset B} (A subseteq B)}, NaturalPos subseteq Natural: {|- NaturalPos subseteq Natural}, forall_{A, B | A subseteq B} (B supseteq A): {|- forall_{A, B | A subseteq B} (B supseteq A)}, Natural supseteq NaturalPos: {|- Natural supseteq NaturalPos}, forall_{A, B | A supseteq B} (B subseteq A): {|- forall_{A, B | A supseteq B} (B subseteq A)}, forall_{A, B | A proper_subset B} (B proper_superset A): {|- forall_{A, B | A proper_subset B} (B proper_superset A)}, Natural proper_superset NaturalPos: {|- Natural proper_superset NaturalPos}, forall_{A, B | A proper_superset B} (A supseteq B): {|- forall_{A, B | A proper_superset B} (A supseteq B)}, forall_{A, B | A proper_superset B} (B proper_subset A): {|- forall_{A, B | A proper_superset B} (B proper_subset A)}, Natural proper_subset Integer: {|- Natural proper_subset Integer}, Natural subseteq Integer: {|- Natural subseteq Integer}, Integer supseteq Natural: {|- Integer supseteq Natural}, Integer proper_superset Natural: {|- Integer proper_superset Natural}, NaturalPos proper_subset Integer: {|- NaturalPos proper_subset Integer}, NaturalPos subseteq Integer: {|- NaturalPos subseteq Integer}, Integer supseteq NaturalPos: {|- Integer supseteq NaturalPos}, Integer proper_superset NaturalPos: {|- Integer proper_superset NaturalPos}, Natural proper_subset Rational: {|- Natural proper_subset Rational}, Natural subseteq Rational: {|- Natural subseteq Rational}, Rational supseteq Natural: {|- Rational supseteq Natural}, Rational proper_superset Natural: {|- Rational proper_superset Natural}, Natural proper_subset RationalNonNeg: {|- Natural proper_subset RationalNonNeg}, Natural subseteq RationalNonNeg: {|- Natural subseteq RationalNonNeg}, RationalNonNeg supseteq Natural: {|- RationalNonNeg supseteq Natural}, RationalNonNeg proper_superset Natural: {|- RationalNonNeg proper_superset Natural}, NaturalPos proper_subset RationalPos: {|- NaturalPos proper_subset RationalPos}, NaturalPos subseteq RationalPos: {|- NaturalPos subseteq RationalPos}, RationalPos supseteq NaturalPos: {|- RationalPos supseteq NaturalPos}, RationalPos proper_superset NaturalPos: {|- RationalPos proper_superset NaturalPos}, NaturalPos proper_subset RationalNonZero: {|- NaturalPos proper_subset RationalNonZero}, NaturalPos subseteq RationalNonZero: {|- NaturalPos subseteq RationalNonZero}, RationalNonZero supseteq NaturalPos: {|- RationalNonZero supseteq NaturalPos}, RationalNonZero proper_superset NaturalPos: {|- RationalNonZero proper_superset NaturalPos}, RationalNonZero proper_subset Rational: {|- RationalNonZero proper_subset Rational}, RationalNonZero subseteq Rational: {|- RationalNonZero subseteq Rational}, Rational supseteq RationalNonZero: {|- Rational supseteq RationalNonZero}, Rational proper_superset RationalNonZero: {|- Rational proper_superset RationalNonZero}, RationalPos proper_subset Rational: {|- RationalPos proper_subset Rational}, RationalPos subseteq Rational: {|- RationalPos subseteq Rational}, Rational supseteq RationalPos: {|- Rational supseteq RationalPos}, Rational proper_superset RationalPos: {|- Rational proper_superset RationalPos}, RationalNeg proper_subset Rational: {|- RationalNeg proper_subset Rational}, RationalNeg subseteq Rational: {|- RationalNeg subseteq Rational}, Rational supseteq RationalNeg: {|- Rational supseteq RationalNeg}, Rational proper_superset RationalNeg: {|- Rational proper_superset RationalNeg}, RationalNonNeg proper_subset Rational: {|- RationalNonNeg proper_subset Rational}, RationalNonNeg subseteq Rational: {|- RationalNonNeg subseteq Rational}, Rational supseteq RationalNonNeg: {|- Rational supseteq RationalNonNeg}, Rational proper_superset RationalNonNeg: {|- Rational proper_superset RationalNonNeg}, RationalPos proper_subset RationalNonZero: {|- RationalPos proper_subset RationalNonZero}, RationalPos subseteq RationalNonZero: {|- RationalPos subseteq RationalNonZero}, RationalNonZero supseteq RationalPos: {|- RationalNonZero supseteq RationalPos}, RationalNonZero proper_superset RationalPos: {|- RationalNonZero proper_superset RationalPos}, RationalNeg proper_subset RationalNonZero: {|- RationalNeg proper_subset RationalNonZero}, RationalNeg subseteq RationalNonZero: {|- RationalNeg subseteq RationalNonZero}, RationalNonZero supseteq RationalNeg: {|- RationalNonZero supseteq RationalNeg}, RationalNonZero proper_superset RationalNeg: {|- RationalNonZero proper_superset RationalNeg}, RationalPos proper_subset RationalNonNeg: {|- RationalPos proper_subset RationalNonNeg}, RationalPos subseteq RationalNonNeg: {|- RationalPos subseteq RationalNonNeg}, RationalNonNeg supseteq RationalPos: {|- RationalNonNeg supseteq RationalPos}, RationalNonNeg proper_superset RationalPos: {|- RationalNonNeg proper_superset RationalPos}, 0 in Rational: {|- 0 in Rational}, RealPos proper_subset Real: {|- RealPos proper_subset Real}, RealPos subseteq Real: {|- RealPos subseteq Real}, Real supseteq RealPos: {|- Real supseteq RealPos}, Real proper_superset RealPos: {|- Real proper_superset RealPos}, RealNeg proper_subset Real: {|- RealNeg proper_subset Real}, RealNeg subseteq Real: {|- RealNeg subseteq Real}, Real supseteq RealNeg: {|- Real supseteq RealNeg}, Real proper_superset RealNeg: {|- Real proper_superset RealNeg}, RealNonNeg proper_subset Real: {|- RealNonNeg proper_subset Real}, RealNonNeg subseteq Real: {|- RealNonNeg subseteq Real}, Real supseteq RealNonNeg: {|- Real supseteq RealNonNeg}, Real proper_superset RealNonNeg: {|- Real proper_superset RealNonNeg}, Rational proper_subset Real: {|- Rational proper_subset Real}, Rational subseteq Real: {|- Rational subseteq Real}, Real supseteq Rational: {|- Real supseteq Rational}, Real proper_superset Rational: {|- Real proper_superset Rational}, Integer proper_subset Real: {|- Integer proper_subset Real}, Integer subseteq Real: {|- Integer subseteq Real}, Real supseteq Integer: {|- Real supseteq Integer}, Real proper_superset Integer: {|- Real proper_superset Integer}, Natural proper_subset Real: {|- Natural proper_subset Real}, Natural subseteq Real: {|- Natural subseteq Real}, Real supseteq Natural: {|- Real supseteq Natural}, Real proper_superset Natural: {|- Real proper_superset Natural}, NaturalPos proper_subset Real: {|- NaturalPos proper_subset Real}, NaturalPos subseteq Real: {|- NaturalPos subseteq Real}, Real supseteq NaturalPos: {|- Real supseteq NaturalPos}, Real proper_superset NaturalPos: {|- Real proper_superset NaturalPos}, NaturalPos proper_subset RealPos: {|- NaturalPos proper_subset RealPos}, NaturalPos subseteq RealPos: {|- NaturalPos subseteq RealPos}, RealPos supseteq NaturalPos: {|- RealPos supseteq NaturalPos}, RealPos proper_superset NaturalPos: {|- RealPos proper_superset NaturalPos}, Natural proper_subset RealNonNeg: {|- Natural proper_subset RealNonNeg}, Natural subseteq RealNonNeg: {|- Natural subseteq RealNonNeg}, RealNonNeg supseteq Natural: {|- RealNonNeg supseteq Natural}, RealNonNeg proper_superset Natural: {|- RealNonNeg proper_superset Natural}, NaturalPos proper_subset RealNonNeg: {|- NaturalPos proper_subset RealNonNeg}, NaturalPos subseteq RealNonNeg: {|- NaturalPos subseteq RealNonNeg}, RealNonNeg supseteq NaturalPos: {|- RealNonNeg supseteq NaturalPos}, RealNonNeg proper_superset NaturalPos: {|- RealNonNeg proper_superset NaturalPos}, RealPos proper_subset RealNonNeg: {|- RealPos proper_subset RealNonNeg}, RealPos subseteq RealNonNeg: {|- RealPos subseteq RealNonNeg}, RealNonNeg supseteq RealPos: {|- RealNonNeg supseteq RealPos}, RealNonNeg proper_superset RealPos: {|- RealNonNeg proper_superset RealPos}, _c proper_subset _b: {{_c proper_subset _b} |- _c proper_subset _b}, forall_{A, B | A proper_subset B} [forall_{x in A} (x in B)]: {|- forall_{A, B | A proper_subset B} [forall_{x in A} (x in B)]}, 0 in Real: {|- 0 in Real}, Real proper_subset Complex: {|- Real proper_subset Complex}, Real subseteq Complex: {|- Real subseteq Complex}, Complex supseteq Real: {|- Complex supseteq Real}, Complex proper_superset Real: {|- Complex proper_superset Real}, Integer proper_subset Complex: {|- Integer proper_subset Complex}, Integer subseteq Complex: {|- Integer subseteq Complex}, Complex supseteq Integer: {|- Complex supseteq Integer}, Complex proper_superset Integer: {|- Complex proper_superset Integer}, Natural proper_subset Complex: {|- Natural proper_subset Complex}, Natural subseteq Complex: {|- Natural subseteq Complex}, Complex supseteq Natural: {|- Complex supseteq Natural}, Complex proper_superset Natural: {|- Complex proper_superset Natural}, 0 in Complex: {|- 0 in Complex}, 0 in Natural: {|- 0 in Natural}, forall_{n in Natural} (n &gt;= 0): {|- forall_{n in Natural} (n &gt;= 0)}, 0 &gt;= 0: {|- 0 &gt;= 0}, forall_{x, y | x &gt;= y} (y &lt;= x): {|- forall_{x, y | x &gt;= y} (y &lt;= x)}, 0 &lt;= 0: {|- 0 &lt;= 0}, forall_{x, y | x &lt;= y} (y &gt;= x): {|- forall_{x, y | x &lt;= y} (y &gt;= x)}, 0 in Integer: {|- 0 in Integer}, Integer proper_subset Rational: {|- Integer proper_subset Rational}, Integer subseteq Rational: {|- Integer subseteq Rational}, Rational supseteq Integer: {|- Rational supseteq Integer}, Rational proper_superset Integer: {|- Rational proper_superset Integer}, 0 &lt; 1: {|- 0 &lt; 1}, forall_{x, y | x &lt; y} (x &lt;= y): {|- forall_{x, y | x &lt; y} (x &lt;= y)}, 0 &lt;= 1: {|- 0 &lt;= 1}, 1 &gt;= 0: {|- 1 &gt;= 0}, forall_{x, y | x &lt; y} (y &gt; x): {|- forall_{x, y | x &lt; y} (y &gt; x)}, 1 &gt; 0: {|- 1 &gt; 0}, forall_{x, y | x &gt; y} (x &gt;= y): {|- forall_{x, y | x &gt; y} (x &gt;= y)}, forall_{x, y | x &gt; y} (y &lt; x): {|- forall_{x, y | x &gt; y} (y &lt; x)}, 1 &lt; 2: {|- 1 &lt; 2}, 1 &lt;= 2: {|- 1 &lt;= 2}, 2 &gt;= 1: {|- 2 &gt;= 1}, 2 &gt; 1: {|- 2 &gt; 1}, 2 &lt; 3: {|- 2 &lt; 3}, 2 &lt;= 3: {|- 2 &lt;= 3}, 3 &gt;= 2: {|- 3 &gt;= 2}, 3 &gt; 2: {|- 3 &gt; 2}, 3 &lt; 4: {|- 3 &lt; 4}, 3 &lt;= 4: {|- 3 &lt;= 4}, 4 &gt;= 3: {|- 4 &gt;= 3}, 4 &gt; 3: {|- 4 &gt; 3}, 4 &lt; 5: {|- 4 &lt; 5}, 4 &lt;= 5: {|- 4 &lt;= 5}, 5 &gt;= 4: {|- 5 &gt;= 4}, 5 &gt; 4: {|- 5 &gt; 4}, 5 &lt; 6: {|- 5 &lt; 6}, 5 &lt;= 6: {|- 5 &lt;= 6}, 6 &gt;= 5: {|- 6 &gt;= 5}, 6 &gt; 5: {|- 6 &gt; 5}, 6 &lt; 7: {|- 6 &lt; 7}, 6 &lt;= 7: {|- 6 &lt;= 7}, 7 &gt;= 6: {|- 7 &gt;= 6}, 7 &gt; 6: {|- 7 &gt; 6}, 7 &lt; 8: {|- 7 &lt; 8}, 7 &lt;= 8: {|- 7 &lt;= 8}, 8 &gt;= 7: {|- 8 &gt;= 7}, 8 &gt; 7: {|- 8 &gt; 7}, 8 &lt; 9: {|- 8 &lt; 9}, 8 &lt;= 9: {|- 8 &lt;= 9}, 9 &gt;= 8: {|- 9 &gt;= 8}, 9 &gt; 8: {|- 9 &gt; 8}, 1 in Natural: {|- 1 in Natural}, 1 in Integer: {|- 1 in Integer}, 1 in Rational: {|- 1 in Rational}, 1 in Real: {|- 1 in Real}, 1 in Complex: {|- 1 in Complex}, 2 in Natural: {|- 2 in Natural}, 2 &gt;= 0: {|- 2 &gt;= 0}, 0 &lt;= 2: {|- 0 &lt;= 2}, 2 in Integer: {|- 2 in Integer}, 2 in Rational: {|- 2 in Rational}, 2 in Real: {|- 2 in Real}, 2 in Complex: {|- 2 in Complex}, 3 in Natural: {|- 3 in Natural}, 3 &gt;= 0: {|- 3 &gt;= 0}, 0 &lt;= 3: {|- 0 &lt;= 3}, 3 in Integer: {|- 3 in Integer}, 3 in Rational: {|- 3 in Rational}, 3 in Real: {|- 3 in Real}, 3 in Complex: {|- 3 in Complex}, 4 in Natural: {|- 4 in Natural}, 4 &gt;= 0: {|- 4 &gt;= 0}, 0 &lt;= 4: {|- 0 &lt;= 4}, 4 in Integer: {|- 4 in Integer}, 4 in Rational: {|- 4 in Rational}, 4 in Real: {|- 4 in Real}, 4 in Complex: {|- 4 in Complex}, 5 in Natural: {|- 5 in Natural}, 5 &gt;= 0: {|- 5 &gt;= 0}, 0 &lt;= 5: {|- 0 &lt;= 5}, 5 in Integer: {|- 5 in Integer}, 5 in Rational: {|- 5 in Rational}, 5 in Real: {|- 5 in Real}, 5 in Complex: {|- 5 in Complex}, 6 in Natural: {|- 6 in Natural}, 6 &gt;= 0: {|- 6 &gt;= 0}, 0 &lt;= 6: {|- 0 &lt;= 6}, 6 in Integer: {|- 6 in Integer}, 6 in Rational: {|- 6 in Rational}, 6 in Real: {|- 6 in Real}, 6 in Complex: {|- 6 in Complex}, 7 in Natural: {|- 7 in Natural}, 7 &gt;= 0: {|- 7 &gt;= 0}, 0 &lt;= 7: {|- 0 &lt;= 7}, 7 in Integer: {|- 7 in Integer}, 7 in Rational: {|- 7 in Rational}, 7 in Real: {|- 7 in Real}, 7 in Complex: {|- 7 in Complex}, 8 in Natural: {|- 8 in Natural}, 8 &gt;= 0: {|- 8 &gt;= 0}, 0 &lt;= 8: {|- 0 &lt;= 8}, 8 in Integer: {|- 8 in Integer}, 8 in Rational: {|- 8 in Rational}, 8 in Real: {|- 8 in Real}, 8 in Complex: {|- 8 in Complex}, 9 in Natural: {|- 9 in Natural}, 9 &gt;= 0: {|- 9 &gt;= 0}, 0 &lt;= 9: {|- 0 &lt;= 9}, 9 in Integer: {|- 9 in Integer}, 9 in Rational: {|- 9 in Rational}, 9 in Real: {|- 9 in Real}, 9 in Complex: {|- 9 in Complex}, 1 in NaturalPos: {|- 1 in NaturalPos}, forall_{n in NaturalPos} (n &gt;= 1): {|- forall_{n in NaturalPos} (n &gt;= 1)}, 1 &gt;= 1: {|- 1 &gt;= 1}, 1 &lt;= 1: {|- 1 &lt;= 1}, forall_{n in NaturalPos} (n != 0): {|- forall_{n in NaturalPos} (n != 0)}, 1 != 0: {|- 1 != 0}, 0 != 1: {|- 0 != 1}, [not](0 = 1): {|- [not](0 = 1)}, (0 = 1) = FALSE: {|- (0 = 1) = FALSE}, FALSE = (0 = 1): {|- FALSE = (0 = 1)}, [not](0 = 1) = TRUE: {|- [not](0 = 1) = TRUE}, TRUE = [not](0 = 1): {|- TRUE = [not](0 = 1)}, [not](0 = 1) in BOOLEAN: {|- [not](0 = 1) in BOOLEAN}, (0 = 1) in BOOLEAN: {|- (0 = 1) in BOOLEAN}, (0 = 1) or [not](0 = 1): {|- (0 = 1) or [not](0 = 1)}, [not](0 = 1) or [not]([not](0 = 1)): {|- [not](0 = 1) or [not]([not](0 = 1))}, [not](1 = 0): {|- [not](1 = 0)}, (1 = 0) = FALSE: {|- (1 = 0) = FALSE}, FALSE = (1 = 0): {|- FALSE = (1 = 0)}, [not](1 = 0) = TRUE: {|- [not](1 = 0) = TRUE}, TRUE = [not](1 = 0): {|- TRUE = [not](1 = 0)}, [not](1 = 0) in BOOLEAN: {|- [not](1 = 0) in BOOLEAN}, (1 = 0) in BOOLEAN: {|- (1 = 0) in BOOLEAN}, (1 = 0) or [not](1 = 0): {|- (1 = 0) or [not](1 = 0)}, [not](1 = 0) or [not]([not](1 = 0)): {|- [not](1 = 0) or [not]([not](1 = 0))}, 2 in NaturalPos: {|- 2 in NaturalPos}, 2 != 0: {|- 2 != 0}, 0 != 2: {|- 0 != 2}, [not](0 = 2): {|- [not](0 = 2)}, (0 = 2) = FALSE: {|- (0 = 2) = FALSE}, FALSE = (0 = 2): {|- FALSE = (0 = 2)}, [not](0 = 2) = TRUE: {|- [not](0 = 2) = TRUE}, TRUE = [not](0 = 2): {|- TRUE = [not](0 = 2)}, [not](0 = 2) in BOOLEAN: {|- [not](0 = 2) in BOOLEAN}, (0 = 2) in BOOLEAN: {|- (0 = 2) in BOOLEAN}, (0 = 2) or [not](0 = 2): {|- (0 = 2) or [not](0 = 2)}, [not](0 = 2) or [not]([not](0 = 2)): {|- [not](0 = 2) or [not]([not](0 = 2))}, [not](2 = 0): {|- [not](2 = 0)}, (2 = 0) = FALSE: {|- (2 = 0) = FALSE}, FALSE = (2 = 0): {|- FALSE = (2 = 0)}, [not](2 = 0) = TRUE: {|- [not](2 = 0) = TRUE}, TRUE = [not](2 = 0): {|- TRUE = [not](2 = 0)}, [not](2 = 0) in BOOLEAN: {|- [not](2 = 0) in BOOLEAN}, (2 = 0) in BOOLEAN: {|- (2 = 0) in BOOLEAN}, (2 = 0) or [not](2 = 0): {|- (2 = 0) or [not](2 = 0)}, [not](2 = 0) or [not]([not](2 = 0)): {|- [not](2 = 0) or [not]([not](2 = 0))}, 3 in NaturalPos: {|- 3 in NaturalPos}, 3 &gt;= 1: {|- 3 &gt;= 1}, 1 &lt;= 3: {|- 1 &lt;= 3}, 3 != 0: {|- 3 != 0}, 0 != 3: {|- 0 != 3}, [not](0 = 3): {|- [not](0 = 3)}, (0 = 3) = FALSE: {|- (0 = 3) = FALSE}, FALSE = (0 = 3): {|- FALSE = (0 = 3)}, [not](0 = 3) = TRUE: {|- [not](0 = 3) = TRUE}, TRUE = [not](0 = 3): {|- TRUE = [not](0 = 3)}, [not](0 = 3) in BOOLEAN: {|- [not](0 = 3) in BOOLEAN}, (0 = 3) in BOOLEAN: {|- (0 = 3) in BOOLEAN}, (0 = 3) or [not](0 = 3): {|- (0 = 3) or [not](0 = 3)}, [not](0 = 3) or [not]([not](0 = 3)): {|- [not](0 = 3) or [not]([not](0 = 3))}, [not](3 = 0): {|- [not](3 = 0)}, (3 = 0) = FALSE: {|- (3 = 0) = FALSE}, FALSE = (3 = 0): {|- FALSE = (3 = 0)}, [not](3 = 0) = TRUE: {|- [not](3 = 0) = TRUE}, TRUE = [not](3 = 0): {|- TRUE = [not](3 = 0)}, [not](3 = 0) in BOOLEAN: {|- [not](3 = 0) in BOOLEAN}, (3 = 0) in BOOLEAN: {|- (3 = 0) in BOOLEAN}, (3 = 0) or [not](3 = 0): {|- (3 = 0) or [not](3 = 0)}, [not](3 = 0) or [not]([not](3 = 0)): {|- [not](3 = 0) or [not]([not](3 = 0))}, 4 in NaturalPos: {|- 4 in NaturalPos}, 4 &gt;= 1: {|- 4 &gt;= 1}, 1 &lt;= 4: {|- 1 &lt;= 4}, 4 != 0: {|- 4 != 0}, 0 != 4: {|- 0 != 4}, [not](0 = 4): {|- [not](0 = 4)}, (0 = 4) = FALSE: {|- (0 = 4) = FALSE}, FALSE = (0 = 4): {|- FALSE = (0 = 4)}, [not](0 = 4) = TRUE: {|- [not](0 = 4) = TRUE}, TRUE = [not](0 = 4): {|- TRUE = [not](0 = 4)}, [not](0 = 4) in BOOLEAN: {|- [not](0 = 4) in BOOLEAN}, (0 = 4) in BOOLEAN: {|- (0 = 4) in BOOLEAN}, (0 = 4) or [not](0 = 4): {|- (0 = 4) or [not](0 = 4)}, [not](0 = 4) or [not]([not](0 = 4)): {|- [not](0 = 4) or [not]([not](0 = 4))}, [not](4 = 0): {|- [not](4 = 0)}, (4 = 0) = FALSE: {|- (4 = 0) = FALSE}, FALSE = (4 = 0): {|- FALSE = (4 = 0)}, [not](4 = 0) = TRUE: {|- [not](4 = 0) = TRUE}, TRUE = [not](4 = 0): {|- TRUE = [not](4 = 0)}, [not](4 = 0) in BOOLEAN: {|- [not](4 = 0) in BOOLEAN}, (4 = 0) in BOOLEAN: {|- (4 = 0) in BOOLEAN}, (4 = 0) or [not](4 = 0): {|- (4 = 0) or [not](4 = 0)}, [not](4 = 0) or [not]([not](4 = 0)): {|- [not](4 = 0) or [not]([not](4 = 0))}, 5 in NaturalPos: {|- 5 in NaturalPos}, 5 &gt;= 1: {|- 5 &gt;= 1}, 1 &lt;= 5: {|- 1 &lt;= 5}, 5 != 0: {|- 5 != 0}, 0 != 5: {|- 0 != 5}, [not](0 = 5): {|- [not](0 = 5)}, (0 = 5) = FALSE: {|- (0 = 5) = FALSE}, FALSE = (0 = 5): {|- FALSE = (0 = 5)}, [not](0 = 5) = TRUE: {|- [not](0 = 5) = TRUE}, TRUE = [not](0 = 5): {|- TRUE = [not](0 = 5)}, [not](0 = 5) in BOOLEAN: {|- [not](0 = 5) in BOOLEAN}, (0 = 5) in BOOLEAN: {|- (0 = 5) in BOOLEAN}, (0 = 5) or [not](0 = 5): {|- (0 = 5) or [not](0 = 5)}, [not](0 = 5) or [not]([not](0 = 5)): {|- [not](0 = 5) or [not]([not](0 = 5))}, [not](5 = 0): {|- [not](5 = 0)}, (5 = 0) = FALSE: {|- (5 = 0) = FALSE}, FALSE = (5 = 0): {|- FALSE = (5 = 0)}, [not](5 = 0) = TRUE: {|- [not](5 = 0) = TRUE}, TRUE = [not](5 = 0): {|- TRUE = [not](5 = 0)}, [not](5 = 0) in BOOLEAN: {|- [not](5 = 0) in BOOLEAN}, (5 = 0) in BOOLEAN: {|- (5 = 0) in BOOLEAN}, (5 = 0) or [not](5 = 0): {|- (5 = 0) or [not](5 = 0)}, [not](5 = 0) or [not]([not](5 = 0)): {|- [not](5 = 0) or [not]([not](5 = 0))}, 6 in NaturalPos: {|- 6 in NaturalPos}, 6 &gt;= 1: {|- 6 &gt;= 1}, 1 &lt;= 6: {|- 1 &lt;= 6}, 6 != 0: {|- 6 != 0}, 0 != 6: {|- 0 != 6}, [not](0 = 6): {|- [not](0 = 6)}, (0 = 6) = FALSE: {|- (0 = 6) = FALSE}, FALSE = (0 = 6): {|- FALSE = (0 = 6)}, [not](0 = 6) = TRUE: {|- [not](0 = 6) = TRUE}, TRUE = [not](0 = 6): {|- TRUE = [not](0 = 6)}, [not](0 = 6) in BOOLEAN: {|- [not](0 = 6) in BOOLEAN}, (0 = 6) in BOOLEAN: {|- (0 = 6) in BOOLEAN}, (0 = 6) or [not](0 = 6): {|- (0 = 6) or [not](0 = 6)}, [not](0 = 6) or [not]([not](0 = 6)): {|- [not](0 = 6) or [not]([not](0 = 6))}, [not](6 = 0): {|- [not](6 = 0)}, (6 = 0) = FALSE: {|- (6 = 0) = FALSE}, FALSE = (6 = 0): {|- FALSE = (6 = 0)}, [not](6 = 0) = TRUE: {|- [not](6 = 0) = TRUE}, TRUE = [not](6 = 0): {|- TRUE = [not](6 = 0)}, [not](6 = 0) in BOOLEAN: {|- [not](6 = 0) in BOOLEAN}, (6 = 0) in BOOLEAN: {|- (6 = 0) in BOOLEAN}, (6 = 0) or [not](6 = 0): {|- (6 = 0) or [not](6 = 0)}, [not](6 = 0) or [not]([not](6 = 0)): {|- [not](6 = 0) or [not]([not](6 = 0))}, 7 in NaturalPos: {|- 7 in NaturalPos}, 7 &gt;= 1: {|- 7 &gt;= 1}, 1 &lt;= 7: {|- 1 &lt;= 7}, 7 != 0: {|- 7 != 0}, 0 != 7: {|- 0 != 7}, [not](0 = 7): {|- [not](0 = 7)}, (0 = 7) = FALSE: {|- (0 = 7) = FALSE}, FALSE = (0 = 7): {|- FALSE = (0 = 7)}, [not](0 = 7) = TRUE: {|- [not](0 = 7) = TRUE}, TRUE = [not](0 = 7): {|- TRUE = [not](0 = 7)}, [not](0 = 7) in BOOLEAN: {|- [not](0 = 7) in BOOLEAN}, (0 = 7) in BOOLEAN: {|- (0 = 7) in BOOLEAN}, (0 = 7) or [not](0 = 7): {|- (0 = 7) or [not](0 = 7)}, [not](0 = 7) or [not]([not](0 = 7)): {|- [not](0 = 7) or [not]([not](0 = 7))}, [not](7 = 0): {|- [not](7 = 0)}, (7 = 0) = FALSE: {|- (7 = 0) = FALSE}, FALSE = (7 = 0): {|- FALSE = (7 = 0)}, [not](7 = 0) = TRUE: {|- [not](7 = 0) = TRUE}, TRUE = [not](7 = 0): {|- TRUE = [not](7 = 0)}, [not](7 = 0) in BOOLEAN: {|- [not](7 = 0) in BOOLEAN}, (7 = 0) in BOOLEAN: {|- (7 = 0) in BOOLEAN}, (7 = 0) or [not](7 = 0): {|- (7 = 0) or [not](7 = 0)}, [not](7 = 0) or [not]([not](7 = 0)): {|- [not](7 = 0) or [not]([not](7 = 0))}, 8 in NaturalPos: {|- 8 in NaturalPos}, 8 &gt;= 1: {|- 8 &gt;= 1}, 1 &lt;= 8: {|- 1 &lt;= 8}, 8 != 0: {|- 8 != 0}, 0 != 8: {|- 0 != 8}, [not](0 = 8): {|- [not](0 = 8)}, (0 = 8) = FALSE: {|- (0 = 8) = FALSE}, FALSE = (0 = 8): {|- FALSE = (0 = 8)}, [not](0 = 8) = TRUE: {|- [not](0 = 8) = TRUE}, TRUE = [not](0 = 8): {|- TRUE = [not](0 = 8)}, [not](0 = 8) in BOOLEAN: {|- [not](0 = 8) in BOOLEAN}, (0 = 8) in BOOLEAN: {|- (0 = 8) in BOOLEAN}, (0 = 8) or [not](0 = 8): {|- (0 = 8) or [not](0 = 8)}, [not](0 = 8) or [not]([not](0 = 8)): {|- [not](0 = 8) or [not]([not](0 = 8))}, [not](8 = 0): {|- [not](8 = 0)}, (8 = 0) = FALSE: {|- (8 = 0) = FALSE}, FALSE = (8 = 0): {|- FALSE = (8 = 0)}, [not](8 = 0) = TRUE: {|- [not](8 = 0) = TRUE}, TRUE = [not](8 = 0): {|- TRUE = [not](8 = 0)}, [not](8 = 0) in BOOLEAN: {|- [not](8 = 0) in BOOLEAN}, (8 = 0) in BOOLEAN: {|- (8 = 0) in BOOLEAN}, (8 = 0) or [not](8 = 0): {|- (8 = 0) or [not](8 = 0)}, [not](8 = 0) or [not]([not](8 = 0)): {|- [not](8 = 0) or [not]([not](8 = 0))}, 9 in NaturalPos: {|- 9 in NaturalPos}, 9 &gt;= 1: {|- 9 &gt;= 1}, 1 &lt;= 9: {|- 1 &lt;= 9}, 9 != 0: {|- 9 != 0}, 0 != 9: {|- 0 != 9}, [not](0 = 9): {|- [not](0 = 9)}, (0 = 9) = FALSE: {|- (0 = 9) = FALSE}, FALSE = (0 = 9): {|- FALSE = (0 = 9)}, [not](0 = 9) = TRUE: {|- [not](0 = 9) = TRUE}, TRUE = [not](0 = 9): {|- TRUE = [not](0 = 9)}, [not](0 = 9) in BOOLEAN: {|- [not](0 = 9) in BOOLEAN}, (0 = 9) in BOOLEAN: {|- (0 = 9) in BOOLEAN}, (0 = 9) or [not](0 = 9): {|- (0 = 9) or [not](0 = 9)}, [not](0 = 9) or [not]([not](0 = 9)): {|- [not](0 = 9) or [not]([not](0 = 9))}, [not](9 = 0): {|- [not](9 = 0)}, (9 = 0) = FALSE: {|- (9 = 0) = FALSE}, FALSE = (9 = 0): {|- FALSE = (9 = 0)}, [not](9 = 0) = TRUE: {|- [not](9 = 0) = TRUE}, TRUE = [not](9 = 0): {|- TRUE = [not](9 = 0)}, [not](9 = 0) in BOOLEAN: {|- [not](9 = 0) in BOOLEAN}, (9 = 0) in BOOLEAN: {|- (9 = 0) in BOOLEAN}, (9 = 0) or [not](9 = 0): {|- (9 = 0) or [not](9 = 0)}, [not](9 = 0) or [not]([not](9 = 0)): {|- [not](9 = 0) or [not]([not](9 = 0))}, (-0) = 0: {|- (-0) = 0}, 0 = (-0): {|- 0 = (-0)}}</em><a class="headerlink" href="#proveit.Judgment.lookup_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="proveit.Judgment.sideeffect_processed">
+<code class="descname">sideeffect_processed</code><em class="property"> = {([not](0 = 9), ()), (5 in NaturalPos, ()), ((0 = 9) or [not](0 = 9), ()), (Integer supseteq NaturalPos, ()), ([not](6 = 0), ()), (3 &lt;= 4, ()), (TRUE = [not](7 = 0), ()), ([not](TRUE = FALSE) in BOOLEAN, ()), (2 in Complex, ()), (2 &lt;= 3, ()), ([not](1 = 0), ()), ([not](TRUE) in BOOLEAN, ()), (FALSE = (0 = 2), ()), (9 in Integer, ()), ((0 = 3) or [not](0 = 3), ()), ([not]([not](TRUE)) in BOOLEAN, ()), (7 &lt;= 8, ()), (3 &lt; 4, ()), (TRUE =&gt; TRUE, ()), ((0 = 1) = FALSE, ()), ((0 = 3) in BOOLEAN, ()), (1 &lt;= 4, ()), (2 &gt;= 0, ()), (forall_{x, y | x &gt; y} (y &lt; x), ()), ((2 = 0) or [not](2 = 0), ()), (RealNeg subseteq Real, ()), (Real proper_superset NaturalPos, ()), (1 &lt;= 7, ()), ([not](0 = 7) in BOOLEAN, ()), (forall_{A | [not]([not](A))} A, ()), ([not](0 = 4), ()), (RealNonNeg proper_superset NaturalPos, ()), ([not](5 = 0) or [not]([not](5 = 0)), ()), (TRUE = [not](0 = 8), ()), (1 &gt;= 1, ()), (Rational supseteq RationalNonNeg, ()), ([not](0 = 5) in BOOLEAN, ()), (NaturalPos subseteq RealNonNeg, ()), (TRUE = [not](9 = 0), ()), ([not]([not](TRUE) = TRUE) in BOOLEAN, ()), (forall_{A in BOOLEAN | A != FALSE} A, ()), (Real proper_superset RealPos, ()), ([not](5 = 0), ()), (RationalNonNeg subseteq Rational, ()), (RealPos proper_superset NaturalPos, ()), (Integer supseteq Natural, ()), (NaturalPos proper_subset Natural, ()), (TRUE = [not](6 = 0), ()), (RealPos subseteq Real, ()), (Rational supseteq RationalNonZero, ()), (FALSE = (4 = 0), ()), (forall_{x} (x = x), ()), ((1 = 0) or [not](1 = 0), ()), (forall_{n in NaturalPos} (n &gt;= 1), ()), ([not](6 = 0) = TRUE, ()), (1 in NaturalPos, ()), (7 &gt;= 1, ()), (forall_{P, x | P(x), x} P(TRUE), ()), (2 &gt; 1, ()), ((0 = 6) = FALSE, ()), ([not]([not](TRUE) = TRUE), ()), (5 &gt;= 0, ()), ((FALSE = TRUE) or [not](FALSE = TRUE), ()), (8 in Rational, ()), (forall_{P, x | P(TRUE), x} P(x), ()), (6 &gt;= 1, ()), (6 &lt;= 7, ()), (forall_{P, x | P(x), [not](x)} P(FALSE), ()), (2 &gt;= 1, ()), ([not](5 = 0) = TRUE, ()), (TRUE in BOOLEAN, ()), ([not](TRUE = FALSE) = TRUE, ()), (Natural subseteq RationalNonNeg, ()), (Rational supseteq Integer, ()), (Real supseteq RealNonNeg, ()), (1 &lt;= 6, ()), (TRUE = [not](0 = 1), ()), (Rational supseteq RationalPos, ()), (0 &lt;= 1, ()), (RationalPos proper_subset RationalNonNeg, ()), (([not](TRUE) = TRUE) in BOOLEAN, ()), (NaturalPos subseteq Natural, ()), (Natural subseteq Rational, ()), (RationalNonZero proper_superset RationalPos, ()), (9 in NaturalPos, ()), (Integer proper_subset Rational, ()), ([not](2 = 0) in BOOLEAN, ()), (Rational supseteq RationalNeg, ()), ([not](0 = 9) = TRUE, ()), ([not]([not](TRUE) = TRUE) or [not]([not]([not](TRUE) = TRUE)), ()), (NaturalPos proper_subset RationalNonZero, ()), (5 &lt; 6, ()), ([not](7 = 0) or [not]([not](7 = 0)), ()), (4 != 0, ()), (6 in NaturalPos, ()), ([not](0 = 6) in BOOLEAN, ()), (5 in Rational, ()), ((2 = 0) in BOOLEAN, ()), (Natural supseteq NaturalPos, ()), ((FALSE = TRUE) = FALSE, ()), (Complex supseteq Natural, ()), (FALSE = (0 = 6), ()), (forall_{A, B | A proper_superset B} (B proper_subset A), ()), (3 != 0, ()), (0 &lt;= 2, ()), ([not](0 = 3), ()), ([not]([not](TRUE)) = TRUE, ()), (FALSE = [not](TRUE), ()), ([not](8 = 0) or [not]([not](8 = 0)), ()), ([not](0 = 3) = TRUE, ()), ([not](0 = 8) or [not]([not](0 = 8)), ()), (7 in NaturalPos, ()), ([not](7 = 0) in BOOLEAN, ()), (Rational proper_superset RationalNonZero, ()), (9 in Natural, ()), (0 in Natural, ()), (TRUE = [not](0 = 9), ()), (RealPos proper_subset Real, ()), (Real proper_superset RealNonNeg, ()), (RealNonNeg proper_superset RealPos, ()), (FALSE =&gt; TRUE, ()), ([not](FALSE) = TRUE, ()), ((8 = 0) in BOOLEAN, ()), ((6 = 0) in BOOLEAN, ()), ([not](FALSE = TRUE) or [not]([not](FALSE = TRUE)), ()), (RationalNonNeg proper_superset RationalPos, ()), ([not](0 = 5) or [not]([not](0 = 5)), ()), ([not](0 = 5) = TRUE, ()), (FALSE = (5 = 0), ()), (0 != 2, ()), (TRUE = [not](0 = 3), ()), (RationalNeg subseteq RationalNonZero, ()), ((0 = 4) = FALSE, ()), (1 &lt;= 1, ()), (9 in Rational, ()), (Integer subseteq Rational, ()), ([not](TRUE = [not](TRUE)) or [not]([not](TRUE = [not](TRUE))), ()), (7 &gt;= 6, ()), ([not](0 = 4) in BOOLEAN, ()), ([not](9 = 0) or [not]([not](9 = 0)), ()), (5 in Real, ()), (0 &lt;= 3, ()), (2 &lt; 3, ()), ([not](8 = 0) in BOOLEAN, ()), (([not](TRUE) = TRUE) or [not]([not](TRUE) = TRUE), ()), (Natural proper_subset RationalNonNeg, ()), ([not](3 = 0), ()), ([not](9 = 0) = TRUE, ()), ((3 = 0) in BOOLEAN, ()), (forall_{x, y | x &lt;= y} (y &gt;= x), ()), (0 &lt;= 4, ()), (5 != 0, ()), ([not](3 = 0) in BOOLEAN, ()), (forall_{n in Natural} (n &gt;= 0), ()), (3 in Integer, ()), (3 in NaturalPos, ()), ([not](0 = 8) in BOOLEAN, ()), (Integer subseteq Complex, ()), (3 in Natural, ()), (Natural subseteq RealNonNeg, ()), (1 &lt;= 2, ()), (TRUE = [not](FALSE), ()), (0 != 8, ()), ([not](0 = 2) in BOOLEAN, ()), (TRUE = [not](0 = 5), ()), (3 &gt; 2, ()), ([not](0 = 6) or [not]([not](0 = 6)), ()), ([not](0 = 2), ()), (0 != 7, ()), ([not](0 = 8), ()), ([not](4 = 0) or [not]([not](4 = 0)), ()), ((7 = 0) = FALSE, ()), ((7 = 0) or [not](7 = 0), ()), (RationalNonNeg proper_subset Rational, ()), ([not]([not](TRUE)) or [not]([not]([not](TRUE))), ()), ([not](4 = 0), ()), (forall_{A | A = FALSE} [not](A), ()), (8 &lt; 9, ()), (5 &lt;= 6, ()), ((8 = 0) = FALSE, ()), (FALSE = (TRUE = FALSE), ()), (6 in Complex, ()), ([not](0 = 8) = TRUE, ()), (forall_{A, B | A proper_subset B} (B proper_superset A), ()), ((TRUE = FALSE) in BOOLEAN, ()), ((0 = 2) or [not](0 = 2), ()), (8 in Real, ()), ((9 = 0) = FALSE, ()), (8 in NaturalPos, ()), (1 in Complex, ()), ((0 = 6) or [not](0 = 6), ()), ([not](0 = 9) or [not]([not](0 = 9)), ()), (7 in Real, ()), (4 &gt;= 1, ()), ([not](1 = 0) = TRUE, ()), ((5 = 0) or [not](5 = 0), ()), (5 &gt;= 4, ()), ((0 = 1) in BOOLEAN, ()), (NaturalPos proper_subset Real, ()), ((8 = 0) or [not](8 = 0), ()), ((5 = 0) = FALSE, ()), (Rational proper_superset Integer, ()), (0 &lt;= 8, ()), (TRUE = [not](FALSE = TRUE), ()), (FALSE = (0 = 5), ()), (7 &gt;= 0, ()), ((3 = 0) or [not](3 = 0), ()), ((TRUE = [not](TRUE)) or [not](TRUE = [not](TRUE)), ()), (NaturalPos subseteq RealPos, ()), ([not](FALSE) or [not]([not](FALSE)), ()), (3 &gt;= 0, ()), (Real supseteq Rational, ()), (RealNonNeg proper_superset Natural, ()), (FALSE = (8 = 0), ()), (forall_{A | A = TRUE} A, ()), (Rational supseteq Natural, ()), (0 &lt; 1, ()), ([not](5 = 0) in BOOLEAN, ()), (RationalPos subseteq Rational, ()), (RealNonNeg proper_subset Real, ()), (forall_{A | [not](A)} (A = FALSE), ()), (([not](TRUE) = TRUE) = FALSE, ()), ((0 = 9) = FALSE, ()), (0 != 5, ()), (4 &gt;= 0, ()), (RationalNonNeg supseteq Natural, ()), ([not](0 = 5), ()), (RationalPos supseteq NaturalPos, ()), ((0 = 2) in BOOLEAN, ()), (0 != 9, ()), (FALSE = (0 = 3), ()), (Complex supseteq Integer, ()), (8 &lt;= 9, ()), (0 in Integer, ()), (TRUE = [not]([not](TRUE) = TRUE), ()), (forall_{A in BOOLEAN | A =&gt; FALSE} [not](A), ()), (0 != 3, ()), (RationalPos proper_superset NaturalPos, ()), (Integer proper_superset Natural, ()), (Rational proper_superset RationalNonNeg, ()), (FALSE = (6 = 0), ()), (Rational proper_subset Real, ()), ([not](4 = 0) in BOOLEAN, ()), ([not](2 = 0) = TRUE, ()), (9 != 0, ()), (TRUE, ()), (6 &lt; 7, ()), (0 in Complex, ()), (2 in Integer, ()), (FALSE = (7 = 0), ()), (RationalPos proper_subset RationalNonZero, ()), ((2 = 0) = FALSE, ()), (9 in Real, ()), (1 &lt;= 9, ()), (forall_{A in BOOLEAN} ((A = TRUE) or (A = FALSE)), ()), (forall_{x, y | x != y} [not](x = y), ()), (3 in Complex, ()), ([not](TRUE = [not](TRUE)), ()), ([not](TRUE = [not](TRUE)) = TRUE, ()), (FALSE = (TRUE = [not](TRUE)), ()), (Real supseteq RealNeg, ()), (Rational proper_superset RationalNeg, ()), (1 != 0, ()), (0 != 1, ()), (0 != 4, ()), (FALSE = ([not](TRUE) = TRUE), ()), ([not](0 = 1), ()), (Natural proper_superset NaturalPos, ()), (4 in Rational, ()), (forall_{x, y | x &lt; y} (y &gt; x), ()), ([not](3 = 0) = TRUE, ()), (0 = (-0), ()), ((TRUE = [not](TRUE)) = FALSE, ()), (forall_{A in BOOLEAN} (A or [not](A)), ()), (TRUE = [not](1 = 0), ()), (RationalNeg proper_subset Rational, ()), ([not](0 = 3) in BOOLEAN, ()), (1 in Real, ()), (5 &gt;= 1, ()), ((0 = 6) in BOOLEAN, ()), (RationalNeg subseteq Rational, ()), (0 in Rational, ()), ((-0) = 0, ()), ([not](0 = 1) in BOOLEAN, ()), (RationalPos proper_subset Rational, ()), (2 in NaturalPos, ()), (Natural proper_subset Complex, ()), (Integer proper_subset Complex, ()), (1 &lt;= 5, ()), ({TRUE, FALSE} = BOOLEAN, ()), (7 in Natural, ()), (FALSE or [not](FALSE), ()), ([not](3 = 0) or [not]([not](3 = 0)), ()), ([not](0 = 6), ()), (forall_{A | A} (A in BOOLEAN), ()), ([not](0 = 7) = TRUE, ()), ((0 = 7) in BOOLEAN, ()), ([not](8 = 0), ()), (Natural subseteq Integer, ()), (Natural proper_subset Integer, ()), (8 != 0, ()), (7 in Rational, ()), (RationalPos subseteq RationalNonNeg, ()), (Complex proper_superset Natural, ()), ((0 = 5) or [not](0 = 5), ()), (Real supseteq RealPos, ()), ((0 = 1) or [not](0 = 1), ()), ([not](0 = 4) or [not]([not](0 = 4)), ()), (FALSE = (9 = 0), ()), (forall_{A in BOOLEAN | [not](A) =&gt; FALSE} A, ()), ((7 = 0) in BOOLEAN, ()), (1 &lt; 2, ()), (forall_{A | A =&gt; FALSE} (A != TRUE), ()), (3 &gt;= 2, ()), ([not](2 = 0), ()), (Real proper_superset Natural, ()), (forall_{x, y | x &gt; y} (x &gt;= y), ()), (9 &gt;= 8, ()), (2 in Real, ()), (8 in Natural, ()), (6 != 0, ()), (RealPos subseteq RealNonNeg, ()), (RationalNonZero proper_superset NaturalPos, ()), ([not](7 = 0), ()), (5 in Integer, ()), (1 &lt;= 3, ()), ((3 = 0) = FALSE, ()), (Real supseteq Integer, ()), (RationalNonNeg proper_superset Natural, ()), (TRUE = [not](0 = 6), ()), (forall_{x, y | x != y} (y != x), ()), ([not](TRUE) != TRUE, ()), (1 in Rational, ()), ([not](FALSE = TRUE) = TRUE, ()), (6 in Integer, ()), (9 &gt;= 1, ()), ((0 = 8) in BOOLEAN, ()), (5 &gt; 4, ()), ([not](0 = 2) = TRUE, ()), (TRUE or [not](TRUE), ()), (Natural subseteq Real, ()), ([not](TRUE = [not](TRUE)) in BOOLEAN, ()), (Real supseteq NaturalPos, ()), ([not]([not](TRUE) = TRUE) = TRUE, ()), (forall_{A | [not](A)} (A != TRUE), ()), (TRUE = [not]([not](TRUE)), ()), (Integer proper_superset NaturalPos, ()), (Rational subseteq Real, ()), ([not](TRUE) or [not]([not](TRUE)), ()), (Integer subseteq Real, ()), (Natural subseteq Complex, ()), (TRUE = [not](4 = 0), ()), (Complex proper_superset Real, ()), (6 &gt;= 5, ()), ([not](0 = 1) = TRUE, ()), ([not](0 = 3) or [not]([not](0 = 3)), ()), (9 &gt; 8, ()), (NaturalPos proper_subset RealPos, ()), (1 in Integer, ()), (8 &gt; 7, ()), (7 in Complex, ()), (NaturalPos proper_subset RealNonNeg, ()), (TRUE = TRUE, ()), (4 in NaturalPos, ()), (Complex proper_superset Integer, ()), ([not](4 = 0) = TRUE, ()), (Real supseteq Natural, ()), (forall_{A | [not](A)} (A in BOOLEAN), ()), (RealPos supseteq NaturalPos, ()), (6 in Rational, ()), (forall_{x, y | x = y} (y = x), ()), (4 &lt;= 5, ()), ([not](TRUE) = FALSE, ()), ((0 = 8) = FALSE, ()), ([not](TRUE = FALSE), ()), ([not](1 = 0) in BOOLEAN, ()), (TRUE = [not](2 = 0), ()), ([not](2 = 0) or [not]([not](2 = 0)), ()), (TRUE = [not](3 = 0), ()), ([not](0 = 7), ()), ((9 = 0) or [not](9 = 0), ()), (NaturalPos proper_subset RationalPos, ()), (0 != 6, ()), (forall_{A, B | A proper_subset B} [forall_{x in A} (x in B)], ()), (Integer proper_subset Real, ()), (RealNonNeg supseteq RealPos, ()), (7 &gt; 6, ()), ((0 = 8) or [not](0 = 8), ()), ((6 = 0) or [not](6 = 0), ()), ([not](7 = 0) = TRUE, ()), (0 &lt;= 9, ()), (8 &gt;= 7, ()), (RealNonNeg supseteq NaturalPos, ()), ((0 = 2) = FALSE, ()), ([not](0 = 2) or [not]([not](0 = 2)), ()), ((4 = 0) in BOOLEAN, ()), (TRUE = [not](TRUE = [not](TRUE)), ()), (RationalPos subseteq RationalNonZero, ()), (2 in Natural, ()), (9 in Complex, ()), (Real proper_superset Integer, ()), (Natural proper_subset Real, ()), (FALSE = (3 = 0), ()), (3 in Rational, ()), ([not](1 = 0) or [not]([not](1 = 0)), ()), (FALSE = (0 = 4), ()), (1 &lt;= 8, ()), (RationalNonZero supseteq RationalNeg, ()), (4 &lt; 5, ()), (2 != 0, ()), (forall_{A, B | A proper_subset B} (A subseteq B), ()), (0 in Real, ()), (4 &gt;= 3, ()), (5 in Natural, ()), (1 &gt; 0, ()), (8 &gt;= 1, ()), (6 in Natural, ()), ((TRUE = FALSE) or [not](TRUE = FALSE), ()), ([not]([not](TRUE)), ()), (TRUE = [not](0 = 4), ()), ((0 = 9) in BOOLEAN, ()), (forall_{A | A} (A = TRUE), ()), (RationalNonNeg supseteq RationalPos, ()), ([not](0 = 4) = TRUE, ()), (TRUE != FALSE, ()), (forall_{A | [not](A) in BOOLEAN} (A in BOOLEAN), ()), ((1 = 0) = FALSE, ()), (RationalNonZero proper_superset RationalNeg, ()), (3 &gt;= 1, ()), (RationalNonZero proper_subset Rational, ()), (8 in Complex, ()), (Complex supseteq Real, ()), (6 &gt;= 0, ()), (FALSE != TRUE, ()), (4 in Complex, ()), ([not](TRUE = FALSE) or [not]([not](TRUE = FALSE)), ()), (forall_{x, y | x &lt; y} (x &lt;= y), ()), (TRUE = [not](0 = 2), ()), (6 &gt; 5, ()), ((0 = 4) or [not](0 = 4), ()), (0 &gt;= 0, ()), ((1 = 0) in BOOLEAN, ()), (RationalNonZero subseteq Rational, ()), ((0 = 5) = FALSE, ()), (0 &lt;= 7, ()), (TRUE = [not](TRUE = FALSE), ()), (TRUE = [not](8 = 0), ()), (forall_{P, x | P(FALSE), [not](x)} P(x), ()), (RationalNeg proper_subset RationalNonZero, ()), ((0 = 7) = FALSE, ()), (TRUE = [not](5 = 0), ()), (TRUE != [not](TRUE), ()), (RealPos proper_subset RealNonNeg, ()), (RationalNonZero supseteq RationalPos, ()), (1 in Natural, ()), (forall_{n in NaturalPos} (n != 0), ()), (forall_{A, B | A supseteq B} (B subseteq A), ()), ((0 = 4) in BOOLEAN, ()), ((TRUE = [not](TRUE)) in BOOLEAN, ()), (2 in Rational, ()), ([not](8 = 0) = TRUE, ()), (RationalNonZero supseteq NaturalPos, ()), (forall_{x, y | x &gt;= y} (y &lt;= x), ()), (forall_{P, x, y | P(y), x = y} P(x), ()), (0 &lt;= 6, ()), (7 in Integer, ()), (6 in Real, ()), (FALSE = (2 = 0), ()), ((TRUE = FALSE) = FALSE, ()), (FALSE = (0 = 1), ()), ([not](0 = 9) in BOOLEAN, ()), (TRUE = [not](0 = 7), ()), (Rational proper_superset RationalPos, ()), (9 &gt;= 0, ()), (8 &gt;= 0, ()), (4 in Natural, ()), (4 in Real, ()), (0 &lt;= 0, ()), ([not](0 = 6) = TRUE, ()), (forall_{x, y | [not](x = y)} (x != y), ()), ([not](6 = 0) or [not]([not](6 = 0)), ()), ([not](FALSE), ()), ([not](6 = 0) in BOOLEAN, ()), (8 in Integer, ()), (BOOLEAN = {TRUE, FALSE}, ()), ((6 = 0) = FALSE, ()), (4 &gt; 3, ()), ((0 = 7) or [not](0 = 7), ()), (Rational proper_superset Natural, ()), ([not](FALSE) in BOOLEAN, ()), ((4 = 0) or [not](4 = 0), ()), ([not](FALSE = TRUE) in BOOLEAN, ()), ((9 = 0) in BOOLEAN, ()), (Real proper_subset Complex, ()), (FALSE = (1 = 0), ()), (Natural proper_subset RealNonNeg, ()), (FALSE in BOOLEAN, ()), (FALSE = (0 = 7), ()), ([not](9 = 0), ()), (7 &lt; 8, ()), (NaturalPos subseteq Real, ()), (forall_{A, B | A subseteq B} (B supseteq A), ()), (RealNeg proper_subset Real, ()), (Real subseteq Complex, ()), (7 != 0, ()), (Real proper_superset RealNeg, ()), (FALSE = (FALSE = TRUE), ()), ([not](FALSE = TRUE), ()), (NaturalPos subseteq Integer, ()), ((5 = 0) in BOOLEAN, ()), (NaturalPos subseteq RationalNonZero, ()), ((0 = 3) = FALSE, ()), (NaturalPos subseteq RationalPos, ()), (FALSE = (0 = 9), ()), ([not](0 = 1) or [not]([not](0 = 1)), ()), (0 &lt;= 5, ()), (Real proper_superset Rational, ()), (5 in Complex, ()), (forall_{A, B | A proper_superset B} (A supseteq B), ()), (Natural proper_subset Rational, ()), (1 &gt;= 0, ()), (FALSE =&gt; FALSE, ()), ((FALSE = TRUE) in BOOLEAN, ()), (RealNonNeg subseteq Real, ()), (FALSE = (0 = 8), ()), (4 in Integer, ()), ([not](0 = 7) or [not]([not](0 = 7)), ()), ((4 = 0) = FALSE, ()), (FALSE = FALSE, ()), ([not](9 = 0) in BOOLEAN, ()), (RealNonNeg supseteq Natural, ()), (forall_{A | (A = TRUE) or (A = FALSE)} (A in BOOLEAN), ()), (NaturalPos proper_subset Integer, ()), (3 in Real, ()), ((0 = 5) in BOOLEAN, ())}</em><a class="headerlink" href="#proveit.Judgment.sideeffect_processed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="proveit.Judgment.eliminate">
+<code class="descname">eliminate</code><span class="sig-paren">(</span><em>*skolem_constants</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/judgment.html#Judgment.eliminate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Judgment.eliminate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a Skolem constant elimination derivation step on this
+Judgment (KT), where this KT has the form S <a href="#id3"><span class="problematic" id="id4">|</span></a>– alpha and the
+set S of assumptions includes one or more assumptions involving
+one or more Skolem constants sk1, …, skn specified by
+skolem_constants, where the Skolem constant-related assumptions
+were previously generated using the Exists.choose(sk1, …, skn)
+method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Judgment.evaluation">
+<code class="descname">evaluation</code><span class="sig-paren">(</span><em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/judgment.html#Judgment.evaluation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Judgment.evaluation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calling evaluation on a Judgment results in deriving that its
+expression is equal to TRUE, under the assumptions of the Judgment.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Judgment.generalize">
+<code class="descname">generalize</code><span class="sig-paren">(</span><em>forall_var_or_vars_or_var_lists</em>, <em>domain_lists=None</em>, <em>domain=None</em>, <em>conditions=()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/judgment.html#Judgment.generalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Judgment.generalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a generalization derivation step.  Returns the
+proven generalized Judgment.  Can introduce any number of
+nested Forall operations to wrap the original statement,
+corresponding to the number of given forall_var_lists and domains.
+A single variable list or single variable and a single domain may
+be provided to introduce a single Forall wrapper.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Judgment.instantiate">
+<code class="descname">instantiate</code><span class="sig-paren">(</span><em>repl_map=None</em>, <em>*</em>, <em>num_forall_eliminations=None</em>, <em>assumptions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/judgment.html#Judgment.instantiate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Judgment.instantiate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs an instantiation derivation step to be proven under the given
+assumptions, in addition to the (possibly revised) assumptions of the
+Judgment.  This may instantiate Variables, according to the
+“replacement” map (repl_map), on either side of the turnstile of the
+Judgment, the assumptions side and the “truth” side.  It may also
+eliminate any number of nested Forall operations, instantiating the
+instance Variables according to repl_map, going to the depth
+for which the instance variables occur as keys in repl_map.
+For Variables that map to Variables and occur as “internal” Lambda
+map parameters (internal after the Forall operations are eliminated),
+they will be relabeled within the “internal” Lambda map parameters.
+For Variables that map to non-Variables, the replacement will not
+penetrate into internal Lambda maps that use that Variable as a
+parameter.  Replacements are made simultaneously.  For example,
+the {x:y, y:x} mapping will swap x and y variables, but mapping {x:y}
+then {y:x} in series would set both variables to x.</p>
+<p>Returns the proven instantiated Judgment, or throws an exception if
+the proof fails.  For the proof to succeed, all conditions of
+eliminated Forall operations, after replacements are made, must
+be proven.  Furthermore, there may be additional requirements when
+iterated parameters are instantiated (see Lambda.apply for details).
+Automation will be used in attempting to prove these requirements.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Judgment.latex">
+<code class="descname">latex</code><span class="sig-paren">(</span><em>perform_usability_check=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/judgment.html#Judgment.latex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Judgment.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display the turnstile notation to show that the judgment
+on the right derives from the set of assumptions on the left.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Judgment.proof">
+<code class="descname">proof</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/judgment.html#Judgment.proof"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Judgment.proof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the most up-to-date proof of this Judgment.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="proveit.Judgment.string">
+<code class="descname">string</code><span class="sig-paren">(</span><em>perform_usability_check=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/proveit/_core_/judgment.html#Judgment.string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proveit.Judgment.string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display the turnstile notation to show that the judgment
+on the right derives from the set of assumptions on the left.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.var_range.html">var_range</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="proveit.InvalidAssumptions.html" title="previous chapter">InvalidAssumptions</a></li>
+      <li>Next: <a href="proveit.Label.html" title="next chapter">Label</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="../_sources/api/proveit.Judgment.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

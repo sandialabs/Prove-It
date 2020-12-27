@@ -1,0 +1,1 @@
+n \mapsto \left\{\lceil x + n\rceil = \left(\lceil x\rceil + n\right) \textrm{ if } n \in \mathbb{Z}\right..

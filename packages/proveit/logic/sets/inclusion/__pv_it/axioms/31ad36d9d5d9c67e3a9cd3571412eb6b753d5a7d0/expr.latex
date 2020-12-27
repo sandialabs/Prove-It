@@ -1,0 +1,1 @@
+\left(A \supset B\right) = \left(\left(A \supseteq B\right) \land \left(B \ncong A\right)\right)

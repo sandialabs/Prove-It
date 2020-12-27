@@ -1,0 +1,1 @@
+\left(A_{1}, \ldots, A_{m}, B, C_{1}, \ldots, C_{n}\right) \mapsto \left\{\lnot \left(A_{1} \land \ldots \land A_{m} \land B \land C_{1} \land \ldots \land C_{n}\right) \textrm{ if } \lnot B\right..

@@ -1,0 +1,1 @@
+\forall_{x, A, B}~\left(\left(x \notin \left(A - B\right)\right) = \left(\left(x \notin A\right) \lor \left(x \in B\right)\right)\right)

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.reduce_4_repeats theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.reduce_4_repeats-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#reduce_4_repeats">reduce_4_repeats</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.reduce_4_repeats-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> reduce_4_repeats
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="reduce_4_repeats">reduce_4_repeats:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/74199c29a5fb89e39a3c6fe435df01ee75e2d9520/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUkAAAAUBAMAAADyw9IGAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA4ZJREFU
+SMe1V11IFFEUPu7OOuvszBQlYT0tK/ggZYPSU0pWhPVSi0GvLlGBD5YkFFiU9JJLRAtF9hJN+6Ai
+YkaQJEWL9lAb0j5EUaRN9IfRj2WGq6XdmTPTzJ0/FqsD3+6Zc+/55tv7exbAYSU5xL+ySMr9HYXY
+LR2K+jBubenV4bTdS5PZ7Az1FphanEI8VB8+WFsmdTjtiD9lvUd8wBmaLFAlpyAuqePfYWkQJITT
+Aqv8GSWPBj5qjwhSofMwghBlQjNoibMphNMuv/Ml9Hw1t9weced3s6sIIdvX12WNd+lwWsZf5V3P
+AXpjD3QVvKbFesRsZ+dxa7xcR7riwlpqqoSUpnLnituTcP5FM/NqrLaFPBMXIrEREDa1bYTGO1XW
+FJ1j1P5ump+LNW8ZoRLMIC8h9gMkrQxnEVxGOMwq1CsBx3Ll8C+mHTbLRaXQI4HmDqWCCWAl4DqA
+tU61zjGhrc7Pmkng4O+Hp9ETVIIZFBTEVm0TmXYMwcv8HEMtn4yu8j1AUQaKomICIt/RvR5n5lSV
+zBoIWLeNzjFkH0uaPwuP5B1UghmMtCJYCFBHbCmCg3AHfTjHdZXks6lu/ElOJGM3jS40juZVlXDy
+lPWHGRxNdpU0vwydtgQzGJpC8DkWXFQCLKMPkH7QVb4mG0U9FIhKmEV3IBlClf1fpqkk5HBTSfF/
+syWYQUNlibJHPZM2VMSpGSfccYr5Zk3N12rV+UiaoqhSHUvVPQ2hvMxKgRIZXlJnO3I0WNZlApz8
+oRlbghlkWhGQ3EcObPkgW0/tnoi8nkTpIcBTnagkK5zT16Xm/oRIfpuYCDJRKLYsH4Njwj6WNP9w
+YAoqqQQzaOweuEGkhuCTwTCK2DV4Di4Dt6CulgX8hjKtQxvpPg9BWVwNPRl0y4CfeR5UgmT3hFPY
+Xc1ADoBau0qKn5kPT5Hq45riEoRgBqEvhbzB0IDojqXrSK+jMt7f6hV+f1E9H7cvniGt1VkQW2Jk
+FjT3YnW2KgcHHjBj6+4Z3UmmzgFv7Sopfm5vZTkpd9h2lyCIcQQIsrZKQ643ZET2vhb8L2Mzk2v1
+viEt/MMuqdCjQ7MrvMK7Vhs8LFUlX1C1wVvPY5egXm2gdT8eyRp+Eiy3UdpbBpvwVZn2q9xc+Lmo
+S6pRublXqH+qVO+amjn0w7eyyTkluVTBZi/BLTWcQvz/fxTCX/yjeIb4DVbLRsc85x7SAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/a55e8d3cb304b4c83d343940c922079c49491b0d0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(A, B\right) \mapsto \left(\left(A \nsupseteq B\right) = (\lnot \left(A \supseteq B\right))\right)

@@ -1,0 +1,1 @@
+\forall_{x_{1}, \ldots, x_{n}~|~\textrm{distinct}(x_{1}, \ldots, x_{n})}~\left(|\left\{x_{1}, \ldots, x_{n}\right\}| = |\left(x_{1}, \ldots, x_{n}\right)|\right)

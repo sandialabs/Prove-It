@@ -1,0 +1,7 @@
+proveit.logic.booleans.conjunction.and_if_both
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.inclusion.reverse_subset_eq
+proveit.logic.sets.inclusion.reverse_supset_eq
+proveit.logic.sets.inclusion.subset_eq_is_bool
+proveit.logic.sets.inclusion.supset_eq_is_bool

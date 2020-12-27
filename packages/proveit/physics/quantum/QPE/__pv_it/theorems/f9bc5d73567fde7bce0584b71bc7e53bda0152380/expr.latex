@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{\mathsf{e}^{\frac{2 \cdot \pi \cdot \mathsf{i} \cdot \left(a \oplus b\right)}{2^{t}}} = \mathsf{e}^{\frac{2 \cdot \pi \cdot \mathsf{i} \cdot \left(a + b\right)}{2^{t}}} \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z}\right..

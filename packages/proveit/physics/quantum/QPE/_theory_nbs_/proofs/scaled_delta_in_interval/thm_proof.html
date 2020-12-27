@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.QPE.scaled_delta_in_interval theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.QPE.scaled_delta_in_interval-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">QPE</a>.<a class="ProveItLink" href="../../theorems.html#scaled_delta_in_interval">scaled_delta_in_interval</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.QPE.scaled_delta_in_interval-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> scaled_delta_in_interval
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="scaled_delta_in_interval">scaled_delta_in_interval:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/0d26d5ce8717282b4925193d41926dc0df29be7c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH4AAAAbBAMAAABINCZSAAAAMFBMVEX///8iIiJERESYmJiqqqoQ
+EBB2dnbc3NyIiIhmZmbu7u4yMjJUVFS6urrMzMwAAADZVrDbAAAAAXRSTlMAQObYZgAAAklJREFU
+OMu9lM9rE0EUx7/d3WyS0Wwb6EUPWnvxohgETxWshx48VCLi2ZzEHpS1/0AiItQf2K2H0lYP24NS
+sJAIXlJ/NIrozagH8SC4CL0pKpRWIk19s7M/ZpNdCB46kJ153+xn35s37w0QjBf4v/FDTOxXVK70
+iBsNMWsDUf1Lj/wu253SM3UnouuF3vg5/zujkvj5NLC3881bnRnSTPLboq3PDzvoN8M/1PEjDm50
+8pcoqGuXZeUtKRawDH0La5K+Gwwox/BPsOi7GaN9PwJSFPYCcA63mRnde99oF68WodfEab1pEq9X
+UKbpDNA05/TwzdwmPbJDnnU0n68JXmlAa3nqCQJZEcdouWqj6Xy/I7l6TL9MUay/3Qz89zeQW5d4
+PMc9Ye235UiXpksUhPDEVsL4qxZyf2R+AsMi4I1ISa0oVIxGW+TSDPlyCUaEH8Ez1+jzipDnHXjg
+qMSmt1xFkfJXtmBsyPxJ7HGNef+dKs/UXdc3E/zaUxq1hPh/os7XGcvn3UDOwmgF/icl/5Q/bT3K
+H+LrU0hL1cfaUKmZjE3XSkm8MgRVPj98wCuerxIyEo82lEKQ/2wlrn6C/F2n55ULEy/l/F/ER94E
+3vkPSvU7SLllf11rmvOz+ErT6vb270jrTllS/S0ftgP+4dQ7IM/t++frBX5npd4nXgx+4J8O+PXr
+tW1Qa2wA2VISX7W7+0+EFwZagVFM4o8jgV8KFOpfvE7i9yXx4cV20PtG3FC7Nna18/5S+aFrVjw/
+2ev9Px4vL2Anxj8SGZjGVZgvpwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/3a80034f38fe183bbb55f6a19d3b9b86337249100/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

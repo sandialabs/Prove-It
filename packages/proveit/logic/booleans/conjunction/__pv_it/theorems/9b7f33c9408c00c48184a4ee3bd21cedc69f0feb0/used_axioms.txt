@@ -1,0 +1,1 @@
+proveit.logic.booleans.conjunction.and_t_f

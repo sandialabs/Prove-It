@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.md_nine_add_one theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.md_nine_add_one-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#md_nine_add_one">md_nine_add_one</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.md_nine_add_one-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> md_nine_add_one
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br><strong id="md_nine_add_one">md_nine_add_one:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/2fe8f16e078a889095e3f38c2586fb5fd66875f60/expr.html"><img src="data:image/png;base64,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
+YGzG5tcI/Q/5KqoodmI1rQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/6067ca89272ffbe4921aea5b32c0fb486e1011ce0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left\{A = B \textrm{ if } A \in \mathbb{B} ,  \left(B \in \mathbb{B}\right) \land \left(A \Rightarrow B\right) \land \left(B \Rightarrow A\right)\right.. = \left\{A = B \textrm{ if } A \in \mathbb{B} ,  B \in \mathbb{B} ,  A \Rightarrow B ,  B \Rightarrow A\right..

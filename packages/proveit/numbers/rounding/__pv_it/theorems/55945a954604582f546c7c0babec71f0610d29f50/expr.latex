@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{R}}~\left[\forall_{n \in \mathbb{Z}}~\left(\lceil x + n\rceil = \left(\lceil x\rceil + n\right)\right)\right]

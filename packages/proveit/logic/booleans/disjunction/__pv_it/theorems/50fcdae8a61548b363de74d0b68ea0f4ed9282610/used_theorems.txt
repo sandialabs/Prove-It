@@ -1,0 +1,4 @@
+proveit.logic.booleans.disjunction.or_if_left
+proveit.logic.booleans.implication.modus_tollens_denial
+proveit.logic.booleans.true_is_bool
+proveit.logic.equality.substitute_truth

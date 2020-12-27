@@ -1,0 +1,869 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>proveit._core_.expression.composite.expr_tuple &#8212; Prove-It 0.3 documentation</title>
+    <link rel="stylesheet" href="../../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for proveit._core_.expression.composite.expr_tuple</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">.composite</span> <span class="k">import</span> <span class="n">Composite</span>
+<span class="kn">from</span> <span class="nn">proveit._core_.expression.expr</span> <span class="k">import</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">MakeNotImplemented</span>
+<span class="kn">from</span> <span class="nn">proveit._core_.proof</span> <span class="k">import</span> <span class="n">ProofFailure</span>
+<span class="kn">from</span> <span class="nn">proveit._core_.defaults</span> <span class="k">import</span> <span class="n">USE_DEFAULTS</span>
+<span class="kn">from</span> <span class="nn">proveit._core_.expression.style_options</span> <span class="k">import</span> <span class="n">StyleOptions</span>
+
+
+<div class="viewcode-block" id="ExprTuple"><a class="viewcode-back" href="../../../../../api/proveit.ExprTuple.html#proveit.ExprTuple">[docs]</a><span class="k">class</span> <span class="nc">ExprTuple</span><span class="p">(</span><span class="n">Composite</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ExprTuple is a composite Expression composed of an ordered list</span>
+<span class="sd">    of member Expression &quot;entries&quot;.  The ExprTuple represents a</span>
+<span class="sd">    mathematical tuple as an ordered collection of &quot;elements&quot;.</span>
+<span class="sd">    Each entry may either represent a single element or a &quot;range&quot;</span>
+<span class="sd">    of elements.  An entry that is an ExprRange represents a range</span>
+<span class="sd">    of elements.  For example,</span>
+<span class="sd">    (a, b, x_1, ..., x_n, c, d)</span>
+<span class="sd">    Is represented by an ExprTuple with 5 entries representing</span>
+<span class="sd">    n+4 elements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">expressions</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initialize an ExprTuple from an iterable over Expression</span>
+<span class="sd">        objects.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_</span> <span class="k">import</span> <span class="n">Judgment</span>
+        <span class="kn">from</span> <span class="nn">.composite</span> <span class="k">import</span> <span class="n">single_or_composite_expression</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">expressions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">Judgment</span><span class="p">):</span>
+                <span class="c1"># Extract the Expression from the Judgment:</span>
+                <span class="n">entry</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">expr</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+                <span class="n">entry</span> <span class="o">=</span> <span class="n">single_or_composite_expression</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
+            <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">styles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;wrap_positions&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">styles</span><span class="p">:</span>
+            <span class="n">styles</span><span class="p">[</span><span class="s1">&#39;wrap_positions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;()&#39;</span>  <span class="c1"># no wrapping by default</span>
+        <span class="k">if</span> <span class="s1">&#39;justification&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">styles</span><span class="p">:</span>
+            <span class="n">styles</span><span class="p">[</span><span class="s1">&#39;justification&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span>
+
+        <span class="n">Expression</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;ExprTuple&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="n">styles</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">style_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">StyleOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s1">&#39;wrap_positions&#39;</span><span class="p">,</span>
+                           <span class="p">(</span><span class="s2">&quot;position(s) at which wrapping is to occur; &#39;n&#39; &quot;</span>
+                            <span class="s2">&quot;is after the nth comma.&quot;</span><span class="p">))</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+            <span class="s1">&#39;justification&#39;</span><span class="p">,</span>
+            <span class="p">(</span><span class="s2">&quot;if any wrap positions are set, justify to the &#39;left&#39;, &quot;</span>
+             <span class="s2">&quot;&#39;center&#39;, or &#39;right&#39;&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">options</span>
+
+    <span class="k">def</span> <span class="nf">with_wrapping_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">wrap_positions</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_styles</span><span class="p">(</span>
+            <span class="n">wrap_positions</span><span class="o">=</span><span class="s1">&#39;(&#39;</span> <span class="o">+</span>
+            <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">wrap_positions</span><span class="p">)</span> <span class="o">+</span>
+            <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">with_justification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">justification</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_styles</span><span class="p">(</span><span class="n">justification</span><span class="o">=</span><span class="n">justification</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_make</span><span class="p">(</span><span class="n">sub_class</span><span class="p">,</span> <span class="n">core_info</span><span class="p">,</span> <span class="n">styles</span><span class="p">,</span> <span class="n">sub_expressions</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sub_class</span> <span class="o">!=</span> <span class="n">ExprTuple</span><span class="p">:</span>
+            <span class="n">MakeNotImplemented</span><span class="p">(</span><span class="n">sub_class</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">core_info</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">core_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;ExprTuple&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expecting ExprTuple core_info to contain &quot;</span>
+                             <span class="s2">&quot;exactly one item: &#39;ExprTuple&#39;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="n">sub_expressions</span><span class="p">)</span><span class="o">.</span><span class="n">with_styles</span><span class="p">(</span><span class="o">**</span><span class="n">styles</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">remake_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Yield the argument values or (name, value) pairs</span>
+<span class="sd">        that could be used to recreate the ExprTuple.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">sub_expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_expr_iter</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">sub_expr</span>
+
+    <span class="k">def</span> <span class="nf">remake_with_style_calls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        In order to reconstruct this Expression to have the same styles,</span>
+<span class="sd">        what &quot;with...&quot; method calls are most appropriate?  Return a</span>
+<span class="sd">        tuple of strings with the calls to make.  The default for the</span>
+<span class="sd">        Operation class is to include appropriate &#39;with_wrapping_at&#39;</span>
+<span class="sd">        and &#39;with_justification&#39; calls.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">wrap_positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_positions</span><span class="p">()</span>
+        <span class="n">call_strs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrap_positions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">call_strs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;with_wrapping_at(&#39;</span> <span class="o">+</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+                                                            <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">wrap_positions</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+        <span class="n">justification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_style</span><span class="p">(</span><span class="s1">&#39;justification&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">justification</span> <span class="o">!=</span> <span class="s1">&#39;left&#39;</span><span class="p">:</span>
+            <span class="n">call_strs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;with_justification(&quot;&#39;</span> <span class="o">+</span> <span class="n">justification</span> <span class="o">+</span> <span class="s1">&#39;&quot;)&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">call_strs</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Iterator over the entries of the list.</span>
+<span class="sd">        Some entries may be ranges (ExprRange) that</span>
+<span class="sd">        represent multiple elements of the list.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the number of entries of the list.</span>
+<span class="sd">        Some entries may be ranges (ExprRange) that</span>
+<span class="sd">        represent multiple elements of the list.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the list entry at the ith index.</span>
+<span class="sd">        This is a relative entry-wise index where</span>
+<span class="sd">        entries may represent multiple elements</span>
+<span class="sd">        via ranges (ExprRange).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Concatenate ExprTuple&#39;s together via &#39;+&#39; just like</span>
+<span class="sd">        Python lists.  Actually works with any iterable</span>
+<span class="sd">        of Expressions as the second argument.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">other</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">is_singular</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True if this has a single element that is not an</span>
+<span class="sd">        ExprRange.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.expr_range</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns True if this has two elements that are not ExprRanges.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">contains_range</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">contains_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns true if the entry contains an ExprRange.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.expr_range</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExprTuple.index"><a class="viewcode-back" href="../../../../../api/proveit.ExprTuple.html#proveit.ExprTuple.index">[docs]</a>    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">wrap_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a list of wrap positions according to the current style setting.</span>
+<span class="sd">        Position &#39;n&#39; is after the nth comma.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">pos_str</span><span class="p">)</span> <span class="k">for</span> <span class="n">pos_str</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_style</span><span class="p">(</span>
+            <span class="s1">&#39;wrap_positions&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;()&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">pos_str</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ExprTuple.string"><a class="viewcode-back" href="../../../../../api/proveit.ExprTuple.html#proveit.ExprTuple.string">[docs]</a>    <span class="k">def</span> <span class="nf">string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExprTuple.latex"><a class="viewcode-back" href="../../../../../api/proveit.ExprTuple.html#proveit.ExprTuple.latex">[docs]</a>    <span class="k">def</span> <span class="nf">latex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="s1">&#39;latex&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExprTuple.formatted"><a class="viewcode-back" href="../../../../../api/proveit.ExprTuple.html#proveit.ExprTuple.formatted">[docs]</a>    <span class="k">def</span> <span class="nf">formatted</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">format_type</span><span class="p">,</span>
+            <span class="n">fence</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">sub_fence</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">operator_or_operators</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">implicit_first_operator</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">wrap_positions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">justification</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.expr_range</span> <span class="k">import</span> <span class="n">ExprRange</span>
+
+        <span class="n">out_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">fence</span><span class="p">:</span>
+            <span class="c1"># for an empty list, show the parenthesis to show something.</span>
+            <span class="k">return</span> <span class="s1">&#39;()&#39;</span>
+
+        <span class="k">if</span> <span class="n">wrap_positions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Convert from a convention where position &#39;n&#39; is after the nth comma to one in which the position &#39;2n&#39; is</span>
+            <span class="c1"># after the nth operator (which also allow for position before</span>
+            <span class="c1"># operators).</span>
+            <span class="n">wrap_positions</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pos</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_positions</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="n">justification</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">justification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_style</span><span class="p">(</span><span class="s1">&#39;justification&#39;</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+        <span class="n">do_wrapping</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrap_positions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">fence</span><span class="p">:</span>
+            <span class="n">out_str</span> <span class="o">=</span> <span class="s1">&#39;(&#39;</span> <span class="k">if</span> <span class="n">format_type</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span> <span class="k">else</span> <span class="sa">r</span><span class="s1">&#39;\left(&#39;</span>
+        <span class="k">if</span> <span class="n">do_wrapping</span> <span class="ow">and</span> <span class="n">format_type</span> <span class="o">==</span> <span class="s1">&#39;latex&#39;</span><span class="p">:</span>
+            <span class="n">out_str</span> <span class="o">+=</span> <span class="sa">r</span><span class="s1">&#39;\begin</span><span class="si">{array}</span><span class="s1">{</span><span class="si">%s</span><span class="s1">} &#39;</span> <span class="o">%</span> <span class="n">justification</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">formatted_sub_expressions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Track whether or not ExprRange operands are using</span>
+        <span class="c1"># &quot;explicit&quot; parameterization, becuase the operators must</span>
+        <span class="c1"># follow suit.</span>
+        <span class="n">using_explicit_parameterization</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sub_expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sub_expr</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">):</span>
+                <span class="c1"># Handle an ExprRange entry; here the &quot;sub-expressions&quot;</span>
+                <span class="c1"># are really ExprRange &quot;checkpoints&quot; (first, last, as</span>
+                <span class="c1"># well as the ExprRange body in the middle if using</span>
+                <span class="c1"># an &#39;explicit&#39; style for &#39;parameterization) as well as</span>
+                <span class="c1"># ellipses between the checkpoints..</span>
+                <span class="n">using_explicit_parameterization</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">sub_expr</span><span class="o">.</span><span class="n">_use_explicit_parameterization</span><span class="p">(</span><span class="n">format_type</span><span class="p">))</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sub_expr</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">):</span>
+                    <span class="n">_fence</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_fence</span> <span class="o">=</span> <span class="n">sub_fence</span>
+                <span class="n">formatted_sub_expressions</span> <span class="o">+=</span> <span class="n">sub_expr</span><span class="o">.</span><span class="n">_formatted_checkpoints</span><span class="p">(</span>
+                    <span class="n">format_type</span><span class="p">,</span> <span class="n">fence</span><span class="o">=</span><span class="n">_fence</span><span class="p">,</span> <span class="n">with_ellipses</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">operator</span><span class="o">=</span><span class="n">operator_or_operators</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sub_expr</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">):</span>
+                <span class="c1"># always fence nested expression lists</span>
+                <span class="n">formatted_sub_expressions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">sub_expr</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="n">format_type</span><span class="p">,</span> <span class="n">fence</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">formatted_sub_expressions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">sub_expr</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="n">format_type</span><span class="p">,</span> <span class="n">fence</span><span class="o">=</span><span class="n">sub_fence</span><span class="p">))</span>
+
+        <span class="c1"># put the formatted operator between each of formatted_sub_expressions</span>
+        <span class="k">for</span> <span class="n">wrap_position</span> <span class="ow">in</span> <span class="n">wrap_positions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">wrap_position</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># wrap after operand (before next operation)</span>
+                <span class="n">formatted_sub_expressions</span><span class="p">[(</span><span class="n">wrap_position</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="sa">r</span><span class="s1">&#39; </span><span class="se">\\</span><span class="s1"> &#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># wrap after operation (before next operand)</span>
+                <span class="n">formatted_sub_expressions</span><span class="p">[</span><span class="n">wrap_position</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39; </span><span class="se">\\</span><span class="s1"> &#39;</span> <span class="o">+</span> \
+                    <span class="n">formatted_sub_expressions</span><span class="p">[</span><span class="n">wrap_position</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">operator_or_operators</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">operator_or_operators</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operator_or_operators</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operator_or_operators</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">):</span>
+            <span class="n">operator_or_operators</span> <span class="o">=</span> <span class="n">operator_or_operators</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span>
+                <span class="n">format_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operator_or_operators</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># single operator</span>
+            <span class="n">formatted_operator</span> <span class="o">=</span> <span class="n">operator_or_operators</span>
+            <span class="k">if</span> <span class="n">operator_or_operators</span> <span class="o">==</span> <span class="s1">&#39;,&#39;</span><span class="p">:</span>
+                <span class="c1"># e.g.: a, b, c, d</span>
+                <span class="n">out_str</span> <span class="o">+=</span> <span class="p">(</span><span class="n">formatted_operator</span> <span class="o">+</span>
+                            <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">formatted_sub_expressions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># e.g.: a + b + c + d</span>
+                <span class="n">out_str</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">formatted_operator</span> <span class="o">+</span>
+                            <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">formatted_sub_expressions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># assume all different operators</span>
+            <span class="n">formatted_operators</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">operator</span> <span class="ow">in</span> <span class="n">operator_or_operators</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operator</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">):</span>
+                    <span class="c1"># Handle an ExprRange entry; here the &quot;operators&quot;</span>
+                    <span class="c1"># are really ExprRange &quot;checkpoints&quot; (first, last,</span>
+                    <span class="c1"># as well as the ExprRange body in the middle if</span>
+                    <span class="c1"># using an &#39;explicit&#39; style for &#39;parameterization&#39;).</span>
+                    <span class="c1"># For the &#39;ellipses&#39;, we will just use a</span>
+                    <span class="c1"># placeholder.</span>
+                    <span class="n">be_explicit</span> <span class="o">=</span> <span class="n">using_explicit_parameterization</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">formatted_operators</span> <span class="o">+=</span> <span class="n">operator</span><span class="o">.</span><span class="n">_formatted_checkpoints</span><span class="p">(</span>
+                        <span class="n">format_type</span><span class="p">,</span> <span class="n">fence</span><span class="o">=</span><span class="n">sub_fence</span><span class="p">,</span> <span class="n">ellipses</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                        <span class="n">use_explicit_parameterization</span><span class="o">=</span><span class="n">be_explicit</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">formatted_operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">formatted</span><span class="p">(</span><span class="n">format_type</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted_sub_expressions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted_operators</span><span class="p">):</span>
+                <span class="c1"># operator preceeds each operand</span>
+                <span class="k">if</span> <span class="n">implicit_first_operator</span><span class="p">:</span>
+                    <span class="c1"># first operator is implicit</span>
+                    <span class="n">out_str</span> <span class="o">=</span> <span class="n">formatted_sub_expressions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># no space after first operator</span>
+                    <span class="n">out_str</span> <span class="o">=</span> <span class="n">formatted_operators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> \
+                        <span class="n">formatted_sub_expressions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">out_str</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span>  <span class="c1"># space before next operator</span>
+                <span class="n">out_str</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">formatted_operator</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">formatted_operand</span> <span class="k">for</span> <span class="n">formatted_operator</span><span class="p">,</span>
+                                    <span class="n">formatted_operand</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">formatted_operators</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">formatted_sub_expressions</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted_sub_expressions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted_operators</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># operator between each operand</span>
+                <span class="n">out_str</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">formatted_operand</span> <span class="o">+</span>
+                    <span class="s1">&#39; &#39;</span> <span class="o">+</span>
+                    <span class="n">formatted_operator</span> <span class="k">for</span> <span class="n">formatted_operand</span><span class="p">,</span>
+                    <span class="n">formatted_operator</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                        <span class="n">formatted_sub_expressions</span><span class="p">,</span>
+                        <span class="n">formatted_operators</span><span class="p">))</span>
+                <span class="n">out_str</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">formatted_sub_expressions</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted_sub_expressions</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted_operators</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator ranges must be in correpsondence with operand ranges.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">do_wrapping</span> <span class="ow">and</span> <span class="n">format_type</span> <span class="o">==</span> <span class="s1">&#39;latex&#39;</span><span class="p">:</span>
+            <span class="n">out_str</span> <span class="o">+=</span> <span class="sa">r</span><span class="s1">&#39; \end</span><span class="si">{array}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="n">fence</span><span class="p">:</span>
+            <span class="n">out_str</span> <span class="o">+=</span> <span class="s1">&#39;)&#39;</span> <span class="k">if</span> <span class="n">format_type</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span> <span class="k">else</span> <span class="sa">r</span><span class="s1">&#39;\right)&#39;</span>
+
+        <span class="k">return</span> <span class="n">out_str</span></div>
+
+<div class="viewcode-block" id="ExprTuple.length"><a class="viewcode-back" href="../../../../../api/proveit.ExprTuple.html#proveit.ExprTuple.length">[docs]</a>    <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the proven length of this ExprTuple as an Expression.</span>
+<span class="sd">        This length includes the extent of all contained ranges.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">Len</span>
+        <span class="k">return</span> <span class="n">Len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">computed</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExprTuple.has_matching_ranges"><a class="viewcode-back" href="../../../../../api/proveit.ExprTuple.html#proveit.ExprTuple.has_matching_ranges">[docs]</a>    <span class="k">def</span> <span class="nf">has_matching_ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_tuple</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return True iff the `other_tuple` matches this ExprTuple</span>
+<span class="sd">        with respect to which entries are ExprRanges and, where they</span>
+<span class="sd">        are, the start and end indices of the ExprRanges match.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">composite_expression</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other_tuple</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">):</span>
+            <span class="n">other_tuple</span> <span class="o">=</span> <span class="n">composite_expression</span><span class="p">(</span><span class="n">other_tuple</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_tuple</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># don&#39;t have the same number of entries</span>
+        <span class="k">for</span> <span class="n">entry</span><span class="p">,</span> <span class="n">other_entry</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_tuple</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">)</span>
+                    <span class="o">!=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other_entry</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># range vs singular mismatch</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">start_index</span> <span class="o">!=</span> <span class="n">other_entry</span><span class="o">.</span><span class="n">start_index</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># start indices don&#39;t match</span>
+                <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">end_index</span> <span class="o">!=</span> <span class="n">other_entry</span><span class="o">.</span><span class="n">end_index</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># end indices don&#39;t match</span>
+        <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># everything matches.</span></div>
+
+    <span class="k">def</span> <span class="nf">_replaced</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repl_map</span><span class="p">,</span> <span class="n">allow_relabeling</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span>
+                  <span class="n">requirements</span><span class="p">,</span> <span class="n">equality_repl_requirements</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns this expression with sub-expressions replaced</span>
+<span class="sd">        according to the replacement map (repl_map) dictionary.</span>
+
+<span class="sd">        &#39;assumptions&#39; and &#39;requirements&#39; are used when an operator is</span>
+<span class="sd">        replaced by a Lambda map that has a range of parameters</span>
+<span class="sd">        (e.g., x_1, ..., x_n) such that the length of the parameters</span>
+<span class="sd">        and operands must be proven to be equal.  For more details,</span>
+<span class="sd">        see Operation._replaced, Lambda.apply, and ExprRange._replaced</span>
+<span class="sd">        (which is the sequence of calls involved).</span>
+
+<span class="sd">        For an ExprTuple, each entry is &#39;replaced&#39; independently.</span>
+<span class="sd">        For an entry that is an ExprRange, its &quot;replaced entries&quot; are</span>
+<span class="sd">        embedded as one or more entries of the ExprTuple.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.expr_range</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">repl_map</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span> <span class="ow">in</span> <span class="n">repl_map</span><span class="p">):</span>
+            <span class="c1"># The full expression is to be replaced.</span>
+            <span class="k">return</span> <span class="n">repl_map</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
+
+        <span class="n">subbed_exprs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">):</span>
+                <span class="c1"># ExprRange.replaced is a generator that yields items</span>
+                <span class="c1"># to be embedded into the tuple.</span>
+                <span class="n">subbed_exprs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">_replaced_entries</span><span class="p">(</span>
+                    <span class="n">repl_map</span><span class="p">,</span> <span class="n">allow_relabeling</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">,</span>
+                    <span class="n">requirements</span><span class="p">,</span> <span class="n">equality_repl_requirements</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">subbed_expr</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">replaced</span><span class="p">(</span><span class="n">repl_map</span><span class="p">,</span> <span class="n">allow_relabeling</span><span class="p">,</span>
+                                            <span class="n">assumptions</span><span class="p">,</span> <span class="n">requirements</span><span class="p">,</span>
+                                            <span class="n">equality_repl_requirements</span><span class="p">)</span>
+                <span class="n">subbed_exprs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subbed_expr</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_checked_make</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_core_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_style_data</span><span class="o">.</span><span class="n">styles</span><span class="p">),</span>
+            <span class="n">subbed_exprs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExprTuple.merger"><a class="viewcode-back" href="../../../../../api/proveit.ExprTuple.html#proveit.ExprTuple.merger">[docs]</a>    <span class="k">def</span> <span class="nf">merger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If this is an tuple of expressions that can be directly merged</span>
+<span class="sd">        together into a single ExprRange, return this proven</span>
+<span class="sd">        equivalence.  For example,</span>
+<span class="sd">        {j \in Natural, k-(j+1) \in Natural}</span>
+<span class="sd">        |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">proveit._core_.expression.lambda_expr</span> <span class="k">import</span> <span class="n">Lambda</span>
+        <span class="kn">from</span> <span class="nn">.expr_range</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="kn">from</span> <span class="nn">proveit.relation</span> <span class="k">import</span> <span class="n">TransRelUpdater</span>
+        <span class="kn">from</span> <span class="nn">proveit.core_expr_types.tuples._theorems_</span> <span class="k">import</span> <span class="p">(</span>
+            <span class="n">merge</span><span class="p">,</span> <span class="n">merge_front</span><span class="p">,</span> <span class="n">merge_back</span><span class="p">,</span> <span class="n">merge_extension</span><span class="p">,</span>
+            <span class="n">merge_pair</span><span class="p">,</span> <span class="n">merge_series</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">proveit._common_</span> <span class="k">import</span> <span class="n">f</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">x</span>
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">one</span>
+
+        <span class="c1"># A convenience to allow successive update to the equation via</span>
+        <span class="c1"># transitivities (starting with self=self).</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="n">TransRelUpdater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assumptions</span><span class="p">)</span>
+
+        <span class="c1"># Determine the position of the first ExprRange item and get the</span>
+        <span class="c1"># lambda map.</span>
+        <span class="n">first_range_pos</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lambda_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">_k</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">):</span>
+                <span class="n">lambda_map</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">parameter</span><span class="p">,</span>
+                                    <span class="n">item</span><span class="o">.</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+                <span class="n">first_range_pos</span> <span class="o">=</span> <span class="n">_k</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="n">first_range_pos</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lambda_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Means of extracting a lambda &quot;</span>
+                                          <span class="s2">&quot;map has not been implemented&quot;</span><span class="p">)</span>
+                <span class="k">pass</span>  <span class="c1"># need the lambda map</span>
+            <span class="c1"># Collapse singular items at the beginning.</span>
+            <span class="n">front_singles</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[:</span><span class="n">first_range_pos</span><span class="p">])</span>
+            <span class="n">i_sub</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">extract_argument</span><span class="p">(</span><span class="n">front_singles</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">j_sub</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">extract_argument</span><span class="p">(</span><span class="n">front_singles</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">front_singles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># Merge a pair of singular items.</span>
+                <span class="n">front_merger</span> <span class="o">=</span> <span class="n">merge_pair</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">i_sub</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="n">j_sub</span><span class="p">},</span>
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Merge a series of singular items in one shot.</span>
+                <span class="n">front_merger</span> <span class="o">=</span> <span class="n">merge_series</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">front_singles</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">i_sub</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="n">j_sub</span><span class="p">},</span>
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">front_merger</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">inner_expr</span><span class="p">()[</span>
+                        <span class="p">:</span><span class="n">first_range_pos</span><span class="p">],</span>
+                    <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># We have accomplished a merger down to one item.</span>
+            <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Merge a pair.</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">):</span>
+                    <span class="c1"># Merge a pair of ExprRanges.</span>
+                    <span class="n">item</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">other_lambda_map</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">parameter</span><span class="p">,</span>
+                                              <span class="n">item</span><span class="o">.</span><span class="n">lambda_map</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">other_lambda_map</span> <span class="o">!=</span> <span class="n">lambda_map</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">ExprTupleError</span><span class="p">(</span>
+                            <span class="s2">&quot;Cannot merge together ExprRanges &quot;</span>
+                            <span class="s2">&quot;with different lambda maps: </span><span class="si">%s</span><span class="s2"> vs </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                            <span class="p">(</span><span class="n">lambda_map</span><span class="p">,</span> <span class="n">other_lambda_map</span><span class="p">))</span>
+                    <span class="n">_i</span><span class="p">,</span> <span class="n">_j</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">end_index</span>
+                    <span class="n">_k</span><span class="p">,</span> <span class="n">_l</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end_index</span>
+                    <span class="n">merger</span> <span class="o">=</span> \
+                        <span class="n">merge</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">f</span><span class="p">:</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">_i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="n">_j</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">_k</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="n">_l</span><span class="p">},</span>
+                                          <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Merge an ExprRange and a singular item.</span>
+                    <span class="n">_i</span><span class="p">,</span> <span class="n">_j</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">end_index</span>
+                    <span class="n">_k</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">extract_argument</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">_k</span> <span class="o">==</span> <span class="n">Add</span><span class="p">(</span><span class="n">_j</span><span class="p">,</span> <span class="n">one</span><span class="p">):</span>
+                        <span class="n">merger</span> <span class="o">=</span> <span class="n">merge_extension</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                            <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">_i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="n">_j</span><span class="p">},</span>
+                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">merger</span> <span class="o">=</span> <span class="n">merge_back</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span>
+                            <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">_i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="n">_j</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">_k</span><span class="p">},</span>
+                            <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Merge a singular item and ExprRange.</span>
+                <span class="n">i_sub</span> <span class="o">=</span> <span class="n">lambda_map</span><span class="o">.</span><span class="n">extract_argument</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">j_sub</span><span class="p">,</span> <span class="n">k_sub</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span> <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end_index</span>
+                <span class="n">merger</span> <span class="o">=</span> \
+                    <span class="n">merge_front</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">f</span><span class="p">:</span> <span class="n">lambda_map</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">i_sub</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="n">j_sub</span><span class="p">,</span>
+                                             <span class="n">k</span><span class="p">:</span> <span class="n">k_sub</span><span class="p">},</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">merger</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span>
+
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">front_merger</span> <span class="o">=</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">merger</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)</span>
+            <span class="n">eq</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">front_merger</span><span class="o">.</span><span class="n">substitution</span><span class="p">(</span>
+                <span class="n">eq</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">inner_expr</span><span class="p">(</span><span class="n">assumptions</span><span class="p">)[:</span><span class="mi">2</span><span class="p">],</span>
+                <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">eq</span><span class="o">.</span><span class="n">relation</span></div>
+
+    <span class="k">def</span> <span class="nf">deduce_equality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">equality</span><span class="p">,</span> <span class="n">assumptions</span><span class="o">=</span><span class="n">USE_DEFAULTS</span><span class="p">,</span>
+                        <span class="n">minimal_automation</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span>
+        <span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">equality</span><span class="p">,</span> <span class="n">Equals</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The &#39;equality&#39; should be an Equals expression&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">equality</span><span class="o">.</span><span class="n">lhs</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The left side of &#39;equality&#39; should be &#39;self&#39;&quot;</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">num</span><span class="p">,</span> <span class="n">one</span>
+
+        <span class="c1"># Handle the special counting cases.  For example,</span>
+        <span class="c1">#   (1, 2, 3, 4) = (1, ..., 4)</span>
+        <span class="n">_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">_k</span><span class="p">]</span> <span class="o">==</span> <span class="n">num</span><span class="p">(</span><span class="n">_k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_n</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">equality</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">equality</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+                    <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">equality</span><span class="o">.</span><span class="n">rhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ExprRange</span><span class="p">)):</span>
+                <span class="n">expr_range</span> <span class="o">=</span> <span class="n">equality</span><span class="o">.</span><span class="n">rhs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">expr_range</span><span class="o">.</span><span class="n">start_index</span> <span class="o">==</span> <span class="n">one</span> <span class="ow">and</span>
+                        <span class="n">expr_range</span><span class="o">.</span><span class="n">end_index</span> <span class="o">==</span> <span class="n">num</span><span class="p">(</span><span class="n">_n</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;counting range equality &quot;</span>
+                                                  <span class="s2">&quot;not implemented for more &quot;</span>
+                                                  <span class="s2">&quot;then 10 elements&quot;</span><span class="p">)</span>
+                    <span class="kn">import</span> <span class="nn">proveit.numbers.numerals.decimals</span>
+                    <span class="n">equiv_thm</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">numbers</span><span class="o">.</span><span class="n">numerals</span><span class="o">.</span><span class="n">decimals</span><span class="o">.</span><span class="n">_theorems_</span>\
+                        <span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="s1">&#39;count_to_</span><span class="si">%d</span><span class="s1">_range&#39;</span> <span class="o">%</span> <span class="n">_n</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">equiv_thm</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;ExprTuple.deduce_equality not implemented &quot;</span>
+                                  <span class="s2">&quot;for this case: </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="p">)</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    TODO: change register_equivalence_method to allow and fascilitate these</span>
+<span class="sd">    method stubs for purposes of generating useful documentation.</span>
+
+<span class="sd">    def merged(self, assumptions=USE_DEFAULTS):</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        Return the right-hand-side of a &#39;merger&#39;.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        raise Exception(&quot;Should be implemented via InnerExpr.register_equivalence_method&quot;)</span>
+
+<span class="sd">    def merge(self, assumptions=USE_DEFAULTS):</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        As an InnerExpr method when the inner expression is an ExprTuple,</span>
+<span class="sd">        return the expression with the inner expression replaced by its</span>
+<span class="sd">        &#39;merged&#39; version.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        raise Exception(&quot;Implemented via InnerExpr.register_equivalence_method &quot;</span>
+<span class="sd">                        &quot;only to be applied to an InnerExpr object.&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="extract_var_tuple_indices"><a class="viewcode-back" href="../../../../../api/proveit.extract_var_tuple_indices.html#proveit.extract_var_tuple_indices">[docs]</a><span class="k">def</span> <span class="nf">extract_var_tuple_indices</span><span class="p">(</span><span class="n">indexed_var_tuple</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given an ExprTuple of only IndexedVar and ExprRange entries, returns</span>
+<span class="sd">    an ExprTuple of just the corresponding indices (including ranges of</span>
+<span class="sd">    indices and nested ranges of indices).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">IndexedVar</span><span class="p">,</span> <span class="n">ExprRange</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">indexed_var_tuple</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;indexed_var_tuple&#39; must be an ExprTuple&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">indexed_var_tuple</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">):</span>
+            <span class="n">entry_indices</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">indices</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry_indices</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">):</span>
+            <span class="n">inner_indices</span> <span class="o">=</span> <span class="n">extract_var_tuple_indices</span><span class="p">(</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">inner_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">inner_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">parameter</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span>
+                                     <span class="n">entry</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">end_index</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;var_range&#39; must be an ExprTuple only of &quot;</span>
+                            <span class="s2">&quot;IndexedVar or (nested) ExprRange entries.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="o">*</span><span class="n">indices</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExprTupleError"><a class="viewcode-back" href="../../../../../api/proveit.ExprTupleError.html#proveit.ExprTupleError">[docs]</a><span class="k">class</span> <span class="nc">ExprTupleError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span></div>
+
+
+<span class="k">class</span> <span class="nc">ConvertToMapError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extra_msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra_msg</span> <span class="o">=</span> <span class="n">extra_msg</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;The indices must be in correspondence with ExprTuple items &quot;</span>
+                <span class="s2">&quot;when performing ExprTuple.convert_to_map: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">extr_msg</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">Prove-It</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expression.html">as_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.as_expressions.html">as_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.attempt_to_simplify.html">attempt_to_simplify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.bundle.html">bundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.composite_expression.html">composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.expression_depth.html">expression_depth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.extract_var_tuple_indices.html">extract_var_tuple_indices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.free_vars.html">free_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced.html">maybe_fenced</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_latex.html">maybe_fenced_latex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.maybe_fenced_string.html">maybe_fenced_string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.possibly_free_var_ranges.html">possibly_free_var_ranges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.reset.html">reset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_default_or_dummy_var.html">safe_default_or_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_var.html">safe_dummy_var</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.safe_dummy_vars.html">safe_dummy_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.single_or_composite_expression.html">single_or_composite_expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.traverse_inner_expressions.html">traverse_inner_expressions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.unbundle.html">unbundle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.used_vars.html">used_vars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.var_range.html">var_range</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ArgumentExtractionError.html">ArgumentExtractionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Assumption.html">Assumption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Axiom.html">Axiom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Composite.html">Composite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Conditional.html">Conditional</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ConditionalSet.html">ConditionalSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Deduction.html">Deduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DisallowedParameterRelabeling.html">DisallowedParameterRelabeling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.DuplicateLiteralError.html">DuplicateLiteralError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprArray.html">ExprArray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprRange.html">ExprRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTuple.html">ExprTuple</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ExprTupleError.html">ExprTupleError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Expression.html">Expression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Function.html">Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Generalization.html">Generalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.GeneralizationFailure.html">GeneralizationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ImproperReplacement.html">ImproperReplacement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.IndexedVar.html">IndexedVar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InnerExpr.html">InnerExpr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Instantiation.html">Instantiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InstantiationFailure.html">InstantiationFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.InvalidAssumptions.html">InvalidAssumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Judgment.html">Judgment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Label.html">Label</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Lambda.html">Lambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.LambdaApplicationError.html">LambdaApplicationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Literal.html">Literal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.MakeNotImplemented.html">MakeNotImplemented</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonens.html">ModusPonens</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ModusPonensFailure.html">ModusPonensFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.NamedExprs.html">NamedExprs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationError.html">OperationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationOverInstances.html">OperationOverInstances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.OperationSequence.html">OperationSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ParameterCollisionError.html">ParameterCollisionError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Proof.html">Proof</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.ProofFailure.html">ProofFailure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.RangeInstanceError.html">RangeInstanceError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.StyleOptions.html">StyleOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theorem.html">Theorem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TheoryException.html">TheoryException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransRelUpdater.html">TransRelUpdater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveRelation.html">TransitiveRelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitiveSequence.html">TransitiveSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.TransitivityException.html">TransitivityException</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.Variable.html">Variable</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.core_expr_types.Len.html">Len</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.compose.html">compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.conclude_via_implication.html">conclude_via_implication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.default_simplification.html">default_simplification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.evaluate_truth.html">evaluate_truth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.in_bool.html">in_bool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.is_irreducible_value.html">is_irreducible_value</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.reduce_operands.html">reduce_operands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.And.html">And</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.BooleanSet.html">BooleanSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Card.html">Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Difference.html">Difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Disjoint.html">Disjoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Distinct.html">Distinct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Equals.html">Equals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.EvaluationError.html">EvaluationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Exists.html">Exists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.FalseLiteral.html">FalseLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Forall.html">Forall</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Iff.html">Iff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Implies.html">Implies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.InSet.html">InSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Intersect.html">Intersect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IntersectAll.html">IntersectAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.IrreducibleValue.html">IrreducibleValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Membership.html">Membership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Nonmembership.html">Nonmembership</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Not.html">Not</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotEquals.html">NotEquals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotExists.html">NotExists</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotInSet.html">NotInSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSubset.html">NotProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotProperSuperset.html">NotProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSubsetEq.html">NotSubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.NotSupersetEq.html">NotSupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Or.html">Or</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.PowerSet.html">PowerSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSubset.html">ProperSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.ProperSuperset.html">ProperSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Set.html">Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetEquiv.html">SetEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetNotEquiv.html">SetNotEquiv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SetOfAll.html">SetOfAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SimplificationError.html">SimplificationError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSubset.html">StrictSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.StrictSuperset.html">StrictSuperset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetEq.html">SubsetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SubsetProper.html">SubsetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetEq.html">SupersetEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.SupersetProper.html">SupersetProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.TrueLiteral.html">TrueLiteral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.Union.html">Union</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.logic.UnionAll.html">UnionAll</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEqOnlySeq.html">GreaterEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterOnlySeq.html">GreaterOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEqOnlySeq.html">LessEqOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessOnlySeq.html">LessOnlySeq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_composition.html">const_shift_composition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.const_shift_decomposition.html">const_shift_decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_add.html">dist_add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.dist_subtract.html">dist_subtract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.frac.html">frac</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.greater_sequence.html">greater_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.is_literal_int.html">is_literal_int</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.lesser_sequence.html">lesser_sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.num.html">num</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.sqrt.html">sqrt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.subtract.html">subtract</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Abs.html">Abs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Add.html">Add</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Ceil.html">Ceil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DecimalSequence.html">DecimalSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Div.html">Div</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Divides.html">Divides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.DividesProper.html">DividesProper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Exp.html">Exp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Floor.html">Floor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GCD.html">GCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Greater.html">Greater</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterEq.html">GreaterEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.GreaterSequence.html">GreaterSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Integrate.html">Integrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Interval.html">Interval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCC.html">IntervalCC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalCO.html">IntervalCO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOC.html">IntervalOC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.IntervalOO.html">IntervalOO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Less.html">Less</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LessEq.html">LessEq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.LesserSequence.html">LesserSequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Max.html">Max</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Min.html">Min</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mod.html">Mod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.ModAbs.html">ModAbs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Mult.html">Mult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Neg.html">Neg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Numeral.html">Numeral</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Prod.html">Prod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.RealInterval.html">RealInterval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Round.html">Round</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/proveit.numbers.Sum.html">Sum</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../../index.html">Module code</a><ul>
+  <li><a href="../../../../proveit.html">proveit</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Wayne Witzel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

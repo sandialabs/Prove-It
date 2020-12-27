@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theory of proveit.numbers.addition</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theory-of-proveit.numbers.addition">Theory of <a class="ProveItLink" href="../../_theory_.html">proveit</a>.<a class="ProveItLink" href="../_theory_.html">numbers</a>.addition<a class="anchor-link" href="#Theory-of-proveit.numbers.addition">&#182;</a></h1><p>Provide description here.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Local content of this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="_common_.html">common expressions</a></th>
+<th><a class="ProveItLink" href="_axioms_.html">axioms</a></th>
+<th><a class="ProveItLink" href="_theorems_.html">theorems</a></th>
+<th><a class="ProveItLink" href="_demonstrations_.html">demonstrations</a></th>
+</tr></table>
+<h3>Sub-theories</h3>
+<table>
+<tr><th><a class="ProveItLink" href="subtraction/_theory_.html">subtraction</a></th><td>Subtraction is internally represented as addition of negated operands.</td></tr>
+</table>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Axioms contained within this theory and its descendents</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#nat_plus_zero">proveit.numbers.addition.nat_plus_zero</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/61991a7990cde29e02d00a23ddfb53adc630f4210/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKkAAAAUBAMAAAAErwC3AAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAAkRJREFU
+OMudVT9oE1Ec/pq7a5L71w7iIAiH/zYh6CYRUkQ6CZks4tCj6OAicdBFhxsviHCTdbOlQ0sQL9RB
+CoKHxSWCBEFQQclgBRUOcZLUwd+795Lm7t5V8YMPLu/9ft97v38vwH6o9jmlMAL5+hZxwD4+Fjhu
+COZgnnwJXJM7TdNpr9jHtwLVr4I5fMd6gMdyJ50u+oAF6sn3rRrnHjbFxizMAUxH7vYCsFconq58
+uxxw5lQrLowh9Fm52yod2+t0lgsSsCyYU51xoe4Cn+VudgP45ft3ClSPClbrpw6lVMMa1J/Adq5n
+EkOTknYVaBeo3hOcC+wfKdWHETRS/ZS0Q5wgST83tKhc55KijbFQb5QOiu/bnPphKF5atQbtN/A0
+W31uaLSoHCiN+lx/drpveD2cEb8PcCpDlFm5X8fxjTj+speBxYyqMNTovma/PFp9t9WB8UZBlFad
+8hA2s9UydvOqwpCpVgcXaWHtxA5Ulhvj8iUnSmcgjPA801kerCEwP5FXF2NDlTKA9hWK/aY2hJ1M
+d7P3NkpXK+ziuhj61BTwak1AGLJq4QlJKzWthTWuapqjcdrmrDjWLTN1V4pglUKtZ1SFocJuNUMJ
+nuqWXCz4vu8YzWq/JazmOfWl4/ePpVUfHaGGxE62B7ihzYpg0cyGQeXDyjS/K847f5tYIdKSt/n6
+uHrB4gWYyRkNWFHh69JJPYfFrwuHurR5FrjLIqbhdkfLbRQPHvZ7CSdRorz+26s9PlOCSgD8/z+M
+VeD9HvgDq/mqEfw798MAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#nat_plus_successor">proveit.numbers.addition.nat_plus_successor</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/2afeddb0f64c3326cd7e9aa4f293a1eeeb2a396d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAU4AAAAVBAMAAADbQxraAAAAMFBMVEX///8QEBCIiIhmZma6urrM
+zMxUVFQiIiJERETc3Nzu7u6qqqp2dnaYmJgyMjIAAAAcRTyBAAAAAXRSTlMAQObYZgAAA/BJREFU
+SMfNV01oE0EUfvlp026yiYfiT0GNVnsSDAoiWjUi4kmsF0U8GIseBH+qoFDrIeolQYSAoF4KK4W2
+9GBiPUhBMLSgUFGCIlpBDbRWrBBLUdBUxfdmZ9udndm1ggcHJrv7vnnffPPmzU8A/ly6sNaXVIja
+ChDO4c+gS/su8HCSyiBHyvTxxkumlsafPiXUB9rFdhVwDGttTtGe00nAIu4kFcaCyGP6mPTSGaWW
+H5UQWqMJp/GOAXCbBJVV7U06qYyB6SRGuJGzIHKTpiPtpfM5Vl1QM8CfZI0VLNK4Gf3jp1BnhD6G
+nEyM5bmgJM5fZoA72fh7HlY5CyJRYi146ezAGsqpdJJ1j+Hs8h1atAX4csvJxFg6VDqDpIg5CXGo
+chZE9JH+/hteMuspAcUWFg9ZH4FKJ4zTDCcdVDcsOklnhFnHVToZCyLfMpkLXjr9NFlN1EPLukaR
+h6wTKzerdA5T587UbbLorg2vMASnaFtTwXSSdDIWRI4CZC2iYEXWWUd7yVWs23PRKZEHrdovI59T
+6HxL3bCF9LRCZYy3Z3TBJfBZHFx+UvtuOkk6GQsiO+wL0xrR/pakfyFPKkreTlS0FAJpkQet4SrE
+4gqd98ji3LI6Od2tEmwUdT4wYNp0knQyFkRC4J/brT9R0t5fXwqnR2CTafJRfjQABKoQipvxOV2p
+TAC3liFfxMmpVD4sq1RSszoPYa2Zcuhs4HTbDDgDgtNW0H6YTnZ+ppOxIBIpheaYMPjwarAfws8C
+UBR1+tKQbxXH28C2zz0FRTw9dS4G7asYzzEIznCdznhaOuvL+/Clu/k92aabjSDlbfjggXhRnHcM
+2wOQ5j1WoujIOndRtrfP5eeEbd4xdOEpUedPmi7mJOlkLIRkj+Bcn60hm/+8PxFl/q0jL4riOsoX
+4CQ/gm3rKJbEvPVcR7bC15E2A7XlQcHpC+Ws9zqCuyg4kKgh2XVxvdxt6oxYu4q1LyB2LiLyoLW2
+VJdw6FxLOluwBooOndZmdQlepoqC0wm4zJ3s/P6qxUIIrVdfwZ9iyRNI7c9kMvFwa32Jr1Yr7lrb
+6uurRB6yrnvi2LI3LB/D0FAWRVsdOq1k6Fl5oC0pOHWvoVl7L+oMHP61hbMQouP487m61/iIGb5C
+rRlP2Bmf17kpH9XslKfB9c7/3JxzsvOz0mtHfLlDu+GmETJeQYT060nQi673kH77vWK2F8P2Md97
+iOxk52dlyI4E2wa2wN5CzXEUd4VmCA/UlHUgURSyyjM163bYutzrshadq5N8+y3LiLkR+jE/531P
+dikuglzvye6jVkQpnPtX/zt0Yhr9y/8durL7URnR4f8tvwHbO1Ftf+A8HwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#empty_addition">proveit.numbers.addition.empty_addition</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/8dfa7b9348ee9b91f78b6a279540b5f290df5ca90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFMAAAAUBAMAAAADwRznAAAAMFBMVEX///9mZmZERETc3NyYmJju
+7u5UVFQQEBCqqqoiIiK6urp2dnbMzMwyMjKIiIgAAABfEwHCAAAAAXRSTlMAQObYZgAAAPlJREFU
+KM9jeHuHAQp8Z4EpE4ZmBuxgFxqTVYGBzQBD1T7vA5hKeQ0YWC+gq+RtYJ0Mled4AFfqCDIDXak7
+A8NeTKVA3Qzh6ErVGBj6A9CVMk8A2bcATek3Bob1DehK+QSABLcAqkrWj0ClD9CVMjkACRawv/be
+BYGLIKt+MzCcx1DK2QDiTkA1lRlo6vkNQHnuu3dv1t69mwBWyg5yJs8HYhyAVSnIW/0NWB3ANQHh
+1msgphIDg38AHm8RigJwODFuQFPK2cBag6EUbDfvATSlrPueHcAesZF4EiFrAP7kgj29MmFLhDiT
+NpMBdqUv4RnmLSzDOGNXCQBwgGgEy/YizQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="_axioms_.html#multi_addition_def">proveit.numbers.addition.multi_addition_def</a></dt><dd><a class="ProveItLink" href="__pv_it/axioms/f634cb85563e75219d2bc122a762466e0d0e3d6f0/expr.html"><img src="data:image/png;base64,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
+Hx5ypBkvAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h4>proveit.numbers.addition.subtraction</h4>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+This sub-theory contains no axioms.
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

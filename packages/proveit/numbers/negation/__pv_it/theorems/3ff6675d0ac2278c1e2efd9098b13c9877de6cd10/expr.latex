@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{x_{1}, \ldots, x_{n} \in \mathbb{C}}~\left(\left(-\left(x_{1} + \ldots + x_{n}\right)\right) = \left(\left(-x_{1}\right) + \ldots + \left(-x_{n}\right)\right)\right) \textrm{ if } n \in \mathbb{N}^+\right..

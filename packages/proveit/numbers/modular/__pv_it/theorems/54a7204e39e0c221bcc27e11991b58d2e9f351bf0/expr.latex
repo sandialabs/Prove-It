@@ -1,0 +1,1 @@
+\forall_{a, b, c \in \mathbb{R}}~\left(\left(a \cdot \left|b\right|_{\textup{mod}\thinspace c}\right) = \left|a \cdot b\right|_{\textup{mod}\thinspace a \cdot c}\right)

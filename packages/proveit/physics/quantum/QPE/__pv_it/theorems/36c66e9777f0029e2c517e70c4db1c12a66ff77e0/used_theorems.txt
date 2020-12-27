@@ -1,0 +1,4 @@
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.exponentiation.exp_nat_closure
+proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
+proveit.numbers.numerals.decimals.posnat2

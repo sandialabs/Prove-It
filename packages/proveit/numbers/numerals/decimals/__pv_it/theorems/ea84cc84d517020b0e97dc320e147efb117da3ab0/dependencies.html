@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorem Dependencies</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorem-Dependencies">Theorem Dependencies<a class="anchor-link" href="#Theorem-Dependencies">&#182;</a></h1><h2 id="proveit.numbers.numerals.decimals.nat2"><a class="ProveItLink" href="../../../_theory_nbs_/theory.html">proveit.numbers.numerals.decimals</a>.<a class="ProveItLink" href="../../../_theorems_.html#nat2">nat2</a><a class="anchor-link" href="#proveit.numbers.numerals.decimals.nat2">&#182;</a></h2><p><strong><em>see <a class="ProveItLink" href="../../../_theory_nbs_/proofs/nat2/thm_proof.html">proof</a></em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when querying dependencies:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Makes files smaller.</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.numerals.decimals</span> <span class="k">import</span> <span class="n">nat2</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">dependencies</span> nat2
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Axioms required (directly or indirectly) to prove nat2</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dl>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../logic/booleans/_theory_nbs_/axioms.html#eq_true_elim">proveit.logic.booleans.eq_true_elim</a></dt><dd><a class="ProveItLink" href="../../../../../../logic/booleans/__pv_it/axioms/05a6b4904cc64664b923b0e52c73af64907ac3af0/expr.html"><img src="../../../../../../logic/booleans/__pv_it/axioms/05a6b4904cc64664b923b0e52c73af64907ac3af0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../logic/booleans/_theory_nbs_/axioms.html#eq_true_intro">proveit.logic.booleans.eq_true_intro</a></dt><dd><a class="ProveItLink" href="../../../../../../logic/booleans/__pv_it/axioms/654339f5fb5a65119fa860e26cec5f77107afe860/expr.html"><img src="../../../../../../logic/booleans/__pv_it/axioms/654339f5fb5a65119fa860e26cec5f77107afe860/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../logic/equality/_theory_nbs_/axioms.html#equals_transitivity">proveit.logic.equality.equals_transitivity</a></dt><dd><a class="ProveItLink" href="../../../../../../logic/equality/__pv_it/axioms/f827123c5f21af6ab6d517e6d3247a9ee44c13460/expr.html"><img src="../../../../../../logic/equality/__pv_it/axioms/f827123c5f21af6ab6d517e6d3247a9ee44c13460/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../logic/equality/_theory_nbs_/axioms.html#substitution">proveit.logic.equality.substitution</a></dt><dd><a class="ProveItLink" href="../../../../../../logic/equality/__pv_it/axioms/326b89aaf9a595f74daee801075977039365c5540/expr.html"><img src="../../../../../../logic/equality/__pv_it/axioms/326b89aaf9a595f74daee801075977039365c5540/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../number_sets/natural_numbers/_theory_nbs_/axioms.html#successor_in_nats">proveit.numbers.number_sets.natural_numbers.successor_in_nats</a></dt><dd><a class="ProveItLink" href="../../../../../number_sets/natural_numbers/__pv_it/axioms/f3a49da770e4d222eaa27aba165c392838336ed70/expr.html"><img src="../../../../../number_sets/natural_numbers/__pv_it/axioms/f3a49da770e4d222eaa27aba165c392838336ed70/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../number_sets/natural_numbers/_theory_nbs_/axioms.html#zero_in_nats">proveit.numbers.number_sets.natural_numbers.zero_in_nats</a></dt><dd><a class="ProveItLink" href="../../../../../number_sets/natural_numbers/__pv_it/axioms/41585b68a7dd1d513f84c532999561d9671aca5e0/expr.html"><img src="../../../../../number_sets/natural_numbers/__pv_it/axioms/41585b68a7dd1d513f84c532999561d9671aca5e0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../_theory_nbs_/axioms.html#one_def">proveit.numbers.numerals.decimals.one_def</a></dt><dd><a class="ProveItLink" href="../../axioms/58fe78e5dae28e9d8f11281c875767fa467140140/expr.html"><img src="../../axioms/58fe78e5dae28e9d8f11281c875767fa467140140/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../_theory_nbs_/axioms.html#two_def">proveit.numbers.numerals.decimals.two_def</a></dt><dd><a class="ProveItLink" href="../../axioms/0d4f8d6aafbb1763372638950331fcf1bcff5f0b0/expr.html"><img src="../../axioms/0d4f8d6aafbb1763372638950331fcf1bcff5f0b0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+</dl>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Theorems/conjectures that depend directly on nat2</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dl>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../logic/booleans/_theory_nbs_/proofs/fold_is_bool/thm_proof.html">proveit.logic.booleans.fold_is_bool</a></dt><dd><a class="ProveItLink" href="../../../../../../logic/booleans/__pv_it/theorems/66ee3da68980508fb28ff4bb1ff9eb259adbbb280/expr.html"><img src="../../../../../../logic/booleans/__pv_it/theorems/66ee3da68980508fb28ff4bb1ff9eb259adbbb280/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../logic/booleans/implication/_theory_nbs_/proofs/eq_from_iff/thm_proof.html">proveit.logic.booleans.implication.eq_from_iff</a></dt><dd><a class="ProveItLink" href="../../../../../../logic/booleans/implication/__pv_it/theorems/69f21aff9036999a8b150f9521873ad4e7bb75740/expr.html"><img src="../../../../../../logic/booleans/implication/__pv_it/theorems/69f21aff9036999a8b150f9521873ad4e7bb75740/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../logic/booleans/_theory_nbs_/proofs/in_bool_def/thm_proof.html">proveit.logic.booleans.in_bool_def</a></dt><dd><a class="ProveItLink" href="../../../../../../logic/booleans/__pv_it/theorems/559b827ebfc7bf227a6df8a9c299bc1ccf0cb3fe0/expr.html"><img src="../../../../../../logic/booleans/__pv_it/theorems/559b827ebfc7bf227a6df8a9c299bc1ccf0cb3fe0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../logic/booleans/_theory_nbs_/proofs/unfold_is_bool_explicit/thm_proof.html">proveit.logic.booleans.unfold_is_bool_explicit</a></dt><dd><a class="ProveItLink" href="../../../../../../logic/booleans/__pv_it/theorems/b348c96b6dbd5f639b48426b92efd9c9a5c1ecc80/expr.html"><img src="../../../../../../logic/booleans/__pv_it/theorems/b348c96b6dbd5f639b48426b92efd9c9a5c1ecc80/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../exponentiation/_theory_nbs_/proofs/sqrt2_is_not_rational/thm_proof.html">proveit.numbers.exponentiation.sqrt2_is_not_rational</a></dt><dd><a class="ProveItLink" href="../../../../../exponentiation/__pv_it/theorems/7fae0196da015b8256d13b37a10b8319c493434a0/expr.html"><img src="../../../../../exponentiation/__pv_it/theorems/7fae0196da015b8256d13b37a10b8319c493434a0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../_theory_nbs_/proofs/tuple_len_3/thm_proof.html">proveit.numbers.numerals.decimals.tuple_len_3</a></dt><dd><a class="ProveItLink" href="../bab14b35ba4be3b2ce0267766eff11c90f0a363c0/expr.html"><img src="../bab14b35ba4be3b2ce0267766eff11c90f0a363c0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../../physics/quantum/QPE/_theory_nbs_/proofs/two_pow_t_not_zero/thm_proof.html">proveit.physics.quantum.QPE.two_pow_t_not_zero</a></dt><dd><a class="ProveItLink" href="../../../../../../physics/quantum/QPE/__pv_it/theorems/fb512b73917f83a46c3fe07daada230234c7c4de0/expr.html"><img src="../../../../../../physics/quantum/QPE/__pv_it/theorems/fb512b73917f83a46c3fe07daada230234c7c4de0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+</dl>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2020-12-27 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

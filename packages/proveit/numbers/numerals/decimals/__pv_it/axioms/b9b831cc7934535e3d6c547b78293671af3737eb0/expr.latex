@@ -1,0 +1,1 @@
+\left(n \in \mathbb{N}^{\leq 9}\right) = \left(\left(n \in \mathbb{N}\right) \land \left(n \leq 9\right)\right)

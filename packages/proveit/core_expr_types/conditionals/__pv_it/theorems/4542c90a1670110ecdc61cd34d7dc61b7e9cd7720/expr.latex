@@ -1,0 +1,1 @@
+\left(a \textrm{ if } Q_{1} \land \ldots \land Q_{m} ,  R, a \textrm{ if } Q_{1} ,  \ldots ,  Q_{m} ,  R\right)
