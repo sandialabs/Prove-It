@@ -56,7 +56,7 @@ class Set(Operation):
             "May only call the prove_by_cases method of the enumerated "
             "Set class using a Forall (universally quantified) expression "
             "as the first argument.")
-        assert(len(forall_stmt.conditions) >= 1), (
+        assert(forall_stmt.conditions.num_entries() >= 1), (
             "When calling the prove_by_cases method of the enumerated "
             "Set class, the Forall argument should have (at least) "
             "a domain condition matching the enumerated Set.")
@@ -69,9 +69,9 @@ class Set(Operation):
             "specify the domain using an InSet expression as the first "
             "of the conditions you specify.")
 
-        if (len(forall_stmt.conditions) > 1):
+        if (forall_stmt.conditions.num_entries() > 1):
             from . import true_for_each_then_true_for_all_conditioned
-            if len(forall_stmt.conditions) == 2:
+            if forall_stmt.conditions.is_double():
                 # Note that when a Forall expression is created, if the
                 # domain was defined separately using the domain=
                 # notation, the InSet() domain expression then appears
@@ -83,7 +83,7 @@ class Set(Operation):
                 condition = And(*forall_stmt.conditions[1:])
 
             # Cardinality of the domain:
-            n_sub = forall_stmt.domain.operands.length(assumptions)
+            n_sub = forall_stmt.domain.operands.num_elements(assumptions)
 
             # Domain elements to substitute
             # Notice the n_sub is already a Numeral and not an int
@@ -113,7 +113,7 @@ class Set(Operation):
             # is the domain specification
 
             # Cardinality of the domain:
-            n_sub = forall_stmt.domain.operands.length(assumptions)
+            n_sub = forall_stmt.domain.operands.num_elements(assumptions)
 
             # Domain elements to substitute
             # Notice the n_sub is already a Numeral and not an int
@@ -169,10 +169,10 @@ class Set(Operation):
                              "to swap, idx01 = {0} and idx02 = {1}".
                              format(idx01, idx02))
         if idx01 is not None and idx02 is not None:
-            valid_indices_list = list(range(0, len(self.operands)))
+            valid_indices_list = list(range(0, self.operands.num_entries()))
             self._check_subset_indices_weak(valid_indices_list, [idx01, idx02])
 
-        new_order = list(range(0, len(self.operands)))
+        new_order = list(range(0, self.operands.num_entries()))
         new_order[idx01], new_order[idx02] = new_order[idx02], new_order[idx01]
 
         return self.permutation(new_order=new_order, assumptions=assumptions)
@@ -224,14 +224,15 @@ class Set(Operation):
         if subset is not None and not isinstance(subset, Set):
             raise ValueError("Specified subset {} does not appear to be a "
                              "valid Set object.".format(subset))
-        self_list = list(self.operands)
-        valid_indices_list = list(range(0, len(self.operands)))
+        self_entries = self.operands.entries
+        self_set = set(self_entries)
+        valid_indices_list = list(range(0, self.operands.num_entries()))
 
         if subset_indices is not None:
             # We must have had subset=None, so check validity of the
             # indices and use them to create a subset Set
             self._check_subset_indices_weak(valid_indices_list, subset_indices)
-            subset_list_from_indices = [self_list[i] for i in subset_indices]
+            subset_list_from_indices = [self_entries[i] for i in subset_indices]
             subset_from_indices = Set(*subset_list_from_indices)
             subset = subset_from_indices
 
@@ -245,14 +246,15 @@ class Set(Operation):
         # in self or elements somehow proven to be equal to elements
         # in self.
         subset_was_substituted = False
-        subset_list = list(subset.operands)
+        subset_entries = subset.operands.entries
+        subset_set = set(subset_entries)
         if subset_indices is None:  # subset provided by user
 
             # then our subset and subset_reduced might have issues
             error_elem_candidates = set()
             error_elem_equivalences_dict = dict()
-            for elem in set(subset_list):
-                if elem not in set(self_list):
+            for elem in subset_set:
+                if elem not in self_set:
                     error_elem_candidates.add(elem)
 
             if len(error_elem_candidates) > 0:
@@ -264,7 +266,7 @@ class Set(Operation):
                 error_elems = error_elem_candidates.copy()
                 from proveit.logic import Equals
                 for elem in error_elem_candidates:
-                    for super_elem in set(self_list):
+                    for super_elem in self_set:
                         if Equals(elem, super_elem).proven(
                                 assumptions=assumptions):
                             error_elems.discard(elem)
@@ -300,23 +302,24 @@ class Set(Operation):
         # reduced forms of the specified Sets.
         self_to_support_kt = self.reduction(assumptions=assumptions)
         self_reduced = self_to_support_kt.rhs
-        self_reduced_list = list(self_reduced.operands)
+        self_reduced_entries = self_reduced.operands.entries
 
         # Derive the reduced form of the subset Set.
         # The eventual subset relationship will be based
         # on the reduced forms of the specified Sets.
         subset_to_support_kt = subset.reduction(assumptions=assumptions)
         subset_reduced = subset_to_support_kt.rhs
-        subset_reduced_list = list(subset_reduced.operands)
+        subset_reduced_operands = subset_reduced.operands
 
-        # For convenience, convert the subset_reduced_list to indices
-        # of the self_reduced_list. Because of earlier checks, the
-        # subset_reduced_list should not contain any items not also
-        # contained in self_reduced_list.
+        # For convenience, convert the subset_reduced_operands to indices
+        # of the self_reduced_entries. Because of earlier checks, the
+        # subset_reduced_operands should not contain any items not also
+        # contained in self_reduced_entries.
         subset_reduced_indices_list = (
-            [self_reduced_list.index(elem) for elem in subset_reduced_list])
+            [self_reduced_entries.index(elem) for elem 
+             in subset_reduced_operands])
 
-        full_indices_list = list(range(0, len(self_reduced_list)))
+        full_indices_list = list(range(0, len(self_reduced_entries)))
 
         # construct the complement of the subset indices
         # avoiding using sets to preserve order just in case
@@ -330,22 +333,23 @@ class Set(Operation):
         superset_perm_relation = generic_permutation(
             self_reduced, new_order, assumptions=assumptions)
         # construct the desired list of subset elems
-        desired_subset_list = subset_reduced_list
+        desired_subset = subset_reduced_operands
         # construct the desired complement list of elems
         desired_complement_list = []
         for elem in remaining_indices:
-            desired_complement_list.append(self_reduced_list[elem])
+            desired_complement_list.append(self_reduced_entries[elem])
 
         # Organize info for theorem instantiation
         # then instantiate.
         from . import subset_eq_of_superset
         # from proveit import m, n, aa, bb
-        from proveit.numbers import num
         m, n, a, b = subset_eq_of_superset.all_instance_vars()
-        a_sub, b_sub = (desired_subset_list, desired_complement_list)
-        m_sub, n_sub = num(len(a_sub)), num(len(b_sub))
+        desired_complement = ExprTuple(*desired_complement_list)
+        _a, _b = (desired_subset, desired_complement)
+        _m = _a.num_elements(assumptions)
+        _n = _b.num_elements(assumptions)
         subset_of_permuted_superset = subset_eq_of_superset.instantiate(
-            {m: m_sub, n: n_sub, a: a_sub, b: b_sub},
+            {m: _m, n: _n, a: _a, b: _b},
             assumptions=assumptions)
 
         # We now have |- reduced_subset \subseteq reduced_superset.
@@ -422,15 +426,16 @@ class Set(Operation):
         if subset is not None and not isinstance(subset, Set):
             raise ValueError("Specified subset {} does not appear to be a "
                              "valid Set object.".format(subset))
-        self_list = list(self.operands)
-        valid_indices_list = list(range(0, len(self.operands)))
+        self_entries = self.operands.entries
+        self_set = set(self_entries)
+        valid_indices_list = list(range(0, self.operands.num_entries()))
 
         if subset_indices is not None:
             # We must have had subset=None, so check validity of the
             # indices and use them to create a subset Set
             self._check_subset_indices_weak(
                 valid_indices_list, subset_indices, proper_subset=True)
-            subset_list_from_indices = [self_list[i] for i in subset_indices]
+            subset_list_from_indices = [self_entries[i] for i in subset_indices]
             subset_from_indices = Set(*subset_list_from_indices)
             subset = subset_from_indices
 
@@ -440,7 +445,8 @@ class Set(Operation):
 
         # We should now have a subset Set, either explicitly provided
         # as an argument or derived from the subset_indices.
-        subset_list = list(subset.operands)
+        subset_entries = subset.operands.entries
+        subset_set = set(subset_entries)
 
         # Try to make some appropriate substitutions into the subset,
         # and reduce the subset, all to make later processing (such as
@@ -467,7 +473,7 @@ class Set(Operation):
         # reduce multiplicities
         temp_subset = eq_temp.update(temp_subset.reduction(assumptions))
         subset = temp_subset
-        subset_list = list(subset.operands)
+        subset_entries = subset.operands.entries
         subset_to_subset_subbed_reduced_kt = eq_temp.relation
         # subset_was_substituted = True
 
@@ -486,8 +492,8 @@ class Set(Operation):
             # then substituted, reduced subset might not be a subset
             error_elem_candidates = set()
             error_elem_equivalences_dict = dict()
-            for elem in set(subset_list):
-                if elem not in set(self_list):
+            for elem in subset_set:
+                if elem not in self_set:
                     error_elem_candidates.add(elem)
             if len(error_elem_candidates) > 0:
                 # We have candidates in the supposed subset that do not
@@ -498,7 +504,7 @@ class Set(Operation):
                 error_elems = error_elem_candidates.copy()
                 # from proveit.logic import Equals
                 for elem in error_elem_candidates:
-                    for super_elem in set(self_list):
+                    for super_elem in self_set:
                         if Equals(elem, super_elem).proven(
                                 assumptions=assumptions):
                             error_elems.discard(elem)
@@ -523,8 +529,8 @@ class Set(Operation):
         non_subset_elem_proven = None
         non_subset_elem_index = None
         non_subset_elem_kt = None
-        for elem in set(self_list):
-            if elem not in set(subset_list):
+        for elem in self_set:
+            if elem not in subset_set:
                 non_subset_elem_candidates.add(elem)
                 non_subset_elem_remaining.add(elem)
         # if no candidate elements, raise an error
@@ -539,7 +545,7 @@ class Set(Operation):
         else:
             from proveit.logic import Equals, NotEquals, NotInSet
             for elem in non_subset_elem_candidates:
-                for subset_elem in set(subset_list):
+                for subset_elem in subset_set:
                     if Equals(elem, subset_elem).proven(
                             assumptions=assumptions):
                         non_subset_elem_remaining.discard(elem)
@@ -577,18 +583,18 @@ class Set(Operation):
         # based on the reduced forms of the specified Sets.
         self_to_support_kt = self.reduction(assumptions=assumptions)
         self_reduced = self_to_support_kt.rhs
-        self_reduced_list = list(self_reduced.operands)
+        self_reduced_entries = self_reduced.operands.entries
         # while we're here, get the index of the non_subset_elem_proven
-        non_subset_elem_index = self_reduced_list.index(non_subset_elem_proven)
+        non_subset_elem_index = self_reduced_entries.index(non_subset_elem_proven)
 
         # For convenience, convert the subset_list to indices
-        # of the self_reduced_list. Because of earlier checks, the
+        # of the self_reduced_entries. Because of earlier checks, the
         # subset_list should contain only items in
-        # self_reduced_list but not all the items in self_reduced_list.
+        # self_reduced_entries but not all the items in self_reduced_entries.
         subset_indices_list = (
-            [self_reduced_list.index(elem) for elem in subset_list])
+            [self_reduced_entries.index(elem) for elem in subset_entries])
 
-        full_indices_list = list(range(0, len(self_reduced_list)))
+        full_indices_list = list(range(0, len(self_reduced_entries)))
 
         # construct the complement of the subset_indices_list,
         # to use in the eventual construction of the necessary
@@ -606,23 +612,23 @@ class Set(Operation):
         superset_perm_relation = generic_permutation(
             self_reduced, new_order, assumptions=assumptions)
         # construct the desired list of subset elems
-        desired_subset_list = subset_list
+        desired_subset = subset.operands
         # construct the desired complement list of elems
         desired_complement_list = [non_subset_elem_proven]
         for elem in remaining_indices:
-            desired_complement_list.append(self_reduced_list[elem])
+            desired_complement_list.append(self_reduced_entries[elem])
 
         # Organize info for theorem instantiation
         # then instantiate.
         from . import proper_subset_of_superset
-        from proveit.numbers import num
         m, n, a, b, c = proper_subset_of_superset.all_instance_vars()
-        a_sub = desired_subset_list
-        b_sub = desired_complement_list[0]
-        c_sub = desired_complement_list[1:]
-        m_sub, n_sub = num(len(a_sub)), num(len(c_sub))
+        _a = desired_subset
+        _b = desired_complement_list[0]
+        _c = ExprTuple(*desired_complement_list[1:])
+        _m = _a.num_elements(assumptions)
+        _n = _c.num_elements(assumptions)
         subset_of_permuted_superset = proper_subset_of_superset.instantiate(
-            {m: m_sub, n: n_sub, a: a_sub, b: b_sub, c: c_sub},
+            {m: _m, n: _n, a: _a, b: _b, c: _c},
             assumptions=assumptions)
 
         # We now have
@@ -660,15 +666,13 @@ class Set(Operation):
         '''
         from proveit import TransRelUpdater
         eq = TransRelUpdater(self, assumptions)
-        current_operands = list(self.operands)
         # the following does not preserve the order, but we really
         # just want the size of the support set
-        desired_operands = set(self.operands)
-        desired_num_operands = len(set(self.operands))
+        desired_operands = set(self.operands.entries)
+        desired_num_operands = len(desired_operands)
         expr = self
-        while len(current_operands) > desired_num_operands:
+        while expr.operands.num_entries() > desired_num_operands:
             expr = eq.update(expr.reduction_elem(assumptions=assumptions))
-            current_operands = expr.operands
 
         return eq.relation
 
@@ -688,7 +692,7 @@ class Set(Operation):
         Consider changing name to elem_reduction, then use elem_reduced
         as adj and elem_reduce as verb.
         '''
-        n = len(self.operands)
+        n = self.operands.num_entries()
 
         # if user has specified position index idx,
         # check for validity and use  idx if possible
@@ -703,7 +707,7 @@ class Set(Operation):
                 idx = n + idx
             # check if idx corresponds to an elem that repeats
             elem = self.operands[idx]
-            if list(self.operands).count(elem) < 2:
+            if self.operands.entries.count(elem) < 2:
                 raise ValueError("The element '{0}' specified at index "
                                  "idx={1} occurs just once in the enum Set "
                                  "and thus cannot be eliminated.".
@@ -735,7 +739,7 @@ class Set(Operation):
         # its positional index for idx
         if idx is None and elem is None:
             # check if there are ANY repeating elements:
-            if len(self.operands) == len(set(self.operands)):
+            if self.operands.num_entries() == len(set(self.operands)):
                 raise ValueError("{0} appears to already be in reduced form.".
                                  format(self))
             else:  # find first repeated elem
@@ -773,12 +777,13 @@ class Set(Operation):
         # so we break the set in into [ ]+[idx_left]+[ ]+[idx_right]+[ ]
         l_sub, m_sub, n_sub = (num(idx_left),
                                num(idx_right - idx_left - 1),
-                               num(len(self.operands) - 1 - idx_right))
+                               num(self.operands.num_entries() - 1 - idx_right))
+        operand_entries = self.operands.entries
         aa_sub, x_sub, bb_sub, cc_sub = (
-            list(self.operands)[0:idx_left],
-            list(self.operands)[idx_left],
-            list(self.operands)[idx_left + 1: idx_right],
-            list(self.operands)[idx_right + 1:])
+            operand_entries[0:idx_left],
+            operand_entries[idx_left],
+            operand_entries[idx_left + 1: idx_right],
+            operand_entries[idx_right + 1:])
         if idx_to_keep < idx_to_elim:
             return reduction_right.instantiate(
                 {l: l_sub, m: m_sub, n: n_sub, aa: aa_sub, x: x_sub,
@@ -822,7 +827,7 @@ class Set(Operation):
                              "sub_elem argument. Must specify the replacement "
                              "value using argument 'sub_elem='.")
 
-        set_length = len(self.operands)
+        set_length = self.operands.num_entries()
 
         # if user has specified position index idx,
         # check for validity and use idx if possible
@@ -846,7 +851,7 @@ class Set(Operation):
             if isinstance(elem, list):  # elem = [x, n]
                 which_elem = elem[1]    # which_elem = n
                 elem = elem[0]          # elem = x
-                if which_elem < 1 or which_elem > len(self.operands):
+                if which_elem < 1 or which_elem > self.operands.num_entries():
                     raise ValueError(
                         "In specifying the elem to be replaced in the "
                         "call to Set.single_elem_substitution(), it "
@@ -880,10 +885,11 @@ class Set(Operation):
         m, n, aa, b, cc, d = equal_element_equality.all_instance_vars()
         # --- Break the set into [ ]+[idx]+[ ].
         m_sub, n_sub = (num(idx), num(set_length - idx - 1))
+        operand_entries = self.operands.entries
         aa_sub, b_sub, cc_sub, d_sub = (
-            list(self.operands)[0:idx],
-            list(self.operands)[idx],
-            list(self.operands)[idx + 1:],
+            operand_entries[0:idx],
+            operand_entries[idx],
+            operand_entries[idx + 1:],
             sub_elem)
         # --- Specialize and return.
         return equal_element_equality.instantiate(
@@ -926,8 +932,7 @@ class Set(Operation):
                              format(elem, self))
 
         # count the number of elems to replace with the sub_elem
-        self_list = list(self.operands)
-        num_elems_to_replace = self_list.count(elem)
+        num_elems_to_replace = self.operands.entries.count(elem)
 
         from proveit import TransRelUpdater
         eq = TransRelUpdater(self, assumptions)
@@ -988,7 +993,7 @@ class Set(Operation):
         '''
 
         valid_indices_set = set(valid_indices_list)
-        # allowed_indices_set = set(range(0, len(self.operands)))
+        # allowed_indices_set = set(range(0, self.operands.num_entries()))
         subset_indices_set = set(subset_indices_list)
         unexpected_indices_set = subset_indices_set - valid_indices_set
         if len(unexpected_indices_set) != 0:

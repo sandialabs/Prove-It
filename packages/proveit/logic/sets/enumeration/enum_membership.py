@@ -28,7 +28,7 @@ class EnumMembership(Membership):
         from proveit import ProofFailure
         from . import fold_singleton, in_enumerated_set, fold
         enum_elements = self.domain.elements
-        if len(enum_elements) == 1:
+        if enum_elements.is_single():
             return fold_singleton.instantiate(
                 {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
         else:
@@ -37,13 +37,15 @@ class EnumMembership(Membership):
                 _a = self.domain.operands[:idx]
                 _b = self.element
                 _c = self.domain.operands[idx + 1:]
-                _m = ExprTuple(*_a).length(assumptions=assumptions)
-                _n = ExprTuple(*_c).length(assumptions=assumptions)
+                _m = _a.num_elements(assumptions=assumptions)
+                _n = _c.num_elements(assumptions=assumptions)
                 return in_enumerated_set.instantiate(
                     {m: _m, n: _n, a: _a, b: _b, c: _c}, assumptions=assumptions)
-            except (ProofFailure, ValueError) as e:
-                return fold.instantiate({n: num(
-                    len(enum_elements)), x: self.element, y: enum_elements}, assumptions=assumptions)
+            except (ProofFailure, ValueError):
+                _y = enum_elements
+                _n = _y.num_elements(assumptions=assumptions)
+                return fold.instantiate({n: _n, x: self.element, y:_y}, 
+                                        assumptions=assumptions)
 
     def equivalence(self, assumptions=USE_DEFAULTS):
         '''
@@ -55,12 +57,14 @@ class EnumMembership(Membership):
         from . import singleton_def
         enum_elements = self.domain.elements
 
-        if len(enum_elements) == 1:
+        if enum_elements.is_single():
             return singleton_def.instantiate(
                 {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
         else:
-            return enum_set_def.instantiate({n: num(
-                len(enum_elements)), x: self.element, y: enum_elements}, assumptions=assumptions)
+            _y = enum_elements
+            _n = _y.num_elements(assumptions=assumptions)
+            return enum_set_def.instantiate({n: _n, x: self.element, y: _y}, 
+                                            assumptions=assumptions)
 
     def derive_in_singleton(self, expression, assumptions=USE_DEFAULTS):
         # implemented by JML 6/28/19
@@ -79,23 +83,27 @@ class EnumMembership(Membership):
         '''
         from . import unfold_singleton, unfold
         enum_elements = self.domain.elements
-        if len(enum_elements) == 1:
+        if enum_elements.is_single():
             return unfold_singleton.instantiate(
                 {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
         else:
-            return unfold.instantiate({n: num(
-                len(enum_elements)), x: self.element, y: enum_elements}, assumptions=assumptions)
+            _y = enum_elements
+            _n = _y.num_elements(assumptions=assumptions)
+            return unfold.instantiate({n: _n, x: self.element, y: _y}, 
+                                      assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         from . import in_singleton_is_bool, in_enum_set_is_bool
         enum_elements = self.domain.elements
-        if len(enum_elements) == 1:
+        if enum_elements.is_single():
             return in_singleton_is_bool.instantiate(
                 {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
         else:
+            _y = enum_elements
+            _n = _y.num_elements(assumptions=assumptions)
             return in_enum_set_is_bool.instantiate(
-                {n: num(len(enum_elements)), x: self.element, y: enum_elements},
-                assumptions=assumptions)
+                    {n: _n, x: self.element, y: _y}, 
+                    assumptions=assumptions)
 
 
 class EnumNonmembership(Nonmembership):
@@ -113,7 +121,7 @@ class EnumNonmembership(Nonmembership):
         '''
         yield self.unfold
 
-    def equivalence(self):
+    def equivalence(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return
         |– [element not in {a, ..., n}] =
@@ -122,13 +130,15 @@ class EnumNonmembership(Nonmembership):
         '''
         from . import not_in_singleton_equiv, nonmembership_equiv
         enum_elements = self.domain.elements
-        if len(enum_elements) == 1:
+        if enum_elements.is_single():
             return not_in_singleton_equiv.instantiate(
                 {x: self.element, y: enum_elements})
         else:
+            _y = enum_elements
+            _n = _y.num_elements(assumptions=assumptions)
             return nonmembership_equiv.instantiate(
-                {n: num(len(enum_elements)), x: self.element,
-                 y: enum_elements})
+                    {n: _n, x: self.element, y: _y}, 
+                    assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -141,10 +151,10 @@ class EnumNonmembership(Nonmembership):
         assumptions = defaults.checked_assumptions(assumptions)
         from . import nonmembership_fold
         enum_elements = self.domain.elements
-        element = self.element
-        operands = self.domain.operands
+        _y = enum_elements
+        _n = _y.num_elements(assumptions=assumptions)
         return nonmembership_fold.instantiate(
-            {n: num(len(enum_elements)), x: self.element, y: enum_elements},
+            {n: _n, x: self.element, y: _y},
             assumptions=assumptions)
 
     def unfold(self, assumptions=USE_DEFAULTS):
@@ -155,23 +165,28 @@ class EnumNonmembership(Nonmembership):
         from . import (
             nonmembership_unfold, nonmembership_unfold_singleton)
         enum_elements = self.domain.elements
-        if len(enum_elements) == 1:
+        if enum_elements.is_single():
             return nonmembership_unfold_singleton.instantiate(
                 {x: self.element, y: enum_elements[0]},
                 assumptions=assumptions)
         else:
+            _y = enum_elements
+            _n = _y.num_elements(assumptions=assumptions)
             return nonmembership_unfold.instantiate(
-                {n: num(len(enum_elements)), x: self.element, y: enum_elements},
+                {n: _n, x: self.element, y: _y}, 
                 assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         from . import not_in_singleton_is_bool, not_in_enum_set_is_bool
         enum_elements = self.domain.elements
-        if len(enum_elements) == 1:
+        if enum_elements.is_single():
             return not_in_singleton_is_bool.instantiate(
                 {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
         else:
             # return nonmembership_equiv.instantiate(
             #     {n:num(len(enum_elements)), x:self.element, y:enum_elements})
+            _y = enum_elements
+            _n = _y.num_elements(assumptions=assumptions)
             return not_in_enum_set_is_bool.instantiate(
-                {n: num(len(enum_elements)), x: self.element, y: enum_elements})
+                {n: _n, x: self.element, y: _y},
+                assumptions=assumptions)

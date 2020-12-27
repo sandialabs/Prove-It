@@ -113,11 +113,11 @@ class BooleanSet(Literal):
                ), "May only apply fold_as_forall method of Boolean to a forall statement"
         assert(forall_stmt.domain ==
                Boolean), "May only apply fold_as_forall method of Boolean to a forall statement with the Boolean domain"
-        if(len(forall_stmt.conditions) > 1):
-            if len(forall_stmt.conditions) == 2:
+        if forall_stmt.conditions.num_entries() > 1:
+            if forall_stmt.conditions.is_double():
                 condition = forall_stmt.conditions[1]
             else:
-                condition = And(*forall_stmt.conditions[1:])
+                condition = And(*forall_stmt.conditions[1:].entries)
             Qx = Operation(Q, forall_stmt.instance_var)
             _Qx = condition
             Px = Operation(P, forall_stmt.instance_var)

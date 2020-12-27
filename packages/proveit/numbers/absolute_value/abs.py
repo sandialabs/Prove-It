@@ -51,15 +51,16 @@ class Abs(Operation):
         '''
         from . import abs_frac, abs_prod
         from proveit import n, x
-        from proveit.numbers import num, Complex, Div, Mult
+        from proveit.numbers import Complex, Div, Mult
         if isinstance(self.operand, Div):
             return abs_frac.instantiate(
                 {a: self.operand.numerator, b: self.operand.denominator},
                 assumptions=assumptions)
         elif isinstance(self.operand, Mult):
-            the_operands = self.operand.operands
+            _x = self.operand.operands
+            _n = _x.num_elements(assumptions)
             return abs_prod.instantiate(
-                {n: num(len(the_operands)), x: the_operands},
+                {n: _n, x: _x},
                 assumptions=assumptions)
         else:
             raise ValueError(
@@ -171,7 +172,8 @@ class Abs(Operation):
             for op in self.operand.operands:
                 if op in InSet.known_memberships.keys():
                     count_of_known_memberships += 1
-            if count_of_known_memberships == len(self.operand.operands):
+            if (count_of_known_memberships == 
+                    self.operand.operands.num_entries()):
                 for op in self.operand.operands:
                     op_temp_known_memberships = InSet.known_memberships[op]
                     for kt in op_temp_known_memberships:
@@ -187,7 +189,7 @@ class Abs(Operation):
                             break
 
                 if (count_of_known_relevant_memberships ==
-                        len(self.operand.operands)):
+                        self.operand.operands.num_entries()):
                     # Prove that the sum or product is in
                     # RealNonNeg and then instantiate abs_elimination.
                     for op in self.operand.operands:

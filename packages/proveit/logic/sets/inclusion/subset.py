@@ -72,7 +72,7 @@ class SubsetEq(SubsetRelation):
 
         # Any set contains itself
         try:
-            Equals(*self.operands).prove(assumptions, automation=False)
+            Equals(*self.operands.entries).prove(assumptions, automation=False)
             return self.conclude_via_equality(assumptions)
         except ProofFailure:
             pass

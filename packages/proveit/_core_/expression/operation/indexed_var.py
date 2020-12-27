@@ -1,5 +1,6 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.operation.operation import Operation
+from proveit._core_.expression.composite import is_single
 from proveit._core_.expression.label import Variable
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.proof import ProofFailure
@@ -30,7 +31,7 @@ class IndexedVar(Operation):
             raise TypeError("'var' being indexed should be a Variable "
                             "or IndexedVar itself; got %s" % str(var))
         self.indices = composite_expression(index_or_indices)
-        if len(self.indices) == 1:
+        if is_single(self.indices):
             # has a single index
             self.index = self.indices[0]
             self.index_or_indices = self.index

@@ -1,4 +1,5 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 
@@ -44,13 +45,12 @@ class Conditional(Expression):
             single_or_composite_expression(condition_or_conditions)
 
         if isinstance(condition_or_conditions, ExprTuple):
-            if (len(condition_or_conditions) == 1 and
-                    not isinstance(condition_or_conditions[0], ExprRange)):
+            if is_single(condition_or_conditions):
                 condition = condition_or_conditions[0]
             else:
                 # Must wrap a tuple of conditions in a conjunction.
                 from proveit.logic import And
-                condition = And(*condition_or_conditions)
+                condition = And(*condition_or_conditions.entries)
         else:
             condition = condition_or_conditions
         assert (isinstance(condition, Expression) and
@@ -95,7 +95,7 @@ class Conditional(Expression):
         from proveit.logic import And
         if self.get_style('condition_delimiter') == 'comma':
             if (isinstance(self.condition, And)
-                    and len(self.condition.operands) > 1):
+                    and self.condition.operands.num_entries() > 1):
                 return self.condition.operands.formatted(
                     format_type, fence=False, sub_fence=False,
                     operator_or_operators=', ')
@@ -136,7 +136,6 @@ class Conditional(Expression):
            \forall_{x, y | A, B, C, D} P(x, y)
         would make use of this reduction.
         '''
-        from proveit import ExprRange
         from proveit import a, m, n, Q, R
         from proveit.logic import And, TRUE
         if self.condition == TRUE:
@@ -151,36 +150,37 @@ class Conditional(Expression):
                  condition_with_true_on_left_reduction,
                  condition_with_true_on_right_reduction)
             conditions = self.condition.operands
-            if len(conditions) == 1 and not isinstance(
-                    conditions[0], ExprRange):
+            if is_single(conditions):
                 with defaults.disabled_auto_reduction_types as disabled_types:
                     # Don't auto-reduce 'And' in this process
                     disabled_types.discard(And)
                     return singular_conjunction_condition_reduction \
                         .instantiate({a: self.value, Q: conditions[0]})
-            elif (len(conditions) == 2 and isinstance(conditions[0], And)):
+            elif (conditions.num_entries() == 2 
+                      and isinstance(conditions[0], And)):
                 _Q = conditions[0].operands
-                _m = _Q.length(assumptions)
+                _m = _Q.num_elements(assumptions)
                 return condition_append_reduction.instantiate(
                     {a: self.value, m: _m, Q: _Q, R: conditions[1]},
                     assumptions=assumptions)
-            elif (len(conditions) == 2 and isinstance(conditions[1], And)):
+            elif (conditions.num_entries() == 2 
+                      and isinstance(conditions[1], And)):
                 _R = conditions[1].operands
-                _n = _R.length(assumptions)
+                _n = _R.num_elements(assumptions)
                 return condition_prepend_reduction.instantiate(
                     {a: self.value, n: _n, Q: conditions[0], R: _R},
                     assumptions=assumptions)
-            elif (len(conditions) == 2 and
+            elif (conditions.num_entries() == 2 and
                     all(isinstance(cond, And) for cond in conditions)):
                 _Q = conditions[0].operands
                 _R = conditions[1].operands
-                _m = _Q.length(assumptions)
-                _n = _R.length(assumptions)
+                _m = _Q.num_elements(assumptions)
+                _n = _R.num_elements(assumptions)
                 _a = self.value
                 return condition_merger_reduction.instantiate(
                     {m: _m, n: _n, a: _a, Q: _Q, R: _R},
                     assumptions=assumptions)
-            elif (len(conditions) == 2 and
+            elif (conditions.num_entries() == 2 and
                     any(isinstance(cond, And) for cond in conditions) and
                     any(cond == TRUE for cond in conditions)):
                 if conditions[0] == TRUE:
@@ -190,7 +190,7 @@ class Conditional(Expression):
                     assert conditions[1] == TRUE
                     thm = condition_with_true_on_right_reduction
                     _Q = conditions[0].operands
-                _m = _Q.length(assumptions)
+                _m = _Q.num_elements(assumptions)
                 _a = self.value
                 return thm.instantiate({m: _m, a: _a, Q: _Q},
                                        assumptions=assumptions)

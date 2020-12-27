@@ -262,7 +262,6 @@ class Judgment:
         presumed theorem that has a direct or indirect dependence upon this
         theorem then a CircularLogic exception is raised.
         '''
-        from .theory import Theory, TheoryException
         from .proof import Theorem
         if Judgment.theorem_being_proven is not None:
             raise ProofInitiationFailure(
@@ -566,8 +565,10 @@ class Judgment:
         if proof.is_usable() and proof.proven_truth == self:
             if Judgment.has_been_proven is not None:
                 # check if we have a usable proof for the theorem being proven
-                if not Judgment.qed_in_progress and len(
-                        self.assumptions) == 0 and self.expr == Judgment.theorem_being_proven.proven_truth.expr:
+                if (not Judgment.qed_in_progress and 
+                        len(self.assumptions) == 0 and 
+                        (self.expr == 
+                         Judgment.theorem_being_proven.proven_truth.expr)):
                     if not Judgment.has_been_proven:
                         Judgment.has_been_proven = True
                         print(
@@ -733,18 +734,6 @@ class Judgment:
         return self._checkedTruth(Specialization(self, num_forall_eliminations=0, relabel_map=relabel_map, assumptions=self.assumptions))
     """
 
-    def instantiate(self, repl_map=None, relabel_map=None,
-                    assumptions=USE_DEFAULTS):
-        # TEMPORARY BACKWARD COMPATIBILITY
-        # if repl_map is None:
-        #     repl_map = dict()
-        # if relabel_map is not None:
-        #     repl_map.update(relabel_map)
-        if repl_map is None and relabel_map is not None:
-            repl_map = dict()
-            repl_map.update(relabel_map)
-        return self.instantiate(repl_map, assumptions=assumptions)
-
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
                     assumptions=USE_DEFAULTS):
         '''
@@ -774,7 +763,7 @@ class Judgment:
         '''
         from proveit import (Variable, Operation, Conditional, Lambda,
                              single_or_composite_expression,
-                             ExprTuple, ExprRange, IndexedVar)
+                             ExprTuple, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
         from proveit.logic import Forall
@@ -817,7 +806,7 @@ class Judgment:
             '''
             if isinstance(key, Variable) or isinstance(key, IndexedVar):
                 processed_repl_map[key] = replacement
-            elif isinstance(key, ExprTuple) and len(key) > 0:
+            elif isinstance(key, ExprTuple) and key.num_entries() > 0:
                 try:
                     for param_entry in key:
                         get_param_var(param_entry)
@@ -826,7 +815,7 @@ class Judgment:
                         "%s is not the expected kind of Expression "
                         "as a repl_map key:\n%s" %
                         str(e))
-                if len(key) == 1:
+                if key.num_entries() == 1:
                     # Replacement key for replacing a range of indexed
                     # variables, or range of ranges of indexed variables, etc.
                     processed_repl_map[key] = replacement
@@ -837,7 +826,7 @@ class Judgment:
                     # mappings:
                     equiv_alt_expansions[key] = replacement
                 else:
-                    assert len(key) > 1
+                    assert key.num_entries() > 1
                     # An "alternative equivalent expansion" of
                     # some range of indexed variables (or range of ranges,
                     # etc.).    For example,
@@ -962,12 +951,13 @@ class Judgment:
             domain_conditions = []
             for domain_list, forall_var_list in zip(domain_lists,
                                                     forall_var_lists):
-                domain_list = composite_expression(domain_list)
-                if len(domain_list) == 1:
-                    domain_list = [domain_list[0]] * len(forall_var_list)
+                domains = composite_expression(domain_list)
+                forall_vars = composite_expression(forall_var_list)
+                if domains.num_entries() == 1:
+                    domains = [domain_list[0]] * forall_vars.num_entries()
                 domain_conditions += [InSet(instance_var, domain) for
                                       instance_var, domain in
-                                      zip(forall_var_list, domain_list)]
+                                      zip(forall_vars, domains)]
             conditions = domain_conditions + list(conditions)
 
         return self._checkedTruth(Generalization(self, forall_var_lists,

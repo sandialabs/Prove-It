@@ -87,7 +87,7 @@ class Operation(Expression):
         if isinstance(self.operand_or_operands, Composite):
             # a composite of multiple operands
             self.operands = self.operand_or_operands
-            if (isinstance(self.operands, ExprTuple) and len(self.operands)
+            if (isinstance(self.operands, ExprTuple) and self.operands.num_entries()
                     == 1 and isinstance(self.operands[0], ExprTuple)):
                 # This is a single operand that is an ExprTuple.
                 self.operand = self.operands[0]
@@ -132,13 +132,13 @@ class Operation(Expression):
             ')')
 
     def with_wrap_before_operator(self):
-        if len(self.operands) != 2:
+        if self.operands.num_entries() != 2:
             raise NotImplementedError(
                 "'with_wrap_before_operator' only valid when there are 2 operands")
         return self.with_wrapping_at(1)
 
     def with_wrap_after_operator(self):
-        if len(self.operands) != 2:
+        if self.operands.num_entries() != 2:
             raise NotImplementedError(
                 "'with_wrap_after_operator' only valid when there are 2 operands")
         return self.with_wrapping_at(2)
@@ -283,7 +283,7 @@ class Operation(Expression):
                 # handle default implicit operator case
                 if implicit_operator and (
                     (len(args) == 0 and varargs is not None) or (
-                        len(args) == len(operands) and varargs is None)):
+                        len(args) == operands.num_entries() and varargs is None)):
                     # yield each operand separately
                     for operand in operands:
                         yield operand
@@ -297,7 +297,9 @@ class Operation(Expression):
                         yield operator_or_operators
                         yield operand_or_operands
                         return
-                    elif (varargs is not None and len(args) == 1) or (len(args) == len(operands) + 1 and varargs is None):
+                    elif ((varargs is not None and len(args) == 1) or 
+                          (len(args) == operands.num_entries() + 1 
+                           and varargs is None)):
                         # yield the operator(s) and each operand separately
                         yield operator_or_operators
                         for operand in operands:
@@ -446,8 +448,8 @@ class Operation(Expression):
             # Single operator case.
             # Different formatting when there is 0 or 1 element, unless
             # it is an ExprRange.
-            if len(operands) < 2:
-                if len(operands) == 0 or not isinstance(
+            if operands.num_entries() < 2:
+                if operands.num_entries() == 0 or not isinstance(
                         operands[0], ExprRange):
                     if format_type == 'string':
                         return '[' + operator.string(fence=True) + '](' + operands.string(
@@ -474,8 +476,8 @@ class Operation(Expression):
             # Multiple operator case.
             # Different formatting when there is 0 or 1 element, unless it is
             # an ExprRange
-            if len(operands) < 2:
-                if len(operands) == 0 or not isinstance(
+            if operands.num_entries() < 2:
+                if operands.num_entries() == 0 or not isinstance(
                         operands[0], ExprRange):
                     raise OperationError(
                         "No defaut formatting with multiple operators and zero operands")
@@ -547,7 +549,7 @@ class Operation(Expression):
 
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
-        if len(subbed_operators) == 1:
+        if subbed_operators.num_entries() == 1:
             subbed_operator = subbed_operators[0]
             if isinstance(subbed_operator, Lambda):
                 # Substitute the entire operation via a Lambda map
@@ -561,13 +563,13 @@ class Operation(Expression):
                         "lambda, %s, that has an ExprRange for its body; "
                         "that could lead to tuple length contradictions."
                         % (self.operator, subbed_operator))
-                if len(self.operands) == 1 and \
+                if self.operands.num_entries() == 1 and \
                         not isinstance(self.operands[0], ExprRange):
                     # A single operand case (even if that operand
                     # happens to be a tuple).
                     subbed_operands = [subbed_operand_or_operands]
                 else:
-                    subbed_operands = subbed_operand_or_operands
+                    subbed_operands = subbed_operand_or_operands.entries
                 return Lambda._apply(
                     subbed_operator.parameters, subbed_operator.body,
                     *subbed_operands, assumptions=assumptions,
@@ -592,7 +594,7 @@ class Operation(Expression):
 
         # Remake the Expression with substituted operator and/or
         # operands
-        if len(subbed_operators) == 1:
+        if subbed_operators.num_entries() == 1:
             # If it is a single operator that is a literal operator of
             # an Operation class defined via an "_operator_" class
             # attribute, then create the Operation of that class.

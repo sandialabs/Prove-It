@@ -58,11 +58,8 @@ def composite_expression(expressions):
         expressions.raise_attempted_use_error()
     if isinstance(expressions, Judgment):
         expressions = expressions.expr
-    if isinstance(
-            expressions,
-            ExprTuple) or isinstance(
-            expressions,
-            NamedExprs):
+    if (isinstance(expressions, ExprTuple) 
+            or isinstance(expressions, NamedExprs)):
         return expressions  # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
         # A single expression that we will wrap in an ExprTuple:
@@ -105,7 +102,7 @@ def single_or_composite_expression(expr_or_exprs,
     if not isinstance(expr_or_exprs, Expression):
         expr_or_exprs = composite_expression(expr_or_exprs)
     if (do_singular_reduction and isinstance(expr_or_exprs, ExprTuple)
-            and len(expr_or_exprs) == 1):
+            and expr_or_exprs.num_entries() == 1):
         if (not isinstance(expr_or_exprs[0], ExprTuple) and
                 not isinstance(expr_or_exprs[0], ExprRange)):
             # Reduce it to a singular expression.

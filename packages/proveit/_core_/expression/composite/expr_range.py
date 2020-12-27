@@ -586,7 +586,7 @@ class ExprRange(Expression):
                 return
         assert isinstance(reduction, Judgment)
         assert isinstance(reduction.expr, Equals)
-        assert len(reduction.expr.operands) == 2
+        assert reduction.expr.operands.num_entries() == 2
         assert reduction.expr.operands[0] == ExprTuple(expr_range)
         reduced_tuple = reduction.expr.operands[1]
         assert isinstance(reduced_tuple, ExprTuple)
@@ -1425,8 +1425,8 @@ def var_range(var, start_index_or_indices, end_index_or_indices):
                          IndexedVar)
     start_indices = composite_expression(start_index_or_indices)
     end_indices = composite_expression(end_index_or_indices)
-    parameters = safe_dummy_vars(len(start_indices), var, start_indices,
-                                 end_indices)
+    parameters = safe_dummy_vars(start_indices.num_entries(), var, 
+                                 start_indices, end_indices)
     return nested_range(parameters, IndexedVar(var, parameters),
                         start_indices, end_indices)
 

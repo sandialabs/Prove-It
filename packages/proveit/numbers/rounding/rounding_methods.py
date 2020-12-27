@@ -77,17 +77,18 @@ def apply_rounding_extraction(
     if isinstance(expr.operand, Add):
         expr = eq.update(
             expr.inner_expr().operand.commutation(
-                idx_to_extract, len(
-                    expr.operand.operands) - 1, assumptions=assumptions))
+                idx_to_extract, expr.operand.operands.num_entries() - 1, 
+                assumptions=assumptions))
 
         # An association step -- because the later application of
         # the round_of_real_plus_int thm produces a grouping of the
         # Round operands in the chain of equivalences.
         # BUT, only perform the association if multiple operands are
         # needing to be associated:
-        if len(expr.operand.operands) - 1 > 1:
+        if expr.operand.operands.num_entries() - 1 > 1:
             expr = eq.update(expr.inner_expr().operand.association(
-                0, len(expr.operand.operands) - 1, assumptions=assumptions))
+                0, expr.operand.operands.num_entries() - 1, 
+                assumptions=assumptions))
 
         # then update by applying the round_of_real_plus_int thm
         x_sub = expr.operand.operands[0]
@@ -173,7 +174,7 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
         # integers versus real numbers versus neither
         indices_of_known_ints = []
         indices_of_non_ints = []
-        for i in range(len(subops)):
+        for i in range(subops.num_entries()):
             the_subop = subops[i]
 
             # (a) first perform easiest check: is the subop already known
@@ -203,7 +204,7 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
             # Then we have at least one known integer addend, so we
             # rearrange and group the addends, associating the non-ints
             # and associating the ints
-            original_addends = list(subops)
+            original_addends = list(subops.entries)
             desired_order_by_index = list(
                 indices_of_non_ints + indices_of_known_ints)
             # commute to put reals first, followed by ints
@@ -237,7 +238,7 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
                         len(indices_of_known_ints),
                         assumptions=assumptions))
 
-            if len(indices_of_known_ints) == len(subops):
+            if len(indices_of_known_ints) == subops.num_entries():
                 # all the addends were actually integers
                 # could probably short-circuit this earlier!
                 expr = eq.update(expr.rounding_elimination(assumptions))

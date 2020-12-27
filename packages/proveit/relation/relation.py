@@ -12,7 +12,7 @@ class Relation(Operation):
 
     def __init__(self, operator, lhs, rhs):
         Operation.__init__(self, operator, (lhs, rhs))
-        assert(len(self.operands) == 2)
+        assert(self.operands.is_double())
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
 

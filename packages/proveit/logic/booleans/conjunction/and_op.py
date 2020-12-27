@@ -23,12 +23,12 @@ class And(Operation):
         '''
         Automatically reduce "And() = TRUE" and "And(a) = a".
         '''
-        if len(self.operands) == 0:
+        if self.operands.num_entries() == 0:
             from proveit.logic.booleans.conjunction import \
                 empty_conjunction_eval
             if empty_conjunction_eval.is_usable():
                 return empty_conjunction_eval
-        elif self.operands.is_singular():
+        elif self.operands.is_single():
             try:
                 return self.unary_reduction(assumptions)
             except BaseException:
@@ -46,7 +46,7 @@ class And(Operation):
         from . import true_and_true
         if self == true_and_true.expr:
             return true_and_true  # simple special case
-        if (len(self.operands) == 1 and
+        if (self.operands.num_entries() == 1 and
                 isinstance(self.operands[0], ExprRange) and
                 self.operands[0].is_parameter_independent):
             return self.conclude_as_redundant(assumptions)
@@ -85,7 +85,7 @@ class And(Operation):
                     self.conclude_via_example(operand, assumptions=assumptions)
                 except ProofFailure:
                     pass
-            if len(self.operands) == 2 and len(disproven_operand_indices) > 0:
+            if self.operands.is_double() and len(disproven_operand_indices) > 0:
                 # One or both of the two operands were known to be true (without automation).
                 # Try a possibly simpler proof than conclude_via_example.
                 try:
@@ -122,9 +122,9 @@ class And(Operation):
         '''
 
         from proveit.logic import Not
-        if len(self.operands) == 0:
+        if self.operands.num_entries() == 0:
             return  # No side-effects needed for [And]().
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
@@ -182,16 +182,16 @@ class And(Operation):
             idx = index_or_expr
         else:
             idx = list(self.operands).index(index_or_expr)
-        if idx < 0 or idx >= len(self.operands):
+        if idx < 0 or idx >= self.operands.num_entries():
             raise IndexError("Operand out of range: " + str(idx))
         has_range_operands = any(isinstance(operand, ExprRange)
                                  for operand in self.operands)
-        if len(self.operands) == 1 and not has_range_operands:
+        if self.operands.num_entries() == 1 and not has_range_operands:
             with defaults.disabled_auto_reduction_types as disabled_types:
                 disabled_types.add(And)
                 return from_unary_and.instantiate({A: self.operands[0]},
                                                   assumptions=assumptions)
-        if len(self.operands) == 2 and not has_range_operands:
+        if self.operands.is_double() and not has_range_operands:
             # Two operand special case:
             if idx == 0:
                 return left_from_and.instantiate(
@@ -244,7 +244,7 @@ class And(Operation):
         r'''
         From :math:`(A \land B)` derive :math:`A`.
         '''
-        if len(self.operands) != 2:
+        if self.operands.num_entries() != 2:
             raise Exception(
                 'derive_left only applicable for binary conjunction operations')
         return self.derive_any(0, assumptions)
@@ -253,7 +253,7 @@ class And(Operation):
         r'''
         From :math:`(A \land B)` derive :math:`B`.
         '''
-        if len(self.operands) != 2:
+        if self.operands.num_entries() != 2:
             raise Exception(
                 'derive_right only applicable for binary conjunction operations')
         return self.derive_any(1, assumptions)
@@ -261,7 +261,7 @@ class And(Operation):
     def unary_reduction(self, assumptions=USE_DEFAULTS):
         from proveit.logic.booleans.conjunction import \
             unary_and_reduction
-        if not self.operands.is_singular():
+        if not self.operands.is_single():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unary_reduction")
         operand = self.operands[0]
@@ -275,14 +275,14 @@ class And(Operation):
         Prove and return some (A and B ... and ... Z) via A, B, ..., Z each proven individually.
         See also the compose method to do this constructively.
         '''
-        return compose(*self.operands, assumptions=assumptions)
+        return compose(*self.operands.entries, assumptions=assumptions)
 
     def deduce_left_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce A in Boolean from (A and B) in Boolean.
         '''
         from . import left_in_bool
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             left_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -291,7 +291,7 @@ class And(Operation):
         Deduce B in Boolean from (A and B) in Boolean.
         '''
         from . import right_in_bool
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             right_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -300,7 +300,7 @@ class And(Operation):
         Deduce A in Boolean, B in Boolean, ..., Z in Boolean
         from (A and B and ... and Z) in Boolean.
         '''
-        for i in range(len(self.operands)):
+        for i in range(self.operands.num_entries()):
             self.deduce_part_in_bool(i, assumptions)
 
     def deduce_part_in_bool(self, index_or_expr, assumptions=USE_DEFAULTS):
@@ -312,22 +312,22 @@ class And(Operation):
         idx = index_or_expr if isinstance(
             index_or_expr, int) else list(
             self.operands).index(index_or_expr)
-        if idx < 0 or idx >= len(self.operands):
+        if idx < 0 or idx >= self.operands.num_entries():
             raise IndexError("Operand out of range: " + str(idx))
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if idx == 0:
                 return self.deduce_left_in_bool(assumptions)
             elif idx == 1:
                 return self.deduce_right_in_bool(assumptions)
         else:
-            from proveit.numbers import num
-            m_val, n_val = num(idx), num(len(self.operands) - idx - 1)
-            return each_is_bool.instantiate({m: m_val,
-                                             n: n_val,
-                                             A: self.operands[:idx],
-                                             B: self.operands[idx],
-                                             C: self.operands[idx + 1:]},
-                                            assumptions=assumptions)
+            _A = self.operands[:idx]
+            _B = self.operands[idx]
+            _C = self.operands[idx + 1:]
+            _m = _A.num_elements(assumptions)
+            _n = _C.num_elements(assumptions)
+            return each_is_bool.instantiate(
+                    {m: _m, n: _n, A: _A, B: _B, C: _C},
+                    assumptions=assumptions)
 
     def conclude_via_demorgans(self, assumptions=USE_DEFAULTS):
         '''
@@ -335,35 +335,37 @@ class And(Operation):
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
         from . import demorgans_law_or_to_and, demorgans_law_or_to_and_bin
-        from proveit.numbers import num
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return demorgans_law_or_to_and_bin.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         else:
+            _A = self.operands
+            _m = _A.num_elements(assumptions)
             return demorgans_law_or_to_and.instantiate(
-                {m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
+                {m: _m, A: _A}, assumptions=assumptions)
 
     def conclude_via_example(self, true_operand, assumptions=USE_DEFAULTS):
         '''
         From one true operand, conclude that this 'or' expression is true.
         Requires all of the operands to be in the BOOLEAN set.
         '''
-        from proveit.numbers import num
         from . import nand_if_not_one, nand_if_not_left, nand_if_not_right
         index = self.operands.index(true_operand)
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if index == 0:
                 return nand_if_not_left.instantiate(
                     {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
             elif index == 1:
                 return nand_if_not_right.instantiate(
                     {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-        return nand_if_not_one.instantiate({m: num(index),
-                                            n: num(len(self.operands) - index - 1),
-                                            A: self.operands[:index],
-                                            B: self.operands[index],
-                                            C: self.operands[index + 1:]},
-                                           assumptions=assumptions)
+        _A = self.operands[:index]
+        _B = self.operands[index]
+        _C = self.operands[index + 1:]
+        _m = _A.num_elements(assumptions)
+        _n = _C.num_elements(assumptions)
+        return nand_if_not_one.instantiate(
+                {m: _m, n: _n, A: _A, B: _B, C: _C},
+                assumptions=assumptions)
 
     def conclude_as_redundant(self, assumptions=USE_DEFAULTS):
         '''
@@ -374,7 +376,7 @@ class And(Operation):
         from proveit import ExprRange
         from proveit.numbers import one
         from . import redundant_conjunction
-        if (len(self.operands) != 1 or
+        if (self.operands.num_entries() != 1 or
                 not isinstance(self.operands[0], ExprRange) or
                 not self.operands[0].is_parameter_independent):
             raise ValueError("`And.conclude_as_redundant` only allowed for a "
@@ -403,7 +405,7 @@ class And(Operation):
         from proveit.logic import FALSE
         # load in truth-table evaluations
         from . import and_t_t, and_t_f, and_f_t, and_f_f
-        if len(self.operands) == 0:
+        if self.operands.num_entries() == 0:
             return self.unary_reduction(assumptions)
 
         # First just see if it has a known evaluation.
@@ -454,13 +456,13 @@ class And(Operation):
         '''
 
         from . import binary_closure, closure
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             return binary_closure.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-        else:
-            from proveit.numbers import num
+        _A = self.operands
+        _m = _A.num_elements(assumptions)
         return closure.instantiate(
-            {m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
+            {m: _m, A: _A}, assumptions=assumptions)
 
     def commutation(
             self,
@@ -588,19 +590,21 @@ def compose(*expressions, assumptions=USE_DEFAULTS):
     Returns [A and B and ...], the And operator applied to the collection of given arguments,
     derived from each separately.
     '''
-    if len(expressions) == 0:
+    from proveit._core_.expression.composite import composite_expression
+    expressions = composite_expression(expressions)
+    if expressions.num_entries() == 0:
         from proveit.logic.booleans.conjunction import \
             empty_conjunction
         return empty_conjunction
-    if len(expressions) == 2:
+    if expressions.is_double():
         from . import and_if_both
         return and_if_both.instantiate(
             {A: expressions[0], B: expressions[1]}, assumptions=assumptions)
     else:
-        from proveit.numbers import num
         from . import and_if_all
+        _m = expressions.num_elements(assumptions)
         return and_if_all.instantiate(
-            {m: num(len(expressions)), A: expressions}, assumptions=assumptions)
+            {m: _m, A: expressions}, assumptions=assumptions)
 
 
 # Register these expression equivalence methods:

@@ -125,7 +125,7 @@ class Equals(TransitiveRelation):
         if self.lhs == self.rhs:
             # Trivial x=x
             return self.conclude_via_reflexivity()
-        if self.lhs or self.rhs in (TRUE, FALSE):
+        if (self.lhs in (TRUE, FALSE)) or (self.rhs in (TRUE, FALSE)):
             try:
                 # Try to conclude as TRUE or FALSE.
                 return self.conclude_boolean_equality(assumptions)
@@ -400,7 +400,7 @@ class Equals(TransitiveRelation):
         if not isinstance(lambda_map, Lambda):
             # as a default, do a global replacement
             lambda_map = Lambda.global_repl(lambda_map, expr_being_replaced)
-        if len(lambda_map.parameters) != 1:
+        if lambda_map.parameters.num_entries() != 1:
             raise ValueError("When substituting, expecting a single "
                              "'lambda_map' parameter entry which may "
                              "be a single parameter or a range; got "

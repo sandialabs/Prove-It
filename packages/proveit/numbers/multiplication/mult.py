@@ -28,8 +28,7 @@ class Mult(Operation):
         '''
         Operation.__init__(self, Mult._operator_, operands)
         self.factors = self.operands
-        if len(
-                self.factors) == 2 and all(
+        if self.factors.is_double() and all(
                 factor in DIGITS for factor in self.factors):
             if self not in Mult.multiplied_numerals:
                 try:
@@ -64,43 +63,43 @@ class Mult(Operation):
             number_set = number_set.number_set
         bin = False
         if number_set == Integer:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 thm = mult_int_closure_bin
                 bin = True
             else:
                 thm = mult_int_closure
         elif number_set == Natural:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 thm = mult_nat_closure_bin
                 bin = True
             else:
                 thm = mult_nat_closure
         elif number_set == NaturalPos:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 thm = mult_nat_pos_closure_bin
                 bin = True
             else:
                 thm = mult_nat_pos_closure
         elif number_set == Real:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 thm = mult_real_closure_bin
                 bin = True
             else:
                 thm = mult_real_closure
         elif number_set == RealPos:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 thm = mult_real_pos_closure_bin
                 bin = True
             else:
                 thm = mult_real_pos_closure
         elif number_set == Complex:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 thm = mult_complex_closure_bin
                 bin = True
             else:
                 thm = mult_complex_closure
         elif number_set == RealNonNeg:
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 thm = mult_real_non_neg_closure_bin
                 bin = True
             else:
@@ -115,7 +114,7 @@ class Mult(Operation):
         if bin:
             return thm.instantiate({a: self.operands[0], b: self.operands[1]},
                                    assumptions=assumptions)
-        return thm.instantiate({n: self.operands.length(assumptions),
+        return thm.instantiate({n: self.operands.num_elements(assumptions),
                                 a: self.operands},
                                assumptions=assumptions)
 
@@ -156,7 +155,7 @@ class Mult(Operation):
         from . import mult_not_eq_zero
         from proveit.numbers import zero
         if rhs == zero:
-            _n = self.operands.length(assumptions)
+            _n = self.operands.num_elements(assumptions)
             _a = self.operands
             return mult_not_eq_zero.instantiate({n: _n, a: _a},
                                                 assumptions=assumptions)
@@ -177,7 +176,7 @@ class Mult(Operation):
 
         # Ungroup the expression (disassociate nested multiplications).
         idx = 0
-        length = len(expr.operands) - 1
+        length = expr.operands.num_entries() - 1
         while idx < length:
             # loop through all operands
             if isinstance(expr.operands[idx], Mult):
@@ -185,7 +184,7 @@ class Mult(Operation):
                 expr = eq.update(expr.disassociation(idx, assumptions))
             else:
                 idx += 1
-            length = len(expr.operands)
+            length = expr.operands.num_entries()
 
         # Simplify negations -- factor them out.
         expr = eq.update(expr.neg_simplifications(assumptions))
@@ -219,9 +218,9 @@ class Mult(Operation):
         eq = TransRelUpdater(self, assumptions)
 
         # Work in reverse order so indices don't need to be updated.
-        for rev_idx, operand in enumerate(reversed(self.operands)):
+        for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if isinstance(operand, Neg):
-                idx = len(self.operands) - rev_idx - 1
+                idx = self.operands.num_entries() - rev_idx - 1
                 if isinstance(expr, Mult):
                     expr = eq.update(expr.neg_simplification(idx, assumptions))
                 elif isinstance(expr, Neg):
@@ -246,7 +245,7 @@ class Mult(Operation):
                 "Operand at the index %d expected to be a negation for %s" %
                 (idx, str(self)))
 
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if idx == 0:
                 _x = self.operands[0].operand
                 _y = self.operands[1]
@@ -257,11 +256,11 @@ class Mult(Operation):
                 _y = self.operands[1].operand
                 return mult_neg_right.instantiate({x: _x, y: _y},
                                                   assumptions=assumptions)
-        _a = ExprTuple(*self.operands[:idx])
+        _a = self.operands[:idx]
         _b = self.operands[idx].operand
-        _c = ExprTuple(*self.operands[idx + 1:])
-        _i = _a.length(assumptions)
-        _j = _c.length(assumptions)
+        _c = self.operands[idx + 1:]
+        _i = _a.num_elements(assumptions)
+        _j = _c.num_elements(assumptions)
         return mult_neg_any.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c},
                                         assumptions=assumptions)
 
@@ -280,9 +279,9 @@ class Mult(Operation):
         eq = TransRelUpdater(self, assumptions)
 
         # Work in reverse order so indices don't need to be updated.
-        for rev_idx, operand in enumerate(reversed(self.operands)):
+        for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if operand == one:
-                idx = len(self.operands) - rev_idx - 1
+                idx = self.operands.num_entries() - rev_idx - 1
                 expr = eq.update(expr.one_elimination(idx, assumptions))
                 if not isinstance(expr, Mult):
                     # can't do an elimination if reduced to a single term.
@@ -305,17 +304,17 @@ class Mult(Operation):
                 "Operand at the index %d expected to be zero for %s" %
                 (idx, str(self)))
 
-        if len(self.operands) == 2:
+        if self.operands.is_double():
             if idx == 0:
                 return elim_one_left.instantiate({x: self.operands[1]},
                                                  assumptions=assumptions)
             else:
                 return elim_one_right.instantiate({x: self.operands[0]},
                                                   assumptions=assumptions)
-        _a = ExprTuple(*self.operands[:idx])
-        _b = ExprTuple(*self.operands[idx + 1:])
-        _i = _a.length(assumptions)
-        _j = _b.length(assumptions)
+        _a = self.operands[:idx]
+        _b = self.operands[idx + 1:]
+        _i = _a.num_elements(assumptions)
+        _j = _b.num_elements(assumptions)
         return elim_one_any.instantiate({i: _i, j: _j, a: _a, b: _b},
                                         assumptions=assumptions)
 
@@ -330,7 +329,7 @@ class Mult(Operation):
         # via transitivities (starting with self=self).
         eq = TransRelUpdater(self, assumptions)
 
-        for _i, factor in enumerate(self.factors):
+        for _i, factor in enumerate(self.factors.entries):
             if hasattr(factor, 'deep_one_eliminations'):
                 expr = eq.update(expr.inner_expr().factors[_i].
                                  deep_one_eliminations(assumptions))
@@ -357,7 +356,7 @@ class Mult(Operation):
 
         numer_factors = []
         denom_factors = []
-        for _i, factor in enumerate(self.factors):
+        for _i, factor in enumerate(self.factors.entries):
             if isinstance(factor, Div):
                 if isinstance(factor.numerator, Mult):
                     numer_factors.extend(factor.numerator.factors)
@@ -399,7 +398,7 @@ class Mult(Operation):
         numer_occurrence_indices = []
         denom_occurrence_indices = []
 
-        for _i, factor in enumerate(self.factors):
+        for _i, factor in enumerate(self.factors.entries):
             if isinstance(factor, Div):
                 numer_factors = (factor.numerator.factors if
                                  isinstance(factor.numerator, Mult)
@@ -433,7 +432,7 @@ class Mult(Operation):
 
         # Handle the special case of two neighboring factors which
         # serves as the base case.
-        if len(expr.factors) == 2:
+        if expr.factors.is_double():
             from proveit.numbers.division import (
                 mult_frac_cancel_numer_left, mult_frac_cancel_denom_left)
 
@@ -510,7 +509,7 @@ class Mult(Operation):
                     _a = one
                 else:
                     assert (isinstance(canceling_numer_expr, Mult) and
-                            len(canceling_numer_expr.factors) == 2)
+                            canceling_numer_expr.factors.is_double())
                     _a = canceling_numer_expr.factors[0]
                 assert isinstance(right_factor, Div)
                 _d = right_factor.numerator
@@ -518,7 +517,7 @@ class Mult(Operation):
                     _e = one
                 else:
                     assert (isinstance(canceling_denom_expr, Mult) and
-                            len(canceling_denom_expr.factors) == 2)
+                            canceling_denom_expr.factors.is_double())
                     _e = canceling_denom_expr.factors[1]
                 cancelation = mult_frac_cancel_numer_left.instantiate(
                     {a: _a, b: _b, c: _c, d: _d, e: _e},
@@ -537,7 +536,7 @@ class Mult(Operation):
                     _b = one
                 else:
                     assert (isinstance(canceling_denom_expr, Mult) and
-                            len(canceling_denom_expr.factors) == 2)
+                            canceling_denom_expr.factors.is_double())
                     _b = canceling_denom_expr.factors[0]
                 if isinstance(right_factor, Div):
                     _d = right_factor.denominator
@@ -547,7 +546,7 @@ class Mult(Operation):
                     _e = one
                 else:
                     assert (isinstance(canceling_numer_expr, Mult) and
-                            len(canceling_numer_expr.factors) == 2)
+                            canceling_numer_expr.factors.is_double())
                     _e = canceling_numer_expr.factors[1]
                 cancelation = mult_frac_cancel_denom_left.instantiate(
                     {a: _a, b: _b, c: _c, d: _d, e: _e},
@@ -595,7 +594,7 @@ class Mult(Operation):
                 denom_idx, numer_idx, assumptions=assumptions))
         expr = eq.update(expr.inner_expr().cancelation(
             term_to_cancel, assumptions=assumptions))
-        if len(expr.factors) < len(self.factors):
+        if expr.factors.num_entries() < self.factors.num_entries():
             # It must have been a complete cancelation, so no
             # reason to move anything back.
             return eq.relation
@@ -618,7 +617,7 @@ class Mult(Operation):
         # First check for any zero factors -- quickest way to do an evaluation.
         try:
             zero_idx = self.operands.index(zero)
-            if len(self.operands) == 2:
+            if self.operands.is_double():
                 if zero_idx == 0:
                     return mult_zero_left.instantiate(
                         {x: self.operands[1]}, assumptions=assumptions)
@@ -627,8 +626,8 @@ class Mult(Operation):
                         {x: self.operands[0]}, assumptions=assumptions)
             _a = self.operands[:zero_idx]
             _b = self.operands[zero_idx + 1:]
-            _i = ExprTuple(*_a.length(assumptions))
-            _j = ExprTuple(*_b.length(assumptions))
+            _i = _a.num_elements(assumptions)
+            _j = _b.num_elements(assumptions)
             return mult_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b},
                                              assumptions=assumptions)
         except (ValueError, ProofFailure):
@@ -656,7 +655,7 @@ class Mult(Operation):
         if is_irreducible_value(expr):
             return eq.relation  # done
 
-        if len(self.operands) > 2:
+        if self.operands.num_entries() > 2:
             eq.update(pairwise_evaluation(expr, assumptions))
             return eq.relation
 
@@ -680,11 +679,10 @@ class Mult(Operation):
         # for convenience updating our equation
         eq = TransRelUpdater(self, assumptions)
         # Group together the remaining factors if necessary:
-        if len(self.operands) > 2:
+        if self.operands.num_entries() > 2:
             expr = eq.update(
                 expr.association(
-                    1, len(
-                        self.operands) - 1, assumptions))
+                    1, self.operands.num_entries() - 1, assumptions))
         _x = self.operands[1]
         _n = num(reps)
         eq.update(mult_def.instantiate({n: _n, a: [_x] * reps, x: _x},
@@ -693,18 +691,16 @@ class Mult(Operation):
 
     def index(self, the_factor, also_return_num=False):
         '''
-        Return the starting index of the_factor, which may be a single operand,
-        a list of consecutive operands, or a Mult expression that represents
-        the product of the list of consecutive operands.  If also_return_num is
-        True, return a tuple of the index and number of operands for the_factor.
+        Return the starting index of the_factor, which may be a single 
+        operand, a list of consecutive operands, or a Mult expression 
+        that represents the product of the list of consecutive operands.
+        If also_return_num is True, return a tuple of the index and 
+        number of operands for the_factor.
         '''
         if isinstance(the_factor, Mult):
-            the_factor = the_factor.operands
-        if hasattr(
-                the_factor,
-                '__getitem__') and hasattr(
-                the_factor,
-                '__len__'):
+            the_factor = the_factor.operands.entries
+        if (hasattr(the_factor, '__getitem__') and 
+                hasattr(the_factor, '__len__')):
             # multiple operands in the_factor
             first_factor = the_factor[0]
             num = len(the_factor)
@@ -712,8 +708,7 @@ class Mult(Operation):
             try:
                 while True:
                     idx = self.operands.index(first_factor, start=idx + 1)
-                    if tuple(self.operands[idx:idx + num]
-                             ) == tuple(the_factor):
+                    if self.operands[idx:idx + num].entries == tuple(the_factor):
                         break  # found it all!
             except ValueError:
                 raise ValueError("Factor is absent!")
@@ -744,7 +739,7 @@ class Mult(Operation):
             return self.group_commutation(
                 None, start_idx, start_idx, end_idx, assumptions=assumptions)
         elif direction == "right":  # pull the factor(s) to the right
-            if end_idx == len(self.operands) or end_idx is None:
+            if end_idx == self.operands.num_entries() or end_idx is None:
                 return Equals(self, self).prove(
                     assumptions)  # no move necessary
             return self.group_commutation(
@@ -767,11 +762,8 @@ class Mult(Operation):
         from . import distribute_through_sum, distribute_through_subtract  # , distribute_through_summation
         from proveit.numbers.division import prod_of_fracs  # , frac_in_prod
         from proveit.numbers import Add, Div, Neg, Sum
-        if idx is None and len(
-                self.factors) == 2 and all(
-                isinstance(
-                factor,
-                Div) for factor in self.factors):
+        if (idx is None and self.factors.is_double() and 
+                all(isinstance(factor, Div) for factor in self.factors)):
             return prod_of_fracs.instantiate(
                 {
                     x: self.factors[0].numerator,
@@ -780,17 +772,17 @@ class Mult(Operation):
                     w: self.factors[1].denominator},
                 assumptions=assumptions)
         operand = self.operands[idx]
-        _a = ExprTuple(*self.operands[:idx])
-        _c = ExprTuple(*self.operands[idx + 1:])
-        _i = _a.length(assumptions)
-        _k = _c.length(assumptions)
+        _a = self.operands[:idx]
+        _c = self.operands[idx + 1:]
+        _i = _a.num_elements(assumptions)
+        _k = _c.num_elements(assumptions)
         if isinstance(operand, Add):
             _b = self.operands[idx].operands
-            _j = _b.length(assumptions)
+            _j = _b.num_elements(assumptions)
             return distribute_through_sum.instantiate(
                 {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
                 assumptions=assumptions)
-        elif (isinstance(operand, Add) and len(operand.operands) == 2
+        elif (isinstance(operand, Add) and operand.operands.is_double()
               and isinstance(operand.operands[0], Neg)):
             _j = _k
             _x = self.operands[idx].operands[0]
@@ -860,15 +852,16 @@ class Mult(Operation):
             elif pull == 'right':
                 expr = eq.update(expr.association(-num, num,
                                                   assumptions=assumptions))
-        if group_remainder and len(self.operands) - num > 1:
+        if group_remainder and self.operands.num_entries() - num > 1:
             # if the factor has been group, effectively there is just 1 factor
             # operand now
             num_factor_operands = 1 if group_factor else num
             if pull == 'left':
                 expr = eq.update(
                     expr.association(
-                        num_factor_operands, len(
-                            self.operands) - num_factor_operands, assumptions=assumptions))
+                        num_factor_operands, 
+                        self.operands.num_entries() - num_factor_operands, 
+                        assumptions=assumptions))
             elif pull == 'right':
                 expr = eq.update(expr.association(0, num_factor_operands,
                                                   assumptions=assumptions))
@@ -918,10 +911,10 @@ class Mult(Operation):
             'Combine exponents only implemented for a product '
             'of two exponentiated operands (or a simple variant)')
 
-        if not self.operands.is_binary() or not isinstance(
+        if not self.operands.is_double() or not isinstance(
                 self.operands[0], Exp) or not isinstance(
                 self.operands[1], Exp):
-            if self.operands.is_binary() and isinstance(
+            if self.operands.is_double() and isinstance(
                     self.operands[0], Exp) and self.operands[0].base == self.operands[1]:
                 # Of the form a^b a
                 return add_one_right_in_exp.instantiate(
@@ -929,7 +922,7 @@ class Mult(Operation):
                         a: self.operands[1],
                         b: self.operands[0].exponent},
                     assumptions=assumptions).derive_reversed(assumptions)
-            elif self.operands.is_binary() and isinstance(self.operands[1], Exp) and self.operands[1].base == self.operands[0]:
+            elif self.operands.is_double() and isinstance(self.operands[1], Exp) and self.operands[1].base == self.operands[0]:
                 # Of the form a a^b
                 return add_one_left_in_exp.instantiate(
                     {
@@ -1019,17 +1012,17 @@ class Mult(Operation):
             known_exponent_type = possible_exponent_types[0]
 
             if known_exponent_type == NaturalPos:
-                if self.base.operands.is_binary():
+                if self.base.operands.is_double():
                     _m, _n = operand_exponents
                     return product_of_posnat_powers.instantiate(
                         {a: same_base, m: _m, n: _n}, assumptions=assumptions)
                 else:
                     _k = ExprTuple(*operand_exponents)
-                    _m = _k.length(assumptions)
+                    _m = _k.num_elements(assumptions)
                     return products_of_posnat_powers.instantiate(
                         {a: same_base, m: _m, k: _k}, assumptions=assumptions)
             else:
-                if self.operands.is_binary():
+                if self.operands.is_double():
                     _b, _c = operand_exponents
                     if known_exponent_type == RealPos:
                         thm = product_of_pos_powers
@@ -1041,7 +1034,7 @@ class Mult(Operation):
                                            assumptions=assumptions)
                 else:
                     _b = ExprTuple(*operand_exponents)
-                    _m = _b.length(assumptions)
+                    _m = _b.num_elements(assumptions)
                     if known_exponent_type == RealPos:
                         thm = products_of_pos_powers  # plural products
                     elif known_exponent_type == Real:

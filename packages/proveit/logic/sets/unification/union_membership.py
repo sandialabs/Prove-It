@@ -27,8 +27,10 @@ class UnionMembership(Membership):
         from . import union_def
         element = self.element
         operands = self.domain.operands
+        _A = operands
+        _m = _A.num_elements(assumptions)
         return union_def.instantiate(
-            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
+            {m: _m, x: element, A: _A}, assumptions=assumptions)
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -36,11 +38,12 @@ class UnionMembership(Membership):
         where self represents (A union B ...).
         '''
         from . import membership_unfolding
-        from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
+        _A = operands
+        _m = _A.num_elements(assumptions)
         return membership_unfolding.instantiate(
-            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
+            {m: _m, x: element, A: _A}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -48,11 +51,12 @@ class UnionMembership(Membership):
         where self represents (A union B ...).
         '''
         from . import membership_folding
-        from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
+        _A = operands
+        _m = _A.num_elements(assumptions)
         return membership_folding.instantiate(
-            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
+            {m: _m, x: element, A: _A}, assumptions=assumptions)
 
 
 class UnionNonmembership(Nonmembership):
@@ -77,11 +81,12 @@ class UnionNonmembership(Nonmembership):
         where self = (A union B ...).
         '''
         from . import nonmembership_equiv
-        from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
+        _A = operands
+        _m = _A.num_elements(assumptions)
         return nonmembership_equiv.instantiate(
-            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
+            {m: _m, x: element, A: _A}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -89,8 +94,9 @@ class UnionNonmembership(Nonmembership):
         where self represents (A union B ...).
         '''
         from . import nonmembership_folding
-        from proveit.numbers import num
         element = self.element
         operands = self.domain.operands
+        _A = operands
+        _m = _A.num_elements(assumptions)
         return nonmembership_folding.instantiate(
-            {m: num(len(operands)), x: element, A: operands}, assumptions=assumptions)
+            {m: _m, x: element, A: _A}, assumptions=assumptions)

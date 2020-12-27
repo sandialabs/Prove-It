@@ -3,8 +3,8 @@ from proveit._core_.expression.expr import (
     Expression, MakeNotImplemented, free_vars)
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda, get_param_var
 from proveit._core_.expression.composite import (
-    ExprTuple, single_or_composite_expression, composite_expression,
-    ExprRange)
+    ExprTuple, is_single, single_or_composite_expression, 
+    composite_expression, ExprRange)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.defaults import USE_DEFAULTS
 from .operation import Operation, OperationError
@@ -114,6 +114,8 @@ class OperationOverInstances(Operation):
             conditions = (condition,)
         elif conditions is None:
             conditions = tuple()
+        elif isinstance(conditions, ExprTuple):
+            conditions = conditions.entries
 
         if _lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
@@ -124,7 +126,7 @@ class OperationOverInstances(Operation):
                 # Has conditions.
                 instance_expr = lambda_map.body.value
                 if (isinstance(lambda_map.body.condition, And) and
-                        not lambda_map.body.condition.operands.is_singular()):
+                        not is_single(lambda_map.body.condition.operands)):
                     conditions = composite_expression(
                         lambda_map.body.condition.operands)
                 else:
@@ -139,7 +141,7 @@ class OperationOverInstances(Operation):
             # Do some initial preparations w.r.t. instance_params, domain(s), and
             # conditions.
             instance_params = composite_expression(instance_param_or_params)
-            if len(instance_params) == 0:
+            if instance_params.num_entries() == 0:
                 raise ValueError(
                     "Expecting at least one instance parameter when "
                     "constructing an OperationOverInstances")
@@ -154,14 +156,14 @@ class OperationOverInstances(Operation):
                 if not isinstance(domain, Expression):
                     raise TypeError(
                         "The domain should be an 'Expression' type")
-                domains = [domain] * len(instance_params)
+                domains = [domain] * instance_params.num_entries()
 
             if domains is not None:
                 # Prepend domain conditions.  Note that although we start with
                 # all domain conditions at the beginning,
                 # some may later get pushed back as "inner conditions"
                 # (see below),
-                if len(domains) != len(instance_params):
+                if len(domains) != instance_params.num_entries():
                     raise ValueError(
                         "When specifying multiple domains, the number "
                         "should be the same as the number of instance "
@@ -208,7 +210,7 @@ class OperationOverInstances(Operation):
         # supplied, this should simply reproduce them from the conditions that
         # were prepended.
         domain = domains = None  # These may be reset below if there are ...
-        if (len(conditions) >= len(instance_params)):
+        if (conditions.num_entries() >= instance_params.num_entries()):
             domains = [_extract_domain_from_condition(ivar, cond) for
                        ivar, cond in zip(instance_params, conditions)]
             if all(domain is not None for domain in domains):
@@ -219,7 +221,7 @@ class OperationOverInstances(Operation):
 
         if _lambda_map is None:
             # Now do the actual lambda_map creation
-            if len(instance_params) == 1:
+            if instance_params.num_entries() == 1:
                 instance_param_or_params = instance_params[0]
             # Generate the Lambda sub-expression.
             lambda_map = OperationOverInstances._createOperand(
@@ -229,7 +231,7 @@ class OperationOverInstances(Operation):
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
 
         self.instance_params = instance_params
-        if (len(instance_params) > 1 or
+        if (instance_params.num_entries() > 1 or
                 isinstance(instance_params[0], ExprRange)):
             '''Instance parameters of the OperationOverInstance.'''
             self.instance_vars = [get_param_var(parameter) for
@@ -311,7 +313,7 @@ class OperationOverInstances(Operation):
 
     @staticmethod
     def _createOperand(instance_param_or_params, instance_expr, conditions):
-        if len(conditions) == 0:
+        if conditions.num_entries() == 0:
             return Lambda(instance_param_or_params, instance_expr)
         else:
             conditional = Conditional(instance_expr, conditions)
@@ -351,9 +353,9 @@ class OperationOverInstances(Operation):
             # return the joined conditions excluding domain conditions
             conditions = composite_expression(
                 OperationOverInstances.explicit_conditions(self))
-            if len(conditions) == 1 and arg_name == 'condition':
+            if conditions.num_entries() == 1 and arg_name == 'condition':
                 return conditions[0]
-            elif len(conditions) > 1 and arg_name == 'conditions':
+            elif conditions.num_entries() > 1 and arg_name == 'conditions':
                 return conditions
             return None
 
@@ -506,7 +508,7 @@ class OperationOverInstances(Operation):
         implicit instance parameters.
         '''
         if hasattr(self, 'instance_params'):
-            return self.instance_params
+            return self.instance_params.entries
         else:
             return [self.instance_param]
 
@@ -549,14 +551,14 @@ class OperationOverInstances(Operation):
         areg joined together at this level according to the style.
         '''
         if hasattr(self, 'domains'):
-            assert len(
-                self.conditions) >= len(
-                self.domains), 'expecting a condition for each domain'
+            assert (self.conditions.num_entries() >= 
+                    len(self.domains)), (
+                            'expecting a condition for each domain')
             for iparam, condition, domain in  \
                     zip(self.instance_params, self.conditions, self.domains):
                 assert domain == _extract_domain_from_condition(
                     iparam, condition)
-            return self.conditions[:len(self.domains)]
+            return self.conditions[:len(self.domains)].entries
         else:
             explicit_domains = self.explicit_domains()
             if len(explicit_domains) == 0:
@@ -576,25 +578,24 @@ class OperationOverInstances(Operation):
         implicit 'domain' conditions.
         '''
         if hasattr(self, 'domains'):
-            assert len(
-                self.conditions) >= len(
-                self.domains), ('expecting a condition'
-                                ' for each domain')
+            assert (self.conditions.num_entries() >= 
+                    len(self.domains)), (
+                            'expecting a condition for each domain')
             for iparam, condition, domain in zip(
                     self.instance_params, self.conditions, self.domains):
                 cond_domain = _extract_domain_from_condition(iparam, condition)
                 assert cond_domain == domain
-            return self.conditions[len(self.domains):]  # skip the domains
+            return self.conditions[len(self.domains):].entries  # skip the domains
         else:
             explicit_domains = self.explicit_domains()
             conditions = []
             if len(explicit_domains) == 0:
-                conditions.extend(self.conditions)
+                conditions.extend(self.conditions.entries)
             else:
                 cond_domain = _extract_domain_from_condition(
                     self.instance_param, self.conditions[0])
                 assert cond_domain == self.domain
-                conditions.extend(self.conditions[1:])
+                conditions.extend(self.conditions[1:].entries)
             return conditions
 
     def _instance_param_lists(self):
@@ -692,7 +693,7 @@ class OperationOverInstances(Operation):
         explicit_domains = ExprTuple(*self.explicit_domains())
         instance_expr = self.instance_expr
         has_explicit_iparams = (len(explicit_iparams) > 0)
-        has_explicit_conditions = (len(explicit_conditions) > 0)
+        has_explicit_conditions = (explicit_conditions.num_entries() > 0)
         has_multi_domain = not self.has_one_domain()
         domain_conditions = ExprTuple(*self.domain_conditions())
         out_str = ''
@@ -903,8 +904,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
                 "May only 'bundle' nested OperationOverInstances, "
                 "not %s" %
                 bundled)
-        _m = bundled.instance_params.length()
-        _n = bundled.instance_expr.instance_params.length()
+        _m = bundled.instance_params.num_elements(assumptions)
+        _n = bundled.instance_expr.instance_params.num_elements(assumptions)
         _P = bundled.instance_expr.instance_expr
         _Q = bundled.effective_condition()
         _R = bundled.instance_expr.effective_condition()
@@ -913,8 +914,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         correspondence = bundle_thm.instance_expr.instance_expr
         if isinstance(correspondence, Implies):
             if (not isinstance(correspondence.antecedent,
-                               OperationOverInstances)
-                    or not len(correspondence.consequent.instance_params) == 2):
+                               OperationOverInstances) or not 
+                    correspondence.consequent.instance_params.num_entries() == 2):
                 raise ValueError("'bundle_thm', %s, does not have the "
                                  "expected form with the bundled form as "
                                  "the consequent of the implication, %s"
@@ -922,8 +923,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
             x_1_to_m, y_1_to_n = correspondence.consequent.instance_params
         elif isinstance(correspondence, Equals):
             if not isinstance(
-                correspondence.rhs, OperationOverInstances or not len(
-                    correspondence.antecedent.instance_params) == 2):
+                correspondence.rhs, OperationOverInstances or not 
+                    correspondence.antecedent.instance_params.num_entries() == 2):
                 raise ValueError("'bundle_thm', %s, does not have the "
                                  "expected form with the bundled form on "
                                  "right of the an equality, %s"
@@ -993,7 +994,7 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
     eq = None
     unbundled = expr
     net_indicated_param_entries = sum(num_param_entries)
-    num_actual_param_entries = len(expr.instance_params)
+    num_actual_param_entries = expr.instance_params.num_entries()
     for n in num_param_entries:
         if not isinstance(n, int) or n <= 0:
             raise ValueError(
@@ -1013,12 +1014,11 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         num_param_entries = list(num_param_entries)
     while len(num_param_entries) > 1:
         n_last_entries = num_param_entries.pop(-1)
-        first_params = ExprTuple(*unbundled.instance_params[:-n_last_entries])
+        first_params = unbundled.instance_params[:-n_last_entries]
         first_param_vars = {get_param_var(param) for param in first_params}
-        remaining_params = \
-            ExprTuple(*unbundled.instance_params[-n_last_entries:])
-        _m = first_params.length()
-        _n = remaining_params.length()
+        remaining_params = unbundled.instance_params[-n_last_entries:]
+        _m = first_params.num_elements(assumptions)
+        _n = remaining_params.num_elements(assumptions)
         _P = unbundled.instance_expr
         # Split up the conditions between the outer
         # OperationOverInstances and inner OperationOverInstances
@@ -1035,14 +1035,14 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
             elif _nQ == 1:
                 _Q = condition.operands[0]
             else:
-                _Q = And(*condition.operands[:_nQ])
-            _nR = len(condition.operands) - _nQ
+                _Q = And(*condition.operands[:_nQ].entries)
+            _nR = condition.operands.num_entries() - _nQ
             if _nR == 0:
                 _R = And()
             elif _nR == 1:
                 _R = condition.operands[-1]
             else:
-                _R = And(*condition.operands[_nQ:])
+                _R = And(*condition.operands[_nQ:].entries)
         elif first_param_vars.isdisjoint(free_vars(condition,
                                                    err_inclusively=True)):
             _Q = condition
@@ -1055,8 +1055,8 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         correspondence = unbundle_thm.instance_expr.instance_expr
         if isinstance(correspondence, Implies):
             if (not isinstance(correspondence.antecedent,
-                               OperationOverInstances)
-                    or not len(correspondence.antecedent.instance_params) == 2):
+                               OperationOverInstances) or not 
+                    correspondence.antecedent.instance_params.num_entries() == 2):
                 raise ValueError("'unbundle_thm', %s, does not have the "
                                  "expected form with the bundled form as "
                                  "the antecedent of the implication, %s"
@@ -1064,8 +1064,8 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
             x_1_to_m, y_1_to_n = correspondence.antecedent.instance_params
         elif isinstance(correspondence, Equals):
             if not isinstance(
-                correspondence.rhs, OperationOverInstances or not len(
-                    correspondence.antecedent.instance_params) == 2):
+                correspondence.rhs, OperationOverInstances or not 
+                    correspondence.antecedent.instance_params.num_entries() == 2):
                 raise ValueError("'unbundle_thm', %s, does not have the "
                                  "expected form with the bundled form on "
                                  "right of the an equality, %s"

@@ -3,6 +3,7 @@ from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
                                             free_vars, used_vars,
                                             traverse_inner_expressions)
 from proveit._core_.expression.label.var import safe_dummy_var, safe_dummy_vars
+from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 
@@ -103,7 +104,7 @@ class Lambda(Expression):
         self.parameters = composite_expression(parameter_or_parameters)
         parameter_vars = [get_param_var(parameter)
                           for parameter in self.parameters]
-        if self.parameters.is_singular():
+        if is_single(self.parameters):
             # has a single parameter
             self.parameter = self.parameters[0]
             self.parameter_or_parameters = self.parameter
@@ -113,7 +114,7 @@ class Lambda(Expression):
         self.parameter_var_set = frozenset(parameter_vars)
 
         # Parameter variables may not occur multiple times.
-        if len(self.parameter_var_set) != len(self.parameters):
+        if len(self.parameter_var_set) != self.parameters.num_entries():
             raise ParameterCollisionError(
                 self.parameters, "Parameter variables must be unique")
 
@@ -277,9 +278,9 @@ class Lambda(Expression):
         is 2 + 1, this will return 2.  If there is more than one parameter
         in this Lambda expression, use extract_arguments instead.
         '''
-        assert len(
-            self.parameters) == 1, ("Use the 'extract_arguments' method "
-                                    "when there is more than one parameter")
+        assert is_single(self.parameters), (
+                "Use the 'extract_arguments' method when there is more "
+                "than one parameter")
         return self.extract_arguments(mapped_expr)[0]
 
     def extract_arguments(self, mapped_expr):
@@ -294,11 +295,11 @@ class Lambda(Expression):
         parameters = self.parameters
         lambda_sub_expr = self.body
         mapped_sub_expr = mapped_expr
-        if len(self.parameters) == 1 and self.body == self.parameter:
+        if self.parameters.num_entries() == 1 and self.body == self.parameter:
             # Simple case of x -> x.  Just return the mapped_expr as the
             # one argument.
             return [mapped_expr]
-        param_values = [None] * len(parameters)
+        param_values = [None] * parameters.num_entries()
         if lambda_sub_expr.num_sub_expr() != mapped_sub_expr.num_sub_expr():
             raise ArgumentExtractionError("# of sub-expressions, %d vs %d"
                                           % (lambda_sub_expr.num_sub_expr(),
@@ -375,7 +376,7 @@ class Lambda(Expression):
         out_str = '[' if fence else ''
         parameter_list_str = ', '.join(
             [parameter.string(abbrev=True) for parameter in parameters])
-        if parameters.is_singular():
+        if is_single(parameters):
             out_str += parameter_list_str + ' -> '
         else:
             out_str += '(' + parameter_list_str + ') -> '
@@ -389,7 +390,7 @@ class Lambda(Expression):
         out_str = r'\left[' if fence else ''
         parameter_list_str = ', '.join(
             [parameter.latex(abbrev=True) for parameter in self.parameters])
-        if self.parameters.is_singular():
+        if is_single(self.parameters):
             out_str += parameter_list_str + r' \mapsto '
         else:
             out_str += r'\left(' + parameter_list_str + r'\right) \mapsto '
@@ -583,7 +584,7 @@ class Lambda(Expression):
                 cur_repl_map_extensions[var_tuple] = expansion_tuple
                 try:
                     extract_complete_param_replacements(
-                        var_tuple, [param_var] * len(var_tuple),
+                        var_tuple, [param_var] * var_tuple.num_entries(),
                         var_tuple, expansion_tuple, assumptions,
                         requirements, cur_repl_map_extensions)
                 except LambdaApplicationError as e:
@@ -904,8 +905,8 @@ class Lambda(Expression):
         x1, x2, ..., xn -> f(g1(x1, x2, ..., xn), g2(x1, x2, ..., xn), ..., gn(x1, x2, ..., xn)).
         '''
         lambda1 = self
-        if len(lambda1.parameters) == 1:
-            if len(lambda2.parameters) != 1:
+        if is_single(lambda1.parameters):
+            if not is_single(lambda2.parameters):
                 raise TypeError(
                     "lambda2 may only take 1 parameter if lambda1 takes only 1 parameter")
             # g(x)
@@ -915,12 +916,13 @@ class Lambda(Expression):
             return Lambda(lambda1.parameters[0], lambda1.body.replaced(
                 {lambda1.parameters[0]: relabeled_expr2}))
         else:
-            if len(lambda2) != len(lambda1.parameters):
+            if len(lambda2) != lambda1.parameters.num_entries():
                 raise TypeError(
                     "Must supply a list of lambda2s with the same length as the number of lambda1 parameters")
             relabeled_expr2s = []
             for lambda2elem in lambda2:
-                if len(lambda2elem.parameters) != len(lambda1.parameters):
+                if (lambda2elem.parameters.num_entries() != 
+                        lambda1.parameters.num_entries()):
                     raise TypeError(
                         "Each lambda2 must have the same number of parameters as lambda1")
                 # gi(x1, x2, ..., xn)
@@ -971,9 +973,8 @@ class Lambda(Expression):
                         inner_expr.operands == sub_expr):
                     # We should use a multi-parameter map
                     from proveit import safe_dummy_var, var_range
-                    from proveit.core_expr_types import Len
                     from proveit.numbers import one
-                    n = Len(sub_expr).computed(assumptions)
+                    n = sub_expr.num_elements(assumptions)
                     parameters = var_range(safe_dummy_var(master_expr),
                                            one, n)
                     body = master_expr.replaced({sub_expr: parameters},
@@ -1091,7 +1092,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
     try:
         for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
-                from proveit.numbers import zero, one, is_literal_int
+                from proveit.numbers import zero, one
                 # This is a parameter range which corresponds with
                 # one or more operand entries in order to match the
                 # element-wise length.
@@ -1303,7 +1304,7 @@ def _mask_var_range(
             cur_repl_map = dict()
             try:
                 extract_complete_param_replacements(
-                    var_range_form, [var] * len(var_range_form),
+                    var_range_form, [var] * var_range_form.num_entries(),
                     var_range_form, expansion, assumptions,
                     requirements, cur_repl_map)
             except LambdaApplicationError as e:
@@ -1322,7 +1323,7 @@ def _mask_var_range(
             for masked_entry in masked_entries:
                 if isinstance(masked_entry, ExprRange):
                     masked_region_repl.extend(
-                        cur_repl_map.pop(ExprTuple(masked_entry)))
+                        cur_repl_map.pop(ExprTuple(masked_entry)).entries)
                 else:
                     masked_region_repl.append(cur_repl_map.pop(masked_entry))
             masked_region_repl = ExprTuple(*masked_region_repl)

@@ -40,7 +40,6 @@ proveit.numbers.addition.add_int_closure
 proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.add_nat_closure
 proveit.numbers.addition.add_nat_closure_bin
-proveit.numbers.addition.add_nat_pos_closure
 proveit.numbers.addition.add_nat_pos_from_non_neg
 proveit.numbers.addition.add_real_closure
 proveit.numbers.addition.add_real_closure_bin

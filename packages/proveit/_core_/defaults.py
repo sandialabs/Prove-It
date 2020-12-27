@@ -84,14 +84,18 @@ class Defaults:
         collection of Expressions, and skip any repeats.
         '''
         from .expression.expr import Expression
+        from .expression.composite.expr_tuple import ExprTuple
         assumptions_set = set()
-        try:
-            assumptions = list(assumptions)
-        except TypeError:
-            raise TypeError(
-                'The assumptions must be an iterable collection of '
-                'Expression objects')
-        for assumption in list(assumptions):
+        if isinstance(assumptions, ExprTuple):
+            assumptions = assumptions.entries
+        else:
+            try:
+                assumptions = list(assumptions)
+            except TypeError:
+                raise TypeError(
+                    'The assumptions must be an iterable collection of '
+                    'Expression objects')
+        for assumption in assumptions:
             if assumption not in assumptions_set:
                 if not isinstance(assumption, Expression):
                     raise TypeError("The assumptions must be an iterable "

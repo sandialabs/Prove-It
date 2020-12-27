@@ -221,7 +221,7 @@ class Gate(Operation):
         '''
         Automatically reduce "Gate() = IdentityOp()".
         '''
-        if len(self.operands) == 0:
+        if self.operands.num_entries() == 0:
             from proveit.physics.quantum import empty_gate
             with defaults.disabled_auto_reduction_types as disable_reduction_types:
                 disable_reduction_types.add(Gate)
@@ -331,11 +331,8 @@ class MultiQubitGate(Operation):
         Automatically reduce "MultiQubitGate(a, Set()) = IdentityOp()" and "MultiQubitGate(a, Set(n)) = Gate(a)".
         '''
         from proveit.numbers import is_literal_int
-
-        if isinstance(
-            self.gate_set, Set) and len(
-            self.gate_set.operands) == 1 and is_literal_int(
-                self.gate_set.operands[0]):
+        if (isinstance(self.gate_set, Set) and self.gate_set.operands.is_single()
+                and is_literal_int(self.gate_set.operands[0])):
             try:
                 return self.unary_reduction(assumptions)
             except BaseException:
@@ -343,7 +340,8 @@ class MultiQubitGate(Operation):
                 # to be in NaturalPos.
                 pass
 
-        if isinstance(self.gate_set, Set) and len(self.gate_set.operands) == 0:
+        if (isinstance(self.gate_set, Set) and 
+                self.gate_set.operands.num_entries() == 0):
             return self.empty_set_reduction(assumptions)
             # need to implement an empty set reduction theorem
 
@@ -377,7 +375,7 @@ class MultiQubitGate(Operation):
 
     def empty_set_reduction(self, assumptions=USE_DEFAULTS):
         from proveit.physics.quantum import empty_multi_qubit_gate_reduction
-        if not len(self.gate_set.operands) == 0:
+        if not self.gate_set.operands.num_entries() == 0:
             raise ValueError("Expression must have an empty Set() in "
                              "order to invoke empty_set_reduction")
         #operand = self.gate_set
@@ -434,7 +432,7 @@ class MultiQubitGate(Operation):
                         self.gate_set, Set) and all(
                         is_literal_int(entry) for entry in self.gate_set.operands):
                     # everything is a literal
-                    if len(self.gate_set.operands) <= 1:
+                    if self.gate_set.operands.num_entries() <= 1:
                         out_str += r'\gate{' + formatted_gate_operation + \
                             r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
                     else:
@@ -538,7 +536,7 @@ class CircuitEquiv(TransitiveRelation):
         if not isinstance(lambda_map, Lambda):
             # as a default, do a global replacement
             lambda_map = Lambda.global_repl(lambda_map, expr_being_replaced)
-        if len(lambda_map.parameters) != 1:
+        if not lambda_map.parameters.is_single():
             raise ValueError("When substituting, expecting a single "
                              "'lambda_map' parameter entry which may "
                              "be a single parameter or a range; got "
@@ -755,7 +753,7 @@ class Circuit(Operation):
 
         self.array = array
 
-        # or len(self.operands) != 1:
+        # or self.operands.num_entries() != 1:
         if not isinstance(self.array, ExprArray):
             raise ValueError(
                 "Expected contents of a Circuit expression to be an ExprArray object not %s" % str(
@@ -1224,7 +1222,7 @@ class Circuit(Operation):
                                 value.gate.string() != 'CLASSICAL\\_CONTROL':
                             # control gates should not be inside of a
                             # MultiQubit block gate
-                            if index < len(value.indices) - 1:
+                            if index < value.indices.num_entries() - 1:
                                 # if this is not the last gate in the
                                 # multi_qubit_gate
                                 if value.indices[index + 1].as_int() == k + 1 and value.gate == \
@@ -1237,7 +1235,7 @@ class Circuit(Operation):
                                         # block gate!
                                         length = 0
                                         n = index
-                                        while n + 1 < len(value.indices) and value.indices[n + 1].as_int() == \
+                                        while n + 1 < value.indices.num_entries() and value.indices[n + 1].as_int() == \
                                                 k + length + 1 and value.gate == \
                                                 self.array.entries[value.indices[n + 1].as_int() - 1].entries[col].gate:
                                             length += 1
@@ -1306,7 +1304,7 @@ class Circuit(Operation):
                             # there is a control or a classical control
                             # Define the wire_direction for the MultiQubitGate by taking the next index and
                             # subtracting the current one
-                            if index < len(value.indices) - 1:
+                            if index < value.indices.num_entries() - 1:
                                 # this is not the last gate so we add a wire
                                 # index
                                 row[col] = value.indices[index + 1].as_int() - k
@@ -1558,7 +1556,7 @@ class Circuit(Operation):
         from proveit._core_.expression.expr import Expression
         default_style = ("explicit" if format_type == 'string' else 'implicit')
         out_str = ''
-        if len(self.array) == 0 and fence:
+        if self.array.num_entries() == 0 and fence:
             # for an empty list, show the parenthesis to show something.
             return '()'
 

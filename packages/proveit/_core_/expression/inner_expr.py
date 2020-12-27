@@ -140,7 +140,7 @@ class InnerExpr:
             # sub-Expression or a slice (in which case the replacement map
             # has multiple parameters).
             if isinstance(key, int) and key < 0:
-                key = len(cur_inner_expr) + key
+                key = cur_inner_expr.num_entries() + key
             if isinstance(key, slice):
                 if key.step is not None and key.step != 1:
                     raise ValueError("When using a slice for an InnerExpr, the"
@@ -403,18 +403,18 @@ class InnerExpr:
             if start is None:
                 start = 0
             if stop is None:
-                stop = len(parent_tuple)
-            sub_tuple_len = cur_sub_expr.length(self.assumptions)
+                stop = parent_tuple.num_entries()
+            sub_tuple_len = cur_sub_expr.num_elements(self.assumptions)
             dummy_var = top_level_expr.safe_dummy_var()
             lambda_params = var_range(dummy_var, one, sub_tuple_len)
-            lambda_body = ExprTuple(*(parent_tuple[:start] + (lambda_params,)
-                                      + parent_tuple[stop:]))
+            lambda_body = ExprTuple(*(parent_tuple[:start].entries + (lambda_params,)
+                                      + parent_tuple[stop:].entries))
             """
         elif isinstance(cur_sub_expr, Composite):
             dummy_vars = top_level_expr.safe_dummy_vars(len(cur_sub_expr))
             lambda_params = dummy_vars
             cur_sub_class = cur_sub_expr.__class__
-            if len(self.parameters)==0:
+            if self.parameters.num_entries()==0:
                 lambda_body = cur_sub_class._checked_make(
                         cur_sub_expr.core_info(), cur_sub_expr.get_styles(),
                         dummy_vars)
