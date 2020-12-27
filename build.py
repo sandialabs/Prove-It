@@ -717,7 +717,7 @@ def extract_tar_with_limitations(filename, paths):
                               "You may then want to checkout master, do"
                               "'build.py --download', and go from there."%
                               (unique_rep, new_unique_rep))    
-                if (not in_database_folder and ext != '.html'):
+                if (not in_database_folder and ext == '.ipynb'):
                     git_clear_notebook(member_fullpath)
     tar.extractall(path=extract_to_path, members=tar_member_generator())
 
