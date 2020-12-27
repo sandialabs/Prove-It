@@ -125,7 +125,7 @@ class Equals(TransitiveRelation):
         if self.lhs == self.rhs:
             # Trivial x=x
             return self.conclude_via_reflexivity()
-        if self.lhs or self.rhs in (TRUE, FALSE):
+        if (self.lhs in (TRUE, FALSE)) or (self.rhs in (TRUE, FALSE)):
             try:
                 # Try to conclude as TRUE or FALSE.
                 return self.conclude_boolean_equality(assumptions)

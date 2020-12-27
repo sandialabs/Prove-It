@@ -1091,7 +1091,7 @@ class Instantiation(Proof):
             # in the original Judgment.
             def get_key_var(key):
                 if isinstance(key, ExprTuple):
-                    assert len(key) >= 1
+                    assert key.num_entries() >= 1
                     return get_param_var(key[0])
                 return get_param_var(key)
             repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
@@ -1408,6 +1408,7 @@ class Generalization(Proof):
         from proveit import Judgment
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var, _guaranteed_to_be_independent)
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
         from proveit.logic import Forall
         if not isinstance(instance_truth, Judgment):
             raise GeneralizationFailure(
@@ -1420,7 +1421,10 @@ class Generalization(Proof):
         # these assumptions will be used for deriving any side-effects
         defaults.assumptions = assumptions
         try:
-            remaining_conditions = list(new_conditions)
+            if isinstance(new_conditions, ExprTuple):
+                remaining_conditions = list(new_conditions.entries)
+            else:
+                remaining_conditions = list(new_conditions)
             expr = instance_truth.expr
             introduced_forall_vars = set()
             for k, new_forall_params in enumerate(

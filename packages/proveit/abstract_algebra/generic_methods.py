@@ -9,7 +9,7 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
 
     # check validity of default usage of indices
     if init_idx is None or final_idx is None:
-        if len(expr.operands) != 2:
+        if expr.operands.num_entries() != 2:
             raise IndexError("You may use default 'init_idx' or "
                              "'final_idx' values when applying "
                              "commutation only if your set or "
@@ -92,9 +92,9 @@ def apply_association_thm(
         # association over the entire range is trivial:
         return Equals(expr, expr).prove()  # simply the self equality
     i, j, k, A, B, C = thm.all_instance_vars()
-    _A = ExprTuple(*expr.operands[:beg])
-    _B = ExprTuple(*expr.operands[beg:end])
-    _C = ExprTuple(*expr.operands[end:])
+    _A = expr.operands[:beg]
+    _B = expr.operands[beg:end]
+    _C = expr.operands[end:]
     _i = _A.num_elements(assumptions)
     _j = _B.num_elements(assumptions)
     _k = _C.num_elements(assumptions)
@@ -113,9 +113,9 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
             "Expecting %d index of %s to be grouped (i.e., a nested expression of the same type)" %
             (idx, str(expr)))
     i, j, k, A, B, C = thm.all_instance_vars()
-    _A = ExprTuple(*expr.operands[:idx])
+    _A = expr.operands[:idx]
     _B = expr.operands[idx].operands
-    _C = ExprTuple(*expr.operands[idx + 1:])
+    _C = expr.operands[idx + 1:]
     _i = _A.num_elements(assumptions)
     _j = _B.num_elements(assumptions)
     _k = _C.num_elements(assumptions)

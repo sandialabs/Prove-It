@@ -275,7 +275,7 @@ class And(Operation):
         Prove and return some (A and B ... and ... Z) via A, B, ..., Z each proven individually.
         See also the compose method to do this constructively.
         '''
-        return compose(*self.operands, assumptions=assumptions)
+        return compose(*self.operands.entries, assumptions=assumptions)
 
     def deduce_left_in_bool(self, assumptions=USE_DEFAULTS):
         '''
@@ -590,11 +590,13 @@ def compose(*expressions, assumptions=USE_DEFAULTS):
     Returns [A and B and ...], the And operator applied to the collection of given arguments,
     derived from each separately.
     '''
-    if len(expressions) == 0:
+    from proveit._core_.expression.composite import composite_expression
+    expressions = composite_expression(expressions)
+    if expressions.num_entries() == 0:
         from proveit.logic.booleans.conjunction import \
             empty_conjunction
         return empty_conjunction
-    if len(expressions) == 2:
+    if expressions.is_double():
         from . import and_if_both
         return and_if_both.instantiate(
             {A: expressions[0], B: expressions[1]}, assumptions=assumptions)

@@ -151,7 +151,7 @@ class Or(Operation):
             return false_or_false_negated  # the negation of (FALSE or FALSE)
         elif self.operands.num_entries() == 0:
             return empty_disjunction
-        elif self.is_double():
+        elif self.operands.is_double():
             return neither_intro.instantiate(
                 {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         else:
@@ -162,13 +162,13 @@ class Or(Operation):
 
     def conclude_via_both(self, assumptions):
         from . import or_if_both
-        assert self.operands.num_entries().is_double()
+        assert self.operands.is_double()
         return or_if_both.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
     def conclude_via_only_left(self, assumptions):
         from . import or_if_only_left
-        assert self.operands.num_entries().is_double()
+        assert self.operands.is_double()
         return or_if_only_left.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -177,7 +177,7 @@ class Or(Operation):
         From A being (or assumed) True, conclude that (A V B) is True.
         '''
         from . import or_if_left
-        assert self.operands.num_entries().is_double()
+        assert self.operands.is_double()
         return or_if_left.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
 
@@ -250,6 +250,7 @@ class Or(Operation):
         '''
         from . import constructive_dilemma, destructive_dilemma, constructive_multi_dilemma, destructive_multi_dilemma
         from proveit.logic import Not, Or
+        from proveit import ExprTuple
         assert (isinstance(conclusion, Or) and 
                 (conclusion.operands.num_entries() 
                 == self.operands.num_entries())), \
@@ -277,8 +278,8 @@ class Or(Operation):
                     operand.operand for operand in self.operands]
                 negated_operands_conc = [
                     operand.operand for operand in conclusion.operands]
-                _A = negated_operands_self
-                _B = negated_operands_conc
+                _A = ExprTuple(*negated_operands_self)
+                _B = ExprTuple(*negated_operands_conc)
                 _m = _A.num_elements(assumptions)
                 return destructive_multi_dilemma.instantiate(
                         {m: _m, A: _A, B: _B}, assumptions=assumptions)

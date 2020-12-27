@@ -28,7 +28,7 @@ class IntersectMembership(Membership):
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = A.num_elements(assumptions)
+        _m = _A.num_elements(assumptions)
         return intersection_def.instantiate(
             {m: _m, x: element, A: _A}, assumptions=assumptions)
 
@@ -41,7 +41,7 @@ class IntersectMembership(Membership):
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = A.num_elements(assumptions)
+        _m = _A.num_elements(assumptions)
         return membership_unfolding.instantiate(
             {m: _m, x: element, A: _A}, assumptions=assumptions)
 
@@ -54,7 +54,7 @@ class IntersectMembership(Membership):
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = A.num_elements(assumptions)
+        _m = _A.num_elements(assumptions)
         return membership_folding.instantiate(
             {m: _m, x: element, A: _A}, assumptions=assumptions)
 
@@ -84,7 +84,7 @@ class IntersectNonmembership(Nonmembership):
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = A.num_elements(assumptions)
+        _m = _A.num_elements(assumptions)
         return nonmembership_equiv.instantiate(
             {m: _m, x: element, A: _A}, assumptions=assumptions)
 
@@ -97,6 +97,6 @@ class IntersectNonmembership(Nonmembership):
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = A.num_elements(assumptions)
+        _m = _A.num_elements(assumptions)
         return nonmembership_folding.instantiate(
             {m: _m, x: element, A: _A}, assumptions=assumptions)

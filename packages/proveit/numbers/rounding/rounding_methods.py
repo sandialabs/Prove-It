@@ -204,7 +204,7 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
             # Then we have at least one known integer addend, so we
             # rearrange and group the addends, associating the non-ints
             # and associating the ints
-            original_addends = list(subops)
+            original_addends = list(subops.entries)
             desired_order_by_index = list(
                 indices_of_non_ints + indices_of_known_ints)
             # commute to put reals first, followed by ints

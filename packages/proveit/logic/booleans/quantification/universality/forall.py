@@ -55,7 +55,7 @@ class Forall(OperationOverInstances):
         while isinstance(expr, Forall):
             new_params = expr.explicit_instance_params()
             instance_param_lists.append(list(new_params))
-            conditions += list(expr.conditions)
+            conditions += list(expr.conditions.entries)
             expr = expr.instance_expr
             new_assumptions = assumptions + tuple(conditions)
             if expr.proven(assumptions=assumptions + tuple(conditions)):
@@ -92,7 +92,7 @@ class Forall(OperationOverInstances):
             # attempt a different non-trivial strategy of proving
             # via generalization with automation.
             try:
-                conditions = list(self.conditions)
+                conditions = list(self.conditions.entries)
                 proven_inst_expr = self.instance_expr.prove(
                     assumptions=assumptions + tuple(conditions))
                 instance_param_lists = [list(self.explicit_instance_params())]
@@ -101,7 +101,7 @@ class Forall(OperationOverInstances):
                 while isinstance(proven_inst_expr.proof(), Generalization):
                     new_params = proven_inst_expr.explicit_instance_params()
                     instance_param_lists.append(list(new_params))
-                    conditions += proven_inst_expr.conditions
+                    conditions += proven_inst_expr.conditions.entries
                     proven_inst_expr = (
                         proven_inst_expr.proof().required_truths[0])
                 return proven_inst_expr.generalize(instance_param_lists,

@@ -235,7 +235,7 @@ class InnerExpr:
                     str(equiv_method))
             repl_lambda = self.repl_lambda()
             if (isinstance(cur_inner_expr, ExprTuple)
-                    and self.expr_hierarchy.num_entries() > 2
+                    and len(self.expr_hierarchy) > 2
                     and isinstance(self.expr_hierarchy[-2], Operation)):
                 # When replace operands of an operation, we need a
                 # a repl_lambda with a range of parameters.
@@ -407,8 +407,8 @@ class InnerExpr:
             sub_tuple_len = cur_sub_expr.num_elements(self.assumptions)
             dummy_var = top_level_expr.safe_dummy_var()
             lambda_params = var_range(dummy_var, one, sub_tuple_len)
-            lambda_body = ExprTuple(*(parent_tuple[:start] + (lambda_params,)
-                                      + parent_tuple[stop:]))
+            lambda_body = ExprTuple(*(parent_tuple[:start].entries + (lambda_params,)
+                                      + parent_tuple[stop:].entries))
             """
         elif isinstance(cur_sub_expr, Composite):
             dummy_vars = top_level_expr.safe_dummy_vars(len(cur_sub_expr))
@@ -429,7 +429,7 @@ class InnerExpr:
             """
         else:
             lambda_params = [top_level_expr.safe_dummy_var()]
-            if self.parameters.num_entries() == 0:
+            if len(self.parameters) == 0:
                 lambda_body = lambda_params[0]
             else:
                 # The replacements should be a function of the
@@ -520,7 +520,7 @@ class InnerExpr:
         # else:
         sub_exprs = [cur_sub_expr]
         named_expr_dict = [('lambda', repl_lambda)]
-        if self.parameters.num_entries() == 0:
+        if len(self.parameters) == 0:
             named_expr_dict += [('$%s$' % lambda_param.latex(), sub_expr)
                                 for lambda_param, sub_expr
                                 in zip(lambda_params, sub_exprs)]

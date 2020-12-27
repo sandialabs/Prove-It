@@ -951,12 +951,13 @@ class Judgment:
             domain_conditions = []
             for domain_list, forall_var_list in zip(domain_lists,
                                                     forall_var_lists):
-                domain_list = composite_expression(domain_list)
-                if len(domain_list) == 1:
-                    domain_list = [domain_list[0]] * len(forall_var_list)
+                domains = composite_expression(domain_list)
+                forall_vars = composite_expression(forall_var_list)
+                if domains.num_entries() == 1:
+                    domains = [domain_list[0]] * forall_vars.num_entries()
                 domain_conditions += [InSet(instance_var, domain) for
                                       instance_var, domain in
-                                      zip(forall_var_list, domain_list)]
+                                      zip(forall_vars, domains)]
             conditions = domain_conditions + list(conditions)
 
         return self._checkedTruth(Generalization(self, forall_var_lists,

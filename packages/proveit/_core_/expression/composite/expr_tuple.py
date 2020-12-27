@@ -140,7 +140,10 @@ class ExprTuple(Composite, Expression):
         Python lists.  Actually works with any iterable
         of Expressions as the second argument.
         '''
-        return ExprTuple(*(self.entries + tuple(other)))
+        if isinstance(other, ExprTuple):
+            return ExprTuple(*(self.entries + other.entries))
+        else:
+            return ExprTuple(*(self.entries + tuple(other)))
 
     def is_single(self):
         '''
@@ -581,7 +584,7 @@ def extract_var_tuple_indices(indexed_var_tuple):
                 indices.append(entry_indices)
         elif isinstance(entry, ExprRange):
             inner_indices = extract_var_tuple_indices(ExprTuple(entry.body))
-            assert is_single(inner_indices)
+            assert inner_indices.num_entries() == 1
             body = inner_indices[0]
             indices.append(ExprRange(entry.parameter, body,
                                      entry.start_index, entry.end_index))

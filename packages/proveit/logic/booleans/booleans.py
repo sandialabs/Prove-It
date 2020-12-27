@@ -117,7 +117,7 @@ class BooleanSet(Literal):
             if forall_stmt.conditions.is_double():
                 condition = forall_stmt.conditions[1]
             else:
-                condition = And(*forall_stmt.conditions[1:])
+                condition = And(*forall_stmt.conditions[1:].entries)
             Qx = Operation(Q, forall_stmt.instance_var)
             _Qx = condition
             Px = Operation(P, forall_stmt.instance_var)

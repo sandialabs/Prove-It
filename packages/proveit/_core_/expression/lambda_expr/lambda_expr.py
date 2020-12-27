@@ -1323,7 +1323,7 @@ def _mask_var_range(
             for masked_entry in masked_entries:
                 if isinstance(masked_entry, ExprRange):
                     masked_region_repl.extend(
-                        cur_repl_map.pop(ExprTuple(masked_entry)))
+                        cur_repl_map.pop(ExprTuple(masked_entry)).entries)
                 else:
                     masked_region_repl.append(cur_repl_map.pop(masked_entry))
             masked_region_repl = ExprTuple(*masked_region_repl)

@@ -218,7 +218,7 @@ class Mult(Operation):
         eq = TransRelUpdater(self, assumptions)
 
         # Work in reverse order so indices don't need to be updated.
-        for rev_idx, operand in enumerate(reversed(self.operands)):
+        for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if isinstance(operand, Neg):
                 idx = self.operands.num_entries() - rev_idx - 1
                 if isinstance(expr, Mult):
@@ -256,9 +256,9 @@ class Mult(Operation):
                 _y = self.operands[1].operand
                 return mult_neg_right.instantiate({x: _x, y: _y},
                                                   assumptions=assumptions)
-        _a = ExprTuple(*self.operands[:idx])
+        _a = self.operands[:idx]
         _b = self.operands[idx].operand
-        _c = ExprTuple(*self.operands[idx + 1:])
+        _c = self.operands[idx + 1:]
         _i = _a.num_elements(assumptions)
         _j = _c.num_elements(assumptions)
         return mult_neg_any.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c},
@@ -279,7 +279,7 @@ class Mult(Operation):
         eq = TransRelUpdater(self, assumptions)
 
         # Work in reverse order so indices don't need to be updated.
-        for rev_idx, operand in enumerate(reversed(self.operands)):
+        for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if operand == one:
                 idx = self.operands.num_entries() - rev_idx - 1
                 expr = eq.update(expr.one_elimination(idx, assumptions))
@@ -311,8 +311,8 @@ class Mult(Operation):
             else:
                 return elim_one_right.instantiate({x: self.operands[0]},
                                                   assumptions=assumptions)
-        _a = ExprTuple(*self.operands[:idx])
-        _b = ExprTuple(*self.operands[idx + 1:])
+        _a = self.operands[:idx]
+        _b = self.operands[idx + 1:]
         _i = _a.num_elements(assumptions)
         _j = _b.num_elements(assumptions)
         return elim_one_any.instantiate({i: _i, j: _j, a: _a, b: _b},
@@ -329,7 +329,7 @@ class Mult(Operation):
         # via transitivities (starting with self=self).
         eq = TransRelUpdater(self, assumptions)
 
-        for _i, factor in enumerate(self.factors):
+        for _i, factor in enumerate(self.factors.entries):
             if hasattr(factor, 'deep_one_eliminations'):
                 expr = eq.update(expr.inner_expr().factors[_i].
                                  deep_one_eliminations(assumptions))
@@ -356,7 +356,7 @@ class Mult(Operation):
 
         numer_factors = []
         denom_factors = []
-        for _i, factor in enumerate(self.factors):
+        for _i, factor in enumerate(self.factors.entries):
             if isinstance(factor, Div):
                 if isinstance(factor.numerator, Mult):
                     numer_factors.extend(factor.numerator.factors)
@@ -398,7 +398,7 @@ class Mult(Operation):
         numer_occurrence_indices = []
         denom_occurrence_indices = []
 
-        for _i, factor in enumerate(self.factors):
+        for _i, factor in enumerate(self.factors.entries):
             if isinstance(factor, Div):
                 numer_factors = (factor.numerator.factors if
                                  isinstance(factor.numerator, Mult)
@@ -626,8 +626,8 @@ class Mult(Operation):
                         {x: self.operands[0]}, assumptions=assumptions)
             _a = self.operands[:zero_idx]
             _b = self.operands[zero_idx + 1:]
-            _i = ExprTuple(*_a.num_elements(assumptions))
-            _j = ExprTuple(*_b.num_elements(assumptions))
+            _i = _a.num_elements(assumptions)
+            _j = _b.num_elements(assumptions)
             return mult_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b},
                                              assumptions=assumptions)
         except (ValueError, ProofFailure):
@@ -708,8 +708,7 @@ class Mult(Operation):
             try:
                 while True:
                     idx = self.operands.index(first_factor, start=idx + 1)
-                    if tuple(self.operands[idx:idx + num]
-                             ) == tuple(the_factor):
+                    if self.operands[idx:idx + num].entries == tuple(the_factor):
                         break  # found it all!
             except ValueError:
                 raise ValueError("Factor is absent!")
@@ -773,8 +772,8 @@ class Mult(Operation):
                     w: self.factors[1].denominator},
                 assumptions=assumptions)
         operand = self.operands[idx]
-        _a = ExprTuple(*self.operands[:idx])
-        _c = ExprTuple(*self.operands[idx + 1:])
+        _a = self.operands[:idx]
+        _c = self.operands[idx + 1:]
         _i = _a.num_elements(assumptions)
         _k = _c.num_elements(assumptions)
         if isinstance(operand, Add):

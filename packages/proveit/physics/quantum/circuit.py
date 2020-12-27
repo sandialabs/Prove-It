@@ -1222,7 +1222,7 @@ class Circuit(Operation):
                                 value.gate.string() != 'CLASSICAL\\_CONTROL':
                             # control gates should not be inside of a
                             # MultiQubit block gate
-                            if index < len(value.indices) - 1:
+                            if index < value.indices.num_entries() - 1:
                                 # if this is not the last gate in the
                                 # multi_qubit_gate
                                 if value.indices[index + 1].as_int() == k + 1 and value.gate == \
@@ -1235,7 +1235,7 @@ class Circuit(Operation):
                                         # block gate!
                                         length = 0
                                         n = index
-                                        while n + 1 < len(value.indices) and value.indices[n + 1].as_int() == \
+                                        while n + 1 < value.indices.num_entries() and value.indices[n + 1].as_int() == \
                                                 k + length + 1 and value.gate == \
                                                 self.array.entries[value.indices[n + 1].as_int() - 1].entries[col].gate:
                                             length += 1
@@ -1304,7 +1304,7 @@ class Circuit(Operation):
                             # there is a control or a classical control
                             # Define the wire_direction for the MultiQubitGate by taking the next index and
                             # subtracting the current one
-                            if index < len(value.indices) - 1:
+                            if index < value.indices.num_entries() - 1:
                                 # this is not the last gate so we add a wire
                                 # index
                                 row[col] = value.indices[index + 1].as_int() - k

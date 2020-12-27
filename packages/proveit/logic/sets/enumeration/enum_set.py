@@ -309,14 +309,15 @@ class Set(Operation):
         # on the reduced forms of the specified Sets.
         subset_to_support_kt = subset.reduction(assumptions=assumptions)
         subset_reduced = subset_to_support_kt.rhs
-        subset_reduced_list = list(subset_reduced.operands)
+        subset_reduced_operands = subset_reduced.operands
 
-        # For convenience, convert the subset_reduced_list to indices
+        # For convenience, convert the subset_reduced_operands to indices
         # of the self_reduced_entries. Because of earlier checks, the
-        # subset_reduced_list should not contain any items not also
+        # subset_reduced_operands should not contain any items not also
         # contained in self_reduced_entries.
         subset_reduced_indices_list = (
-            [self_reduced_entries.index(elem) for elem in subset_reduced_list])
+            [self_reduced_entries.index(elem) for elem 
+             in subset_reduced_operands])
 
         full_indices_list = list(range(0, len(self_reduced_entries)))
 
@@ -332,7 +333,7 @@ class Set(Operation):
         superset_perm_relation = generic_permutation(
             self_reduced, new_order, assumptions=assumptions)
         # construct the desired list of subset elems
-        desired_subset_list = subset_reduced_list
+        desired_subset = subset_reduced_operands
         # construct the desired complement list of elems
         desired_complement_list = []
         for elem in remaining_indices:
@@ -343,7 +344,8 @@ class Set(Operation):
         from . import subset_eq_of_superset
         # from proveit import m, n, aa, bb
         m, n, a, b = subset_eq_of_superset.all_instance_vars()
-        _a, _b = (desired_subset_list, desired_complement_list)
+        desired_complement = ExprTuple(*desired_complement_list)
+        _a, _b = (desired_subset, desired_complement)
         _m = _a.num_elements(assumptions)
         _n = _b.num_elements(assumptions)
         subset_of_permuted_superset = subset_eq_of_superset.instantiate(
@@ -586,11 +588,11 @@ class Set(Operation):
         non_subset_elem_index = self_reduced_entries.index(non_subset_elem_proven)
 
         # For convenience, convert the subset_list to indices
-        # of the self_reduced_list. Because of earlier checks, the
+        # of the self_reduced_entries. Because of earlier checks, the
         # subset_list should contain only items in
-        # self_reduced_list but not all the items in self_reduced_list.
+        # self_reduced_entries but not all the items in self_reduced_entries.
         subset_indices_list = (
-            [self_reduced_list.index(elem) for elem in subset_entries])
+            [self_reduced_entries.index(elem) for elem in subset_entries])
 
         full_indices_list = list(range(0, len(self_reduced_entries)))
 
@@ -610,7 +612,7 @@ class Set(Operation):
         superset_perm_relation = generic_permutation(
             self_reduced, new_order, assumptions=assumptions)
         # construct the desired list of subset elems
-        desired_subset_list = subset_entries
+        desired_subset = subset.operands
         # construct the desired complement list of elems
         desired_complement_list = [non_subset_elem_proven]
         for elem in remaining_indices:
@@ -620,11 +622,11 @@ class Set(Operation):
         # then instantiate.
         from . import proper_subset_of_superset
         m, n, a, b, c = proper_subset_of_superset.all_instance_vars()
-        _a = desired_subset_list
+        _a = desired_subset
         _b = desired_complement_list[0]
-        _c = desired_complement_list[1:]
+        _c = ExprTuple(*desired_complement_list[1:])
         _m = _a.num_elements(assumptions)
-        _n = _b.num_elements(assumptions)
+        _n = _c.num_elements(assumptions)
         subset_of_permuted_superset = proper_subset_of_superset.instantiate(
             {m: _m, n: _n, a: _a, b: _b, c: _c},
             assumptions=assumptions)
@@ -664,15 +666,13 @@ class Set(Operation):
         '''
         from proveit import TransRelUpdater
         eq = TransRelUpdater(self, assumptions)
-        current_operands = list(self.operands.entries)
         # the following does not preserve the order, but we really
         # just want the size of the support set
-        desired_operands = set(self.operands)
+        desired_operands = set(self.operands.entries)
         desired_num_operands = len(desired_operands)
         expr = self
-        while len(current_operands) > desired_num_operands:
+        while expr.operands.num_entries() > desired_num_operands:
             expr = eq.update(expr.reduction_elem(assumptions=assumptions))
-            current_operands = expr.operands
 
         return eq.relation
 

@@ -151,8 +151,10 @@ class EnumNonmembership(Nonmembership):
         assumptions = defaults.checked_assumptions(assumptions)
         from . import nonmembership_fold
         enum_elements = self.domain.elements
+        _y = enum_elements
+        _n = _y.num_elements(assumptions=assumptions)
         return nonmembership_fold.instantiate(
-            {n: num(len(enum_elements)), x: self.element, y: enum_elements},
+            {n: _n, x: self.element, y: _y},
             assumptions=assumptions)
 
     def unfold(self, assumptions=USE_DEFAULTS):

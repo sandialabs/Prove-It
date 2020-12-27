@@ -70,16 +70,16 @@ class Exists(OperationOverInstances):
 
         # Update the default assumptions with the Skolem versions
         # of the conditions and instance expression
-        defaults.assumptions = (*defaults.assumptions, *Q_skolem, P_skolem)
+        defaults.assumptions = (*defaults.assumptions, *Q_skolem.entries, P_skolem)
         if print_message:
             print(
                 "Creating Skolem 'constant(s)': {0}.\n"
                 "Call the Judgment.eliminate{0} to complete the "
                 "Skolemization\n(when the 'constant(s)' are no longer needed).\n"
                 "Adding to defaults.assumptions:". format(
-                    skolem_constants, (*Q_skolem)))
+                    skolem_constants, (*Q_skolem.entries)))
 
-        return ExprTuple(*Q_skolem, P_skolem)
+        return ExprTuple(*Q_skolem.entries, P_skolem)
 
     @staticmethod
     def eliminate(skolem_constants, judgment, assumptions=USE_DEFAULTS):

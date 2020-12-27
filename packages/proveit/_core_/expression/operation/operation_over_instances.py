@@ -904,8 +904,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
                 "May only 'bundle' nested OperationOverInstances, "
                 "not %s" %
                 bundled)
-        _m = bundled.instance_params.num_elements()
-        _n = bundled.instance_expr.instance_params.num_elements()
+        _m = bundled.instance_params.num_elements(assumptions)
+        _n = bundled.instance_expr.instance_params.num_elements(assumptions)
         _P = bundled.instance_expr.instance_expr
         _Q = bundled.effective_condition()
         _R = bundled.instance_expr.effective_condition()
@@ -1014,12 +1014,11 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         num_param_entries = list(num_param_entries)
     while len(num_param_entries) > 1:
         n_last_entries = num_param_entries.pop(-1)
-        first_params = ExprTuple(*unbundled.instance_params[:-n_last_entries])
+        first_params = unbundled.instance_params[:-n_last_entries]
         first_param_vars = {get_param_var(param) for param in first_params}
-        remaining_params = \
-            ExprTuple(*unbundled.instance_params[-n_last_entries:])
-        _m = first_params.num_elements()
-        _n = remaining_params.num_elements()
+        remaining_params = unbundled.instance_params[-n_last_entries:]
+        _m = first_params.num_elements(assumptions)
+        _n = remaining_params.num_elements(assumptions)
         _P = unbundled.instance_expr
         # Split up the conditions between the outer
         # OperationOverInstances and inner OperationOverInstances
@@ -1036,14 +1035,14 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
             elif _nQ == 1:
                 _Q = condition.operands[0]
             else:
-                _Q = And(*condition.operands[:_nQ])
+                _Q = And(*condition.operands[:_nQ].entries)
             _nR = condition.operands.num_entries() - _nQ
             if _nR == 0:
                 _R = And()
             elif _nR == 1:
                 _R = condition.operands[-1]
             else:
-                _R = And(*condition.operands[_nQ:])
+                _R = And(*condition.operands[_nQ:].entries)
         elif first_param_vars.isdisjoint(free_vars(condition,
                                                    err_inclusively=True)):
             _Q = condition

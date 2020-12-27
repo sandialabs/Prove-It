@@ -569,7 +569,7 @@ class Operation(Expression):
                     # happens to be a tuple).
                     subbed_operands = [subbed_operand_or_operands]
                 else:
-                    subbed_operands = subbed_operand_or_operands
+                    subbed_operands = subbed_operand_or_operands.entries
                 return Lambda._apply(
                     subbed_operator.parameters, subbed_operator.body,
                     *subbed_operands, assumptions=assumptions,

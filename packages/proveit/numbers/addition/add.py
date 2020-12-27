@@ -177,7 +177,7 @@ class Add(Operation):
         subtraction_positions = self.subtraction_positions()
         default_subtraction_positions = [
             _k for _k, operand in enumerate(
-                self.operands) if Add._isNegatedOperand(operand)]
+                self.operands.entries) if Add._isNegatedOperand(operand)]
         if subtraction_positions != default_subtraction_positions:
             call_strs.append('with_subtraction_at(' + ','.join(str(pos)
                                                                for pos in subtraction_positions) + ')')
@@ -236,7 +236,7 @@ class Add(Operation):
         '''
         from . import strictly_increasing_additions
         # print(b)
-        for _i, term in enumerate(self.terms):
+        for _i, term in enumerate(self.terms.entries):
             if term == x:
                 idx = _i
         _a = self.terms[:idx]
@@ -256,7 +256,7 @@ class Add(Operation):
         from . import strictly_decreasing_additions
         # print(b)
         # print(self.terms)
-        for _i, term in enumerate(self.terms):
+        for _i, term in enumerate(self.terms.entries):
             if term == x:
                 idx = _i
         _a = self.terms[:idx]
@@ -344,12 +344,12 @@ class Add(Operation):
         eq = TransRelUpdater(self, assumptions)
 
         neg_operand_indices = dict()
-        for _i, operand in enumerate(self.operands):
+        for _i, operand in enumerate(self.operands.entries):
             if isinstance(operand, Neg):
                 neg_operand_indices.setdefault(operand.operand, set()).add(_i)
 
         canceled_indices = []
-        for _i, operand in enumerate(self.operands):
+        for _i, operand in enumerate(self.operands.entries):
             if isinstance(operand, Neg):
                 continue
             if operand in neg_operand_indices:
@@ -452,7 +452,7 @@ class Add(Operation):
         eq = TransRelUpdater(self, assumptions)
 
         # Work in reverse order so indices don't need to be updated.
-        for rev_idx, operand in enumerate(reversed(self.operands)):
+        for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if operand == zero:
                 idx = self.operands.num_entries() - rev_idx - 1
                 expr = eq.update(expr.zero_elimination(idx, assumptions))
@@ -562,7 +562,7 @@ class Add(Operation):
         hold = {}
         order = []
 
-        for _i, val in enumerate(self.operands):
+        for _i, val in enumerate(self.operands.entries):
             # loop through each operand
 
             # used to differentiate positive and negative for ordering
@@ -767,7 +767,7 @@ class Add(Operation):
                 return eq.relation
 
         # simplify the combined terms
-        for _i, operand in enumerate(expr.operands):
+        for _i, operand in enumerate(expr.operands.entries):
             if isinstance(operand, Add):
                 expr = eq.update(
                     expr.inner_expr().operands[_i].simplification(assumptions))
@@ -927,7 +927,7 @@ class Add(Operation):
         from proveit.numbers import Neg
         from proveit.numbers.addition.subtraction.theorems import add_neg_as_subtract
         if term_idx is None:
-            for _k, term in enumerate(self.terms):
+            for _k, term in enumerate(self.terms.entries):
                 if isinstance(term, Neg):
                     term_idx = _k
                     break
@@ -1029,7 +1029,7 @@ class Add(Operation):
             # positive number set, our last resort will be if we know
             # one of the operands is greater than zero.
             val = -1
-            for _i, operand in enumerate(self.operands):
+            for _i, operand in enumerate(self.operands.entries):
                 if Greater(operand, zero).proven(assumptions=assumptions):
                     val = _i
                     # print(b)
@@ -1078,6 +1078,8 @@ class Add(Operation):
             if self.operands.is_double():
                 return add_complex_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            _a = self.operands
+            _i = _a.num_elements(assumptions)
             return add_complex_closure.instantiate(
                 {i: _i, a: _a}, assumptions=assumptions)
         msg = "'deduce_in_number_set' not implemented for the %s set" % str(
@@ -1160,6 +1162,7 @@ class Add(Operation):
         Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
+        from proveit import ExprTuple
         from proveit.numbers.multiplication import distribute_through_sum
         from proveit.numbers import one, Mult
         expr = self
@@ -1202,13 +1205,14 @@ class Add(Operation):
         if not group_factor and isinstance(the_factor, Mult):
             factor_sub = the_factor.operands
         else:
-            factor_sub = [the_factor]
+            factor_sub = ExprTuple(the_factor)
         if pull == 'left':
             _a = factor_sub
-            _c = []
+            _c = ExprTuple()
         else:
-            _a = []
+            _a = ExprTuple()
             _c = factor_sub
+        _b = ExprTuple(*_b)
         _i = _a.num_elements(assumptions)
         _j = _b.num_elements(assumptions)
         _k = _c.num_elements(assumptions)
