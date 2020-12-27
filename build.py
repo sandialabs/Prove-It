@@ -687,7 +687,7 @@ def extract_tar_with_limitations(filename, paths):
                     elif ext == '.ipynb':
                         notebook_path = member_fullpath
                     if os.path.isfile(notebook_path):
-                        if not is_git_diff_empty(member_fullpath):
+                        if not is_git_diff_empty(notebook_path):
                             # Skip this extraction since it
                             # isn't committed.
                             print("Skipping", tar_member.name)
@@ -717,7 +717,7 @@ def extract_tar_with_limitations(filename, paths):
                               "You may then want to checkout master, do"
                               "'build.py --download', and go from there."%
                               (unique_rep, new_unique_rep))    
-                if (not in_database_folder and ext == '.html'):
+                if (not in_database_folder and ext != '.html'):
                     git_clear_notebook(member_fullpath)
     tar.extractall(path=extract_to_path, members=tar_member_generator())
 
@@ -747,6 +747,7 @@ def sure_you_want_to_extract(paths):
           "cells)\n"
           "will be replaced, but you should still be careful.\n"
           %paths)
+    
     response = input("Are you sure you want to continue? ")
     if response == "": return False
     return response[0].upper()=='Y'  
@@ -1216,7 +1217,7 @@ if __name__ == '__main__':
                             theory_path, '__pv_it', 'common', 'name_to_hash.txt')
                     if os.path.isfile(name_to_hash_filename):
                         os.remove(name_to_hash_filename)
-            if nranks > 1:
+            if nranks > 0:
                 comm.barrier()
 
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/common.ipynb'),
@@ -1272,24 +1273,27 @@ if __name__ == '__main__':
         '''
         url = ("https://github.com/PyProveIt/Prove-It/archive/"
                "master-full.tar.gz")
-        if not sure_you_want_to_extract(paths):
-            print('Quitting')
-            tar_file = ''
-        else:
-            print("Downloading '%s'" % url)
-            try:
-                tar_file = urllib.request.urlretrieve(
-                    url, filename=None)[0]  # Comment in for Python 3
-            except urllib.error.URLError as e:
-                print(str(e))
-                raise Exception(
+        if rank == 0:
+            if not sure_you_want_to_extract(paths):
+                print('Quitting')
+                tar_file = ''
+            else:
+                print("Downloading '%s'" % url)
+                try:
+                    tar_file = urllib.request.urlretrieve(
+                        url, filename=None)[0]  # Comment in for Python 3
+                except urllib.error.URLError as e:
+                    print(str(e))
+                    raise Exception(
                         "Unable to download %s; there may be a firewall "
                         "issue.\nIn any case, you can try downloading this "
                         "file manually and then use '--extract'."%url)        
     elif tar_file != "":
-        if not sure_you_want_to_extract(paths):
+        if rank == 0 and not sure_you_want_to_extract(paths):
             print('Quitting')
             tar_file = ''
+    if nranks > 0:
+        tar_file = comm.bcast(tar_file, root=0)
     if tar_file != "":
         extract_tar_with_limitations(tar_file, paths)
         #extract_tar_test(tar_file, paths)
