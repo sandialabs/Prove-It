@@ -47,6 +47,8 @@ Installation instructions
     - Python3.7 (installing a distribution such as Anaconda is recommended)
     - Jupyter (included in a distribution such as Anaconda)
     - LaTeX distribution (e.g. MiKTeX or TeX Live)
+    - The qcircuit LaTeX package which may be acquired from CTAN
+      (or disable the quantum theory package in Prove-It).
 
 2) Run:
 
@@ -62,13 +64,25 @@ Installation instructions
    
 3) Run:
 
-       python build.py --clean --download
+       python build.py --essential
    
-   to download and extract the Prove-It "database" files distributed in
-   `__pv_it` folders throughout the Prove-It sub-folders.  The `--clean`
-   option will erase anything that may have been added to your local
-   database before extracting the downloaded version.  THIS FEATURE IS
-   NOT CURRENTLY WORKING.  WE HOPE TO RE-ENABLE IT SOON.
+   to execute Jupyter notebooks that will define axioms and theorems
+   of each theory package as well as commonly used expressions.  You will
+   then be able to execute any notebook in the system as well as experiment
+   on your own.  Currently, this takes about 10 minutes on a single core.
+   Use the "--help" option to see other "build" options (for example,
+   `python build.py --download` will essentially download the entire 
+   contents of the `pyproveit.org` website).
+   It is also possible to execute the `build.py` script using multiple
+   cores with mpi4py.  For example, if you have 4 cores available in
+   your system and mpi/mpi4py is installed, 
+   `mpirun -np 4 build.py --essential` will
+   build the essential theory package notebooks using 3 active cores 
+   (one core will assign tasks to the other three).
+   
+   To disable the quantum physics package (and alleviate the need to install
+   the qcircuit LaTeX package), remove "quantum" from 
+   `packages/proveit/physics/_sub_theories_.txt`.
 
 4) It is intended that theory packages continue to be added and updated 
    to cover an ever-expanding range of mathematical knowledge.  Theory 
@@ -79,7 +93,7 @@ Installation instructions
    at this top level.  For example, the `Or` class is contained in the
    python file
 
-   `proveit.logic.boolean.disjunction.or_op.py`
+   `proveit.logic.booleans.disjunction.or_op.py`
 
    but it can and should be accessed via the import command
 
@@ -99,12 +113,16 @@ Installation instructions
             proofs.</td>
     </tr>
     <tr>
-      <td style="font-family:courier, courier new;">logic</td>
-      <td>Boolean arithmetic, equality, and set theory.</td>
+      <td style="font-family:courier, courier new;">_core_expr_types_</td>
+      <td>Theory package with axioms/theorems pertaining to some of the core expression types.</td>
     </tr>
     <tr>
-      <td style="font-family:courier, courier new;">number</td>
-      <td>Arithmetic and number theory concepts.</td>
+      <td style="font-family:courier, courier new;">logic</td>
+      <td>Theory package for boolean arithmetic, equality, and set theory.</td>
+    </tr>
+    <tr>
+      <td style="font-family:courier, courier new;">numbers</td>
+      <td>Theory package for arithmetic and number theory concepts.</td>
     </tr>
     <tr>
       <td style="font-family:courier, courier new; vertical-align:top;">relations</td>
@@ -113,15 +131,15 @@ Installation instructions
     </tr>
     <tr>
       <td style="font-family:courier, courier new;">trigonometry</td>
-      <td>A few things pertaining to trigonometry.</td>
+      <td>Yet to be a theory package pertaining to trigonometry.</td>
     </tr>
     <tr>
       <td style="font-family:courier, courier new;">linalg</td>
-      <td>A few things pertaining to linear algebra.</td>
+      <td>Yet to be a theory package pertaining to linear algebra.</td>
     </tr>
     <tr>
       <td style="font-family:courier, courier new;">statistics</td>
-      <td>A few things pertaining to statistics.</td>
+      <td>Yet to be a theory package pertaining to statistics.</td>
     </tr>
     <tr>
       <td style="font-family:courier, courier new; vertical-align:top;"
@@ -134,7 +152,8 @@ Installation instructions
     </tr>
    </table>
 
-5) Take a look at the `tutorial` folder.  It has numbered Jupyter notebooks 
+5) The tutorial notebooks in the `tutorial` folder are in progress.  
+   It has numbered Jupyter notebooks 
    (and html versions for convenience) that introduce Prove-It concepts
    in an appropriate order.  There are also "demonstration" notebooks/html
    in the various theory packages with specific information about that
