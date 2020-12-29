@@ -717,7 +717,7 @@ def extract_tar_with_limitations(filename, paths):
                               "You may then want to checkout master, do"
                               "'build.py --download', and go from there."%
                               (unique_rep, new_unique_rep))    
-                if (not in_database_folder and ext != '.html'):
+                if (not in_database_folder and ext == '.ipynb'):
                     git_clear_notebook(member_fullpath)
     tar.extractall(path=extract_to_path, members=tar_member_generator())
 
@@ -1217,7 +1217,7 @@ if __name__ == '__main__':
                             theory_path, '__pv_it', 'common', 'name_to_hash.txt')
                     if os.path.isfile(name_to_hash_filename):
                         os.remove(name_to_hash_filename)
-            if nranks > 0:
+            if nranks > 1:
                 comm.barrier()
 
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/common.ipynb'),
@@ -1292,7 +1292,7 @@ if __name__ == '__main__':
         if rank == 0 and not sure_you_want_to_extract(paths):
             print('Quitting')
             tar_file = ''
-    if nranks > 0:
+    if nranks > 1:
         tar_file = comm.bcast(tar_file, root=0)
     if tar_file != "":
         extract_tar_with_limitations(tar_file, paths)
