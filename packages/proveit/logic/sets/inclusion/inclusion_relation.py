@@ -1,9 +1,9 @@
 from proveit import USE_DEFAULTS
 from proveit.relation import (
-    TransitiveRelation, TransitiveSequence, make_sequence_or_relation)
+    TransitiveRelation, total_ordering)
 
 
-class ContainmentRelation(TransitiveRelation):
+class InclusionRelation(TransitiveRelation):
     r'''
     Base class for all strict and non-strict set containment
     relations.  Do not construct an object of this class directly!
@@ -12,7 +12,24 @@ class ContainmentRelation(TransitiveRelation):
 
     def __init__(self, operator, lhs, rhs):
         TransitiveRelation.__init__(self, operator, lhs, rhs)
+        self.subset = self.operands[0]
+        self.superset = self.operands[1]
 
+    @staticmethod
+    def WeakRelationClass():
+        from .subset_eq import SubsetEq
+        return SubsetEq
+
+    @staticmethod
+    def StrongRelationClass():
+        from .proper_subset import ProperSubset
+        return ProperSubset
+
+    @staticmethod
+    def EquivalenceClass():
+        from proveit.logic.sets.equivalence import SetEquiv
+        return SetEquiv
+    
     def side_effects(self, judgment):
         '''
         In addition to the TransitiveRelation side-effects, also
@@ -33,20 +50,24 @@ class ContainmentRelation(TransitiveRelation):
         if isinstance(other, Equals):
             if (self.proven(assumptions=assumptions) and
                     other.proven(assumptions=assumptions)):
-                if other.lhs == self.rhs:
+                if other.subset == self.superset:
                     return other.sub_right_side_into(
                         self, assumptions=assumptions)
-                elif other.rhs == self.rhs:
+                elif other.superset == self.subset:
                     return other.sub_left_side_into(
                         self, assumptions=assumptions)
 
-
-class ContainmentSequence(TransitiveSequence):
-    r'''
-    Base class for the containment relation sequences.
-    Do not construct an object of this class directly!
-    Instead, use SubsetSequence or SupersetSequence
+def inclusion_ordering(*relations):
     '''
-
-    def __init__(self, operators, operands):
-        TransitiveSequence.__init__(self, operators, operands)
+    Return a conjunction of set inclusion ordering relations
+    with a total-ordering style; for example,
+    A proper_subset B subset_eq C set_equiv D proper_subset E
+    '''
+    from proveit.logic.sets.equivalence import SetEquiv
+    for relation in relations:
+        if (not isinstance(relation, InclusionRelation) and
+               not isinstance(relation, SetEquiv)):
+            raise TypeError("For a set inclusion ordering expression, "
+                            "all relations must be either InclusionRelation "
+                            "or SetEquiv objects.")
+    return total_ordering(*relations)
