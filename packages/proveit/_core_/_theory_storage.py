@@ -521,8 +521,8 @@ class TheoryStorage:
         theory_folder_storage = self.theory_folder_storage(folder)
         name_to_hash_filename = os.path.join(self.pv_it_dir, folder,
                                              'name_to_hash.txt')
+        special_hash_ids = self._special_hash_ids[kind] = dict()
         if os.path.isfile(name_to_hash_filename):
-            special_hash_ids = self._special_hash_ids[kind] = dict()
             with open(name_to_hash_filename, 'r') as f:
                 for line in f.readlines():
                     name, hash_id = line.split()
