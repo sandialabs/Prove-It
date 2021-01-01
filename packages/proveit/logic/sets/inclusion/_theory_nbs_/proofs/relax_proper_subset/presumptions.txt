@@ -34,8 +34,4 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.equivalence.set_not_equiv_reversal
-proveit.logic.sets.inclusion.reverse_proper_subset
-proveit.logic.sets.inclusion.reverse_proper_superset
-proveit.logic.sets.inclusion.reverse_subset_eq
-proveit.logic.sets.inclusion.reverse_supset_eq
 # THEOREMS AND THEORIES TO EXCLUDE:

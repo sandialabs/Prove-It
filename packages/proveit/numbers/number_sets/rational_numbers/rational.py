@@ -213,7 +213,7 @@ class RationalMembership(NumberMembership):
         from proveit.logic import InSet, NotEquals
         from proveit.numbers import (
             Rational, RationalNonZero, RationalPos, RationalNeg,
-            RationalNonNeg, Less, Greater, GreaterEq, zero)
+            RationalNonNeg, Less, greater, greater_eq, zero)
 
         # If we known the element is in Q, we may be able to
         # prove that is in RationalNonZero, RationalPos, RationalNeg, or
@@ -226,7 +226,7 @@ class RationalMembership(NumberMembership):
                     return non_zero_rational_is_rational_non_zero.instantiate(
                         {q: self.element}, assumptions=assumptions)
             if self.number_set == RationalPos:
-                if Greater(self.element, zero).proven(assumptions):
+                if greater(self.element, zero).proven(assumptions):
                     from . import positive_rational_is_rational_pos
                     return positive_rational_is_rational_pos.instantiate(
                         {q: self.element}, assumptions=assumptions)
@@ -236,7 +236,7 @@ class RationalMembership(NumberMembership):
                     return negative_rational_is_rational_neg.instantiate(
                         {q: self.element}, assumptions=assumptions)
             if self.number_set == RationalNonNeg:
-                if GreaterEq(self.element, zero).proven():
+                if greater_eq(self.element, zero).proven():
                     from . import non_neg_rational_in_rational_neg
                     return non_neg_rational_in_rational_neg.instantiate(
                         {q: self.element}, assumptions=assumptions)

@@ -28,11 +28,6 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
-proveit.logic.sets.inclusion.relax_proper_superset
-proveit.logic.sets.inclusion.reverse_proper_subset
-proveit.logic.sets.inclusion.reverse_proper_superset
-proveit.logic.sets.inclusion.reverse_subset_eq
-proveit.logic.sets.inclusion.reverse_supset_eq
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.number_sets.complex_numbers.int_within_complex
@@ -77,12 +72,7 @@ proveit.numbers.numerals.decimals.posnat6
 proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
-proveit.numbers.ordering.gtr_is_not_eq
+proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.positive_if_real_pos
-proveit.numbers.ordering.relax_greater
 proveit.numbers.ordering.relax_less
-proveit.numbers.ordering.reverse_greater
-proveit.numbers.ordering.reverse_greater_eq
-proveit.numbers.ordering.reverse_less
-proveit.numbers.ordering.reverse_less_eq
 # THEOREMS AND THEORIES TO EXCLUDE:

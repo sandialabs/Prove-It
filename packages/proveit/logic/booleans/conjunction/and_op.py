@@ -19,6 +19,45 @@ class And(Operation):
         '''
         Operation.__init__(self, And._operator_, operands)
 
+    def _formatted(self, format_type, **kwargs):
+        '''
+        Override Operation._formatted when formatting a conjunction
+        of relations as a total ordering.
+        '''
+        if self.get_style('as_total_ordering', 'False') == 'True':
+            from proveit.relation import TransitiveRelation
+            relations = self.operands.entries
+            for relation in relations:
+                if not isinstance(relation, TransitiveRelation):
+                    raise TypeError(
+                            "Can only to effect a total ordering style on "
+                            "a conjunction of TransitiveRelation objects, "
+                            "not %s of type %s"
+                            %(relation, relation.__class__))
+            for rel1, rel2 in zip(relations[:-1], relations[1:]):
+                if rel1.rhs != rel2.lhs:
+                    raise ValueError(
+                            "Consecutive total ordering relations must "
+                            "match rhs to lhs: %s and %s do not match"
+                            %(rel1, rel2))
+            operands = [rel.lhs for rel in relations] + [relations[-1].rhs]
+            formatted_operators = [
+                    rel.operator.formatted(format_type) if
+                    rel.get_style('direction', 'normal') == 'normal'
+                    else rel.__class__.reversed_operator_str(format_type)
+                    for rel in relations]
+            return Operation._formattedOperation(
+                format_type,
+                formatted_operators,
+                operands,
+                wrap_positions=self.wrap_positions(),
+                justification=self.get_style('justification'),
+                **kwargs)
+        else:
+            # Just use the default Operation._formatted method.
+            return Operation._formatted(self, format_type, **kwargs)
+        
+    
     def auto_reduction(self, assumptions=USE_DEFAULTS):
         '''
         Automatically reduce "And() = TRUE" and "And(a) = a".

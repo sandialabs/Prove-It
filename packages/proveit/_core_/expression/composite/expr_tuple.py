@@ -285,6 +285,8 @@ class ExprTuple(Composite, Expression):
                     formatted_operators += operator._formatted_checkpoints(
                         format_type, fence=sub_fence, ellipses='',
                         use_explicit_parameterization=be_explicit)
+                elif isinstance(operator, str):
+                    formatted_operators.append(operator)
                 else:
                     formatted_operators.append(operator.formatted(format_type))
             if len(formatted_sub_expressions) == len(formatted_operators):

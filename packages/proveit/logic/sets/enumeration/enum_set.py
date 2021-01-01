@@ -491,7 +491,6 @@ class Set(Operation):
         if subset_indices is None:  # i.e. subset provided explicitly by user
             # then substituted, reduced subset might not be a subset
             error_elem_candidates = set()
-            error_elem_equivalences_dict = dict()
             for elem in subset_set:
                 if elem not in self_set:
                     error_elem_candidates.add(elem)
@@ -528,7 +527,6 @@ class Set(Operation):
         non_subset_elem_remaining = set()
         non_subset_elem_proven = None
         non_subset_elem_index = None
-        non_subset_elem_kt = None
         for elem in self_set:
             if elem not in subset_set:
                 non_subset_elem_candidates.add(elem)
@@ -543,7 +541,7 @@ class Set(Operation):
         # but if we have candidates, see if at least one can be proven
         # to not be in the subset
         else:
-            from proveit.logic import Equals, NotEquals, NotInSet
+            from proveit.logic import Equals, NotInSet
             for elem in non_subset_elem_candidates:
                 for subset_elem in subset_set:
                     if Equals(elem, subset_elem).proven(
@@ -562,8 +560,7 @@ class Set(Operation):
             else:
                 for elem in non_subset_elem_remaining:
                     try:
-                        non_subset_elem_kt = NotInSet(elem, subset).prove(
-                            assumptions=assumptions)
+                        NotInSet(elem, subset).prove(assumptions=assumptions)
                         non_subset_elem_proven = elem
                         break
                     except Exception:
@@ -767,31 +764,30 @@ class Set(Operation):
         # Now ready to apply the single-elem reduction theorem
         from . import reduction_right, reduction_left
         from proveit import l, m, n, x
-        from proveit.numbers import num
-        l, m, n, aa, x, bb, cc = reduction_right.all_instance_vars()
+        l, m, n, a, x, b, c = reduction_right.all_instance_vars()
 
         # NOTICE most of this is the same whether we are eliminating an
         # extra element to the right or to the left of an id'd element
         idx_left = min(idx_to_keep, idx_to_elim)
         idx_right = max(idx_to_keep, idx_to_elim)
         # so we break the set in into [ ]+[idx_left]+[ ]+[idx_right]+[ ]
-        l_sub, m_sub, n_sub = (num(idx_left),
-                               num(idx_right - idx_left - 1),
-                               num(self.operands.num_entries() - 1 - idx_right))
-        operand_entries = self.operands.entries
-        aa_sub, x_sub, bb_sub, cc_sub = (
-            operand_entries[0:idx_left],
-            operand_entries[idx_left],
-            operand_entries[idx_left + 1: idx_right],
-            operand_entries[idx_right + 1:])
+        operands = self.operands
+        _a, _x, _b, _c = (
+            operands[0:idx_left],
+            operands[idx_left],
+            operands[idx_left + 1: idx_right],
+            operands[idx_right + 1:])
+        _l = _a.num_elements(assumptions)
+        _m = _b.num_elements(assumptions)
+        _n = _c.num_elements(assumptions)
         if idx_to_keep < idx_to_elim:
             return reduction_right.instantiate(
-                {l: l_sub, m: m_sub, n: n_sub, aa: aa_sub, x: x_sub,
-                 bb: bb_sub, cc: cc_sub}, assumptions=assumptions)
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c}, 
+                assumptions=assumptions)
         else:
             return reduction_left.instantiate(
-                {l: l_sub, m: m_sub, n: n_sub, aa: aa_sub, x: x_sub,
-                 bb: bb_sub, cc: cc_sub}, assumptions=assumptions)
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c}, 
+                assumptions=assumptions)
 
     def single_elem_substitution(self, elem=None, idx=None, sub_elem=None,
                                  assumptions=USE_DEFAULTS):

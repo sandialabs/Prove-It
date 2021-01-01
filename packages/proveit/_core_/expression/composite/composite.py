@@ -111,10 +111,10 @@ def single_or_composite_expression(expr_or_exprs,
 
 
 def _generateCoordOrderAssumptions(coords):
-    from proveit.numbers import LessEq, GreaterEq
+    from proveit.numbers import LessEq, greater_eq
     for prev_coord, next_coord in zip(coords[:-1], coords[1:]):
         yield LessEq(prev_coord, next_coord)
-        yield GreaterEq(next_coord, prev_coord)
+        yield greater_eq(next_coord, prev_coord)
 
 
 class IndexingError(Exception):

@@ -126,6 +126,4 @@ proveit.numbers.numerals.decimals.nat8
 proveit.numbers.numerals.decimals.nat9
 proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
-proveit.numbers.ordering.reverse_greater_eq
-proveit.numbers.ordering.reverse_less_eq
 # THEOREMS AND THEORIES TO EXCLUDE:

@@ -52,7 +52,7 @@ class Add(Operation):
     def style_options(self):
         # Added by JML on 9/10/19
         options = StyleOptions(self)
-        options.add(
+        options.add_option(
             'subtraction_positions',
             "Position(s) to use subtraction notation instead of adding the negation at the specified indices")
         return options
@@ -989,7 +989,7 @@ class Add(Operation):
             add_complex_closure_bin)
         from proveit.numbers.addition.subtraction import (
             subtract_nat_closure_bin, sub_one_is_nat)
-        from proveit.numbers import (zero, one, Neg, Greater,
+        from proveit.numbers import (zero, one, Neg, greater,
                                      Integer, Natural, Real, RealPos,
                                      RealNonNeg, Complex, NaturalPos)
         from proveit.logic import InSet
@@ -1030,7 +1030,7 @@ class Add(Operation):
             # one of the operands is greater than zero.
             val = -1
             for _i, operand in enumerate(self.operands.entries):
-                if Greater(operand, zero).proven(assumptions=assumptions):
+                if greater(operand, zero).proven(assumptions=assumptions):
                     val = _i
                     # print(b)
                     break
