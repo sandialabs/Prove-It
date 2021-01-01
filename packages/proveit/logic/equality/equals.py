@@ -201,7 +201,7 @@ class Equals(TransitiveRelation):
         raise ProofFailure(self, assumptions,
                            "Unable to automatically conclude by "
                            "standard means.  To try to prove this via "
-                           "transitive implication relations, try "
+                           "transitive relations, try "
                            "'conclude_via_transitivity'.")
 
     @staticmethod

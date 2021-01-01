@@ -26,8 +26,6 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.enumeration.unfold
 proveit.logic.sets.enumeration.unfold_singleton
-proveit.logic.sets.inclusion.reverse_proper_subset
-proveit.logic.sets.inclusion.reverse_proper_superset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.negation.negated_zero
 proveit.numbers.number_sets.complex_numbers.int_within_complex

@@ -30,7 +30,8 @@ from .integration import Integrate
 from .absolute_value import Abs
 from .modular import Mod, ModAbs
 from .rounding import Floor, Ceil, Round
-from .ordering import Less, LessEq, LesserSequence, LessOnlySeq, LessEqOnlySeq, lesser_sequence, Greater, GreaterEq, GreaterSequence, GreaterOnlySeq, GreaterEqOnlySeq, greater_sequence, Min, Max
+from .ordering import (Less, LessEq, greater, greater_eq, number_ordering,
+                       Min, Max)
 from .divisibility import Divides, DividesProper, GCD
 
 import proveit

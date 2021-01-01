@@ -36,10 +36,14 @@ class Less(NumberOrderingRelation):
             concluded = negative_if_real_neg.instantiate(
                 {a: self.lower}, assumptions=assumptions)
             return concluded.with_matching_style(self)            
+        if self.lower == zero:
+            from . import positive_if_real_pos
+            positive_if_real_pos.instantiate({a: self.upper},
+                                             assumptions=assumptions)
         if isinstance(self.upper, Add):
             if self.lower in self.upper.terms:
                 return self.conclude_via_increase(assumptions)
-        return LesserRelation.conclude(self, assumptions)
+        return NumberOrderingRelation.conclude(self, assumptions)
 
     def conclude_via_increase(self, assumptions):
         from proveit.numbers import Add, one
@@ -108,7 +112,19 @@ class Less(NumberOrderingRelation):
             return self.lower.deduce_strict_dec_add(self.upper, assumptions)
         else:
             raise ValueError("expected self.lower to be addition")
+    
+    def deduce_inc_add(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML 7/17/19
+        if self.lhs is addition, deduce strictly increasing addition
+        '''
+        from proveit.numbers import Add
 
+        if isinstance(self.upper, Add):
+            return self.upper.deduce_strict_inc_add(self.lower, assumptions)
+        else:
+            raise ValueError("expected self.lhs to be addition")
+    
     def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this x<y expression
@@ -118,10 +134,10 @@ class Less(NumberOrderingRelation):
         from . import transitivity_less_less
         from . import transitivity_less_less_eq
         from . import transitivity_less_eq_less
-        from .greater_than import Greater, GreaterEq
+        from .less_eq import LessEq
         other = as_expression(other)
         if isinstance(other, Equals):
-            return LesserRelation.apply_transitivity(
+            return NumberOrderingRelation.apply_transitivity(
                 self, other, assumptions)  # handles this special case
         elif other.lower == self.upper:
             if isinstance(other, Less):
@@ -219,6 +235,7 @@ class Less(NumberOrderingRelation):
         determined from the given 'relation'.
         '''
         from . import less_add_both
+        from .less_eq import LessEq
         if not (isinstance(relation, Less) or isinstance(relation, LessEq)):
             raise ValueError("Less.add 'relation' must be of type Less or "
                              "LessEq, not %s"
@@ -272,7 +289,7 @@ class Less(NumberOrderingRelation):
         Multiply both sides of the relation by the 'multiplier'
         on the right.
         '''
-        from proveit.numbers import Less, LessEq, Greater, GreaterEq, zero
+        from proveit.numbers import LessEq, zero
         from proveit.numbers.multiplication import (
             right_mult_pos_less, right_mult_nonneg_less,
             right_mult_neg_less, right_mult_nonpos_less)
@@ -307,7 +324,7 @@ class Less(NumberOrderingRelation):
         '''
         Divide both sides of the relation by the 'divisor'.
         '''
-        from proveit.numbers import Less, Greater, zero
+        from proveit.numbers import Less, zero
         from proveit.numbers.division import (
             div_pos_less, div_neg_less)
         if Less(zero, divisor).proven(assumptions):
@@ -355,7 +372,7 @@ class Less(NumberOrderingRelation):
         '''
         Exponentiate both sides of the relation by the 'exponent'.
         '''
-        from proveit.numbers import Less, LessEq, Greater, GreaterEq, zero
+        from proveit.numbers import Less, LessEq, zero
         from proveit.numbers.exponentiation import (
             exp_pos_less, exp_nonneg_less, exp_neg_less, exp_nonpos_less)
         if Less(zero, exponent).proven(assumptions):
@@ -389,4 +406,4 @@ def greater(a, b):
     Return an expression representing a > b, internally represented 
     as b < a but with a style that reverses the direction.    
     '''
-    return Less(b, a).with_style(direction='reversed')
+    return Less(b, a).with_styles(direction='reversed')

@@ -18,6 +18,13 @@ class NotProperSubset(Relation):
             self, NotProperSubset._operator_, (A, B))
         # Need 'direction' style
 
+    @staticmethod
+    def reversed_operator_str(format_type):
+        '''
+        Reversing not_proper_subset gives not_proper_subset.
+        '''
+        return r'\not\supset' if format_type == 'latex' else 'not_proper_subset'
+    
     def side_effects(self, judgment):
         yield self.unfold
 
@@ -64,4 +71,4 @@ def not_proper_superset(A, B):
     internally represented as (B not_proper_subset A) but with a style 
     that reverses the direction.
     '''
-    return NotProperSubset(B, A).with_style(direction='reversed')
+    return NotProperSubset(B, A).with_styles(direction='reversed')

@@ -41,6 +41,12 @@ class LessEq(NumberOrderingRelation):
             return self.with_style(direction = 'normal')
         else:
             return self.with_style(direction = 'reversed')
+
+    def conclude_via_equality(self, assumptions=USE_DEFAULTS):
+        from . import relax_equal_to_less_eq
+        return relax_equal_to_less_eq.instantiate(
+            {x: self.operands[0], y: self.operands[1]},
+            assumptions=assumptions)
     
     def deduce_in_bool(self, assumptions=frozenset()):
         from . import less_than_equals_is_bool
@@ -186,10 +192,10 @@ class LessEq(NumberOrderingRelation):
         Multiply both sides of the relation by the 'multiplier'
         on the left.
         '''
-        from proveit.numbers import GreaterEq, zero
+        from proveit.numbers import greater_eq, zero
         from proveit.numbers.multiplication import (
             left_mult_pos_lesseq, left_mult_neg_lesseq)
-        if GreaterEq(multiplier, zero).proven(assumptions):
+        if greater_eq(multiplier, zero).proven(assumptions):
             new_rel = left_mult_pos_lesseq.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper},
                 assumptions=assumptions)._simplify_both_sides(
@@ -318,4 +324,4 @@ def greater_eq(a, b):
     Return an expression representing a >= b, internally represented 
     as b <= a but with a style that reverses the direction.    
     '''
-    return LessEq(b, a).with_style(direction='reversed')
+    return LessEq(b, a).with_styles(direction='reversed')

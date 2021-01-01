@@ -33,6 +33,13 @@ class ProperSubset(InclusionRelation):
         InclusionRelation.__init__(
             self, ProperSubset._operator_, A, B)
 
+    @staticmethod
+    def reversed_operator_str(format_type):
+        '''
+        Reversing proper_subset gives proper_superset.
+        '''
+        return r'\supset' if format_type == 'latex' else 'proper_superset'
+
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From A proper_subset B, derive and return
@@ -41,7 +48,7 @@ class ProperSubset(InclusionRelation):
         from . import unfold_proper_subset
         unfolded = unfold_proper_subset.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-        return unfolded.inner_expr.operands[0].with_matching_style(self)
+        return unfolded.inner_expr().operands[0].with_matching_style(self)
     
     def derive_relaxed(self, assumptions=USE_DEFAULTS):
         '''
@@ -50,7 +57,8 @@ class ProperSubset(InclusionRelation):
         from . import relax_proper_subset
         new_rel = relax_proper_subset.instantiate(
             {A: self.subset, B: self.superset}, assumptions=assumptions)
-        return new_rel.with_matching_style(self)
+        new_rel.with_matching_style(self)
+        return new_rel
 
     def derive_superset_membership(self, element, assumptions=USE_DEFAULTS):
         '''
@@ -68,11 +76,11 @@ class ProperSubset(InclusionRelation):
         ProperSubset(B, C), or B=C, to obtain ProperSubset(A, C) as
         appropriate.
         '''
-        from proveit.logic import Equals, SubsetEq
+        from proveit.logic import Equals, SetEquiv, SubsetEq
         from . import (
             transitivity_subset_subset, transitivity_subset_eq_subset,
             transitivity_subset_subset_eq,)
-        if isinstance(other, Equals):
+        if isinstance(other, Equals) or isinstance(other, SetEquiv):
             return InclusionRelation.apply_transitivity(
                 self, other, assumptions=assumptions)
         if other.subset == self.superset:
@@ -119,4 +127,4 @@ def proper_superset(A, B):
     represented as (B subset A) but with a style that reverses
     the direction.
     '''
-    return ProperSubset(B, A).with_style(direction = 'reversed')
+    return ProperSubset(B, A).with_styles(direction = 'reversed')

@@ -39,23 +39,33 @@ class InclusionRelation(TransitiveRelation):
             yield side_effect
         if hasattr(self, 'derive_relaxed'):
             yield self.derive_relaxed
-        yield self.derive_reversed
-
+    
     @staticmethod
     def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
         '''
-        apply_transitivity(Subset(A,B), Equals(B,C)) returns Subset(A,C)
+        apply_transitivity(Subset(A,B), SetEquiv(B,C)) 
+        returns Subset(A,C)
         '''
-        from proveit.logic import Equals
+        from proveit.logic import Equals, SetEquiv, SubsetEq
         if isinstance(other, Equals):
-            if (self.proven(assumptions=assumptions) and
-                    other.proven(assumptions=assumptions)):
-                if other.subset == self.superset:
-                    return other.sub_right_side_into(
-                        self, assumptions=assumptions)
-                elif other.superset == self.subset:
-                    return other.sub_left_side_into(
-                        self, assumptions=assumptions)
+            return TransitiveRelation.apply_transitivity(self, other,
+                                                         assumptions)
+        if isinstance(other, SetEquiv):
+            # From set equivalence, derive the appropriate subset_eq
+            # so we can use normal subset transitivity.
+            if other.lhs == self.superset or other.rhs == self.subset:
+                # EITHER (A subset B) and (B set_equiv C) 
+                # OR (A subset B) and (C set_equiv A)
+                other_as_subset_eq = SubsetEq(*other.operands.entries)
+            elif other.rhs == self.superset or other.lhs == self.subset:
+                # EITHER (A subset B) and (C set_equiv B)
+                # OR (A subset B) and (A set_equiv C)
+                other_as_subset_eq = SubsetEq(
+                        *reversed(other.operands.entries))
+            else:
+                raise ValueError("Unable to apply transitivity between %s "
+                                 "and %s."%(self, other))
+            return self.apply_transitivity(other_as_subset_eq, assumptions)
 
 def inclusion_ordering(*relations):
     '''

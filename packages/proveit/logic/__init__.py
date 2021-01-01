@@ -10,8 +10,8 @@ from .sets import InSet, NotInSet, Membership, Nonmembership
 # StrictSuperset and SupersetProper are aliases for ProperSuperset.
 from .sets import (
     SubsetEq, NotSubsetEq, ProperSubset, StrictSubset, SubsetProper,
-    NotProperSubset, SupersetEq, NotSupersetEq, ProperSuperset,
-    StrictSuperset, SupersetProper, NotProperSuperset)
+    NotProperSubset, superset_eq, not_superset_eq, proper_superset,
+    not_proper_superset)
 from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
                    SetOfAll, PowerSet, Disjoint, Distinct, Card)
 from .equality import (

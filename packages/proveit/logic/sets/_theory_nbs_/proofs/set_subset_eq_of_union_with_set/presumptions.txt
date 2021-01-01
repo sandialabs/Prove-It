@@ -37,11 +37,6 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
-proveit.logic.sets.inclusion.relax_proper_superset
-proveit.logic.sets.inclusion.reverse_proper_subset
-proveit.logic.sets.inclusion.reverse_proper_superset
-proveit.logic.sets.inclusion.reverse_subset_eq
-proveit.logic.sets.inclusion.reverse_supset_eq
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.unification.membership_unfolding
 proveit.numbers.numerals.decimals.posnat1

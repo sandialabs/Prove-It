@@ -186,9 +186,9 @@ class Exp(Operation):
 
     def style_options(self):
         options = StyleOptions(self)
-        options.add('exponent',
-                    "'raised': exponent as a superscript; "
-                    "'radical': using a radical sign")
+        options.add_option('exponent',
+                           "'raised': exponent as a superscript; "
+                           "'radical': using a radical sign")
         return options
 
     def string(self, **kwargs):

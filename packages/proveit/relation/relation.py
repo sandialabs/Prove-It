@@ -20,43 +20,46 @@ class Relation(Operation):
         # 'reversed'.
 
     @staticmethod
-    def reversed_operator_str(formatType):
+    def reversed_operator_str(format_type):
         raise NotImplementedError(
-                "'reverseOperatorStr' must be implemented as a class/ "
+                "'reversed_operator_str' must be implemented as a class/"
                 "static method for a Relation class to support the "
                 "'direction' style of 'reversed'.  It should take a "
-                "'formatType' argument which may be 'latex' or 'string'.")
+                "'format_type' argument which may be 'latex' or 'string'.")
     
-    def _formatted(self, formatType, **kwargs):
+    def _formatted(self, format_type, **kwargs):
         '''
         Format the binary relation operation.  Note: it may
         be reversed if the "direction" style is "reversed".
         '''
-        wrapPositions=self.wrapPositions()
-        justification=self.getStyle('justification')
+        from proveit import ExprTuple
+        wrap_positions=self.wrap_positions()
+        justification=self.get_style('justification')
         fence =  kwargs.get('fence', False)
         subFence =  kwargs.get('subFence', True)
-        operator_str = self.operator.formatted(formatType)
-        if self.getStyle("direction", "normal")=="reversed":
-            operator_str = self.__class__.reversedOperatorStr(formatType)
+        operator_str = self.operator.formatted(format_type)
         operands = self.operands
-        return operands.formatted(formatType, 
+        if self.get_style("direction", "normal") == "reversed":
+            operator_str = self.__class__.reversed_operator_str(format_type)
+            operands = ExprTuple(*reversed(operands.entries))
+        return operands.formatted(format_type, 
                                   fence=fence, subFence=subFence, 
-                                  operatorOrOperators=operator_str, 
-                                  wrapPositions=wrapPositions, justification=justification)
+                                  operator_or_operators=operator_str, 
+                                  wrap_positions=wrap_positions, 
+                                  justification=justification)
     
     def reversed(self):
-        return self.withReverseStyle()
+        return self.with_direction_reversed()
     
     def with_direction_reversed(self):
-        if self.get_style("direction", "normal") == "reverse":
+        if self.get_style("direction", "normal") == "reversed":
             return self.with_styles(direction="normal")
         return self.with_styles(direction="reversed")
     
     def style_options(self):
         options = StyleOptions(self)
-        options.add('direction', ("Direction of the relation "
-                                  "(normal or reversed)"))
+        options.add_option('direction', ("Direction of the relation "
+                                         "(normal or reversed)"))
         return options
         
     def _simplify_both_sides(self, *, simplify, assumptions=USE_DEFAULTS):
@@ -116,7 +119,7 @@ class Relation(Operation):
             # For some reason, self.getStyleData('direction', None)
             # leads to errors, but 
             # self._styleData.styles.get('direction', None) is fine.
-            if self._styleData.styles.get('direction', 'normal') == 'reversed':
+            if self._style_data.styles.get('direction', 'normal') == 'reversed':
                 if name=='lhs': return self.operands[1]
                 else: return self.operands[0]
             else:

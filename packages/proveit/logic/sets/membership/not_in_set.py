@@ -94,7 +94,7 @@ class NotInSet(Operation):
         if possible.
         As a last resort, try 'conclude_as_folded'.
         '''
-        from proveit.logic import SupersetEq, InSet
+        from proveit.logic import SubsetEq, InSet
         from proveit import ProofFailure
         from proveit.logic import SimplificationError
 
@@ -102,13 +102,14 @@ class NotInSet(Operation):
         if self.element in NotInSet.known_nonmemberships:
             for known_nonmembership in NotInSet.known_nonmemberships[self.element]:
                 if known_nonmembership.is_sufficient(assumptions):
-                    # x not in R is a judgment; if we know that
-                    # R supseteq S, we are done.
-                    sup_rel = SupersetEq(known_nonmembership.domain,
-                                         self.domain)
-                    if sup_rel.proven(assumptions):
-                        # S is a subset of R, so now we can prove x not in S.
-                        return sup_rel.derive_subset_non_membership(
+                    # x not in R is known to be true; if we know that
+                    # S subset_eq R, we are done.
+                    rel = SubsetEq(self.domain,
+                                   known_nonmembership.domain)
+                    if rel.proven(assumptions):
+                        # S is a subset of R, so now we can prove 
+                        # x not in S.
+                        return rel.derive_subset_nonmembership(
                             self.element, assumptions)
         # No known membership works.  Let's see if there is a known
         # simplification of the element before trying anything else.

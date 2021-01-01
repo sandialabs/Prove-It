@@ -532,9 +532,11 @@ class Expression(metaclass=ExprType):
         Alter the styles of this expression to match that of the
         given "expr_with_different_style".
         '''
-        if self != expr_with_different_style:
+        if (self.style_options().options != 
+                expr_with_different_style.style_options().options):
             raise ValueError(
-                "'with_matching_style' must be given an expression with the same meaning")
+                "'with_matching_style' must be given an expression with "
+                "the same style options.")
         return self._with_matching_style(expr_with_different_style)
 
     def _with_matching_style(self, expr_with_different_style):
@@ -542,7 +544,7 @@ class Expression(metaclass=ExprType):
         Helper function for 'with_matching_style.
         '''
         if self._style_id == expr_with_different_style._style_id:
-            return  # no difference in style actually; do nothing
+            return self # no difference in style actually; do nothing
         for my_sub_expr, other_sub_expr in zip(
                 self.sub_expr_iter(), expr_with_different_style.sub_expr_iter()):
             my_sub_expr._with_matching_style(other_sub_expr)

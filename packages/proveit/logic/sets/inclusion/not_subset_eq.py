@@ -6,7 +6,8 @@ from proveit.relation import Relation
 
 class NotSubsetEq(Relation):
     # operator of the NotSubsetEq operation
-    _operator_ = Literal(string_format='nsubseteq', latex_format=r'\nsubseteq',
+    _operator_ = Literal(string_format='not_subset_eq', 
+                         latex_format=r'\nsubseteq',
                          theory=__file__)
 
     def __init__(self, A, B):
@@ -14,6 +15,13 @@ class NotSubsetEq(Relation):
         Create the expression for (A not_subset_eq B)
         '''
         Operation.__init__(self, NotSubsetEq._operator_, (A, B))
+
+    @staticmethod
+    def reversed_operator_str(format_type):
+        '''
+        Reversing not_subset_eq gives not_superset_eq.
+        '''
+        return r'\nsupseteq' if format_type == 'latex' else 'not_superset_eq'
 
     def side_effects(self, judgment):
         # unfold as an automatic side-effect
@@ -59,4 +67,4 @@ def not_superset_eq(A, B):
     represented as (B not_subset_eq A) but with a style that reverses
     the direction.
     '''
-    return NotSubsetEq(B, A).with_style(direction='reversed')
+    return NotSubsetEq(B, A).with_styles(direction='reversed')

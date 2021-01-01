@@ -1,4 +1,4 @@
-from proveit.defaults import USE_DEFAULTS
+from proveit import USE_DEFAULTS
 from proveit.relation import TransitiveRelation, total_ordering
 
 
@@ -22,7 +22,6 @@ class NumberOrderingRelation(TransitiveRelation):
         # yield self.derive_negated # Needs to be implemented (again)
         if hasattr(self, 'derive_relaxed'):
             yield self.derive_relaxed
-        yield self.derive_reversed
     
     @staticmethod
     def WeakRelationClass():
