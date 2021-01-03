@@ -267,7 +267,7 @@ class OperationOverInstances(Operation):
         if isinstance(lambda_map.body, Conditional):
             self.condition = lambda_map.body.condition
 
-        Operation.__init__(self, operator, lambda_map, styles=styles)
+        Operation.__init__(self, operator, [lambda_map], styles=styles)
 
     def remake_with_style_calls(self):
         '''
@@ -367,7 +367,7 @@ class OperationOverInstances(Operation):
         if len(sub_expressions) != 2:
             raise ValueError("Expecting exactly two sub_expressions for an "
                              "OperationOverInstances object: an operator and "
-                             "a lambda_map.")
+                             "operands with a single lambda_map entry.")
 
         implicit_operator = cls._implicitOperator()
         if implicit_operator is None:
@@ -378,10 +378,17 @@ class OperationOverInstances(Operation):
                 str(cls))
 
         operator = sub_expressions[0]
-        lambda_map = sub_expressions[1]
-
         if not (operator == implicit_operator):
             raise OperationError("An implicit operator may not be changed")
+
+        operands = sub_expressions[1]
+        if (not isinstance(operands, ExprTuple) or 
+                not len(operands.entries) == 1):
+            raise ValueError("Expecting operands to have a single entry.")
+        lambda_map = operands[0]
+        if not isinstance(lambda_map, Lambda):
+             raise ValueError("Expecting operands to have a single "
+                              "lambda_map entry.")
 
         args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
             inspect.getfullargspec(cls.__init__)

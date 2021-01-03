@@ -66,11 +66,11 @@ class Relation(Operation):
         if self.is_reversed():
             operator_str = self.__class__.reversed_operator_str(format_type)
             operands = ExprTuple(*reversed(operands.entries))
-        return operands.formatted(format_type, 
-                                  fence=fence, subFence=subFence, 
-                                  operator_or_operators=operator_str, 
-                                  wrap_positions=wrap_positions, 
-                                  justification=justification)
+        return Operation._formattedOperation(
+                format_type, fence=fence, subFence=subFence, 
+                operator_or_operators=operator_str, operands=operands,
+                wrap_positions=wrap_positions, 
+                justification=justification)
     
     def style_options(self):
         options = StyleOptions(self)
