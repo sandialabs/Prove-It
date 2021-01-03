@@ -40,6 +40,13 @@ class ProperSubset(InclusionRelation):
         '''
         return r'\supset' if format_type == 'latex' else 'proper_superset'
 
+    def remake_constructor(self):
+        if self.is_reversed():
+            # Use the 'proper_superset' function if it is reversed.
+            return 'proper_superset'
+        # Use the default.
+        return Operation.remake_constructor(self)
+    
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From A proper_subset B, derive and return
@@ -48,7 +55,7 @@ class ProperSubset(InclusionRelation):
         from . import unfold_proper_subset
         unfolded = unfold_proper_subset.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-        return unfolded.inner_expr().operands[0].with_matching_style(self)
+        return unfolded.inner_expr().operands[0].with_mimicked_style(self)
     
     def derive_relaxed(self, assumptions=USE_DEFAULTS):
         '''
@@ -57,7 +64,7 @@ class ProperSubset(InclusionRelation):
         from . import relax_proper_subset
         new_rel = relax_proper_subset.instantiate(
             {A: self.subset, B: self.superset}, assumptions=assumptions)
-        new_rel.with_matching_style(self)
+        new_rel.with_mimicked_style(self)
         return new_rel
 
     def derive_superset_membership(self, element, assumptions=USE_DEFAULTS):
@@ -105,7 +112,7 @@ class ProperSubset(InclusionRelation):
             raise ValueError(
                 "Cannot perform transitivity with {0} and {1}!".
                 format(self, other))
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
@@ -114,7 +121,8 @@ class ProperSubset(InclusionRelation):
         '''
         from . import proper_subset_is_bool
         is_bool_stmt = proper_subset_is_bool.instantiate(
-                {A: self.lhs, B: self.rhs}, assumptions=assumptions)
+                {A: self.normal_lhs, B: self.normal_rhs}, 
+                assumptions=assumptions)
         return is_bool_stmt.inner_expr().element.with_matching_style(self)
 
 # Provide aliases for ProperSubset to augment user's ease-of-use

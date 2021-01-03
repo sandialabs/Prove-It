@@ -25,6 +25,14 @@ class NotProperSubset(Relation):
         '''
         return r'\not\supset' if format_type == 'latex' else 'not_proper_subset'
     
+    def remake_constructor(self):
+        if self.is_reversed():
+            # Use the 'not_proper_superset' function if it 
+            # is reversed.
+            return 'not_proper_superset'
+        # Use the default.
+        return Operation.remake_constructor(self)
+    
     def side_effects(self, judgment):
         yield self.unfold
 
@@ -40,7 +48,7 @@ class NotProperSubset(Relation):
         unfolded = unfold_not_proper_subset.instantiate(
             {A: self.operands[0], B: self.operands[1]}, 
             assumptions=assumptions)
-        return unfolded.inner_expr().operand.with_matching_style(self)
+        return unfolded.inner_expr().operand.with_mimicked_style(self)
 
     def conclude_as_folded(self, assumptions=USE_DEFAULTS):
         '''
@@ -56,9 +64,7 @@ class NotProperSubset(Relation):
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this NotProperSubset statement is in the
-        Boolean set. NOTE that the NotProperSubset class has been
-        created as an Operation and thus has operands instead of lhs
-        and rhs attributes.
+        Boolean set.
         '''
         from . import not_proper_subset_is_bool
         is_bool_stmt = not_proper_subset_is_bool.instantiate(

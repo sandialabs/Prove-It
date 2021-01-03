@@ -23,6 +23,13 @@ class NotSubsetEq(Relation):
         '''
         return r'\nsupseteq' if format_type == 'latex' else 'not_superset_eq'
 
+    def remake_constructor(self):
+        if self.is_reversed():
+            # Use the 'not_superset_eq' function if it is reversed.
+            return 'not_superset_eq'
+        # Use the default.
+        return Operation.remake_constructor(self)
+    
     def side_effects(self, judgment):
         # unfold as an automatic side-effect
         yield self.unfold
@@ -37,7 +44,7 @@ class NotSubsetEq(Relation):
         from . import unfold_not_subset_eq
         unfolded = unfold_not_subset_eq.instantiate(
             {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-        return unfolded.inner_expr().operand.with_matching_style(self)
+        return unfolded.inner_expr().operand.with_mimicked_style(self)
 
     def conclude_as_folded(self, assumptions=USE_DEFAULTS):
         '''
@@ -52,9 +59,7 @@ class NotSubsetEq(Relation):
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this NotSubsetEq statement is in the
-        Boolean set. NOTE that the NotSubsetEq class has been
-        created as an Operation and thus has operands instead of lhs
-        and rhs attributes.
+        Boolean set.
         '''
         from . import not_subset_eq_is_bool
         is_bool_stmt = not_subset_eq_is_bool.instantiate(

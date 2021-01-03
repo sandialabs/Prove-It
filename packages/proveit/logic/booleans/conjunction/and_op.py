@@ -25,21 +25,8 @@ class And(Operation):
         of relations as a total ordering.
         '''
         if self.get_style('as_total_ordering', 'False') == 'True':
-            from proveit.relation import TransitiveRelation
+            self._check_total_ordering_applicability()
             relations = self.operands.entries
-            for relation in relations:
-                if not isinstance(relation, TransitiveRelation):
-                    raise TypeError(
-                            "Can only to effect a total ordering style on "
-                            "a conjunction of TransitiveRelation objects, "
-                            "not %s of type %s"
-                            %(relation, relation.__class__))
-            for rel1, rel2 in zip(relations[:-1], relations[1:]):
-                if rel1.rhs != rel2.lhs:
-                    raise ValueError(
-                            "Consecutive total ordering relations must "
-                            "match rhs to lhs: %s and %s do not match"
-                            %(rel1, rel2))
             operands = [rel.lhs for rel in relations] + [relations[-1].rhs]
             formatted_operators = [
                     rel.operator.formatted(format_type) if
@@ -56,7 +43,47 @@ class And(Operation):
         else:
             # Just use the default Operation._formatted method.
             return Operation._formatted(self, format_type, **kwargs)
-        
+    
+    def remake_with_style_calls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'with_wrapping_at'
+        and 'with_justification' calls.
+        '''
+        call_strs = Operation.remake_with_style_calls(self)
+        if self.get_style('as_total_ordering', 'False') == 'True':
+            call_strs.append('with_total_ordering_style()')
+        return call_strs
+
+    def _check_total_ordering_applicability(self):
+        '''
+        Check to see if the total ordering style is
+        applicable, raising an exception otherwise.
+        '''
+        from proveit.relation import TransitiveRelation
+        relations = self.operands.entries
+        for relation in relations:
+            if not isinstance(relation, TransitiveRelation):
+                raise TypeError(
+                    "Can only to effect a total ordering style on "
+                    "a conjunction of TransitiveRelation objects, "
+                    "not %s of type %s"
+                    %(relation, relation.__class__))
+        for rel1, rel2 in zip(relations[:-1], relations[1:]):
+            if rel1.rhs != rel2.lhs:
+                raise ValueError(
+                    "Consecutive total ordering relations must "
+                    "match rhs to lhs: %s and %s do not match"
+                    %(rel1, rel2))
+
+    def with_total_ordering_style(self):
+        '''
+        Use the total ordering style.
+        '''
+        self._check_total_ordering_applicability()
+        return self.with_styles(as_total_ordering='True')
     
     def auto_reduction(self, assumptions=USE_DEFAULTS):
         '''

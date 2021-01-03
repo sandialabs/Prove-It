@@ -530,18 +530,18 @@ class Expression(metaclass=ExprType):
     def with_matching_style(self, expr_with_different_style):
         '''
         Alter the styles of this expression to match that of the
-        given "expr_with_different_style".
+        given "expr_with_different_style" which should be an
+        Expression with the same meaning as 'self'.
         '''
-        if (self.style_options().options != 
-                expr_with_different_style.style_options().options):
+        if self != expr_with_different_style:
             raise ValueError(
-                "'with_matching_style' must be given an expression with "
-                "the same style options.")
+                "'with_matching_style' must an expression with "
+                "the same meaning as self.")
         return self._with_matching_style(expr_with_different_style)
 
     def _with_matching_style(self, expr_with_different_style):
         '''
-        Helper function for 'with_matching_style.
+        Helper function for 'with_matching_style'.
         '''
         if self._style_id == expr_with_different_style._style_id:
             return self # no difference in style actually; do nothing
@@ -550,6 +550,19 @@ class Expression(metaclass=ExprType):
             my_sub_expr._with_matching_style(other_sub_expr)
         self.with_styles(**expr_with_different_style.get_styles())
         return self
+    
+    def with_mimicked_style(self, other_expr):
+        '''
+        Given an 'other_expr' with the same style options as
+        'self', return self with a style that mimicks that
+        of 'other_expr' just at the top level.
+        '''
+        if (self.style_options().options != 
+                other_expr.style_options().options):
+            raise ValueError(
+                "'other_expr' must an expression with "
+                "the same style options as 'self'.")
+        return self.with_styles(**other_expr.get_styles())
 
     def style_names(self):
         '''

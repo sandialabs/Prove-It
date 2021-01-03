@@ -603,21 +603,10 @@ def total_ordering(*relations):
     "(a > b) and (b >= c) and (c = d) and (d > e)".
     '''
     from proveit.logic import And
-    for relation in relations:
-        relation_expr = relation
-        if isinstance(relation, Judgment):
-            relation_expr = relation.expr
-        if not isinstance(relation_expr, TransitiveRelation):
-            raise TypeError("All 'relations' of a total ordering must be "
-                            "TransitiveRelation objects (or Judgments of "
-                            "TransitiveRelation expressions), not %s."
-                            %relation_expr.__class__)
-    for rel1, rel2 in zip(relations[:-1], relations[1:]):
-        if rel1.rhs != rel2.lhs:
-            raise ValueError(
-                    "Consecutive total ordering relations must match rhs "
-                    "to lhs: %s and %s do not match"%(rel1, rel2))
-    if len(relations) == 1:
+    conjunction = And(*relations)
+    conjunction = conjunction.with_total_ordering_style()
+    if conjunction.operands.is_single():
         # A single relation is a trivial total ordering.
-        return relations[0]
-    return And(*relations).with_styles(as_total_ordering='True')
+        return conjunction.operands[0]
+    return conjunction
+

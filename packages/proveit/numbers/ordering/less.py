@@ -1,4 +1,4 @@
-from proveit import Literal, USE_DEFAULTS, as_expression
+from proveit import Literal, Operation, USE_DEFAULTS, as_expression
 from proveit.logic import Equals
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
@@ -26,6 +26,13 @@ class Less(NumberOrderingRelation):
         Reversing '<' gives '>'.
         '''
         return '>' 
+    
+    def remake_constructor(self):
+        if self.is_reversed():
+            # Use the 'greater' function if it is reversed.
+            return 'greater'
+        # Use the default.
+        return Operation.remake_constructor(self)
     
     def conclude(self, assumptions):
         # See if the right side is the left side plus something
@@ -99,7 +106,7 @@ class Less(NumberOrderingRelation):
         from . import relax_less
         new_rel = relax_less.instantiate(
             {x: self.lower, y: self.upper}, assumptions=assumptions)
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def deduce_dec_add(self, assumptions=USE_DEFAULTS):
         '''
@@ -161,7 +168,7 @@ class Less(NumberOrderingRelation):
             raise ValueError(
                 "Cannot perform transitivity with %s and %s!" %
                 (self, other))
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     """
     def derive_negated(self, assumptions=frozenset()):
@@ -194,7 +201,7 @@ class Less(NumberOrderingRelation):
             raise ValueError(
                 "Unrecognized addend side (should be 'left' or 'right'): " +
                 str(addend_side))
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def add_left(self, addend, assumptions=USE_DEFAULTS):
         '''
@@ -210,7 +217,7 @@ class Less(NumberOrderingRelation):
             new_rel = less_add_left.instantiate(
                     {a: self.lower, b: self.upper, c: addend},
                     assumptions=assumptions)
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def add_right(self, addend, assumptions=USE_DEFAULTS):
         '''
@@ -226,7 +233,7 @@ class Less(NumberOrderingRelation):
             new_rel = less_add_right.instantiate(
                 {a: self.lower, b: self.upper, c: addend}, 
                 assumptions=assumptions)
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
     
     def add(self, relation, assumptions=USE_DEFAULTS):
         '''
@@ -245,7 +252,7 @@ class Less(NumberOrderingRelation):
         new_rel = less_add_both.instantiate(
                 {a: self.lower, b: self.upper, c: _c, d: _d},
                 assumptions=assumptions)
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def left_mult_both_sides(self, multiplier, *, simplify=True,
                              assumptions=USE_DEFAULTS):
@@ -281,7 +288,7 @@ class Less(NumberOrderingRelation):
             raise Exception(
                 "Cannot 'left_mult_both_sides' a Less relation without "
                 "knowing the multiplier's relation with zero.")
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def right_mult_both_sides(self, multiplier, *, simplify=True,
                               assumptions=USE_DEFAULTS):
@@ -317,7 +324,7 @@ class Less(NumberOrderingRelation):
             raise Exception(
                 "Cannot 'right_mult_both_sides' a Less relation without "
                 "knowing the multiplier's relation with zero.")
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def divide_both_sides(self, divisor, *, simplify=True,
                           assumptions=USE_DEFAULTS):
@@ -341,7 +348,7 @@ class Less(NumberOrderingRelation):
             raise Exception("Cannot 'divide' a Less relation without "
                             "knowing whether the divisor is greater than "
                             "or less than zero.")
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def left_add_both_sides(self, addend, *, simplify=True,
                             assumptions=USE_DEFAULTS):
@@ -353,7 +360,7 @@ class Less(NumberOrderingRelation):
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def right_add_both_sides(self, addend, *, simplify=True,
                              assumptions=USE_DEFAULTS):
@@ -365,7 +372,7 @@ class Less(NumberOrderingRelation):
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def exponentiate_both_sides(self, exponent, *, simplify=True,
                                 assumptions=USE_DEFAULTS):
@@ -398,7 +405,7 @@ class Less(NumberOrderingRelation):
         else:
             raise Exception("Cannot 'exponentiate' a Less relation without "
                             "knowing the exponent's relation with zero")
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
 
 def greater(a, b):

@@ -26,7 +26,31 @@ class Relation(Operation):
                 "static method for a Relation class to support the "
                 "'direction' style of 'reversed'.  It should take a "
                 "'format_type' argument which may be 'latex' or 'string'.")
+
+    def reversed(self):
+        return self.with_direction_reversed()
     
+    def is_reversed(self):
+        return self.get_style("direction", "normal") == "reversed"
+    
+    def with_direction_reversed(self):
+        if self.is_reversed():
+            return self.with_styles(direction="normal")
+        return self.with_styles(direction="reversed")
+    
+    def remake_constructor(self):
+        if self.is_reversed():
+            raise NotImplementedError("Must implement 'remake_constructor' for %s for "
+                                      "the case when it is reversed."%self.__class__)
+        return Operation.remake_constructor(self)
+    
+    def remake_arguments(self):
+        '''
+        The arguments may be reversed if is_reversed() is true.
+        '''
+        yield self.lhs # These account for a possible reversal.
+        yield self.rhs
+
     def _formatted(self, format_type, **kwargs):
         '''
         Format the binary relation operation.  Note: it may
@@ -39,7 +63,7 @@ class Relation(Operation):
         subFence =  kwargs.get('subFence', True)
         operator_str = self.operator.formatted(format_type)
         operands = self.operands
-        if self.get_style("direction", "normal") == "reversed":
+        if self.is_reversed():
             operator_str = self.__class__.reversed_operator_str(format_type)
             operands = ExprTuple(*reversed(operands.entries))
         return operands.formatted(format_type, 
@@ -47,14 +71,6 @@ class Relation(Operation):
                                   operator_or_operators=operator_str, 
                                   wrap_positions=wrap_positions, 
                                   justification=justification)
-    
-    def reversed(self):
-        return self.with_direction_reversed()
-    
-    def with_direction_reversed(self):
-        if self.get_style("direction", "normal") == "reversed":
-            return self.with_styles(direction="normal")
-        return self.with_styles(direction="reversed")
     
     def style_options(self):
         options = StyleOptions(self)

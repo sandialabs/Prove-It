@@ -29,6 +29,13 @@ class SubsetEq(InclusionRelation):
         Reversing subset_eq gives superset_eq.
         '''
         return r'\supseteq' if format_type == 'latex' else 'superset_eq'
+
+    def remake_constructor(self):
+        if self.is_reversed():
+            # Use the 'superset_eq' function if it is reversed.
+            return 'superset_eq'
+        # Use the default.
+        return Operation.remake_constructor(self)
     
     def conclude(self, assumptions=USE_DEFAULTS):
         from proveit import ProofFailure
@@ -168,7 +175,7 @@ class SubsetEq(InclusionRelation):
             raise ValueError(
                 "Cannot perform transitivity with {0} and {1}!".
                 format(self, other))
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
@@ -176,9 +183,10 @@ class SubsetEq(InclusionRelation):
         in the Boolean set.
         '''
         from . import subset_eq_is_bool
-        is_bool_stm = subset_eq_is_bool.instantiate(
-                {A: self.lhs, B: self.rhs}, assumptions=assumptions)
-        return is_bool_stm.inner_expr().element.with_matching_style(self)
+        is_bool_stmt = subset_eq_is_bool.instantiate(
+                {A: self.normal_lhs, B: self.normal_rhs}, 
+                assumptions=assumptions)
+        return is_bool_stmt.inner_expr().element.with_matching_style(self)
 
 def superset_eq(A, B):
     '''
