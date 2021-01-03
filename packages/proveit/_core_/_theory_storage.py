@@ -366,7 +366,7 @@ class TheoryStorage:
             # record the special expression in this theory object
             theory_folder_storage = \
                 self.theory._theory_folder_storage(folder)
-            # get the expression id to be stored on 'commons.pv_it'
+            # get the expression id to be stored in the database 
             hash_id = theory_folder_storage._prove_it_storage_id(obj)
             if kind == 'common':
                 expr_id = hash_id
