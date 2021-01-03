@@ -42,11 +42,11 @@ class Relation(Operation):
         if self.get_style("direction", "normal") == "reversed":
             operator_str = self.__class__.reversed_operator_str(format_type)
             operands = ExprTuple(*reversed(operands.entries))
-        return operands.formatted(format_type, 
-                                  fence=fence, subFence=subFence, 
-                                  operator_or_operators=operator_str, 
-                                  wrap_positions=wrap_positions, 
-                                  justification=justification)
+        return Operation._formattedOperation(
+                format_type, fence=fence, subFence=subFence, 
+                operator_or_operators=operator_str, operands=operands,
+                wrap_positions=wrap_positions, 
+                justification=justification)
     
     def reversed(self):
         return self.with_direction_reversed()
