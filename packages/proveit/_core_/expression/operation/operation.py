@@ -20,89 +20,49 @@ class Operation(Expression):
         '''
         Operation.operation_class_of_operator.clear()
 
-    def __init__(
-            self,
-            operator_or_operators,
-            operand_or_operands,
-            styles=None):
+    def __init__(self, operator, operand_or_operands, styles=None):
         '''
-        Create an operation with the given operator(s) and operand(s).
-        The operator(s) must be Label(s) (a Variable or a Literal).
-        When there is a single operator, there will be an 'operator'
-        attribute.  When there is a single operand, there will be
-        an 'operand' attribute.  In any case, there will be
-        'operators' and 'operands' attributes that bundle
-        the one or more Expressions into a composite Expression.
+        Create an operation with the given operator and operands.
+        The operator must be a Label (a Variable or a Literal).
+        If a composite expression is provided as the 
+        'operand_or_operands' it is taken to be the 'operands' of the
+        Operation; otherwise the 'operands' will be the the provided
+        Expression wrapped as a single entry in an ExprTuple.
+        When there is a single operand that is not an ExprRange, there
+        will be an 'operand' attribute as well as 'operands' as an 
+        ExprTuple containing the one operand.
         '''
         from proveit._core_.expression.composite import (
-            Composite, composite_expression,
-            single_or_composite_expression, ExprTuple, ExprRange)
+            single_or_composite_expression, Composite, ExprTuple)
         from proveit._core_.expression.label.label import Label
         from .indexed_var import IndexedVar
         if styles is None:
             styles = dict()
-        if hasattr(
-                self.__class__,
-                '_operator_') and operator_or_operators == self.__class__._operator_:
-            operator = operator_or_operators
-            # if Expression.theories[operator._style_id] != operator.theory:
-            #    raise OperationError("Expecting '_operator_' Theory to match the Theory of the Operation sub-class.  Use 'theory=__file__'.")
-        if isinstance(operator_or_operators, ExprRange):
-            operator_or_operators = [operator_or_operators]
-        if isinstance(operand_or_operands, ExprRange):
-            operand_or_operands = [operand_or_operands]
-        self.operator_or_operators = single_or_composite_expression(
-            operator_or_operators)
-
-        # Reduce to a single operand if it is just a tuple with
-        # one non-ExprRange and non-ExprTuple element.
-        self.operand_or_operands = single_or_composite_expression(
+        self.operator = operator
+        operand_or_operands = single_or_composite_expression(
             operand_or_operands, do_singular_reduction=True)
-
-        def raise_bad_operator_type(operator):
-            raise TypeError('operator(s) must be a Label, an indexed variable '
-                            '(IndexedVar), or ranges of indexed'
-                            'variables (IndexedVar). %s is none of those.'
-                            % str(operator))
-        if isinstance(self.operator_or_operators, Composite):
-            # a composite of multiple operators:
-            self.operators = self.operator_or_operators
-            for operator in self.operators:
-                if isinstance(operator, ExprRange):
-                    if not isinstance(operator.body, IndexedVar):
-                        raise_bad_operator_type(operator)
-                elif not isinstance(operator, Label) and not isinstance(operator, IndexedVar):
-                    raise_bad_operator_type(operator)
-        else:
-            # a single operator
-            self.operator = self.operator_or_operators
-            if not isinstance(
-                    self.operator,
-                    Label) and not isinstance(
-                    self.operator,
-                    IndexedVar):
-                raise_bad_operator_type(self.operator)
-            # wrap a single operator in a composite for convenience
-            self.operators = composite_expression(self.operator)
-        if isinstance(self.operand_or_operands, Composite):
+        if isinstance(operand_or_operands, Composite):
             # a composite of multiple operands
-            self.operands = self.operand_or_operands
-            if (isinstance(self.operands, ExprTuple) and self.operands.num_entries()
-                    == 1 and isinstance(self.operands[0], ExprTuple)):
-                # This is a single operand that is an ExprTuple.
-                self.operand = self.operands[0]
+            self.operands = operand_or_operands
         else:
-            # a single operand
-            self.operand = self.operand_or_operands
-            # wrap a single operand in a composite for convenience
-            self.operands = composite_expression(self.operand)
+            self.operands = ExprTuple(operand_or_operands) 
+        def raise_bad_operator_type(operator):
+            raise TypeError('operator must be a Label or an indexed variable '
+                            '(IndexedVar). %s is none of those.'
+                            % str(operator))
+        if (not isinstance(self.operator, Label) and 
+                not isinstance(self.operator, IndexedVar)):
+            raise_bad_operator_type(self.operator)
+        if self.operands.is_single():
+            # This is a single operand.
+            self.operand = self.operands[0]
         if 'operation' not in styles:
             styles['operation'] = 'infix'  # vs 'function'
         if 'wrap_positions' not in styles:
             styles['wrap_positions'] = '()'  # no wrapping by default
         if 'justification' not in styles:
             styles['justification'] = 'center'
-        sub_exprs = (self.operator_or_operators, self.operand_or_operands)
+        sub_exprs = (self.operator, self.operands)
         if isinstance(self, IndexedVar):
             core_type = 'IndexedVar'
         else:
@@ -153,11 +113,7 @@ class Operation(Expression):
         return None
 
     @classmethod
-    def extract_init_arg_value(
-            cls,
-            arg_name,
-            operator_or_operators,
-            operand_or_operands):
+    def extract_init_arg_value(cls, arg_name, operator, operands):
         '''
         Given a name of one of the arguments of the __init__ method,
         return the corresponding value contained in the 'operands'
@@ -168,7 +124,9 @@ class Operation(Expression):
         into the __init__ method.
         '''
         raise NotImplementedError(
-            "'extract_init_arg_value' must be appropriately implemented if __init__ arguments do not fall into a simple 'default' scenario")
+            "'%s.extract_init_arg_value' must be appropriately implemented; "
+            "__init__ arguments do not fall into a simple 'default' "
+            "scenarios."%str(cls))
 
     def extract_my_init_arg_value(self, arg_name):
         '''
@@ -181,7 +139,7 @@ class Operation(Expression):
         afterwards.
         '''
         return self.__class__.extract_init_arg_value(
-            arg_name, self.operator_or_operators, self.operand_or_operands)
+            arg_name, self.operator, self.operands)
 
     def _extractMyInitArgs(self):
         '''
@@ -190,51 +148,47 @@ class Operation(Expression):
         the extract_init_arg_value static method.
         '''
         return self.__class__._extract_init_args(
-            self.operator_or_operators, self.operand_or_operands, obj=self)
+            self.operator, self.operands, obj=self)
 
     @classmethod
-    def _extract_init_args(
-            cls,
-            operator_or_operators,
-            operand_or_operands,
-            obj=None):
+    def _extract_init_args(cls, operator, operands, obj=None):
         '''
-        For a particular Operation class and given operator(s) and operand(s),
-        yield (name, value) pairs to pass into the initialization method
-        for creating the operation consistent with the given operator(s) and operand(s).
+        For a particular Operation class and given operator and 
+        operands, yield (name, value) pairs to pass into the 
+        initialization method for creating the operation consistent 
+        with the given operator and operands.
 
-        First attempt to call 'extract_init_arg_value' (or 'extract_my_init_arg_value' if
-        'obj' is provided) for each of the __init__ arguments to determine how
-        to generate the appropriate __init__ parameters from the given operators
-        and operands.  If that is not implemented, fall back to one of the
-        following default scenarios.
+        First attempt to call 'extract_init_arg_value' (or 
+        'extract_my_init_arg_value' if 'obj' is provided) for each of 
+        the __init__ arguments to determine how to generate the 
+        appropriate __init__ parameters from the given operators
+        and operands.  If that is not implemented, fall back to one of 
+        the following default scenarios.
 
-        If the particular Operation class has an 'implicit operator' defined
-        via an _operator_ attribute and the number of __init__ arguments matches the
-        number of operands or it takes only a single *args variable-length argument
-        list: construct the Operation by passing each operand individually.
+        If the particular Operation class has an 'implicit operator' 
+        defined via an _operator_ attribute and the number of __init__
+        arguments matches the number of operands or it takes only a
+        single *args variable-length argument list: construct the 
+        Operation by passing each operand individually.
 
-        Otherwise, if there is no 'implicit operator' and __init__ accepts
-        only two arguments (no variable-length or keyward arguments): construct
-        the Operation by passeng the operation(s) as the first argument
-        and operand(s) as the second argument.  If the length of either of
-        these is 1, then the single expression is passed rather than a
-        composite.
+        Otherwise, if there is no 'implicit operator' and __init__ 
+        accepts only two arguments (no variable-length or keyward
+        arguments): construct the Operation by passeng the operation(s) 
+        as the first argument and operand(s) as the second argument.  
+        If the length of either of these is 1, then the single 
+        expression is passed rather than a composite.
 
-        Otherwise, if there is no 'implicit operator' and __init__ accepts
-        one formal  argument and a variable-length argument and no keyword
-        arguments, or a number of formal arguments equal to the number of operands
-        plus 1 and no variable-length argument and no keyword arguments:
-        construct the Operation by passing the operator(s) and
-        each operand individually.
+        Otherwise, if there is no 'implicit operator' and __init__ 
+        accepts one formal  argument and a variable-length argument and 
+        no keyword arguments, or a number of formal arguments equal to
+        the number of operands plus 1 and no variable-length argument 
+        and no keyword arguments: construct the Operation by passing 
+        the operator(s) and each operand individually.
         '''
-        from proveit._core_.expression.composite.composite import composite_expression
         implicit_operator = cls._implicitOperator()
-        matches_implicit_operator = (
-            operator_or_operators == implicit_operator)
+        matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
             raise OperationError("An implicit operator may not be changed")
-        operands = composite_expression(operand_or_operands)
         args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
             inspect.getfullargspec(cls.__init__)
         args = args[1:]  # skip over the 'self' arg
@@ -243,8 +197,8 @@ class Operation(Expression):
             args = args[:-1]
             defaults = defaults[:-1]
         if obj is None:
-            def extract_init_arg_value_fn(arg): return cls.extract_init_arg_value(
-                arg, operator_or_operators, operand_or_operands)
+            def extract_init_arg_value_fn(arg): 
+                return cls.extract_init_arg_value(arg, operator, operands)
         else:
             extract_init_arg_value_fn = \
                 lambda arg: obj.extract_my_init_arg_value(arg)
@@ -279,8 +233,9 @@ class Operation(Expression):
             # and (operation_class.extract_init_arg_value ==
             # Operation.extract_init_arg_value):
             if (varkw is None):
-                # try some default scenarios (that do not involve keyword arguments)
-                # handle default implicit operator case
+                # try some default scenarios (that do not involve 
+                # keyword arguments) handle default implicit operator
+                # case
                 if implicit_operator and (
                     (len(args) == 0 and varargs is not None) or (
                         len(args) == operands.num_entries() and varargs is None)):
@@ -289,19 +244,19 @@ class Operation(Expression):
                         yield operand
                     return
 
-                # handle default explicit operator(s) case
+                # handle default explicit operator case
                 if (not implicit_operator) and (varkw is None):
                     if varargs is None and len(args) == 2:
-                        # assume one argument for the operator(s) and one
-                        # argument for the operand(s)
-                        yield operator_or_operators
-                        yield operand_or_operands
+                        # assume one argument for the operator and one
+                        # argument for the operands
+                        yield operator
+                        yield operands
                         return
                     elif ((varargs is not None and len(args) == 1) or 
                           (len(args) == operands.num_entries() + 1 
                            and varargs is None)):
-                        # yield the operator(s) and each operand separately
-                        yield operator_or_operators
+                        # yield the operator and each operand separately
+                        yield operator
                         for operand in operands:
                             yield operand
                         return
@@ -314,13 +269,15 @@ class Operation(Expression):
     @classmethod
     def _make(operation_class, core_info, styles, sub_expressions):
         '''
-        Make the appropriate Operation.  core_info should equal ['Operation'].  The first
-        of the sub_expressions should be the operator(s) and the second should be the
-        operand(s).  This implementation expects the Operation sub-class to have a
-        class variable named '_operator_' that defines the Literal operator
-        of the class.  It will instantiate the Operation sub-class with just *operands
-        and check that the operator is consistent.  Override this method
-        if a different behavior is desired.
+        Make the appropriate Operation.  core_info should equal 
+        ('Operation',).  The first of the sub_expressions should be 
+        the operator and the second should be the operands.  This 
+        implementation expects the Operation sub-class to have a
+        class variable named '_operator_' that defines the Literal 
+        operator of the class.  It will instantiate the Operation 
+        sub-class with just *operands and check that the operator is 
+        consistent.  Override this method if a different behavior is 
+        desired.
         '''
         if len(core_info) != 1 or core_info[0] != 'Operation':
             raise ValueError(
@@ -328,11 +285,11 @@ class Operation(Expression):
         if len(sub_expressions) == 0:
             raise ValueError(
                 'Expecting at least one sub_expression for an Operation, for the operator')
-        operator_or_operators, operand_or_operands = sub_expressions[0], sub_expressions[1]
+        operator, operands = sub_expressions[0], sub_expressions[1]
         args = []
         kw_args = dict()
         for arg in operation_class._extract_init_args(
-                operator_or_operators, operand_or_operands):
+                operator, operands):
             if isinstance(arg, Expression):
                 args.append(arg)
             else:
@@ -395,15 +352,12 @@ class Operation(Expression):
     def _function_formatted(self, format_type, **kwargs):
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
         formatted_operator = self.operator.formatted(format_type, fence=True)
-        if hasattr(
-                self,
-                'operand') and not isinstance(
-                self.operand,
-                ExprTuple):
+        if (hasattr(self, 'operand') and 
+                not isinstance(self.operand, ExprTuple)):
             return '%s(%s)' % (formatted_operator,
                                self.operand.formatted(format_type, fence=False))
         return '%s(%s)' % (formatted_operator,
-                           self.operand_or_operands.formatted(
+                           self.operands.formatted(
                                format_type, fence=False, sub_fence=False))
 
     def _formatted(self, format_type, **kwargs):
@@ -529,92 +483,61 @@ class Operation(Expression):
         keep derivation rules (i.e., instantiation) simple.  For details,
         see the ExprRange.substituted documentation.
         '''
-        from proveit import (Lambda, single_or_composite_expression,
-                             composite_expression, ExprTuple, ExprRange)
+        from proveit import Lambda, ExprRange
 
         if len(repl_map) > 0 and (self in repl_map):
             # The full expression is to be substituted.
             return repl_map[self]
 
         # Perform substitutions for the operator(s) and operand(s).
-        subbed_operator_or_operators = \
-            self.operator_or_operators.replaced(repl_map, allow_relabeling,
-                                                assumptions, requirements,
-                                                equality_repl_requirements)
-        subbed_operand_or_operands = \
-            self.operand_or_operands.replaced(repl_map, allow_relabeling,
-                                              assumptions, requirements,
-                                              equality_repl_requirements)
-        subbed_operators = composite_expression(subbed_operator_or_operators)
+        subbed_operator = \
+            self.operator.replaced(repl_map, allow_relabeling,
+                                   assumptions, requirements,
+                                   equality_repl_requirements)
+        subbed_operands = \
+            self.operands.replaced(repl_map, allow_relabeling,
+                                   assumptions, requirements,
+                                   equality_repl_requirements)
 
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
-        if subbed_operators.num_entries() == 1:
-            subbed_operator = subbed_operators[0]
-            if isinstance(subbed_operator, Lambda):
-                # Substitute the entire operation via a Lambda map
-                # application.  For example, f(x, y) -> x + y,
-                # or g(a, b_1, ..., b_n) -> a * b_1 + ... + a * b_n.
+        if isinstance(subbed_operator, Lambda):
+            # Substitute the entire operation via a Lambda map
+            # application.  For example, f(x, y) -> x + y,
+            # or g(a, b_1, ..., b_n) -> a * b_1 + ... + a * b_n.
 
-                if isinstance(subbed_operator.body, ExprRange):
-                    raise ImproperReplacement(
-                        self, repl_map,
-                        "The function %s cannot be defined using this "
-                        "lambda, %s, that has an ExprRange for its body; "
-                        "that could lead to tuple length contradictions."
-                        % (self.operator, subbed_operator))
-                if self.operands.num_entries() == 1 and \
-                        not isinstance(self.operands[0], ExprRange):
-                    # A single operand case (even if that operand
-                    # happens to be a tuple).
-                    subbed_operands = [subbed_operand_or_operands]
-                else:
-                    subbed_operands = subbed_operand_or_operands.entries
-                return Lambda._apply(
-                    subbed_operator.parameters, subbed_operator.body,
-                    *subbed_operands, assumptions=assumptions,
-                    requirements=requirements,
-                    equality_repl_requirements=equality_repl_requirements)
-
-        had_singular_operand = hasattr(self, 'operand')
-        if (had_singular_operand and isinstance(subbed_operand_or_operands,
-                                                ExprTuple)
-                and not isinstance(self.operand_or_operands, ExprTuple)):
-            # If a singular operand is replaced with an ExprTuple,
-            # we must wrap an extra ExprTuple around it to indicate
-            # that it is still a singular operand with the operand
-            # as the ExprTuple (rather than expanding to multiple
-            # operands).
-            subbed_operand_or_operands = ExprTuple(subbed_operand_or_operands)
-        else:
-            # Possibly collapse multiple operands to a single operand
-            # via "do_singular_reduction=True".
-            subbed_operand_or_operands = single_or_composite_expression(
-                subbed_operand_or_operands, do_singular_reduction=True)
-
-        # Remake the Expression with substituted operator and/or
-        # operands
-        if subbed_operators.num_entries() == 1:
-            # If it is a single operator that is a literal operator of
-            # an Operation class defined via an "_operator_" class
-            # attribute, then create the Operation of that class.
-            operator = subbed_operators[0]
-            if operator in Operation.operation_class_of_operator:
-                op_class = Operation.operation_class_of_operator[operator]
-                if op_class != self.__class__:
-                    # Don't transfer the styles; they may not apply in
-                    # the same manner in the setting of the new
-                    # operation.
-                    subbed_sub_exprs = (operator, subbed_operand_or_operands)
-                    substituted = op_class._checked_make(
-                        ['Operation'], styles=None,
-                        sub_expressions=subbed_sub_exprs)
-                    return substituted._auto_reduced(
-                        assumptions, requirements,
-                        equality_repl_requirements)
-
-        subbed_sub_exprs = (subbed_operator_or_operators,
-                            subbed_operand_or_operands)
+            if isinstance(subbed_operator.body, ExprRange):
+                raise ImproperReplacement(
+                    self, repl_map,
+                    "The function %s cannot be defined using this "
+                    "lambda, %s, that has an ExprRange for its body; "
+                    "that could lead to tuple length contradictions."
+                    % (self.operator, subbed_operator))
+            return Lambda._apply(
+                subbed_operator.parameters, subbed_operator.body,
+                *subbed_operands.entries, assumptions=assumptions,
+                requirements=requirements,
+                equality_repl_requirements=equality_repl_requirements)
+        
+        # If the operator is a literal operator of
+        # an Operation class defined via an "_operator_" class
+        # attribute, then create the Operation of that class.
+        if subbed_operator in Operation.operation_class_of_operator:
+            op_class = Operation.operation_class_of_operator[subbed_operator]
+            if op_class != self.__class__:
+                # Don't transfer the styles; they may not apply in
+                # the same manner in the setting of the new
+                # operation.
+                subbed_sub_exprs = (subbed_operator, subbed_operands)
+                substituted = op_class._checked_make(
+                    ['Operation'], styles=None,
+                    sub_expressions=subbed_sub_exprs)
+                return substituted._auto_reduced(
+                    assumptions, requirements,
+                    equality_repl_requirements)
+        
+        subbed_sub_exprs = (subbed_operator,
+                            subbed_operands)
         substituted = self.__class__._checked_make(
             self._core_info, self.get_styles(), subbed_sub_exprs)
         return substituted._auto_reduced(assumptions, requirements,

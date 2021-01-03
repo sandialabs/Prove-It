@@ -67,12 +67,8 @@ class ExpressionInfo:
                     out_str += r'indices: ' + \
                         str(expr_num_map[expr.indices]) + '\n'
             elif isinstance(expr, Operation):
-                if hasattr(expr, 'operator'):  # has a single operator
-                    out_str += indent + r'operator: ' + \
-                        str(expr_num_map[expr.operator]) + '\n'
-                else:  # has multiple operators
-                    out_str += indent + r'operators: ' + \
-                        str(expr_num_map[expr.operators]) + '\n'
+                out_str += indent + r'operator: ' + \
+                    str(expr_num_map[expr.operator]) + '\n'
                 if hasattr(expr, 'operand'):  # has a single operand
                     out_str += indent + r'operand: ' + \
                         str(expr_num_map[expr.operand]) + '\n'
@@ -140,12 +136,8 @@ class ExpressionInfo:
                     sub_expressions += 'indices:&nbsp;%d<br>' % (
                         expr_num_map[expr.indices])
             elif isinstance(expr, Operation):
-                if hasattr(expr, 'operator'):  # has a single operator
-                    sub_expressions = 'operator:&nbsp;%d<br>' % (
-                        expr_num_map[expr.operator])
-                else:  # has multiple operators
-                    sub_expressions = 'operators:&nbsp;%d<br>' % (
-                        expr_num_map[expr.operators])
+                sub_expressions = 'operator:&nbsp;%d<br>' % (
+                    expr_num_map[expr.operator])
                 if hasattr(expr, 'operand'):  # has a single operand
                     sub_expressions += 'operand:&nbsp;%d<br>' % (
                         expr_num_map[expr.operand])

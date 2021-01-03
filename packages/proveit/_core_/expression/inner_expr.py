@@ -156,7 +156,7 @@ class InnerExpr:
                              assumptions=self.assumptions)
         raise KeyError("The current sub-Expression is not a Composite.")
 
-    def _getAttrAsInnerExpr(self, cur_depth, attr, attr_expr):
+    def _get_attr_as_inner_expr(self, cur_depth, attr, attr_expr):
         '''
         Try to find a deeper inner expression that corresponds with the
         attribute (attr) of the expression at the given current depth
@@ -166,8 +166,11 @@ class InnerExpr:
         attribute (not just happening to be the same sub-expression that
         could occur multiple places).
         '''
+        from proveit._core_.judgment import Judgment
         top_level_expr = self.expr_hierarchy[0]
         cur_inner_expr = self.expr_hierarchy[-1]
+        if isinstance(cur_inner_expr, Judgment):
+            cur_inner_expr = cur_inner_expr.expr
         inner_subs = list(cur_inner_expr.sub_expr_iter())
         # See if any of the sub-expressions are a match.
         for i, inner_sub in enumerate(inner_subs):
@@ -179,21 +182,21 @@ class InnerExpr:
                 deeper_inner_expr = InnerExpr(top_level_expr,
                                               self.inner_expr_path + (i,),
                                               assumptions=self.assumptions)
-                if attr == 'operands':
-                    # We'll make an exception for 'operands' where it
-                    # should always be allowed and the following test
-                    # can fail for binary operations for example but
-                    # it is okay to use if one operand will be indexed.
-                    return deeper_inner_expr
+                if (isinstance(cur_inner_expr, Operation) 
+                        and cur_inner_expr.operands == attr_expr):
+                    # The 'operands' attribute of an Operation is a
+                    # special case.  Take the full slice and we don't
+                    # need to check it.
+                    return deeper_inner_expr[:]
                 repl_lambda = deeper_inner_expr.repl_lambda()
                 sub_expr = repl_lambda .body
                 for j in self.inner_expr_path[:cur_depth]:
-                    sub_expr = sub_expr.sub_expr(j)
+                    if isinstance(sub_expr, ExprTuple):
+                        sub_expr = sub_expr[j]
+                    else:
+                        sub_expr = sub_expr.sub_expr(j)
                 fvars = free_vars(
-                    composite_expression(
-                        getattr(
-                            sub_expr,
-                            attr)),
+                    composite_expression(getattr(sub_expr,attr)),
                     err_inclusively=False)
                 if repl_lambda.parameter_var_set.issubset(fvars):
                     return deeper_inner_expr
@@ -203,8 +206,8 @@ class InnerExpr:
             inner_expr = InnerExpr(self.expr_hierarchy[0],
                                    self.inner_expr_path + (i,),
                                    assumptions=self.assumptions)
-            inner_expr = inner_expr._getAttrAsInnerExpr(cur_depth, attr,
-                                                        attr_expr)
+            inner_expr = inner_expr._get_attr_as_inner_expr(
+                    cur_depth, attr, attr_expr)
             if inner_expr is not None:
                 return inner_expr
         return None  # no match found down to the maximum depth
@@ -299,7 +302,7 @@ class InnerExpr:
             # The attribute is addressing a sub-Expression of the current inner Expression
             # and may be a sub-sub-Expression (or a member of sub-sub-Expression composite);
             # if so, return the SubExprRepl extended to the sub-sub-Expression.
-            inner_expr = self._getAttrAsInnerExpr(
+            inner_expr = self._get_attr_as_inner_expr(
                 len(self.inner_expr_path), attr, inner_attr_val)
             if inner_expr is not None:
                 return inner_expr

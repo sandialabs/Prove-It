@@ -975,8 +975,9 @@ class Lambda(Expression):
                     from proveit import safe_dummy_var, var_range
                     from proveit.numbers import one
                     n = sub_expr.num_elements(assumptions)
-                    parameters = var_range(safe_dummy_var(master_expr),
-                                           one, n)
+                    parameters = ExprTuple(
+                            var_range(safe_dummy_var(master_expr),
+                                      one, n))
                     body = master_expr.replaced({sub_expr: parameters},
                                                 assumptions=assumptions)
                     return Lambda(parameters, body)

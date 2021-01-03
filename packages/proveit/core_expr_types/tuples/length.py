@@ -69,7 +69,7 @@ class Len(Operation):
         # What it should do is make sure it evaluates to a number
         # and can circumvent any attempt that will not evaluate to
         # number.
-        from proveit.numbers import zero, one
+        from proveit.numbers import one
         if not isinstance(self.operand, ExprTuple):
             # Don't know how to compute the length if the operand is
             # not a tuple. For example, it could be a variable that
@@ -222,8 +222,8 @@ class Len(Operation):
                         (entries[0].parameter,
                          entries[0].body.parameter),
                         entries[0].body.body)
-                    _i = [entry_map(entry) for entry in _i]
-                    _j = [entry_map(entry) for entry in _j]
+                    _i = entry_map(_i)
+                    _j = entry_map(_j)
                     return len_of_empty_range_of_ranges.instantiate(
                         {m: _m, n: _n, f: _f, i: _i, j: _j}, assumptions=assumptions)
 
@@ -234,12 +234,11 @@ class Len(Operation):
 
             from proveit.numbers import is_literal_int
             if len(entries) == 1 and isinstance(entries[0], ExprRange):
-                if is_literal_int(
-                        entries[0].start_index) and is_literal_int(
-                        entries[0].end_index):
-                    if entries[0].end_index.as_int(
-                    ) + 1 == entries[0].start_index.as_int():
-                        return empty_range(_i, _j, _f, assumptions)
+                if (is_literal_int(entries[0].start_index) and 
+                        is_literal_int(entries[0].end_index)):
+                    if (entries[0].end_index.as_int() + 1 
+                            == entries[0].start_index.as_int()):
+                        return empty_range(_i[0], _j[0], _f, assumptions)
 
             if all(_ == _i[0] for _ in _i) and all(_ == _j[0] for _ in _j):
                 if isinstance(_i[0], ExprRange):
