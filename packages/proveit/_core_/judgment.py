@@ -607,6 +607,13 @@ class Judgment:
         attr = getattr(self.expr, name)
 
         if hasattr(attr, '__call__'):
+            if name[:5] == 'with_':
+                # 'with_...' methods change the style.  We want to
+                # change the style and the return the judgment.
+                def call_method_for_new_style(*args, **kwargs):
+                    attr.__call__(*args, **kwargs)
+                    return self
+                return call_method_for_new_style
             argspec = inspect.getfullargspec(attr)
             if ('assumptions' in argspec.args
                     or 'assumptions' in argspec.kwonlyargs):

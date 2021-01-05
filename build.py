@@ -1254,6 +1254,19 @@ if __name__ == '__main__':
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/theorems.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
+
+        # This seems to be necessary to rerun these after rerunning the
+        # theorem notebooks, though it shouldn't be.  Why?
+        if args.build_demos or args.build_all:
+            mpi_build(notebook_path_generator(paths, '_theory_nbs_/demonstrations.ipynb'),
+                      no_latex=args.nolatex, git_clear=not args.nogitclear,
+                      no_execute=args.noexecute, export_to_html=True)
+        if args.build_theorem_proofs or args.build_all:
+            mpi_build(theoremproof_path_generator(paths),
+                      no_latex=args.nolatex, git_clear=not args.nogitclear,
+                      no_execute=args.noexecute, export_to_html=True)
+
+
         if args.build_dependencies or args.build_all:
             mpi_build(database_notebook_path_generator(paths, ('dependencies',)),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,

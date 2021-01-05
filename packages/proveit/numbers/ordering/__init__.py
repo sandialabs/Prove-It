@@ -1,7 +1,17 @@
-from .greater_than import Greater, GreaterEq, GreaterSequence, GreaterOnlySeq, GreaterEqOnlySeq, greater_sequence
-from .less_than import Less, LessEq, LesserSequence, LessOnlySeq, LessEqOnlySeq, lesser_sequence
+# Note: '>' and '>=' relations are expressed using Less and LessEq
+# expression types using the direction='reversed' style variant.
+from .less import Less, greater
+from .less_eq import LessEq, greater_eq
+
 from .max import Max
 from .min import Min
+
+# Total number ordering is internally represented as a
+# conjunction of number relationships but formatted as, for example,
+# a <= b < c = d <= e.
+# number ordering is a funciton for creating such an expression
+# with this formatting style.
+from .number_ordering_relation import number_ordering
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

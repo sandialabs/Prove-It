@@ -1,5 +1,5 @@
 from collections import deque
-from proveit import Expression, Operation, OperationSequence
+from proveit import Expression, Operation, OperationSequence, StyleOptions
 from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
 from .sorter import TransitivitySorter
 
@@ -11,11 +11,73 @@ class Relation(Operation):
     '''
 
     def __init__(self, operator, lhs, rhs):
-        Operation.__init__(self, operator, (lhs, rhs))
+        Operation.__init__(self,operator, (lhs, rhs), 
+                           styles={"direction":"normal"})
         assert(self.operands.is_double())
-        self.lhs = self.operands[0]
-        self.rhs = self.operands[1]
+        # The 'lhs' and 'rhs' attributes will access the respective
+        # operands, but this is effected in __getattr__ because
+        # they will be switched when the 'direction' style is
+        # 'reversed'.
 
+    @staticmethod
+    def reversed_operator_str(format_type):
+        raise NotImplementedError(
+                "'reversed_operator_str' must be implemented as a class/"
+                "static method for a Relation class to support the "
+                "'direction' style of 'reversed'.  It should take a "
+                "'format_type' argument which may be 'latex' or 'string'.")
+
+    def reversed(self):
+        return self.with_direction_reversed()
+    
+    def is_reversed(self):
+        return self.get_style("direction", "normal") == "reversed"
+    
+    def with_direction_reversed(self):
+        if self.is_reversed():
+            return self.with_styles(direction="normal")
+        return self.with_styles(direction="reversed")
+    
+    def remake_constructor(self):
+        if self.is_reversed():
+            raise NotImplementedError("Must implement 'remake_constructor' for %s for "
+                                      "the case when it is reversed."%self.__class__)
+        return Operation.remake_constructor(self)
+    
+    def remake_arguments(self):
+        '''
+        The arguments may be reversed if is_reversed() is true.
+        '''
+        yield self.lhs # These account for a possible reversal.
+        yield self.rhs
+
+    def _formatted(self, format_type, **kwargs):
+        '''
+        Format the binary relation operation.  Note: it may
+        be reversed if the "direction" style is "reversed".
+        '''
+        from proveit import ExprTuple
+        wrap_positions=self.wrap_positions()
+        justification=self.get_style('justification')
+        fence =  kwargs.get('fence', False)
+        subFence =  kwargs.get('subFence', True)
+        operator_str = self.operator.formatted(format_type)
+        operands = self.operands
+        if self.is_reversed():
+            operator_str = self.__class__.reversed_operator_str(format_type)
+            operands = ExprTuple(*reversed(operands.entries))
+        return Operation._formattedOperation(
+                format_type, fence=fence, subFence=subFence, 
+                operator_or_operators=operator_str, operands=operands,
+                wrap_positions=wrap_positions, 
+                justification=justification)
+    
+    def style_options(self):
+        options = StyleOptions(self)
+        options.add_option('direction', ("Direction of the relation "
+                                         "(normal or reversed)"))
+        return options
+        
     def _simplify_both_sides(self, *, simplify, assumptions=USE_DEFAULTS):
         '''
         Simplify both sides iff 'simplify' is True.
@@ -64,7 +126,22 @@ class Relation(Operation):
         for the TransitiveRelation class will take an extra optional
         'simplify' argument, True by default, for automatically
         simplifying both sides of the new relation.
+        
+        Also, 'lhs' and 'rhs' attributes are implemented here
+        because they will be reversed if the 'direction' style
+        is 'reversed'.
         '''
+        if name in ('lhs', 'rhs'):
+            # For some reason, self.getStyleData('direction', None)
+            # leads to errors, but 
+            # self._styleData.styles.get('direction', None) is fine.
+            if self._style_data.styles.get('direction', 'normal') == 'reversed':
+                if name=='lhs': return self.operands[1]
+                else: return self.operands[0]
+            else:
+                if name=='lhs': return self.operands[0]
+                else: return self.operands[1]
+        
         both_sides_str = '_both_sides'
         if name[-len(both_sides_str):] == both_sides_str:
             from proveit.logic import InSet

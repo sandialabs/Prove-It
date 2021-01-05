@@ -28,9 +28,9 @@ from ._core_ import (
     StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
 from .relation import (
     TransitiveRelation,
-    TransitiveSequence,
     TransitivityException,
-    TransRelUpdater)
+    TransRelUpdater,
+    total_ordering)
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet

@@ -1,3 +1,4 @@
 from .relation import Relation
-from .transitivity import TransitiveRelation, TransitiveSequence, make_sequence_or_relation, TransitivityException
+from .transitivity import (TransitiveRelation, TransitivityException, 
+                           total_ordering)
 from .updater import TransRelUpdater

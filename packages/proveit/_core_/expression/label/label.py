@@ -44,7 +44,7 @@ class Label(Expression):
 
     def style_options(self):
         options = StyleOptions(self)
-        options.add(
+        options.add_option(
             'fence',
             "Do we need to wrap in paranthesis: 'when forced' or 'never'?")
         return options

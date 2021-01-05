@@ -101,7 +101,7 @@ class Abs(Operation):
         Assumptions may be necessary to deduce necessary conditions for
         the simplification.
         '''
-        from proveit.numbers import Greater, GreaterEq, Mult, Neg
+        from proveit.numbers import greater, greater_eq, Mult, Neg
         from proveit.numbers import (zero, Natural, NaturalPos, RealNeg,
                                      RealNonNeg, RealPos)
         # among other things, convert any assumptions=None
@@ -139,12 +139,12 @@ class Abs(Operation):
         #--               of which are known or assumed to be non-   --#
         # --               negative real numbers. TBA!
         #-- -------------------------------------------------------- --#
-        if (Greater(self.operand, zero).proven(assumptions=assumptions) and
-                not GreaterEq(self.operand, zero).proven(assumptions=assumptions)):
-            GreaterEq(self.operand, zero).prove(assumptions=assumptions)
+        if (greater(self.operand, zero).proven(assumptions=assumptions) and
+                not greater_eq(self.operand, zero).proven(assumptions=assumptions)):
+            greater_eq(self.operand, zero).prove(assumptions=assumptions)
             # and then it will get picked up in the next if() below
 
-        if GreaterEq(self.operand, zero).proven(assumptions=assumptions):
+        if greater_eq(self.operand, zero).proven(assumptions=assumptions):
             from proveit.numbers.number_sets.real_numbers import (
                 in_real_non_neg_if_greater_eq_zero)
             in_real_non_neg_if_greater_eq_zero.instantiate(

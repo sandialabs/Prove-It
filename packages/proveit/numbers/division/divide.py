@@ -22,7 +22,7 @@ class Div(Operation):
 
     def style_options(self):
         options = StyleOptions(self)
-        options.add(
+        options.add_option(
             'division',
             "'inline': uses '/'; 'fraction': numerator over the denominator")
         return options

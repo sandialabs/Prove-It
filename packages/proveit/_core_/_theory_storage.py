@@ -366,7 +366,7 @@ class TheoryStorage:
             # record the special expression in this theory object
             theory_folder_storage = \
                 self.theory._theory_folder_storage(folder)
-            # get the expression id to be stored on 'commons.pv_it'
+            # get the expression id to be stored in the database 
             hash_id = theory_folder_storage._prove_it_storage_id(obj)
             if kind == 'common':
                 expr_id = hash_id
@@ -521,8 +521,8 @@ class TheoryStorage:
         theory_folder_storage = self.theory_folder_storage(folder)
         name_to_hash_filename = os.path.join(self.pv_it_dir, folder,
                                              'name_to_hash.txt')
+        special_hash_ids = self._special_hash_ids[kind] = dict()
         if os.path.isfile(name_to_hash_filename):
-            special_hash_ids = self._special_hash_ids[kind] = dict()
             with open(name_to_hash_filename, 'r') as f:
                 for line in f.readlines():
                     name, hash_id = line.split()

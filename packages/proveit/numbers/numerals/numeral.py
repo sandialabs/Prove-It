@@ -27,15 +27,15 @@ class Numeral(Literal, IrreducibleValue):
 
     def not_equal(self, other, assumptions=USE_DEFAULTS):
         from proveit.numbers import Less
-        from proveit.numbers.ordering import less_is_not_eq, gtr_is_not_eq
+        from proveit.numbers.ordering import less_is_not_eq
         _a, _b = Less.sorted_items([self, other], assumptions=assumptions)
-        if self == _a:
-            return less_is_not_eq.instantiate(
-                {a: _a, b: _b}, assumptions=assumptions)
-        else:
-            return gtr_is_not_eq.instantiate(
-                {a: _b, b: _a}, assumptions=assumptions)
-
+        not_eq_stmt = less_is_not_eq.instantiate(
+            {a: _a, b: _b}, assumptions=assumptions)
+        if not_eq_stmt.lhs != self:
+            # We need to reverse the statement.
+            return not_eq_stmt.derive_reversed(assumptions)
+        return not_eq_stmt       
+    
     def remake_arguments(self):
         '''
         Yield the argument values that could be used to recreate this DigitLiteral.
