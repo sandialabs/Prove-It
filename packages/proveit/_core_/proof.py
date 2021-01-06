@@ -1224,6 +1224,10 @@ class Instantiation(Proof):
         expr = original_judgment.expr
         instantiated_params = list(relabel_vars)
         instantiated_param_vars = list(relabel_var_replacements)
+        equiv_alt_expansion_keys_by_param_var = dict()
+        for key in equiv_alt_expansions.keys():
+            equiv_alt_expansion_keys_by_param_var.setdefault(
+                get_param_var(key.entries[0]), []).append(key)
         active_equiv_alt_expansions = dict()
 
         # When an implicit range of indexed variables becomes explicit,
@@ -1249,12 +1253,8 @@ class Instantiation(Proof):
                                         instantiated_param_vars):
                 if param_var == exclusion:
                     continue  # skip the 'exclusion'
-                if isinstance(param, ExprRange):
-                    # An ExprRange parameter should have a tuple
-                    # replacement for its tuple form.
-                    for entry in repl_map[ExprTuple(param)]:
-                        operands.append(entry)
-                elif param_var in explicit_ranges:
+                if (isinstance(param, ExprRange) and 
+                        param_var in explicit_ranges):
                     # When an implicit range is mapped to an
                     # explicit one, a variable instantiation
                     # should be replaced by the corresponding range
@@ -1265,11 +1265,24 @@ class Instantiation(Proof):
                     #   \forall_{x_1, ..., x_n} ...
                     # universal quantifier.
                     param = explicit_ranges[param_var]
-                    for entry in repl_map[ExprTuple(param)]:
-                        operands.append(entry)
+                    param_tuple = ExprTuple(param)
+                    param_tuple_repl = repl_map.get(param_tuple,
+                                                    None)
+                    if (param_tuple_repl is None and 
+                            param_tuple in active_equiv_alt_expansions):
+                        # No replacement but there are applicable
+                        # equivalent alternative expansions, so 
+                        # we'll use itself as the replacement to 
+                        # ensure these alternative expansions are
+                        # used.
+                        param_tuple_repl = param_tuple
+                    if param_tuple_repl is not None:
+                        for entry in param_tuple_repl:
+                            operands.append(entry)
+                        params.append(param)
                 else:
-                    operands.append(repl_map[param])
-                params.append(param)
+                    operands.append(repl_map.get(param, param))
+                    params.append(param)
             if len(params) == 0:
                 return expr
             return Lambda._apply(
@@ -1306,14 +1319,10 @@ class Instantiation(Proof):
                     subbed_param = instantiate(param, exclusion=param_var)
                     instantiated_params.append(subbed_param)
                     instantiated_param_vars.append(param_var)         
-                    subbed_param_tuple = ExprTuple(subbed_param)
-                    if subbed_param_tuple in equiv_alt_expansions:
-                        # An equivalent alternative expansion is
-                        # now active.
-                        active_equiv_alt_expansions[subbed_param_tuple] = \
-                            equiv_alt_expansions[subbed_param_tuple]
+                    explicit_ranges[param_var] = subbed_param
                     if isinstance(param_var_repl, ExprTuple):
                         if subbed_param not in repl_map:
+                            subbed_param_tuple = ExprTuple(subbed_param)
                             if (subbed_param_tuple in repl_map and
                                     repl_map[subbed_param_tuple] !=
                                     param_var_repl):
@@ -1323,11 +1332,14 @@ class Instantiation(Proof):
                                               % (subbed_param_tuple,
                                                  param_var_repl, param_var,
                                                  repl_map[subbed_param_tuple]))
-                            explicit_ranges[param_var] = subbed_param
                             repl_map[subbed_param_tuple] = param_var_repl   
                 elif param_var_repl is not None:
                    instantiated_params.append(param)
-                   instantiated_param_vars.append(param_var)              
+                   instantiated_param_vars.append(param_var)
+                # Update the active equivalent alternative expansions.
+                active_equiv_alt_expansions.update(
+                    {key:equiv_alt_expansions[key] for key in 
+                     equiv_alt_expansion_keys_by_param_var.get(param_var, ())})
             
             # If there is a condition of the universal quantifier
             # being eliminated, produce the instantiated condition,
@@ -1365,7 +1377,6 @@ class Instantiation(Proof):
                         # a range, we need to wrap it in a
                         # conjunction.
                         subbed_cond = And(subbed_cond)
-                        defaults.debug = (subbed_cond, assumptions)
                     try:
                         requirements.append(subbed_cond.prove(assumptions))
                     except ProofFailure:
