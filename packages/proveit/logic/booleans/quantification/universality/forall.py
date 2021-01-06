@@ -176,8 +176,7 @@ class Forall(OperationOverInstances):
             unbundled = self.unbundle_equality(assumptions=assumptions).rhs
             unbundled = unbundled.conclude_as_folded(assumptions)
             return unbundled.bundle(assumptions=assumptions)
-        blah = self.domain.fold_as_forall(self, assumptions)
-        return blah
+        return self.domain.fold_as_forall(self, assumptions)
 
     def bundle(self, num_levels=2, *, assumptions=USE_DEFAULTS):
         '''
