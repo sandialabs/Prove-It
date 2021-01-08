@@ -1257,7 +1257,6 @@ if __name__ == '__main__':
                                 # skip notebook with preceeding underscore.
                                 continue
                             if (sub_path[-6:] == '.ipynb' and os.path.isfile(full_path)):
-                                print('full_path', full_path)
                                 yield full_path
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/demonstrations.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,

@@ -53,7 +53,8 @@ class Operation(Expression):
         if (not isinstance(self.operator, Label) and 
                 not isinstance(self.operator, IndexedVar)):
             raise_bad_operator_type(self.operator)
-        if self.operands.is_single():
+        if (isinstance(self.operands, ExprTuple) and 
+                self.operands.is_single()):
             # This is a single operand.
             self.operand = self.operands[0]
         if 'operation' not in styles:

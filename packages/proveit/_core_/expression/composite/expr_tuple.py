@@ -493,7 +493,7 @@ class ExprTuple(Composite, Expression):
             return eq.relation
 
         while eq.expr.num_entries() > 1:
-            front_merger = ExprTuple(*eq.expr[:2]).merger(assumptions)
+            front_merger = ExprTuple(*eq.expr[:2].entries).merger(assumptions)
             eq.update(front_merger.substitution(
                 eq.expr.inner_expr(assumptions)[:2],
                 assumptions=assumptions))
