@@ -1253,6 +1253,9 @@ if __name__ == '__main__':
                             [main_path], find_theory_paths(main_path)):
                         for sub_path in os.listdir(path):
                             full_path = os.path.join(path, sub_path)
+                            if sub_path[0] == '_':
+                                # skip notebook with preceeding underscore.
+                                continue
                             if (sub_path[-6:] == '.ipynb' and os.path.isfile(full_path)):
                                 print('full_path', full_path)
                                 yield full_path
