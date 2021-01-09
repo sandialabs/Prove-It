@@ -16,7 +16,6 @@ from ._core_ import (
     Label, Variable, Literal, DuplicateLiteralError,
     safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var,
     MakeNotImplemented, ImproperReplacement,
-    ProofFailure,
     Composite, composite_expression, single_or_composite_expression,
     ExprTuple, ExprTupleError, extract_var_tuple_indices,
     ExprArray, NamedExprs, ExprRange,
@@ -24,6 +23,7 @@ from ._core_ import (
     Judgment, as_expression, as_expressions,
     Proof, Assumption, Axiom, Theorem, ModusPonens,
     Deduction, Instantiation, Generalization,
+    UnusableProof, ProofFailure,
     ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
     StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
 from .relation import (

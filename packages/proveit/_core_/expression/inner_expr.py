@@ -115,7 +115,7 @@ class InnerExpr:
                 if isinstance(expr, Lambda) and idx == expr.num_sub_expr() - 1:
                     # while descending into a lambda expression body, we
                     # pick up the lambda parameters.
-                    self.parameters.extend(expr.parameters)
+                    self.parameters.extend(expr.parameters.entries)
                 expr = expr.sub_expr(idx)
                 if isinstance(expr, tuple):
                     # A slice `idx` will yield a tuple sub expression.

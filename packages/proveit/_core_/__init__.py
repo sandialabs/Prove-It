@@ -25,7 +25,7 @@ from .defaults import defaults, USE_DEFAULTS, InvalidAssumptions
 from .theory import Theory, TheoryException
 from .proof import (Proof, Assumption, Axiom, Theorem, ModusPonens,
                     Deduction, Instantiation, Generalization)
-from .proof import (ProofFailure, ModusPonensFailure,
+from .proof import (UnusableProof, ProofFailure, ModusPonensFailure,
                     InstantiationFailure, GeneralizationFailure)
 #import _theory_storage
 from ._theory_storage import (relurl, TheoryStorage, StoredSpecialStmt,

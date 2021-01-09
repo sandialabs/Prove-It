@@ -772,29 +772,35 @@ class Judgment:
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
                     assumptions=USE_DEFAULTS):
         '''
-        Performs an instantiation derivation step to be proven under the
-        given assumptions, in addition to the (possibly revised) 
-        assumptions of the Judgment.  This may instantiate Variables, 
-        according to the "replacement" map (repl_map), on either side of
-        the turnstile of the Judgment, the assumptions side and the 
-        "truth" side.  It may also eliminate any number of nested Forall
-        operations, instantiating the instance Variables according to 
-        repl_map, going to the depth for which the instance variables 
-        occur as keys in repl_map.  For Variables that map to Variables
-        and occur as "internal" Lambda map parameters (internal after 
-        the Forall operations are eliminated), they will be relabeled
-        within the "internal" Lambda map parameters.  For Variables that
-        map to non-Variables, the replacement will not penetrate into 
-        internal Lambda maps that use that Variable as a parameter. 
+        Performs an instantiation derivation step to be proven under the 
+        given assumptions, in addition to the assumptions of the 
+        Judgment.  This may instantiate Variables that are universally 
+        quantified immediately to the right of the Judgment turnstile
+        according to the "replacement" map (repl_map), eliminating the 
+        quantifier as the corresponding variables are instantiated.
+        It may eliminate any number of nested Forall operations, 
+        instantiating the instance Variables according to repl_map, 
+        going to the depth for which the instance variables occur as 
+        keys in repl_map or according to num_forall_eliminations if it
+        is specified.
+        
+        For Variables that map to Variables in the replacement map,
+        this is handled as a relabeling across both sides of the
+        turnstile as well as "internal" Lambda map parameters.
+        For Variables that map to non-Variables, the replacement only
+        occurs within an eliminated quantifier and will not penetrate 
+        into internal Lambda maps that use that Variable as a parameter. 
+        
         Replacements are made simultaneously.  For example, the 
         {x:y, y:x} mapping will swap x and y variables.
 
-        Returns the proven instantiated Judgment, or throws an exception if
-        the proof fails.  For the proof to succeed, all conditions of
+        Returns the proven instantiated Judgment, or throws an exception
+        if the proof fails.  For the proof to succeed, all conditions of
         eliminated Forall operations, after replacements are made, must
-        be proven.  Furthermore, there may be additional requirements when
-        iterated parameters are instantiated (see Lambda.apply for details).
-        Automation will be used in attempting to prove these requirements.
+        be proven.  Furthermore, there may be additional requirements 
+        when iterated parameters are instantiated (see Lambda.apply for
+        details).  Automation mayb be used in attempting to prove these 
+        requirements provided proveit.defaults.automation=True.
         '''
         from proveit import (Variable, Operation, Conditional, Lambda,
                              single_or_composite_expression,
