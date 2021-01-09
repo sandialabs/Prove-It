@@ -114,12 +114,6 @@ class Proof:
             # determine the number of unique steps required for this proof
             self._meaning_data.num_steps = len(all_required_proofs)
 
-        # establish some parent-child relationships (important in case styles
-        # are updated)
-        self._style_data.add_child(self, self.proven_truth)
-        for required_truth in self.required_truths:
-            self._style_data.add_child(self, required_truth)
-
         self._style_id = self._style_data._unique_id
 
         if not original_proof:
@@ -369,12 +363,18 @@ class Proof:
 
     def __setattr__(self, attr, value):
         '''
-        Proofs should be read-only objects.  Attributes may be added, however; for example,
-        the 'png' attribute which will be added whenever it is generated).  Also,
-        _dependents is an exception which can be updated internally.
+        Proofs should be read-only objects except for changing
+        the proven_truth to another with the same meaning (but
+        possibly different style).  Attributes may be added, 
+        however; for example, the 'png' attribute which will be added 
+        whenever it is generated).
         '''
         if hasattr(self, attr):
-            raise Exception("Attempting to alter read-only value")
+            # It is okay to change to proven_truth to another one
+            # with the same meaning but possibly different style.
+            # But otherwise, we want to treat attributes as read only.
+            if attr != 'proven_truth' or value != self.__dict__[attr]:
+                raise Exception("Attempting to alter read-only value")
         self.__dict__[attr] = value
 
     def enumerated_proof_steps(self):

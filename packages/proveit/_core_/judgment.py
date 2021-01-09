@@ -10,6 +10,7 @@ from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaning_data, style_data
 from .defaults import defaults, USE_DEFAULTS
 import re
+from copy import copy
 
 
 class _ExprProofs:
@@ -165,12 +166,6 @@ class Judgment:
             self._generate_unique_rep(
                 lambda expr: hex(
                     expr._style_id)))
-
-        # establish some parent-child relationships (important in case
-        # styles are updated)
-        self._style_data.add_child(self, self.expr)
-        for assumption in self.assumptions:
-            self._style_data.add_child(self, assumption)
 
         # reference this unchanging data of the unique 'meaning' data
         self._meaning_id = self._meaning_data._unique_id
@@ -632,8 +627,19 @@ class Judgment:
                 # 'with_...' methods change the style.  We want to
                 # change the style and the return the judgment.
                 def call_method_for_new_style(*args, **kwargs):
-                    attr.__call__(*args, **kwargs)
-                    return self
+                    new_style_expr = attr.__call__(*args, **kwargs)
+                    new_style_judgment = \
+                        Judgment(new_style_expr, self.assumptions)
+                    proof = new_style_judgment._proof
+                    if proof is not None:
+                        # Update the style for the proof if there
+                        # is one.
+                        new_style_proof = copy(proof)
+                        new_style_proof.proven_truth = self
+                        self._meaning_data._expr_proofs.insert(
+                                new_style_proof)
+                        new_style_judgment._proof = new_style_proof
+                    return new_style_judgment
                 return call_method_for_new_style
             argspec = inspect.getfullargspec(attr)
             if ('assumptions' in argspec.args

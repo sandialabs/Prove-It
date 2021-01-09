@@ -29,54 +29,13 @@ class _StyleData:
 
     unique_id_map = dict()  # map _unique_id's to UniqueData objects
 
-    # map object ids to the list of ids
-    # that contain it as a direct dependent for the purpose of updating
-    # styles (which is why they are stored with ids because different
-    # styles of the same object, in meaning, will have the same hash and
-    # be considered equal).
-    parent_map = dict()
-
     def __init__(self, unique_id, unique_rep):
         self._unique_id = unique_id
         self._unique_rep = unique_rep
+        self.styles = dict()
 
     def __hash__(self):
         return self._unique_id
-
-    def add_child(self, obj, child):
-        assert obj._style_data == self  # obj style data should correspond with this data
-        _StyleData.parent_map.setdefault(
-            id(child), list()).append(
-            (obj, id(obj)))
-
-    def update_styles(self, expr, styles):
-        '''
-        Update _styles_rep and _styles_id and remove the png and png_path for this Expression object,
-        its parent(s), their parent(s), etc (all ancestors whose overall styles will be affected).
-        '''
-        to_update = [(expr, id(expr))]
-        while len(to_update) > 0:
-            obj, obj_id = to_update.pop()
-            # its parents must also be updated
-            to_update.extend(_StyleData.parent_map.get(id(obj), list()))
-            if hasattr(obj._style_data, 'styles'):
-                if styles is None:
-                    styles = dict(obj._style_data.styles)
-                style_rep = obj._generate_unique_rep(
-                    lambda o: hex(o._style_id), styles=styles)
-            else:
-                # styles only apply to Expression objects
-                style_rep = obj._generate_unique_rep(
-                    lambda o: hex(o._style_id))
-            _style_data = style_data(style_rep)
-            if styles is not None:
-                _style_data.styles = styles
-            styles = None  # only use these styles as the base level
-            obj.__dict__['_style_data'] = _style_data
-            obj.__dict__['_style_id'] = _style_data._unique_id
-            # the png is must be updated to correspond with the new styles
-            obj.__dict__.pop('png', None)
-            obj.__dict__.pop('png_path', None)
 
 
 def unique_data(DataClass, unique_rep):
@@ -108,4 +67,3 @@ def style_data(unique_rep):
 def clear_unique_data():
     _MeaningData.unique_id_map.clear()
     _StyleData.unique_id_map.clear()
-    _StyleData.parent_map.clear()

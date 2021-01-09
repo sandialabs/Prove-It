@@ -13,7 +13,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 from base64 import encodebytes
-
+from copy import copy
 
 class ExprType(type):
     '''
@@ -160,19 +160,7 @@ class Expression(metaclass=ExprType):
             self._canonical_expr = self
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
-
-        """
-        self._styles = dict(styles) # formatting style options that don't affect the meaning of the expression
-        # meaning representations and unique ids are independent of style
-        self._meaning_rep =
-        self._meaning_id = make_unique_id(self._meaning_rep)
-        # style representations and style ids are dependent of style
-        self._style_rep = self._generate_unique_rep(lambda expr : hex(expr._style_id), include_style=True)
-        self._style_id = make_unique_id(self._style_rep)
-        """
-        for sub_expression in sub_expressions:  # update Expression.parent_expr_map
-            self._style_data.add_child(self, sub_expression)
-
+    
     def _canonical_version(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
@@ -505,13 +493,14 @@ class Expression(metaclass=ExprType):
         Alter the styles of this expression, and anything containing this
         particular expression object, according to kwargs.
         '''
+        new_style_expr = copy(self)
         styles = dict(self._style_data.styles)
         # update the _styles, _style_rep, and _style_id
         styles.update(kwargs)
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
-        self._style_data.update_styles(self, styles)
-        return self
+        new_style_expr._style_data.styles = styles
+        return new_style_expr
 
     def without_style(self, name):
         '''
