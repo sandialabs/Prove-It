@@ -69,6 +69,9 @@ class Expression(metaclass=ExprType):
     # Map Expression classes to their proper paths (as returned
     # by the Expression._class_path method).
     class_paths = dict()
+    
+    # Map each expression to its default style.
+    default_expr_styles = dict()
 
     @staticmethod
     def _clear_():
@@ -82,6 +85,7 @@ class Expression(metaclass=ExprType):
                 "(should have been temporary)")
         Expression.labeled_to_canonical_meaning_data.clear()
         Expression.class_paths.clear()
+        Expression.default_expr_styles.clear()
 
     def __init__(self, core_info, sub_expressions=tuple(), styles=None):
         '''
@@ -94,8 +98,6 @@ class Expression(metaclass=ExprType):
         signature.
         '''
         from proveit._core_.theory import UnsetCommonExpressionPlaceholder
-        if styles is None:
-            styles = dict()
         for core_info_elem in core_info:
             if not isinstance(core_info_elem, str):
                 raise TypeError(
@@ -139,6 +141,12 @@ class Expression(metaclass=ExprType):
         # version of the exrpession) will be generated on demand,
         # when expressions are compared (__eq__) or hashed (__hash__).
 
+        if styles is None:
+            if self in Expression.default_expr_styles:
+                styles = Expression.default_expr_styles[self]
+            else:
+                styles = dict()
+        
         # The style data is shared among Expressions with the same structure
         # and style -- this will contain the 'png' generated on demand.
         self._style_data = style_data(
@@ -157,6 +165,9 @@ class Expression(metaclass=ExprType):
             self._canonical_expr = self
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
+        
+        # Make this the default style.
+        Expression.default_expr_styles[self] = styles
     
     def _canonical_version(self):
         '''
@@ -493,15 +504,7 @@ class Expression(metaclass=ExprType):
         styles = dict(self._style_data.styles)
         # update the _styles, _style_rep, and _style_id
         styles.update(kwargs)
-        if styles == self._style_data.styles:
-            return self  # no change in styles, so just use the original
-        new_style_expr = copy(self)
-        new_style_expr._style_data = style_data(
-            new_style_expr._generate_unique_rep(lambda expr: hex(expr._style_id),
-                styles=styles))
-        new_style_expr._style_data.styles = dict(styles)
-        new_style_expr._style_id = new_style_expr._style_data._unique_id
-        return new_style_expr
+        return self._with_these_styles(styles)
 
     def without_style(self, name):
         '''
@@ -511,12 +514,24 @@ class Expression(metaclass=ExprType):
         and LaTeX formatting).
         '''
         styles = dict(self._style_data.styles)
-        styles.remove(name)
+        styles.discard(name)
+        return self._with_these_styles(styles)
+    
+    def _with_these_styles(self, styles):
+        '''
+        Helper for with_styles and without_style methods.
+        '''
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
-        self._style_data.update_styles(self, styles)
-        return self
-
+        Expression.default_expr_styles[self] = styles
+        new_style_expr = copy(self)
+        new_style_expr._style_data = style_data(
+            new_style_expr._generate_unique_rep(lambda expr: hex(expr._style_id),
+                styles=styles))
+        new_style_expr._style_data.styles = dict(styles)
+        new_style_expr._style_id = new_style_expr._style_data._unique_id
+        return new_style_expr
+    
     def with_matching_style(self, expr_with_different_style):
         '''
         Alter the styles of this expression to match that of the
