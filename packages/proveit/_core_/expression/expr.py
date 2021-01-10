@@ -142,11 +142,8 @@ class Expression(metaclass=ExprType):
         # The style data is shared among Expressions with the same structure
         # and style -- this will contain the 'png' generated on demand.
         self._style_data = style_data(
-            self._generate_unique_rep(
-                lambda expr: hex(
-                    expr._style_id),
-                core_info,
-                styles))
+            self._generate_unique_rep(lambda expr: hex(expr._style_id),
+                core_info, styles))
         # initialize the style options
         # formatting style options that don't affect the meaning of the
         # expression
@@ -493,13 +490,17 @@ class Expression(metaclass=ExprType):
         Alter the styles of this expression, and anything containing this
         particular expression object, according to kwargs.
         '''
-        new_style_expr = copy(self)
         styles = dict(self._style_data.styles)
         # update the _styles, _style_rep, and _style_id
         styles.update(kwargs)
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
-        new_style_expr._style_data.styles = styles
+        new_style_expr = copy(self)
+        new_style_expr._style_data = style_data(
+            new_style_expr._generate_unique_rep(lambda expr: hex(expr._style_id),
+                styles=styles))
+        new_style_expr._style_data.styles = dict(styles)
+        new_style_expr._style_id = new_style_expr._style_data._unique_id
         return new_style_expr
 
     def without_style(self, name):
@@ -537,8 +538,7 @@ class Expression(metaclass=ExprType):
         for my_sub_expr, other_sub_expr in zip(
                 self.sub_expr_iter(), expr_with_different_style.sub_expr_iter()):
             my_sub_expr._with_matching_style(other_sub_expr)
-        self.with_styles(**expr_with_different_style.get_styles())
-        return self
+        return self.with_styles(**expr_with_different_style.get_styles())
     
     def with_mimicked_style(self, other_expr):
         '''

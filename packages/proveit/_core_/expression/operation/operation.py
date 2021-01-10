@@ -298,7 +298,7 @@ class Operation(Expression):
                 kw_args[kw] = val
         made_operation = operation_class(*args, **kw_args)
         if styles is not None:
-            made_operation.with_styles(**styles)
+            return made_operation.with_styles(**styles)
         return made_operation
 
     def remake_arguments(self):

@@ -628,18 +628,7 @@ class Judgment:
                 # change the style and the return the judgment.
                 def call_method_for_new_style(*args, **kwargs):
                     new_style_expr = attr.__call__(*args, **kwargs)
-                    new_style_judgment = \
-                        Judgment(new_style_expr, self.assumptions)
-                    proof = new_style_judgment._proof
-                    if proof is not None:
-                        # Update the style for the proof if there
-                        # is one.
-                        new_style_proof = copy(proof)
-                        new_style_proof.proven_truth = self
-                        self._meaning_data._expr_proofs.insert(
-                                new_style_proof)
-                        new_style_judgment._proof = new_style_proof
-                    return new_style_judgment
+                    return self.with_matching_styles(new_style_expr, [])
                 return call_method_for_new_style
             argspec = inspect.getfullargspec(attr)
             if ('assumptions' in argspec.args
@@ -684,23 +673,41 @@ class Judgment:
 
     def with_matching_styles(self, expr, assumptions):
         '''
-        Alter the styles of the Judgment expression and any of its 
-        assumptions to match the given styles.
+        Return the Judgement expression with the styles matching
+        those of the given expression and assumptions.
         '''
-        self.expr.with_matching_style(expr)
+        new_style_expr = self.expr.with_matching_style(expr)
         # storing the assumptions in a trivial dictionary will be useful
         # for popping them out.
         assumptions_dict = {
             assumption: assumption for assumption in assumptions}
+        new_style_assumptions = []
         for assumption in self.assumptions:
             if assumption in assumptions_dict:
-                assumption.with_matching_style(
-                    assumptions_dict.pop(assumption))
-        proof = self.proof()
+                new_style_assumptions.append(
+                        assumption.with_matching_style(
+                                assumptions_dict.pop(assumption)))
+            else:
+                new_style_assumptions.append(assumption)
+        new_style_judgment = \
+            Judgment(new_style_expr, new_style_assumptions)
+        if ((new_style_expr._style_id == self.expr._style_id) and
+                all(new_style_assumption._style_id == old_assumption._style_id
+                    for new_style_assumption, old_assumption in zip(
+                            new_style_assumptions, self.assumptions))):
+            # Nothing has changed.
+            return self
+            
+        proof = new_style_judgment.proof()
         if proof is not None:
-            if proof.proven_truth._style_id != self._style_id:
-                proof.proven_truth.with_matching_styles(expr, assumptions)
-        return self
+            # Update the style for the proof if there is one.
+            new_style_proof = copy(proof)
+            new_style_proof.proven_truth = self
+            self._meaning_data._expr_proofs.insert(
+                    new_style_proof)
+            new_style_judgment._meaning_data._proof = \
+                new_style_proof
+        return new_style_judgment
 
     @staticmethod
     def find_judgment(expression, assumptions_set):
@@ -1170,7 +1177,7 @@ def as_expressions(*truth_or_expressions):
     Return the arguments as a list of Expressions via as_expression.
     '''
     return [as_expression(truth_or_expression)
-            for truth_or_expression in truth_or_expression]
+            for truth_or_expression in truth_or_expressions]
 
 
 class ProofInitiationFailure(Exception):

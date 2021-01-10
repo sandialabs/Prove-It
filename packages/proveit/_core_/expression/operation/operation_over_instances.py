@@ -406,7 +406,7 @@ class OperationOverInstances(Operation):
             *[None] * num_remaining_args,
             _lambda_map=lambda_map)
         if styles is not None:
-            made_operation.with_styles(**styles)
+            return made_operation.with_styles(**styles)
         return made_operation
 
     def _all_instance_params(self):
