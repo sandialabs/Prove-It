@@ -156,7 +156,6 @@ class DecimalSequence(NumeralSequence):
                 idx += _n.as_int()
 
                 if _n == one:
-                    print("disabling range reduction!")
                     # we have to disable ExprRange reduction in this instance
                     # because Prove-It knows that an ExprRange of one element is just that element
                     # but we need to preserve the left hand side of the equation without this reduction
