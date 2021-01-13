@@ -13,7 +13,9 @@ class IntegerSet(NumberSet):
         '''
         member = judgment.element
         yield lambda assumptions: self.deduce_member_in_rational(member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
+        # Added but commented the following out while we debate the
+        # wisdom of further side-effects
+        # yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
 
     def deduce_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
         from . import in_ints_is_bool
