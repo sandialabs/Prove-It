@@ -91,5 +91,4 @@ proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
 proveit.numbers.ordering.relax_less
-proveit.numbers.rounding.ceil_real_pos_closure
 # THEOREMS AND THEORIES TO EXCLUDE:
