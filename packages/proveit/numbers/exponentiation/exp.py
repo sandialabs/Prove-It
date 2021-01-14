@@ -1,4 +1,4 @@
-from proveit import (Literal, Operation, ExprTuple, InnerExpr, ProofFailure,
+from proveit import (Literal, Function, ExprTuple, InnerExpr, ProofFailure,
                      maybe_fenced_string, USE_DEFAULTS, StyleOptions)
 from proveit.logic import Membership
 import proveit
@@ -6,7 +6,11 @@ from proveit import a, b, c, k, m, n, x, S
 from proveit.numbers import one, two, Div, frac, num
 
 
-class Exp(Operation):
+class Exp(Function):
+    '''
+    An Expression class to represent an exponentiation.  Derive from
+    Function since infix notation should not be a style option.
+    '''
     # operator of the Exp operation.
     _operator_ = Literal(string_format='Exp', theory=__file__)
 
@@ -14,11 +18,10 @@ class Exp(Operation):
         r'''
         Raise base to exponent power.
         '''
-        Operation.__init__(self, Exp._operator_, (base, exponent),
-                           styles={'exponent': 'raised'})
         self.base = base
         self.exponent = exponent
-
+        Function.__init__(self, Exp._operator_, (base, exponent))
+    
     def remake_constructor(self):
         if self.get_style('exponent') == 'radical':
             # Use a different constructor if using the 'radical' style.
@@ -29,7 +32,7 @@ class Exp(Operation):
                     "Unkown radical type, exponentiating to the power "
                     "of %s" % str(
                         self.exponent))
-        return Operation.remake_constructor(self)
+        return Function.remake_constructor(self)
 
     def remake_arguments(self):
         '''
@@ -44,6 +47,27 @@ class Exp(Operation):
 
     def membership_object(self, element):
         return ExpSetMembership(element, self)
+    
+    def style_options(self):
+        '''
+        Returns the StyleOptions object for this Exp.
+        '''
+        options = StyleOptions(self)
+        default_exp_style = ('radical' if self.exponent==frac(one, two)
+                             else 'raised')
+        options.add_option(
+                name = 'exponent',
+                description = ("'raised': exponent as a superscript; "
+                               "'radical': using a radical sign"),
+                default = default_exp_style,
+                related_methods = ('with_radical', 'without_radical'))
+        return options
+        
+    def with_radical(self):
+        return self.with_styles(exponent='radical')
+
+    def without_radical(self):
+        return self.with_styles(exponent='raised')
 
     def _closureTheorem(self, number_set):
         import natural.theorems
@@ -183,13 +207,6 @@ class Exp(Operation):
     def _not_eqZeroTheorem(self):
         import complex.theorems
         return complex.theorems.pow_not_eq_zero
-
-    def style_options(self):
-        options = StyleOptions(self)
-        options.add_option('exponent',
-                           "'raised': exponent as a superscript; "
-                           "'radical': using a radical sign")
-        return options
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -587,15 +604,8 @@ class ExpSetMembership(Membership):
 def sqrt(base):
     '''
     Special function for square root version of an exponential.
-    Formatting depends on the argument supplied to the with_styles()
-    method called on the Expression superclass, which then sets
-    things up so the Exp latex() method will display the expression
-    using a traditional square root radical. If you want a square
-    root to be displayed more literally as a base to the 1/2 power,
-    use Exp(_, frac(1/2)) directly.
-    Could later generalize this to cube roots or general nth roots.
     '''
-    return Exp(base, frac(one, two)).with_styles(exponent='radical')
+    return Exp(base, frac(one, two))
 
 
 # Register these expression equivalence methods:

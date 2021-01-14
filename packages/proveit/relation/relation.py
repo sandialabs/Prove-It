@@ -1,5 +1,5 @@
 from collections import deque
-from proveit import Expression, Operation, OperationSequence, StyleOptions
+from proveit import Expression, Operation, StyleOptions
 from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
 from .sorter import TransitivitySorter
 
@@ -11,13 +11,29 @@ class Relation(Operation):
     '''
 
     def __init__(self, operator, lhs, rhs):
-        Operation.__init__(self,operator, (lhs, rhs), 
-                           styles={"direction":"normal"})
+        # We need to pass along 'direction':'normal' rather than
+        # relying about StyleOption defaults because we don't want
+        # that to be overwritten by the style of the last expression
+        # with the same meaning.
+        Operation.__init__(self, operator, (lhs, rhs),
+                           styles={'direction':'normal'})
         assert(self.operands.is_double())
         # The 'lhs' and 'rhs' attributes will access the respective
         # operands, but this is effected in __getattr__ because
         # they will be switched when the 'direction' style is
         # 'reversed'.
+
+    def style_options(self):
+        '''
+        Returns the StyleOptions object for this Relation.
+        '''
+        options = Operation.style_options(self)
+        options.add_option(
+                name='direction', 
+                description="Direction of the relation (normal or reversed)",
+                default='normal',
+                related_methods=('with_direction_reversed', 'is_reversed'))
+        return options
 
     @staticmethod
     def reversed_operator_str(format_type):
@@ -71,13 +87,7 @@ class Relation(Operation):
                 operator_or_operators=operator_str, operands=operands,
                 wrap_positions=wrap_positions, 
                 justification=justification)
-    
-    def style_options(self):
-        options = StyleOptions(self)
-        options.add_option('direction', ("Direction of the relation "
-                                         "(normal or reversed)"))
-        return options
-        
+            
     def _simplify_both_sides(self, *, simplify, assumptions=USE_DEFAULTS):
         '''
         Simplify both sides iff 'simplify' is True.
