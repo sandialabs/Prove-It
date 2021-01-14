@@ -147,7 +147,7 @@ class Literal(Label):
                 Theory.default = prev_theory_default  # restore the default
 
             Literal.instances.pop(core_info)
-            return made_obj.with_styles(**styles)
+            return made_obj.with_styles_as_applicable(**styles)
 
     def remake_arguments(self):
         '''

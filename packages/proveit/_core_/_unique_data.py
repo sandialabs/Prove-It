@@ -32,11 +32,9 @@ class _StyleData:
     def __init__(self, unique_id, unique_rep):
         self._unique_id = unique_id
         self._unique_rep = unique_rep
-        self.styles = dict()
-
+    
     def __hash__(self):
         return self._unique_id
-
 
 def unique_data(DataClass, unique_rep):
     '''
@@ -67,3 +65,5 @@ def style_data(unique_rep):
 def clear_unique_data():
     _MeaningData.unique_id_map.clear()
     _StyleData.unique_id_map.clear()
+
+

@@ -67,7 +67,7 @@ class OperationOverInstances(Operation):
 
     def __init__(self, operator, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None, conditions=None,
-                 styles=None, _lambda_map=None):
+                 _lambda_map=None):
         '''
         Create an Operation for the given operator that is applied over
         instances of the given instance parameter(s), instance_param_or_params,
@@ -97,15 +97,6 @@ class OperationOverInstances(Operation):
         '''
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import get_param_var
-
-        if styles is None:
-            styles = dict()
-        if 'with_wrapping' not in styles:
-            styles['with_wrapping'] = 'False'
-        if 'wrap_params' not in styles:
-            styles['wrap_params'] = 'False'
-        if 'justification' not in styles:
-            styles['justification'] = 'center'
 
         if condition is not None:
             if conditions is not None:
@@ -267,7 +258,7 @@ class OperationOverInstances(Operation):
         if isinstance(lambda_map.body, Conditional):
             self.condition = lambda_map.body.condition
 
-        Operation.__init__(self, operator, [lambda_map], styles=styles)
+        Operation.__init__(self, operator, [lambda_map])
 
     def remake_with_style_calls(self):
         '''
@@ -406,7 +397,7 @@ class OperationOverInstances(Operation):
             *[None] * num_remaining_args,
             _lambda_map=lambda_map)
         if styles is not None:
-            return made_operation.with_styles(**styles)
+            return made_operation.with_styles_as_applicable(**styles)
         return made_operation
 
     def _all_instance_params(self):
@@ -631,15 +622,23 @@ class OperationOverInstances(Operation):
         from proveit._core_.expression.style_options import StyleOptions
         options = StyleOptions(self)
         options.add_option(
-            'with_wrapping',
-            'Whether or not to wrap the Expression after the parameters, default is True')
+            name = 'with_wrapping',
+            description = ("If 'True', wrap the Expression after "
+                           "the parameters"),
+            default = None, 
+            related_methods = ('with_wrapping',))
         options.add_option(
-            'wrap_params',
-            'Wraps every two parameters AND wraps the Expression after the parameters, '
-            'default is True')
+            name = 'wrap_params',
+            description = ("If 'True', wraps every two parameters "
+                           "AND wraps the Expression after the parameters"),
+            default = None,
+            related_methods = ('with_params',)),
         options.add_option(
-            'justification',
-            "justify to the 'left', 'center', or 'right' in the array cells")
+            name = 'justification',
+            description = ("justify to the 'left', 'center', or 'right' "
+                           "in the array cells"),
+            default = 'center',
+            related_methods = ('with_justification',))
         return options
 
     def with_justification(self, justification):
@@ -778,6 +777,9 @@ class OperationOverInstances(Operation):
                 # out_str += ', '.join(condition.formatted(format_type) for condition in self.conditions
                 # if condition not in implicit_conditions)
                 if with_wrapping == 'True':
+                    raise NotImplementedError(
+                            "'with_wrapping' not implemented in "
+                            "OperationOverInstances")
                     print(instance_expr.formatted(format_type, fence=True))
                     out_str += r'}~ ' + \
                         instance_expr.formatted(format_type, fence=True)

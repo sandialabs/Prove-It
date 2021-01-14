@@ -96,7 +96,7 @@ class ExprRange(Expression):
         lambda_map, start_index, end_index = sub_expressions
         return ExprRange(None, None, start_index, end_index,
                          lambda_map=lambda_map) \
-            .with_styles(**styles)
+            .with_styles_as_applicable(**styles)
 
     def literal_int_extent(self):
         '''
@@ -152,13 +152,18 @@ class ExprRange(Expression):
     def style_options(self):
         options = StyleOptions(self)
         options.add_option(
-            'parameterization',
-            ("'implicit' (default for LaTeX formatting) hides "
-             "the parameter the ExprRange so the parameterization "
-             "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
-             "'explicit' (default for string formatting) reveals "
-             "the parameterization "
-             "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
+            name = 'parameterization',
+            description = (
+                    "'implicit' (default for LaTeX formatting) hides "
+                    "the parameter the ExprRange so the parameterization "
+                    "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
+                    "'explicit' (default for string formatting) reveals "
+                    "the parameterization "
+                    "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."),
+            default = None,
+            related_methods = ('with_explicit_parameterization',
+                               'with_implicit_parameterization',
+                               'with_default_parameterization_style'))
         return options
 
     def with_explicit_parameterization(self):

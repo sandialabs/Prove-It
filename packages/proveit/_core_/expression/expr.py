@@ -142,10 +142,15 @@ class Expression(metaclass=ExprType):
         # when expressions are compared (__eq__) or hashed (__hash__).
 
         if styles is None:
-            if self in Expression.default_expr_styles:
-                styles = Expression.default_expr_styles[self]
-            else:
-                styles = dict()
+            styles = dict()
+        if self in Expression.default_expr_styles:
+            # Any styles that have not been explicitly set will
+            # use the default style for an expression of this "meaning".
+            styles_to_emulate = Expression.default_expr_styles[self]
+            for name, val in styles_to_emulate.items():
+                if name not in styles:
+                    styles[name] = val
+        styles = self.style_options().standardized_styles(styles)
         
         # The style data is shared among Expressions with the same structure
         # and style -- this will contain the 'png' generated on demand.
@@ -155,7 +160,7 @@ class Expression(metaclass=ExprType):
         # initialize the style options
         # formatting style options that don't affect the meaning of the
         # expression
-        self._style_data.styles = dict(styles)
+        self._style_data.styles = styles
         self._style_id = self._style_data._unique_id
 
         if len(self._sub_expressions) == 0:
@@ -214,8 +219,8 @@ class Expression(metaclass=ExprType):
         # sub-expressions, so that propagates to this Expression's
         # canonical version.
         self._canonical_expr = self.__class__._checked_make(
-            self._core_info, dict(self._style_data.styles),
-            canonical_sub_expressions)
+            self._core_info, styles = dict(), 
+            sub_expressions = canonical_sub_expressions)
         return self._canonical_expr
 
     def _establish_and_get_meaning_id(self):
@@ -505,8 +510,15 @@ class Expression(metaclass=ExprType):
         # update the _styles, _style_rep, and _style_id
         styles.update(kwargs)
         return self._with_these_styles(styles)
+    
+    def with_styles_as_applicable(self, **kwargs):
+        '''
+        Use the given styles as applicable (ignore ones that don't
+        exist as options).
+        '''
+        return self._with_these_styles(kwargs, styles_must_exist=False)
 
-    def without_style(self, name):
+    def with_default_style(self, name):
         '''
         Remove one of the styles from the styles dictionary for this
         expression.  Sometimes you want to remove a style and use
@@ -517,10 +529,12 @@ class Expression(metaclass=ExprType):
         styles.discard(name)
         return self._with_these_styles(styles)
     
-    def _with_these_styles(self, styles):
+    def _with_these_styles(self, styles, styles_must_exist=True):
         '''
         Helper for with_styles and without_style methods.
         '''
+        styles = self.style_options().standardized_styles(
+                styles, styles_must_exist)
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
         Expression.default_expr_styles[self] = styles
