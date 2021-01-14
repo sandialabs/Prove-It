@@ -1545,7 +1545,7 @@ class _ShowProof:
                 ref_obj_id_groups[-2][0])
         self.proven_truth._meaning_data._proof = self
         self.required_proofs = \
-            [theory.get_show_proof(obj_id.rstrip('*')) for obj_id
+            [theory.get_show_proof(obj_id.rstrip('*'), folder) for obj_id
              in ref_obj_id_groups[-1]]
         self.marked_required_truth_indices = \
             {k for k, obj_id in enumerate(ref_obj_id_groups[-1])
