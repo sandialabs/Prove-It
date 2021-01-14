@@ -1205,7 +1205,7 @@ if __name__ == '__main__':
     elif not args.download and args.tar == '':
         if (args.build_commons or args.build_axioms or args.build_theorems or 
                 args.build_theories or args.build_demos or args.build_theorem_proofs or
-                args.build_dependencies):
+                args.build_dependencies or args.build_expr_and_proofs):
             # Disable --essential if anything more specific is requested.
             args.build_essential = False
         if args.build_commons or args.build_all or args.build_essential:
