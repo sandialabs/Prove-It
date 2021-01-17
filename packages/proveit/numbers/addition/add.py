@@ -1358,6 +1358,8 @@ class Add(Operation):
         from . import (
                 strong_bound_by_right_term, strong_bound_by_left_term,
                 weak_bound_by_right_term, weak_bound_by_left_term)
+        if isinstance(term_relation_or_relations, Judgment):
+            term_relation_or_relations = term_relation_or_relations.expr
         if isinstance(term_relation_or_relations, ExprTuple):
             term_relations = term_relation_or_relations.entries
         elif isinstance(term_relation_or_relations, Expression):
@@ -1366,6 +1368,8 @@ class Add(Operation):
             term_relations = term_relation_or_relations
         term_indices_with_relations = set()
         for term_relation in term_relations:
+            if isinstance(term_relation, Judgment):
+                term_relation = term_relation.expr
             if not (isinstance(term_relation, Less) or
                     isinstance(term_relation, LessEq)):
                 raise TypeError("term_relations are expected to be Less "

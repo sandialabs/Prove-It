@@ -1,5 +1,6 @@
 from proveit import (Literal, Lambda, Operation, OperationOverInstances, 
-                     free_vars, maybe_fenced, USE_DEFAULTS, ProofFailure)
+                     Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
+                     ProofFailure)
 from proveit.logic import Forall, InSet
 from proveit.numbers.number_sets import (
         RealInterval, Interval, Real, Integer, Natural, Complex)
@@ -362,13 +363,15 @@ class Sum(OperationOverInstances):
             raise NotImplementedError(
                     "sum.bound only currently implemented for summations "
                     "over a single parameter")
+        if isinstance(summand_relation, Judgment):
+            summand_relation = summand_relation.expr
         if not (isinstance(summand_relation, Forall) and
                 summand_relation.instance_params.is_single() and
                 (isinstance(summand_relation.instance_expr, Less) or
                  isinstance(summand_relation.instance_expr, LessEq))):
             raise ValueError("Expecting summand_relation to be a number "
                              "ordering relation (< or <=) universally "
-                             "quantified over a singe parameter, not %s"
+                             "quantified over a single parameter, not %s"
                              %summand_relation)
         summand_lambda = Lambda(self.instance_param, self.summand)
         lesser_lambda = Lambda(summand_relation.instance_param, 
