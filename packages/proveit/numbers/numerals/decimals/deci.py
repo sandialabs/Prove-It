@@ -1,4 +1,4 @@
-from proveit import Literal, USE_DEFAULTS, Operation, ExprRange
+from proveit import Literal, USE_DEFAULTS, Operation, ExprRange, defaults
 from proveit import a, b, c, d, k, m, n, x
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 from proveit.numbers.numerals.numeral import NumeralSequence, Numeral
@@ -30,8 +30,7 @@ class DecimalSequence(NumeralSequence):
                 return self.evaluate_add_digit(assumptions=assumptions)
             if isinstance(digit, ExprRange):
                 # if at least one digit is an ExprRange, we can try to reduce it to an ExprTuple
-               # return self.reduce_exprRange(assumptions=assumptions)
-                pass
+                return self.reduce_exprRange(assumptions=assumptions)
 
     def as_int(self):
         return int(self.formatted('string'))
@@ -60,7 +59,7 @@ class DecimalSequence(NumeralSequence):
                 self.deduce_in_natural()
                 if self.as_int() > 0:
                     self.deduce_in_natural_pos()
-            # return InSet(self, number_set).conclude(assumptions)
+            return InSet(self, number_set).conclude(assumptions)
 
     def deduce_in_natural(self, assumptions=USE_DEFAULTS):
         from . import deci_sequence_is_nat
@@ -97,12 +96,18 @@ class DecimalSequence(NumeralSequence):
         from proveit.core_expr_types.tuples import n_repeats_reduction
         from proveit.numbers.numerals.decimals import deci_sequence_reduction_ER
 
+        was_range_reduction_disabled = (
+                ExprRange in defaults.disabled_auto_reduction_types)
+
         expr = self
         # A convenience to allow successive update to the equation via transitivities.
         # (starting with self=self).
         eq = TransRelUpdater(self, assumptions)
 
+        idx = 0
         for i, digit in enumerate(self.digits):
+            # i is the current index in the original expression
+            # idx is the current index in the transformed expression (eq.relation)
             if isinstance(
                     digit,
                     ExprRange) and isinstance(
@@ -110,10 +115,17 @@ class DecimalSequence(NumeralSequence):
                     Numeral):
                 import proveit.numbers.numerals.decimals
 
-                _m = expr.digits[:i].num_elements(assumptions)
+                # _m = expr.digits[:i].num_elements(assumptions)
+                # _n = digit.end_index
+                # _k = expr.digits[i + 1:].num_elements(assumptions)
+                # _a = expr.digits[:i]
+                # _b = digit.body
+                # _d = expr.digits[i + 1:]
+
+                _m = eq.relation.rhs.digits[:idx].num_elements(assumptions)
                 _n = digit.end_index
                 _k = expr.digits[i + 1:].num_elements(assumptions)
-                _a = expr.digits[:i]
+                _a = eq.relation.rhs.digits[:idx]
                 _b = digit.body
                 _d = expr.digits[i + 1:]
 
@@ -132,6 +144,7 @@ class DecimalSequence(NumeralSequence):
                     eq.update(deci_sequence_reduction_ER.instantiate(
                         {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
                     _n = num(_n.as_int() - 1)
+                    idx += 1
 
                 #_n = digit.end_index
                 len_thm = proveit.numbers.numerals.decimals \
@@ -140,8 +153,24 @@ class DecimalSequence(NumeralSequence):
 
                 _c = len_thm.instantiate({x: _x}, assumptions=assumptions).rhs
 
-                eq.update(deci_sequence_reduction_ER.instantiate(
-                    {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
+                idx += _n.as_int()
+
+                if _n == one:
+                    # we have to disable ExprRange reduction in this instance
+                    # because Prove-It knows that an ExprRange of one element is just that element
+                    # but we need to preserve the left hand side of the equation without this reduction
+                    defaults.disabled_auto_reduction_types.add(ExprRange)
+                    eq.update(deci_sequence_reduction_ER.instantiate(
+                        {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
+
+                    if not was_range_reduction_disabled:
+                        defaults.disabled_auto_reduction_types.remove(ExprRange)
+
+                else:
+                    eq.update(deci_sequence_reduction_ER.instantiate(
+                        {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
+            else:
+                idx += 1
 
         return eq.relation
 
@@ -229,7 +258,10 @@ class DecimalSequence(NumeralSequence):
 
                 expr = eq.update(deci_sequence_reduction.instantiate(
                     {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
-        return eq.relation
+
+        with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            disable_reduction_types.add(DecimalSequence)
+            return eq.relation
 
     def _formatted(self, format_type, operator=None, **kwargs):
         from proveit import ExprRange, var_range
