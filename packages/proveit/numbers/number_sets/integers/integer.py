@@ -9,10 +9,13 @@ class IntegerSet(NumberSet):
 
     def membership_side_effects(self, judgment):
         '''
-        Yield side-effects when proving 'n in NaturalPos' for a given n.
+        Yield side-effects when proving 'n in Integer' for a given n.
         '''
         member = judgment.element
         yield lambda assumptions: self.deduce_member_in_rational(member, assumptions)
+        # Added but commented the following out while we debate the
+        # wisdom of further side-effects
+        # yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
 
     def deduce_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
         from . import in_ints_is_bool
@@ -33,4 +36,9 @@ class IntegerSet(NumberSet):
     def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
         from proveit.numbers.number_sets.rational_numbers import int_within_rational
         return int_within_rational.derive_superset_membership(
+            member, assumptions)
+
+    def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.real_numbers import int_within_real
+        return int_within_real.derive_superset_membership(
             member, assumptions)

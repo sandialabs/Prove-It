@@ -554,8 +554,10 @@ class Mult(Operation):
             # Eliminate ones in the cancelation; it should now
             # match with the expression where we have already
             # eliminated ones.
-            cancelation = cancelation.inner_expr().lhs.deep_eliminate_ones()
-            cancelation = cancelation.inner_expr().rhs.deep_eliminate_ones()
+            cancelation = (
+                cancelation.inner_expr().lhs.deep_eliminate_ones(assumptions))
+            cancelation = (
+                cancelation.inner_expr().rhs.deep_eliminate_ones(assumptions))
             eq.update(cancelation)
             return eq.relation
 
