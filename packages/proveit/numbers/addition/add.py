@@ -27,13 +27,7 @@ class Add(Operation):
         r'''
         Add together any number of operands.
         '''
-        # The default style will be to use subtraction notation (relevant where operands are negated).
-        # Call 'with_subtraction_at' to alter this default.
-        subtraction_positions = [_k for _k, operand in enumerate(
-            operands) if Add._isNegatedOperand(operand)]
-        styles = {
-            'subtraction_positions': '(' + ' '.join(str(pos) for pos in subtraction_positions) + ')'}
-        Operation.__init__(self, Add._operator_, operands, styles=styles)
+        Operation.__init__(self, Add._operator_, operands)
         self.terms = self.operands
 
     @staticmethod
@@ -52,11 +46,25 @@ class Add(Operation):
                 Neg))
 
     def style_options(self):
-        # Added by JML on 9/10/19
-        options = StyleOptions(self)
+        '''
+        Return the StyleOptions object for this Add expression.
+        '''
+        options = Operation.style_options(self)
+        # The default style will be to use subtraction notation 
+        # (relevant where operands are negated).
+        # Call 'with_subtraction_at' to alter the style relative
+        # to this default..
+        subtraction_positions = [_k for _k, operand in enumerate(
+            self.operands) if Add._isNegatedOperand(operand)]
+        default_sub_pos_style = \
+            '(' + ' '.join(str(pos) for pos in subtraction_positions) + ')'
         options.add_option(
-            'subtraction_positions',
-            "Position(s) to use subtraction notation instead of adding the negation at the specified indices")
+            name='subtraction_positions',
+            description=("Position(s) to use subtraction notation instead "
+                         "of adding the negation at the specified indices"),
+            default=default_sub_pos_style,
+            related_methods=('with_subtraction_at', 
+                             'subtraction_positions'))
         return options
 
     def with_subtraction_at(self, *subtraction_positions):

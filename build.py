@@ -1101,7 +1101,8 @@ if __name__ == '__main__':
         action='store_const',
         const=True,
         default=False,
-        help=("build the 'demonstrations' notebook for each theory "
+        help=("build the 'demonstrations' notebook for each theory and "
+              "other extraneous notebooks, like tutorials "
               "(--essential is disabled)"))
     parser.add_argument(
         '--theorem_proofs',
@@ -1204,7 +1205,7 @@ if __name__ == '__main__':
     elif not args.download and args.tar == '':
         if (args.build_commons or args.build_axioms or args.build_theorems or 
                 args.build_theories or args.build_demos or args.build_theorem_proofs or
-                args.build_dependencies):
+                args.build_dependencies or args.build_expr_and_proofs):
             # Disable --essential if anything more specific is requested.
             args.build_essential = False
         if args.build_commons or args.build_all or args.build_essential:
@@ -1215,8 +1216,8 @@ if __name__ == '__main__':
                     for theory_path in find_theory_paths(path):
                         name_to_hash_filename = os.path.join(
                             theory_path, '__pv_it', 'common', 'name_to_hash.txt')
-                    if os.path.isfile(name_to_hash_filename):
-                        os.remove(name_to_hash_filename)
+                        if os.path.isfile(name_to_hash_filename):
+                            os.remove(name_to_hash_filename)
             if nranks > 1:
                 comm.barrier()
 
@@ -1242,9 +1243,28 @@ if __name__ == '__main__':
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
         if args.build_demos or args.build_all:
+            # Build demonstration and 'extra' notebooks.
+            def extra_notebook_gen():
+                '''
+                Yield 'extra' notebooks (not in '_theory_nbs' folders).
+                '''
+                for main_path in paths:
+                    for path in itertools.chain(
+                            [main_path], find_theory_paths(main_path)):
+                        for sub_path in os.listdir(path):
+                            full_path = os.path.join(path, sub_path)
+                            if sub_path[0] == '_':
+                                # skip notebook with preceeding underscore.
+                                continue
+                            if (sub_path[-6:] == '.ipynb' and os.path.isfile(full_path)):
+                                yield full_path
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/demonstrations.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
+            mpi_build(extra_notebook_gen(),
+                      no_latex=args.nolatex, git_clear=not args.nogitclear,
+                      no_execute=args.noexecute, export_to_html=True)
+                            
         if args.build_theorem_proofs or args.build_all:
             mpi_build(theoremproof_path_generator(paths),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,

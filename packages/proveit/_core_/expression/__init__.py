@@ -6,7 +6,7 @@ from .style_options import StyleOptions
 from .inner_expr import InnerExpr
 from .fencing import maybe_fenced_string, maybe_fenced_latex, maybe_fenced
 from .operation import (
-    Operation, IndexedVar, Function, OperationSequence,
+    Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError)
 from .conditional import Conditional, ConditionalSet
 from .lambda_expr import (

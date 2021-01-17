@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
-                     ProofFailure, InnerExpr)
+                     ProofFailure, InnerExpr, UnusableProof)
 from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
@@ -99,11 +99,12 @@ class Or(Operation):
                     pass
             if len(proven_operand_indices) > 0:
                 try:
-                    # proven using conclude_via_example above (unless or_if[Any,Left,Right] was not a usable theorem,
+                    # proven using conclude_via_example above 
+                    # (unless or_if[Any,Left,Right] was not a usable theorem,
                     # in which case this will fail and we can simply try the
                     # default below)
                     return self.prove(assumptions, automation=False)
-                except BaseException:
+                except UnusableProof:
                     # or_if[Any,Left,Right] must not have been a usable
                     # theorem; use the default below.
                     break

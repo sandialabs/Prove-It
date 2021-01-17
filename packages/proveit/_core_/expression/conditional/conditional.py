@@ -21,21 +21,17 @@ class Conditional(Expression):
     instances and the rest are disregarded.
     '''
 
-    def __init__(self, value, condition_or_conditions,
-                 comma_delimited_conditions=True):
+    def __init__(self, value, condition_or_conditions):
         '''
         Create a Conditional with the given particular value
         and the given condition.  If multiple conditions are
         provided, these will be wrapped in a conjunction internally.
-        However, if the 'condition_delimiter' style is set to ','
-        (initially set according the the comma_delimited_conditions
-        flag), the conditions will be displayed in a comma
+        However, if the 'condition_delimiter' style is set to 'comma', 
+        the conditions will be displayed in a comma
         delimited fashion if it is within a conjunction.
         '''
         from proveit._core_.expression.composite import \
             single_or_composite_expression, Composite, ExprTuple, ExprRange
-        styles = {'condition_delimiter':
-                  'comma' if comma_delimited_conditions else 'and'}
 
         value = single_or_composite_expression(value)
         assert (isinstance(value, Expression)
@@ -56,17 +52,10 @@ class Conditional(Expression):
         assert (isinstance(condition, Expression) and
                 not isinstance(condition, Composite))
 
-        Expression.__init__(self, ['Conditional'],
-                            (value, condition), styles=styles)
+        Expression.__init__(self, ['Conditional'], (value, condition))
 
         self.value = value
         self.condition = condition
-
-    def style_options(self):
-        from proveit import StyleOptions
-        options = StyleOptions(self)
-        options.add_option('condition_delimiter', ("'comma' or 'and'"))
-        return options
 
     @classmethod
     def _make(sub_class, core_info, styles, sub_expressions):
@@ -81,7 +70,7 @@ class Conditional(Expression):
                 "Expecting Conditional to have two sub-expressions.")
         value, condition = sub_expressions
         return Conditional(value, condition) \
-            .with_styles(**styles)
+            .with_styles_as_applicable(**styles)
 
     def remake_arguments(self):
         '''
@@ -90,6 +79,27 @@ class Conditional(Expression):
         '''
         yield self.value
         yield self.condition
+
+    def style_options(self):
+        '''
+        Return the StyleOptions for this Conditional.
+        '''
+        from proveit import StyleOptions
+        options = StyleOptions(self)
+        options.add_option(
+                name = 'condition_delimiter', 
+                description = ("'comma' or 'and'"),
+                default = 'comma',
+                related_methods = ('with_comma_delimiter',
+                                   'with_conjunction_delimiter')
+                )
+        return options
+    
+    def with_comma_delimiter(self):
+        return self.with_styles(condition_delimiter='comma')
+    
+    def with_conjunction_delimiter(self):
+        return self.with_styles(condition_delimiter='and')
 
     def _formatted_condition(self, format_type):
         from proveit.logic import And

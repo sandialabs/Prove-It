@@ -19,7 +19,7 @@ class ExprTuple(Composite, Expression):
     n+4 elements.
     """
 
-    def __init__(self, *expressions, styles=None):
+    def __init__(self, *expressions):
         '''
         Initialize an ExprTuple from an iterable over Expression
         objects.
@@ -36,25 +36,23 @@ class ExprTuple(Composite, Expression):
             assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
-
-        if styles is None:
-            styles = dict()
-        if 'wrap_positions' not in styles:
-            styles['wrap_positions'] = '()'  # no wrapping by default
-        if 'justification' not in styles:
-            styles['justification'] = 'left'
-
-        Expression.__init__(self, ['ExprTuple'], self.entries, styles=styles)
+        Expression.__init__(self, ['ExprTuple'], self.entries)
 
     def style_options(self):
         options = StyleOptions(self)
-        options.add_option('wrap_positions',
-                           ("position(s) at which wrapping is to occur; 'n' "
-                            "is after the nth comma."))
-        options.add_option(
-            'justification',
-            ("if any wrap positions are set, justify to the 'left', "
-             "'center', or 'right'"))
+        if len(self.entries) > 1:
+            options.add_option(
+                    name='wrap_positions',
+                    description=("position(s) at which wrapping is to occur; "
+                                 "'n' is after the nth comma."),
+                    default = '()',
+                    related_methods = ('with_wrapping_at',))
+            options.add_option(
+                name = 'justification',
+                description = ("if any wrap positions are set, justify to the "
+                               "'left', 'center', or 'right'"),
+                default = 'left',
+                related_methods = ('with_justification',))
         return options
 
     def with_wrapping_at(self, *wrap_positions):
@@ -74,7 +72,7 @@ class ExprTuple(Composite, Expression):
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("Expecting ExprTuple core_info to contain "
                              "exactly one item: 'ExprTuple'")
-        return ExprTuple(*sub_expressions).with_styles(**styles)
+        return ExprTuple(*sub_expressions).with_styles_as_applicable(**styles)
 
     def remake_arguments(self):
         '''
@@ -97,7 +95,7 @@ class ExprTuple(Composite, Expression):
         if len(wrap_positions) > 0:
             call_strs.append('with_wrapping_at(' + ','.join(str(pos)
                                                             for pos in wrap_positions) + ')')
-        justification = self.get_style('justification')
+        justification = self.get_style('justification', 'left')
         if justification != 'left':
             call_strs.append('with_justification("' + justification + '")')
         return call_strs
@@ -176,6 +174,10 @@ class ExprTuple(Composite, Expression):
         Return a list of wrap positions according to the current style setting.
         Position 'n' is after the nth comma.
         '''
+        if len(self.entries) < 2:
+            # There can be no "wrap positions" unless there are 2 or
+            # more entries.
+            return [] 
         return [int(pos_str) for pos_str in self.get_style(
             'wrap_positions').strip('()').split(' ') if pos_str != '']
 
@@ -493,7 +495,7 @@ class ExprTuple(Composite, Expression):
             return eq.relation
 
         while eq.expr.num_entries() > 1:
-            front_merger = ExprTuple(*eq.expr[:2]).merger(assumptions)
+            front_merger = ExprTuple(*eq.expr[:2].entries).merger(assumptions)
             eq.update(front_merger.substitution(
                 eq.expr.inner_expr(assumptions)[:2],
                 assumptions=assumptions))

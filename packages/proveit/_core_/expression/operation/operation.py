@@ -36,8 +36,6 @@ class Operation(Expression):
             single_or_composite_expression, Composite, ExprTuple)
         from proveit._core_.expression.label.label import Label
         from .indexed_var import IndexedVar
-        if styles is None:
-            styles = dict()
         self.operator = operator
         operand_or_operands = single_or_composite_expression(
             operand_or_operands, do_singular_reduction=True)
@@ -53,15 +51,10 @@ class Operation(Expression):
         if (not isinstance(self.operator, Label) and 
                 not isinstance(self.operator, IndexedVar)):
             raise_bad_operator_type(self.operator)
-        if self.operands.is_single():
+        if (isinstance(self.operands, ExprTuple) and 
+                self.operands.is_single()):
             # This is a single operand.
             self.operand = self.operands[0]
-        if 'operation' not in styles:
-            styles['operation'] = 'infix'  # vs 'function'
-        if 'wrap_positions' not in styles:
-            styles['wrap_positions'] = '()'  # no wrapping by default
-        if 'justification' not in styles:
-            styles['justification'] = 'center'
         sub_exprs = (self.operator, self.operands)
         if isinstance(self, IndexedVar):
             core_type = 'IndexedVar'
@@ -70,18 +63,47 @@ class Operation(Expression):
         Expression.__init__(self, [core_type], sub_exprs, styles=styles)
 
     def style_options(self):
+        '''
+        Return the StyleOptions object for the Operation.
+        '''
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
+        trivial_op = False
+        if (isinstance(self.operands, ExprTuple) and 
+                len(self.operands.entries) > 0  and
+                not self.operands.is_single()):
+            # 'infix' is only a sensible option when there are
+            # multiple operands as an ExprTuple.
+            default_op_style = 'infix'
+        else:            
+            # With no operands or 1 operand, infix is not an option.
+            trivial_op = True
+            default_op_style= 'function'
         options = StyleOptions(self)
-        options.add_option('operation',
-                           ("'infix' or 'function' style formatting"))
         options.add_option(
-            'wrap_positions',
-            ("position(s) at which wrapping is to occur; '2 n - 1' "
-             "is after the nth operand, '2 n' is after the nth "
-             "operation."))
-        options.add_option(
-            'justification',
-            ("if any wrap positions are set, justify to the 'left', "
-             "'center', or 'right'"))
+                name = 'operation',
+                description = "'infix' or 'function' style formatting",
+                default = default_op_style,
+                related_methods = ())
+        if not trivial_op:
+            # Wrapping is only relevant if there is more than one
+            # operand.
+            options.add_option(
+                name = 'wrap_positions',
+                description = (
+                        "position(s) at which wrapping is to occur; "
+                        "'2 n - 1' is after the nth operand, '2 n' is "
+                        "after the nth operation."),
+                default = '()',
+                related_methods = (
+                        'with_wrapping_at', 'with_wrap_before_operator',
+                        'with_wrap_after_operator', 'wrap_positions'))
+            options.add_option(
+                name = 'justification',
+                description = (
+                        "if any wrap positions are set, justify to the 'left', "
+                        "'center', or 'right'"),
+                default = 'center',
+                related_methods = ('with_justification',))
         return options
 
     def with_wrapping_at(self, *wrap_positions):
@@ -192,10 +214,6 @@ class Operation(Expression):
         args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
             inspect.getfullargspec(cls.__init__)
         args = args[1:]  # skip over the 'self' arg
-        if len(args) > 0 and args[-1] == 'styles':
-            # NOT TREATING 'styles' FULLY AT THIS TIME; THIS NEEDS WORK.
-            args = args[:-1]
-            defaults = defaults[:-1]
         if obj is None:
             def extract_init_arg_value_fn(arg): 
                 return cls.extract_init_arg_value(arg, operator, operands)
@@ -297,7 +315,7 @@ class Operation(Expression):
                 kw_args[kw] = val
         made_operation = operation_class(*args, **kw_args)
         if styles is not None:
-            made_operation.with_styles(**styles)
+            return made_operation.with_styles_as_applicable(**styles)
         return made_operation
 
     def remake_arguments(self):
@@ -321,7 +339,7 @@ class Operation(Expression):
         if len(wrap_positions) > 0:
             call_strs.append('with_wrapping_at(' + ','.join(str(pos)
                                                             for pos in wrap_positions) + ')')
-        justification = self.get_style('justification')
+        justification = self.get_style('justification', 'center')
         if justification != 'center':
             call_strs.append('with_justification("' + justification + '")')
         return call_strs
@@ -329,16 +347,14 @@ class Operation(Expression):
     def string(self, **kwargs):
         # When there is a single operand, we must use the "function"-style
         # formatting.
-        if self.get_style('operation') == 'function' or not hasattr(
-                self, 'operands'):
+        if self.get_style('operation', 'function') == 'function':
             return self._function_formatted('string', **kwargs)
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         # When there is a single operand, we must use the "function"-style
         # formatting.
-        if self.get_style('operation') == 'function' or not hasattr(
-                self, 'operands'):
+        if self.get_style('operation', 'function') == 'function':
             return self._function_formatted('latex', **kwargs)
         return self._formatted('latex', **kwargs)
 
@@ -347,7 +363,7 @@ class Operation(Expression):
         Return a list of wrap positions according to the current style setting.
         '''
         return [int(pos_str) for pos_str in self.get_style(
-            'wrap_positions').strip('()').split(' ') if pos_str != '']
+            'wrap_positions', '').strip('()').split(' ') if pos_str != '']
 
     def _function_formatted(self, format_type, **kwargs):
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
@@ -372,7 +388,7 @@ class Operation(Expression):
                 self.operator,
                 self.operands,
                 wrap_positions=self.wrap_positions(),
-                justification=self.get_style('justification'),
+                justification=self.get_style('justification', 'center'),
                 **kwargs)
         else:
             return Operation._formattedOperation(
@@ -380,7 +396,7 @@ class Operation(Expression):
                 self.operators,
                 self.operands,
                 wrap_positions=self.wrap_positions(),
-                justification=self.get_style('justification'),
+                justification=self.get_style('justification', 'center'),
                 **kwargs)
 
     @staticmethod
@@ -542,7 +558,6 @@ class Operation(Expression):
             self._core_info, self.get_styles(), subbed_sub_exprs)
         return substituted._auto_reduced(assumptions, requirements,
                                          equality_repl_requirements)
-
 
 class OperationError(Exception):
     def __init__(self, message):

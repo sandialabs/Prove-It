@@ -166,7 +166,7 @@ class Lambda(Expression):
         if len(sub_expressions) != 2:
             raise ValueError("Expected Lambda to have two sub-expressions")
         parameters, body = sub_expressions
-        return Lambda(parameters, body).with_styles(**styles)
+        return Lambda(parameters, body).with_styles_as_applicable(**styles)
 
     def _possibly_free_vars_of_parameter_indices(self):
         '''

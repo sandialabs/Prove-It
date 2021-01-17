@@ -218,8 +218,7 @@ class Forall(OperationOverInstances):
             unbundled = self.unbundle_equality(assumptions=assumptions).rhs
             unbundled = unbundled.conclude_as_folded(assumptions)
             return unbundled.bundle(assumptions=assumptions)
-        blah = self.domain.fold_as_forall(self, assumptions)
-        return blah
+        return self.domain.fold_as_forall(self, assumptions)
     
     def conclude_via_domain_inclusion(self, superset_domain,
                                       assumptions=USE_DEFAULTS):
