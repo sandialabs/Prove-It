@@ -260,8 +260,8 @@ class LessEq(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the left.
         '''
-        from proveit.numbers.addition import left_add_lesseq
-        new_rel = left_add_lesseq.instantiate(
+        from proveit.numbers.addition import weak_bound_by_right_term
+        new_rel = weak_bound_by_right_term.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
@@ -272,8 +272,8 @@ class LessEq(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the right.
         '''
-        from proveit.numbers.addition import right_add_lesseq
-        new_rel = right_add_lesseq.instantiate(
+        from proveit.numbers.addition import weak_bound_by_left_term
+        new_rel = weak_bound_by_left_term.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)

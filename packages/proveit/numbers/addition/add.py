@@ -1,4 +1,6 @@
-from proveit import Judgment, Literal, Operation, ExprRange, USE_DEFAULTS, StyleOptions, maybe_fenced_latex, ProofFailure, InnerExpr
+from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
+                     ExprRange, USE_DEFAULTS, StyleOptions, 
+                     maybe_fenced_latex, ProofFailure, InnerExpr)
 from proveit import a, b, c, d, i, j, k, l, n, x, y
 from proveit.logic import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
@@ -1334,7 +1336,83 @@ class Add(Operation):
         eq.inner_expr().rhs.with_subtraction_at(*new_positions)
         '''
         return eq
-
+    
+    def deduce_bound(self, term_relation_or_relations, 
+                     assumptions=USE_DEFAULTS):
+        '''
+        Given relations of applicable to one or more of the terms,
+        bound this addition accordingly.  For example, if self is
+        "x + a" and the term_relations are
+            x < y and a < b
+        return x + a < y + b.
+        '''
+        from proveit.numbers import Less, LessEq
+        from . import (
+                strong_bound_by_right_term, strong_bound_by_left_term,
+                weak_bound_by_right_term, weak_bound_by_left_term)
+        if isinstance(term_relation_or_relations, ExprTuple):
+            term_relations = term_relation_or_relations.entries
+        elif isinstance(term_relation_or_relations, Expression):
+            term_relations = [term_relation_or_relations]
+        else:
+            term_relations = term_relation_or_relations
+        term_indices_with_relations = set()
+        for term_relation in term_relations:
+            if not (isinstance(term_relation, Less) or
+                    isinstance(term_relation, LessEq)):
+                raise TypeError("term_relations are expected to be Less "
+                                "or LessEq number relations, not %s"
+                                %term_relation)
+            term_index = None
+            for rel_side in (term_relation.normal_lhs, 
+                             term_relation.normal_rhs):
+                try:
+                    term_index = self.terms.entries.index(rel_side)
+                except ValueError:
+                    pass
+            if term_index is None:
+                raise ValueError("term_relations are expected to be "
+                                 "relations (< or <=) involving terms of "
+                                 "%s.  %s does not involve any"
+                                 %(self, term_relation))
+            term_indices_with_relations.add(term_index)
+        if not self.terms.is_double():
+            raise NotImplementedError("Add.deduce_bound is currently only "
+                                      "implemented for binary addition.")
+        if len(term_relations) == 2:
+            # Do this in two passes.
+            first_rel = self.deduce_bound(term_relations[0], assumptions)
+            next_rel = first_rel.rhs.deduce_bound(term_relations[1],
+                                                  assumptions)
+            return first_rel.apply_transitivity(next_rel, assumptions)
+        term_relation = term_relations[0]
+        _x = term_relation.normal_lhs
+        _y = term_relation.normal_rhs            
+        if 0 in term_indices_with_relations:
+            # bounded by left term
+            _a = self.terms[1]
+            if isinstance(term_relations[0], Less):
+                thm = strong_bound_by_left_term # strong bound
+            else:
+                assert isinstance(term_relations[0], LessEq)
+                thm = weak_bound_by_left_term # weak bound
+        else:
+            # bounded by right term
+            assert 1 in term_indices_with_relations
+            _a = self.terms[0]
+            if isinstance(term_relations[0], Less):
+                thm = strong_bound_by_right_term # strong bound
+            else:
+                assert isinstance(term_relations[0], LessEq)
+                thm = weak_bound_by_right_term # weak bound
+        print(thm, _a, _x, _y)
+        bound = thm.instantiate({a:_a, x:_x, y:_y},
+                                assumptions=assumptions)
+        print('bound', bound)
+        if bound.rhs == self:
+            return bound.reversed()
+        assert bound.lhs == self
+        return bound
 
 def subtract(a, b):
     '''
