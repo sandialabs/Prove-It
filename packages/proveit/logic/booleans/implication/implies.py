@@ -171,6 +171,7 @@ class Implies(TransitiveRelation):
         From A => B derive and return B assuming A.
         '''
         from proveit._core_.proof import ModusPonens
+        self.antecedent.prove(assumptions)
         return ModusPonens(self, assumptions).proven_truth
 
     def derive_iff(self, assumptions=USE_DEFAULTS):
