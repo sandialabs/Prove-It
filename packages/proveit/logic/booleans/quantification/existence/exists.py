@@ -1,6 +1,6 @@
 from proveit import Lambda, Conditional, OperationOverInstances, Judgment
-from proveit import defaults, Literal, Operation, ExprTuple, USE_DEFAULTS
-from proveit import n, A, B, P, Q, R, S
+from proveit import defaults, Literal, Function, ExprTuple, USE_DEFAULTS
+from proveit import n, x, A, B, P, Q, R, S, Px
 
 
 class Exists(OperationOverInstances):
@@ -13,6 +13,10 @@ class Exists(OperationOverInstances):
     # a dictionary to track Skolem constants chosen with the
     # Exists.choose() method
     skolem_consts_to_existential = dict()
+    
+    # Map instance expressions to existential quantifications
+    # over them that are known judgments.
+    known_instance_exprs = dict()
 
     def __init__(self, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None,
@@ -29,11 +33,15 @@ class Exists(OperationOverInstances):
             self, Exists._operator_, instance_param_or_params, instance_expr,
             domain=domain, domains=domains, condition=condition,
             conditions=conditions, _lambda_map=_lambda_map)
-
+    
     def side_effects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for an exists operations.
         '''
+        # Remember the proven Existential judgments by their
+        # instance expressions.
+        Exists.known_instance_exprs.setdefault(
+                judgment.expr.instance_expr, set()).add(judgment)
         return
         yield self.derive_negated_forall  # derive the negated forall form
 
@@ -201,8 +209,8 @@ class Exists(OperationOverInstances):
                     self.instance_vars.num_entries())):
             raise Exception(
                 'Number in example_instance list must match number of instance variables in the Exists expression')
-        P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
+        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
+        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
         # P(..x..) where ..x.. is the given example_instance
         example_mapping = {
             instance_var: example_instance_elem for instance_var,
@@ -229,6 +237,27 @@ class Exists(OperationOverInstances):
                 y_multi: self.instance_vars}).derive_consequent(
             assumptions=assumptions)
 
+    def conclude_via_domain_inclusion(self, subset_domain,
+                                      assumptions=USE_DEFAULTS):
+        '''
+        Conclude this exists statement from a similar exists statement
+        over a narrower domain.  For example, conclude
+        exists_{x in B} P(x) from exists_{x in A} P(x)
+        given A subset_eq B.
+        '''
+        from proveit.logic.sets.inclusion import (
+                inclusive_existential_quantification)
+        if not (self.has_domain() and self.instance_params.is_single 
+                and self.conditions.is_single()):
+            raise ValueError("May only call conclude_via_domain_inclusion "
+                             "on a Forall expression with a single instance "
+                             "variable over a domain and no other conditions.")
+        _x = self.instance_param
+        P_op, _P_op = Function(P, _x), self.instance_expr
+        return inclusive_existential_quantification.instantiate(
+                {x:_x, P_op:_P_op, A:subset_domain, B:self.domain},
+                assumptions=assumptions).derive_consequent(assumptions)        
+
     def derive_negated_forall(self, assumptions=USE_DEFAULTS):
         '''
         From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
@@ -238,9 +267,9 @@ class Exists(OperationOverInstances):
         from . import exists_def
         from . import exists_not_implies_not_forall
         from proveit.logic import Not
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
+        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
         if isinstance(self.instance_expr, Not):
-            P_op, P_op_sub = Operation(
+            P_op, P_op_sub = Function(
                 P, self.instance_vars), self.instance_expr.operand
             return exists_not_implies_not_forall.instantiate(
                 {
@@ -251,7 +280,7 @@ class Exists(OperationOverInstances):
                 relabel_map={
                     x_multi: self.instance_vars}).derive_consequent(assumptions)
         else:
-            P_op, P_op_sub = Operation(
+            P_op, P_op_sub = Function(
                 P, self.instance_vars), self.instance_expr
             return exists_def.instantiate(
                 {
@@ -270,8 +299,8 @@ class Exists(OperationOverInstances):
         '''
         raise NotImplementedError("Need to update")
         from . import exists_in_superset
-        P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
+        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
+        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
         return exists_in_superset.instantiate(
             {
                 P_op: P_op_sub,
@@ -290,8 +319,8 @@ class Exists(OperationOverInstances):
         '''
         raise NotImplementedError("Need to update")
         from . import exists_in_general
-        P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
+        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
+        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
         return exists_in_general.instantiate(
             {
                 P_op: P_op_sub,
@@ -309,8 +338,8 @@ class Exists(OperationOverInstances):
         '''
         raise NotImplementedError("Need to update")
         from . import exists_is_bool
-        P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
+        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
+        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
         return exists_is_bool.instantiate({P_op: P_op_sub, Q_op: Q_op_sub, S: self.domain}, relabel_map={
                                           x_multi: self.instance_vars}, assumptions=assumptions)
 
@@ -369,11 +398,11 @@ class Exists(OperationOverInstances):
                     "'universality' must have the same conditions as the Exists operation having instances substituted, in addition to the Exists instance expression",
                     self,
                     universality)
-            P_op, P_op_sub = Operation(
+            P_op, P_op_sub = Function(
                 P, self.instance_vars), self.instance_expr
-            Q_op, Q_op_sub = Operation(
+            Q_op, Q_op_sub = Function(
                 Qmulti, self.instance_vars), self.conditions
-            R_op, R_op_sub = Operation(
+            R_op, R_op_sub = Function(
                 R, self.instance_vars), universality.instance_expr.substituted(i_var_substitutions)
             if self.has_domain():
                 return existential_implication.instantiate(

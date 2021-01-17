@@ -1,9 +1,11 @@
-from proveit import (Literal, Operation, OperationOverInstances, free_vars,
-                     maybe_fenced, USE_DEFAULTS, ProofFailure)
-from proveit.logic import InSet
-from proveit.numbers.number_sets import RealInterval, Interval, Real, Integer, Natural, Complex
+from proveit import (Literal, Lambda, Operation, OperationOverInstances, 
+                     free_vars, maybe_fenced, USE_DEFAULTS, ProofFailure)
+from proveit.logic import Forall, InSet
+from proveit.numbers.number_sets import (
+        RealInterval, Interval, Real, Integer, Natural, Complex)
 from proveit.numbers.negation import Neg
-from proveit import a, f, P, S
+from proveit.numbers.ordering import LessEq, Less
+from proveit import a, b, f, P, S
 
 
 class Sum(OperationOverInstances):
@@ -340,3 +342,57 @@ class Sum(OperationOverInstances):
                     end_idx=factor_operands.num_entries(),
                     assumptions=assumptions))
         return eq.eq_expr  # .checked(assumptions)
+    
+    def deduce_bound(self, summand_relation, assumptions=USE_DEFAULTS):
+        '''
+        Given a universally quantified ordering relation over all 
+        summand instances, return a bounding relation for the
+        summation.  For example, using the summand relation
+            \forall_{k in {m...n}} (a(k) <= b(k)),
+        we can prove
+            \sum_{l=m}^{n} a(l) <= \sum_{l=m}^{n} b(l)
+        or using the summand relation
+            \forall_{k in {m...n}} (a(k) < b(k)),
+        and assuming m <= n, we can prove
+            \sum_{l=m}^{n} a(l) < \sum_{l=m}^{n} b(l)
+        '''
+        from . import (weak_summation_from_summands_bound,
+                       strong_summation_from_summands_bound)
+        if not (self.instance_params.is_single()):
+            raise NotImplementedError(
+                    "sum.bound only currently implemented for summations "
+                    "over a single parameter")
+        if not (isinstance(summand_relation, Forall) and
+                summand_relation.instance_params.is_single() and
+                (isinstance(summand_relation.instance_expr, Less) or
+                 isinstance(summand_relation.instance_expr, LessEq))):
+            raise ValueError("Expecting summand_relation to be a number "
+                             "ordering relation (< or <=) universally "
+                             "quantified over a singe parameter, not %s"
+                             %summand_relation)
+        summand_lambda = Lambda(self.instance_param, self.summand)
+        lesser_lambda = Lambda(summand_relation.instance_param, 
+                               summand_relation.instance_expr.normal_lhs)
+        greater_lambda = Lambda(summand_relation.instance_param, 
+                                summand_relation.instance_expr.normal_rhs)
+        if summand_lambda not in (lesser_lambda, greater_lambda):
+            raise ValueError("Expecting summand_relation to be a universally "
+                             "quantified number relation (< or <=) "
+                             "involving the summand, %d, not %s"%
+                             (self.summand, summand_relation))
+        _a = lesser_lambda
+        _b = greater_lambda
+        _S = self.domain
+        if isinstance(summand_relation.instance_expr, LessEq):
+            # Use weak form
+            sum_rel_impl = weak_summation_from_summands_bound.instantiate(
+                    {a:_a, b:_b, S:_S}, assumptions=assumptions)
+        else:
+            # Use strong form
+            sum_rel_impl = strong_summation_from_summands_bound.instantiate(
+                    {a:_a, b:_b, S:_S}, assumptions=assumptions)
+        sum_relation = sum_rel_impl.derive_consequent(assumptions)
+        if summand_lambda == greater_lambda:
+            return sum_relation.reversed()
+        return sum_relation
+    
