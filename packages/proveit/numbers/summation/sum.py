@@ -393,6 +393,6 @@ class Sum(OperationOverInstances):
                     {a:_a, b:_b, S:_S}, assumptions=assumptions)
         sum_relation = sum_rel_impl.derive_consequent(assumptions)
         if summand_lambda == greater_lambda:
-            return sum_relation.reversed()
+            return sum_relation.with_direction_reversed()
         return sum_relation
     

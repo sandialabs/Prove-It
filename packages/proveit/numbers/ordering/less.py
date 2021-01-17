@@ -78,19 +78,7 @@ class Less(NumberOrderingRelation):
             {x: self.operands[0], y: self.operands[1]},
             assumptions=assumptions)
         return concluded.with_matching_style(self)
-    
-    def reversed(self):
-        '''
-        Returns this Expression with a reversed inequality style.
-        For example, 
-            (a < b).reversed() is b > a 
-            (a > b).reversed() is b < a
-        '''
-        if self.get_style('direction') == 'reversed':
-            return self.with_style(direction = 'normal')
-        else:
-            return self.with_style(direction = 'reversed')
-            
+                
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         from . import less_than_is_bool
         is_bool_stmt = less_than_is_bool.instantiate(

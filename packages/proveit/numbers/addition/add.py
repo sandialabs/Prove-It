@@ -1413,12 +1413,10 @@ class Add(Operation):
             else:
                 assert isinstance(term_relations[0], LessEq)
                 thm = weak_bound_by_right_term # weak bound
-        print(thm, _a, _x, _y)
         bound = thm.instantiate({a:_a, x:_x, y:_y},
                                 assumptions=assumptions)
-        print('bound', bound)
         if bound.rhs == self:
-            return bound.reversed()
+            return bound.with_direction_reversed()
         assert bound.lhs == self
         return bound
 
