@@ -34,6 +34,39 @@ class Exists(OperationOverInstances):
             domain=domain, domains=domains, condition=condition,
             conditions=conditions, _lambda_map=_lambda_map)
     
+    def conclude(self, assumptions):
+        from proveit.logic import SubsetEq
+        instance_expr = self.instance_expr
+        if (self.has_domain() and self.instance_params.is_single 
+                and self.conditions.is_single()):
+            domain = self.domain 
+            known_domains = set()
+            # Check the known quantified instance expressions
+            # and known set inclusions of domains to see if we can 
+            # construct a proof via inclusive existential 
+            # quantification.
+            if instance_expr in Exists.known_instance_exprs:
+                known_foralls = Exists.known_instance_exprs[instance_expr]
+                for known_forall in known_foralls:
+                    if (known_forall.has_domain() 
+                            and known_forall.instance_params.is_single()
+                            and known_forall.conditions.is_single()):
+                        if known_forall.is_sufficient(assumptions):
+                            known_domains.add(known_forall.domain)
+            if len(known_domains) > 0 and domain in SubsetEq.known_left_sides:
+                # We know this quantification in other domain(s).
+                # Does our domain include any of those?
+                for known_inclusion in SubsetEq.known_right_sides[domain]:
+                    if known_inclusion.is_sufficient(assumptions):
+                        subset = known_inclusion.subset
+                        if subset in known_domains:
+                            # We know the quantification over a s
+                            # uperset.  We can use 
+                            # inclusive_universal_quantification.
+                            return self.conclude_via_domain_inclusion(
+                                    subset, assumptions=assumptions)
+        
+    
     def side_effects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for an exists operations.

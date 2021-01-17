@@ -90,20 +90,18 @@ class Forall(OperationOverInstances):
                             and known_forall.conditions.is_single()):
                         if known_forall.is_sufficient(assumptions):
                             known_domains.add(known_forall.domain)
-            print('known_domains', known_domains)
-            if len(known_domains) > 0 and domain in SubsetEq.known_right_sides:
+            if len(known_domains) > 0 and domain in SubsetEq.known_left_sides:
                 # We know this quantification in other domain(s).
                 # Do any of those include this domain?
-                for known_inclusion in SubsetEq.known_right_sides[domain]:
-                    print('known_inclusion', known_inclusion)
+                for known_inclusion in SubsetEq.known_left_sides[domain]:
                     if known_inclusion.is_sufficient(assumptions):
-                        superset = known_inclusion.lhs
+                        superset = known_inclusion.superset
                         if superset in known_domains:
                             # We know the quantification over a s
                             # uperset.  We can use 
                             # inclusive_universal_quantification.
                             return self.conclude_via_domain_inclusion(
-                                    self, superset, assumptions=assumptions)
+                                    superset, assumptions=assumptions)
         
         # The next 2 'ifs', one for prove_by_cases and one for
         # conclude_as_folded can eventually be merged as we eliminate the
