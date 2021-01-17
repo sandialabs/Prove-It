@@ -1,5 +1,5 @@
 from proveit import (Literal, maybe_fenced_latex, Operation, InnerExpr,
-                     StyleOptions, USE_DEFAULTS)
+                     USE_DEFAULTS)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, x, y, z
 
@@ -38,7 +38,7 @@ class Div(Operation):
         '''
         Return the StyleOptions object for this Div.
         '''
-        options = StyleOptions(self)
+        options = Operation.style_options(self)
         options.add_option(
             name='division',
             description=("'inline': uses '/'; 'fraction': "
