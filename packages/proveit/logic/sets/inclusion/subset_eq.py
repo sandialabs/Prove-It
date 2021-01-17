@@ -49,7 +49,8 @@ class SubsetEq(InclusionRelation):
         if SetEquiv(*self.operands.entries).proven(assumptions):
             return self.conclude_via_equivalence(assumptions)
 
-        # Check for special case of [{x | Q*(x)}_{x \in S}] \subseteq S
+        # Check for special case of set comprehension
+        # [{x | Q*(x)}_{x \in S}] \subseteq S
         if isinstance(self.subset, SetOfAll):
             from proveit.logic.sets.comprehension import (
                 comprehension_is_subset)
@@ -65,6 +66,13 @@ class SubsetEq(InclusionRelation):
                     relabel_map={x: set_of_all.all_instance_vars()[0]},
                     assumptions=assumptions)
                 return concluded.with_matching_style(self)
+
+        _A, _B = self.operands.entries
+        if hasattr(_B, 'deduce_subset_eq_relation'):
+            try:
+                return _B.deduce_subset_eq_relation(_A, assumptions)
+            except NotImplementedError:
+                pass
 
         try:
             # Attempt to conclude A subseteq B via
