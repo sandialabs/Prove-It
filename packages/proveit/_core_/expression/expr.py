@@ -219,8 +219,7 @@ class Expression(metaclass=ExprType):
         # sub-expressions, so that propagates to this Expression's
         # canonical version.
         self._canonical_expr = self.__class__._checked_make(
-            self._core_info, styles = dict(), 
-            sub_expressions = canonical_sub_expressions)
+            self._core_info, canonical_sub_expressions)
         return self._canonical_expr
 
     def _establish_and_get_meaning_id(self):
@@ -409,7 +408,7 @@ class Expression(metaclass=ExprType):
             return self.latex(**kwargs)
 
     @classmethod
-    def _make(cls, core_info, styles, sub_expressions, canonical_version=None):
+    def _make(cls, core_info, sub_expressions, canonical_version=None):
         '''
         Should make the Expression object for the specific Expression sub-class
         based upon the core_info and sub_expressions.  Must be implemented for
@@ -418,7 +417,7 @@ class Expression(metaclass=ExprType):
         raise MakeNotImplemented(cls)
 
     @classmethod
-    def _checked_make(cls, core_info, styles, sub_expressions,
+    def _checked_make(cls, core_info, sub_expressions,
                       canonical_version=None):
         '''
         Check that '_make' is done appropriately since it is not
@@ -427,10 +426,10 @@ class Expression(metaclass=ExprType):
         core_info = tuple(core_info)
         sub_expressions = tuple(sub_expressions)
         if canonical_version is not None:
-            made = cls._make(core_info, styles, sub_expressions,
+            made = cls._make(core_info, sub_expressions,
                              canonical_version)
         else:
-            made = cls._make(core_info, styles, sub_expressions)
+            made = cls._make(core_info, sub_expressions)
         assert made._core_info == core_info, (
             "%s vs %s" % (made._core_info, core_info))
         assert made._sub_expressions == sub_expressions, (
@@ -511,13 +510,6 @@ class Expression(metaclass=ExprType):
         styles.update(kwargs)
         return self._with_these_styles(styles)
     
-    def with_styles_as_applicable(self, **kwargs):
-        '''
-        Use the given styles as applicable (ignore ones that don't
-        exist as options).
-        '''
-        return self._with_these_styles(kwargs, styles_must_exist=False)
-
     def with_default_style(self, name):
         '''
         Remove one of the styles from the styles dictionary for this
@@ -878,8 +870,7 @@ class Expression(metaclass=ExprType):
                                         equality_repl_requirements)
                       for sub_expr in self._sub_expressions)
             replaced = self.__class__._checked_make(
-                self._core_info, dict(self._style_data.styles),
-                subbed_sub_exprs)
+                self._core_info, subbed_sub_exprs)
         return replaced
 
     def copy(self):

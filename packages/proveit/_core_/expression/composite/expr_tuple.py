@@ -66,13 +66,13 @@ class ExprTuple(Composite, Expression):
         return self.with_styles(justification=justification)
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if sub_class != ExprTuple:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("Expecting ExprTuple core_info to contain "
                              "exactly one item: 'ExprTuple'")
-        return ExprTuple(*sub_expressions).with_styles_as_applicable(**styles)
+        return ExprTuple(*sub_expressions)
 
     def remake_arguments(self):
         '''
@@ -390,8 +390,7 @@ class ExprTuple(Composite, Expression):
                 subbed_exprs.append(subbed_expr)
 
         return self.__class__._checked_make(
-            self._core_info, dict(self._style_data.styles),
-            subbed_exprs)
+            self._core_info, subbed_exprs)
 
     def merger(self, assumptions=USE_DEFAULTS):
         '''

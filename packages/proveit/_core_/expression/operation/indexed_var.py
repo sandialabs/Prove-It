@@ -40,14 +40,14 @@ class IndexedVar(Function):
         self.var = var
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if sub_class != IndexedVar:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'IndexedVar':
             raise ValueError(
                 "Expecting IndexedVar core_info to contain exactly"
                 " one item: 'IndexedVar'")
-        return IndexedVar(*sub_expressions).with_styles_as_applicable(**styles)
+        return IndexedVar(*sub_expressions)
 
     def remake_arguments(self):
         '''

@@ -83,7 +83,7 @@ class Literal(Label):
         return Variable(self.string_format, self.latex_format)
 
     @classmethod
-    def _make(literal_class, core_info, styles, sub_expressions):
+    def _make(literal_class, core_info, sub_expressions):
         '''
         Make the object of class `literal_class` matching the core information
         and sub expressions.
@@ -103,7 +103,7 @@ class Literal(Label):
             raise ValueError("Expecting core_info[0] to be 'Literal'")
         core_info = tuple(core_info)  # make it hashable
         if core_info in Literal.instances:
-            return Literal.instances[core_info].with_styles(**styles)
+            return Literal.instances[core_info]
         else:
             # If the Literal is not in the instances dictionary, just make it independently
             # without storing it in the instances dictionary.  This allows us to create
@@ -119,8 +119,6 @@ class Literal(Label):
                 kwargs = dict()
                 if 'theory' in init_args:
                     kwargs['theory'] = theory
-                if 'styles' in init_args:
-                    kwargs['styles'] = styles
                 if len(extra_core_info) > 0:
                     # If there is extra core information, we need to call
                     # a make_literal method.
@@ -147,7 +145,7 @@ class Literal(Label):
                 Theory.default = prev_theory_default  # restore the default
 
             Literal.instances.pop(core_info)
-            return made_obj.with_styles_as_applicable(**styles)
+            return made_obj
 
     def remake_arguments(self):
         '''

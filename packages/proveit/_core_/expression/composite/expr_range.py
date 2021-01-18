@@ -87,7 +87,7 @@ class ExprRange(Expression):
             free_vars(self.body, err_inclusively=True))
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if sub_class != ExprRange:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprRange':
@@ -95,8 +95,7 @@ class ExprRange(Expression):
                              "exactly one item: 'ExprRange'")
         lambda_map, start_index, end_index = sub_expressions
         return ExprRange(None, None, start_index, end_index,
-                         lambda_map=lambda_map) \
-            .with_styles_as_applicable(**styles)
+                         lambda_map=lambda_map)
 
     def literal_int_extent(self):
         '''

@@ -351,7 +351,7 @@ class OperationOverInstances(Operation):
             return None
 
     @classmethod
-    def _make(cls, core_info, styles, sub_expressions):
+    def _make(cls, core_info, sub_expressions):
         if len(core_info) != 1 or core_info[0] != 'Operation':
             raise ValueError(
                 "Expecting Operation core_info to contain exactly one item: 'Operation'")
@@ -396,8 +396,6 @@ class OperationOverInstances(Operation):
         made_operation = cls(
             *[None] * num_remaining_args,
             _lambda_map=lambda_map)
-        if styles is not None:
-            return made_operation.with_styles_as_applicable(**styles)
         return made_operation
 
     def _all_instance_params(self):

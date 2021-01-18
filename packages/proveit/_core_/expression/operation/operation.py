@@ -285,7 +285,7 @@ class Operation(Expression):
                     % str(cls))
 
     @classmethod
-    def _make(operation_class, core_info, styles, sub_expressions):
+    def _make(operation_class, core_info, sub_expressions):
         '''
         Make the appropriate Operation.  core_info should equal 
         ('Operation',).  The first of the sub_expressions should be 
@@ -313,10 +313,7 @@ class Operation(Expression):
             else:
                 kw, val = arg
                 kw_args[kw] = val
-        made_operation = operation_class(*args, **kw_args)
-        if styles is not None:
-            return made_operation.with_styles_as_applicable(**styles)
-        return made_operation
+        return operation_class(*args, **kw_args)
 
     def remake_arguments(self):
         '''
@@ -546,8 +543,7 @@ class Operation(Expression):
                 # operation.
                 subbed_sub_exprs = (subbed_operator, subbed_operands)
                 substituted = op_class._checked_make(
-                    ['Operation'], styles=None,
-                    sub_expressions=subbed_sub_exprs)
+                    ['Operation'], sub_expressions=subbed_sub_exprs)
                 return substituted._auto_reduced(
                     assumptions, requirements,
                     equality_repl_requirements)
@@ -555,7 +551,7 @@ class Operation(Expression):
         subbed_sub_exprs = (subbed_operator,
                             subbed_operands)
         substituted = self.__class__._checked_make(
-            self._core_info, self.get_styles(), subbed_sub_exprs)
+            self._core_info, subbed_sub_exprs)
         return substituted._auto_reduced(assumptions, requirements,
                                          equality_repl_requirements)
 

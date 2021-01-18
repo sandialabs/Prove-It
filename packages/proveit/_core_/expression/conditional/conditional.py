@@ -58,7 +58,7 @@ class Conditional(Expression):
         self.condition = condition
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if len(core_info) != 1 or core_info[0] != 'Conditional':
             raise ValueError(
                 "Expecting Conditional core_info to contain exactly "
@@ -69,8 +69,7 @@ class Conditional(Expression):
             raise ValueError(
                 "Expecting Conditional to have two sub-expressions.")
         value, condition = sub_expressions
-        return Conditional(value, condition) \
-            .with_styles_as_applicable(**styles)
+        return Conditional(value, condition)
 
     def remake_arguments(self):
         '''

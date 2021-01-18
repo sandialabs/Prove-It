@@ -784,6 +784,8 @@ def mpi_build(
     # ranks that have been assigned to execute a notebook but
     # haven't finished.
     unfinished_ranks = set()
+    # Set of theories for which a notebook was successfully executed:
+    successful_execution_theories = set()
 
     # Inner functions to address retrying notebooks when executing
     # common expression notebooks and one imports from another that
@@ -844,7 +846,11 @@ def mpi_build(
                                 "expression notebooks detected" %
                                 (failed_import, theory.name))
             retry_orig_err_msg[notebook_path] = orig_err_msg
-            unmet_prerequisites.add(failed_import)
+            if failed_import not in successful_execution_theories:
+                # Note: the prerequisite may have been satisfied
+                # while this was being executed; that's why we
+                # track the 'successful_execution_theories'.
+                unmet_prerequisites.add(failed_import)
             return True
         else:
             return False
@@ -853,10 +859,12 @@ def mpi_build(
     def successful_execution_notification(notebook_path):
         nonlocal count
         count += 1
-        if len(unmet_prerequisites) > 0:
+        common_filename = 'common.ipynb'
+        if notebook_path[-len(common_filename):] == common_filename:
             theory = Theory(notebook_path)
+            successful_execution_theories.add(theory.name)
             unmet_prerequisites.discard(theory.name)
-
+    
     if nranks == 1:
         # The boring single rank case.
         with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
