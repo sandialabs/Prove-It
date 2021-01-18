@@ -32,14 +32,14 @@ class ExprArray(ExprTuple):
         self.check_range()
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if sub_class != ExprArray:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("An ExprArray is an ExprTuple of ExprTuples, "
                              "so the ExprArray core_info should contain "
                              "exactly one item: 'ExprTuple'")
-        return ExprArray(*sub_expressions).with_styles_as_applicable(**styles)
+        return ExprArray(*sub_expressions)
 
     def remake_with_style_calls(self):
         '''

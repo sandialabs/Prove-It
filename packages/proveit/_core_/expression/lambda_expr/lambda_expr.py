@@ -156,7 +156,7 @@ class Lambda(Expression):
         Expression.__init__(self, ['Lambda'], sub_exprs)
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if len(core_info) != 1 or core_info[0] != 'Lambda':
             raise ValueError(
                 "Expecting Lambda core_info to contain exactly one "
@@ -166,7 +166,7 @@ class Lambda(Expression):
         if len(sub_expressions) != 2:
             raise ValueError("Expected Lambda to have two sub-expressions")
         parameters, body = sub_expressions
-        return Lambda(parameters, body).with_styles_as_applicable(**styles)
+        return Lambda(parameters, body)
 
     def _possibly_free_vars_of_parameter_indices(self):
         '''

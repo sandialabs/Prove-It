@@ -1966,7 +1966,7 @@ class TheoryFolderStorage:
                 styles,
                 sub_expressions):
             expr_class = expr_class_map[expr_class_str]
-            expr = expr_class._checked_make(expr_info, styles, sub_expressions)
+            expr = expr_class._checked_make(expr_info, sub_expressions).with_styles(**styles)
             return expr
         # Load the "special names" of the theory so we
         # will know, for future reference, if this is a special

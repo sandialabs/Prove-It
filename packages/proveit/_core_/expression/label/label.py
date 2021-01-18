@@ -79,7 +79,7 @@ class Label(Expression):
         return [self.string_format, self.latex_format]
 
     @classmethod
-    def _make(label_class, core_info, styles, sub_expressions):
+    def _make(label_class, core_info, sub_expressions):
         if len(sub_expressions) > 0:
             raise ValueError('Not expecting any sub_expressions of Label')
         if len(core_info) != 3:
@@ -95,7 +95,7 @@ class Label(Expression):
                 label_class.__name__ +
                 "'")
         made_label =  label_class(core_info[1], core_info[2])
-        return made_label.with_styles_as_applicable(**styles)
+        return made_label
 
     def remake_arguments(self):
         '''
