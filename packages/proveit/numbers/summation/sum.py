@@ -1,5 +1,5 @@
 from proveit import (Literal, Lambda, Function, Operation, 
-                     OperationOverInstances, 
+                     OperationOverInstances, InnerExpr,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
                      ProofFailure, defaults)
 from proveit.logic import Forall, InSet
@@ -265,11 +265,11 @@ class Sum(OperationOverInstances):
         raise Exception(
             "split_off_last only implemented for a summation over a Interval of one instance variable")
 
-    def factor(
+    def factorization(
             self,
             the_factor,
             pull="left",
-            group_factor=False,
+            group_factor=True,
             group_remainder=None,
             assumptions=USE_DEFAULTS):
         '''
@@ -284,17 +284,25 @@ class Sum(OperationOverInstances):
         if not free_vars(the_factor).isdisjoint(self.indices):
             raise Exception(
                 'Cannot factor anything involving summation indices out of a summation')
+        expr = self
+        # for convenience updating our equation
+        eq = TransRelUpdater(expr, assumptions)
+        
         assumptions = defaults.checked_assumptions(assumptions)
         # We may need to factor the summand within the summation
         summand_assumptions = assumptions + self.condition
-        summand_factor_eq = self.summand.factor(
+        summand_factorization = self.summand.factorization(
             the_factor,
             pull,
             group_factor=False,
             group_remainder=True,
             assumptions=summand_assumptions)
+        
+        
         summand_instance_equivalence = summand_factor_eq.generalize(
             self.indices, domain=self.domain).checked(assumptions)
+        
+        
         eq = Equation(self.instance_substitution(
             summand_instance_equivalence).checked(assumptions))
         factor_operands = the_factor.operands if isinstance(
@@ -391,4 +399,6 @@ class Sum(OperationOverInstances):
         if summand_lambda == greater_lambda:
             return sum_relation.with_direction_reversed()
         return sum_relation
-    
+
+InnerExpr.register_equivalence_method(
+    Sum, 'factorization', 'factorized', 'factor')
