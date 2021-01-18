@@ -21,7 +21,7 @@ class Interval(Operation):
             self.upper_bound.string() + '}'
 
     def latex(self, **kwargs):
-        return r'\{' + self.lower_bound.latex() + r' \dots ' + \
+        return r'\{' + self.lower_bound.latex() + r' \ldots ' + \
             self.upper_bound.latex() + r'\}'
 
     def deduce_elem_in_set(self, member):
