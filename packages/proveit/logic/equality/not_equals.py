@@ -45,6 +45,19 @@ class NotEquals(Relation):
                 return self.lhs.not_equal(self.rhs, assumptions)
             except BaseException:
                 pass
+        if hasattr(self.lhs, 'deduce_not_equal'):
+            # If there is a 'deduce_not_equal' method, use that.
+            # The responsibility then shifts to that method for
+            # determining what strategies should be attempted
+            # (with the recommendation that it should not attempt
+            # multiple non-trivial automation strategies).
+            eq = self.lhs.deduce_not_equal(self, assumptions)
+            if eq.expr != self:
+                raise ValueError("'deduce_not_equal' not implemented "
+                                 "correctly; must deduce the 'inequality' "
+                                 "that it is given if it can: "
+                                 "'%s' != '%s'" % (eq.expr, self))
+            return eq            
         try:
             return self.conclude_as_folded(assumptions)
         except BaseException:
