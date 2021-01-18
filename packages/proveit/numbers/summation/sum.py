@@ -1,12 +1,13 @@
-from proveit import (Literal, Lambda, Operation, OperationOverInstances, 
+from proveit import (Literal, Lambda, Function, Operation, 
+                     OperationOverInstances, 
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
-                     ProofFailure)
+                     ProofFailure, defaults)
 from proveit.logic import Forall, InSet
 from proveit.numbers.number_sets import (
         RealInterval, Interval, Real, Integer, Natural, Complex)
 from proveit.numbers.negation import Neg
 from proveit.numbers.ordering import LessEq, Less
-from proveit import a, b, f, P, S
+from proveit import a, b, f, x, P, Q, S
 
 
 class Sum(OperationOverInstances):
@@ -53,36 +54,28 @@ class Sum(OperationOverInstances):
         """
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
-        from . import summation_nats_closure, summation_ints_closure, summation_real_closure, summation_complex_closure
-        P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
-        Operation(P, self.instance_vars)
+        from . import (summation_nat_closure, summation_int_closure, 
+                       summation_real_closure, summation_complex_closure)
+        _x = self.instance_param
+        P_op, _P_op = Function(P, _x), self.instance_expr
+        Q_op, _Q_op = Function(Q, _x), self.condition
         self.summand
         if number_set == Natural:
-            thm = summation_nats_closure
+            thm = summation_nat_closure
         elif number_set == Integer:
-            thm = summation_ints_closure
+            thm = summation_int_closure
         elif number_set == Real:
             thm = summation_real_closure
         elif number_set == Complex:
             thm = summation_complex_closure
         else:
             raise ProofFailure(
-                InSet(
-                    self,
-                    number_set),
-                assumptions,
-                "'deduce_in_number_set' not implemented for the %s set" %
-                str(number_set))
-        return thm.instantiate(
-            {
-                P_op: P_op_sub,
-                S: self.domain,
-                Q_op: Q_op_sub},
-            relabel_map={
-                x_multi: self.instance_vars},
-            assumptions=assumptions).derive_consequent(
-                assumptions=assumptions)
+                    InSet(self, number_set), assumptions,
+                    ("'deduce_in_number_set' not implemented for the %s set"
+                     % str(number_set)))
+        impl = thm.instantiate(
+            { x: _x, P_op: _P_op, Q_op: _Q_op}, assumptions=assumptions)
+        return impl.derive_consequent(assumptions=assumptions)
 
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
@@ -115,7 +108,7 @@ class Sum(OperationOverInstances):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         from proveit.logic import SimplificationError
-        from axioms import sum_single
+        from . import sum_single
         if isinstance(
                 self.domain,
                 Interval) and self.domain.lower_bound == self.domain.upper_bound:
@@ -278,7 +271,7 @@ class Sum(OperationOverInstances):
             pull="left",
             group_factor=False,
             group_remainder=None,
-            assumptions=frozenset()):
+            assumptions=USE_DEFAULTS):
         '''
         If group_factor is True and the_factor is a product, it will be grouped together as a
         sub-product.  group_remainder is not relevant kept for compatibility with other factor
@@ -286,14 +279,14 @@ class Sum(OperationOverInstances):
         Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         '''
-        from proveit.numbers.multiplication.theorems import distribute_through_summation_rev
+        from proveit.numbers.multiplication import distribute_through_summation
         from proveit.numbers import Mult
         if not free_vars(the_factor).isdisjoint(self.indices):
             raise Exception(
                 'Cannot factor anything involving summation indices out of a summation')
+        assumptions = defaults.checked_assumptions(assumptions)
         # We may need to factor the summand within the summation
-        summand_assumptions = assumptions | {
-            InSet(index, self.domain) for index in self.indices}
+        summand_assumptions = assumptions + self.condition
         summand_factor_eq = self.summand.factor(
             the_factor,
             pull,
