@@ -488,22 +488,25 @@ class Exp(Function):
                 return sqrt_real_closure.instantiate(
                     {a: self.base}, assumptions=assumptions)
             else:
-                err_string = ''
                 try:
                     return exp_real_closure_base_pos.instantiate(
                         {a: self.base, b: self.exponent},
                         assumptions=assumptions)
-                except BaseException:
-                    err_string = 'Positive base condition failed '
+                except ProofFailure:
+                    return exp_real_closure_exp_non_zero.instantiate(
+                        {a: self.base, b: self.exponent},
+                        assumptions=assumptions)
                     try:
                         return exp_real_closure_exp_non_zero.instantiate(
                             {a: self.base, b: self.exponent},
                             assumptions=assumptions)
-                    except BaseException:
-                        err_string += (
-                            'and non-zero exponent condition failed. '
-                            'Need base ≥ 0 and exponent ≠ 0, OR base > 0.')
-                        raise Exception(err_string)
+                    except ProofFailure:
+                        msg = ('Positive base condition failed '
+                               'and non-zero exponent condition failed. '
+                               'Need base ≥ 0 and exponent ≠ 0, OR base > 0 '
+                               'to prove %s is real.'%self)
+                        raise ProofFailure(InSet(self, number_set), 
+                                           assumptions, msg)
 
         if number_set == RealPos:
             if self.exponent == frac(one, two):
@@ -522,8 +525,8 @@ class Exp(Function):
                     {a: self.base, b: self.exponent},
                     assumptions=assumptions)
 
-        msg = "'deduce_in_number_set' not implemented for the %s set" % str(
-            number_set)
+        msg = ("'Exp.deduce_in_number_set' not implemented for the %s set" 
+              % str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
 
 
