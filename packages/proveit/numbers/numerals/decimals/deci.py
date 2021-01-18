@@ -259,9 +259,7 @@ class DecimalSequence(NumeralSequence):
                 expr = eq.update(deci_sequence_reduction.instantiate(
                     {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
 
-        with defaults.disabled_auto_reduction_types as disable_reduction_types:
-            disable_reduction_types.add(DecimalSequence)
-            return eq.relation
+        return eq.relation
 
     def _formatted(self, format_type, operator=None, **kwargs):
         from proveit import ExprRange, var_range
