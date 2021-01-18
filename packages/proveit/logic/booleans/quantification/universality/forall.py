@@ -1,4 +1,4 @@
-from proveit import (Literal, Function, OperationOverInstances,
+from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
                      defaults, USE_DEFAULTS, ProofFailure)
 from proveit import k, n, x, A, B, P, S
@@ -10,9 +10,9 @@ class Forall(OperationOverInstances):
     _operator_ = Literal(string_format='forall', latex_format=r'\forall',
                          theory=__file__)
     
-    # Map instance expressions to universal quantifications
-    # over them that are known judgments.
-    known_instance_exprs = dict()
+    # Map instance parameter -> expression maps to universal 
+    # quantifications over them that are known judgments.
+    known_instance_maps = dict()
 
     def __init__(self, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None,
@@ -44,8 +44,10 @@ class Forall(OperationOverInstances):
                 yield self.unfold
         # Remember the proven Universal judgments by their
         # instance expressions.
-        Forall.known_instance_exprs.setdefault(
-                judgment.expr.instance_expr, set()).add(judgment)
+        instance_map = Lambda(judgment.expr.instance_params,
+                              judgment.expr.instance_expr)
+        Forall.known_instance_maps.setdefault(
+                instance_map, set()).add(judgment)
 
     def conclude(self, assumptions):
         '''
@@ -56,11 +58,10 @@ class Forall(OperationOverInstances):
         via 'conclude_as_folded'.
         '''
         from proveit.logic import SubsetEq
-
-        instance_expr = self.instance_expr
         
         # first try to prove via generalization without automation
         assumptions = defaults.checked_assumptions(assumptions)
+        
         expr = self
         instance_param_lists = []
         conditions = []
@@ -77,13 +78,14 @@ class Forall(OperationOverInstances):
         
         if (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
+            instance_map = Lambda(self.instance_params, self.instance_expr)
             domain = self.domain 
             known_domains = set()
             # Next, check the known quantified instance expressions
             # and known set inclusions of domains to see if we can 
             # construct a proof via inclusive universal quantification.
-            if instance_expr in Forall.known_instance_exprs:
-                known_foralls = Forall.known_instance_exprs[instance_expr]
+            if instance_map in Forall.known_instance_maps:
+                known_foralls = Forall.known_instance_maps[instance_map]
                 for known_forall in known_foralls:
                     if (known_forall.has_domain() 
                             and known_forall.instance_params.is_single()

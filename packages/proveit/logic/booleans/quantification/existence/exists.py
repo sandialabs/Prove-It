@@ -14,9 +14,9 @@ class Exists(OperationOverInstances):
     # Exists.choose() method
     skolem_consts_to_existential = dict()
     
-    # Map instance expressions to existential quantifications
-    # over them that are known judgments.
-    known_instance_exprs = dict()
+    # Map instance parameter -> expression maps to existential 
+    # quantifications over them that are known judgments.
+    known_instance_maps = dict()
 
     def __init__(self, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None,
@@ -36,17 +36,17 @@ class Exists(OperationOverInstances):
     
     def conclude(self, assumptions):
         from proveit.logic import SubsetEq
-        instance_expr = self.instance_expr
         if (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
+            instance_map = Lambda(self.instance_params, self.instance_expr)
             domain = self.domain 
             known_domains = set()
             # Check the known quantified instance expressions
             # and known set inclusions of domains to see if we can 
             # construct a proof via inclusive existential 
             # quantification.
-            if instance_expr in Exists.known_instance_exprs:
-                known_foralls = Exists.known_instance_exprs[instance_expr]
+            if instance_map in Exists.known_instance_maps:
+                known_foralls = Exists.known_instance_maps[instance_map]
                 for known_forall in known_foralls:
                     if (known_forall.has_domain() 
                             and known_forall.instance_params.is_single()
@@ -73,8 +73,10 @@ class Exists(OperationOverInstances):
         '''
         # Remember the proven Existential judgments by their
         # instance expressions.
-        Exists.known_instance_exprs.setdefault(
-                judgment.expr.instance_expr, set()).add(judgment)
+        instance_map = Lambda(judgment.expr.instance_params,
+                              judgment.expr.instance_expr)        
+        Exists.known_instance_maps.setdefault(
+                instance_map, set()).add(judgment)
         return
         yield self.derive_negated_forall  # derive the negated forall form
 
