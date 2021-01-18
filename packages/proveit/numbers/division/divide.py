@@ -44,7 +44,7 @@ class Div(Operation):
             description=("'inline': uses '/'; 'fraction': "
                          "numerator over the denominator "
                          "(also see 'frac' function)"),
-            default='inline',
+            default='fraction',
             related_methods=('with_inline_style', 
                              'with_fraction_style'))
         return options
@@ -411,7 +411,7 @@ class Div(Operation):
 
 
 def frac(numer, denom):
-    return Div(numer, denom).with_styles(division='fraction')
+    return Div(numer, denom)
 
 
 # Register these expression equivalence methods:
