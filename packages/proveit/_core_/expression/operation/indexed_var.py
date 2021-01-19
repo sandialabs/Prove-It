@@ -1,13 +1,12 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.expression.operation.operation import Operation
+from proveit._core_.expression.operation.function import Function
 from proveit._core_.expression.composite import is_single
 from proveit._core_.expression.label import Variable
-from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
 
 
-class IndexedVar(Operation):
+class IndexedVar(Function):
     '''
     An IndexedVar Expression expresses a Variable or nested IndexedVar,
     representing an ExprTuple (or ExprArray which is really just an ExprTuple
@@ -37,18 +36,18 @@ class IndexedVar(Operation):
             self.index_or_indices = self.index
         else:
             self.index_or_indices = self.indices
-        Operation.__init__(self, var, self.index_or_indices)
+        Function.__init__(self, var, self.index_or_indices)
         self.var = var
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if sub_class != IndexedVar:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'IndexedVar':
             raise ValueError(
                 "Expecting IndexedVar core_info to contain exactly"
                 " one item: 'IndexedVar'")
-        return IndexedVar(*sub_expressions).with_styles(**styles)
+        return IndexedVar(*sub_expressions)
 
     def remake_arguments(self):
         '''
@@ -91,7 +90,7 @@ class IndexedVar(Operation):
                                     assumptions, requirements,
                                     equality_repl_requirements)
 
-    def _formatted(self, format_type, **kwargs):
+    def _function_formatted(self, format_type, **kwargs):
         indices_str = self.index_or_indices.formatted(format_type, fence=False)
         result = self.var.formatted(format_type) + '_{' + indices_str + '}'
         if kwargs.get('force_fence', False):

@@ -16,14 +16,7 @@ class ExprArray(ExprTuple):
         objects.
         '''
         from .expr_range import ExprRange
-        if styles is None:
-            styles = dict()
-        if 'orientation' not in styles:
-            styles['orientation'] = 'horizontal'
-        if 'justification' not in styles:
-            styles['justification'] = 'center'
-
-        ExprTuple.__init__(self, *expressions, styles=styles)
+        ExprTuple.__init__(self, *expressions)
 
         for entry in self.entries:
             entry_or_body = entry
@@ -39,33 +32,14 @@ class ExprArray(ExprTuple):
         self.check_range()
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if sub_class != ExprArray:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("An ExprArray is an ExprTuple of ExprTuples, "
                              "so the ExprArray core_info should contain "
                              "exactly one item: 'ExprTuple'")
-        return ExprArray(*sub_expressions).with_styles(**styles)
-
-    def style_options(self):
-        options = StyleOptions(self)
-        options.add_option(
-            'justification',
-            ("justify to the 'left', 'center', or 'right' in the array cells"))
-        options.add_option(
-            'orientation',
-            ("to be read from left to right then top to bottom ('horizontal') "
-             "or to be read top to bottom then left to right ('vertical')"))
-        options.add_option(
-            'parameterization',
-            ("'implicit' (default for LaTeX formatting) hides "
-             "the parameter the ExprRange so the parameterization "
-             "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
-             "'explicit' (default for string formatting) reveals "
-             "the parameterization "
-             "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
-        return options
+        return ExprArray(*sub_expressions)
 
     def remake_with_style_calls(self):
         '''
@@ -90,6 +64,39 @@ class ExprArray(ExprTuple):
                 call_strs.append('with_implicit_parameterization()')
         return call_strs
 
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this ExprArray.
+        '''
+        options = StyleOptions(self)
+        options.add_option(
+            name = 'justification',
+            description = ("justify to the 'left', 'center', or 'right' "
+                           "in the array cells"),
+            default = 'center',
+            related_methods = ('with_justification'))
+        options.add_option(
+            name = 'orientation',
+            description = ("to be read from left to right then top to "
+                           "bottom ('horizontal') or to be read top to "
+                           "bottom then left to right ('vertical')"),
+            default = 'horizontal',
+            related_methods = ('with_orientation'))
+        options.add_option(
+            name = 'parameterization',
+            description = (
+                    "'implicit' (default for LaTeX formatting) hides "
+                    "the parameter the ExprRange so the parameterization "
+                    "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
+                    "'explicit' (default for string formatting) reveals "
+                    "the parameterization "
+                    "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."),
+            default = None, # Removes the 'parameterization' key.
+            related_methods = ('with_explicit_parameterization',
+                               'with_implicit_parameterization',
+                               'with_default_parameterization_style'))
+        return options
+    
     def with_justification(self, justification):
         return self.with_styles(justification=justification)
 
@@ -129,7 +136,7 @@ class ExprArray(ExprTuple):
         and 'explicit' parameterization for LaTeX formatting
         (see 'with_explicit_parameterization').
         '''
-        return self.without_style('parameterization')
+        return self.with_default_style('parameterization')
 
     def flat(self):
         '''

@@ -1,11 +1,11 @@
-from proveit import Operation, Literal, Function
+from proveit import Literal, Function
 from proveit.linalg import SU, TensorExp
 from proveit.numbers import num, Complex, Exp
 
 pkg = __package__  # delete this later; will no longer be needed
 
 
-class Bra(Operation):
+class Bra(Function):
     '''
     Class to represent a Dirac bra vector of the form ⟨0| or ⟨1|.
     '''
@@ -13,10 +13,16 @@ class Bra(Operation):
     _operator_ = Literal(string_format='BRA', theory=__file__)
 
     def __init__(self, label):
-        Operation.__init__(self, Bra._operator_, label)
+        Function.__init__(self, Bra._operator_, label)
         self.label = self.operands[0]  # might need to change
 
-    def _formatted(self, format_type, **kwargs):
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+    
+    def formatted(self, format_type, **kwargs):
         if format_type == 'latex':
             return (r'\langle '
                     + self.label.formatted(format_type, fence=False)
@@ -29,7 +35,7 @@ class Bra(Operation):
     # could instead use string() or latex() method instead
 
 
-class Ket(Operation):
+class Ket(Function):
     '''
     Class to represent a Dirac ket vector of the form |0⟩ or |1⟩.
     '''
@@ -37,10 +43,16 @@ class Ket(Operation):
     _operator_ = Literal(string_format='KET', theory=__file__)
 
     def __init__(self, label):
-        Operation.__init__(self, Ket._operator_, label)
+        Function.__init__(self, Ket._operator_, label)
         self.label = self.operands[0]
 
-    def _formatted(self, format_type, no_lvert=False, **kwargs):
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+    
+    def formatted(self, format_type, no_lvert=False, **kwargs):
         left_str = r'\lvert ' if format_type == 'latex' else '|'
         if no_lvert:
             left_str = ''
@@ -54,7 +66,7 @@ class Ket(Operation):
                     + u'\u232A')
 
 
-class RegisterBra(Operation):
+class RegisterBra(Function):
     '''
     Class to represent a Dirac bra vector that acknowledges the
     size of the register. Intended params are not quite clear ...
@@ -63,17 +75,23 @@ class RegisterBra(Operation):
     _operator_ = Literal(string_format='REGISTER_BRA', theory=__file__)
 
     def __init__(self, label, size):
-        Operation.__init__(self, RegisterBra._operator_, (label, size))
+        Function.__init__(self, RegisterBra._operator_, (label, size))
         self.label = self.operands[0]   # value
         self.size = self.operands[1]   # size of the register
 
     def _config_latex_tool(self, lt):
-        Operation._config_latex_tool(self, lt)
+        Function._config_latex_tool(self, lt)
         # Expression._config_latex_tool(self, lt)
         if 'mathtools' not in lt.packages:
             lt.packages.append('mathtools')
 
-    def _formatted(self, format_type, fence=False):
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+    
+    def formatted(self, format_type, fence=False):
         formatted_label = self.label.formatted(format_type, fence=False)
         formatted_size = self.size.formatted(format_type, fence=False)
         if format_type == 'latex':
@@ -90,7 +108,7 @@ class RegisterBra(Operation):
                 u'\u2329' + formatted_label + '|'
 
 
-class RegisterKet(Operation):
+class RegisterKet(Function):
     '''
     Class to represent a Dirac ket vector that acknowledges the
     size of the register on which it is defined.
@@ -99,11 +117,17 @@ class RegisterKet(Operation):
     _operator_ = Literal(string_format='REGISTER_KET', theory=__file__)
 
     def __init__(self, label, size):
-        Operation.__init__(self, RegisterKet._operator_, (label, size))
+        Function.__init__(self, RegisterKet._operator_, (label, size))
         self.label = self.operands[0]   # value for the ket
         self.size = self.operands[1]   # size of the register
 
-    def _formatted(self, format_type, fence=False, no_lvert=False):
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+    
+    def formatted(self, format_type, fence=False, no_lvert=False):
         formatted_label = self.label.formatted(format_type, fence=False)
         formatted_size = self.size.formatted(format_type, fence=False)
         left_str = r'\lvert ' if format_type == 'latex' else '|'

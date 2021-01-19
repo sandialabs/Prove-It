@@ -1,5 +1,6 @@
 import sys
-from proveit import Lambda, Literal, Operation, TransitiveRelation, USE_DEFAULTS, defaults
+from proveit import (Lambda, Literal, Function, TransitiveRelation, 
+                     StyleOptions, USE_DEFAULTS, defaults)
 from proveit import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
@@ -62,7 +63,7 @@ def _defineTheorems():
 """
 
 
-class Input(Operation):
+class Input(Function):
     '''
     Represents an input state entering from the left-hand side of a
     circuit. Updated 1/26/2020 by wdc
@@ -75,9 +76,15 @@ class Input(Operation):
         Create an INPUT operation (for entering the left-hand side
         of a circuit) with the given input state.
         '''
-        Operation.__init__(self, Input._operator_, state)
+        Function.__init__(self, Input._operator_, state)
         self.state = state
 
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+    
     def formatted(self, format_type, fence=False):
         formatted_state = self.state.formatted(format_type, fence=False)
         if format_type == 'latex':
@@ -90,7 +97,7 @@ class Input(Operation):
             return 'Input(' + formatted_state + ')'
 
     def _config_latex_tool(self, lt):
-        Operation._config_latex_tool(self, lt)
+        Function._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
 
@@ -99,7 +106,7 @@ class Input(Operation):
 # An input state (entering the left of the circuit)
 
 
-class Output(Operation):
+class Output(Function):
     '''
     Represents an output state exiting from the right-hand side of
     a circuit. Updated 1/26/2020 by wdc
@@ -111,8 +118,14 @@ class Output(Operation):
         '''
         Create an OUTPUT operation with the given input state.
         '''
-        Operation.__init__(self, Output._operator_, state)
+        Function.__init__(self, Output._operator_, state)
         self.state = state
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
 
     def formatted(self, format_type, fence=False):
         formatted_state = self.state.formatted(format_type, fence=False)
@@ -126,7 +139,7 @@ class Output(Operation):
             return 'Output(' + formatted_state + ')'
 
     def _config_latex_tool(self, lt):
-        Operation._config_latex_tool(self, lt)
+        Function._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
 
@@ -148,13 +161,19 @@ class IdentityOp(Literal):
         Literal.__init__(self, 'I', styles=styles)
 
     def style_options(self):
-        from proveit._core_.expression.style_options import StyleOptions
-
+        '''
+        Return the StyleOptions object for this IdendityOp.
+        '''
         options = StyleOptions(self)
         options.add_option(
-            'representation',
-            ("The 'implicit' option formats the identity operation as a quantum wire and the 'explicit'"
-             "option formats it as a box containing the I literal"))
+            name = 'representation',
+            description = (
+                    "The 'wire' option formats the identity operation as "
+                    "a quantum wire and the 'explicit' option formats it "
+                    "as a box containing the I literal"),
+            default = 'wire',
+            related_methods = ())
+
         return options
 
     def remake_arguments(self):
@@ -186,7 +205,7 @@ class IdentityOp(Literal):
                 return '[I]'
 
     def _config_latex_tool(self, lt):
-        Operation._config_latex_tool(self, lt)
+        Literal._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
 
@@ -194,7 +213,7 @@ class IdentityOp(Literal):
 # An output state (exiting the right of the circuit)
 
 
-class Gate(Operation):
+class Gate(Function):
     '''
     Represents a gate in a quantum circuit.
     '''
@@ -210,7 +229,7 @@ class Gate(Operation):
                 'Expected one operand, got %s instead.' %
                 len(operand))
 
-        Operation.__init__(self, Gate._operator_, operand)
+        Function.__init__(self, Gate._operator_, operand)
 
         if len(operand) == 0:
             self.gate_operation = None
@@ -277,12 +296,12 @@ class Gate(Operation):
             return 'Gate(' + formatted_gate_operation + ')'
 
     def _config_latex_tool(self, lt):
-        Operation._config_latex_tool(self, lt)
+        Function._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
 
 
-class MultiQubitGate(Operation):
+class MultiQubitGate(Function):
     '''
     Represents a connection of multiple gates.  In a circuit(), each row that contains a member of a MultiQubitGate
     must contain a MultiQubitGate() where the arguments are 1- the name of the gate, and 2- the indices of the other
@@ -296,7 +315,7 @@ class MultiQubitGate(Operation):
     # the literal operator of the Gate operation class
     _operator_ = Literal('MULTI_QUBIT_GATE', theory=__file__)
 
-    def __init__(self, gate, gate_set, styles=None):
+    def __init__(self, gate, gate_set):
         '''
         Create a quantum circuit gate performing the given operation.
         '''
@@ -305,15 +324,9 @@ class MultiQubitGate(Operation):
         else:
             self.indices = None
         self.gate_set = gate_set
-
         self.gate = gate
-
-        if styles is None:
-            styles = dict()
-        if 'representation' not in styles:
-            styles['representation'] = 'explicit'
-        Operation.__init__(self, MultiQubitGate._operator_,
-                           (gate, gate_set), styles=styles)
+        Function.__init__(self, MultiQubitGate._operator_,
+                           (gate, gate_set))
 
     def remake_with_style_calls(self):
         '''
@@ -349,10 +362,16 @@ class MultiQubitGate(Operation):
         from proveit._core_.expression.style_options import StyleOptions
 
         options = StyleOptions(self)
+        # It would be better to make this only an option when it is
+        # applicable.  Just doing this for now.
         options.add_option(
-            'representation',
-            ("'implicit' representation displays X gates as a target and the IdentityOp() as a wire while"
-             "'explicit' representation always displays the type of gate in a box. Ex. |X|"))
+            name = 'representation',
+            description = ("'implicit' representation displays X gates "
+                           "as a target, while 'explicit' representation "
+                           "always displays the type of gate in a box. "
+                           "Ex. |X|"),
+            default = 'explicit',
+            related_methods = ())
         return options
 
     def string(self, **kwargs):
@@ -449,7 +468,7 @@ class MultiQubitGate(Operation):
                 ", " + self.gate_set.formatted(format_type) + ')'
 
     def _config_latex_tool(self, lt):
-        Operation._config_latex_tool(self, lt)
+        Function._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
 
@@ -470,7 +489,7 @@ class TargetOperator(Literal):
         return r'\oplus'
 
 
-class Target(Operation):
+class Target(Function):
     '''
     Represents the target of a control.
     Updated 1/26/2020 by wdc.
@@ -486,7 +505,7 @@ class Target(Operation):
         Create a Target operation with the given target_gate as the type
         of the gate for the target (e.g., X for CNOT and Z for Controlled-Z).
         '''
-        Operation.__init__(self, Target._operator_, target_gate)
+        Function.__init__(self, Target._operator_, target_gate)
         self.target_gate = target_gate
 
     def string(self, **kwargs):
@@ -499,7 +518,7 @@ class Target(Operation):
         if format_type == 'latex':
             return r'\targ'
         else:
-            return Operation._formatted(self, format_type)
+            return Function._formatted(self, format_type)
 
 
 class CircuitEquiv(TransitiveRelation):
@@ -729,7 +748,7 @@ class CircuitEquiv(TransitiveRelation):
 # MULTI_WIRE = Literal(pkg, 'MULTI_WIRE', operation_maker = lambda operands : MultiWire(*operands))
 
 
-class Circuit(Operation):
+class Circuit(Function):
     '''
     Represents a quantum circuit as a 2-D ExprArray
     '''
@@ -737,20 +756,12 @@ class Circuit(Operation):
     _operator_ = Literal('CIRCUIT', theory=__file__)
     DEFAULT_SPACING = '@C=1em @R=.7em'
 
-    def __init__(self, array, styles=None):
+    def __init__(self, array):
         '''
         Initialize an ExprTuple from an iterable over Expression
         objects.
         '''
-        if styles is None:
-            styles = dict()
-        if 'orientation' not in styles:
-            styles['orientation'] = 'horizontal'
-
-        if 'spacing' not in styles:
-            styles['spacing'] = Circuit.DEFAULT_SPACING
-
-        Operation.__init__(self, Circuit._operator_, [array], styles=styles)
+        Function.__init__(self, Circuit._operator_, [array])
 
         self.array = array
 
@@ -799,14 +810,27 @@ class Circuit(Operation):
         return call_strs
 
     def style_options(self):
-        from proveit._core_.expression.style_options import StyleOptions
-
+        '''
+        Return the StyleOptions object for this Circuit.
+        '''
         options = StyleOptions(self)
         options.add_option(
-            'spacing',
-            ("change the spacing of a circuit using the format '@C=1em @R=.7em' where C is the column"
-             " spacing and R is the row spacing"))
-
+            name = 'spacing',
+            description = (
+                    "change the spacing of a circuit using the format "
+                    "'@C=1em @R=.7em' where C is the column spacing and "\
+                    "R is the row spacing"),
+            default = Circuit.DEFAULT_SPACING,
+            related_methods = ())
+        options.add_option(
+            name = 'orientation',
+            description = ("to be read from left to right then top to "
+                           "bottom ('horizontal') or to be read top to "
+                           "bottom then left to right ('vertical')"),
+            default = 'horizontal',
+            related_methods = ('with_orientation'))
+        return options
+        
     def replace_equiv_circ(self, current, new, assumptions=USE_DEFAULTS):
         '''
         Given the piece that is to be replaced, and the piece it is being replaced with,
@@ -1837,7 +1861,7 @@ class Circuit(Operation):
         return out_str
 
     def _config_latex_tool(self, lt):
-        Operation._config_latex_tool(self, lt)
+        Function._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
 

@@ -3,20 +3,22 @@ from .operation import Operation
 
 class Function(Operation):
     '''
-    A Function is an Operation with a default format as a function:
+    A Function is an Operation that will format as a function:
     f(x), Q(x, y), etc.
+    The StyleOptions will not include 'operation' which will for
+    Operation into a 'function' style rather than 'infix'.
     '''
 
-    def __init__(self, operator, operand_or_operands, styles=None):
-        if styles is None:
-            styles = dict()
-        styles['operation'] = 'function'
-        Operation.__init__(self, operator, operand_or_operands, styles=styles)
-        if not hasattr(self, 'operator'):
-            raise ValueError("A Function must be given a single `operator`. "
-                             "%s is not a valid `operator`." % str(operator))
+    def __init__(self, operator, operand_or_operands):
+        Operation.__init__(self, operator, operand_or_operands)
 
-
-def function(operator, operand_or_operands):
-    return Operation(operator, operand_or_operands,
-                     {'operation': 'function'})
+    def style_options(self):
+        '''
+        Return the StyleOptions object for the Function.
+        '''
+        # We won't have the 'operation' style.  By doing so,
+        # Operation will format with the operation:'function' style.
+        options = Operation.style_options(self)
+        first = options.options.pop(0)
+        assert first[0]=='operation'
+        return options

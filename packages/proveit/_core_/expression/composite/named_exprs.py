@@ -72,7 +72,7 @@ class NamedExprs(Composite, Expression):
             yield ('"' + str(name) + '"', expr)
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if sub_class != NamedExprs:
             MakeNotImplemented(sub_class)
         if core_info[0] != 'NamedExprs':
@@ -83,7 +83,7 @@ class NamedExprs(Composite, Expression):
             raise ValueError("The number of sub-expressions, " + str(len(sub_expressions)),
                              ", expected to match the number of the NamedExprs' keys, ", str(len(keys)))
         return NamedExprs([(key, sub_expression) for key, sub_expression in zip(
-            keys, sub_expressions)]).with_styles(**styles)
+            keys, sub_expressions)])
 
     def string(self, **kwargs):
         return '{' + ', '.join(key + ':' + self[key].string(fence=True)

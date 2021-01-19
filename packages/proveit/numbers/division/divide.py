@@ -15,18 +15,10 @@ class Div(Operation):
         r'''
         Divide two operands.
         '''
-        Operation.__init__(self, Div._operator_, [numerator, denominator],
-                           styles={'division': 'inline'})
+        Operation.__init__(self, Div._operator_, [numerator, denominator])
         self.numerator = self.operands[0]
         self.denominator = self.operands[1]
-
-    def style_options(self):
-        options = StyleOptions(self)
-        options.add_option(
-            'division',
-            "'inline': uses '/'; 'fraction': numerator over the denominator")
-        return options
-
+    
     def latex(self, **kwargs):
         if self.get_style('division') == 'fraction':
             # only fence if force_fence=True (a fraction within an
@@ -41,6 +33,27 @@ class Div(Operation):
                 **kwargs)
         else:
             return Operation.latex(self, **kwargs)  # normal division
+    
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this Div.
+        '''
+        options = StyleOptions(self)
+        options.add_option(
+            name='division',
+            description=("'inline': uses '/'; 'fraction': "
+                         "numerator over the denominator "
+                         "(also see 'frac' function)"),
+            default='inline',
+            related_methods=('with_inline_style', 
+                             'with_fraction_style'))
+        return options
+        
+    def with_inline_style(self):
+        return self.with_styles(division='inline')
+
+    def with_fraction_style(self):
+        return self.with_styles(division='fraction')
 
     def remake_constructor(self):
         if self.get_style('division') == 'fraction':
