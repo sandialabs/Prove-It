@@ -364,7 +364,7 @@ class MultiQubitGate(Operation):
     def unary_reduction(self, assumptions=USE_DEFAULTS):
         from proveit.physics.quantum import unary_multi_qubit_gate_reduction
 
-        if not self.gate_set.operands.singular():
+        if not self.gate_set.operands.is_single():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unary_reduction")
         operand = self.gate_set.operands[0]
