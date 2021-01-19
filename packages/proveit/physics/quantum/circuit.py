@@ -79,19 +79,40 @@ class Input(Function):
         Function.__init__(self, Input._operator_, state)
         self.state = state
 
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this Input object.
+        '''
+        options = StyleOptions(self)
+        options.add_option(
+            name = 'display',
+            description = (
+                    "The 'solo' option formats the Input inside the "
+                    r"\qcircuit package (for use outside a circuit. "
+                    "The 'contained' option formats the Input as a "
+                    "circuit element (for use inside a circuit). "),
+            default = 'solo',
+            related_methods = ())
+
+        return options
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
     
-    def formatted(self, format_type, fence=False):
+    def formatted(self, format_type, display=None, fence=False):
         formatted_state = self.state.formatted(format_type, fence=False)
         if format_type == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
-            out_str += r'\lstick{' + formatted_state + r'}'
-            out_str += ' \n' + r'} \hspace{2em}'
+            if display is None:
+                display = self.get_style('display', 'solo')
+
+            out_str = r'\lstick{' + formatted_state + r'}'
+            if display == 'solo':
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Input(' + formatted_state + ')'
@@ -121,19 +142,39 @@ class Output(Function):
         Function.__init__(self, Output._operator_, state)
         self.state = state
 
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this Output object.
+        '''
+        options = StyleOptions(self)
+        options.add_option(
+            name = 'display',
+            description = (
+                    "The 'solo' option formats the Output inside the "
+                    r"\qcircuit package (for use outside a circuit. "
+                    "The 'contained' option formats the Output as a "
+                    "circuit element (for use inside a circuit). "),
+            default = 'solo',
+            related_methods = ())
+
+        return options
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, fence=False):
+    def formatted(self, format_type, display=None, fence=False):
         formatted_state = self.state.formatted(format_type, fence=False)
         if format_type == 'latex':
+            if display is None:
+                display = self.get_style('display', 'solo')
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
-            out_str += r'\rstick{' + formatted_state + r'} \qw'
-            out_str += ' \n' + r'} \hspace{2em}'
+            out_str = r'\rstick{' + formatted_state + r'} \qw'
+            if display == 'solo':
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Output(' + formatted_state + ')'
@@ -162,17 +203,27 @@ class IdentityOp(Literal):
 
     def style_options(self):
         '''
-        Return the StyleOptions object for this IdendityOp.
+        Return the StyleOptions object for this IdentityOp.
         '''
         options = StyleOptions(self)
         options.add_option(
             name = 'representation',
             description = (
-                    "The 'wire' option formats the identity operation as "
+                    "The 'implicit' option formats the identity operation as "
                     "a quantum wire and the 'explicit' option formats it "
                     "as a box containing the I literal"),
             default = 'wire',
             related_methods = ())
+
+        options.add_option(
+            name='display',
+            description=(
+                "The 'solo' option formats the IdentityOp inside the "
+                r"\qcircuit package (for use outside a circuit. "
+                "The 'contained' option formats the IdentityOp as a "
+                "circuit element (for use inside a circuit). "),
+            default='solo',
+            related_methods=())
 
         return options
 
@@ -186,17 +237,21 @@ class IdentityOp(Literal):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, representation=None, fence=False):
+    def formatted(self, format_type, representation=None, display=None, fence=False):
         if representation is None:
             representation = self.get_style('representation')
+        if display is None:
+            display = self.get_style('display', 'solo')
         if format_type == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = ''
             if representation == 'implicit':
                 out_str += r'\qw'
             else:
                 out_str += r'\gate{I}'
-            out_str += ' \n' + r'} \hspace{2em}'
+            if display == 'solo':
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             if representation == 'implicit':
@@ -261,23 +316,56 @@ class Gate(Function):
             return output_gate_to_ket.instantiate(
                 {U: self.gate_operation.state}, assumptions=assumptions)
 
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this Gate object.
+        '''
+        options = StyleOptions(self)
+        options.add_option(
+            name='representation',
+            description=(
+                "The 'implicit' option formats the identity operation as "
+                "a quantum wire and the X gate as a target. The 'explicit' "
+                "option formats the identity operation as a box containing the "
+                "I literal and the X gate as a box containing an X"),
+            default='wire',
+            related_methods=())
+        options.add_option(
+            name = 'display',
+            description = (
+                    "The 'solo' option formats the Gate inside the "
+                    r"\qcircuit package (for use outside a circuit. "
+                    "The 'contained' option formats the Gate as a "
+                    "circuit element (for use inside a circuit). "),
+            default = 'solo',
+            related_methods = ())
+
+
+        return options
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, **kwargs):
+    def formatted(self, format_type, representation=None, display=None, **kwargs):
         if self.gate_operation is None:
             formatted_gate_operation = '[]'
         else:
             formatted_gate_operation = self.gate_operation.formatted(
                 format_type, fence=False)
+        if representation is None:
+            representation = self.get_style('representation', 'explicit')
+        if display is None:
+            display = self.get_style('display', 'solo')
+
         if isinstance(self.gate_operation, IdentityOp):
-            formatted_gate_operation = 'I'
+            return self.gate_operation.formatted(format_type, display=display)
         if format_type == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = ''
+
             if formatted_gate_operation == 'MES':
                 out_str += r'\meter'
             elif formatted_gate_operation == 'SPACE':
@@ -288,9 +376,14 @@ class Gate(Function):
             elif isinstance(self.gate_operation, Output):
                 out_str += r'\gate{ Output(' + self.gate_operation.state.formatted(
                     format_type='latex') + ')}'
+            elif formatted_gate_operation == 'X' and representation == 'implicit':
+                # this is formatted as a target.
+                out_str += r'\targ'
             else:
                 out_str += r'\gate{' + formatted_gate_operation + r'}'
-            out_str += ' \n' + r'} \hspace{2em}'
+            if display == 'solo':
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Gate(' + formatted_gate_operation + ')'
@@ -372,6 +465,15 @@ class MultiQubitGate(Function):
                            "Ex. |X|"),
             default = 'explicit',
             related_methods = ())
+        options.add_option(
+            name='display',
+            description=(
+                "The 'solo' option formats the MQG inside the "
+                r"\qcircuit package (for use outside a circuit. "
+                "The 'contained' option formats the MQG as a "
+                "circuit element (for use inside a circuit). "),
+            default='solo',
+            related_methods=())
         return options
 
     def string(self, **kwargs):
@@ -403,31 +505,36 @@ class MultiQubitGate(Function):
             return empty_multi_qubit_gate_reduction.instantiate(
                 {U: self.gate}, assumptions=assumptions)
 
-    def formatted(self, format_type, representation=None, **kwargs):
+    def formatted(self, format_type, representation=None, display=None, **kwargs):
         if representation is None:
             representation = self.get_style('representation', 'explicit')
+        if display is None:
+            display = self.get_style('display', 'solo')
 
-        formatted_gate_operation = (
-            self.gate.formatted(format_type, fence=False))
+        if self.gate.get_style('display', 'test') == 'test':
+            formatted_gate_operation = (
+                self.gate.formatted(format_type, fence=False))
+        else:
+            formatted_gate_operation = (
+                self.gate.formatted(format_type, display='contained', fence=False))
+
+        if isinstance(self.gate, Input) or isinstance(self.gate, Output):
+            formatted_gate_operation = self.gate.formatted('string')
+
         if isinstance(self.gate, IdentityOp):
             formatted_gate_operation = 'I'
-        if isinstance(self.gate, Input):
-            formatted_gate_operation = 'Input(' + self.gate.state.formatted(
-                format_type, fence=False) + ')'
-        if isinstance(self.gate, Output):
-            formatted_gate_operation = 'Output(' + self.gate.state.formatted(
-                format_type, fence=False) + ')'
         if format_type == 'latex':
-            if r'\Qcircuit' in formatted_gate_operation:
-                idx = formatted_gate_operation.index('\n')
-                formatted_gate_operation = formatted_gate_operation[idx + 3:len(
-                    formatted_gate_operation) - 16]
-                # add = '& '
-                # we add three  to include the n and the & and the space after then &
-                # we subtract 16 to get rid of the ending bracket, the \hspace,
-                # and \n
+            # if r'\Qcircuit' in formatted_gate_operation:
+            #     idx = formatted_gate_operation.index('\n')
+            #     formatted_gate_operation = formatted_gate_operation[idx + 3:len(
+            #         formatted_gate_operation) - 16]
+            #     # add = '& '
+            #     # we add three  to include the n and the & and the space after then &
+            #     # we subtract 16 to get rid of the ending bracket, the \hspace,
+            #     # and \n
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = ''
+
             if formatted_gate_operation == 'X' and representation == 'implicit':
                 # this is formatted as a target.
                 out_str += r'\targ'
@@ -444,8 +551,6 @@ class MultiQubitGate(Function):
                 out_str += r'\qswap'
             elif formatted_gate_operation == 'SPACE':
                 out_str += formatted_gate_operation
-            elif formatted_gate_operation == 'I' and representation == 'implicit':
-                out_str += r'\qw'
             else:
                 from proveit.numbers import is_literal_int
                 if isinstance(
@@ -461,7 +566,10 @@ class MultiQubitGate(Function):
                     out_str += r'\gate{' + formatted_gate_operation + \
                         r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
                     #out_str += formatted_gate_operation + r'{\Big \{}' + self.gate_set.formatted(format_type)
-            out_str += ' \n' + r'} \hspace{2em}'
+
+            if display == 'solo':
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return "MultiQubitGate(" + formatted_gate_operation + \
