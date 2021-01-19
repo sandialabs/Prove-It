@@ -1313,7 +1313,7 @@ if __name__ == '__main__':
         as notebook outputs and html versions.
         '''
         url = ("https://github.com/PyProveIt/Prove-It/archive/"
-               "master-full.tar.gz")
+               "gh-pages.tar.gz")
         if rank == 0:
             if not sure_you_want_to_extract(paths):
                 print('Quitting')
