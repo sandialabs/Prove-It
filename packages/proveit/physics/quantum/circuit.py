@@ -136,15 +136,15 @@ class IdentityOp(Literal):
     The quantum identity operator 'I'
     '''
 
-    def __init__(self, explicit=False):
+    def __init__(self, explicit=True):
         '''
         Create the Literal 'I'.
         If not 'explicit', just use a wire.
         '''
         if explicit:
-            styles = {'gate': 'explicit'}
+            styles = {'representation': 'explicit'}
         else:
-            styles = {'gate': 'wire'}
+            styles = {'representation': 'implicit'}
         Literal.__init__(self, 'I', styles=styles)
 
     def style_options(self):
@@ -152,13 +152,13 @@ class IdentityOp(Literal):
 
         options = StyleOptions(self)
         options.add_option(
-            'gate',
-            ("The 'wire' option formats the identity operation as a quantum wire and the 'explicit'"
+            'representation',
+            ("The 'implicit' option formats the identity operation as a quantum wire and the 'explicit'"
              "option formats it as a box containing the I literal"))
         return options
 
     def remake_arguments(self):
-        if self.get_style('gate', 'wire') == 'explicit':
+        if self.get_style('representation', 'wire') == 'explicit':
             yield('explicit', True)
 
     def string(self, **kwargs):
@@ -167,20 +167,20 @@ class IdentityOp(Literal):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, gate=None, fence=False):
-        if gate is None:
-            gate = self.get_style('gate', 'wire')
+    def formatted(self, format_type, representation=None, fence=False):
+        if representation is None:
+            representation = self.get_style('representation')
         if format_type == 'latex':
             spacing = '@C=1em @R=.7em'
             out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
-            if gate == 'wire':
+            if representation == 'implicit':
                 out_str += r'\qw'
             else:
                 out_str += r'\gate{I}'
             out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
-            if gate == 'wire':
+            if representation == 'implicit':
                 return '--'
             else:
                 return '[I]'
@@ -351,7 +351,7 @@ class MultiQubitGate(Operation):
         options = StyleOptions(self)
         options.add_option(
             'representation',
-            ("'implicit' representation displays X gates as a target, while"
+            ("'implicit' representation displays X gates as a target and the IdentityOp() as a wire while"
              "'explicit' representation always displays the type of gate in a box. Ex. |X|"))
         return options
 
@@ -403,14 +403,14 @@ class MultiQubitGate(Operation):
                 idx = formatted_gate_operation.index('\n')
                 formatted_gate_operation = formatted_gate_operation[idx + 3:len(
                     formatted_gate_operation) - 16]
-                #add = '& '
+                # add = '& '
                 # we add three  to include the n and the & and the space after then &
                 # we subtract 16 to get rid of the ending bracket, the \hspace,
                 # and \n
             spacing = '@C=1em @R=.7em'
             out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
             if formatted_gate_operation == 'X' and representation == 'implicit':
-               # this is formatted as a target.
+                # this is formatted as a target.
                 out_str += r'\targ'
             elif formatted_gate_operation == 'CONTROL':
                 # this is formatted as a solid dot using \control
@@ -425,7 +425,8 @@ class MultiQubitGate(Operation):
                 out_str += r'\qswap'
             elif formatted_gate_operation == 'SPACE':
                 out_str += formatted_gate_operation
-
+            elif formatted_gate_operation == 'I' and representation == 'implicit':
+                out_str += r'\qw'
             else:
                 from proveit.numbers import is_literal_int
                 if isinstance(
@@ -1219,8 +1220,9 @@ class Circuit(Operation):
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
                         # across all gates in the MultiQubitGate
                         if value.gate.string() != 'CONTROL' and \
-                                value.gate.string() != 'CLASSICAL\\_CONTROL':
-                            # control gates should not be inside of a
+                                value.gate.string() != 'CLASSICAL\\_CONTROL' and \
+                                value.gate.string() != '--':
+                            # control gates and implicit IdentityOp()'s should not be inside of a
                             # MultiQubit block gate
                             if index < value.indices.num_entries() - 1:
                                 # if this is not the last gate in the
@@ -1301,7 +1303,7 @@ class Circuit(Operation):
                                     # wires
                                     row[col] = 'skip'
                         else:
-                            # there is a control or a classical control
+                            # there is a control, a classical control, or the IdentityOp()
                             # Define the wire_direction for the MultiQubitGate by taking the next index and
                             # subtracting the current one
                             if index < value.indices.num_entries() - 1:
@@ -1554,7 +1556,7 @@ class Circuit(Operation):
             spacing=None,
             **kwargs):
         from proveit._core_.expression.expr import Expression
-        default_style = ("explicit" if format_type == 'string' else 'implicit')
+        default_style = ('explicit' if format_type == 'string' else 'implicit')
         out_str = ''
         if self.array.num_entries() == 0 and fence:
             # for an empty list, show the parenthesis to show something.
@@ -1625,6 +1627,9 @@ class Circuit(Operation):
                                 if r'\gate' in entry:
                                     entry_str += add + entry + r' \qwx[' + str(wires[row][column][1]) + r'] ' \
                                         r'\qwx[' + str(wires[row][column][2]) + r']'
+                                elif entry == 'I':
+                                    entry_str += add + r'\qw' + r' \qwx[' + str(wires[row][column][1]) + r'] \
+                                            qwx[' + str(wires[row][column][2]) + r']'
                                 else:
                                     entry_str += add + r'\gate{' + entry + r'} \qwx[' + str(
                                         wires[row][column][1]) + r'] \qwx[' + str(wires[row][column][2]) + r']'
@@ -1632,6 +1637,9 @@ class Circuit(Operation):
                                 if r'\gate' in entry:
                                     entry_str += add + entry + \
                                         r' \qwx[' + str(wires[row][column][1]) + r']'
+                                elif entry == 'I':
+                                    entry_str += add + r'\qw' + \
+                                                 r' \qwx[' + str(wires[row][column][1]) + r']'
                                 else:
                                     entry_str += add + \
                                         r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
