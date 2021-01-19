@@ -114,12 +114,6 @@ class Proof:
             # determine the number of unique steps required for this proof
             self._meaning_data.num_steps = len(all_required_proofs)
 
-        # establish some parent-child relationships (important in case styles
-        # are updated)
-        self._style_data.add_child(self, self.proven_truth)
-        for required_truth in self.required_truths:
-            self._style_data.add_child(self, required_truth)
-
         self._style_id = self._style_data._unique_id
 
         if not original_proof:
@@ -369,12 +363,18 @@ class Proof:
 
     def __setattr__(self, attr, value):
         '''
-        Proofs should be read-only objects.  Attributes may be added, however; for example,
-        the 'png' attribute which will be added whenever it is generated).  Also,
-        _dependents is an exception which can be updated internally.
+        Proofs should be read-only objects except for changing
+        the proven_truth to another with the same meaning (but
+        possibly different style).  Attributes may be added, 
+        however; for example, the 'png' attribute which will be added 
+        whenever it is generated).
         '''
         if hasattr(self, attr):
-            raise Exception("Attempting to alter read-only value")
+            # It is okay to change to proven_truth to another one
+            # with the same meaning but possibly different style.
+            # But otherwise, we want to treat attributes as read only.
+            if attr != 'proven_truth' or value != self.__dict__[attr]:
+                raise Exception("Attempting to alter read-only value")
         self.__dict__[attr] = value
 
     def enumerated_proof_steps(self):
@@ -970,50 +970,36 @@ class Instantiation(Proof):
     def __init__(self, orig_judgment, num_forall_eliminations,
                  repl_map, equiv_alt_expansions, assumptions):
         '''
-        Create the instantiation+instantiation proof step that eliminates
-        some number of nested Forall operations (instantiation) and
-        simultaneously replaces Variables with Expressions (instantiation)
-        according to the replacement map (repl_map). A Variable that is
-        a parameter variable of an internal Lambda expression may only
-        be relabeled; it will not be replaced with a non-Variable expression
-        within the scop of the Lambda expression.
+        Create the instantiation proof step that eliminates some number
+        of nested Forall operations and simultaneously replaces 
+        Variables with Expressions according to the replacement map 
+        (repl_map).  A Variable that is a parameter variable of an 
+        internal Lambda expression may only be relabeled; it will not 
+        be replaced with a non-Variable expression within the scope of
+        the Lambda expression.
 
-        See Expression.substituted for details regarding the replacement rules.
+        See Expression.substituted for details regarding the replacement 
+        rules.
         '''
-        from proveit import (Expression, Function, Lambda, ExprRange,
-                             ExprTuple)
+        from proveit import Variable, Function, Lambda, ExprTuple, ExprRange
         from proveit._core_.expression.lambda_expr.lambda_expr import \
-            (get_param_var, LambdaApplicationError)
-
-        # Prepare the 'parameters' and 'operands' for a lambda map
-        # application (beta reduction) to perform the replacements.
-        parameters = []
+            (get_param_var, valid_params, LambdaApplicationError)
+        from proveit._core_.expression.label.var import safe_dummy_var
+        
+        # Prepare the 'relabel_params' for basic relabeling that 
+        # can apply to both sides of the turnstile.
+        relabel_params = []
+        relabel_param_replacements = []
         for key, repl in repl_map.items():
-            if isinstance(repl, set):
-                # When the replacement is a set, it indicates a set
-                # of possible ways to expand a range of variables.
-                # For the current purpose, skip these instances.
-                continue
-            if not isinstance(repl, Expression):
-                raise TypeError("Replacement %s is of type %s and not "
-                                "an 'Expression' object"
-                                % (repl, repl.__class__))
-            if isinstance(key, ExprTuple):
-                # If the key is an ExprTuple, it must either be a
-                # range (or range of ranges, etc.) of an indexed variable
-                # for a full expansion, or it is an "equivalent alternative
-                # expansion".
-                # Should already have been checked in
-                # Judgment.instantiate:
-                try:
-                    for param_entry in key:
-                        get_param_var(param_entry)
-                except TypeError as e:
-                    assert False, ("Should have been checked in 'instantiate' "
-                                   "method:\n%s" % str(e))
-                parameters.append(key[0])
-            else:
-                parameters.append(key)
+            if isinstance(key, Variable) and isinstance(repl, Variable):
+                relabel_params.append(key)
+                relabel_param_replacements.append(repl)
+            elif (isinstance(key, ExprTuple) and isinstance(repl, ExprTuple)
+                    and key.num_entries()==1
+                    and valid_params(key) and valid_params(repl)):
+                relabel_params.append(key.entries[0])
+                relabel_param_replacements.extend(repl.entries)
+
         prev_default_assumptions = set(defaults.assumptions)
         try:
             # These assumptions will be used for deriving any
@@ -1025,28 +1011,15 @@ class Instantiation(Proof):
                 raise UnusableProof(Judgment.theorem_being_proven,
                                     orig_judgment)
 
-            # The "original" Judgment is the first "requirement truth" for
-            # this derivation step.
+            # Perform relabeling of Judgment assumptions,
+            # recording requirements.
             orig_subbed_assumptions = []
             requirements = []
             equality_repl_requirements = set()
-
-            # Make possible substitutions in the "original" Judgment
-            # assumption.
-            operands = []
-            for parameter in parameters:
-                if (ExprTuple(parameter) in repl_map):
-                    # Yield the entries for the replacement of the
-                    # ExprTuple of the parameter.
-                    for entry in repl_map[ExprTuple(parameter)]:
-                        operands.append(entry)
-                else:
-                    operands.append(repl_map[parameter])
             for assumption in orig_judgment.assumptions:
                 subbed_assumption = Lambda._apply(
-                    parameters, assumption, *operands,
-                    allow_relabeling=False,
-                    equiv_alt_expansions=equiv_alt_expansions,
+                    relabel_params, assumption, *relabel_param_replacements,
+                    allow_relabeling=True, equiv_alt_expansions=None,
                     assumptions=assumptions, requirements=requirements,
                     equality_repl_requirements=equality_repl_requirements)
                 if isinstance(assumption, ExprRange):
@@ -1055,20 +1028,22 @@ class Instantiation(Proof):
                 else:
                     orig_subbed_assumptions.append(subbed_assumption)
 
+
             # Automatically use the assumptions of the
             # original_judgment plus the assumptions that were
             # provided.
             assumptions = tuple(orig_subbed_assumptions) + assumptions
             # Eliminate duplicates.
             assumptions = tuple(OrderedDict.fromkeys(assumptions))
-            # Make this the new default (for side-effects).
+            # Make these the new default assumptions (for side-effects).
             defaults.assumptions = assumptions
-
+            
+            # Perform the instantiations, recording requirements.
             instantiated_expr = \
-                Instantiation._instantiated_expr(
-                    orig_judgment, num_forall_eliminations,
-                    parameters, repl_map, equiv_alt_expansions,
-                    assumptions, requirements,
+                Instantiation._instantiated_expr(orig_judgment, 
+                    relabel_params, relabel_param_replacements,
+                    num_forall_eliminations, repl_map, 
+                    equiv_alt_expansions, assumptions, requirements,
                     equality_repl_requirements)
 
             # Remove duplicates in the requirements.
@@ -1130,6 +1105,15 @@ class Instantiation(Proof):
                     if isinstance(replacement, Lambda):
                         # If the replacement is a Lambda, convert it
                         # to a Function mapping form.
+                        if var in replacement.parameters:
+                            # We don't want any of the parameters of 
+                            # the Lambda replacement to be the same as
+                            # the function variable (e.g. i(i) = ...
+                            # doesn't make sense in its appearance).
+                            safe_var = safe_dummy_var(
+                                var, replacement, replacement.parameters)
+                            replacement = replacement.relabeled(
+                                {var:safe_var})
                         key = Function(
                             var, replacement.parameter_or_parameters)
                         replacement = replacement.body
@@ -1227,79 +1211,55 @@ class Instantiation(Proof):
         return parameters
 
     @staticmethod
-    def _instantiated_expr(original_judgment, num_forall_eliminations,
-                           instantiation_params, repl_map,
-                           equiv_alt_expansions,
+    def _instantiated_expr(original_judgment, 
+                           relabel_params, relabel_param_replacements,
+                           num_forall_eliminations,
+                           repl_map, equiv_alt_expansions,
                            assumptions, requirements,
                            equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
-        original_judgment.  The assumptions on the left side of
-        the turnstile are treated in Instantiation.__init__.
-
+        original_judgment.
+        
         Eliminates the specified number of Forall operations,
         substituting all  of the corresponding instance variables
         according to repl_map.
         '''
-        from proveit import (Lambda, Conditional, ExprTuple, ExprRange)
+        from proveit import (Lambda, Conditional, ExprTuple,
+                             ExprRange)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
         from proveit.logic import Forall, And
-
         # Eliminate the desired number of Forall operations and extract
         # appropriately mapped conditions.
+        # Start with replacing the variables that are being relabeled
+        # on both sides of the turnstile and then successively include
+        # parameters as their universal quantifier is eliminated.
         expr = original_judgment.expr
+        params = list(relabel_params)
+        param_vars = {get_param_var(param) for param in params}
+        operands = list(relabel_param_replacements)
+        equiv_alt_expansion_keys_by_param_var = dict()
+        for key in equiv_alt_expansions.keys():
+            equiv_alt_expansion_keys_by_param_var.setdefault(
+                get_param_var(key.entries[0]), []).append(key)
+        active_equiv_alt_expansions = dict()
 
         def raise_failure(msg):
             raise InstantiationFailure(original_judgment, repl_map,
                                        assumptions, msg)
-        instantiation_param_vars = [get_param_var(param) for param
-                                    in instantiation_params]
-        # When an implicit range of indexed variables becomes explicit,
-        # map this correspondence, e.g., 'x' to 'x_1, ..., x_n' when
-        # eliminated \forall_{x_1, ..., x_n}.
-        explicit_ranges = dict()
-
-        def instantiate(expr, exclusion=None):
+        
+        def instantiate(expr):
             '''
             Instantiate the given expression by applying an
-            ad-hoc Lambda mapping with parameters from the
-            instantiation_params and operands extracted from the
-            current repl_map.  If an exclusion is provided, skip
-            parameters whose variable is the exclusion.
+            ad-hoc Lambda mapping of the active params
+            and operands.
             '''
-            params = []
-            operands = []
-            for param, param_var in zip(instantiation_params,
-                                        instantiation_param_vars):
-                if param_var == exclusion:
-                    continue  # skip the 'exclusion'
-                if isinstance(param, ExprRange):
-                    # An ExprRange parameter should have a tuple
-                    # replacement for its tuple form.
-                    for entry in repl_map[ExprTuple(param)]:
-                        operands.append(entry)
-                elif param_var in explicit_ranges:
-                    # When an implicit range is mapped to an
-                    # explicit one, a variable instantiation
-                    # should be replaced by the corresponding range
-                    # of variables.
-                    # For example
-                    #   x : (x_1, ..., x_n)
-                    # which may be introduced after eliminating a
-                    #   \forall_{x_1, ..., x_n} ...
-                    # universal quantifier.
-                    param = explicit_ranges[param_var]
-                    for entry in repl_map[ExprTuple(param)]:
-                        operands.append(entry)
-                else:
-                    operands.append(repl_map[param])
-                params.append(param)
             if len(params) == 0:
                 return expr
             return Lambda._apply(
                 params, expr, *operands, allow_relabeling=True,
-                equiv_alt_expansions=equiv_alt_expansions,
+                equiv_alt_expansions=active_equiv_alt_expansions,
                 assumptions=assumptions, requirements=requirements,
                 equality_repl_requirements=equality_repl_requirements)
 
@@ -1310,38 +1270,75 @@ class Instantiation(Proof):
             lambda_expr = expr.operand
             assert isinstance(lambda_expr, Lambda)
             expr = lambda_expr.body
-
+            
+            # Append to params and operands for new parameter
+            # variables as the parameter quantifiers are 
+            # eliminated.
             # Check for implicit variable range substitutions
             # that need to be made explicit.  For example,
             # if we have an instantiation for 'x' that is an ExprTuple
             # and 'x' is universally quantified over a range here
-            # (e.g., x_1, ..., x_n), then we will record the
-            # correspondence (e.g., x : x_1, ..., x_n) in
-            # `explicit_ranges` (used when generating parameters
-            # for ad-hoc Lambda expressions) and update
-            # repl_map to record the assignments.  For example,
-            # x : {(x_1, ..., x_n)}
-            # (x_1, ..., x_n) : <the-actual-replacement>
+            # (e.g., x_1, ..., x_n), we will use the replacement
+            # of 'x' as the operands corresponding to
+            # the x_1, ..., x_n parameters.  Also activate
+            # equivalent alternative expansions (of such ranges)
+            # as appropriate.
             for param in lambda_expr.parameters:
+                param_var = get_param_var(param)
+                if param_var in param_vars:
+                    # The replacement for this parameter variable
+                    # is already included.
+                    continue
+                param_vars.add(param_var)
+                param_var_repl = repl_map.get(param_var, None)
+                new_param = None
+                new_operands = None
                 if isinstance(param, ExprRange):
-                    param_var = get_param_var(param)
-                    param_var_repl = repl_map.get(param_var, None)
-                    if isinstance(param_var_repl, ExprTuple):
-                        subbed_param = instantiate(param, exclusion=param_var)
-                        if subbed_param not in repl_map:
-                            subbed_param_tuple = ExprTuple(subbed_param)
-                            if (subbed_param_tuple in repl_map and
-                                    repl_map[subbed_param_tuple] !=
-                                    param_var_repl):
-                                raise_failure("Inconsistent assignment of "
-                                              "%s: %s, from instantiation of "
-                                              "%s, versus %s."
-                                              % (subbed_param_tuple,
-                                                 param_var_repl, param_var,
-                                                 repl_map[subbed_param_tuple]))
-                            explicit_ranges[param_var] = subbed_param
-                            repl_map[subbed_param_tuple] = param_var_repl
-
+                    subbed_param = instantiate(param)
+                    assert isinstance(subbed_param, ExprRange)
+                    subbed_param_tuple = ExprTuple(subbed_param)
+                    new_param = subbed_param
+                    if subbed_param_tuple in repl_map:
+                        # There exists an explicit range
+                        # instantiation.  For example,
+                        # (x_1, ..., x_n): (a, b, c)
+                        new_operands = repl_map[subbed_param_tuple]
+                        assert isinstance(new_operands, ExprTuple)
+                        if (param_var_repl is not None and
+                                param_var_repl != new_operands):
+                            # An implicit and explicit range
+                            # instantiation do not agree.
+                            raise_failure("Inconsistent assignment of "
+                                          "%s: %s, from instantiation of "
+                                          "%s, versus %s."
+                                          % (subbed_param_tuple,
+                                             param_var_repl, param_var,
+                                             new_operands))                            
+                        new_operands = new_operands.entries
+                    elif param_var_repl is not None:
+                        # We have an implicit range instantiation.
+                        # For example, x: (a, b, c).
+                        new_operands = param_var_repl.entries   
+                elif param_var_repl is not None:
+                    new_param = param
+                    new_operands = [param_var_repl]
+                # Update the active equivalent alternative expansions.
+                equiv_alt_expansion_keys = \
+                    equiv_alt_expansion_keys_by_param_var.get(param_var, None)
+                if equiv_alt_expansion_keys is not None:
+                    active_equiv_alt_expansions.update(
+                        {key:equiv_alt_expansions[key] for key 
+                         in equiv_alt_expansion_keys})
+                    if new_operands is None:
+                        # For the equivalent alternative expansion to
+                        # be used, we need to include the parameter
+                        # and corresponding operands; in this case,
+                        # it is a trivial identity replacement.
+                        new_operands = [new_param]
+                if new_operands is not None:
+                    params.append(new_param)
+                    operands.extend(new_operands)
+            
             # If there is a condition of the universal quantifier
             # being eliminated, produce the instantiated condition,
             # prove that this is satisfied and add it as "requirements".
@@ -1378,7 +1375,6 @@ class Instantiation(Proof):
                         # a range, we need to wrap it in a
                         # conjunction.
                         subbed_cond = And(subbed_cond)
-                        defaults.debug = (subbed_cond, assumptions)
                     try:
                         requirements.append(subbed_cond.prove(assumptions))
                     except ProofFailure:
@@ -1549,7 +1545,7 @@ class _ShowProof:
                 ref_obj_id_groups[-2][0])
         self.proven_truth._meaning_data._proof = self
         self.required_proofs = \
-            [theory.get_show_proof(obj_id.rstrip('*')) for obj_id
+            [theory.get_show_proof(obj_id.rstrip('*'), folder) for obj_id
              in ref_obj_id_groups[-1]]
         self.marked_required_truth_indices = \
             {k for k, obj_id in enumerate(ref_obj_id_groups[-1])

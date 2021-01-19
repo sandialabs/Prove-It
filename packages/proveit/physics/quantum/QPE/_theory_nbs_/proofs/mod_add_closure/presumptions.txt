@@ -102,5 +102,4 @@ proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
 proveit.numbers.ordering.relax_less
 proveit.physics.quantum.QPE.two_pow_t_is_nat_pos
-proveit.physics.quantum.QPE.two_pow_t_not_zero
 # THEOREMS AND THEORIES TO EXCLUDE:

@@ -78,19 +78,7 @@ class Less(NumberOrderingRelation):
             {x: self.operands[0], y: self.operands[1]},
             assumptions=assumptions)
         return concluded.with_matching_style(self)
-    
-    def reversed(self):
-        '''
-        Returns this Expression with a reversed inequality style.
-        For example, 
-            (a < b).reversed() is b > a 
-            (a > b).reversed() is b < a
-        '''
-        if self.get_style('direction') == 'reversed':
-            return self.with_style(direction = 'normal')
-        else:
-            return self.with_style(direction = 'reversed')
-            
+                
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         from . import less_than_is_bool
         is_bool_stmt = less_than_is_bool.instantiate(
@@ -355,8 +343,8 @@ class Less(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the left.
         '''
-        from proveit.numbers.addition import left_add_less
-        new_rel = left_add_less.instantiate(
+        from proveit.numbers.addition import strong_bound_by_right_term
+        new_rel = strong_bound_by_right_term.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
@@ -367,8 +355,8 @@ class Less(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the right.
         '''
-        from proveit.numbers.addition import right_add_less
-        new_rel = right_add_less.instantiate(
+        from proveit.numbers.addition import strong_bound_by_left_term
+        new_rel = strong_bound_by_left_term.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)

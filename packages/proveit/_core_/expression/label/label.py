@@ -45,8 +45,11 @@ class Label(Expression):
     def style_options(self):
         options = StyleOptions(self)
         options.add_option(
-            'fence',
-            "Do we need to wrap in paranthesis: 'when forced' or 'never'?")
+            name = 'fence',
+            description = ("Do we need to wrap in paranthesis: "
+                           "'when forced' or 'never'?"),
+            default = 'never',
+            related_methods = ())
         return options
 
     def string(self, **kwargs):
@@ -76,7 +79,7 @@ class Label(Expression):
         return [self.string_format, self.latex_format]
 
     @classmethod
-    def _make(label_class, core_info, styles, sub_expressions):
+    def _make(label_class, core_info, sub_expressions):
         if len(sub_expressions) > 0:
             raise ValueError('Not expecting any sub_expressions of Label')
         if len(core_info) != 3:
@@ -91,7 +94,8 @@ class Label(Expression):
                 "Expecting core_info[0] to be '" +
                 label_class.__name__ +
                 "'")
-        return label_class(core_info[1], core_info[2]).with_styles(**styles)
+        made_label =  label_class(core_info[1], core_info[2])
+        return made_label
 
     def remake_arguments(self):
         '''
@@ -112,8 +116,6 @@ class Label(Expression):
             raise LabelError(
                 "Must properly implement the 'remake_arguments' method for class %s" % str(
                     self.__class__))
-        if 'styles' in init_args and len(self.get_styles()) > 0:
-            yield ('styles', self.get_styles())
         if 'fence_when_forced' in init_args and self.get_style(
                 'fence', 'never') == 'when forced':
             yield ('fence_when_forced', True)

@@ -21,7 +21,7 @@ is an equality (in which case, substitution may simply be performed).
 
 import itertools
 from collections import deque
-from proveit import Expression, Operation, OperationSequence
+from proveit import Expression, Operation
 from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
 from .sorter import TransitivitySorter
 from .relation import Relation

@@ -77,6 +77,24 @@ class And(Operation):
                     "Consecutive total ordering relations must "
                     "match rhs to lhs: %s and %s do not match"
                     %(rel1, rel2))
+    
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this And expression.
+        '''
+        style_options = Operation.style_options(self)
+        try:
+            self._check_total_ordering_applicability()
+            style_options.add_option(
+                    name = "as_total_ordering",
+                    description = ("When 'True', style the conjunction as a "
+                                   "total ordering (e.g. x < y < z from "
+                                   "(x < y) and (y < z))"),
+                    default = None,
+                    related_methods = ('with_total_ordering_style',))
+        except (TypeError, ValueError):
+            pass # total ordering is not applicable
+        return style_options
 
     def with_total_ordering_style(self):
         '''

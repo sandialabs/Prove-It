@@ -1,10 +1,10 @@
 from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
-                     Operation, var_range, USE_DEFAULTS)
+                     Function, var_range, USE_DEFAULTS)
 from proveit.abstract_algebra.generic_methods import (
     apply_commutation_thm, generic_permutation)
 
 
-class Set(Operation):
+class Set(Function):
     '''
     Defines an enumerated set (i.e. a set with explicitly-listed
     elements). For example, one could use Set(one, two, three) to
@@ -22,7 +22,7 @@ class Set(Operation):
                          latex_format=r'\textrm{Set}', theory=__file__)
 
     def __init__(self, *elems):
-        Operation.__init__(self, Set._operator_, elems)
+        Function.__init__(self, Set._operator_, elems)
         self.elements = self.operands
 
     def membership_object(self, element):

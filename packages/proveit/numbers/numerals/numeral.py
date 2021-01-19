@@ -22,8 +22,9 @@ class Numeral(Literal, IrreducibleValue):
 
     def eval_equality(self, other, assumptions=USE_DEFAULTS):
         if other == self:
-            return Equals(self, self).prove()
-        pass  # need axioms/theorems to prove inequality amongst different numerals
+            return Equals(self, self).prove().evaluation()
+        self_neq_other = self.not_equal(other, assumptions)
+        return self_neq_other.unfold().equate_negated_to_false()
 
     def not_equal(self, other, assumptions=USE_DEFAULTS):
         from proveit.numbers import Less
