@@ -32,7 +32,6 @@ proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.addition.commutation
 proveit.numbers.addition.leftward_commutation
-proveit.numbers.addition.right_add_lesseq
 proveit.numbers.addition.rightward_commutation
 proveit.numbers.addition.subtraction.add_cancel_basic
 proveit.numbers.addition.subtraction.add_cancel_general
@@ -44,6 +43,7 @@ proveit.numbers.addition.subtraction.add_cancel_triple_21
 proveit.numbers.addition.subtraction.add_cancel_triple_23
 proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
+proveit.numbers.addition.weak_bound_by_left_term
 proveit.numbers.negation.complex_closure
 proveit.numbers.negation.int_closure
 proveit.numbers.negation.negated_zero
