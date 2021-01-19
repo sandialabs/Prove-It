@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit import a, b, n
+from proveit import a, b, c, d, n
 
 
 class Interval(Operation):
@@ -21,7 +21,7 @@ class Interval(Operation):
             self.upper_bound.string() + '}'
 
     def latex(self, **kwargs):
-        return r'\{' + self.lower_bound.latex() + r' \dots ' + \
+        return r'\{' + self.lower_bound.latex() + r' \ldots ' + \
             self.upper_bound.latex() + r'\}'
 
     def deduce_elem_in_set(self, member):
@@ -69,3 +69,28 @@ class Interval(Operation):
         from . import all_in_negative_interval_are_negative
         return all_in_negative_interval_are_negative.instantiate(
             {a: self.lower_bound, b: self.upper_bound}).instantiate({n: member})
+
+    def deduce_subset_eq_relation(self, sub_interval, assumptions=USE_DEFAULTS):
+        '''
+        Deduce that self of the form {a...d} has as a subset_eq the
+        Interval of the form {b...c}, if a <= b <= c <= d. Example:
+            {1...5}.deduce_subset_eq_relation({2...4})
+        should return
+            |- {2...4} \subset_eq {1...5}
+        Not yet implemented for deducing a ProperSubset relation.
+        '''
+        if isinstance(sub_interval, Interval):
+            from . import interval_subset_eq
+            _a = self.lower_bound
+            _d = self.upper_bound
+            _b = sub_interval.lower_bound
+            _c = sub_interval.upper_bound
+            return interval_subset_eq.instantiate(
+                {a:_a, b:_b, c:_c, d:_d}, assumptions = assumptions)
+        else:
+            # print("Poop!")
+            raise NotImplementedError (
+                    "In calling the Interval.deduce_subset_eq_relation() "
+                    "method, the proposed subset {} needs to be an Interval.".
+                    format(sub_interval))
+

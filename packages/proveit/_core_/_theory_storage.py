@@ -226,7 +226,6 @@ class TheoryStorage:
         root = self.root_theory_storage
         referenced_root = referenced_theory._storage.root_theory_storage
         if root is not referenced_root:
-            assert False, "%s with a different root as %s, from %s referencing %s"%(root.name, referenced_root.name, self.name, referenced_theory._storage.name)
             referenced_root_name = referenced_root.name
             if referenced_root_name not in root.referenced_theory_roots:
                 with open(self.paths_filename, 'a') as paths_file:
@@ -1967,7 +1966,7 @@ class TheoryFolderStorage:
                 styles,
                 sub_expressions):
             expr_class = expr_class_map[expr_class_str]
-            expr = expr_class._checked_make(expr_info, styles, sub_expressions)
+            expr = expr_class._checked_make(expr_info, sub_expressions).with_styles(**styles)
             return expr
         # Load the "special names" of the theory so we
         # will know, for future reference, if this is a special

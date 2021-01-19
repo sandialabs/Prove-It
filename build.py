@@ -784,6 +784,8 @@ def mpi_build(
     # ranks that have been assigned to execute a notebook but
     # haven't finished.
     unfinished_ranks = set()
+    # Set of theories for which a notebook was successfully executed:
+    successful_execution_theories = set()
 
     # Inner functions to address retrying notebooks when executing
     # common expression notebooks and one imports from another that
@@ -844,7 +846,11 @@ def mpi_build(
                                 "expression notebooks detected" %
                                 (failed_import, theory.name))
             retry_orig_err_msg[notebook_path] = orig_err_msg
-            unmet_prerequisites.add(failed_import)
+            if failed_import not in successful_execution_theories:
+                # Note: the prerequisite may have been satisfied
+                # while this was being executed; that's why we
+                # track the 'successful_execution_theories'.
+                unmet_prerequisites.add(failed_import)
             return True
         else:
             return False
@@ -853,10 +859,12 @@ def mpi_build(
     def successful_execution_notification(notebook_path):
         nonlocal count
         count += 1
-        if len(unmet_prerequisites) > 0:
+        common_filename = 'common.ipynb'
+        if notebook_path[-len(common_filename):] == common_filename:
             theory = Theory(notebook_path)
+            successful_execution_theories.add(theory.name)
             unmet_prerequisites.discard(theory.name)
-
+    
     if nranks == 1:
         # The boring single rank case.
         with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
@@ -1101,7 +1109,8 @@ if __name__ == '__main__':
         action='store_const',
         const=True,
         default=False,
-        help=("build the 'demonstrations' notebook for each theory "
+        help=("build the 'demonstrations' notebook for each theory and "
+              "other extraneous notebooks, like tutorials "
               "(--essential is disabled)"))
     parser.add_argument(
         '--theorem_proofs',
@@ -1204,7 +1213,7 @@ if __name__ == '__main__':
     elif not args.download and args.tar == '':
         if (args.build_commons or args.build_axioms or args.build_theorems or 
                 args.build_theories or args.build_demos or args.build_theorem_proofs or
-                args.build_dependencies):
+                args.build_dependencies or args.build_expr_and_proofs):
             # Disable --essential if anything more specific is requested.
             args.build_essential = False
         if args.build_commons or args.build_all or args.build_essential:
@@ -1215,8 +1224,8 @@ if __name__ == '__main__':
                     for theory_path in find_theory_paths(path):
                         name_to_hash_filename = os.path.join(
                             theory_path, '__pv_it', 'common', 'name_to_hash.txt')
-                    if os.path.isfile(name_to_hash_filename):
-                        os.remove(name_to_hash_filename)
+                        if os.path.isfile(name_to_hash_filename):
+                            os.remove(name_to_hash_filename)
             if nranks > 1:
                 comm.barrier()
 
@@ -1242,9 +1251,28 @@ if __name__ == '__main__':
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
         if args.build_demos or args.build_all:
+            # Build demonstration and 'extra' notebooks.
+            def extra_notebook_gen():
+                '''
+                Yield 'extra' notebooks (not in '_theory_nbs' folders).
+                '''
+                for main_path in paths:
+                    for path in itertools.chain(
+                            [main_path], find_theory_paths(main_path)):
+                        for sub_path in os.listdir(path):
+                            full_path = os.path.join(path, sub_path)
+                            if sub_path[0] == '_':
+                                # skip notebook with preceeding underscore.
+                                continue
+                            if (sub_path[-6:] == '.ipynb' and os.path.isfile(full_path)):
+                                yield full_path
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/demonstrations.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
+            mpi_build(extra_notebook_gen(),
+                      no_latex=args.nolatex, git_clear=not args.nogitclear,
+                      no_execute=args.noexecute, export_to_html=True)
+                            
         if args.build_theorem_proofs or args.build_all:
             mpi_build(theoremproof_path_generator(paths),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
@@ -1285,7 +1313,7 @@ if __name__ == '__main__':
         as notebook outputs and html versions.
         '''
         url = ("https://github.com/PyProveIt/Prove-It/archive/"
-               "master-full.tar.gz")
+               "gh-pages.tar.gz")
         if rank == 0:
             if not sure_you_want_to_extract(paths):
                 print('Quitting')

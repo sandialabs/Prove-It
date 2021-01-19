@@ -87,7 +87,7 @@ class ExprRange(Expression):
             free_vars(self.body, err_inclusively=True))
 
     @classmethod
-    def _make(sub_class, core_info, styles, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions):
         if sub_class != ExprRange:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprRange':
@@ -95,8 +95,7 @@ class ExprRange(Expression):
                              "exactly one item: 'ExprRange'")
         lambda_map, start_index, end_index = sub_expressions
         return ExprRange(None, None, start_index, end_index,
-                         lambda_map=lambda_map) \
-            .with_styles(**styles)
+                         lambda_map=lambda_map)
 
     def literal_int_extent(self):
         '''
@@ -152,13 +151,18 @@ class ExprRange(Expression):
     def style_options(self):
         options = StyleOptions(self)
         options.add_option(
-            'parameterization',
-            ("'implicit' (default for LaTeX formatting) hides "
-             "the parameter the ExprRange so the parameterization "
-             "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
-             "'explicit' (default for string formatting) reveals "
-             "the parameterization "
-             "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
+            name = 'parameterization',
+            description = (
+                    "'implicit' (default for LaTeX formatting) hides "
+                    "the parameter the ExprRange so the parameterization "
+                    "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
+                    "'explicit' (default for string formatting) reveals "
+                    "the parameterization "
+                    "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."),
+            default = None,
+            related_methods = ('with_explicit_parameterization',
+                               'with_implicit_parameterization',
+                               'with_default_parameterization_style'))
         return options
 
     def with_explicit_parameterization(self):

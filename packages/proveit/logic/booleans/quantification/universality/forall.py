@@ -1,7 +1,7 @@
-from proveit import (Literal, Operation, OperationOverInstances,
+from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
                      defaults, USE_DEFAULTS, ProofFailure)
-from proveit import k, n, x, P, S
+from proveit import k, n, x, A, B, P, S
 from proveit._core_.proof import Generalization
 
 
@@ -9,6 +9,10 @@ class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(string_format='forall', latex_format=r'\forall',
                          theory=__file__)
+    
+    # Map instance parameter -> expression maps to universal 
+    # quantifications over them that are known judgments.
+    known_instance_maps = dict()
 
     def __init__(self, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None,
@@ -26,7 +30,7 @@ class Forall(OperationOverInstances):
             instance_expr, domain=domain, domains=domains,
             condition=condition, conditions=conditions,
             _lambda_map=_lambda_map)
-
+    
     def side_effects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for this
@@ -38,6 +42,12 @@ class Forall(OperationOverInstances):
             if self.conditions.num_entries() == 0:
                 # derive an unfolded version (dependent upon the domain)
                 yield self.unfold
+        # Remember the proven Universal judgments by their
+        # instance expressions.
+        instance_map = Lambda(judgment.expr.instance_params,
+                              judgment.expr.instance_expr)
+        Forall.known_instance_maps.setdefault(
+                instance_map, set()).add(judgment)
 
     def conclude(self, assumptions):
         '''
@@ -47,8 +57,11 @@ class Forall(OperationOverInstances):
         method, attempt to conclude this Forall statement
         via 'conclude_as_folded'.
         '''
+        from proveit.logic import SubsetEq
+        
         # first try to prove via generalization without automation
         assumptions = defaults.checked_assumptions(assumptions)
+        
         expr = self
         instance_param_lists = []
         conditions = []
@@ -62,7 +75,36 @@ class Forall(OperationOverInstances):
                 proven_inst_expr = expr.prove(new_assumptions)
                 return proven_inst_expr.generalize(instance_param_lists,
                                                    conditions=conditions)
-
+        
+        if (self.has_domain() and self.instance_params.is_single 
+                and self.conditions.is_single()):
+            instance_map = Lambda(self.instance_params, self.instance_expr)
+            domain = self.domain 
+            known_domains = set()
+            # Next, check the known quantified instance expressions
+            # and known set inclusions of domains to see if we can 
+            # construct a proof via inclusive universal quantification.
+            if instance_map in Forall.known_instance_maps:
+                known_foralls = Forall.known_instance_maps[instance_map]
+                for known_forall in known_foralls:
+                    if (known_forall.has_domain() 
+                            and known_forall.instance_params.is_single()
+                            and known_forall.conditions.is_single()):
+                        if known_forall.is_sufficient(assumptions):
+                            known_domains.add(known_forall.domain)
+            if len(known_domains) > 0 and domain in SubsetEq.known_left_sides:
+                # We know this quantification in other domain(s).
+                # Do any of those include this domain?
+                for known_inclusion in SubsetEq.known_left_sides[domain]:
+                    if known_inclusion.is_sufficient(assumptions):
+                        superset = known_inclusion.superset
+                        if superset in known_domains:
+                            # We know the quantification over a s
+                            # uperset.  We can use 
+                            # inclusive_universal_quantification.
+                            return self.conclude_via_domain_inclusion(
+                                    superset, assumptions=assumptions)
+        
         # The next 2 'ifs', one for prove_by_cases and one for
         # conclude_as_folded can eventually be merged as we eliminate the
         # separate conclude_as_folded() method. Keeping both for now
@@ -176,8 +218,28 @@ class Forall(OperationOverInstances):
             unbundled = self.unbundle_equality(assumptions=assumptions).rhs
             unbundled = unbundled.conclude_as_folded(assumptions)
             return unbundled.bundle(assumptions=assumptions)
-        blah = self.domain.fold_as_forall(self, assumptions)
-        return blah
+        return self.domain.fold_as_forall(self, assumptions)
+    
+    def conclude_via_domain_inclusion(self, superset_domain,
+                                      assumptions=USE_DEFAULTS):
+        '''
+        Conclude this forall statement from a similar forall statement
+        over a broader domain.  For example, conclude
+        forall_{x in B} P(x) from forall_{x in A} P(x)
+        given A superset_eq B.
+        '''
+        from proveit.logic.sets.inclusion import (
+                inclusive_universal_quantification)
+        if not (self.has_domain() and self.instance_params.is_single 
+                and self.conditions.is_single()):
+            raise ValueError("May only call conclude_via_domain_inclusion "
+                             "on a Forall expression with a single instance "
+                             "variable over a domain and no other conditions.")
+        _x = self.instance_param
+        P_op, _P_op = Function(P, _x), self.instance_expr
+        return inclusive_universal_quantification.instantiate(
+                {x:_x, P_op:_P_op, A:superset_domain, B:self.domain},
+                assumptions=assumptions).derive_consequent(assumptions)
 
     def bundle(self, num_levels=2, *, assumptions=USE_DEFAULTS):
         '''
@@ -259,14 +321,7 @@ class Forall(OperationOverInstances):
         '''
         return self.prove(assumptions).instantiate(
             repl_map, assumptions=assumptions)
-
-    def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
-        '''
-        TEMPORARY FOR BACKWARD COMPATIBILITY
-        '''
-        return self.prove(assumptions).instantiate(
-            repl_map, assumptions=assumptions)
-
+    
     def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if
@@ -294,7 +349,7 @@ class Forall(OperationOverInstances):
         from proveit.numbers import one
         from . import forall_in_bool
         _x = self.instance_params
-        P_op, _P_op = Operation(P, _x), self.instance_expr
+        P_op, _P_op = Function(P, _x), self.instance_expr
         _n = _x.num_elements(assumptions)
         x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
         return forall_in_bool.instantiate(

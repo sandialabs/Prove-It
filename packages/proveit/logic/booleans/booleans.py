@@ -128,9 +128,9 @@ class BooleanSet(Literal):
                 assumptions=assumptions)
         else:
             # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
-            Px = Operation(P, forall_stmt.instance_var)
+            Px = Operation(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
-            _A = forall_stmt.instance_var
+            _A = forall_stmt.instance_param
             return fold_forall_over_bool.instantiate(
                 {Px: _Px, A: _A}, num_forall_eliminations=1,
                 assumptions=assumptions)
