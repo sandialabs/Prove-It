@@ -6,7 +6,6 @@ from proveit._core_.expression.label.var import safe_dummy_var, safe_dummy_vars
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
-
 def get_param_var(parameter, *, _required_indices=None):
     '''
     Parameters may be variables, indexed variables, ranges over indexed
@@ -942,6 +941,65 @@ class Lambda(Expression):
                     relabeled_expr2s)}
             return Lambda(lambda1.parameters,
                           lambda1.body.replaced(lambda1_expr_sub_map))
+    
+    def substitution(self, universal_eq, assumptions=USE_DEFAULTS):
+        '''
+        Equate this Lambda, 
+        x_1, ..., x_n -> f(x_1, ..., x_n) if Q(x_1, ..., x_n),
+        with one that substitutes the body given some universal_eq:
+            forall_{x_1, ..., x_n | Q(x_1, ..., x_n)} 
+                f(x_1, ..., x_n) = g(x_1, ..., x_n).
+        Derive and return the following type of equality assuming 
+        universal_eq:
+        x_1, ..., x_n -> f(x_1, ..., x_n) if Q(x_1, ..., x_n)
+          = x_1, ..., x_n -> g(x_1, ..., x_n) if Q(x_1, ..., x_n).
+        
+        The Q conditional need not be present.
+        '''
+        from proveit import Conditional, Judgment
+        from proveit import a, b, c, i, f, g, Q
+        from proveit.logic import Forall, Equals
+        from proveit.core_expr_types.lambda_maps import (
+                lambda_substitution, general_lambda_substitution)
+        if isinstance(universal_eq, Judgment):
+            universal_eq = universal_eq.expr
+        if not isinstance(universal_eq, Forall):
+            raise TypeError(
+                    "'universal_eq' must be a forall expression, got %s", 
+                    universal_eq)
+        if not isinstance(universal_eq.instance_expr, Equals):
+            raise TypeError(
+                    "'universal_eq' expected to be of a universally "
+                    "quantified equality, got %s", universal_eq)
+        equality = universal_eq.instance_expr
+        _a = universal_eq.instance_params
+        _b = _c = self.parameters
+        _i = _b.num_elements(assumptions)
+        if isinstance(self.body, Conditional):
+            _f = Lambda(self.parameters, self.body.value)
+        else:
+            _f = Lambda(self.parameters, self.body)
+        lhs_map = Lambda(universal_eq.instance_params, equality.lhs)
+        rhs_map = Lambda(universal_eq.instance_params, equality.rhs)
+        if _f == lhs_map:
+            _g = rhs_map
+        elif _f == rhs_map:
+            _g = lhs_map
+        else:
+            raise ValueError(
+                    "%s not valid as the 'universal_eq' argument for "
+                    "the call to 'substitution' on %s: %s not equal "
+                    "to %s or %s"%(universal_eq, self, _f, lhs_map, rhs_map))     
+        if isinstance(self.body, Conditional):
+            _Q = Lambda(self.parameters, self.body.condition)
+            return general_lambda_substitution.instantiate(
+                    {i: _i, f: _f, g: _g, Q: _Q, a: _a, b: _b, c: _c},
+                    assumptions=assumptions).derive_consequent(assumptions)
+        else:
+            impl = lambda_substitution.instantiate(
+                    {i: _i, f: _f, g: _g, a: _a, b: _b, c: _c}, 
+                    assumptions=assumptions)
+            return impl.derive_consequent(assumptions)
 
     @staticmethod
     def global_repl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
@@ -1431,3 +1489,4 @@ class ArgumentExtractionError(Exception):
         return (
             "Cannot extract argument(s); mapped_expr does not match this Lambda "
             "expression: " + self.specifics)
+

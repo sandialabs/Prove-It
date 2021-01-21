@@ -1,6 +1,7 @@
 import inspect
 from proveit._core_.expression.expr import (
     Expression, MakeNotImplemented, free_vars)
+from proveit._core_.expression.label.var import Variable
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda, get_param_var
 from proveit._core_.expression.composite import (
     ExprTuple, is_single, single_or_composite_expression, 
@@ -360,7 +361,7 @@ class OperationOverInstances(Operation):
                              "OperationOverInstances object: an operator and "
                              "operands with a single lambda_map entry.")
 
-        implicit_operator = cls._implicitOperator()
+        implicit_operator = cls._implicit_operator()
         if implicit_operator is None:
             raise OperationError(
                 "Expecting a '_operator_' attribute for class "
@@ -376,11 +377,18 @@ class OperationOverInstances(Operation):
         if (not isinstance(operands, ExprTuple) or 
                 not len(operands.entries) == 1):
             raise ValueError("Expecting operands to have a single entry.")
+        if isinstance(operands[0], Variable) and hasattr(cls, '_operator_'):
+            # If the operand is not a Variable, make an
+            # Operation instead.  This can come up when creating
+            # an InnerExpr replacement map when the inner expression
+            # the the operand of an OperationOverInstances.
+            return Operation(cls._operator_, operands)
+            
         lambda_map = operands[0]
         if not isinstance(lambda_map, Lambda):
              raise ValueError("Expecting operands to have a single "
                               "lambda_map entry.")
-
+        
         args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
             inspect.getfullargspec(cls.__init__)
         if '_lambda_map' not in kwonlyargs:
@@ -829,46 +837,24 @@ class OperationOverInstances(Operation):
                     count += len(entry.formatted(format_type, fence=fence))
         return out_str
 
-    """
-    def instance_substitution(self, universality, assumptions=USE_DEFAULTS):
+    def instance_substitution(self, universal_eq, assumptions=USE_DEFAULTS):
         '''
-        Equate this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..),
+        Equate this OperationOverInstances, 
+        Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} f(x_1, ..., x_n),
         with one that substitutes instance expressions given some
-        universality = forall_{..x.. in S | ..Q(..x..)..} f(..x..) = g(..x..).
-        Derive and return the following type of equality assuming universality:
-        Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..) = Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
-        Works also when there is no domain S and/or no conditions ..Q...
+        universal_eq:
+            forall_{x_1, ..., x_n | Q(x_1, ..., x_n)} 
+                f(x_1, ..., x_n) = g(x_1, ..., x_n).
+        Derive and return the following type of equality assuming 
+        universal_eq:
+        Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} f(x_1, ..., x_n) 
+          = Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} g(x_1, ..., x_n)
         '''
-        from proveit.logic.equality import instance_substitution, no_domain_instance_substitution
-        from proveit.logic import Forall, Equals
-        from proveit import Judgment
-        from proveit import n, Qmulti, x_multi, y_multi, z_multi, f, g, Upsilon, S
-        if isinstance(universality, Judgment):
-            universality = universality.expr
-        if not isinstance(universality, Forall):
-            raise InstanceSubstitutionException("'universality' must be a forall expression", self, universality)
-        if len(universality.instance_vars) != len(self.instance_vars):
-            raise InstanceSubstitutionException("'universality' must have the same number of variables as the OperationOverInstances having instances substituted", self, universality)
-        if universality.domain != self.domain:
-            raise InstanceSubstitutionException("'universality' must have the same domain as the OperationOverInstances having instances substituted", self, universality)
-        # map from the forall instance variables to self's instance variables
-        i_var_substitutions = {forall_ivar:self_ivar for forall_ivar, self_ivar in zip(universality.instance_vars, self.instance_vars)}
-        if universality.conditions.substituted(i_var_substitutions) != self.conditions:
-            raise InstanceSubstitutionException("'universality' must have the same conditions as the OperationOverInstances having instances substituted", self, universality)
-        if not isinstance(universality.instance_expr, Equals):
-            raise InstanceSubstitutionException("'universality' must be an equivalence within Forall: " + str(universality))
-        if universality.instance_expr.lhs.substituted(i_var_substitutions) != self.instance_expr:
-            raise InstanceSubstitutionException("lhs of equivalence in 'universality' must match the instance expression of the OperationOverInstances having instances substituted", self, universality)
-        f_op, f_op_sub = Operation(f, self.instance_vars), self.instance_expr
-        g_op, g_op_sub = Operation(g, self.instance_vars), universality.instance_expr.rhs.substituted(i_var_substitutions)
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
-        if self.has_domain():
-            return instance_substitution.instantiate({Upsilon:self.operator, Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub},
-                                                    relabel_map={x_multi:universality.instance_vars, y_multi:self.instance_vars, z_multi:self.instance_vars}, assumptions=assumptions).derive_consequent(assumptions=assumptions)
-        else:
-            return no_domain_instance_substitution.instantiate({Upsilon:self.operator, Q_op:Q_op_sub, f_op:f_op_sub, g_op:g_op_sub},
-                                                             relabel_map={x_multi:universality.instance_vars, y_multi:self.instance_vars, z_multi:self.instance_vars}, assumptions=assumptions).derive_consequent(assumptions=assumptions)
-
+        lambda_eq = self.operand.substitution(universal_eq, assumptions)
+        return lambda_eq.substitution(self.inner_expr().operand,
+                                      assumptions=assumptions)
+        
+    """
     def substitute_instances(self, universality, assumptions=USE_DEFAULTS):
         '''
         Assuming this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..)
@@ -1116,14 +1102,3 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         # Return the equality between the original expression and
         # the unbundled result.
         return eq.relation
-
-
-class InstanceSubstitutionException(Exception):
-    def __init__(self, msg, operation_over_instances, universality):
-        self.msg = msg
-        self.operation_over_instances = operation_over_instances
-        self.universality = universality
-
-    def __str__(self):
-        return self.msg + '.\n  operation_over_instances: ' + \
-            str(self.operation_over_instances) + '\n  universality: ' + str(self.universality)

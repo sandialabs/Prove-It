@@ -20,7 +20,7 @@ class Operation(Expression):
         '''
         Operation.operation_class_of_operator.clear()
 
-    def __init__(self, operator, operand_or_operands, styles=None):
+    def __init__(self, operator, operand_or_operands, *, styles=None):
         '''
         Create an operation with the given operator and operands.
         The operator must be a Label (a Variable or a Literal).
@@ -129,7 +129,7 @@ class Operation(Expression):
         return self.with_styles(justification=justification)
 
     @classmethod
-    def _implicitOperator(operation_class):
+    def _implicit_operator(operation_class):
         if hasattr(operation_class, '_operator_'):
             return operation_class._operator_
         return None
@@ -207,7 +207,7 @@ class Operation(Expression):
         and no keyword arguments: construct the Operation by passing 
         the operator(s) and each operand individually.
         '''
-        implicit_operator = cls._implicitOperator()
+        implicit_operator = cls._implicit_operator()
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
             raise OperationError("An implicit operator may not be changed")
@@ -263,7 +263,7 @@ class Operation(Expression):
                     return
 
                 # handle default explicit operator case
-                if (not implicit_operator) and (varkw is None):
+                if (implicit_operator is None) and (varkw is None):
                     if varargs is None and len(args) == 2:
                         # assume one argument for the operator and one
                         # argument for the operands

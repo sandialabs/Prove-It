@@ -423,11 +423,19 @@ class Equals(TransitiveRelation):
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
         '''
-        from proveit import ExprRange
+        from proveit import ExprRange, Conditional
         from . import substitution
 
-        lambda_map = Equals._lambda_expr(lambda_map, self.lhs, assumptions)
+        if isinstance(lambda_map, Conditional):
+            conditional = lambda_map
+            if self.lhs == conditional.value:
+                # Return the substitution equality for swapping out
+                # the value of a conditional which may implicitly
+                # assume that the condition is satisfied.
+                return conditional.value_substitution(self, assumptions)
 
+        lambda_map = Equals._lambda_expr(lambda_map, self.lhs, assumptions)
+        
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use operands_substitution for ExprTuple
             # substitution.

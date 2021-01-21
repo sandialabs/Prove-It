@@ -23,3 +23,11 @@ from .label import (Label, Literal, Variable, DuplicateLiteralError,
 InnerExpr.register_equivalence_method(
     ExprRange, 'partition', 'partitioned', 'split')
 InnerExpr.register_equivalence_method(ExprTuple, 'merger', 'merged', 'merge')
+
+InnerExpr.register_equivalence_method(
+    Lambda,  'substitution', 'substituted', 'substitute')
+
+InnerExpr.register_equivalence_method(
+    OperationOverInstances, 
+    'instance_substitution', 'instance_substituted', 
+    'instance_substitute')
