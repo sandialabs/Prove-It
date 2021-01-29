@@ -206,7 +206,7 @@ class Judgment:
             return  # automation disabled
         # Sort the assumptions according to hash key so that sets of
         # assumptions are unique for determining which side-effects have
-        # been processedalready.
+        # been processed already.
         sorted_assumptions = tuple(
             sorted(
                 assumptions,
@@ -811,7 +811,7 @@ class Judgment:
         '''
         from proveit import (Variable, Operation, Conditional, Lambda,
                              single_or_composite_expression,
-                             ExprTuple, IndexedVar)
+                             ExprTuple, ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
         from proveit.logic import Forall
@@ -865,16 +865,27 @@ class Judgment:
                         "as a repl_map key:\n%s" %
                         str(e))
                 if key.num_entries() == 1:
-                    # Replacement key for replacing a range of indexed
-                    # variables, or range of ranges of indexed variables
-                    # , etc.
-                    processed_repl_map[key] = replacement
-                    # Although this is redundant (not really necessary
-                    # as an entry in `equiv_alt_expansions` as far
-                    # as Lambda.apply is concerned) it is useful for
-                    # bookkeeping to extract all of the instantiation
-                    # mappings:
-                    equiv_alt_expansions[key] = replacement
+                    key_entry = key.entries[0]
+                    if (isinstance(key_entry, ExprRange) and
+                            key_entry.start_index == key_entry.end_index
+                            and isinstance(replacement, ExprTuple)
+                            and replacement.is_single()):
+                        # Special case of a singular range 
+                        # (e.g., x_1, ..., x1) and singlular
+                        # replacement.
+                        processed_repl_map[key_entry.first()] = \
+                            replacement.entries[0]
+                    else:
+                        # Replacement key for replacing a range of indexed
+                        # variables, or range of ranges of indexed variables
+                        # , etc.
+                        processed_repl_map[key] = replacement
+                        # Although this is redundant (not really necessary
+                        # as an entry in `equiv_alt_expansions` as far
+                        # as Lambda.apply is concerned) it is useful for
+                        # bookkeeping to extract all of the instantiation
+                        # mappings:
+                        equiv_alt_expansions[key] = replacement
                 else:
                     assert key.num_entries() > 1
                     # An "alternative equivalent expansion" of
@@ -882,7 +893,8 @@ class Judgment:
                     # ranges, etc.).    For example,
                     # (x_i, x_{i+1}, ..., x_j).
                     equiv_alt_expansions[key] = replacement
-            elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
+            elif (isinstance(key, Operation) 
+                    and isinstance(key.operator, Variable)):
                 operation = key
                 repl_var = operation.operator
                 replacement = Lambda(operation.operands, replacement)

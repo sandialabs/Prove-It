@@ -683,6 +683,61 @@ class Lambda(Expression):
         from proveit._core_.expression.composite.expr_range import \
             extract_start_indices, extract_end_indices
 
+
+        # Generate the set of parameters which may be altered due 
+        # a change in the start/end indices.
+        # For example, we may have
+        # x_1, ..., x_n go to
+        #       x_1, ..., x_3 with n:3
+        #       x_1 with n:1
+        #       or empty with n:0
+        parameters = []
+        parameter_vars = []
+        inner_repl_map = dict(repl_map)
+        var_to_keys = dict()
+        for key in repl_map.keys():
+            if isinstance(key, ExprTuple):
+                param_var = get_param_var(key.entries[0])
+            else:
+                param_var = get_param_var(key)
+            var_to_keys.setdefault(param_var, set()).add(key)
+        for parameter, param_var in zip(self.parameters, self.parameter_vars):
+            not_applicable_keys = var_to_keys.get(param_var, [])
+            disabled_repl_map = dict()
+            for key in not_applicable_keys:
+                disabled_repl_map[key] = inner_repl_map.pop(key)
+            if isinstance(parameter, ExprRange):
+                subbed_params = []
+                for subbed_param in parameter._replaced_entries(
+                        inner_repl_map, allow_relabeling,
+                        assumptions, requirements,
+                        equality_repl_requirements):
+                    assert get_param_var(subbed_param) == param_var, (
+                            "Unexpected change of parameter variable")
+                    subbed_params.append(subbed_param) 
+                num_subbed = len(subbed_params)
+                assert num_subbed <= 1, (
+                        "Unexpected increase in the number of parameter entries")
+                if num_subbed > 0:
+                    assert num_subbed == 1
+                    parameter_vars.append(param_var)
+                    parameters.extend(subbed_params)
+            elif isinstance(parameter, IndexedVar):
+                subbed_param = parameter
+                assert get_param_var(subbed_param) == param_var, (
+                        "Unexpected change of parameter variable")
+                parameters.append(subbed_param)
+                parameter_vars.append(param_var)
+            else:
+                parameters.append(parameter)
+                parameter_vars.append(param_var)
+            inner_repl_map.update(disabled_repl_map) # re-enable
+        
+        # Free variables of the body but excluding the parameter
+        # variables.
+        non_param_body_free_vars = (free_vars(self.body, err_inclusively=True)
+                                    - self.parameter_var_set)
+        
         # Within the lambda scope, we can instantiate lambda parameters
         # in a manner that retains the validity of the parameters as
         # parameters.  For any disallowed instantiation of Lambda
@@ -693,6 +748,7 @@ class Lambda(Expression):
         # variables.  In the latter case, we raise an exception,
         # disallowing such substitutions.
         inner_repl_map = dict()
+        relabel_map = dict()
         for key, value in repl_map.items():
             if not _guaranteed_to_be_independent(key, self.parameter_var_set):
                 # If any of the free variables of the key occur as
@@ -713,8 +769,8 @@ class Lambda(Expression):
                     var = key
                     assert isinstance(var, Variable)
                     param_of_var = None
-                    for param, param_var in zip(self.parameters,
-                                                self.parameter_vars):
+                    for param, param_var in zip(parameters,
+                                                parameter_vars):
                         if param_var == var:
                             param_of_var = param
                     if param_of_var is None:
@@ -763,23 +819,29 @@ class Lambda(Expression):
                     # over a range that is not covered here.
                     if (allow_relabeling and
                             key not in self.nonrelabelable_param_vars):
-                        inner_repl_map[key] = value
+                        relabel_map[key] = value
                     # Otherwise, it is a simple, fair masking.
-                elif isinstance(key, IndexedVar) and key in self.parameters:
+                elif (isinstance(key, IndexedVar) and key in parameters):
                     if allow_relabeling:
                         if (isinstance(value, IndexedVar)
                                 or isinstance(value, Variable)):
                             # You can relabel an IndexedVar to another
                             # IndexedVar or a Variable.
-                            inner_repl_map[key] = value
+                            relabel_map[key] = value
                     # Otherwise, it is a simple, fair masking.
                 # In all remaining cases where the key is not
                 # inserted into inner_repl_map, the replacement
                 # is deemed to be safely masked within this scope.
             else:
-                # No conflict -- propagate the replacement.
-                inner_repl_map[key] = value
-
+                # No conflict -- propagate the replacement if it is
+                # used.
+                if isinstance(key, ExprTuple):
+                    key_var = get_param_var(key.entries[0])
+                else:
+                    key_var = get_param_var(key)
+                if key_var in non_param_body_free_vars:
+                    inner_repl_map[key] = value
+        
         # Free variables of the replacements must not collide with
         # the parameter variables.  If there are collisions, relabel
         # the parameter variables to something safe.  First, get the
@@ -790,15 +852,18 @@ class Lambda(Expression):
         #            (x_{1+1}, ..., x_{n+1})}
         # we can ignore those for this purpose as the real replacements
         # will be what the members of this set map to.
-        non_param_body_free_vars = (free_vars(self.body, err_inclusively=True)
-                                    - self.parameter_var_set)
         restricted_vars = non_param_body_free_vars.union(
             *[free_vars(value, err_inclusively=True) for key, value
               in inner_repl_map.items()
               if (key not in self.parameter_var_set
                   and not isinstance(value, set))])
-        for param_var in self.parameter_var_set:
-            param_var_repl = inner_repl_map.get(param_var, param_var)
+        for param, param_var in zip(parameters, parameter_vars):
+            if isinstance(param, IndexedVar):
+                param_var_repl = relabel_map.get(param, param_var)
+                if isinstance(param_var_repl, IndexedVar):
+                    param_var_repl = get_param_var(param_var_repl)
+            else:
+                param_var_repl = relabel_map.get(param_var, param_var)
             if param_var_repl in restricted_vars:
                 # Avoid this collision by relabeling to a safe dummy
                 # variable.
@@ -807,31 +872,28 @@ class Lambda(Expression):
                         param_var, self,
                         " Thus, a collision of variable names induced "
                         "by the following replacement map could not be "
-                        "avoided: %s." % inner_repl_map)
+                        "avoided: %s." % relabel_map)
                 dummy_var = safe_dummy_var(*restricted_vars)
-                inner_repl_map[param_var] = dummy_var
+                relabel_map[param_var] = dummy_var
                 restricted_vars.add(dummy_var)
             else:
                 if isinstance(param_var_repl, set):
-                    # If param_var_repl is a set, it's for possile
+                    # If param_var_repl is a set, it's for possible
                     # expansions of an indexed variable.  For the
                     # purpose of checking collisions, we just want
                     # the variable being indexed.
                     restricted_vars.add(param_var)
                 else:
                     restricted_vars.add(param_var_repl)
+        inner_repl_map.update(relabel_map)
 
-        # Generate the new set of parameters which may be relabeled or,
-        # in the case of a parameter range, may be altered due a change
-        # in the start/end indices, or may be expanded.
+        # Generate the new set of parameters which may be relabeled
+        # or may be expanded.
         # For example, we may have
-        # x_1, ..., x_n go to
-        #       x_1, ..., x_3 with n:3
-        #       a, b, c with n:3 and (x_1, ..., x_3):(a, b, c)
-        #       x_1 with n:1
-        #       or empty with n:0
+        # x_1, ..., x_3 go to
+        #       a, b, c with (x_1, ..., x_3):(a, b, c)
         new_params = []
-        for parameter, param_var in zip(self.parameters, self.parameter_vars):
+        for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
                 for subbed_param in parameter._replaced_entries(
                         inner_repl_map, allow_relabeling,
@@ -856,7 +918,7 @@ class Lambda(Expression):
             [assumption for assumption in assumptions if
              free_vars(assumption, err_inclusively=True).isdisjoint(
                  new_param_vars)]
-
+        
         return new_params, inner_repl_map, tuple(inner_assumptions)
 
     def relabeled(self, relabel_map):
@@ -956,9 +1018,10 @@ class Lambda(Expression):
         
         The Q conditional need not be present.
         '''
-        from proveit import Conditional, Judgment
+        from proveit import Conditional, Judgment, ExprTuple, var_range
         from proveit import a, b, c, i, f, g, Q
         from proveit.logic import Forall, Equals
+        from proveit.numbers import one
         from proveit.core_expr_types.lambda_maps import (
                 lambda_substitution, general_lambda_substitution)
         if isinstance(universal_eq, Judgment):
@@ -990,14 +1053,19 @@ class Lambda(Expression):
                     "%s not valid as the 'universal_eq' argument for "
                     "the call to 'substitution' on %s: %s not equal "
                     "to %s or %s"%(universal_eq, self, _f, lhs_map, rhs_map))     
+        a_1_to_i = ExprTuple(var_range(a, one, _i))
+        b_1_to_i = ExprTuple(var_range(b, one, _i))
+        c_1_to_i = ExprTuple(var_range(c, one, _i))        
         if isinstance(self.body, Conditional):
             _Q = Lambda(self.parameters, self.body.condition)
             return general_lambda_substitution.instantiate(
-                    {i: _i, f: _f, g: _g, Q: _Q, a: _a, b: _b, c: _c},
+                    {i: _i, f: _f, g: _g, Q: _Q, 
+                    a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c},
                     assumptions=assumptions).derive_consequent(assumptions)
         else:
             impl = lambda_substitution.instantiate(
-                    {i: _i, f: _f, g: _g, a: _a, b: _b, c: _c}, 
+                    {i: _i, f: _f, g: _g, 
+                     a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c}, 
                     assumptions=assumptions)
             return impl.derive_consequent(assumptions)
 

@@ -981,7 +981,8 @@ class Instantiation(Proof):
         See Expression.substituted for details regarding the replacement 
         rules.
         '''
-        from proveit import Variable, Function, Lambda, ExprTuple, ExprRange
+        from proveit import (Variable, Function, Lambda, ExprTuple, 
+                             ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var, valid_params, LambdaApplicationError)
         from proveit._core_.expression.label.var import safe_dummy_var
@@ -991,7 +992,8 @@ class Instantiation(Proof):
         relabel_params = []
         relabel_param_replacements = []
         for key, repl in repl_map.items():
-            if isinstance(key, Variable) and isinstance(repl, Variable):
+            if ((isinstance(key, Variable) or isinstance(key, IndexedVar))
+                    and isinstance(repl, Variable)):
                 relabel_params.append(key)
                 relabel_param_replacements.append(repl)
             elif (isinstance(key, ExprTuple) and isinstance(repl, ExprTuple)
@@ -1062,19 +1064,6 @@ class Instantiation(Proof):
                         assumptions.append(assumption)
             assumptions = list(OrderedDict.fromkeys(assumptions))
 
-            # Sort the replaced variables in order of their appearance
-            # in the original Judgment.
-            def get_key_var(key):
-                if isinstance(key, ExprTuple):
-                    assert key.num_entries() >= 1
-                    return get_param_var(key[0])
-                return get_param_var(key)
-            repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
-            repl_vars = repl_var_keys.keys()
-            repl_vars = list(orig_judgment.order_of_appearance(repl_vars))
-            # And remove duplicates.
-            repl_vars = list(OrderedDict.fromkeys(repl_vars))
-
             # Map variables to sets of tuples that represent the
             # same range of indexing for equivalent alternative
             # expansions.  For example,
@@ -1083,6 +1072,27 @@ class Instantiation(Proof):
             for var_range_form, expansion in equiv_alt_expansions.items():
                 var = get_param_var(var_range_form[0])
                 var_range_forms.setdefault(var, set()).add(var_range_form)
+            
+            # Sort the replaced variables in order of their appearance
+            # in the original Judgment.
+            def get_key_var(key):
+                if isinstance(key, ExprTuple):
+                    assert key.num_entries() >= 1
+                    var = get_param_var(key[0])
+                    var_range_forms.setdefault(var, set()).add(key)
+                    return var
+                elif isinstance(key, IndexedVar):
+                    var = get_param_var(key)
+                    var_range_forms.setdefault(var, set()).add(key)
+                    # For convenience to be used below:
+                    equiv_alt_expansions[key] = repl_map[key]
+                    return var
+                return get_param_var(key)
+            repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
+            repl_vars = repl_var_keys.keys()
+            repl_vars = list(orig_judgment.order_of_appearance(repl_vars))
+            # And remove duplicates.
+            repl_vars = list(OrderedDict.fromkeys(repl_vars))
 
             # We have what we need; set up the Instantiation Proof
             self.orig_judgment = orig_judgment
@@ -1091,13 +1101,16 @@ class Instantiation(Proof):
             mapping = dict()
             mapping_key_order = []
 
-            def var_range_form_sort(var_tuple):
+            def var_range_form_sort(var_form):
                 # For sorting equivalent ExprTuples of indexed
                 # variables (e.g., {(x_1, ..., x_{n+1}),
                 #                   (x_1, ..., x_n, x_{n+1})})
                 # put ones with the fewest number of entries first
                 # but break ties arbitrarily via the "meaning id".
-                return (var_tuple.num_entries(), var_tuple._meaning_id)
+                if isinstance(var_form, ExprTuple):
+                    return (var_form.num_entries(), var_form._meaning_id)
+                else:
+                    return (0, var_form._meaning_id)
             for var in repl_vars:
                 if var in repl_map:
                     # The variable itself is in the replacement map.
@@ -1226,7 +1239,7 @@ class Instantiation(Proof):
         according to repl_map.
         '''
         from proveit import (Lambda, Conditional, ExprTuple,
-                             ExprRange)
+                             ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
         from proveit.logic import Forall, And
@@ -1290,7 +1303,10 @@ class Instantiation(Proof):
                     # is already included.
                     continue
                 param_vars.add(param_var)
-                param_var_repl = repl_map.get(param_var, None)
+                if isinstance(param, IndexedVar):
+                    param_var_repl = repl_map.get(param, None)
+                else:
+                    param_var_repl = repl_map.get(param_var, None)
                 new_param = None
                 new_operands = None
                 if isinstance(param, ExprRange):
