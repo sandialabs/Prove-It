@@ -39,7 +39,8 @@ class Less(NumberOrderingRelation):
         # positive added to it.
         from proveit.numbers import Add, zero
         if self.upper == zero:
-            from ._theorems import negative_if_real_neg
+            # from ._theorems import negative_if_real_neg
+            from . import negative_if_real_neg
             concluded = negative_if_real_neg.instantiate(
                 {a: self.lower}, assumptions=assumptions)
             return concluded.with_matching_style(self)            
