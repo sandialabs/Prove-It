@@ -115,7 +115,7 @@ class InnerExpr:
                 if isinstance(expr, Lambda) and idx == expr.num_sub_expr() - 1:
                     # while descending into a lambda expression body, we
                     # pick up the lambda parameters.
-                    self.parameters.extend(expr.parameters)
+                    self.parameters.extend(expr.parameters.entries)
                 expr = expr.sub_expr(idx)
                 if isinstance(expr, tuple):
                     # A slice `idx` will yield a tuple sub expression.
@@ -426,7 +426,7 @@ class InnerExpr:
                 # parameters encountered between the top-level
                 # expression and the inner expression.
                 lambda_body = cur_sub_class._checked_make(
-                        cur_sub_expr.core_info(), cur_sub_expr.get_styles(),
+                        cur_sub_expr.core_info(), 
                         [Function(dummy_var, self.parameters)
                          for dummy_var in dummy_vars])
             """
@@ -465,7 +465,7 @@ class InnerExpr:
                 expr = expr.expr
             expr_subs = tuple(expr.sub_expr_iter())
             inner_expr = expr.__class__._make(
-                expr.core_info(), expr.get_styles(),
+                expr.core_info(), 
                 expr_subs[:idx] + (inner_expr,) + expr_subs[idx + 1:])
         revised_expr = inner_expr
         if (isinstance(self.expr_hierarchy[0], Judgment) and
