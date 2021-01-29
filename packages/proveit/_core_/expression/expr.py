@@ -559,7 +559,13 @@ class Expression(metaclass=ExprType):
         for my_sub_expr, other_sub_expr in zip(
                 self.sub_expr_iter(), expr_with_different_style.sub_expr_iter()):
             my_sub_expr._with_matching_style(other_sub_expr)
-        return self.with_styles(**expr_with_different_style.get_styles())
+        # Note, within lambda maps, "meanings" may diverge.
+        # We only "guarantee" the new styles exist where "meanings"
+        # are the same.
+        styles_must_exist = (self == expr_with_different_style)
+        return self._with_these_styles(
+                expr_with_different_style.get_styles(),
+                styles_must_exist = styles_must_exist)
     
     def with_mimicked_style(self, other_expr):
         '''
