@@ -58,23 +58,14 @@ class Forall(OperationOverInstances):
         via 'conclude_as_folded'.
         '''
         from proveit.logic import SubsetEq
-        
-        # first try to prove via generalization without automation
         assumptions = defaults.checked_assumptions(assumptions)
         
-        expr = self
-        instance_param_lists = []
-        conditions = []
-        while isinstance(expr, Forall):
-            new_params = expr.explicit_instance_params()
-            instance_param_lists.append(list(new_params))
-            conditions += list(expr.conditions.entries)
-            expr = expr.instance_expr
-            new_assumptions = assumptions + tuple(conditions)
-            if expr.proven(assumptions=assumptions + tuple(conditions)):
-                proven_inst_expr = expr.prove(new_assumptions)
-                return proven_inst_expr.generalize(instance_param_lists,
-                                                   conditions=conditions)
+        # first try to prove via generalization without automation
+        try:
+            return self.conclude_via_generalization(assumptions, 
+                                                    automation=False)
+        except ProofFailure:
+            pass
         
         if (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
@@ -134,20 +125,8 @@ class Forall(OperationOverInstances):
             # attempt a different non-trivial strategy of proving
             # via generalization with automation.
             try:
-                conditions = list(self.conditions.entries)
-                proven_inst_expr = self.instance_expr.prove(
-                    assumptions=assumptions + tuple(conditions))
-                instance_param_lists = [list(self.explicit_instance_params())]
-                # see if we can generalize multiple levels
-                # simultaneously for a shorter proof
-                while isinstance(proven_inst_expr.proof(), Generalization):
-                    new_params = proven_inst_expr.explicit_instance_params()
-                    instance_param_lists.append(list(new_params))
-                    conditions += proven_inst_expr.conditions.entries
-                    proven_inst_expr = (
-                        proven_inst_expr.proof().required_truths[0])
-                return proven_inst_expr.generalize(instance_param_lists,
-                                                   conditions=conditions)
+                return self.conclude_via_generalization(assumptions, 
+                                                        automation=True)
             except ProofFailure:
                 raise ProofFailure(self, assumptions,
                                    "Unable to conclude automatically; "
@@ -176,6 +155,38 @@ class Forall(OperationOverInstances):
     def equate_with_unfolded(self):
         pass
     """
+    
+    def conclude_via_generalization(self, assumptions=USE_DEFAULTS,
+                                    automation=USE_DEFAULTS):
+        '''
+        Conclude this universal quantification by proving the instance
+        expression with assumptions that include the conditions of the
+        quantification and then performing generalization step(s).
+        This will delve into any number of nested universal
+        quantifications if necessary.  With automation turned on,
+        we will attempt to prove the innermost instance expression,
+        under appropriate assumptions, via automation if necessary.
+        '''
+        assumptions = defaults.checked_assumptions(assumptions)
+        if automation is USE_DEFAULTS:
+            automation = defaults.automation
+        expr = self
+        instance_param_lists = []
+        conditions = []
+        while isinstance(expr, Forall):
+            new_params = expr.explicit_instance_params()
+            instance_param_lists.append(list(new_params))
+            conditions += list(expr.conditions.entries)
+            expr = expr.instance_expr
+            new_assumptions = assumptions + tuple(conditions)
+            if automation and not isinstance(expr, Forall):
+                expr.prove(assumptions=assumptions + tuple(conditions))
+            if expr.proven(assumptions=assumptions + tuple(conditions)):
+                proven_inst_expr = expr.prove(new_assumptions)
+                return proven_inst_expr.generalize(instance_param_lists,
+                                                   conditions=conditions)            
+        raise ProofFailure(self, assumptions,
+                "Unable to 'conclude_via_generalization' without automation.")
 
     # Eventually the conclude_by_cases() method will replace the
     # conclude_as_folded() method. Maintaining both temporarily to
