@@ -451,8 +451,10 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
 
-    def _possibly_reduced_range_entries(self, expr_range, assumptions,
-                                        requirements):
+    def _possibly_reduced_range_entries(self, expr_range, 
+                                        repl_map, allow_relabeling,
+                                        assumptions, requirements, 
+                                        equality_repl_requirements):
         '''
         Yield the entries corresponding to the given expr_range after
         the possible reduction.  If there is no reduction, the
@@ -596,7 +598,9 @@ class ExprRange(Expression):
         assert isinstance(reduced_tuple, ExprTuple)
         requirements.append(reduction)
         for entry in reduced_tuple:
-            yield entry
+            yield entry._replaced(repl_map, allow_relabeling,
+                          assumptions, requirements,
+                          equality_repl_requirements)
 
     def _replaced_entries(self, repl_map, allow_relabeling,
                           assumptions, requirements,
@@ -730,7 +734,8 @@ class ExprRange(Expression):
             # However, we may perform a reduction of the range
             # if it is known to be empty or singular.
             for entry in self._possibly_reduced_range_entries(
-                    subbed_expr_range, assumptions, requirements):
+                    subbed_expr_range, repl_map, allow_relabeling,
+                    assumptions, requirements, equality_repl_requirements):
                 yield entry
             return  # Done.
 
@@ -1058,7 +1063,9 @@ class ExprRange(Expression):
                 # We may perform a reduction of the range if it is known
                 # to be empty or singular.
                 for entry in self._possibly_reduced_range_entries(
-                        entry, assumptions, requirements):
+                        entry, repl_map, allow_relabeling,
+                        assumptions, requirements, 
+                        equality_repl_requirements):
                     yield entry
                 if indices_must_match:
                     # We need to know the new_indices to match with the
