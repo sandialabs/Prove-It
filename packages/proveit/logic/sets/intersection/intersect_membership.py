@@ -19,7 +19,7 @@ class IntersectMembership(Membership):
         '''
         yield self.unfold
 
-    def equivalence(self, element, assumptions=USE_DEFAULTS):
+    def equivalence(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return [element in (A intersect B ...)] = [(element in A) and (element in B) ...]
         where self = (A intersect B ...).
