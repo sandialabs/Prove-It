@@ -447,39 +447,41 @@ class Exp(Function):
         Last Modified: 2/20/2020 by wdc. Creation.
         Once established, these authorship notations can be deleted.
         '''
-        from proveit.logic import InSet
+        from proveit.logic import InSet, NotEquals
         from proveit.numbers.exponentiation import (
-            exp_complex_closure, exp_nat_closure, exp_real_closure,
-            exp_real_closure_exp_non_zero, exp_real_closure_base_pos,
-            exp_real_pos_closure, sqrt_complex_closure, sqrt_real_closure,
+            exp_complex_closure, exp_natpos_closure,
+            exp_nat_closure, exp_int_closure, 
+            exp_rational_closure_natpos_power, exp_rational_closure_int_power,
+            exp_rational_closure, exp_real_closure,
+            exp_real_closure_nonneg_base, exp_real_closure_base_pos,
+            exp_real_closure_natpos_power, exp_real_pos_closure,
+            sqrt_complex_closure, sqrt_real_closure,
             sqrt_real_pos_closure)
         from proveit.numbers import (
-            Complex, NaturalPos, RationalPos, Real, RealPos)
+            Natural, NaturalPos, Integer, Rational, 
+            Real, RealPos, RealNonNeg, Complex)
+        from proveit.numbers import zero
 
         if number_set == NaturalPos:
+            return exp_natpos_closure.instantiate(
+                {a: self.base, b: self.exponent}, assumptions=assumptions)
+        elif number_set == Natural:
             return exp_nat_closure.instantiate(
                 {a: self.base, b: self.exponent}, assumptions=assumptions)
-
-        if number_set == RationalPos:
-            # if we have a^b with a Rational and b Integer
-            # if b is proven to be any Integer
-
-            # if we already know a^b is
-
-            # if b = 0, then a^b = 1 (if a≠0)
-
-            # to be continued later
-            pass
-
-        # the following would be useful to replace the next two Real
-        # closure theorems, once we get the system to deal
-        # effectively with the Or(A, And(B, C)) conditions
-        # if number_set == Real:
-        #     return exp_real_closure.instantiate(
-        #                     {a:self.base, b:self.exponent},
-        #                     assumptions=assumptions)
-
-        if number_set == Real:
+        elif number_set == Integer:
+            return exp_int_closure.instantiate(
+                {a: self.base, b: self.exponent}, assumptions=assumptions)
+        elif number_set == Rational:
+            power_is_nonpos = InSet(self.exponent, NaturalPos)
+            if power_is_nonpos.proven(assumptions):
+                thm = exp_rational_closure_natpos_power
+            elif NotEquals(self.base, zero):
+                thm = exp_rational_closure_int_power
+            else:
+                thm = exp_rational_closure # catch-all theorem
+            return thm.instantiate(
+                    {a: self.base}, assumptions=assumptions)
+        elif number_set == Real:
             # Would prefer the more general approach commented-out
             # above; in the meantime, allowing for 2 possibilities here:
             # if base is positive real, exp can be any real;
@@ -488,35 +490,26 @@ class Exp(Function):
                 return sqrt_real_closure.instantiate(
                     {a: self.base}, assumptions=assumptions)
             else:
-                try:
-                    return exp_real_closure_base_pos.instantiate(
+                power_is_nonpos = InSet(self.exponent, NaturalPos)
+                if power_is_nonpos.proven(assumptions):
+                    thm = exp_real_closure_natpos_power
+                elif InSet(self.base, RealPos).proven(assumptions):
+                    thm = exp_real_closure_base_pos
+                elif InSet(self.base, RealNonNeg).proven(assumptions):
+                    thm = exp_real_closure_nonneg_base
+                else:
+                    thm = exp_real_closure # catch-all theorem
+                return thm.instantiate(
                         {a: self.base, b: self.exponent},
                         assumptions=assumptions)
-                except ProofFailure:
-                    return exp_real_closure_exp_non_zero.instantiate(
-                        {a: self.base, b: self.exponent},
-                        assumptions=assumptions)
-                    try:
-                        return exp_real_closure_exp_non_zero.instantiate(
-                            {a: self.base, b: self.exponent},
-                            assumptions=assumptions)
-                    except ProofFailure:
-                        msg = ('Positive base condition failed '
-                               'and non-zero exponent condition failed. '
-                               'Need base ≥ 0 and exponent ≠ 0, OR base > 0 '
-                               'to prove %s is real.'%self)
-                        raise ProofFailure(InSet(self, number_set), 
-                                           assumptions, msg)
-
-        if number_set == RealPos:
+        elif number_set == RealPos:
             if self.exponent == frac(one, two):
                 return sqrt_real_pos_closure.instantiate(
                     {a: self.base}, assumptions=assumptions)
             else:
                 return exp_real_pos_closure.instantiate(
                     {a: self.base, b: self.exponent}, assumptions=assumptions)
-
-        if number_set == Complex:
+        elif number_set == Complex:
             if self.exponent == frac(one, two):
                 return sqrt_complex_closure.instantiate(
                     {a: self.base}, assumptions=assumptions)
