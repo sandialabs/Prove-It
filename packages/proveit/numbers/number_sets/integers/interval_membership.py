@@ -27,27 +27,18 @@ class IntervalMembership(Membership):
         (2) Deduce that the membership claim is Boolean
         (3) Try to deduce element in more restrictive subset of Integer
         '''
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-        
-        if (Less(_b, _a).proven()):
-            raise ValueError ("Interval {} appears to have illegal bounds, "
-                              "with upper_bound < lower_bound.".
-                              format(self.domain))
-        else:
-          yield self.deduce_element_in_integer
-          yield self.deduce_element_lower_bound
-          yield self.deduce_element_upper_bound
-          yield self.deduce_in_bool
-          # Temporarily leaving out this checking process until we have
-          # access to broader assumptions list
-          # if (LessEq(_a, _b).proven(assumptions=assumptions) and
-          #     (greater(_a, zero).proven(assumptions=assumptions) or
-          #     (InSet(_a, NaturalPos).proven(assumptions=assumptions) and 
-          #      InSet(_b, NaturalPos).proven(assumptions=assumptions)) )):
-          #     yield self.deduce_element_in_restricted_number_set
-          yield self.deduce_element_in_restricted_number_set
+        yield self.deduce_element_in_integer
+        yield self.deduce_element_lower_bound
+        yield self.deduce_element_upper_bound
+        yield self.deduce_in_bool
+        # Temporarily leaving out this checking process until we have
+        # access to broader assumptions list
+        # if (LessEq(_a, _b).proven(assumptions=assumptions) and
+        #     (greater(_a, zero).proven(assumptions=assumptions) or
+        #     (InSet(_a, NaturalPos).proven(assumptions=assumptions) and 
+        #      InSet(_b, NaturalPos).proven(assumptions=assumptions)) )):
+        #     yield self.deduce_element_in_restricted_number_set
+        yield self.deduce_element_in_restricted_number_set
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''

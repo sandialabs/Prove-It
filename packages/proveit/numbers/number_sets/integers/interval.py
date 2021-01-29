@@ -22,11 +22,11 @@ class Interval(Operation):
         self.upper_bound = upper_bound
 
     def string(self, **kwargs):
-        return '{' + self.lower_bound.string() + '...' + \
+        return '{' + self.lower_bound.string() + ' .. ' + \
             self.upper_bound.string() + '}'
 
     def latex(self, **kwargs):
-        return r'\{' + self.lower_bound.latex() + r' \ldots ' + \
+        return r'\{' + self.lower_bound.latex() + r'~\ldotp \ldotp~' + \
             self.upper_bound.latex() + r'\}'
 
     def membership_object(self, element):
