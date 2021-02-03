@@ -1616,6 +1616,12 @@ class ProofFailure(Exception):
         else:
             return "Proof step failed" + assumptions_str + ":\n" + self.message
 
+class UnsatisfiedPrerequisites(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    
+    def __str__(self):
+        return "Prerequisites not met: " + self.msg
 
 class ModusPonensFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
