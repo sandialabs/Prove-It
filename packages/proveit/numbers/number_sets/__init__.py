@@ -6,6 +6,7 @@ from .real_numbers import (
     Real,
     RealNeg,
     RealNonNeg,
+    RealNonPos,
     RealPos,
     RealInterval,
     IntervalOO,

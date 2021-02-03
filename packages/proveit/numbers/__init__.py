@@ -13,6 +13,7 @@ from .number_sets import (
     RealNeg,
     RealPos,
     RealNonNeg,
+    RealNonPos,
     Complex)
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
