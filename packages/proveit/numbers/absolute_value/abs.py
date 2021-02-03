@@ -21,16 +21,12 @@ class Abs(Operation):
     def not_equal(self, rhs, assumptions=USE_DEFAULTS):
         # accessed from conclude() method in not_equals.py
         from . import abs_not_eq_zero
+        from proveit.logic import NotEquals
         from proveit.numbers import zero
         if rhs == zero:
             return abs_not_eq_zero.instantiate(
                 {a: self.operand}, assumptions=assumptions)
-        raise ProofFailure(
-            Equals(
-                self,
-                zero),
-            assumptions,
-            "'not_equal' only implemented for a right side of zero")
+        raise NotEquals(self, zero).conclude_as_folded(assumptions)
 
     def deduce_greater_than_equals_zero(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Complex
