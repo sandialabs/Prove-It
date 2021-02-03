@@ -694,15 +694,23 @@ class Lambda(Expression):
         parameters = []
         parameter_vars = []
         inner_repl_map = dict(repl_map)
-        var_to_keys = dict()
+        paramvar_to_keys = dict()
+        key_to_paramvar = dict()
         for key in repl_map.keys():
-            if isinstance(key, ExprTuple):
-                param_var = get_param_var(key.entries[0])
-            else:
-                param_var = get_param_var(key)
-            var_to_keys.setdefault(param_var, set()).add(key)
+            try:
+                if isinstance(key, ExprTuple):
+                    param_var = get_param_var(key.entries[0])
+                else:
+                    param_var = get_param_var(key)
+                paramvar_to_keys.setdefault(param_var, set()).add(key)
+                key_to_paramvar[key] = param_var
+            except TypeError:
+                # Not a parameter-like key; no worry.  This can
+                # happen with manual replacements but shouldn't happen
+                # for instantiations.
+                pass 
         for parameter, param_var in zip(self.parameters, self.parameter_vars):
-            not_applicable_keys = var_to_keys.get(param_var, [])
+            not_applicable_keys = paramvar_to_keys.get(param_var, [])
             disabled_repl_map = dict()
             for key in not_applicable_keys:
                 disabled_repl_map[key] = inner_repl_map.pop(key)
@@ -835,12 +843,14 @@ class Lambda(Expression):
             else:
                 # No conflict -- propagate the replacement if it is
                 # used.
-                if isinstance(key, ExprTuple):
-                    key_var = get_param_var(key.entries[0])
+                if key in key_to_paramvar:
+                    param_var = key_to_paramvar[key]
+                    if param_var in non_param_body_free_vars:
+                        inner_repl_map[key] = value
                 else:
-                    key_var = get_param_var(key)
-                if key_var in non_param_body_free_vars:
+                    # Non parameter-like key -- just push through.
                     inner_repl_map[key] = value
+                    
         
         # Free variables of the replacements must not collide with
         # the parameter variables.  If there are collisions, relabel
