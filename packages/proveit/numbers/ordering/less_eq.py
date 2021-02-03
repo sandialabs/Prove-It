@@ -111,8 +111,8 @@ class LessEq(NumberOrderingRelation):
         return is_bool_stmt.inner_expr().element.with_matching_style(self)
 
     def unfold(self, assumptions=frozenset()):
-        from . import less_than_equals_def
-        unfolded = less_than_equals_def.instantiate(
+        from . import less_eq_def
+        unfolded = less_eq_def.instantiate(
                 {x: self.lower, y: self.upper}, assumptions=assumptions)
         return unfolded.inner_expr().operands[0].with_mimicked_style(self)
     

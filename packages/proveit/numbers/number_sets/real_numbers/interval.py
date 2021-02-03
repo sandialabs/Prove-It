@@ -35,6 +35,14 @@ class IntervalOO(RealInterval):
         return (r'\left(' + self.lower_bound.latex() + ','
                 + self.upper_bound.latex() + r'\right)')
 
+    def membership_object(self, element):
+        from .real_interval_membership import RealIntervalMembership
+        return RealIntervalMembership(element, self)
+
+    def nonmembership_object(self, element):
+        from .real_interval_membership import RealIntervalNonmembership
+        return RealIntervalNonmembership(element, self)
+
     def deduce_elem_in_set(self, member, assumptions=USE_DEFAULTS):
         from . import in_IntervalOO
         return in_IntervalOO.instantiate(
@@ -106,6 +114,14 @@ class IntervalOC(RealInterval):
         return (r'\left(' + self.lower_bound.latex() + ','
                 + self.upper_bound.latex() + r'\right]')
 
+    def membership_object(self, element):
+        from .real_interval_membership import RealIntervalMembership
+        return RealIntervalMembership(element, self)
+
+    def nonmembership_object(self, element):
+        from .real_interval_membership import RealIntervalNonmembership
+        return RealIntervalNonmembership(element, self)
+
     def deduce_elem_in_set(self, member, assumptions=USE_DEFAULTS):
         from . import in_IntervalOC
         return in_IntervalOC.instantiate(
@@ -163,6 +179,14 @@ class IntervalCO(RealInterval):
         return (r'\left[' + self.lower_bound.latex() + ','
                 + self.upper_bound.latex() + r'\right)')
 
+    def membership_object(self, element):
+        from .real_interval_membership import RealIntervalMembership
+        return RealIntervalMembership(element, self)
+
+    def nonmembership_object(self, element):
+        from .real_interval_membership import RealIntervalNonmembership
+        return RealIntervalNonmembership(element, self)
+
     def deduce_elem_in_set(self, member, assumptions=USE_DEFAULTS):
         from . import in_IntervalCO
         return in_IntervalCO.instantiate(
@@ -219,6 +243,14 @@ class IntervalCC(RealInterval):
     def latex(self, **kwargs):
         return (r'\left[' + self.lower_bound.latex() + ','
                 + self.upper_bound.latex() + r'\right]')
+
+    def membership_object(self, element):
+        from .real_interval_membership import RealIntervalMembership
+        return RealIntervalMembership(element, self)
+
+    def nonmembership_object(self, element):
+        from .real_interval_membership import RealIntervalNonmembership
+        return RealIntervalNonmembership(element, self)
 
     def deduce_elem_in_set(self, member, assumptions=USE_DEFAULTS):
         from . import in_IntervalCC
