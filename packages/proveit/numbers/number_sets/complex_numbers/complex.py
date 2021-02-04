@@ -243,6 +243,38 @@ class ComplexSet(NumberSet):
         new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
         return new_rel
 
+class ComplexNonZeroSet(NumberSet):
+    def __init__(self):
+        NumberSet.__init__(self, 'ComplexNonZero', r'\mathbb{C}^{\neq 0}',
+                           theory=__file__, fence_when_forced=True)
+
+    def membership_side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'q in RationalPos'
+        for a given q.
+        '''
+        member = judgment.element
+        yield lambda assumptions: self.deduce_member_in_complex(member,
+                                                                assumptions)
+        yield lambda assumptions: self.deduce_member_not_zero(member, 
+                                                              assumptions)
+    
+    def deduce_member_not_zero(self, member, assumptions=USE_DEFAULTS):
+        from . import nonzero_if_in_complex_nonzero
+        return nonzero_if_in_complex_nonzero.instantiate(
+            {x: member}, assumptions=assumptions)
+
+    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
+        from . import complex_non_zero_membership_is_bool
+        from proveit import x
+        return complex_non_zero_membership_is_bool.instantiate(
+            {x: member}, assumptions=assumptions)
+
+    def deduce_member_in_complex(self, member, assumptions=USE_DEFAULTS):
+        from . import complex_non_zero_within_complex
+        return complex_non_zero_within_complex.derive_superset_membership(
+            member, assumptions)
+    
 
 # if proveit.defaults.automation:
 #     # Import some fundamental theorems without quantifiers that are

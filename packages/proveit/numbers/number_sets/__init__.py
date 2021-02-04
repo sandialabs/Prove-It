@@ -1,21 +1,15 @@
-from .integers import Integer, Interval, infinity
+from .integers import (
+        Integer, IntegerNeg, IntegerNonZero, IntegerNonPos,
+        Interval, infinity)
 from .natural_numbers import Natural, NaturalPos
-from .rational_numbers import (Rational, RationalNonZero, RationalNeg,
-                               RationalNonNeg, RationalPos)
+from .rational_numbers import (Rational, RationalNonZero,
+                               RationalPos, RationalNeg,
+                               RationalNonNeg, RationalNonPos)
 from .real_numbers import (
-    Real,
-    RealNeg,
-    RealNonNeg,
-    RealNonPos,
-    RealPos,
-    RealInterval,
-    IntervalOO,
-    IntervalCC,
-    IntervalCO,
-    IntervalOC,
-    e,
-    pi)
-from .complex_numbers import Complex, i
+    Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
+    RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC,
+    e, pi)
+from .complex_numbers import Complex, ComplexNonZero, i
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
