@@ -661,8 +661,8 @@ class Lambda(Expression):
                         repl_map, allow_relabeling,
                         assumptions, requirements,
                         equality_repl_requirements)
-                param = IndexedVar(param.var, subbed_index)
-            if isinstance(param, ExprRange):
+                new_params.append(IndexedVar(param.var, subbed_index))
+            elif isinstance(param, ExprRange):
                 param_var = get_param_var(param)
                 subbed_start = \
                     ExprTuple(*extract_start_indices(param))._replaced(
@@ -674,15 +674,12 @@ class Lambda(Expression):
                         repl_map, allow_relabeling,
                         assumptions, requirements,
                         equality_repl_requirements)
-                if subbed_start == subbed_end:
-                    # The parameter range is reduced.  For example,
-                    # x_1, ..., x_n becomes
-                    # x_1, ..., x_1 which becomes
-                    # x_1
-                    param = IndexedVar(param_var, subbed_start)
-                else:
-                    param = var_range(param_var, subbed_start, subbed_end)
-            new_params.append(param)
+                range_param = var_range(param_var, subbed_start, subbed_end)
+                for param in range_param._possibly_reduced_range_entries(
+                        assumptions, requirements):
+                    new_params.append(param)
+            else:
+                new_params.append(param)
 
         # Use a helper method to handle some inner scope transformations.
         new_params, inner_repl_map, inner_assumptions \
@@ -821,8 +818,24 @@ class Lambda(Expression):
                 # inserted into inner_repl_map, the replacement
                 # is deemed to be safely masked within this scope.
             else:
-                # No conflict -- propagate the replacement.
-                inner_repl_map[key] = value
+                # No conflict -- propagate the replacement
+                try:
+                    key_var = get_param_var(key)
+                except (ValueError, TypeError):
+                    key_var = None
+                if key_var is None:
+                    # Non parameter-like key -- just push through.
+                    inner_repl_map[key] = value
+                elif key_var in non_param_body_free_vars:
+                    # This may replace a free variable in the body.
+                    inner_repl_map[key] = value
+                else:
+                    # This does not replace a free variable in the
+                    # body, but may relabel something internally.
+                    # We put this in the relabel_map instead of the
+                    # inner_repl_map so it doesn't impact 
+                    # 'restricted_vars' below.
+                    relabel_map[key] = value                        
 
         # Free variables of the replacements must not collide with
         # the parameter variables.  If there are collisions, relabel
@@ -856,7 +869,10 @@ class Lambda(Expression):
                         "by the following replacement map could not be "
                         "avoided: %s." % relabel_map)
                 dummy_var = safe_dummy_var(*restricted_vars)
-                relabel_map[param_var] = dummy_var
+                if isinstance(param, IndexedVar):
+                    relabel_map[param] = dummy_var
+                else:
+                    relabel_map[param_var] = dummy_var
                 restricted_vars.add(dummy_var)
             else:
                 if isinstance(param_var_repl, set):

@@ -451,10 +451,7 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
 
-    def _possibly_reduced_range_entries(self, expr_range, 
-                                        repl_map, allow_relabeling,
-                                        assumptions, requirements, 
-                                        equality_repl_requirements):
+    def _possibly_reduced_range_entries(self, assumptions, requirements):
         '''
         Yield the entries corresponding to the given expr_range after
         the possible reduction.  If there is no reduction, the
@@ -470,11 +467,11 @@ class ExprRange(Expression):
         if (not defaults.auto_reduce
                 or ExprRange in defaults.disabled_auto_reduction_types):
             # Auto-reduction for this is disabled.
-            yield expr_range
+            yield self
             return
-        lambda_map = expr_range.lambda_map
-        start_index = expr_range.start_index
-        end_index = expr_range.end_index
+        lambda_map = self.lambda_map
+        start_index = self.start_index
+        end_index = self.end_index
         if start_index == end_index:
             # We can do a singular range reduction.
             # Temporarily disable automation to avoid infinite
@@ -483,17 +480,15 @@ class ExprRange(Expression):
                 singular_range_reduction, singular_nested_range_reduction
             defaults.disabled_auto_reduction_types.add(ExprRange)
             try:
-                if expr_range.nested_range_depth() > 1:
+                if self.nested_range_depth() > 1:
                     lambda_map = Lambda(
-                        (expr_range.parameter,
-                         expr_range.body.parameter),
-                        expr_range.body.body)
+                        (self.parameter,
+                         self.body.parameter),
+                        self.body.body)
                     reduction = singular_nested_range_reduction.instantiate(
-                        {
-                            f: lambda_map,
-                            m: start_index,
-                            i: expr_range.first().start_index,
-                            j: expr_range.first().end_index},
+                        {f: lambda_map, m: start_index,
+                         i: self.first().start_index,
+                         j: self.first().end_index},
                         assumptions=assumptions)
                 else:
                     reduction = singular_range_reduction.instantiate(
@@ -515,7 +510,7 @@ class ExprRange(Expression):
                 # We can do an empty range reduction
                 # Temporarily disable automation to avoid infinite
                 # recursion.
-                if expr_range.nested_range_depth() > 1:
+                if self.nested_range_depth() > 1:
                     # this is a nested range, but we know
                     # that the outer range reduces to an empty range,
 
@@ -526,10 +521,10 @@ class ExprRange(Expression):
                         empty_outside_range_of_range
                     defaults.disabled_auto_reduction_types.add(ExprRange)
                     try:
-                        nest_end_index = expr_range.first().end_index
-                        nest_start_index = expr_range.first().start_index
+                        nest_end_index = self.first().end_index
+                        nest_start_index = self.first().start_index
                         lambda_map = Lambda(
-                            (expr_range.parameter, expr_range.body.parameter), expr_range.body.body)
+                            (self.parameter, self.body.parameter), self.body.body)
                         reduction = empty_outside_range_of_range.instantiate(
                             {f: lambda_map, m: start_index, n: end_index, i: nest_start_index, j: nest_end_index},
                             assumptions=assumptions)
@@ -549,7 +544,7 @@ class ExprRange(Expression):
                         # Re-enable automation.
                         defaults.disabled_auto_reduction_types.remove(
                             ExprRange)
-            elif expr_range.nested_range_depth() > 1:
+            elif self.nested_range_depth() > 1:
                 # this is a nested range so the inner range could be empty.
 
                 # If the start and end of the inner range are literal
@@ -557,12 +552,12 @@ class ExprRange(Expression):
                 # straightforward to prove that the entire range is empty.
                 from proveit.numbers import is_literal_int
                 empty_req = Equals(
-                    Add(expr_range.first().end_index, one), expr_range.first().start_index)
+                    Add(self.first().end_index, one), self.first().start_index)
                 if is_literal_int(
-                        expr_range.first().start_index) and is_literal_int(
-                        expr_range.first().end_index):
-                    if expr_range.first().end_index.as_int() + \
-                            1 == expr_range.first().start_index.as_int():
+                        self.first().start_index) and is_literal_int(
+                        self.first().end_index):
+                    if self.first().end_index.as_int() + \
+                            1 == self.first().start_index.as_int():
                         empty_req.prove()
                 if empty_req.proven(assumptions):
                     # We can do an empty range reduction on the entire expression
@@ -572,35 +567,35 @@ class ExprRange(Expression):
                         empty_inside_range_of_range
                     defaults.disabled_auto_reduction_types.add(ExprRange)
                     try:
-                        nest_end_index = expr_range.first().end_index
-                        nest_start_index = expr_range.first().start_index
+                        nest_end_index = self.first().end_index
+                        nest_start_index = self.first().start_index
                         lambda_map = Lambda(
-                            (expr_range.parameter, expr_range.body.parameter), expr_range.body.body)
+                            (self.parameter, self.body.parameter), 
+                            self.body.body)
                         reduction = empty_inside_range_of_range.instantiate(
-                            {f: lambda_map, m: start_index, n: end_index, i: nest_start_index, j: nest_end_index},
+                            {f: lambda_map, m: start_index, n: end_index, 
+                             i: nest_start_index, j: nest_end_index},
                             assumptions=assumptions)
                     finally:
                         # Re-enable automation.
                         defaults.disabled_auto_reduction_types.remove(
                             ExprRange)
                 else:
-                    yield expr_range  # no reduction
+                    yield self  # no reduction
                     return
 
             else:
-                yield expr_range  # no reduction
+                yield self  # no reduction
                 return
         assert isinstance(reduction, Judgment)
         assert isinstance(reduction.expr, Equals)
         assert reduction.expr.operands.num_entries() == 2
-        assert reduction.expr.operands[0] == ExprTuple(expr_range)
+        assert reduction.expr.operands[0] == ExprTuple(self)
         reduced_tuple = reduction.expr.operands[1]
         assert isinstance(reduced_tuple, ExprTuple)
         requirements.append(reduction)
         for entry in reduced_tuple:
-            yield entry._replaced(repl_map, allow_relabeling,
-                          assumptions, requirements,
-                          equality_repl_requirements)
+            yield entry
 
     def _replaced_entries(self, repl_map, allow_relabeling,
                           assumptions, requirements,
@@ -733,9 +728,12 @@ class ExprRange(Expression):
             # Nothing to expand.
             # However, we may perform a reduction of the range
             # if it is known to be empty or singular.
-            for entry in self._possibly_reduced_range_entries(
-                    subbed_expr_range, repl_map, allow_relabeling,
-                    assumptions, requirements, equality_repl_requirements):
+            for entry in subbed_expr_range._possibly_reduced_range_entries(
+                    assumptions, requirements):
+                if entry != self:
+                    entry = entry._replaced(repl_map, allow_relabeling,
+                          assumptions, requirements,
+                          equality_repl_requirements)
                 yield entry
             return  # Done.
 
