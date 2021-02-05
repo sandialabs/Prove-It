@@ -2,6 +2,9 @@
 
 from .number_sets import (
     Integer,
+    IntegerNonZero,
+    IntegerNeg,
+    IntegerNonPos,
     Natural,
     NaturalPos,
     Rational,
@@ -9,11 +12,15 @@ from .number_sets import (
     RationalPos,
     RationalNeg,
     RationalNonNeg,
+    RationalNonPos,
     Real,
+    RealNonZero,
     RealNeg,
     RealPos,
     RealNonNeg,
-    Complex)
+    RealNonPos,
+    Complex,
+    ComplexNonZero)
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
 from .numerals import num, Numeral, DecimalSequence, Digits, DIGITS, is_literal_int
@@ -37,18 +44,12 @@ from .divisibility import Divides, DividesProper, GCD
 import proveit
 
 if proveit.defaults.automation:
-    try:
-        # Import some fundamental theorems without quantifiers that are
-      # imported when automation is used.
-        # Fails before running the _axioms_ and _theorems_ notebooks for the
-        # first time, but fine after that.
-        from .number_sets.natural_numbers import zero_in_nats
-        from .numerals.decimals import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9
-        from .numerals.decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
-        from .numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5, posnat6, posnat7, posnat8, posnat9
-        from .negation import negated_zero
-    except BaseException:
-        pass
+    # Import some fundamental theorems without quantifiers that are
+    from .number_sets.natural_numbers import zero_in_nats
+    from .numerals.decimals import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9
+    from .numerals.decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
+    from .numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5, posnat6, posnat7, posnat8, posnat9
+    from .negation import negated_zero
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

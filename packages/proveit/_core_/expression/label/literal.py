@@ -28,6 +28,7 @@ class Literal(Label):
             latex_format=None,
             extra_core_info=tuple(),
             theory=None,
+            fence_when_forced=False,
             styles=None):
         '''
         Create a Literal.  If latex_format is not supplied, the
@@ -64,7 +65,8 @@ class Literal(Label):
             'Literal',
             (theory.name,
              ) + tuple(extra_core_info),
-            styles=styles)
+            styles=styles,
+            fence_when_forced=fence_when_forced)
         self.theory = theory
         # if self._core_info in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same theory and string/latex formats")
@@ -160,8 +162,7 @@ class Literal(Label):
             yield arg
         if len(init_args) == 3:
             return  # nothing more
-        if (len(init_args) == 6 and init_args[3] == 'extra_core_info'
-                and init_args[4] == 'theory' and init_args[5] == 'styles'):
+        if self.__class__ == Literal:
             core_info = self.core_info()
             theory_name = core_info[3]
             extra_core_info = core_info[4:]

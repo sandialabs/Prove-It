@@ -1,6 +1,7 @@
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, USE_DEFAULTS, StyleOptions, 
-                     maybe_fenced_latex, ProofFailure, InnerExpr)
+                     maybe_fenced_latex, ProofFailure, InnerExpr,
+                     UnsatisfiedPrerequisites)
 from proveit import a, b, c, d, i, j, k, l, n, x, y
 from proveit.logic import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
@@ -239,52 +240,15 @@ class Add(Operation):
                     yield (lambda assumptions: self.deduce_subtraction(judgment.rhs, assumptions))
                     yield (lambda assumptions: self.deduce_reversed_subtraction(judgment.rhs, assumptions))
 
-    def deduce_strict_inc_add(self, x, assumptions=USE_DEFAULTS):
-        '''
-        created by JML 7/17/19. renamed by WMW 9/6/19.
-
-        '''
-        from . import strictly_increasing_additions
-        # print(b)
-        for _i, term in enumerate(self.terms.entries):
-            if term == x:
-                idx = _i
-        _a = self.terms[:idx]
-        _b = self.terms[idx]
-        _c = self.terms[idx + 1:]
-        _i = _a.num_elements(assumptions)
-        _j = _c.num_elements(assumptions)
-        # print(strictly_increasing_additions.instantiate({m:num(idx),n:num(n_val),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
-        return strictly_increasing_additions.instantiate(
-            {i: _i, j: _j, a: _a, b: _b, c: _c}, assumptions=assumptions)
-
-    def deduce_strict_dec_add(self, x, assumptions=USE_DEFAULTS):
-        '''
-        created by JML 7/17/19. renamed by WMW 9/6/19.
-
-        '''
-        from . import strictly_decreasing_additions
-        # print(b)
-        # print(self.terms)
-        for _i, term in enumerate(self.terms.entries):
-            if term == x:
-                idx = _i
-        _a = self.terms[:idx]
-        _b = self.terms[idx]
-        _c = self.terms[idx + 1:]        # print(n_val)
-        _i = _a.num_elements(assumptions)
-        _j = _c.num_elements(assumptions)
-        return strictly_decreasing_additions.instantiate(
-            {i: _i, j: _j, a: _a, b: _b, c: _c}, assumptions=assumptions)
-
     def deduce_negation(self, rhs, assumptions=USE_DEFAULTS):
         '''
         From (a + b) = rhs, derive and return -(a-b) = -rhs
         '''
         from proveit.numbers.addition.subtraction import negated_add
         if not self.terms.is_double():
-            raise Exception(
-                "deduce_negation implemented only when there are two and only two added terms")
+            raise NotImplementedError(
+                "Add.deduce_negation implemented only when there are two "
+                "and only two added terms")
         deduction = negated_add.instantiate(
             {a: self.terms[0], b: self.terms[1], c: rhs}, assumptions=assumptions)
         return deduction
@@ -295,8 +259,9 @@ class Add(Operation):
         '''
         from proveit.numbers.addition.subtraction import subtract_from_add
         if not self.terms.is_double():
-            raise Exception(
-                "deduce_subtraction implemented only when there are two and only two added terms")
+            raise NotImplementedError(
+                "Add.deduce_subtraction implemented only when there are "
+                "two and only two added terms")
         deduction = subtract_from_add.instantiate(
             {a: self.terms[0], b: self.terms[1], c: rhs}, assumptions=assumptions)
         return deduction
@@ -307,8 +272,9 @@ class Add(Operation):
         '''
         from proveit.numbers.addition.subtraction import subtract_from_add_reversed
         if not self.terms.is_double():
-            raise Exception(
-                "subtract_from_add_reversed implemented only when there are two and only two added terms")
+            raise NotImplementedError(
+                "Add.decude_reversed_subtraction implemented only when "
+                "there are two and only two added terms")
         deduction = subtract_from_add_reversed.instantiate(
             {a: self.terms[0], b: self.terms[1], c: rhs}, assumptions=assumptions)
         return deduction
@@ -942,7 +908,7 @@ class Add(Operation):
                     term_idx = _k
                     break
             if term_idx is None:
-                raise Exception(
+                raise ValueError(
                     "No negated term, can't provide the subtraction folding.")
         if not isinstance(self.terms[term_idx], Neg):
             raise ValueError(
@@ -1126,39 +1092,6 @@ class Add(Operation):
         return thm.instantiate({a: self.terms[0], b: self.terms[1].operand},
                                assumptions=assumptions)
 
-    def deduce_strict_increase(
-            self,
-            lower_bound_term_index,
-            assumptions=frozenset()):
-        '''
-        Deducing that all other terms are in RealPos, deduce an return
-        the statement that the sum is greater than the term at lower_bound_term_index.
-        Assumptions may be needed to deduce that the terms are in RealPos or Real.
-        '''
-        from . import strictly_increasing_additions
-        return strictly_increasing_additions.instantiate(
-            {a: self.terms[:lower_bound_term_index],
-             c: self.terms[lower_bound_term_index + 1:]},
-            assumptions=assumptions).instantiate(
-            {b: self.terms[lower_bound_term_index]},
-            assumptions=assumptions)
-
-    def deduce_strict_decrease(
-            self,
-            upper_bound_term_index,
-            assumptions=frozenset()):
-        '''
-        Deducing that all other terms are in RealNeg, deduce an return
-        the statement that the sum is less than the term at upper_bound_term_index.
-        Assumptions may be needed to deduce that the terms are in RealPos or Real.
-        '''
-        from . import strictly_decreasing_additions
-        return strictly_decreasing_additions.instantiate(
-            {a: self.terms[:upper_bound_term_index],
-             c: self.terms[upper_bound_term_index + 1:]}).instantiate(
-            {b: self.terms[upper_bound_term_index]},
-            assumptions=assumptions)
-
     def factorization(
             self,
             the_factor,
@@ -1190,7 +1123,7 @@ class Add(Operation):
                     group_remainder=True,
                     assumptions=assumptions)
                 if not isinstance(term_factorization.rhs, Mult):
-                    raise Exception(
+                    raise ValueError(
                         'Expecting right hand size of factorization to be a product')
                 if pull == 'left':
                     # the grouped remainder on the right
@@ -1344,7 +1277,7 @@ class Add(Operation):
         eq.inner_expr().rhs.with_subtraction_at(*new_positions)
         '''
         return eq
-    
+
     def deduce_bound(self, term_relation_or_relations, 
                      assumptions=USE_DEFAULTS):
         '''
@@ -1353,6 +1286,9 @@ class Add(Operation):
         "x + a" and the term_relations are
             x < y and a < b
         return x + a < y + b.
+        
+        Also see Add.deduce_bound_by_term which bounds the sum
+        by one of the terms.
         '''
         from proveit.numbers import Less, LessEq
         from . import (
@@ -1423,6 +1359,147 @@ class Add(Operation):
             return bound.with_direction_reversed()
         assert bound.lhs == self
         return bound
+
+    def deduce_bound_by_term(
+            self, term_or_idx, assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this sum is bound be the given term (or term at
+        the given index).  To use this method, we must know that the
+        other terms are all in RealPos, RealNeg, RealNonNeg, or
+        RealNonPos and will call
+        deduce_weak_upper_bound_by_term,
+        deduce_strong_upper_bound_by_term,
+        deduce_weak_lower_bound_by_term,
+        deduce_strong_lower_bound_by_term
+        accordingly.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import RealPos, RealNeg, RealNonNeg, RealNonPos
+        relevant_number_sets = {RealPos, RealNeg, RealNonNeg, RealNonPos}
+        for _k, term_entry in enumerate(self.terms.entries):
+            if _k == term_or_idx or term_entry == term_or_idx: 
+                # skip the term doing the bounding.
+                continue
+            for number_set in list(relevant_number_sets):
+                if isinstance(term_entry, ExprRange):
+                    in_number_set = ExprRange(
+                            term_entry.parameter,
+                            InSet(term_entry.body, number_set),
+                            term_entry.start_index, term_entry.end_index)
+                else:
+                    in_number_set = InSet(term_entry, number_set)
+                if not in_number_set.proven(assumptions):
+                    relevant_number_sets.discard(number_set)
+        if len(relevant_number_sets) == 0:
+            raise UnsatisfiedPrerequisites(
+                    "In order to use Add.deduce_bound_by_term, the "
+                    "'other' terms must all be known to be contained "
+                    "in RealPos, RealNeg, RealNonNeg, RealNonPos")
+        # If a strong bound is applicable, use that.
+        if RealPos in relevant_number_sets:
+            return self.deduce_strong_lower_bound_by_term(
+                    term_or_idx, assumptions)
+        if RealNeg in relevant_number_sets:
+            return self.deduce_strong_upper_bound_by_term(
+                    term_or_idx, assumptions)
+        if RealNonNeg in relevant_number_sets:
+            return self.deduce_weak_lower_bound_by_term(
+                    term_or_idx, assumptions)
+        if RealNonPos in relevant_number_sets:
+            return self.deduce_weak_upper_bound_by_term(
+                    term_or_idx, assumptions)
+
+    def deduce_weak_lower_bound_by_term(
+            self, term_or_idx, assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this sum is greater than or equal to the term at the
+        given index.
+        '''
+        from . import term_as_weak_lower_bound
+        return self._deduce_specific_bound_by_term(
+                term_as_weak_lower_bound, term_or_idx, assumptions)
+
+    def deduce_weak_upper_bound_by_term(
+            self, term_or_idx, assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this sum is less than or equal to the term at the
+        given index.
+        '''
+        from . import term_as_weak_upper_bound
+        return self._deduce_specific_bound_by_term(
+                term_as_weak_upper_bound, term_or_idx, assumptions)
+
+    def deduce_strong_lower_bound_by_term(
+            self, term_or_idx, assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this sum is greater than the term at the
+        given index.
+        '''
+        from . import term_as_strong_lower_bound
+        return self._deduce_specific_bound_by_term(
+                term_as_strong_lower_bound, term_or_idx, assumptions)
+
+    def deduce_strong_upper_bound_by_term(
+            self, term_or_idx, assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this sum is less than the term at the
+        given index.
+        '''
+        from . import term_as_strong_upper_bound
+        return self._deduce_specific_bound_by_term(
+                term_as_strong_upper_bound, term_or_idx, assumptions)
+
+    def _deduce_specific_bound_by_term(self, thm, term_or_idx, assumptions):
+        '''
+        Helper method for 
+        deduce_weak_lower_bound_by_term,
+        deduce_weak_upper_bound_by_term, 
+        deduce_strong_lower_bound_by_term, and 
+        deduce_strong_lower_bound_by_term.
+        '''
+        if isinstance(term_or_idx, Expression):
+            try:
+                idx = self.terms.index(term_or_idx)
+            except ValueError:
+                raise ValueError(
+                        "'term_or_idx' must be one of the terms of %s "
+                        "or an index for one of the terms."%self)
+        else:
+            if not isinstance(term_or_idx, int):
+                raise TypeError(
+                        "'term_or_idx' must be an Expression or int")
+            idx = term_or_idx
+        _a = self.terms[:idx]
+        _b = self.terms[idx]
+        _c = self.terms[idx + 1:]
+        _i = _a.num_elements(assumptions)
+        _j = _c.num_elements(assumptions)
+        return thm.instantiate(
+            {i: _i, j: _j, a: _a, b: _b, c: _c},
+            assumptions=assumptions)        
+
+    def not_equal(self, other, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to prove that self is not equal to other.
+        '''
+        from proveit.logic import NotEquals
+        from proveit.numbers import zero, Neg
+        if other == zero:
+            if self.terms.is_double():
+                if isinstance(self.terms[1], Neg):
+                    from .subtraction import nonzero_difference_if_different
+                    _a = self.terms[0]
+                    _b = self.terms[1].operand
+                    #if (NotEquals(_a, _b).proven(assumptions) and
+                    #        nonzero_difference_if_different.is_usable()):
+                    if nonzero_difference_if_different.is_usable():
+                        # If we know that _a ≠ _b then we can 
+                        # prove _a - _b ≠ 0.
+                        return nonzero_difference_if_different.instantiate(
+                                {a:_a, b:_b}, assumptions=assumptions)
+        # If it isn't a special case treated here, just use
+        # conclude-as-folded.
+        return NotEquals(self, other).conclude_as_folded(assumptions)
 
 def subtract(a, b):
     '''

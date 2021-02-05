@@ -547,7 +547,8 @@ class Expression(metaclass=ExprType):
         if self != expr_with_different_style:
             raise ValueError(
                 "'with_matching_style' must an expression with "
-                "the same meaning as self.")
+                "the same meaning as self: %s ≠ %s."%
+                (self, expr_with_different_style))
         return self._with_matching_style(expr_with_different_style)
 
     def _with_matching_style(self, expr_with_different_style):

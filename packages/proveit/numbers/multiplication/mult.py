@@ -153,14 +153,14 @@ class Mult(Operation):
 
     def not_equal(self, rhs, assumptions=USE_DEFAULTS):
         from . import mult_not_eq_zero
+        from proveit.logic import NotEquals
         from proveit.numbers import zero
         if rhs == zero:
             _n = self.operands.num_elements(assumptions)
             _a = self.operands
             return mult_not_eq_zero.instantiate({n: _n, a: _a},
                                                 assumptions=assumptions)
-        raise ProofFailure(Equals(self, zero), assumptions, (
-            "'not_equal' only implemented for a right side of zero"))
+        return NotEquals(self, zero).conclude_as_folded(assumptions)
 
     def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
