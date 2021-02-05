@@ -54,6 +54,7 @@ class ExprRange(Expression):
         and body, in which case the 'parameter' and 'body' arguments
         must both be None.
         '''
+        from proveit import Variable
         if lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
             lambda_map = lambda_map
@@ -63,6 +64,9 @@ class ExprRange(Expression):
                                  "lambda_map is provided.")
             parameter = lambda_map.parameter
         else:
+            if not isinstance(parameter, Variable):
+                raise TypeError("The 'parameter' of an ExprRange must be "
+                                "a Variable.")
             lambda_map = Lambda(parameter, body)
         if parameterization not in (None, 'implicit', 'explicit'):
             raise ValueError("'parameterization' must be 'implicit', "
@@ -76,10 +80,6 @@ class ExprRange(Expression):
         self.start_index = singular_expression(start_index)
         self.end_index = singular_expression(end_index)
         self.lambda_map = lambda_map
-        # The body of the Lambda map is a Conditional that conditions the
-        # mapping according to the parameter being in the [start, end]
-        # interval.  We'll use self.body to refer to the value of this
-        # conditional.
         self.parameter = self.lambda_map.parameter
         self.body = self.lambda_map.body
         self.is_parameter_independent = (
@@ -747,8 +747,8 @@ class ExprRange(Expression):
         dummy_equality_repl_reqs = set()
         new_params, inner_repl_map, inner_assumptions \
             = self.lambda_map._inner_scope_sub(
-                repl_map, allow_relabeling, assumptions,
-                dummy_reqs, dummy_equality_repl_reqs)
+                    [self.parameter], repl_map, allow_relabeling, 
+                    assumptions, dummy_reqs, dummy_equality_repl_reqs)
         # Sanity check that we didn't introduce new requirements.
         # "_inner_scope_sub" should not introduce anything that
         # wasn't introduced when we called `self.replaced`.

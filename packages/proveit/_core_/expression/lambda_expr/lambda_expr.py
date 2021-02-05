@@ -643,15 +643,51 @@ class Lambda(Expression):
         For more details, see Operation.replaced, Lambda.apply, and
         ExprRange.replaced (which is the sequence of calls involved).
         '''
+        from proveit import ExprTuple, ExprRange, IndexedVar
+        from proveit._core_.expression.composite.expr_range import \
+            extract_start_indices, extract_end_indices, var_range
+
         if len(repl_map) > 0 and (self in repl_map):
             # The full expression is to be replaced.
             return repl_map[self]
 
         assumptions = defaults.checked_assumptions(assumptions)
 
+        # First, we may replace indices of any of the parameters.
+        new_params = []
+        for param in self.parameters:
+            if isinstance(param, IndexedVar):
+                subbed_index = param.index._replaced(
+                        repl_map, allow_relabeling,
+                        assumptions, requirements,
+                        equality_repl_requirements)
+                param = IndexedVar(param.var, subbed_index)
+            if isinstance(param, ExprRange):
+                param_var = get_param_var(param)
+                subbed_start = \
+                    ExprTuple(*extract_start_indices(param))._replaced(
+                        repl_map, allow_relabeling,
+                        assumptions, requirements,
+                        equality_repl_requirements)
+                subbed_end = \
+                    ExprTuple(*extract_end_indices(param))._replaced(
+                        repl_map, allow_relabeling,
+                        assumptions, requirements,
+                        equality_repl_requirements)
+                if subbed_start == subbed_end:
+                    # The parameter range is reduced.  For example,
+                    # x_1, ..., x_n becomes
+                    # x_1, ..., x_1 which becomes
+                    # x_1
+                    param = IndexedVar(param_var, subbed_start)
+                else:
+                    param = var_range(param_var, subbed_start, subbed_end)
+            new_params.append(param)
+
         # Use a helper method to handle some inner scope transformations.
         new_params, inner_repl_map, inner_assumptions \
-            = self._inner_scope_sub(repl_map, allow_relabeling,
+            = self._inner_scope_sub(new_params,
+                                    repl_map, allow_relabeling,
                                     assumptions, requirements,
                                     equality_repl_requirements)
 
@@ -670,77 +706,21 @@ class Lambda(Expression):
 
         return replaced
 
-    def _inner_scope_sub(self, repl_map, allow_relabeling,
-                         assumptions, requirements,
+    def _inner_scope_sub(self, parameters, repl_map, 
+                         allow_relabeling, assumptions, requirements,
                          equality_repl_requirements):
         '''
-        Helper method for replaced (and used by ExprRange.replaced)
+        Helper method for _replaced (and used by ExprRange._replaced)
         which handles the change in scope properly as well as parameter
-        relabeling.
+        relabeling.  The parameters may differe from self.parameters
+        just in the parameters indices (e.g., x_1, ..., x_n could have
+        been changed to x_1, ..., x_5).
         '''
-
         from proveit import Variable, ExprTuple, ExprRange, IndexedVar
         from proveit._core_.expression.composite.expr_range import \
             extract_start_indices, extract_end_indices
 
-
-        # Generate the set of parameters which may be altered due 
-        # a change in the start/end indices.
-        # For example, we may have
-        # x_1, ..., x_n go to
-        #       x_1, ..., x_3 with n:3
-        #       x_1 with n:1
-        #       or empty with n:0
-        parameters = []
-        parameter_vars = []
-        inner_repl_map = dict(repl_map)
-        paramvar_to_keys = dict()
-        key_to_paramvar = dict()
-        for key in repl_map.keys():
-            try:
-                if isinstance(key, ExprTuple):
-                    param_var = get_param_var(key.entries[0])
-                else:
-                    param_var = get_param_var(key)
-                paramvar_to_keys.setdefault(param_var, set()).add(key)
-                key_to_paramvar[key] = param_var
-            except TypeError:
-                # Not a parameter-like key; no worry.  This can
-                # happen with manual replacements but shouldn't happen
-                # for instantiations.
-                pass 
-        for parameter, param_var in zip(self.parameters, self.parameter_vars):
-            not_applicable_keys = paramvar_to_keys.get(param_var, [])
-            disabled_repl_map = dict()
-            for key in not_applicable_keys:
-                disabled_repl_map[key] = inner_repl_map.pop(key)
-            if isinstance(parameter, ExprRange):
-                subbed_params = []
-                for subbed_param in parameter._replaced_entries(
-                        inner_repl_map, allow_relabeling,
-                        assumptions, requirements,
-                        equality_repl_requirements):
-                    assert get_param_var(subbed_param) == param_var, (
-                            "Unexpected change of parameter variable")
-                    subbed_params.append(subbed_param) 
-                num_subbed = len(subbed_params)
-                assert num_subbed <= 1, (
-                        "Unexpected increase in the number of parameter entries")
-                if num_subbed > 0:
-                    assert num_subbed == 1
-                    parameter_vars.append(param_var)
-                    parameters.extend(subbed_params)
-            elif isinstance(parameter, IndexedVar):
-                subbed_param = parameter
-                assert get_param_var(subbed_param) == param_var, (
-                        "Unexpected change of parameter variable")
-                parameters.append(subbed_param)
-                parameter_vars.append(param_var)
-            else:
-                parameters.append(parameter)
-                parameter_vars.append(param_var)
-            inner_repl_map.update(disabled_repl_map) # re-enable
-        
+        parameter_vars = self.parameter_vars
         # Free variables of the body but excluding the parameter
         # variables.
         non_param_body_free_vars = (free_vars(self.body, err_inclusively=True)
@@ -841,17 +821,9 @@ class Lambda(Expression):
                 # inserted into inner_repl_map, the replacement
                 # is deemed to be safely masked within this scope.
             else:
-                # No conflict -- propagate the replacement if it is
-                # used.
-                if key in key_to_paramvar:
-                    param_var = key_to_paramvar[key]
-                    if param_var in non_param_body_free_vars:
-                        inner_repl_map[key] = value
-                else:
-                    # Non parameter-like key -- just push through.
-                    inner_repl_map[key] = value
-                    
-        
+                # No conflict -- propagate the replacement.
+                inner_repl_map[key] = value
+
         # Free variables of the replacements must not collide with
         # the parameter variables.  If there are collisions, relabel
         # the parameter variables to something safe.  First, get the
