@@ -118,11 +118,11 @@ class BooleanSet(Literal):
                 condition = forall_stmt.conditions[1]
             else:
                 condition = And(*forall_stmt.conditions[1:].entries)
-            Qx = Operation(Q, forall_stmt.instance_var)
+            Qx = Operation(Q, forall_stmt.instance_param)
             _Qx = condition
-            Px = Operation(P, forall_stmt.instance_var)
+            Px = Operation(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
-            _A = forall_stmt.instance_var
+            _A = forall_stmt.instance_param
             return fold_conditioned_forall_over_bool.instantiate(
                 {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1,
                 assumptions=assumptions)
