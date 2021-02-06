@@ -730,7 +730,7 @@ class ExprRange(Expression):
             # if it is known to be empty or singular.
             for entry in subbed_expr_range._possibly_reduced_range_entries(
                     assumptions, requirements):
-                if entry != self:
+                if entry != subbed_expr_range:
                     entry = entry._replaced(repl_map, allow_relabeling,
                           assumptions, requirements,
                           equality_repl_requirements)
@@ -1060,9 +1060,9 @@ class ExprRange(Expression):
                                   start_index, end_index)
                 # We may perform a reduction of the range if it is known
                 # to be empty or singular.
-                for entry in subbed_expr_range._possibly_reduced_range_entries(
+                for entry in entry._possibly_reduced_range_entries(
                         assumptions, requirements):
-                    if entry != self:
+                    if entry != subbed_expr_range:
                         entry = entry._replaced(repl_map, allow_relabeling,
                               assumptions, requirements,
                               equality_repl_requirements)
