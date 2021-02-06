@@ -1062,7 +1062,7 @@ class ExprRange(Expression):
                 # to be empty or singular.
                 for entry in entry._possibly_reduced_range_entries(
                         assumptions, requirements):
-                    if entry != subbed_expr_range:
+                    if entry != entry:
                         entry = entry._replaced(repl_map, allow_relabeling,
                               assumptions, requirements,
                               equality_repl_requirements)
