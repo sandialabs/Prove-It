@@ -1060,10 +1060,12 @@ class ExprRange(Expression):
                                   start_index, end_index)
                 # We may perform a reduction of the range if it is known
                 # to be empty or singular.
-                for entry in self._possibly_reduced_range_entries(
-                        entry, repl_map, allow_relabeling,
-                        assumptions, requirements, 
-                        equality_repl_requirements):
+                for entry in subbed_expr_range._possibly_reduced_range_entries(
+                        assumptions, requirements):
+                    if entry != self:
+                        entry = entry._replaced(repl_map, allow_relabeling,
+                              assumptions, requirements,
+                              equality_repl_requirements)
                     yield entry
                 if indices_must_match:
                     # We need to know the new_indices to match with the
