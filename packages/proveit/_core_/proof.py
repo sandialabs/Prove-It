@@ -73,9 +73,10 @@ class Proof:
             # meanng data of proofs that directly require this one
             self._meaning_data._dependents = set()
 
-            # Is this a usable Proof?  An unusable proof occurs when trying to prove a Theorem
-            # that must explicitly presume Theorems that are not fully known in order to
-            # avoid circular logic.  They can also be manually introduced via
+            # Is this a usable Proof?  An unusable proof occurs when 
+            # trying to prove a Theorem that must explicitly presume 
+            # Theorems that are not fully known in order to avoid 
+            # circular logic.  They can also be manually introduced via
             # Proof.disable().
             # When unusable, this will point to the unusable theorem
             self._meaning_data._unusable_proof = None
@@ -88,12 +89,12 @@ class Proof:
                 lambda obj: hex(
                     obj._style_id)))
 
-        # reference this unchanging data of the unique 'meaning' data
+        # Reference this unchanging data of the unique 'meaning' data.
         self._meaning_id = self._meaning_data._unique_id
 
-        # reference this data of the unique 'meaning' data, but note that these
-        # are subject to change (as proofs are disabled and as new dependencies
-        # are added).
+        # Reference this data of the unique 'meaning' data, but note 
+        # that these are subject to change (as proofs are disabled and 
+        # as new dependencies are added).
         self.required_proofs = self._meaning_data.required_proofs
         self._dependents = self._meaning_data._dependents
 
@@ -103,10 +104,11 @@ class Proof:
         original_proof = self.proven_truth not in all_required_truths
 
         if original_proof:
-            # As long as this is not a useless self-dependent proof (a proof that depends upon
-            # a different proof of the same truth which should never actually get used),
-            # track the dependencies of required proofs so they can be updated appropriated if there are
-            # changes due to proof disabling.
+            # As long as this is not a useless self-dependent proof (a 
+            # proof that depends upon a different proof of the same
+            # truth which should never actually get used), track the 
+            # dependencies of required proofs so they can be updated 
+            # appropriated if there are changes due to proof disabling.
             for required_proof in self.required_proofs:
                 required_proof._dependents.add(self)
 
@@ -136,8 +138,9 @@ class Proof:
 
         # if it is a Theorem, set its "usability", avoiding circular logic
         if self.is_usable():
-            self._setUsability()
-        # this new proof may be the first proof, make an old one obselete, or be born obsolete itself.
+            self._mark_usability()
+        # This new proof may be the first proof, make an old one 
+        # obselete, or be born obsolete itself.
         #had_previous_proof = (proven_truth.proof() is not None and proven_truth.is_usable())
         proven_truth._addProof(self)
         if requiring_unusable_proof:
@@ -147,27 +150,24 @@ class Proof:
                 Judgment.theorem_being_proven,
                 self._meaning_data._unusable_proof)
         if proven_truth.proof() == self and self.is_usable(
-        ):  # don't bother with side effects if this proof was born obsolete or unusable
-            # May derive any side-effects that are obvious consequences arising from this truth
+        ):  # Don't bother with side effects if this proof was born 
+            # obsolete or unusable.  May derive any side-effects that 
+            # are obvious consequences arising from this truth
             # (if it has not already been processed):
             proven_truth.derive_side_effects(defaults.assumptions)
 
     def _updateDependencies(self, newproof):
         '''
-        Swap out this oldproof for the newproof in all dependents and update their num_steps
-        and usability status.
+        Swap out this oldproof for the newproof in all dependents and 
+        update their num_steps and usability status.
         '''
         oldproof = self
         for dependent in oldproof._dependents:
             revised_dependent = False
-            i = 0
-            try:
-                while True:
-                    i = dependent.required_proofs.index(oldproof, i)
+            for i in range(len(dependent.required_proofs)):
+                if dependent.required_proofs[i] == oldproof:
                     dependent.required_proofs[i] = newproof
                     revised_dependent = True
-            except ValueError:
-                pass
             assert revised_dependent, "Incorrect dependency relationship"
             newproof._dependents.add(dependent)
             if all(required_proof.is_usable()
@@ -178,15 +178,17 @@ class Proof:
                 dependent.proven_truth._addProof(
                     dependent)  # add it back as an option
 
-    def _setUsability(self):
+    def _mark_usability(self, set_to_disable=None):
         pass  # overloaded for the Theorem type Proof
 
     def _generate_unique_rep(self, object_rep_fn):
         '''
-        Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
+        Generate a unique representation string using the given function
+        to obtain representations of other referenced Prove-It objects.
         '''
-        # Internally, for self._meaning_rep and self._style_rep, we will use self.required_truths in the unique representation
-        # and the proofs are subject to change (if anything is disabled).
+        # Internally, for self._meaning_rep and self._style_rep, we will
+        # use self.required_truths in the unique representation and
+        # the proofs are subject to change (if anything is disabled).
         # For external storage (see _theory_storage.py), we will use
         # self.required_proofs, locking the mapping from KnonwTruths of
         # self.required_truths to Proofs.
@@ -204,8 +206,9 @@ class Proof:
     def _generate_step_info(self, object_rep_fn):
         '''
         Generate information about this proof step.
-        Overridden by Specialization which also needs to including the mapping information
-        and uses the given function to obtain representations of sub-Object.
+        Overridden by Specialization which also needs to including the 
+        mapping information and uses the given function to obtain 
+        representations of sub-Object.
         '''
         return self.step_type() + ':'
 
@@ -288,34 +291,37 @@ class Proof:
         that don't have an alternate proof that doesn't rely
         on this one.
         '''
+        Proof._disable_all([self])
+    
+    @staticmethod
+    def _disable_all(to_disable):
+        
         # Get the set of all dependents via breadth-first search
-        all_dependents = set()
-        to_process = [self]
+        to_process = list(to_disable)
+        for thm in to_process:
+            assert isinstance(thm, Theorem), (
+                    "Expecting 'to_disable' to contain Theorems")
+        disabling_thm = None
         while len(to_process) > 0:
             dependent_proof = to_process.pop()
-            if dependent_proof not in all_dependents:
-                all_dependents.add(dependent_proof)
-                if dependent_proof.proven_truth.proof() == dependent_proof:
-                    # include the sub-dependents iff this dependent is actually
-                    # in use
-                    to_process.extend(dependent_proof._dependents)
-
-        # Disable all dependents
-        for dependent_proof in all_dependents:
-            dependent_proof._meaning_data._unusable_proof = self
+            if not dependent_proof.is_usable():
+                # Already disabled, so we can skip it.
+                continue
+            if isinstance(dependent_proof, Theorem):
+                # Next Theorem being disabled (not a dependent of one
+                # -- a dependent only of itself).
+                disabling_thm = dependent_proof
+            dependent_proof._meaning_data._unusable_proof = disabling_thm
             dependent_proof.proven_truth._discardProof(dependent_proof)
-
-        # Check if alternate usable proofs are available for the proofs that we disabled.
-        # Make multiple passes to ensure new possibilities and best options
-        # fully propagate.
-        continue_revisions = True
-        while continue_revisions:
-            continue_revisions = False
-            for dependent_proof in all_dependents:
-                if dependent_proof.proven_truth.proof() == dependent_proof:
-                    # Check for an alternate to this disabled dependent proof.
-                    if dependent_proof.proven_truth._reviseProof():
-                        continue_revisions = True
+            if dependent_proof.proven_truth._reviseProof():
+                # A new proof was found, so we do NOT have to
+                # propagate the disabling to its dependents.
+                continue
+            else:
+                # Include the sub-dependents.
+                # We extend to the back and pop off the back so
+                # we keep the theorem dependents all together.
+                to_process.extend(dependent_proof._dependents)
 
     def __eq__(self, other):
         if isinstance(other, Proof):
@@ -628,7 +634,7 @@ class Theorem(Proof):
         # keep track of proofs that may be used to prove the theorem
         # before 'begin_proof' is called so we will have the proof handy.
         self._possibleProofs = []
-        # Note that _setUsability will be called within Proof.__init__
+        # Note that _mark_usability will be called within Proof.__init__
         Proof.__init__(self, Judgment(expr, frozenset()), [])
         Theorem.all_theorems.append(self)
 
@@ -663,8 +669,10 @@ class Theorem(Proof):
 
     @staticmethod
     def update_usability():
+        set_to_disable = set()
         for theorem in Theorem.all_theorems:
-            theorem._setUsability()
+            theorem._mark_usability(set_to_disable)
+        Proof._disable_all(set_to_disable)
 
     def _stored_theorem(self):
         from ._theory_storage import StoredTheorem
@@ -787,19 +795,23 @@ class Theorem(Proof):
         '''
         return self._stored_theorem().all_dependents()
 
-    def _setUsability(self):
+    def _mark_usability(self, set_to_disable=None):
         '''
-        Sets the '_unusable_proof' attribute to disable the
-        theorem if some theorem is being proven and this
+        Determine whether or not we need to disable the
+        theorem -- if some theorem is being proven and this
         theorem is not presumed or is an alternate proof for the
         same theorem.  Also, if it is presumed, ensure the logic
         is not circular.  Generally, this is preventing circular
         logic.  This applies when a proof has begun
         (see Judgment.begin_proof in judgment.py).
-        When Judgment.theorem_being_proven is None, all Theorems are allowed.
-        Otherwise only Theorems named in the Judgment.presuming_theorem_names set
+        When Judgment.theorem_being_proven is None, all Theorems are 
+        allowed.  Otherwise only Theorems named in the 
+        Judgment.presuming_theorem_names set
         or contained within any of the Judgment.presuming_theories
         (i.e., theory) are allowed.
+        
+        If set_to_disable is provided, instead of actively disabling
+        proofs, collect them in a set to be disabled more efficiently.
         '''
         #from proveit.certify import is_fully_proven
         if Judgment.theorem_being_proven is None:
@@ -814,7 +826,10 @@ class Theorem(Proof):
             # order to show an alternate proof.  In that case, we want to disable
             # the other alternates as well so we will be sure to generate the
             # new proof.
-            self.disable()
+            if set_to_disable is None:
+                self.disable()
+            else:
+                set_to_disable.add(self)
             return
         else:
             name_and_containing_theories = list(
@@ -835,13 +850,15 @@ class Theorem(Proof):
                 # is being proven.
                 # check the "presuming information, recursively, for circular
                 # logic.
-                my_possible_dependents, _ = stored_theorem.get_presumptions_and_exclusions()
-                # If this theorem has a proof, include all dependent theorems as
-                # presumed (this may have been presumed via theory, so this can contain
-                # more information than the specifically presumed theorems).
                 if stored_theorem.has_proof():
-                    my_possible_dependents.update(
-                        stored_theorem.all_used_theorem_names())
+                    # If this theorem has a proof, include all dependent
+                    # theorems.
+                    my_possible_dependents = \
+                        stored_theorem.all_used_theorem_names()
+                else:
+                    # Otherwise, include the presumptions.
+                    my_possible_dependents, _ = \
+                        stored_theorem.get_presumptions_and_exclusions()
                 if theorem_being_proven_str in my_possible_dependents:
                     if str(self) in Judgment.presumed_theorems_and_theories:
                         # Theorem-specific presumption or dependency is
@@ -859,7 +876,10 @@ class Theorem(Proof):
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all
             # dependents.
-            self.disable()
+            if set_to_disable is None:
+                self.disable()
+            else:
+                set_to_disable.add(self)
 
 
 def _checkImplication(implication_expr, antecedent_expr, consequent_expr):

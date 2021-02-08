@@ -542,7 +542,8 @@ class Judgment:
 
     def _updateProof(self, new_proof):
         '''
-        Update the proof of this Judgment.  Return True iff the proof actually changed to something usable.
+        Update the proof of this Judgment.  Return True iff the proof 
+        actually changed to something usable.
         '''
         meaning_data = self._meaning_data
 
