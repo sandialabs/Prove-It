@@ -3,6 +3,7 @@ proveit.core_expr_types.conditionals.condition_append_reduction
 proveit.core_expr_types.conditionals.condition_merger_reduction
 proveit.core_expr_types.conditionals.condition_prepend_reduction
 proveit.core_expr_types.conditionals.singular_conjunction_condition_reduction
+proveit.core_expr_types.tuples.singular_range_reduction
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.false_eq_false
@@ -43,7 +44,6 @@ proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
-proveit.numbers.number_sets.natural_numbers.non_zero_if_is_nat_pos
 proveit.numbers.numerals.decimals.posnat1
 proveit.numbers.numerals.decimals.posnat2
 proveit.numbers.numerals.decimals.posnat3
@@ -54,5 +54,4 @@ proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
 proveit.numbers.numerals.decimals.tuple_len_1
-proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
 # THEOREMS AND THEORIES TO EXCLUDE:
