@@ -68,6 +68,7 @@ class RationalNonZeroSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
+        from . import rational_nonzero_within_rational
         return rational_nonzero_within_rational.derive_superset_membership(
             member, assumptions)
 
@@ -116,16 +117,19 @@ class RationalPosSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
+        from . import rational_pos_within_rational
         return rational_pos_within_rational.derive_superset_membership(
             member, assumptions)
 
     def deduce_member_in_rational_nonzero(self, member, 
                                           assumptions=USE_DEFAULTS):
+        from . import rational_pos_within_rational_nonzero
         thm = rational_pos_within_rational_nonzero
         return thm.derive_superset_membership(member, assumptions)
 
     def deduce_member_in_rational_nonneg(self, member, 
                                          assumptions=USE_DEFAULTS):
+        from . import rational_pos_within_rational_nonneg
         thm = rational_pos_within_rational_nonneg
         return thm.derive_superset_membership(member, assumptions)
 
@@ -176,16 +180,19 @@ class RationalNegSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
+        from . import rational_neg_within_rational
         return rational_neg_within_rational.derive_superset_membership(
             member, assumptions)
 
     def deduce_member_in_rational_nonzero(self, member, 
                                           assumptions=USE_DEFAULTS):
+        from . import rational_neg_within_rational_nonzero
         thm = rational_neg_within_rational_nonzero
         return thm.derive_superset_membership(member, assumptions)
 
     def deduce_member_in_rational_nonpos(self, member, 
                                          assumptions=USE_DEFAULTS):
+        from . import rational_neg_within_rational_nonpos
         thm = rational_neg_within_rational_nonpos
         return thm.derive_superset_membership(member, assumptions)
 
@@ -230,6 +237,7 @@ class RationalNonNegSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
+        from . import rational_nonneg_within_rational
         return rational_nonneg_within_rational.derive_superset_membership(
             member, assumptions)
 
@@ -274,6 +282,7 @@ class RationalNonPosSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
+        from . import rational_nonpos_within_rational
         return rational_nonpos_within_rational.derive_superset_membership(
             member, assumptions)
 

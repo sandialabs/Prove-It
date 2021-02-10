@@ -31,10 +31,11 @@ class NaturalSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_int(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.integers import nat_within_int
         return nat_within_int.derive_superset_membership(member, assumptions)
 
     def deduce_member_in_rational_nonneg(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.rational_numbers.rational import (
+        from proveit.numbers.number_sets.rational_numbers import (
                 nat_within_rational_nonneg)
         return nat_within_rational_nonneg.derive_superset_membership(
             member, assumptions)
@@ -98,19 +99,22 @@ class NaturalPosSet(NumberSet):
             {_n: member}, assumptions=assumptions)
 
     def deduce_member_in_nat(self, member, assumptions=USE_DEFAULTS):
+        from . import nat_pos_within_nat
         return nat_pos_within_nat.derive_superset_membership(
             member, assumptions)
 
     def deduce_member_in_int(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.integers import nat_pos_within_int
         return nat_pos_within_int.derive_superset_membership(
             member, assumptions)
 
     def deduce_member_in_nonzero_int(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.integers import nat_pos_within_nonzero_int
         return nat_pos_within_nonzero_int.derive_superset_membership(
             member, assumptions)
 
     def deduce_member_in_rational_pos(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.rational_numbers.rational import (
+        from proveit.numbers.number_sets.rational_numbers import (
                 nat_pos_within_rational_pos)
         return nat_pos_within_rational_pos.derive_superset_membership(
             member, assumptions)
@@ -120,9 +124,7 @@ class NaturalPosSet(NumberSet):
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
-    from proveit.numbers.number_sets.natural_numbers import nat_pos_within_nat
-    from proveit.numbers.number_sets.integers import (
-            nat_within_int, nat_pos_within_int, nat_pos_within_nonzero_int)
+    from . import nat_pos_within_nat
 
 # if proveit.defaults.automation:
 #     try:

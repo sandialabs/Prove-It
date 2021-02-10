@@ -29,7 +29,6 @@ proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
-proveit.numbers.number_sets.natural_numbers.non_zero_if_is_nat_pos
 proveit.numbers.numerals.decimals.nat1
 proveit.numbers.numerals.decimals.nat2
 proveit.numbers.numerals.decimals.nat3
