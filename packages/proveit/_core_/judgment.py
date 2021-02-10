@@ -79,6 +79,7 @@ class Judgment:
 
     # Call the begin_proof method to begin a proof of a Theorem.
     theorem_being_proven = None  # Theorem being proven.
+    theorem_being_proven_str = None # in string form.
     # Has the theorem_being_proven been proven yet in this session?
     has_been_proven = None  
     # Goes from None to False (after beginning a proof and disabling 
@@ -89,9 +90,11 @@ class Judgment:
     # purposes of the proof being proven and exclusions thereof:
     presumed_theorems_and_theories = None
     presuming_theorem_and_theory_exclusions = None
+    
+    # Set of theorems that have been presumed or their dependencies
+    # (direct or indirect).
+    presumed_theorems_and_dependencies = None
 
-     # set if theorems and theories excluded from presumptions
-    presuming_exclusions = None 
     qed_in_progress = False  # set to true when "%qed" is in progress
 
     # Judgments for which derive_side_effects is in progress, tracked to 
@@ -108,9 +111,11 @@ class Judgment:
         Judgment.lookup_dict.clear()
         Judgment.sideeffect_processed.clear()
         Judgment.theorem_being_proven = None
+        Judgment.theorem_being_proven_str = None
         Judgment.has_been_proven = None
-        Judgment.presuming_theorems = None
-        Judgment.presuming_prefixes = None
+        Judgment.presumed_theorems_and_theories = None
+        Judgment.presuming_theorem_and_theory_exclusions = None
+        Judgment.presumed_theorems_and_dependencies = None
         Judgment.qed_in_progress = False
         _ExprProofs.all_expr_proofs.clear()
         assert len(Judgment.in_progress_to_derive_sideeffects) == 0, (
@@ -298,8 +303,10 @@ class Judgment:
             raise CircularLogic(theorem, theorem)
 
         Judgment.theorem_being_proven = theorem
+        Judgment.theorem_being_proven_str = str(theorem)
         Judgment.presumed_theorems_and_theories = presumptions
         Judgment.presuming_theorem_and_theory_exclusions = exclusions
+        Judgment.presumed_theorems_and_dependencies = set()
         Theorem.update_usability()
 
         # change Judgment.has_been_proven

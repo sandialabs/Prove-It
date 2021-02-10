@@ -161,6 +161,7 @@ class Proof:
         Swap out this oldproof for the newproof in all dependents and 
         update their num_steps and usability status.
         '''
+        newproof._dependents.clear()
         oldproof = self
         for dependent in oldproof._dependents:
             revised_dependent = False
@@ -170,11 +171,10 @@ class Proof:
                     revised_dependent = True
             assert revised_dependent, "Incorrect dependency relationship"
             newproof._dependents.add(dependent)
+            dependent._mark_num_steps_as_unknown()
             if all(required_proof.is_usable()
                    for required_proof in dependent.required_proofs):
                 dependent._meaning_data._unusable_proof = None  # it is usable again
-                dependent._meaning_data.num_steps = len(
-                    dependent.all_required_proofs())
                 dependent.proven_truth._addProof(
                     dependent)  # add it back as an option
 
@@ -295,33 +295,47 @@ class Proof:
     
     @staticmethod
     def _disable_all(to_disable):
-        
-        # Get the set of all dependents via breadth-first search
-        to_process = list(to_disable)
-        for thm in to_process:
+        '''
+        Disable all of the Theorems in 'to_disable', disabling
+        their dependencies or revising them to use alternate
+        proofs if available.
+        '''
+        # Disable in an order sorted according to the number
+        # of steps so that dependents are visited after
+        # everything they depend upon and we avoid revising
+        # and discarding proofs multiple times.
+        import heapq
+        dep_id_to_dep_and_thm = dict()
+        for thm in to_disable:
             assert isinstance(thm, Theorem), (
                     "Expecting 'to_disable' to contain Theorems")
-        disabling_thm = None
-        while len(to_process) > 0:
-            dependent_proof = to_process.pop()
-            if not dependent_proof.is_usable():
+            dep_id_to_dep_and_thm[id(thm)] = (thm, thm)
+        dependents_by_nsteps = [(thm.num_steps(), id(thm)) 
+                                for thm in to_disable]
+        heapq.heapify(dependents_by_nsteps)
+        while len(dependents_by_nsteps) > 0:
+            _, dependent_id = heapq.heappop(dependents_by_nsteps)
+            dependent, thm = dep_id_to_dep_and_thm[dependent_id]
+            #print(dependent.num_steps())
+            if not dependent.is_usable():
                 # Already disabled, so we can skip it.
                 continue
-            if isinstance(dependent_proof, Theorem):
-                # Next Theorem being disabled (not a dependent of one
-                # -- a dependent only of itself).
-                disabling_thm = dependent_proof
-            dependent_proof._meaning_data._unusable_proof = disabling_thm
-            dependent_proof.proven_truth._discardProof(dependent_proof)
-            if dependent_proof.proven_truth._reviseProof():
+            dependent._meaning_data._unusable_proof = thm
+            dependent.proven_truth._discardProof(dependent)
+            if dependent.proven_truth._reviseProof():
                 # A new proof was found, so we do NOT have to
                 # propagate the disabling to its dependents.
                 continue
             else:
-                # Include the sub-dependents.
-                # We extend to the back and pop off the back so
-                # we keep the theorem dependents all together.
-                to_process.extend(dependent_proof._dependents)
+                # Push sub-dependents onto the heap.
+                for _dependent in dependent._dependents:
+                    if _dependent.is_usable():
+                        #assert _dependent.num_steps() > dependent.num_steps()
+                        dep_id_to_dep_and_thm[id(_dependent)] = (
+                            _dependent, thm)
+                        heapq.heappush(dependents_by_nsteps,
+                                       (_dependent.num_steps(),
+                                        id(_dependent)))
 
     def __eq__(self, other):
         if isinstance(other, Proof):
@@ -339,7 +353,23 @@ class Proof:
         '''
         Return the number of unique steps in the proof.
         '''
+        if self._meaning_data.num_steps is None:
+            # Compute the number of steps as needed.
+            self._meaning_data.num_steps = len(self.all_required_proofs())
         return self._meaning_data.num_steps
+
+    def _mark_num_steps_as_unknown(self):
+        '''
+        Mark the number of steps of this proof, and all
+        of its dependents, as unknown to force it to
+        be recomputed if it is needed.
+        '''
+        to_process = [self]
+        while len(to_process) > 0:
+            proof = to_process.pop()
+            if proof._meaning_data.num_steps is not None:
+                proof._meaning_data.num_steps = None
+                to_process.extend(proof._dependents)
 
     def used_axioms(self):
         '''
@@ -775,12 +805,18 @@ class Theorem(Proof):
         '''
         return self._stored_theorem().all_requirements()
 
-    def all_used_theorem_names(self):
+    def all_used_or_presumed_theorem_names(self, names=None):
         '''
-        Returns the set of theorems used to prove the given theorem, directly
-        or indirectly.
+        Returns the set of theorems used to prove the theorem or to be presumed
+        in the proof of the theorem, directly or indirectly (i.e., applied
+        recursively); this theorem itself is also included.
+        If a set of 'names' is provided, this will add the 
+        names to that set and skip over anything that is already in the set, 
+        making the assumption that its dependents have already been
+        included (e.g., if the same set is used in multiple calls to this
+        method for different theorems).
         '''
-        return self._stored_theorem().all_used_theorem_names()
+        return self._stored_theorem().all_used_or_presumed_theorem_names(names)
 
     def direct_dependents(self):
         '''
@@ -819,8 +855,11 @@ class Theorem(Proof):
             self._meaning_data._unusable_proof = None
             return
         legitimately_presumed = False
+        possible_dependencies = set()
         stored_theorem = self._stored_theorem()
-        theorem_being_proven_str = str(Judgment.theorem_being_proven)
+        theorem_being_proven_str = Judgment.theorem_being_proven_str
+        presumed_theorems_and_dependencies = \
+            Judgment.presumed_theorems_and_dependencies
         if self.proven_truth == Judgment.theorem_being_proven.proven_truth:
             # Note that two differently-named theorems for the same thing may exists in
             # order to show an alternate proof.  In that case, we want to disable
@@ -842,24 +881,16 @@ class Theorem(Proof):
             else:
                 presumed = False
             if presumed:
-                # This Theorem is being presumed specifically, or a theory in which it is contained is presumed.
-                # Presumption via theory (a.k.a. prefix) is contingent upon not having a mutual presumption
-                # (that is, some theorem T can presume everything in another theory except for theorems
-                # that presume T or, if proven, depend upon T).
-                # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
-                # is being proven.
-                # check the "presuming information, recursively, for circular
-                # logic.
-                if stored_theorem.has_proof():
-                    # If this theorem has a proof, include all dependent
-                    # theorems.
-                    my_possible_dependents = \
-                        stored_theorem.all_used_theorem_names()
-                else:
-                    # Otherwise, include the presumptions.
-                    my_possible_dependents, _ = \
-                        stored_theorem.get_presumptions_and_exclusions()
-                if theorem_being_proven_str in my_possible_dependents:
+                # This Theorem is being presumed specifically, or a theory
+                # in which it is contained is presumed.  We'll check its
+                # dependencies to avoid circuit logic.  If there is a
+                # circular dependence, we'll either raise a CircularLogic
+                # exception if the theorm was presumed specifically or
+                # simply disregard it if it was presumed as part of a
+                # theory.
+                stored_theorem.all_used_or_presumed_theorem_names(
+                    presumed_theorems_and_dependencies)
+                if theorem_being_proven_str in presumed_theorems_and_dependencies:
                     if str(self) in Judgment.presumed_theorems_and_theories:
                         # Theorem-specific presumption or dependency is
                         # mutual.  Raise a CircularLogic error.
@@ -870,6 +901,12 @@ class Theorem(Proof):
                     print("%s is being implicitly excluded as a "
                           "presumption to avoid a Circular dependency."
                           % str(self))
+                    # We are no longer presuming this theorem, so disregard
+                    # its dependencies.  This may eliminate things from before,
+                    # but that's okay; it only impacts the efficiency of
+                    # future queries but not correctness.
+                    nevermind = stored_theorem.all_used_or_presumed_theorem_names()
+                    presumed_theorems_and_dependencies.difference_update(nevermind)
                 else:
                     legitimately_presumed = True
         if not legitimately_presumed:
