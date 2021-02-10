@@ -236,14 +236,33 @@ class RealIntervalMembership(Membership):
         #       so entire Interval is in positive naturals
         # UNDER CONSTRUCTION
 
-    # We do not yet have deduce_in_bool theorems to use here
-    # def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-    #     from . import interval_membership_is_bool
-    #     _a = self.domain.lower_bound
-    #     _b = self.domain.upper_bound
-    #     _x = self.element
-    #     return interval_membership_is_bool.instantiate(
-    #         {a: _a, b: _b, x: _x}, assumptions=assumptions)
+    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _x = self.element
+
+        # 4 cases corresponding to the 4 types of real intervals
+
+        if isinstance(self.domain, IntervalOO):
+            from . import interval_oo_membership_is_bool
+            return interval_oo_membership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCO):
+            from . import interval_co_membership_is_bool
+            return interval_co_membership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalOC):
+            from . import interval_oc_membership_is_bool
+            return interval_oc_membership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCC):
+            from . import interval_cc_membership_is_bool
+            return interval_cc_membership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
 
 
 class RealIntervalNonmembership(Nonmembership):
@@ -319,9 +338,29 @@ class RealIntervalNonmembership(Nonmembership):
             {a: _a, b: _b, x: _x}, assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        from . import interval_nonmembership_is_bool
+
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
-        return interval_nonmembership_is_bool.instantiate(
-            {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        # 4 cases corresponding to the 4 types of real intervals
+
+        if isinstance(self.domain, IntervalOO):
+            from . import interval_oo_nonmembership_is_bool
+            return interval_oo_nonmembership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCO):
+            from . import interval_co_nonmembership_is_bool
+            return interval_co_nonmembership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalOC):
+            from . import interval_oc_nonmembership_is_bool
+            return interval_oc_nonmembership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCC):
+            from . import interval_cc_nonmembership_is_bool
+            return interval_cc_nonmembership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
