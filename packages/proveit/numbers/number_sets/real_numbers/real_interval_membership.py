@@ -248,10 +248,13 @@ class RealIntervalMembership(Membership):
 
 class RealIntervalNonmembership(Nonmembership):
     '''
-    Defines methods that apply to non-membership in an Interval(m, n)
-    where Interval(m, n) represents a set of contiguous integers.
-    of the form {m, m+1, m+2, ..., n}.
     UNDER CONSTRUCTION
+    Defines methods that apply to non-membership in a continuous real
+    Interval of the form (x, y), [x, y), (x, y], or [x, y], created
+    respectively using the classes IntervalOO, IntervalCO, IntervalOC,
+    and IntervalCC. Non-membership in a continuous real interval might
+    then appear, for example, as NotInSet(x, IntervalOO(m, n)) for the
+    claim that x does not lie in the real open interval (m, n).
     '''
 
     def __init__(self, element, domain):
@@ -260,9 +263,21 @@ class RealIntervalNonmembership(Nonmembership):
 
     def side_effects(self, judgment):
         '''
-        Yield some possible side effects of Interval set nonmembership:
+        Yield some possible side effects of real IntervalXX set
+        nonmembership:
         (1) if element is an integer, deduce some possible bounds on it;
         (2) deduce that the nonmembership claim is Boolean
+
+        As possible side-effects:
+        (1) Unfold the real IntervalXX set non-membership if we know
+            some basic info about the non-element:
+            (a) if element is real, deduce some possible bounds on it;
+            (a) deduce elem in Real (assuming we know upper and
+                lower bounds are Real);
+            (b) deduce lower_bound <= elem or lower_bound < elem
+            (c) deduce elem <= upper_bound or elem < upper_bound
+        (2) Deduce that the membership claim is Boolean
+        (3) Try to deduce element in more restrictive subset of Integer
         '''
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
