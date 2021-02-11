@@ -104,11 +104,13 @@ class RealPosSet(NumberSet):
 
     def deduce_member_in_real_nonzero(self, member, 
                                       assumptions=USE_DEFAULTS):
+        from . import real_pos_within_real_nonzero
         thm = real_pos_within_real_nonzero
         return thm.derive_superset_membership(member, assumptions)
 
     def deduce_member_in_real_nonneg(self, member, 
                                      assumptions=USE_DEFAULTS):
+        from . import real_pos_within_real_nonneg
         thm = real_pos_within_real_nonneg
         return thm.derive_superset_membership(member, assumptions)
 
@@ -148,11 +150,13 @@ class RealNegSet(NumberSet):
 
     def deduce_member_in_real_nonzero(self, member, 
                                       assumptions=USE_DEFAULTS):
+        from . import real_neg_within_real_nonzero
         thm = real_neg_within_real_nonzero
         return thm.derive_superset_membership(member, assumptions)
 
     def deduce_member_in_real_nonpos(self, member,
                                      assumptions=USE_DEFAULTS):
+        from . import real_neg_within_real_nonpos
         thm = real_neg_within_real_nonpos
         return thm.derive_superset_membership(member, assumptions)
 
@@ -182,6 +186,7 @@ class RealNonNegSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
+        from . import real_nonneg_within_real
         return real_nonneg_within_real.derive_superset_membership(
             member, assumptions)
 
@@ -211,6 +216,7 @@ class RealNonPosSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
+        from . import real_nonpos_within_real
         return real_nonpos_within_real.derive_superset_membership(
             member, assumptions)
 
