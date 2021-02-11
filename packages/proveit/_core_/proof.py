@@ -305,23 +305,28 @@ class Proof:
         # everything they depend upon and we avoid revising
         # and discarding proofs multiple times.
         import heapq
-        dep_id_to_dep_and_thm = dict()
-        for thm in to_disable:
-            assert isinstance(thm, Theorem), (
-                    "Expecting 'to_disable' to contain Theorems")
-            dep_id_to_dep_and_thm[id(thm)] = (thm, thm)
-        dependents_by_nsteps = [(thm.num_steps(), id(thm)) 
-                                for thm in to_disable]
+        # The 'sources' are the originally disabled proofs
+        # that may propagate to dependents.
+        dep_id_to_dep_and_source = dict()
+        for proof in to_disable:
+            dep_id_to_dep_and_source[id(proof)] = (proof, proof)
+        dependents_by_nsteps = [(proof.num_steps(), id(proof)) 
+                                for proof in to_disable]
         heapq.heapify(dependents_by_nsteps)
         while len(dependents_by_nsteps) > 0:
             _, dependent_id = heapq.heappop(dependents_by_nsteps)
-            dependent, thm = dep_id_to_dep_and_thm[dependent_id]
-            #print(dependent.num_steps())
+            dependent, source = \
+                dep_id_to_dep_and_source[dependent_id]
             if not dependent.is_usable():
                 # Already disabled, so we can skip it.
                 continue
-            dependent._meaning_data._unusable_proof = thm
+            is_defunct = (dependent.proven_truth.proof() == dependent)
+            dependent._meaning_data._unusable_proof = source
             dependent.proven_truth._discardProof(dependent)
+            if not is_defunct:
+                # A different proof was active, so we don't have
+                # to revise it or worry about its dependents.
+                continue
             if dependent.proven_truth._reviseProof():
                 # A new proof was found, so we do NOT have to
                 # propagate the disabling to its dependents.
@@ -331,8 +336,8 @@ class Proof:
                 for _dependent in dependent._dependents:
                     if _dependent.is_usable():
                         #assert _dependent.num_steps() > dependent.num_steps()
-                        dep_id_to_dep_and_thm[id(_dependent)] = (
-                            _dependent, thm)
+                        dep_id_to_dep_and_source[id(_dependent)] = (
+                            _dependent, source)
                         heapq.heappush(dependents_by_nsteps,
                                        (_dependent.num_steps(),
                                         id(_dependent)))
@@ -855,7 +860,6 @@ class Theorem(Proof):
             self._meaning_data._unusable_proof = None
             return
         legitimately_presumed = False
-        possible_dependencies = set()
         stored_theorem = self._stored_theorem()
         theorem_being_proven_str = Judgment.theorem_being_proven_str
         presumed_theorems_and_dependencies = \
