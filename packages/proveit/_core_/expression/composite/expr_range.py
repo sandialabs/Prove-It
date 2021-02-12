@@ -1055,6 +1055,7 @@ class ExprRange(Expression):
                 entry = ExprRange(new_param,
                                   body.replaced(full_entry_repl_map,
                                                 allow_relabeling,
+                                                reduction_map,
                                                 entry_assumptions,
                                                 requirements,
                                                 equality_repl_requirements),
