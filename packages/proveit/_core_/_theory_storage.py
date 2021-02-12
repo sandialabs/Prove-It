@@ -2606,7 +2606,8 @@ class StoredTheorem(StoredSpecialStmt):
         return self.theory._storage.get_all_presumed_theorem_names(self.name)
     """
 
-    def get_presumptions_and_exclusions(self):
+    def get_presumptions_and_exclusions(self, presumptions=None,
+                                        exclusions=None):
         '''
         Return the set of theorems and theories that are explicitly
         presumed by this theorem, and a set of exclusions (e.g.,
@@ -2615,9 +2616,8 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
                                   'proofs', self.name)
-
-        presumptions = set()
-        exclusions = set()
+        if presumptions is None: presumptions = set()
+        if exclusions is None: exclusions = set()
         presumptions_filename = os.path.join(proof_path, 'presumptions.txt')
 
         # Let's create the generic version.
@@ -2877,36 +2877,40 @@ class StoredTheorem(StoredSpecialStmt):
             processed.add(next_theorem)
         return (required_axioms, required_theorems)
 
-    def all_used_theorem_names(self):
+    def all_used_or_presumed_theorem_names(self, names=None):
         '''
-        Returns the set of names of theorems used to prove the given
-        theorem, directly or indirectly.
+        Returns the set of theorems used to prove the theorem or to be presumed
+        in the proof of the theorem, directly or indirectly (i.e., applied
+        recursively); this theorem itself is also included.
+        If a set of 'names' is provided, this will add the 
+        names to that set and skip over anything that is already in the set, 
+        making the assumption that its dependents have already been
+        included (e.g., if the same set is used in multiple calls to this
+        method for different theorems).
         '''
         from .theory import Theory, TheoryException
-        if not self.has_proof():
-            raise Exception('The theorem must be proven in order to '
-                            'obtain its requirements')
-        used_theorem_names = self.read_used_theorems()
-        all_used_theorem_names = set()
-        processed = set()
-        to_process = set(used_theorem_names)
+        if names is None: names = set()
+        my_name = str(self)
+        to_process = {my_name}
         while len(to_process) > 0:
             next_theorem_name = to_process.pop()
-            all_used_theorem_names.add(next_theorem_name)
+            if next_theorem_name in names:
+                continue
             try:
-                stored_theorem = Theory.get_stored_theorem(next_theorem_name)
+                if next_theorem_name == my_name:
+                    stored_theorem = self
+                else:
+                    stored_theorem = Theory.get_stored_theorem(next_theorem_name)
             except (KeyError, TheoryException):
                 # If it no longer exists, skip it.
                 continue
+            names.add(next_theorem_name)            
             if not stored_theorem.has_proof():
-                processed.add(next_theorem_name)
-                continue
-            used_theorem_names = stored_theorem.read_used_theorems()
-            for used_theorem_name in used_theorem_names:
-                if used_theorem_name not in processed:
-                    to_process.add(used_theorem_name)
-            processed.add(next_theorem_name)
-        return all_used_theorem_names
+                new_to_process, _ = stored_theorem.get_presumptions_and_exclusions()
+            else:
+                new_to_process = stored_theorem.read_used_theorems()
+            to_process.update(set(new_to_process) - names)
+        return names
 
     def _undoDependentCompletion(self):
         '''
