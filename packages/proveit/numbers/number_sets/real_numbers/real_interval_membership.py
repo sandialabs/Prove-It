@@ -1,8 +1,8 @@
 from proveit import defaults, USE_DEFAULTS, ProofFailure
 from proveit import a, b, n, x
-from proveit.logic import InSet, Membership, Nonmembership
+from proveit.logic import InSet, Membership, Nonmembership, NotInSet
 from proveit.numbers import greater, Less, LessEq
-from proveit.numbers import zero, Integer, NaturalPos
+from proveit.numbers import zero, Integer, NaturalPos, Real
 from proveit.numbers import IntervalOO, IntervalCO, IntervalOC, IntervalCC
 
 class RealIntervalMembership(Membership):
@@ -35,7 +35,7 @@ class RealIntervalMembership(Membership):
         yield self.deduce_element_in_real
         yield self.deduce_element_lower_bound
         yield self.deduce_element_upper_bound
-        # yield self.deduce_in_bool
+        yield self.deduce_in_bool
         # # Temporarily leaving out this checking process until we have
         # # access to broader assumptions list
         # # if (LessEq(_a, _b).proven(assumptions=assumptions) and
@@ -51,7 +51,6 @@ class RealIntervalMembership(Membership):
         [element <= upper_bound], derive and return
         [element in IntervalCC(lower_bound, upper_bound)] (and
         similarly for strict upper and/or lower bounds).
-        FIRST working on just OPEN INTERVALS
         '''
         # among other things, convert any assumptions=None
         # to assumptions=()
@@ -82,38 +81,6 @@ class RealIntervalMembership(Membership):
             from . import in_IntervalCC
             return in_IntervalCC.instantiate(
                     {a: _a, b: _b, x: _x}, assumptions=assumptions)
-
-
-        # from proveit import ProofFailure
-        # from . import in_IntervalOO
-        # _a = self.domain.lower_bound
-        # _b = self.domain.upper_bound
-        # _x = self.element
-        # return in_IntervalOO.instantiate(
-        #         {a: _a, b: _b, x: _x}, assumptions=assumptions)
-
-    # def unfold(self, assumptions=USE_DEFAULTS):
-    #     '''
-    #     From [element in Interval(x, y)], derive and return the following
-    #     3 properties:
-    #     (1) element in Integer
-    #     (2) x <= element
-    #     (3) element <= y
-    #     [(element=x) or (element=y) or ..].
-    #     From original EnumMembership class:
-    #     From [element in {x, y, ..}], derive and return
-    #     [(element=x) or (element=y) or ..]
-    #     '''
-    #     from . import unfold_singleton, unfold
-    #     enum_elements = self.domain.elements
-    #     if enum_elements.is_single():
-    #         return unfold_singleton.instantiate(
-    #             {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
-    #     else:
-    #         _y = enum_elements
-    #         _n = _y.num_elements(assumptions=assumptions)
-    #         return unfold.instantiate({n: _n, x: self.element, y: _y}, 
-    #                                   assumptions=assumptions)
     
     def deduce_element_in_real(self, assumptions=USE_DEFAULTS):
         '''
@@ -236,22 +203,44 @@ class RealIntervalMembership(Membership):
         #       so entire Interval is in positive naturals
         # UNDER CONSTRUCTION
 
-    # We do not yet have deduce_in_bool theorems to use here
-    # def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-    #     from . import interval_membership_is_bool
-    #     _a = self.domain.lower_bound
-    #     _b = self.domain.upper_bound
-    #     _x = self.element
-    #     return interval_membership_is_bool.instantiate(
-    #         {a: _a, b: _b, x: _x}, assumptions=assumptions)
+    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _x = self.element
+
+        # 4 cases corresponding to the 4 types of real intervals
+
+        if isinstance(self.domain, IntervalOO):
+            from . import interval_oo_membership_is_bool
+            return interval_oo_membership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCO):
+            from . import interval_co_membership_is_bool
+            return interval_co_membership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalOC):
+            from . import interval_oc_membership_is_bool
+            return interval_oc_membership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCC):
+            from . import interval_cc_membership_is_bool
+            return interval_cc_membership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
 
 
 class RealIntervalNonmembership(Nonmembership):
     '''
-    Defines methods that apply to non-membership in an Interval(m, n)
-    where Interval(m, n) represents a set of contiguous integers.
-    of the form {m, m+1, m+2, ..., n}.
     UNDER CONSTRUCTION
+    Defines methods that apply to non-membership in a continuous real
+    Interval of the form (x, y), [x, y), (x, y], or [x, y], created
+    respectively using the classes IntervalOO, IntervalCO, IntervalOC,
+    and IntervalCC. Non-membership in a continuous real interval might
+    then appear, for example, as NotInSet(x, IntervalOO(m, n)) for the
+    claim that x does not lie in the real open interval (m, n).
     '''
 
     def __init__(self, element, domain):
@@ -260,15 +249,18 @@ class RealIntervalNonmembership(Nonmembership):
 
     def side_effects(self, judgment):
         '''
-        Yield some possible side effects of Interval set nonmembership:
-        (1) if element is an integer, deduce some possible bounds on it;
-        (2) deduce that the nonmembership claim is Boolean
+        Yield some possible side effects of real IntervalXX set
+        nonmembership:
+        (1) If element is real, deduce some possible bounds on it;
+        (2) Deduce that the nonmembership claim is Boolean
         '''
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
-        if (InSet(_x, Integer)).proven():
-            yield self.deduce_int_element_bounds
+        if ((InSet(_x, Real)).proven() and
+           (InSet(_x, Real)).proven() and
+           (InSet(_x, Real)).proven()):
+            yield self.deduce_real_element_bounds
         yield self.deduce_in_bool
 
     def conclude(self, assumptions=USE_DEFAULTS):
@@ -286,27 +278,141 @@ class RealIntervalNonmembership(Nonmembership):
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
-        from . import not_int_not_in_interval
-        try:
-            return not_int_not_in_interval.instantiate(
-                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
-        except ProofFailure:
-            from . import int_not_in_interval
-            return int_not_in_interval.instantiate(
+
+        # if x not real, then x cannot be in a real interval
+        if NotInSet(_x, Real).proven(assumptions=assumptions):
+
+            # 4 cases corresponding to the 4 types of real intervals
+
+            if isinstance(self.domain, IntervalOO):
+                from . import not_real_not_in_interval_oo
+                return not_real_not_in_interval_oo.instantiate(
+                        {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+            if isinstance(self.domain, IntervalCO):
+                from . import not_real_not_in_interval_co
+                return not_real_not_in_interval_co.instantiate(
+                        {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+            if isinstance(self.domain, IntervalOC):
+                from . import not_real_not_in_interval_oc
+                return not_real_not_in_interval_oc.instantiate(
+                        {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+            if isinstance(self.domain, IntervalCC):
+                from . import not_real_not_in_interval_cc
+                return not_real_not_in_interval_cc.instantiate(
+                        {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if (isinstance(self.domain, IntervalOO) and
+            (LessEq(_x, _a).proven(assumptions=assumptions) or
+             LessEq(_b, _x).proven(assumptions=assumptions))):
+            from . import real_not_in_interval_oo
+            return real_not_in_interval_oo.instantiate(
                     {a: _a, b: _b, x: _x}, assumptions=assumptions)
 
-    def deduce_int_element_bounds(self, assumptions=USE_DEFAULTS):
-        from . import bounds_for_int_not_in_interval
+        if (isinstance(self.domain, IntervalCO) and
+            (Less(_x, _a).proven(assumptions=assumptions) or
+             LessEq(_b, _x).proven(assumptions=assumptions))):
+            from . import real_not_in_interval_co
+            return real_not_in_interval_co.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if (isinstance(self.domain, IntervalOC) and
+            (LessEq(_x, _a).proven(assumptions=assumptions) or
+             Less(_b, _x).proven(assumptions=assumptions))):
+            from . import real_not_in_interval_oc
+            return real_not_in_interval_oc.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if (isinstance(self.domain, IntervalCC) and
+            (Less(_x, _a).proven(assumptions=assumptions) or
+             Less(_b, _x).proven(assumptions=assumptions))):
+            from . import real_not_in_interval_cc
+            return real_not_in_interval_cc.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        # from . import not_int_not_in_interval
+        # try:
+        #     return not_int_not_in_interval.instantiate(
+        #             {a: _a, b: _b, x: _x}, assumptions=assumptions)
+        # except ProofFailure:
+        #     from . import int_not_in_interval
+        #     return int_not_in_interval.instantiate(
+        #             {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+    # def deduce_int_element_bounds(self, assumptions=USE_DEFAULTS):
+    #     from . import bounds_for_int_not_in_interval
+    #     _a = self.domain.lower_bound
+    #     _b = self.domain.upper_bound
+    #     _x = self.element
+    #     return bounds_for_int_not_in_interval.instantiate(
+    #         {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+    def deduce_real_element_bounds(self, assumptions=USE_DEFAULTS):
+        '''
+        From a, b, x all real and NotInSet(x, IntervalXX(a, b)), deduce
+        and return that (x <=/< a OR b <=/< x) (where the inequalities
+        depend on the the open/closed ends for the interval).
+        For example,
+        NotInSet(x, IntervalOC(3, 5)).deduce_real_element_bounds()
+        should return: Assumptions |- (x <= 3) OR (5 < x).
+        '''
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
-        return bounds_for_int_not_in_interval.instantiate(
-            {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        # 4 cases corresponding to the 4 types of real intervals
+
+        if isinstance(self.domain, IntervalOO):
+            from . import bounds_for_real_not_in_interval_oo
+            return bounds_for_real_not_in_interval_oo.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCO):
+            from . import bounds_for_real_not_in_interval_co
+            return bounds_for_real_not_in_interval_co.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalOC):
+            from . import bounds_for_real_not_in_interval_oc
+            return bounds_for_real_not_in_interval_oc.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCC):
+            from . import bounds_for_real_not_in_interval_cc
+            return bounds_for_real_not_in_interval_cc.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        from . import interval_nonmembership_is_bool
+        '''
+        Deduce and return that the non-membership claim is Boolean.
+        For example, NotInSet(x, IntervalOO(2, 3)).deduce_in_bool()
+        should return |- NotInSet(x, IntervalOO(2, 3)) in Bool.
+        '''
+
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
-        return interval_nonmembership_is_bool.instantiate(
-            {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        # 4 cases corresponding to the 4 types of real intervals
+
+        if isinstance(self.domain, IntervalOO):
+            from . import interval_oo_nonmembership_is_bool
+            return interval_oo_nonmembership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCO):
+            from . import interval_co_nonmembership_is_bool
+            return interval_co_nonmembership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalOC):
+            from . import interval_oc_nonmembership_is_bool
+            return interval_oc_nonmembership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+
+        if isinstance(self.domain, IntervalCC):
+            from . import interval_cc_nonmembership_is_bool
+            return interval_cc_nonmembership_is_bool.instantiate(
+                    {a: _a, b: _b, x: _x}, assumptions=assumptions)

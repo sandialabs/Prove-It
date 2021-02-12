@@ -1,9 +1,9 @@
 from proveit import (Literal, Function, ExprTuple, InnerExpr, ProofFailure,
                      maybe_fenced_string, USE_DEFAULTS, StyleOptions)
-from proveit.logic import Membership
+from proveit.logic import InSet, Membership
 import proveit
 from proveit import a, b, c, k, m, n, x, S
-from proveit.numbers import one, two, Div, frac, num
+from proveit.numbers import one, two, Div, frac, num, Real
 
 
 class Exp(Function):
@@ -181,14 +181,18 @@ class Exp(Function):
         return exp_not_eq_zero.instantiate(
             {a: self.base, b: self.exponent}, assumptions=assumptions)
 
-    def deduce_in_real_pos_directly(self, assumptions=frozenset()):
-        import real.theorems
-        from number import two
+    def deduce_in_real_pos_directly(self, assumptions=USE_DEFAULTS):
+        '''
+        A specialized method for exponentials of the form a^2.
+        From base a being non-zero real, deduce a^2 is positive real.
+        For example, Exp(three, two).deduce_in_real_pos_directly()
+        should return |- 3^2 in R^{+}.
+        '''
+        from proveit.numbers import two
         if self.exponent == two:
-            deduce_in_real(self.base, assumptions)
-            deduce_not_zero(self.base, assumptions)
-            return real.theorems.sqrd_closure.instantiate(
-                {a: self.base}).checked(assumptions)
+            from proveit.numbers.exponentiation import sqrd_pos_closure
+            return sqrd_pos_closure.instantiate(
+                {a: self.base}, assumptions=assumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealPos, assumptions)
 
