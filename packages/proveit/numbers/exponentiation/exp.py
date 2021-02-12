@@ -151,7 +151,19 @@ class Exp(Function):
             raise EvaluationError('Only trivial evaluation is implemented '
                                   '(zero or one for the base or exponent).',
                                   assumptions)
-
+    
+    def not_equal(self, other, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to prove that self is not equal to other.
+        '''
+        from proveit.logic import NotEquals
+        from proveit.numbers import zero
+        if other == zero:
+            return self.deduce_not_zero(assumptions)
+        # If it isn't a special case treated here, just use
+        # conclude-as-folded.
+        return NotEquals(self, other).conclude_as_folded(assumptions)
+    
     def deduce_not_zero(self, assumptions=USE_DEFAULTS):
         '''
         Prove that this exponential is not zero given that
@@ -602,6 +614,12 @@ def sqrt(base):
     Special function for square root version of an exponential.
     '''
     return Exp(base, frac(one, two))
+
+def sqrd(base):
+    '''
+    Special function for squaring root version of an exponential.
+    '''
+    return Exp(base, two)
 
 
 # Register these expression equivalence methods:
