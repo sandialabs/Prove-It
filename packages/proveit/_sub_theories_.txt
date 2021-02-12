@@ -3,3 +3,4 @@ logic
 numbers
 physics
 statistics
+linear_algebra
