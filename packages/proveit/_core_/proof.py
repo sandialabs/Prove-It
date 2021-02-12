@@ -968,7 +968,7 @@ class Deduction(Proof):
 
 class Instantiation(Proof):
     def __init__(self, orig_judgment, num_forall_eliminations,
-                 repl_map, equiv_alt_expansions, assumptions):
+                 repl_map, equiv_alt_expansions, reduction_map, assumptions):
         '''
         Create the instantiation proof step that eliminates some number
         of nested Forall operations and simultaneously replaces 
@@ -1022,6 +1022,7 @@ class Instantiation(Proof):
                 subbed_assumption = Lambda._apply(
                     relabel_params, assumption, *relabel_param_replacements,
                     allow_relabeling=True, equiv_alt_expansions=None,
+                    reduction_map=reduction_map,
                     assumptions=assumptions, requirements=requirements,
                     equality_repl_requirements=equality_repl_requirements)
                 if isinstance(assumption, ExprRange):
@@ -1044,8 +1045,9 @@ class Instantiation(Proof):
             instantiated_expr = \
                 Instantiation._instantiated_expr(orig_judgment, 
                     relabel_params, relabel_param_replacements,
-                    num_forall_eliminations, repl_map, 
-                    equiv_alt_expansions, assumptions, requirements,
+                    num_forall_eliminations, repl_map,
+                    equiv_alt_expansions, reduction_map,
+                    assumptions, requirements,
                     equality_repl_requirements)
 
             # Remove duplicates in the requirements.
@@ -1228,7 +1230,7 @@ class Instantiation(Proof):
                            relabel_params, relabel_param_replacements,
                            num_forall_eliminations,
                            repl_map, equiv_alt_expansions,
-                           assumptions, requirements,
+                           reduction_map, assumptions, requirements,
                            equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
@@ -1273,6 +1275,7 @@ class Instantiation(Proof):
             return Lambda._apply(
                 params, expr, *operands, allow_relabeling=True,
                 equiv_alt_expansions=active_equiv_alt_expansions,
+                reduction_map=reduction_map,
                 assumptions=assumptions, requirements=requirements,
                 equality_repl_requirements=equality_repl_requirements)
 

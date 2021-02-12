@@ -597,7 +597,7 @@ class ExprRange(Expression):
         for entry in reduced_tuple:
             yield entry
 
-    def _replaced_entries(self, repl_map, allow_relabeling,
+    def _replaced_entries(self, repl_map, allow_relabeling, reduction_map,
                           assumptions, requirements,
                           equality_repl_requirements):
         '''
@@ -722,8 +722,8 @@ class ExprRange(Expression):
         # result will be used for getting the start and end indices
         # ('starts' and 'ends').
         subbed_expr_range = self.replaced(
-            repl_map, allow_relabeling, assumptions, requirements,
-            equality_repl_requirements)
+            repl_map, allow_relabeling, reduction_map, 
+            assumptions, requirements, equality_repl_requirements)
         if len(var_range_forms) == 0:
             # Nothing to expand.
             # However, we may perform a reduction of the range
@@ -732,7 +732,7 @@ class ExprRange(Expression):
                     assumptions, requirements):
                 if entry != subbed_expr_range:
                     entry = entry._replaced(repl_map, allow_relabeling,
-                          assumptions, requirements,
+                          reduction_map, assumptions, requirements,
                           equality_repl_requirements)
                 yield entry
             return  # Done.
@@ -746,7 +746,8 @@ class ExprRange(Expression):
         new_params, inner_repl_map, inner_assumptions \
             = self.lambda_map._inner_scope_sub(
                     [self.parameter], repl_map, allow_relabeling, 
-                    assumptions, dummy_reqs, dummy_equality_repl_reqs)
+                    reduction_map, assumptions, dummy_reqs, 
+                    dummy_equality_repl_reqs)
         # Sanity check that we didn't introduce new requirements.
         # "_inner_scope_sub" should not introduce anything that
         # wasn't introduced when we called `self.replaced`.
@@ -832,8 +833,8 @@ class ExprRange(Expression):
                     % (self, occurrence, orig_parameter))
             orig_occurrence = occurrence
             occurrence = occurrence.replaced(
-                occurrence_map, allow_relabeling, assumptions, requirements,
-                equality_repl_requirements)
+                occurrence_map, allow_relabeling, reduction_map, 
+                assumptions, requirements, equality_repl_requirements)
             if safe_dummy_var in free_vars(occurrence, err_inclusively=True):
                 # There was an instance of the original parameter with a
                 # different shift than what we used.  That's not allowed.
@@ -1064,7 +1065,7 @@ class ExprRange(Expression):
                         assumptions, requirements):
                     if entry != entry:
                         entry = entry._replaced(repl_map, allow_relabeling,
-                              assumptions, requirements,
+                              reduction_map, assumptions, requirements,
                               equality_repl_requirements)
                     yield entry
                 if indices_must_match:
@@ -1091,13 +1092,14 @@ class ExprRange(Expression):
                     # A nested ExprRange may need to be expanded.
                     for subentry in body._replaced_entries(
                             full_entry_repl_map, allow_relabeling,
-                            inner_assumptions, requirements,
+                            reduction_map, inner_assumptions, requirements,
                             equality_repl_requirements):
                         yield subentry
                 else:
-                    yield body.replaced(full_entry_repl_map, allow_relabeling,
-                                        inner_assumptions, requirements,
-                                        equality_repl_requirements)
+                    yield body.replaced(
+                            full_entry_repl_map, allow_relabeling,
+                            reduction_map, inner_assumptions, requirements,
+                            equality_repl_requirements)
 
                 if indices_must_match:
                     # We need to know the new_indices to match with the

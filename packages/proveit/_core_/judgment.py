@@ -777,7 +777,7 @@ class Judgment:
     """
 
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
-                    assumptions=USE_DEFAULTS):
+                    reductions=None, assumptions=USE_DEFAULTS):
         '''
         Performs an instantiation derivation step to be proven under the 
         given assumptions, in addition to the assumptions of the 
@@ -800,7 +800,14 @@ class Judgment:
         
         Replacements are made simultaneously.  For example, the 
         {x:y, y:x} mapping will swap x and y variables.
-
+        
+        If 'reductions' are provided, these are equality judgments
+        in which each occurrence of the left hand sides will be replaced
+        by the right hand sides during the instantiation.  There
+        may also be "auto-reductions" that work in a similar matter
+        via calling 'auto_reduction' on expressions as they are
+        generated during the instantiation.
+        
         Returns the proven instantiated Judgment, or throws an exception
         if the proof fails.  For the proof to succeed, all conditions of
         eliminated Forall operations, after replacements are made, must
@@ -814,8 +821,18 @@ class Judgment:
                              ExprTuple, ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
-        from proveit.logic import Forall
+        from proveit.logic import Forall, Equals
         from .proof import Instantiation, ProofFailure
+        
+        reduction_map = dict()
+        if reductions is not None:
+            for reduction in reductions:
+                if not isinstance(reduction, Judgment):
+                    raise TypeError("The 'reductions' must be Judgments")
+                if not isinstance(reduction.expr, Equals):
+                    raise TypeError(
+                            "The 'reductions' must be equality Judgments")
+                reduction_map[reduction.expr.lhs] = reduction
 
         if not self.is_usable():
             # If this Judgment is not usable, see if there is an alternate
@@ -955,6 +972,7 @@ class Judgment:
                           num_forall_eliminations=num_forall_eliminations,
                           repl_map=processed_repl_map,
                           equiv_alt_expansions=equiv_alt_expansions,
+                          reduction_map=reduction_map,
                           assumptions=assumptions))
 
     def generalize(self, forall_var_or_vars_or_var_lists,
