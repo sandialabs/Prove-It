@@ -31,7 +31,7 @@ from .negation import Neg
 from .multiplication import Mult
 from .product import Prod
 from .division import Div, frac
-from .exponentiation import Exp, sqrt
+from .exponentiation import Exp, sqrt, sqrd
 from .summation import Sum
 from .integration import Integrate
 from .absolute_value import Abs

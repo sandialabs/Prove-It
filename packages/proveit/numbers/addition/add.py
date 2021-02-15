@@ -1281,7 +1281,7 @@ class Add(Operation):
     def deduce_bound(self, term_relation_or_relations, 
                      assumptions=USE_DEFAULTS):
         '''
-        Given relations of applicable to one or more of the terms,
+        Given relations applicable to one or more of the terms,
         bound this addition accordingly.  For example, if self is
         "x + a" and the term_relations are
             x < y and a < b
@@ -1302,6 +1302,9 @@ class Add(Operation):
             term_relations = [term_relation_or_relations]
         else:
             term_relations = term_relation_or_relations
+        if len(set(term_relations)) != len(term_relations):
+            raise ValueError("'term_relations' should be distinct: %s"
+                             % term_relations)
         term_indices_with_relations = set()
         for term_relation in term_relations:
             if isinstance(term_relation, Judgment):

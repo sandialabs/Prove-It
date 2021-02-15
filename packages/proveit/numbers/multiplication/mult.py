@@ -822,27 +822,23 @@ class Mult(Operation):
             raise Exception(
                 "Unsupported operand type to distribute over: " + str(operand.__class__))
 
-    def factorization(
-            self,
-            the_factor,
-            pull="left",
-            group_factor=True,
-            group_remainder=False,
-            assumptions=USE_DEFAULTS):
+    def factorization(self, the_factor, pull="left",
+                      group_factor=True,
+                      group_remainder=False,
+                      assumptions=USE_DEFAULTS):
         '''
-        Factor out "the_factor" from this product, pulling it either to the "left" or "right".
-        If "the_factor" is a product, this may factor out a subset of the operands as
-        long as they are next to each other (use commute to make this happen).  If
-        there are multiple occurrences, the first occurrence is used.  If group_factor is
-        True and the_factor is a product, these operands are grouped together as a sub-product.
-        If group_remainder is True and there are multiple remaining operands (those not in
-        "the_factor"), then these remaining operands are grouped together as a sub-product.
-        Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
-        the associative and commutation theorems are applicable.
+        Return the proven factorization (equality with the factored
+        form) from pulling "the_factor" from this product to the "left"
+        or "right".  If there are multiple occurrences, the first 
+        occurrence is used.  If group_factor is True and the_factor is 
+        a product, these operands are grouped together as a sub-product.
+        If group_remainder is True and there are multiple remaining 
+        operands (those not in "the_factor"), then these remaining
         '''
         expr = self
         eq = TransRelUpdater(expr, assumptions)
+        if the_factor == self:
+            return eq.relation # self = self
         idx, num = self.index(the_factor, also_return_num=True)
         expr = eq.update(self.group_commutation(
             idx, 0 if pull == 'left' else -num, length=num,

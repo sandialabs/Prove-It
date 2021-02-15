@@ -468,7 +468,7 @@ class Operation(Expression):
                 formatted_str += ')' if format_type == 'string' else r'\right)'
             return formatted_str
 
-    def _replaced(self, repl_map, allow_relabeling,
+    def _replaced(self, repl_map, allow_relabeling, reduction_map,
                   assumptions, requirements, equality_repl_requirements):
         '''
         Returns this expression with sub-expressions substituted
@@ -504,13 +504,13 @@ class Operation(Expression):
 
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator = \
-            self.operator.replaced(repl_map, allow_relabeling,
-                                   assumptions, requirements,
-                                   equality_repl_requirements)
+            self.operator.replaced(
+                    repl_map, allow_relabeling, reduction_map,
+                    assumptions, requirements, equality_repl_requirements)
         subbed_operands = \
-            self.operands.replaced(repl_map, allow_relabeling,
-                                   assumptions, requirements,
-                                   equality_repl_requirements)
+            self.operands.replaced(
+                    repl_map, allow_relabeling, reduction_map, 
+                    assumptions, requirements, equality_repl_requirements)
 
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
@@ -544,16 +544,16 @@ class Operation(Expression):
                 subbed_sub_exprs = (subbed_operator, subbed_operands)
                 substituted = op_class._checked_make(
                     ['Operation'], sub_expressions=subbed_sub_exprs)
-                return substituted._auto_reduced(
-                    assumptions, requirements,
+                return substituted._reduced(
+                    reduction_map, assumptions, requirements,
                     equality_repl_requirements)
         
         subbed_sub_exprs = (subbed_operator,
                             subbed_operands)
         substituted = self.__class__._checked_make(
             self._core_info, subbed_sub_exprs)
-        return substituted._auto_reduced(assumptions, requirements,
-                                         equality_repl_requirements)
+        return substituted._reduced(reduction_map, assumptions, requirements,
+                                    equality_repl_requirements)
 
 class OperationError(Exception):
     def __init__(self, message):
