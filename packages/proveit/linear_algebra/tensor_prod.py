@@ -1,16 +1,17 @@
 from proveit import Literal, Operation
 from proveit.logic import Equals
 from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
-from proveit.linalg.matrix_ops import ScalarProd
+# from proveit.linalg.matrix_ops import ScalarProd
+from proveit.linear_algebra.matrix_ops import ScalarProd
 
 pkg = __package__
 
 
 class TensorProd(Operation):
-    '''
+    r'''
     Class to represent the tensor product of any number of operands.
-    Modified 02/11/2020 by wdc: making the class extend Operation
-    instead of AssociativeOperation
+    Example usage: TensorProd(x, y, z) represents the tensor product
+    x \otimes y \otimes z.
     '''
     # the literal operator of the TensorProd operation
     _operator_ = Literal(string_format=r'otimes', latex_format=r'{\otimes}',
@@ -83,8 +84,9 @@ class TensorExp(Operation):
     '''
 
     # the literal operator of the TensorExp operation
-    _operator_ = Literal(string_format=r'otimes', latex_format=r'{\otimes}',
-                         theory=__file__)
+    _operator_ = Literal(
+            string_format=r'otimes', latex_format=r'{\tiny\otimes}',
+            theory=__file__)
 
     def __init__(self, base, exponent):
         r'''
