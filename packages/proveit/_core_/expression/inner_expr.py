@@ -484,7 +484,8 @@ class InnerExpr:
         from proveit.logic import Equals
         cur_inner_expr = self.expr_hierarchy[-1]
         equality = Equals(cur_inner_expr, replacement).prove(assumptions)
-        equality.substitution(self.repl_lambda(), assumptions=assumptions)
+        return equality.substitution(self.repl_lambda(), 
+                                     assumptions=assumptions)
 
     def substitute(self, replacement, assumptions=USE_DEFAULTS):
         '''
