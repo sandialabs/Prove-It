@@ -33,6 +33,10 @@ class RealNonZeroSet(NumberSet):
         NumberSet.__init__(self, 'RealNonZero', r'\mathbb{R}^{\neq 0}',
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .real_membership import RealNonZeroMembership    
+        return RealNonZeroMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealNonZero' for a given n.
@@ -73,6 +77,10 @@ class RealPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealPos', r'\mathbb{R}^+', 
                            theory=__file__, fence_when_forced=True)
+
+    def membership_object(self, element):
+        from .real_membership import RealPosMembership    
+        return RealPosMembership(element)
 
     def membership_side_effects(self, judgment):
         '''
@@ -120,6 +128,10 @@ class RealNegSet(NumberSet):
         NumberSet.__init__(self, 'RealNeg', r'\mathbb{R}^-', 
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .real_membership import RealNegMembership    
+        return RealNegMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealNeg' for a given n.
@@ -166,6 +178,10 @@ class RealNonNegSet(NumberSet):
         NumberSet.__init__(self, 'RealNonNeg', r'\mathbb{R}^{\ge 0}',
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .real_membership import RealNonNegMembership    
+        return RealNonNegMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealNonNeg' for a given n.
@@ -195,6 +211,10 @@ class RealNonPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealNonPos', r'\mathbb{R}^{\le 0}',
                            theory=__file__, fence_when_forced=True)
+
+    def membership_object(self, element):
+        from .real_membership import RealNonPosMembership    
+        return RealNonPosMembership(element)
 
     def membership_side_effects(self, judgment):
         '''

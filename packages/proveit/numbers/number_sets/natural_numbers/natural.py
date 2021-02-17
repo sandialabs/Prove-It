@@ -9,6 +9,10 @@ class NaturalSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Natural', r'\mathbb{N}', theory=__file__)
 
+    def membership_object(self, element):
+        from .natural_membership import NaturalMembership    
+        return NaturalMembership(element, self)
+
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from proveit.numbers.number_sets.natural_numbers import natural_lower_bound
         return natural_lower_bound.instantiate(
@@ -48,6 +52,10 @@ class NaturalPosSet(NumberSet):
             'NaturalPos',
             r'\mathbb{N}^+',
             theory=__file__)
+
+    def membership_object(self, element):
+        from .natural_membership import NaturalPosMembership    
+        return NaturalPosMembership(element)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from proveit.numbers.number_sets.natural_numbers import natural_pos_lower_bound
