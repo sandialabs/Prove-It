@@ -34,6 +34,7 @@ class TransRelUpdater:
         '''
         if assumptions is None:
             assumptions = self.assumptions
+        relation_reversed = relation.is_reversed()
         self.relation = self.relation.apply_transitivity(relation, assumptions)
         if relation.lhs == self.expr:
             self.expr = relation.rhs
@@ -42,4 +43,7 @@ class TransRelUpdater:
         else:
             raise ValueError("Relation %s should match expression %s "
                              "on one of its sides." % (relation, self.expr))
+        if relation_reversed != self.relation.is_reversed():
+            # Reverse to match the "direction" of the provided relation.
+            self.relation = self.relation.with_direction_reversed()
         return self.expr
