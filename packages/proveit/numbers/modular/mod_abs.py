@@ -39,11 +39,9 @@ class ModAbs(Operation):
         if number_set == Integer:
             return mod_abs_int_closure.instantiate(
                 {a: self.value, b: self.divisor}, assumptions=assumptions)
-
         if number_set == Real:
             return mod_abs_real_closure.instantiate(
                 {a: self.value, b: self.divisor}, assumptions=assumptions)
-
-        msg = ("'ModAbs.deduce_in_number_set()' not implemented for "
-               "the %s set" % str(number_set))
-        raise ProofFailure(InSet(self, number_set), assumptions, msg)
+        raise NotImplementedError(
+            "'ModAbs.deduce_in_number_set()' not implemented for the %s set" 
+            % str(number_set))

@@ -141,10 +141,6 @@ class Abs(Operation):
             # and then it will get picked up in the next if() below
 
         if greater_eq(self.operand, zero).proven(assumptions=assumptions):
-            from proveit.numbers.number_sets.real_numbers import (
-                in_real_non_neg_if_greater_eq_zero)
-            in_real_non_neg_if_greater_eq_zero.instantiate(
-                {a: self.operand}, assumptions=assumptions)
             return self.abs_elimination(operand_type='non-negative',
                                         assumptions=assumptions)
 
@@ -207,8 +203,6 @@ class Abs(Operation):
             assumptions=assumptions).rhs
 
         if negated_op_simp in InSet.known_memberships.keys():
-            from proveit.numbers.number_sets.real_numbers import (
-                neg_is_real_neg_if_pos_is_real_pos)
             for kt in InSet.known_memberships[negated_op_simp]:
                 if kt.is_sufficient(assumptions):
                     if is_equal_to_or_subset_eq_of(
@@ -220,8 +214,6 @@ class Abs(Operation):
 
                         InSet(negated_op_simp, RealPos).prove(
                             assumptions=assumptions)
-                        neg_is_real_neg_if_pos_is_real_pos.instantiate(
-                            {a: negated_op_simp}, assumptions=assumptions)
                         return self.abs_elimination(operand_type='negative',
                                                     assumptions=assumptions)
 
@@ -293,9 +285,9 @@ class Abs(Operation):
             return InSet(self, number_set).prove(assumptions=assumptions)
 
         # otherwise, we just don't have the right thm to make it work
-        msg = ("'Abs.deduce_in_number_set()' not implemented for "
-               "the %s set" % str(number_set))
-        raise ProofFailure(InSet(self, number_set), assumptions, msg)
+        raise NotImplementedError(
+            "'Abs.deduce_in_number_set()' not implemented for "
+            "the %s set" % str(number_set))
 
 
 def is_equal_to_or_subset_eq_of(

@@ -477,6 +477,9 @@ class Div(Operation):
         if thm is not None:
             return thm.instantiate({a: self.numerator, b: self.denominator},
                                    assumptions=assumptions)
+        raise NotImplementedError(
+            "'Div.deduce_in_number_set()' not implemented for the %s set" 
+            % str(number_set))
 
     def deduce_bound(self, relation_or_relations, 
                      assumptions=USE_DEFAULTS):

@@ -7,41 +7,6 @@ class RationalMembership(NumberMembership):
     def __init__(self, element, number_set):
         NumberMembership.__init__(self, element, number_set)
 
-    def conclude(self, assumptions):
-        from proveit.logic import InSet, NotEquals
-        from proveit.numbers import (
-            Rational, RationalNonZero, RationalPos, RationalNeg,
-            RationalNonNeg, Less, greater, greater_eq, zero)
-
-        # If we known the element is in Q, we may be able to
-        # prove that is in RationalNonZero, RationalPos, RationalNeg, or
-        # RationalNonNeg if we know its relation to zero.
-        if (self.number_set != Rational and
-                InSet(self.element, Rational).proven(assumptions)):
-            if self.number_set == RationalNonZero:
-                if NotEquals(self.element, zero).proven(assumptions):
-                    from . import nonzero_rational_is_rational_nonzero
-                    return nonzero_rational_is_rational_nonzero.instantiate(
-                        {q: self.element}, assumptions=assumptions)
-            if self.number_set == RationalPos:
-                if greater(self.element, zero).proven(assumptions):
-                    from . import positive_rational_is_rational_pos
-                    return positive_rational_is_rational_pos.instantiate(
-                        {q: self.element}, assumptions=assumptions)
-            if self.number_set == RationalNeg:
-                if Less(self.element, zero).proven():
-                    from . import negative_rational_is_rational_neg
-                    return negative_rational_is_rational_neg.instantiate(
-                        {q: self.element}, assumptions=assumptions)
-            if self.number_set == RationalNonNeg:
-                if greater_eq(self.element, zero).proven():
-                    from . import nonneg_rational_in_rational_neg
-                    return nonneg_rational_in_rational_neg.instantiate(
-                        {q: self.element}, assumptions=assumptions)
-
-        # Resort to the default NumberMembership.conclude strategies.
-        return NumberMembership.conclude(self, assumptions)
-
     def choose_rational_fraction(self, numerator_var, denominator_var,
                                  *, assumptions=USE_DEFAULTS):
         '''
@@ -94,11 +59,18 @@ class RationalNonZeroMembership(RationalMembership):
         from proveit.numbers import Rational, zero
         if (InSet(self.element, Rational).proven(assumptions) and
                 NotEquals(self.element, zero).proven(assumptions)):
-            from . import nonzero_rational_is_rational_nonzero
-            return nonzero_rational_is_rational_nonzero.instantiate(
-                    {q:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
 
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in RationalNonZero by proving it is rational
+        and not zero.  This is called in NumberMembership.conclude
+        as a last resort.
+        '''
+        from . import nonzero_rational_is_rational_nonzero
+        return nonzero_rational_is_rational_nonzero.instantiate(
+            {q:self.element}, assumptions=assumptions)
 
 class RationalPosMembership(RationalMembership):
 
@@ -114,10 +86,18 @@ class RationalPosMembership(RationalMembership):
         from proveit.numbers import Rational, greater, zero
         if (InSet(self.element, Rational).proven(assumptions) and
                 greater(self.element, zero).proven(assumptions)):
-            from . import pos_rational_is_rational_pos
-            return pos_rational_is_rational_pos.instantiate(
-                    {q:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
+
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in RationalPos by proving it is rational
+        and positive.  This is called in NumberMembership.conclude
+        as a last resort.
+        '''
+        from . import pos_rational_is_rational_pos
+        return pos_rational_is_rational_pos.instantiate(
+            {q:self.element}, assumptions=assumptions)
 
         
 class RationalNegMembership(RationalMembership):
@@ -134,11 +114,18 @@ class RationalNegMembership(RationalMembership):
         from proveit.numbers import Rational, Less, zero
         if (InSet(self.element, Rational).proven(assumptions) and
                 Less(self.element, zero).proven(assumptions)):
-            from . import neg_rational_is_rational_neg
-            return neg_rational_is_rational_neg.instantiate(
-                    {q:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
 
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in RationalNeg by proving it is rational
+        and negative.  This is called in NumberMembership.conclude
+        as a last resort.
+        '''
+        from . import neg_rational_is_rational_neg
+        return neg_rational_is_rational_neg.instantiate(
+            {q:self.element}, assumptions=assumptions)
 
 class RationalNonNegMembership(RationalMembership):
 
@@ -154,11 +141,18 @@ class RationalNonNegMembership(RationalMembership):
         from proveit.numbers import Rational, greater_eq, zero
         if (InSet(self.element, Rational).proven(assumptions) and
                 greater_eq(self.element, zero).proven(assumptions)):
-            from . import nonneg_rational_is_rational_nonneg
-            return nonneg_rational_is_rational_nonneg.instantiate(
-                    {q:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
 
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in RationalNeg by proving it is rational
+        and non-negative.  This is called in NumberMembership.conclude
+        as a last resort.
+        '''
+        from . import nonneg_rational_is_rational_nonneg
+        return nonneg_rational_is_rational_nonneg.instantiate(
+            {q:self.element}, assumptions=assumptions)
 
 class RationalNonPosMembership(RationalMembership):
 
@@ -174,7 +168,15 @@ class RationalNonPosMembership(RationalMembership):
         from proveit.numbers import Rational, LessEq, zero
         if (InSet(self.element, Rational).proven(assumptions) and
                 LessEq(self.element, zero).proven(assumptions)):
-            from . import nonpos_rational_is_rational_nonpos
-            return nonpos_rational_is_rational_nonpos.instantiate(
-                    {q:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
+
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in RationalNeg by proving it is rational
+        and non-positive.  This is called in NumberMembership.conclude
+        as a last resort.
+        '''
+        from . import nonpos_rational_is_rational_nonpos
+        return nonpos_rational_is_rational_nonpos.instantiate(
+            {q:self.element}, assumptions=assumptions)

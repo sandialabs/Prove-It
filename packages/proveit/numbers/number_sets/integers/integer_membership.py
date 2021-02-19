@@ -19,10 +19,19 @@ class IntegerNonZeroMembership(NumberMembership):
     def conclude(self, assumptions=USE_DEFAULTS):
         if (InSet(self.element, Integer).proven(assumptions) and
                 NotEquals(self.element, zero).proven(assumptions)):
-            from . import nonzero_int_is_int_nonzero
-            return nonzero_int_is_int_nonzero.instantiate(
-                    {a:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
+
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in IntegerNonZero by proving it is integer
+        and non-zero.  This is called via NumberMembership.conclude
+        if the 'deduce_in_number_set' method of the element raises
+        a NotImplementedError.
+        '''
+        from . import nonzero_int_is_int_nonzero
+        return nonzero_int_is_int_nonzero.instantiate(
+            {a:self.element}, assumptions=assumptions)
 
 
 class IntegerNegMembership(NumberMembership):
@@ -37,10 +46,18 @@ class IntegerNegMembership(NumberMembership):
     def conclude(self, assumptions=USE_DEFAULTS):
         if (InSet(self.element, Integer).proven(assumptions) and
                 Less(self.element, zero).proven(assumptions)):
-            from . import neg_int_is_int_neg
-            return neg_int_is_int_neg.instantiate(
-                    {a:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
+
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in IntegerNeg by proving it is integer
+        and negative.  This is called in NumberMembership.conclude
+        as a last resort.
+        '''
+        from . import neg_int_is_int_neg
+        return neg_int_is_int_neg.instantiate(
+            {a:self.element}, assumptions=assumptions)
 
         
 class IntegerNonPosMembership(NumberMembership):
@@ -55,7 +72,16 @@ class IntegerNonPosMembership(NumberMembership):
     def conclude(self, assumptions=USE_DEFAULTS):
         if (InSet(self.element, Integer).proven(assumptions) and
                 LessEq(self.element, zero).proven(assumptions)):
-            from . import nonpos_int_is_int_nonpos
-            return nonpos_int_is_int_nonpos.instantiate(
-                    {a:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
+
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in IntegerNeg by proving it is integer
+        and non-positive.  This is called via NumberMembership.conclude
+        if the 'deduce_in_number_set' method of the element raises
+        a NotImplementedError.
+        '''
+        from . import nonpos_int_is_int_nonpos
+        return nonpos_int_is_int_nonpos.instantiate(
+            {a:self.element}, assumptions=assumptions)
