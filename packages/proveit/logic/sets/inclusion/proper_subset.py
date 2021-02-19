@@ -46,6 +46,11 @@ class ProperSubset(InclusionRelation):
             return 'proper_superset'
         # Use the default.
         return Operation.remake_constructor(self)
+
+    def conclude(self, assumptions=USE_DEFAULTS):
+        '''
+        '''
+        print("Entering the ProperSubset.conclude() method!")                   # for testing; delete later
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
