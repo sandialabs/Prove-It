@@ -222,8 +222,12 @@ class TheoryInterface:
         '''
         import proveit
         sub_theory_folder = os.path.join('..', sub_theory_name)
-        notebook_name = os.path.join(sub_theory_folder, '_theory_nbs_',
-                                     'theory.ipynb')
+        theory_nb_folder = os.path.join(sub_theory_folder, '_theory_nbs_')
+        try:
+            os.makedirs(theory_nb_folder)
+        except (OSError, FileExistsError):
+            pass
+        notebook_name = os.path.join(theory_nb_folder, 'theory.ipynb')
         if not os.path.isdir(sub_theory_folder):
             import shutil
             os.mkdir(sub_theory_folder)
