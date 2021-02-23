@@ -33,6 +33,11 @@ class Sum(OperationOverInstances):
         summand: instance_expressions
         domains: conditions (except no longer optional)
         '''
+        if (domains is not None):
+            raise NotImplementedError("Sum class not yet implemented for "
+                                      "multiple domains nor for multiple "
+                                      "indices.")
+
         OperationOverInstances.__init__(
             self, Sum._operator_, index_or_indices, summand,
             domain=domain, domains=domains, condition=condition,
@@ -100,7 +105,7 @@ class Sum(OperationOverInstances):
                     formatted_inner += " | "
                 formatted_inner += ', '.join(condition.formatted(format_type)
                                              for condition in explicit_conds)
-            formatted_inner += self.summand.formatted(format_type, fence=fence)
+            formatted_inner += self.summand.formatted(format_type, fence=True)
             return maybe_fenced(format_type, formatted_inner, fence=fence)
         else:
             return OperationOverInstances._formatted(self, format_type, fence)
@@ -166,21 +171,64 @@ class Sum(OperationOverInstances):
 #        else:
 #            print "Not a geometric sum!"
 
-    def shift(self, shift_amount, assumptions=frozenset()):
+    # def shift(self, shift_amount, assumptions=frozenset()):
+    #     '''
+    #     Shift the summation indices by the shift amount, deducing and returning
+    #     the equivalence of this summation with a index-shifted version.
+    #     '''
+    #     from theorems import index_shift
+    #     if not self.indices.is_single() or not isinstance(self.domain, Interval):
+    #         raise Exception(
+    #             'Sum shift only implemented for summations with one index over a Interval')
+    #     f_op, f_op_sub = Operation(f, self.index), self.summand
+    #     deduce_in_integer(self.domain.lower_bound, assumptions)
+    #     deduce_in_integer(self.domain.upper_bound, assumptions)
+    #     deduce_in_integer(shift_amount, assumptions)
+    #     return index_shift.instantiate({f_op: f_op_sub, x: self.index}).instantiate(
+    #         {a: self.domain.lower_bound, b: self.domain.upper_bound, c: shift_amount})
+
+    def shift(self, shift_amount, simplify_idx=True, simplify_summand=True,
+              assumptions=USE_DEFAULTS, user_reductions=[]):
         '''
-        Shift the summation indices by the shift amount, deducing and returning
-        the equivalence of this summation with a index-shifted version.
+        Shift the summation indices by the shift_amount, deducing and
+        returning the equivalence of this summation with the
+        index-shifted version. When the simplify_x args are True, a
+        shallow simplification is applied to the shifted indices and
+        shifted summand. ALSO consider accepting manually provided
+        reductions?
         '''
-        from theorems import index_shift
-        if not self.indices.is_single() or not isinstance(self.domain, Interval):
-            raise Exception(
-                'Sum shift only implemented for summations with one index over a Interval')
+        from . import index_shift
+        from proveit.numbers import Add
+        # if not self.indices.is_single() or not isinstance(self.domain, Interval):
+        #     raise Exception(
+        #         'Sum shift only implemented for summations with one index over a Interval')
+
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _c = shift_amount
+        # create some (possible) reduction formulas for the shifted
+        # components, which will then be passed through to the
+        # instantiation for simpifying the final form of the indices
+        # and summand
+        if (simplify_idx):
+            lower_bound_shifted = (
+                Add(_a, _c).do_reduced_simplification(assumptions=assumptions))
+            user_reductions = [*user_reductions, lower_bound_shifted]
+            upper_bound_shifted = (
+                Add(_b, _c).do_reduced_simplification(assumptions=assumptions))
+            user_reductions = [*user_reductions, lower_bound_shifted]
+        if (simplify_summand):
+            summand_shifted = (
+                Add(self.summand, _c).do_reduced_simplification(
+                    assumptions=assumptions))
+            user_reductions = [*user_reductions, summand_shifted]
+
         f_op, f_op_sub = Operation(f, self.index), self.summand
-        deduce_in_integer(self.domain.lower_bound, assumptions)
-        deduce_in_integer(self.domain.upper_bound, assumptions)
-        deduce_in_integer(shift_amount, assumptions)
-        return index_shift.instantiate({f_op: f_op_sub, x: self.index}).instantiate(
-            {a: self.domain.lower_bound, b: self.domain.upper_bound, c: shift_amount})
+        return index_shift.instantiate(
+            {f_op: f_op_sub, x: self.index}).instantiate(
+            {a: self.domain.lower_bound, b: self.domain.upper_bound,
+             c: shift_amount},
+             reductions=user_reductions)
 
     def join(self, second_summation, assumptions=frozenset()):
         '''
@@ -220,15 +268,47 @@ class Sum(OperationOverInstances):
         return sum_split.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
             {a: lower_bound, b: split_index, c: upper_bound, x: self.indices[0]}).derive_reversed()
 
-    def split(self, split_index, side='after', assumptions=frozenset()):
+    # def split(self, split_index, side='after', assumptions=frozenset()):
+    #     r'''
+    #     Splits summation over one Interval {a ... c} into two summations.
+    #     If side == 'after', it splits into a summation over {a ... split_index} plus
+    #     a summation over {split_index+1 ... c}.  If side == 'before', it splits into
+    #     a summation over {a ... split_index-1} plus a summation over {split_index ... c}.
+    #     As special cases, split_index==a with side == 'after' splits off the first single
+    #     term.  Also, split_index==c with side == 'before' splits off the last single term.
+    #     r'''
+    #     if not isinstance(self.domain, Interval):
+    #         raise Exception(
+    #             'Sum splitting only implemented for Interval domains')
+    #     if side == 'before' and self.domain.upper_bound == split_index:
+    #         return self.split_off_last()
+    #     if side == 'after' and self.domain.lower_bound == split_index:
+    #         return self.split_off_first()
+    #     if isinstance(self.domain, Interval) and self.instance_vars.is_single():
+    #         from theorems import sum_split_after, sum_split_before
+    #         sum_split = sum_split_after if side == 'after' else sum_split_before
+    #         deduce_in_integer(self.domain.lower_bound, assumptions)
+    #         deduce_in_integer(self.domain.upper_bound, assumptions)
+    #         deduce_in_integer(split_index, assumptions)
+    #         # Also needs lower_bound <= split_index and split_index <
+    #         # upper_bound
+    #         return sum_split.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
+    #             {a: self.domain.lower_bound, b: split_index, c: self.domain.upper_bound, x: self.indices[0]})
+    #     raise Exception(
+    #         "split_off_last only implemented for a summation over a Interval of one instance variable")
+
+    def split(self, split_index, side='after', simplify_idx=True,
+              assumptions=USE_DEFAULTS):
         r'''
-        Splits summation over one Interval {a ... c} into two summations.
-        If side == 'after', it splits into a summation over {a ... split_index} plus
-        a summation over {split_index+1 ... c}.  If side == 'before', it splits into
-        a summation over {a ... split_index-1} plus a summation over {split_index ... c}.
-        As special cases, split_index==a with side == 'after' splits off the first single
-        term.  Also, split_index==c with side == 'before' splits off the last single term.
-        r'''
+        Splits summation over one integral Interval {a ... c} into two
+        summations. If side == 'after', it splits into a summation over
+        {a ... split_index} plus a summation over {split_index+1 ... c}.
+        If side == 'before', it splits into a summation over
+        {a ... split_index-1} plus a summation over {split_index ... c}.
+        As special cases, split_index==a with side == 'after' splits
+        off the first single term.  Also, split_index==c with
+        side == 'before' splits off the last single term.
+        '''
         if not isinstance(self.domain, Interval):
             raise Exception(
                 'Sum splitting only implemented for Interval domains')
