@@ -196,20 +196,35 @@ class Sum(OperationOverInstances):
         shallow simplification is applied to the shifted indices and
         shifted summand. ALSO consider accepting manually provided
         reductions?
+        This shift() method is implemented only for a Sum with a single
+        index and only when the domain is an integer Interval.
+        Example: Let S = Sum(i, i+2, Interval(0, 10)). Then S.shift(one)
+        will return |- S = Sum(i, i+1, Interval(1, 11)).
         '''
+        if hasattr(self, 'indices'):
+            raise Exception(
+                "Sum.shift() only implemented for summations with a single "
+                "index over an Interval. The sum {} has indices {}."
+                .format(self, self.indices))
+        # the following constraint can eventually be modified to deal
+        # with a domain like all Natural … but for now limited to
+        # integer Interval domain
+        if not isinstance(self.domain, Interval):
+            raise Exception(
+                "Sum.shift() only implemented for summations with a single "
+                "index over an Interval. The sum {} has domain {}."
+                .format(self, self.domain))
+
         from . import index_shift
         from proveit.numbers import Add
-        # if not self.indices.is_single() or not isinstance(self.domain, Interval):
-        #     raise Exception(
-        #         'Sum shift only implemented for summations with one index over a Interval')
 
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _c = shift_amount
         # create some (possible) reduction formulas for the shifted
         # components, which will then be passed through to the
-        # instantiation for simpifying the final form of the indices
-        # and summand
+        # instantiation as "reductions" for simpifying the final form
+        # of the indices and summand
         if (simplify_idx):
             lower_bound_shifted = (
                 Add(_a, _c).do_reduced_simplification(assumptions=assumptions))
