@@ -3,8 +3,9 @@ from proveit import (Literal, Lambda, Function, Operation,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
                      ProofFailure, defaults)
 from proveit.logic import Forall, InSet
+from proveit.numbers import subtract
 from proveit.numbers.number_sets import (
-        RealInterval, Interval, Real, Integer, Natural, Complex)
+        Complex, Integer, Interval, Natural, NaturalPos, Real, RealInterval)
 from proveit.numbers.negation import Neg
 from proveit.numbers.ordering import LessEq, Less
 from proveit import a, b, c, f, i, j, k, x, P, Q, S
@@ -60,14 +61,17 @@ class Sum(OperationOverInstances):
         """
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
-        from . import (summation_nat_closure, summation_int_closure, 
-                       summation_real_closure, summation_complex_closure)
+        from . import (summation_nat_closure, summation_nat_pos_closure,
+                       summation_int_closure, summation_real_closure,
+                       summation_complex_closure)
         _x = self.instance_param
         P_op, _P_op = Function(P, _x), self.instance_expr
         Q_op, _Q_op = Function(Q, _x), self.condition
-        self.summand
+
         if number_set == Natural:
             thm = summation_nat_closure
+        elif number_set == NaturalPos:
+            thm = summation_nat_pos_closure
         elif number_set == Integer:
             thm = summation_int_closure
         elif number_set == Real:
@@ -190,14 +194,17 @@ class Sum(OperationOverInstances):
     def shift(self, shift_amount, simplify_idx=True, simplify_summand=True,
               assumptions=USE_DEFAULTS, user_reductions=[]):
         '''
-        Shift the summation indices by the shift_amount, deducing and
-        returning the equivalence of this summation with the
-        index-shifted version. When the simplify_x args are True, a
-        shallow simplification is applied to the shifted indices and
-        shifted summand. ALSO consider accepting manually provided
-        reductions?
+        Shift the summation indices by the shift_amount, and shift
+        the summand by a corresponding compensating amount, deducing
+        and returning the equivalence of this summation with the
+        index-shifted version. When the simplify_X args are True, a
+        shallow simplification is applied to the shifted indices and/or
+        shifted summand. Eventual planned to accept and act on user-
+        supplied reductions as well, but not implemented at this time.
         This shift() method is implemented only for a Sum with a single
         index and only when the domain is an integer Interval.
+        Eventually this should also be implemented for domains of
+        Natural, NaturalPos, etc.
         Example: Let S = Sum(i, i+2, Interval(0, 10)). Then S.shift(one)
         will return |- S = Sum(i, i+1, Interval(1, 11)).
         '''
@@ -215,35 +222,50 @@ class Sum(OperationOverInstances):
                 "index over an Interval. The sum {} has domain {}."
                 .format(self, self.domain))
 
+        # Among other things, convert any assumptions=None
+        # to assumptions=()
+        assumptions = defaults.checked_assumptions(assumptions)
+
         from . import index_shift
         from proveit.numbers import Add
 
+        _i = self.index
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _c = shift_amount
-        # create some (possible) reduction formulas for the shifted
+
+        f_op, f_op_sub = Operation(f, self.index), self.summand
+
+        # Create some (possible) reduction formulas for the shifted
         # components, which will then be passed through to the
         # instantiation as "reductions" for simpifying the final form
-        # of the indices and summand
+        # of the indices and summand. Notice that when attempting to
+        # simplify the summand, we need to send along the assumption
+        # about the index domain.
         if (simplify_idx):
             lower_bound_shifted = (
                 Add(_a, _c).do_reduced_simplification(assumptions=assumptions))
-            user_reductions = [*user_reductions, lower_bound_shifted]
+            if lower_bound_shifted.lhs is not lower_bound_shifted.rhs:
+                user_reductions = [*user_reductions, lower_bound_shifted]
             upper_bound_shifted = (
                 Add(_b, _c).do_reduced_simplification(assumptions=assumptions))
-            user_reductions = [*user_reductions, lower_bound_shifted]
+            if upper_bound_shifted.lhs is not upper_bound_shifted.rhs:
+                user_reductions = [*user_reductions, lower_bound_shifted]
         if (simplify_summand):
+            summand_shifted = f_op_sub.replaced({_i:subtract(_i, _c)})
             summand_shifted = (
-                Add(self.summand, _c).do_reduced_simplification(
-                    assumptions=assumptions))
-            user_reductions = [*user_reductions, summand_shifted]
-
-        f_op, f_op_sub = Operation(f, self.index), self.summand
+                summand_shifted.do_reduced_simplification(
+                    assumptions=[*assumptions, InSet(_i, Interval(_a, _b))]))
+            print("summand_shifted: {}".format(summand_shifted))
+            if summand_shifted.lhs is not summand_shifted.rhs:
+                user_reductions = [*user_reductions, summand_shifted]
+        
         return index_shift.instantiate(
-            {f_op: f_op_sub, x: self.index}).instantiate(
+            {f_op: f_op_sub, x: self.index},
+            assumptions=assumptions).instantiate(
             {a: self.domain.lower_bound, b: self.domain.upper_bound,
-             c: shift_amount},
-             reductions=user_reductions)
+             c: shift_amount}, reductions=user_reductions,
+             assumptions=assumptions)
 
     def join(self, second_summation, assumptions=frozenset()):
         '''
@@ -315,7 +337,7 @@ class Sum(OperationOverInstances):
     def split(self, split_index, side='after', simplify_idx=True,
               assumptions=USE_DEFAULTS):
         r'''
-        Splits summation over one integral Interval {a ... c} into two
+        Split summation over one integral Interval {a ... c} into two
         summations. If side == 'after', it splits into a summation over
         {a ... split_index} plus a summation over {split_index+1 ... c}.
         If side == 'before', it splits into a summation over
