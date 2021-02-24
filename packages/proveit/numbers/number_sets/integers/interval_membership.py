@@ -177,7 +177,6 @@ class IntervalMembership(Membership):
         return interval_upper_bound.instantiate(
             {a: _a, b: _b, n: _n}, assumptions=assumptions)
 
-
     def deduce_element_in_restricted_number_set(self, assumptions=USE_DEFAULTS):
         '''
         from (element in Interval(x, y)), where x and y are already
@@ -188,7 +187,6 @@ class IntervalMembership(Membership):
         This method uses a sequence of try-excepts working from most
         restrictive to least restrictive.
         '''
-        print("Entering the deduce_element_in_restricted_number_set() method!")
         from proveit.numbers import zero, greater, LessEq, NaturalPos
 
         _a = self.domain.lower_bound
