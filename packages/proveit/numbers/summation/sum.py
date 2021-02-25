@@ -70,10 +70,9 @@ class Sum(OperationOverInstances):
         elif number_set == Complex:
             thm = summation_complex_closure
         else:
-            raise ProofFailure(
-                    InSet(self, number_set), assumptions,
-                    ("'deduce_in_number_set' not implemented for the %s set"
-                     % str(number_set)))
+            raise NotImplementedError(
+                "'Sum.deduce_in_number_set' not implemented for the %s set"
+                % str(number_set))
         impl = thm.instantiate(
             { x: _x, P_op: _P_op, Q_op: _Q_op}, assumptions=assumptions)
         antecedent = impl.antecedent

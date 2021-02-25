@@ -21,7 +21,7 @@ class Neg(Operation):
         from proveit.numbers import zero
         return is_irreducible_value(self.operand) and self.operand != zero
 
-    def deduce_in_number_set(self, NumberSet, assumptions=USE_DEFAULTS):
+    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
@@ -37,74 +37,68 @@ class Neg(Operation):
                        real_nonneg_closure, real_nonpos_closure, 
                        complex_closure, complex_nonzero_closure)
         from proveit.logic import InSet
-        if NumberSet == Natural:
+        if number_set == Natural:
             return nat_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == NaturalPos:
+        elif number_set == NaturalPos:
             return nat_pos_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == Integer:
+        elif number_set == Integer:
             return int_closure.instantiate(
                     {a: self.operand},  assumptions=assumptions)
-        elif NumberSet == IntegerNonZero:
+        elif number_set == IntegerNonZero:
             return int_nonzero_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == IntegerNeg:
+        elif number_set == IntegerNeg:
             return int_neg_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == IntegerNonPos:
+        elif number_set == IntegerNonPos:
             return int_nonpos_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == Rational:
+        elif number_set == Rational:
             return rational_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RationalNonZero:
+        elif number_set == RationalNonZero:
             return rational_nonzero_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RationalPos:
+        elif number_set == RationalPos:
             return rational_pos_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RationalNeg:
+        elif number_set == RationalNeg:
             return rational_neg_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RationalNonNeg:
+        elif number_set == RationalNonNeg:
             return rational_nonneg_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RationalNonPos:
+        elif number_set == RationalNonPos:
             return rational_nonpos_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == Real:
+        elif number_set == Real:
             return real_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RealNonZero:
+        elif number_set == RealNonZero:
             return real_nonzero_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RealPos:
+        elif number_set == RealPos:
             return real_pos_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RealNeg:
+        elif number_set == RealNeg:
             return real_neg_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RealNonNeg:
+        elif number_set == RealNonNeg:
             return real_nonneg_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == RealNonPos:
+        elif number_set == RealNonPos:
             return real_nonpos_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == Complex:
+        elif number_set == Complex:
             return complex_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        elif NumberSet == ComplexNonZero:
+        elif number_set == ComplexNonZero:
             return complex_nonzero_closure.instantiate(
                     {a: self.operand}, assumptions=assumptions)
-        else:
-            raise ProofFailure(
-                InSet(
-                    self,
-                    NumberSet),
-                assumptions,
-                "No negation closure theorem for set %s" %
-                str(NumberSet))
+        raise NotImplementedError(
+            "No negation closure theorem for set %s" %str(number_set))
 
     def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''

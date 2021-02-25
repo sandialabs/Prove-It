@@ -43,7 +43,9 @@ class Mult(Operation):
                     pass  # and that's okay
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
-        # edited by JML 7/20/19
+        '''
+        Attempt to prove that this product is in the given number_set.
+        '''
         from . import (
             mult_int_closure,
             mult_int_closure_bin,
@@ -105,9 +107,9 @@ class Mult(Operation):
             else:
                 thm = mult_real_non_neg_closure
         else:
-            msg = ("'Mult.deduce_in_number_set()' not implemented for the "
-                   "%s set" % str(number_set))
-            raise ProofFailure(InSet(self, number_set), assumptions, msg)
+            raise NotImplementedError(
+                "'Mult.deduce_in_number_set()' not implemented for the "
+                "%s set" % str(number_set))
         # print("thm", thm)
         # print("self in deduce in number set", self)
         # print("self.operands", self.operands)

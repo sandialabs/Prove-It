@@ -12,14 +12,6 @@ proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.conjunction.true_and_true
-proveit.logic.booleans.disjunction.each_is_bool
-proveit.logic.booleans.disjunction.false_or_true
-proveit.logic.booleans.disjunction.or_if_any
-proveit.logic.booleans.disjunction.or_if_left
-proveit.logic.booleans.disjunction.or_if_only_right
-proveit.logic.booleans.disjunction.or_if_right
-proveit.logic.booleans.disjunction.true_or_false
-proveit.logic.booleans.disjunction.true_or_true
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.false_is_bool
 proveit.logic.booleans.fold_is_bool
@@ -33,7 +25,6 @@ proveit.logic.booleans.implication.true_implies_true
 proveit.logic.booleans.in_bool_if_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
-proveit.logic.booleans.negation.falsified_negation_intro
 proveit.logic.booleans.negation.negation_contradiction
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.negation.not_false
@@ -46,7 +37,6 @@ proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
-proveit.logic.equality.not_equals_is_bool
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
@@ -88,11 +78,8 @@ proveit.numbers.exponentiation.complex_power_of_quotient
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_eq
-proveit.numbers.exponentiation.exp_nat_closure
 proveit.numbers.exponentiation.exp_natpos_closure
 proveit.numbers.exponentiation.exp_rational_non_zero__not_zero
-proveit.numbers.exponentiation.exp_real_closure
-proveit.numbers.exponentiation.exp_real_closure_base_pos
 proveit.numbers.exponentiation.exp_real_pos_closure
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
@@ -124,7 +111,6 @@ proveit.numbers.multiplication.mult_zero_left
 proveit.numbers.multiplication.mult_zero_right
 proveit.numbers.multiplication.right_mult_eq
 proveit.numbers.negation.negated_zero
-proveit.numbers.number_sets.complex_numbers.complex_non_zero_within_complex
 proveit.numbers.number_sets.complex_numbers.int_within_complex
 proveit.numbers.number_sets.complex_numbers.nat_within_complex
 proveit.numbers.number_sets.complex_numbers.nonzero_if_in_complex_nonzero

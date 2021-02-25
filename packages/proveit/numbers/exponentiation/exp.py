@@ -181,21 +181,6 @@ class Exp(Function):
         return exp_not_eq_zero.instantiate(
             {a: self.base, b: self.exponent}, assumptions=assumptions)
 
-    def deduce_in_real_pos_directly(self, assumptions=USE_DEFAULTS):
-        '''
-        A specialized method for exponentials of the form a^2.
-        From base a being non-zero real, deduce a^2 is positive real.
-        For example, Exp(three, two).deduce_in_real_pos_directly()
-        should return |- 3^2 in R^{+}.
-        '''
-        from proveit.numbers import two
-        if self.exponent == two:
-            from proveit.numbers.exponentiation import sqrd_pos_closure
-            return sqrd_pos_closure.instantiate(
-                {a: self.base}, assumptions=assumptions)
-        # only treating certain special case(s) in this manner
-        raise DeduceInNumberSetException(self, RealPos, assumptions)
-
     def expansion(self, assumptions=USE_DEFAULTS):
         '''
         From self of the form x^n return x^n = x(x)...(x).
@@ -453,69 +438,63 @@ class Exp(Function):
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
-        Given a number set number_set, attempt to prove that the given
-        expression is in that number set using the appropriate closure
-        theorem. This method uses instantiated thms for the sqrt() cases.
-        Created: 2/20/2020 by wdc, based on the same method in the Add
-                 class.
-        Last modified: 2/28/2020 by wdc. Added instantiation for
-                       sqrt() cases created using the sqrt() fxn.
-        Last Modified: 2/20/2020 by wdc. Creation.
-        Once established, these authorship notations can be deleted.
+        Attempt to prove that this exponentiation expression is in the 
+        given number set.
         '''
         from proveit.logic import InSet, NotEquals
         from proveit.numbers.exponentiation import (
-            exp_complex_closure, exp_natpos_closure,
-            exp_nat_closure, exp_int_closure, 
-            exp_rational_closure_natpos_power, exp_rational_closure_int_power,
-            exp_rational_closure, exp_real_closure,
-            exp_real_closure_nonneg_base, exp_real_closure_base_pos,
-            exp_real_closure_natpos_power, exp_real_pos_closure,
+            exp_complex_closure, exp_natpos_closure, exp_int_closure, 
+            exp_rational_closure_nat_power, exp_rational_nonzero_closure,
+            exp_rational_pos_closure, exp_real_closure_nat_power,
+            exp_real_pos_closure, exp_complex_closure, 
+            exp_complex_nonzero_closure,
             sqrt_complex_closure, sqrt_real_closure,
             sqrt_real_pos_closure)
         from proveit.numbers import (
-            Natural, NaturalPos, Integer, Rational, 
-            Real, RealPos, RealNonNeg, Complex)
+            Natural, NaturalPos, Integer,
+            Rational, RationalPos, RationalNonZero,
+            Real, RealPos, Complex, ComplexNonZero)
         from proveit.numbers import zero
 
         if number_set == NaturalPos:
             return exp_natpos_closure.instantiate(
                 {a: self.base, b: self.exponent}, assumptions=assumptions)
         elif number_set == Natural:
-            return exp_nat_closure.instantiate(
-                {a: self.base, b: self.exponent}, assumptions=assumptions)
+            # Use the NaturalPos closure which applies for
+            # any Natural base and exponent.
+            self.deduce_in_number_set(NaturalPos)
+            return InSet(self, Natural).prove(assumptions=assumptions)
         elif number_set == Integer:
             return exp_int_closure.instantiate(
                 {a: self.base, b: self.exponent}, assumptions=assumptions)
         elif number_set == Rational:
-            power_is_nonpos = InSet(self.exponent, NaturalPos)
-            if power_is_nonpos.proven(assumptions):
-                thm = exp_rational_closure_natpos_power
-            elif NotEquals(self.base, zero):
-                thm = exp_rational_closure_int_power
-            else:
-                thm = exp_rational_closure # catch-all theorem
-            return thm.instantiate(
-                    {a: self.base}, assumptions=assumptions)
+            power_is_nat = InSet(self.exponent, Natural)
+            if not power_is_nat.proven(assumptions):
+                # Use the RationalNonZero closure which works
+                # for negative exponents as well.
+                self.deduce_in_number_set(RationalNonZero, assumptions)
+                return InSet(self, Rational).prove(assumptions)
+            return exp_rational_closure_nat_power.instantiate(
+                    {a: self.base, b: self.exponent}, assumptions=assumptions)
+        elif number_set == RationalNonZero:
+            return exp_rational_nonzero_closure.instantiate(
+                    {a: self.base, b: self.exponent}, assumptions=assumptions)
+        elif number_set == RationalPos:
+            return exp_rational_pos_closure.instantiate(
+                    {a: self.base, b: self.exponent}, assumptions=assumptions)
         elif number_set == Real:
-            # Would prefer the more general approach commented-out
-            # above; in the meantime, allowing for 2 possibilities here:
-            # if base is positive real, exp can be any real;
-            # if base is real ≥ 0, exp must be non-zero
             if self.exponent == frac(one, two):
                 return sqrt_real_closure.instantiate(
-                    {a: self.base}, assumptions=assumptions)
+                    {a: self.base, b: self.exponent}, assumptions=assumptions)
             else:
-                power_is_nonpos = InSet(self.exponent, NaturalPos)
-                if power_is_nonpos.proven(assumptions):
-                    thm = exp_real_closure_natpos_power
-                elif InSet(self.base, RealPos).proven(assumptions):
-                    thm = exp_real_closure_base_pos
-                elif InSet(self.base, RealNonNeg).proven(assumptions):
-                    thm = exp_real_closure_nonneg_base
-                else:
-                    thm = exp_real_closure # catch-all theorem
-                return thm.instantiate(
+                power_is_nat = InSet(self.exponent, Natural)
+                if not power_is_nat.proven(assumptions):
+                    # Use the RealPos closure which allows
+                    # any real exponent but requires a
+                    # non-negative base.
+                    self.deduce_in_number_set(RealPos, assumptions)
+                    return InSet(self, Real).prove(assumptions)
+                return exp_real_closure_nat_power.instantiate(
                         {a: self.base, b: self.exponent},
                         assumptions=assumptions)
         elif number_set == RealPos:
@@ -533,10 +512,14 @@ class Exp(Function):
                 return exp_complex_closure.instantiate(
                     {a: self.base, b: self.exponent},
                     assumptions=assumptions)
+        elif number_set == ComplexNonZero:
+            return exp_complex_nonzero_closure.instantiate(
+                    {a: self.base, b: self.exponent},
+                    assumptions=assumptions)
 
-        msg = ("'Exp.deduce_in_number_set' not implemented for the %s set" 
-              % str(number_set))
-        raise ProofFailure(InSet(self, number_set), assumptions, msg)
+        raise NotImplementedError(
+            "'Exp.deduce_in_number_set' not implemented for the %s set" 
+            % str(number_set))
 
 
 class ExpSetMembership(Membership):

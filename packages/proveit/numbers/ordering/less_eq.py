@@ -299,21 +299,20 @@ class LessEq(NumberOrderingRelation):
         '''
         from proveit.numbers import Less, zero
         from proveit.numbers.division import (
-            div_pos_lesseq, div_neg_lesseq)
+            weak_div_from_numer_bound__pos_denom, 
+            weak_div_from_numer_bound__neg_denom)
         if Less(zero, divisor).proven(assumptions):
-            new_rel = div_pos_lesseq.instantiate(
-                {a: divisor, x: self.lower, y: self.upper},
-                assumptions=assumptions)._simplify_both_sides(
-                simplify=simplify, assumptions=assumptions)
+            thm = weak_div_from_numer_bound__pos_denom
         elif Less(divisor, zero).proven(assumptions):
-            new_rel = div_neg_lesseq.instantiate(
-                {a: divisor, x: self.lower, y: self.upper},
-                assumptions=assumptions)._simplify_both_sides(
-                simplify=simplify, assumptions=assumptions)
+            thm = weak_div_from_numer_bound__neg_denom
         else:
             raise Exception("Cannot 'divide' a LessEq relation without "
                             "knowing whether the divisor is greater than "
                             "or less than zero.")
+        new_rel = thm.instantiate(
+                {a: divisor, x: self.lower, y: self.upper},
+                assumptions=assumptions)._simplify_both_sides(
+                simplify=simplify, assumptions=assumptions)
         return new_rel.with_mimicked_style(self)
 
     def left_add_both_sides(self, addend, *, simplify=True,

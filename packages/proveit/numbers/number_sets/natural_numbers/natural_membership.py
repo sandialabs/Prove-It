@@ -18,11 +18,19 @@ class NaturalMembership(NumberMembership):
     def conclude(self, assumptions=USE_DEFAULTS):
         if (InSet(self.element, Integer).proven(assumptions) and
                 greater_eq(self.element, zero).proven(assumptions)):
-            from proveit.numbers.number_sets.integers import (
-                    nonneg_int_is_natural)
-            return nonneg_int_is_natural.instantiate(
-                    {a:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
+
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in Natural by proving it is integer
+        and non-negative.  This is called in NumberMembership.conclude
+        as a last resort.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonneg_int_is_natural)
+        return nonneg_int_is_natural.instantiate(
+            {a:self.element}, assumptions=assumptions)
 
 
 class NaturalPosMembership(NaturalMembership):
@@ -37,8 +45,16 @@ class NaturalPosMembership(NaturalMembership):
     def conclude(self, assumptions=USE_DEFAULTS):
         if (InSet(self.element, Integer).proven(assumptions) and
                 greater(self.element, zero).proven(assumptions)):
-            from proveit.numbers.number_sets.integers import (
-                    pos_int_is_natural_pos)
-            return pos_int_is_natural_pos.instantiate(
-                    {a:self.element}, assumptions=assumptions)
+            return self.conclude_as_last_resort(assumptions)
         return NumberMembership.conclude(self, assumptions)
+    
+    def conclude_as_last_resort(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude element in NaturalPos by proving it is integer
+        and positive.  This is called in NumberMembership.conclude
+        as a last resort.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            pos_int_is_natural_pos)
+        return pos_int_is_natural_pos.instantiate(
+            {a:self.element}, assumptions=assumptions)

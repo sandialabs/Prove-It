@@ -80,9 +80,17 @@ class NumberMembership(Membership):
 
         # Try the 'deduce_in_number_set' method.
         if hasattr(element, 'deduce_in_number_set'):
-            return element.deduce_in_number_set(self.number_set,
-                                                assumptions=assumptions)
+            try:
+                return element.deduce_in_number_set(self.number_set,
+                                                    assumptions=assumptions)
+            except NotImplementedError as e:
+                if hasattr(self, 'conclude_as_last_resort'):
+                    return self.conclude_as_last_resort(assumptions)
+                raise ProofFailure(InSet(self.element, self.number_set),
+                                   assumptions, str(e))
         else:
+            if hasattr(self, 'conclude_as_last_resort'):
+                return self.conclude_as_last_resort(assumptions)
             msg = str(element) + " has no 'deduce_in_number_set' method."
             raise ProofFailure(InSet(self.element, self.number_set),
                                assumptions, msg)

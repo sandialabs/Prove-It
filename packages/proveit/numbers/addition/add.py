@@ -1058,9 +1058,9 @@ class Add(Operation):
             _i = _a.num_elements(assumptions)
             return add_complex_closure.instantiate(
                 {i: _i, a: _a}, assumptions=assumptions)
-        msg = "'deduce_in_number_set' not implemented for the %s set" % str(
-            number_set)
-        raise ProofFailure(InSet(self, number_set), assumptions, msg)
+        raise NotImplementedError(
+            "'deduce_in_number_set' not implemented for the %s set"
+            % str(number_set))
 
     def deduce_difference_in_natural(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Neg

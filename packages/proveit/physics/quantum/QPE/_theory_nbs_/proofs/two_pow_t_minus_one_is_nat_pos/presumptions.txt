@@ -33,15 +33,7 @@ proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_int_closure
-proveit.numbers.exponentiation.exp_nat_closure
 proveit.numbers.exponentiation.exp_natpos_closure
-proveit.numbers.exponentiation.exp_rational_closure
-proveit.numbers.exponentiation.exp_rational_closure_int_power
-proveit.numbers.exponentiation.exp_rational_closure_natpos_power
-proveit.numbers.exponentiation.exp_real_closure
-proveit.numbers.exponentiation.exp_real_closure_base_pos
-proveit.numbers.exponentiation.exp_real_closure_natpos_power
-proveit.numbers.exponentiation.exp_real_closure_nonneg_base
 proveit.numbers.exponentiation.exp_real_pos_closure
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
@@ -50,7 +42,6 @@ proveit.numbers.exponentiation.sqrt_complex_closure
 proveit.numbers.exponentiation.sqrt_real_closure
 proveit.numbers.exponentiation.sqrt_real_pos_closure
 proveit.numbers.negation.negated_zero
-proveit.numbers.number_sets.complex_numbers.complex_non_zero_within_complex
 proveit.numbers.number_sets.complex_numbers.int_within_complex
 proveit.numbers.number_sets.complex_numbers.nat_within_complex
 proveit.numbers.number_sets.complex_numbers.nonzero_if_in_complex_nonzero
