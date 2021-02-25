@@ -467,6 +467,9 @@ class Expression(metaclass=ExprType):
                                 "proven equality with 'self' on the "
                                 "left side: got %s for %s"
                                 % (reduction, self))
+            if not reduction.is_sufficient(assumptions):
+                # The assumptions aren't adequate to use this reduction.
+                return self
             requirements.append(reduction)
             equality_repl_requirements.add(reduction)
             return reduction.expr.rhs

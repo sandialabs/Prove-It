@@ -840,6 +840,9 @@ class Judgment:
                 if not isinstance(reduction.expr, Equals):
                     raise TypeError(
                             "The 'reductions' must be equality Judgments")
+                if reduction.expr.lhs == reduction.expr.rhs:
+                    # Don't bother with reflexive (x=x) reductions.
+                    continue
                 reduction_map[reduction.expr.lhs] = reduction
 
         if not self.is_usable():
