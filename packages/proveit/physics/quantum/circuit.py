@@ -1761,6 +1761,9 @@ class Circuit(Function):
                                 elif r'\qw' in entry:
                                     entry_str += add + r'\qw' + r' \qwx[' + str(wires[row][column][1]) + r'] \
                                             qwx[' + str(wires[row][column][2]) + r']'
+                                elif r'\qswap' in entry:
+                                    entry_str += add + r'\qswap' + r' \qwx[' + str(wires[row][column][1]) + r'] \
+                                            qwx[' + str(wires[row][column][2]) + r']'
                                 elif r'\targ' in entry:
                                     entry_str += add + r'\targ' + r' \qwx[' + str(wires[row][column][1]) + r'] \
                                             qwx[' + str(wires[row][column][2]) + r']'
@@ -1773,6 +1776,9 @@ class Circuit(Function):
                                         r' \qwx[' + str(wires[row][column][1]) + r']'
                                 elif r'\qw' in entry:
                                     entry_str += add + r'\qw' + \
+                                                 r' \qwx[' + str(wires[row][column][1]) + r']'
+                                elif r'\qswap' in entry:
+                                    entry_str += add + r'\qswap' + \
                                                  r' \qwx[' + str(wires[row][column][1]) + r']'
                                 elif r'\targ' in entry:
                                     entry_str += add + r'\targ' + \
@@ -1800,7 +1806,7 @@ class Circuit(Function):
                         elif entry == r'\meter':
                             entry_str += add + entry
                         else:
-                            if r'\gate' in entry or r'\qw' in entry:
+                            if r'\gate' in entry or r'\qw' in entry or r'\qswap' in entry:
                                 entry_str += add + entry
                             else:
                                 entry_str += add + r'\gate{' + entry + r'}'
@@ -1812,7 +1818,7 @@ class Circuit(Function):
                             entry_str += add + entry
                         elif entry == r'\meter':
                             entry_str += add + entry
-                        elif r'\gate' in entry or r'\qw' in entry:
+                        elif r'\gate' in entry or r'\qw' in entry or r'\qswap' in entry:
                             entry_str += add + entry
                         else:
                             entry_str += add + r'\gate{' + entry + r'}'
@@ -1830,7 +1836,7 @@ class Circuit(Function):
                         elif entry == r'\targ':
                             entry_str += add + \
                                 r'\targ \qwx[' + str(wires[row][column]) + r']'
-                        elif r'\gate' in entry or entry == r'\meter' or r'\qw' in entry:
+                        elif r'\gate' in entry or entry == r'\meter' or r'\qw' in entry or r'\qswap' in entry:
                             entry_str += add + entry + \
                                 r' \qwx[' + str(wires[row][column]) + r']'
                         else:
@@ -1860,7 +1866,7 @@ class Circuit(Function):
                             r'\control \cw \cwx[' + str(wires[row][column]) + r']'
                     elif entry == r'\meter':
                         entry_str += add + entry
-                    elif r'\gate' in entry or r'\qw' in entry:
+                    elif r'\gate' in entry or r'\qw' in entry or r'\qswap' in entry:
                         entry_str += add + entry + \
                             r' \qwx[' + str(wires[row][column]) + r']'
                     else:
