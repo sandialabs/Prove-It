@@ -1,6 +1,7 @@
 core_expr_types
 logic
 numbers
-physics
-statistics
+trigonometry
 linear_algebra
+statistics
+physics
