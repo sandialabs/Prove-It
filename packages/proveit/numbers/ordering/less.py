@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS, as_expression
+from proveit import (Literal, Operation, USE_DEFAULTS, as_expression,
+                     UnsatisfiedPrerequisites)
 from proveit.logic import Equals
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
@@ -20,6 +21,16 @@ class Less(NumberOrderingRelation):
         '''
         NumberOrderingRelation.__init__(self, Less._operator_, lhs, rhs)
     
+    def side_effects(self, judgment):
+        '''
+        In addition to the NumberOrderingRelation side-effects, also
+        derive a ≠ b from a < b as a side-effect.
+        '''
+        for side_effect in NumberOrderingRelation.side_effects(
+                self, judgment):
+            yield side_effect
+        yield self.derive_not_equal
+        
     @staticmethod
     def reversed_operator_str(formatType):
         '''
@@ -35,41 +46,88 @@ class Less(NumberOrderingRelation):
         return Operation.remake_constructor(self)
     
     def conclude(self, assumptions):
-        # See if the right side is the left side plus something
-        # positive added to it.
-        from proveit.numbers import Add, zero
+        '''
+        Conclude something of the form 
+        a < b.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import Add, zero, RealPos
+        from . import positive_if_real_pos
         if self.upper == zero:
-            from ._theorems import negative_if_real_neg
+            # Special case with upper bound of zero.
+            from . import negative_if_real_neg
             concluded = negative_if_real_neg.instantiate(
                 {a: self.lower}, assumptions=assumptions)
             return concluded.with_matching_style(self)            
         if self.lower == zero:
-            from . import positive_if_real_pos
-            positive_if_real_pos.instantiate({a: self.upper},
-                                             assumptions=assumptions)
-        if isinstance(self.upper, Add):
-            if self.lower in self.upper.terms:
-                return self.conclude_via_increase(assumptions)
+            # Special case with lower bound of zero.
+            if InSet(self.upper, RealPos).proven(assumptions):
+                positive_if_real_pos.instantiate({a: self.upper},
+                                                 assumptions=assumptions)
+        if ((isinstance(self.lower, Add) and 
+                self.upper in self.lower.terms.entries) or
+             (isinstance(self.upper, Add) and 
+                self.lower in self.upper.terms.entries)):
+            try:
+                # Conclude an sum is bounded by one of its terms.
+                return self.conclude_as_bounded_by_term(assumptions)
+            except UnsatisfiedPrerequisites:
+                # If prerequisites weren't satisfied to do this,
+                # we can still try something else.
+                pass
         return NumberOrderingRelation.conclude(self, assumptions)
-
-    def conclude_via_increase(self, assumptions):
+    
+    def conclude_as_bounded_by_term(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude something of the form
+            a_1 + ... + a_i + b + c_1 + ... + c_j > b 
+            assuming a_1, ..., a_i and c_1, ..., c_j all in RealPos
+                and i + j > 0
+        or
+            a_1 + ... + a_i + b + c_1 + ... + c_j < b 
+            assuming a_1, ..., a_i and c_1, ..., c_j all in RealNeg
+                and i + j > 0
+        '''
         from proveit.numbers import Add, one
-        from proveit.numbers.ordering import less_than_successor, less_than_an_increase
-        bad_form_msg = ("Not the right form for "
-                        "'Less.conclude_via_increase': %s" % self)
-        if not isinstance(self.upper, Add):
-            raise ValueError(bad_form_msg)
-        if self.lower not in self.upper.terms:
-            raise ValueError(bad_form_msg)
-        if self.lower != self.upper.terms[0] or len(self.upper.terms) != 2:
-            # rearrange
-            raise NotImplementedError("ToDo: rearrange")
-        if self.upper.terms[1] == one:
-            concluded = less_than_successor.instantiate(
-                    {a: self.lower}, assumptions=assumptions)
-        concluded = less_than_an_increase.instantiate(
-            {a: self.lower, b: self.upper.terms[1]}, 
-            assumptions=assumptions)
+        from proveit.numbers.ordering import (less_than_successor, 
+                                              less_than_left_successor,
+                                              less_than_an_increase,
+                                              less_than_an_left_increase)
+        if (isinstance(self.lower, Add) and 
+                self.upper in self.lower.terms.entries):
+            concluded = self.lower.deduce_bound_by_term(self.upper, assumptions)
+        elif (isinstance(self.upper, Add) and 
+                self.lower in self.upper.terms.entries):
+            if self.upper.terms.is_double():
+                # special binary cases
+                if self.lower == self.upper.terms[0]:
+                    if self.upper.terms[1] == one:
+                        # a + 1 > a
+                        concluded = less_than_successor.instantiate(
+                                {a: self.lower}, assumptions=assumptions)
+                    else:
+                        # a + b > a assuming b in RealPos
+                        concluded = less_than_an_increase.instantiate(
+                            {a: self.lower, b: self.upper.terms[1]}, 
+                            assumptions=assumptions)
+                else:
+                    assert self.lower == self.upper.terms[1]
+                    if self.upper.terms[0] == one:
+                        # 1 + a > a
+                        concluded = less_than_left_successor.instantiate(
+                                {a: self.lower}, assumptions=assumptions)
+                    else:
+                        # b + a > a assuming b in RealPos
+                        concluded = less_than_an_left_increase.instantiate(
+                            {a: self.lower, b: self.upper.terms[0]}, 
+                            assumptions=assumptions)                    
+            else:
+                concluded = self.upper.deduce_bound_by_term(self.lower, assumptions)
+        else:
+            raise ValueError("Less.conclude_as_bounded_by_term is only "
+                             "applicable if one side of the Less "
+                             "expression is an addition and the other "
+                             "side is one of the terms")
         return concluded.with_matching_style(self)
 
     def conclude_via_equality(self, assumptions=USE_DEFAULTS):
@@ -78,19 +136,7 @@ class Less(NumberOrderingRelation):
             {x: self.operands[0], y: self.operands[1]},
             assumptions=assumptions)
         return concluded.with_matching_style(self)
-    
-    def reversed(self):
-        '''
-        Returns this Expression with a reversed inequality style.
-        For example, 
-            (a < b).reversed() is b > a 
-            (a > b).reversed() is b < a
-        '''
-        if self.get_style('direction') == 'reversed':
-            return self.with_style(direction = 'normal')
-        else:
-            return self.with_style(direction = 'reversed')
-            
+
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         from . import less_than_is_bool
         is_bool_stmt = less_than_is_bool.instantiate(
@@ -108,30 +154,15 @@ class Less(NumberOrderingRelation):
             {x: self.lower, y: self.upper}, assumptions=assumptions)
         return new_rel.with_mimicked_style(self)
 
-    def deduce_dec_add(self, assumptions=USE_DEFAULTS):
+    def derive_not_equal(self, assumptions=USE_DEFAULTS):
         '''
-        created by JML 7/17/19
-        if self.lower is addition, deduce strictly increasing addition
+        Derive a ≠ b from a < b.
         '''
-        from proveit.numbers import Add
+        from proveit.numbers.ordering import less_is_not_eq
+        _a, _b = self.lower, self.upper
+        return less_is_not_eq.instantiate(
+            {a: _a, b: _b}, assumptions=assumptions)
 
-        if isinstance(self.lower, Add):
-            return self.lower.deduce_strict_dec_add(self.upper, assumptions)
-        else:
-            raise ValueError("expected self.lower to be addition")
-    
-    def deduce_inc_add(self, assumptions=USE_DEFAULTS):
-        '''
-        created by JML 7/17/19
-        if self.lhs is addition, deduce strictly increasing addition
-        '''
-        from proveit.numbers import Add
-
-        if isinstance(self.upper, Add):
-            return self.upper.deduce_strict_inc_add(self.lower, assumptions)
-        else:
-            raise ValueError("expected self.lhs to be addition")
-    
     def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this x<y expression
@@ -333,21 +364,20 @@ class Less(NumberOrderingRelation):
         '''
         from proveit.numbers import Less, zero
         from proveit.numbers.division import (
-            div_pos_less, div_neg_less)
+            strong_div_from_numer_bound__pos_denom, 
+            strong_div_from_numer_bound__neg_denom)
         if Less(zero, divisor).proven(assumptions):
-            new_rel = div_pos_less.instantiate(
-                {a: divisor, x: self.lower, y: self.upper},
-                assumptions=assumptions)._simplify_both_sides(
-                simplify=simplify, assumptions=assumptions)
+            thm = strong_div_from_numer_bound__pos_denom
         elif Less(divisor, zero).proven(assumptions):
-            new_rel = div_neg_less.instantiate(
-                {a: divisor, x: self.lower, y: self.upper},
-                assumptions=assumptions)._simplify_both_sides(
-                simplify=simplify, assumptions=assumptions)
+            thm = strong_div_from_numer_bound__neg_denom
         else:
             raise Exception("Cannot 'divide' a Less relation without "
                             "knowing whether the divisor is greater than "
                             "or less than zero.")
+        new_rel = thm.instantiate(
+                {a: divisor, x: self.lower, y: self.upper},
+                assumptions=assumptions)._simplify_both_sides(
+                simplify=simplify, assumptions=assumptions)
         return new_rel.with_mimicked_style(self)
 
     def left_add_both_sides(self, addend, *, simplify=True,
@@ -355,8 +385,8 @@ class Less(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the left.
         '''
-        from proveit.numbers.addition import left_add_less
-        new_rel = left_add_less.instantiate(
+        from proveit.numbers.addition import strong_bound_by_right_term
+        new_rel = strong_bound_by_right_term.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
@@ -367,8 +397,8 @@ class Less(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the right.
         '''
-        from proveit.numbers.addition import right_add_less
-        new_rel = right_add_less.instantiate(
+        from proveit.numbers.addition import strong_bound_by_left_term
+        new_rel = strong_bound_by_left_term.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)

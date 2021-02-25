@@ -9,6 +9,10 @@ class NaturalSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Natural', r'\mathbb{N}', theory=__file__)
 
+    def membership_object(self, element):
+        from .natural_membership import NaturalMembership    
+        return NaturalMembership(element, self)
+
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from proveit.numbers.number_sets.natural_numbers import natural_lower_bound
         return natural_lower_bound.instantiate(
@@ -21,6 +25,8 @@ class NaturalSet(NumberSet):
         member = judgment.element
         yield lambda assumptions: self.deduce_member_lower_bound(member, assumptions)
         yield lambda assumptions: self.deduce_member_in_int(member, assumptions)
+        yield lambda assumptions: self.deduce_member_in_rational_nonneg(
+                member, assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from proveit.numbers.number_sets.natural_numbers import nat_membership_is_bool
@@ -32,6 +38,12 @@ class NaturalSet(NumberSet):
         from proveit.numbers.number_sets.integers import nat_within_int
         return nat_within_int.derive_superset_membership(member, assumptions)
 
+    def deduce_member_in_rational_nonneg(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.rational_numbers import (
+                nat_within_rational_nonneg)
+        return nat_within_rational_nonneg.derive_superset_membership(
+            member, assumptions)
+
 
 class NaturalPosSet(NumberSet):
     def __init__(self):
@@ -40,6 +52,10 @@ class NaturalPosSet(NumberSet):
             'NaturalPos',
             r'\mathbb{N}^+',
             theory=__file__)
+
+    def membership_object(self, element):
+        from .natural_membership import NaturalPosMembership    
+        return NaturalPosMembership(element)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from proveit.numbers.number_sets.natural_numbers import natural_pos_lower_bound
@@ -51,9 +67,18 @@ class NaturalPosSet(NumberSet):
         Yield side-effects when proving 'n in NaturalPos' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_lower_bound(member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_nat(member, assumptions)
-        yield lambda assumptions: self.deduce_member_non_zero(member, assumptions)
+        yield lambda assumptions: self.deduce_member_lower_bound(
+                member, assumptions)
+        yield lambda assumptions: self.deduce_member_in_nat(
+                member, assumptions)
+        yield lambda assumptions: self.deduce_member_in_int(
+                member, assumptions)
+        yield lambda assumptions: self.deduce_member_in_nonzero_int(
+                member, assumptions)
+        yield lambda assumptions: self.deduce_member_nonzero(
+                member, assumptions)
+        yield lambda assumptions: self.deduce_member_in_rational_pos(
+                member, assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
@@ -75,23 +100,39 @@ class NaturalPosSet(NumberSet):
         return nat_pos_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
+    def deduce_member_nonzero(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.natural_numbers import nonzero_if_is_nat_pos
+        _n = nonzero_if_is_nat_pos.instance_param
+        return nonzero_if_is_nat_pos.instantiate(
+            {_n: member}, assumptions=assumptions)
+
     def deduce_member_in_nat(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.natural_numbers import nat_pos_within_nat
+        from . import nat_pos_within_nat
         return nat_pos_within_nat.derive_superset_membership(
             member, assumptions)
 
-    def deduce_member_non_zero(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.natural_numbers import non_zero_if_is_nat_pos
-        _n = non_zero_if_is_nat_pos.instance_param
-        return non_zero_if_is_nat_pos.instantiate(
-            {_n: member}, assumptions=assumptions)
+    def deduce_member_in_int(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.integers import nat_pos_within_int
+        return nat_pos_within_int.derive_superset_membership(
+            member, assumptions)
+
+    def deduce_member_in_nonzero_int(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.integers import nat_pos_within_nonzero_int
+        return nat_pos_within_nonzero_int.derive_superset_membership(
+            member, assumptions)
+
+    def deduce_member_in_rational_pos(self, member, assumptions=USE_DEFAULTS):
+        from proveit.numbers.number_sets.rational_numbers import (
+                nat_pos_within_rational_pos)
+        return nat_pos_within_rational_pos.derive_superset_membership(
+            member, assumptions)
+
 
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
-    from proveit.numbers.number_sets.natural_numbers import nat_pos_within_nat
-    from proveit.numbers.number_sets.integers import nat_within_int, nat_pos_within_int
+    from . import nat_pos_within_nat
 
 # if proveit.defaults.automation:
 #     try:

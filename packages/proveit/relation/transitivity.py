@@ -97,7 +97,7 @@ class TransitiveRelation(Relation):
                    " from the proven relation of %s."
                    % (str(self), str(relation)))
             raise TransitivityException(self, assumptions, msg)
-        return proven_relation
+        return proven_relation.with_matching_style(self)
 
     @classmethod
     def _RelationClasses(cls):

@@ -15,27 +15,21 @@ class Neg(Operation):
         from proveit.numbers import zero
         return is_irreducible_value(self.operand) and self.operand != zero
 
-    def deduce_in_number_set(self, NumberSet, assumptions=USE_DEFAULTS):
+    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
         '''
         from . import int_closure, real_closure, complex_closure
         from proveit.logic import InSet
-        if NumberSet == Integer:
+        if number_set == Integer:
             return int_closure.instantiate({a: self.operand})
-        elif NumberSet == Real:
+        elif number_set == Real:
             return real_closure.instantiate({a: self.operand})
-        elif NumberSet == Complex:
+        elif number_set == Complex:
             return complex_closure.instantiate({a: self.operand})
-        else:
-            raise ProofFailure(
-                InSet(
-                    self,
-                    NumberSet),
-                assumptions,
-                "No negation closure theorem for set %s" %
-                str(NumberSet))
+        raise NotImplementedError(
+            "No negation closure theorem for set %s" %str(number_set))
 
     def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''

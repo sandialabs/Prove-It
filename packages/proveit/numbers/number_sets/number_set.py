@@ -3,8 +3,9 @@ from proveit.logic import Equals, InSet, Membership
 
 
 class NumberSet(Literal):
-    def __init__(self, string, latex, theory):
-        Literal.__init__(self, string, latex, theory=theory)
+    def __init__(self, string, latex, theory, fence_when_forced=False):
+        Literal.__init__(self, string, latex, theory=theory,
+                         fence_when_forced=fence_when_forced)
 
     def membership_object(self, element):
         return NumberMembership(element, self)
@@ -79,9 +80,17 @@ class NumberMembership(Membership):
 
         # Try the 'deduce_in_number_set' method.
         if hasattr(element, 'deduce_in_number_set'):
-            return element.deduce_in_number_set(self.number_set,
-                                                assumptions=assumptions)
+            try:
+                return element.deduce_in_number_set(self.number_set,
+                                                    assumptions=assumptions)
+            except NotImplementedError as e:
+                if hasattr(self, 'conclude_as_last_resort'):
+                    return self.conclude_as_last_resort(assumptions)
+                raise ProofFailure(InSet(self.element, self.number_set),
+                                   assumptions, str(e))
         else:
+            if hasattr(self, 'conclude_as_last_resort'):
+                return self.conclude_as_last_resort(assumptions)
             msg = str(element) + " has no 'deduce_in_number_set' method."
             raise ProofFailure(InSet(self.element, self.number_set),
                                assumptions, msg)

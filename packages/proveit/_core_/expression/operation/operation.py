@@ -20,7 +20,7 @@ class Operation(Expression):
         '''
         Operation.operation_class_of_operator.clear()
 
-    def __init__(self, operator, operand_or_operands, styles=None):
+    def __init__(self, operator, operand_or_operands, *, styles=None):
         '''
         Create an operation with the given operator and operands.
         The operator must be a Label (a Variable or a Literal).
@@ -129,7 +129,7 @@ class Operation(Expression):
         return self.with_styles(justification=justification)
 
     @classmethod
-    def _implicitOperator(operation_class):
+    def _implicit_operator(operation_class):
         if hasattr(operation_class, '_operator_'):
             return operation_class._operator_
         return None
@@ -207,7 +207,7 @@ class Operation(Expression):
         and no keyword arguments: construct the Operation by passing 
         the operator(s) and each operand individually.
         '''
-        implicit_operator = cls._implicitOperator()
+        implicit_operator = cls._implicit_operator()
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
             raise OperationError("An implicit operator may not be changed")
@@ -263,7 +263,7 @@ class Operation(Expression):
                     return
 
                 # handle default explicit operator case
-                if (not implicit_operator) and (varkw is None):
+                if (implicit_operator is None) and (varkw is None):
                     if varargs is None and len(args) == 2:
                         # assume one argument for the operator and one
                         # argument for the operands
@@ -468,7 +468,7 @@ class Operation(Expression):
                 formatted_str += ')' if format_type == 'string' else r'\right)'
             return formatted_str
 
-    def _replaced(self, repl_map, allow_relabeling,
+    def _replaced(self, repl_map, allow_relabeling, reduction_map,
                   assumptions, requirements, equality_repl_requirements):
         '''
         Returns this expression with sub-expressions substituted
@@ -504,13 +504,13 @@ class Operation(Expression):
 
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator = \
-            self.operator.replaced(repl_map, allow_relabeling,
-                                   assumptions, requirements,
-                                   equality_repl_requirements)
+            self.operator.replaced(
+                    repl_map, allow_relabeling, reduction_map,
+                    assumptions, requirements, equality_repl_requirements)
         subbed_operands = \
-            self.operands.replaced(repl_map, allow_relabeling,
-                                   assumptions, requirements,
-                                   equality_repl_requirements)
+            self.operands.replaced(
+                    repl_map, allow_relabeling, reduction_map, 
+                    assumptions, requirements, equality_repl_requirements)
 
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
@@ -544,16 +544,16 @@ class Operation(Expression):
                 subbed_sub_exprs = (subbed_operator, subbed_operands)
                 substituted = op_class._checked_make(
                     ['Operation'], sub_expressions=subbed_sub_exprs)
-                return substituted._auto_reduced(
-                    assumptions, requirements,
+                return substituted._reduced(
+                    reduction_map, assumptions, requirements,
                     equality_repl_requirements)
         
         subbed_sub_exprs = (subbed_operator,
                             subbed_operands)
         substituted = self.__class__._checked_make(
             self._core_info, subbed_sub_exprs)
-        return substituted._auto_reduced(assumptions, requirements,
-                                         equality_repl_requirements)
+        return substituted._reduced(reduction_map, assumptions, requirements,
+                                    equality_repl_requirements)
 
 class OperationError(Exception):
     def __init__(self, message):

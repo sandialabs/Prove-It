@@ -1,9 +1,14 @@
-from proveit import (Literal, Operation, OperationOverInstances, free_vars,
-                     maybe_fenced, USE_DEFAULTS, ProofFailure)
-from proveit.logic import InSet
-from proveit.numbers.number_sets import RealInterval, Interval, Real, Integer, Natural, Complex
+from proveit import (Literal, Lambda, Function, Operation, 
+                     OperationOverInstances, InnerExpr,
+                     Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
+                     ProofFailure, defaults)
+from proveit.logic import Forall, InSet
+from proveit.numbers.number_sets import (
+        RealInterval, Interval, Real, Integer, Natural, Complex)
 from proveit.numbers.negation import Neg
-from proveit import a, f, P, S
+from proveit.numbers.ordering import LessEq, Less
+from proveit import a, b, c, f, i, j, k, x, P, Q, S
+from proveit import TransRelUpdater
 
 
 class Sum(OperationOverInstances):
@@ -32,10 +37,10 @@ class Sum(OperationOverInstances):
             self, Sum._operator_, index_or_indices, summand,
             domain=domain, domains=domains, condition=condition,
             conditions=conditions, _lambda_map=_lambda_map)
-        if hasattr(self, 'instance_var'):
-            self.index = self.instance_var
+        if hasattr(self, 'instance_param'):
+            self.index = self.instance_param
         if hasattr(self, 'instance_vars'):
-            self.indices = self.instance_vars
+            self.indices = self.instance_params
         self.summand = self.instance_expr
         """
         # think about this later
@@ -50,36 +55,32 @@ class Sum(OperationOverInstances):
         """
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
-        from . import summation_nats_closure, summation_ints_closure, summation_real_closure, summation_complex_closure
-        P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
-        Operation(P, self.instance_vars)
+        from . import (summation_nat_closure, summation_int_closure, 
+                       summation_real_closure, summation_complex_closure)
+        _x = self.instance_param
+        P_op, _P_op = Function(P, _x), self.instance_expr
+        Q_op, _Q_op = Function(Q, _x), self.condition
         self.summand
         if number_set == Natural:
-            thm = summation_nats_closure
+            thm = summation_nat_closure
         elif number_set == Integer:
-            thm = summation_ints_closure
+            thm = summation_int_closure
         elif number_set == Real:
             thm = summation_real_closure
         elif number_set == Complex:
             thm = summation_complex_closure
         else:
-            raise ProofFailure(
-                InSet(
-                    self,
-                    number_set),
-                assumptions,
-                "'deduce_in_number_set' not implemented for the %s set" %
-                str(number_set))
-        return thm.instantiate(
-            {
-                P_op: P_op_sub,
-                S: self.domain,
-                Q_op: Q_op_sub},
-            relabel_map={
-                x_multi: self.instance_vars},
-            assumptions=assumptions).derive_consequent(
-                assumptions=assumptions)
+            raise NotImplementedError(
+                "'Sum.deduce_in_number_set' not implemented for the %s set"
+                % str(number_set))
+        impl = thm.instantiate(
+            { x: _x, P_op: _P_op, Q_op: _Q_op}, assumptions=assumptions)
+        antecedent = impl.antecedent
+        if not antecedent.proven(assumptions):
+            # Conclude the antecedent via generalization.
+            antecedent.conclude_via_generalization(
+                    assumptions, defaults.automation)
+        return impl.derive_consequent(assumptions=assumptions)
 
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
@@ -112,7 +113,7 @@ class Sum(OperationOverInstances):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         from proveit.logic import SimplificationError
-        from axioms import sum_single
+        from . import sum_single
         if isinstance(
                 self.domain,
                 Interval) and self.domain.lower_bound == self.domain.upper_bound:
@@ -269,13 +270,13 @@ class Sum(OperationOverInstances):
         raise Exception(
             "split_off_last only implemented for a summation over a Interval of one instance variable")
 
-    def factor(
+    def factorization(
             self,
             the_factor,
             pull="left",
-            group_factor=False,
+            group_factor=True,
             group_remainder=None,
-            assumptions=frozenset()):
+            assumptions=USE_DEFAULTS):
         '''
         If group_factor is True and the_factor is a product, it will be grouped together as a
         sub-product.  group_remainder is not relevant kept for compatibility with other factor
@@ -283,60 +284,119 @@ class Sum(OperationOverInstances):
         Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         '''
-        from proveit.numbers.multiplication.theorems import distribute_through_summation_rev
-        from proveit.numbers import Mult
-        if not free_vars(the_factor).isdisjoint(self.indices):
+        from proveit import ExprTuple, var_range
+        from proveit.numbers.multiplication import distribute_through_summation
+        from proveit.numbers import Mult, one
+        if not free_vars(the_factor, err_inclusively=True).isdisjoint(
+                self.instance_params):
             raise Exception(
-                'Cannot factor anything involving summation indices out of a summation')
+                'Cannot factor anything involving summation indices '
+                'out of a summation')
+        expr = self
+        # for convenience updating our equation
+        eq = TransRelUpdater(expr, assumptions)
+        
+        assumptions = defaults.checked_assumptions(assumptions)
         # We may need to factor the summand within the summation
-        summand_assumptions = assumptions | {
-            InSet(index, self.domain) for index in self.indices}
-        summand_factor_eq = self.summand.factor(
+        summand_assumptions = assumptions + self.conditions.entries
+        summand_factorization = self.summand.factorization(
             the_factor,
             pull,
             group_factor=False,
             group_remainder=True,
             assumptions=summand_assumptions)
-        summand_instance_equivalence = summand_factor_eq.generalize(
-            self.indices, domain=self.domain).checked(assumptions)
-        eq = Equation(self.instance_substitution(
-            summand_instance_equivalence).checked(assumptions))
-        factor_operands = the_factor.operands if isinstance(
-            the_factor, Mult) else the_factor
-        x_dummy, z_dummy = self.safe_dummy_vars(2)
-        # Now do the actual factoring by reversing distribution
+        gen_summand_factorization = summand_factorization.generalize(
+                self.instance_params, conditions=self.conditions)
+        expr = eq.update(expr.instance_substitution(gen_summand_factorization,
+                                                    assumptions=assumptions))
+        if isinstance(the_factor, Mult):
+            factors = the_factor.factors
+        else:
+            factors = ExprTuple(the_factor)
         if pull == 'left':
-            Pop, Pop_sub = Operation(
-                P, self.indices), summand_factor_eq.rhs.operands[-1]
-            x_sub = factor_operands
-            z_sub = []
+            _a = factors
+            _c = ExprTuple()
+            summand_remainder = expr.summand.factors[-1]
         elif pull == 'right':
-            Pop, Pop_sub = Operation(
-                P, self.indices), summand_factor_eq.rhs.operands[0]
-            x_sub = []
-            z_sub = factor_operands
-        # We need to deduce that the_factor is in Complex and that all
-        # instances of Pop_sup are in Complex.
-        deduce_in_complex(factor_operands, assumptions=assumptions)
-        deduce_in_complex(
-            Pop_sub,
-            assumptions=assumptions | {
-                InSet(
-                    idx,
-                    self.domain) for idx in self.indices}).generalize(
-            self.indices,
-            domain=self.domain).checked(assumptions)
-        # Now we instantiate distribut_through_summation_rev
-        spec1 = distribute_through_summation_rev.instantiate(
-            {
-                Pop: Pop_sub, S: self.domain, y_etc: self.indices, x_etc: Etcetera(
-                    Multi_variable(x_dummy)), z_etc: Etcetera(
-                    Multi_variable(z_dummy))}).checked()
-        eq.update(spec1.derive_conclusion().instantiate({Etcetera(
-            Multi_variable(x_dummy)): x_sub, Etcetera(Multi_variable(z_dummy)): z_sub}))
-        if group_factor and factor_operands.num_entries() > 1:
-            eq.update(
-                eq.eq_expr.rhs.group(
-                    end_idx=factor_operands.num_entries(),
-                    assumptions=assumptions))
-        return eq.eq_expr  # .checked(assumptions)
+            _a = ExprTuple()
+            _c = factors
+            summand_remainder = expr.summand.factors[0]
+        else:
+            raise ValueError("'pull' must be 'left' or 'right', not %s"
+                             %pull)
+        _b = self.instance_params
+        _i = _a.num_elements(assumptions)
+        _j = _b.num_elements(assumptions)
+        _k = _c.num_elements(assumptions)
+        _P = Lambda(expr.instance_params, summand_remainder)
+        _Q = Lambda(expr.instance_params, expr.condition)
+        a_1_to_i = ExprTuple(var_range(a, one, _i))
+        b_1_to_j = ExprTuple(var_range(b, one, _j))
+        c_1_to_k = ExprTuple(var_range(c, one, _k))
+        _impl = distribute_through_summation.instantiate(
+                {i: _i, j: _j, k: _k, P:_P, Q:_Q, b_1_to_j: _b},
+                assumptions=assumptions)
+        quantified_eq = _impl.derive_consequent(assumptions)  
+        eq.update(quantified_eq.instantiate(
+                {a_1_to_i: _a, b_1_to_j:_b, c_1_to_k: _c}, 
+                assumptions=assumptions))
+        
+        return eq.relation
+    
+    def deduce_bound(self, summand_relation, assumptions=USE_DEFAULTS):
+        '''
+        Given a universally quantified ordering relation over all 
+        summand instances, return a bounding relation for the
+        summation.  For example, using the summand relation
+            \forall_{k in {m...n}} (a(k) <= b(k)),
+        we can prove
+            \sum_{l=m}^{n} a(l) <= \sum_{l=m}^{n} b(l)
+        or using the summand relation
+            \forall_{k in {m...n}} (a(k) < b(k)),
+        and assuming m <= n, we can prove
+            \sum_{l=m}^{n} a(l) < \sum_{l=m}^{n} b(l)
+        '''
+        from . import (weak_summation_from_summands_bound,
+                       strong_summation_from_summands_bound)
+        if not (self.instance_params.is_single()):
+            raise NotImplementedError(
+                    "sum.bound only currently implemented for summations "
+                    "over a single parameter")
+        if isinstance(summand_relation, Judgment):
+            summand_relation = summand_relation.expr
+        if not (isinstance(summand_relation, Forall) and
+                summand_relation.instance_params.is_single() and
+                (isinstance(summand_relation.instance_expr, Less) or
+                 isinstance(summand_relation.instance_expr, LessEq))):
+            raise ValueError("Expecting summand_relation to be a number "
+                             "ordering relation (< or <=) universally "
+                             "quantified over a single parameter, not %s"
+                             %summand_relation)
+        summand_lambda = Lambda(self.instance_param, self.summand)
+        lesser_lambda = Lambda(summand_relation.instance_param, 
+                               summand_relation.instance_expr.normal_lhs)
+        greater_lambda = Lambda(summand_relation.instance_param, 
+                                summand_relation.instance_expr.normal_rhs)
+        if summand_lambda not in (lesser_lambda, greater_lambda):
+            raise ValueError("Expecting summand_relation to be a universally "
+                             "quantified number relation (< or <=) "
+                             "involving the summand, %d, not %s"%
+                             (self.summand, summand_relation))
+        _a = lesser_lambda
+        _b = greater_lambda
+        _S = self.domain
+        if isinstance(summand_relation.instance_expr, LessEq):
+            # Use weak form
+            sum_rel_impl = weak_summation_from_summands_bound.instantiate(
+                    {a:_a, b:_b, S:_S}, assumptions=assumptions)
+        else:
+            # Use strong form
+            sum_rel_impl = strong_summation_from_summands_bound.instantiate(
+                    {a:_a, b:_b, S:_S}, assumptions=assumptions)
+        sum_relation = sum_rel_impl.derive_consequent(assumptions)
+        if summand_lambda == greater_lambda:
+            return sum_relation.with_direction_reversed()
+        return sum_relation
+
+InnerExpr.register_equivalence_method(
+    Sum, 'factorization', 'factorized', 'factor')

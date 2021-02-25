@@ -1,4 +1,4 @@
-from .exp import sqrt, Exp
+from .exp import sqrt, sqrd, Exp
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

@@ -79,6 +79,7 @@ class Judgment:
 
     # Call the begin_proof method to begin a proof of a Theorem.
     theorem_being_proven = None  # Theorem being proven.
+    theorem_being_proven_str = None # in string form.
     # Has the theorem_being_proven been proven yet in this session?
     has_been_proven = None  
     # Goes from None to False (after beginning a proof and disabling 
@@ -89,9 +90,11 @@ class Judgment:
     # purposes of the proof being proven and exclusions thereof:
     presumed_theorems_and_theories = None
     presuming_theorem_and_theory_exclusions = None
+    
+    # Set of theorems that have been presumed or their dependencies
+    # (direct or indirect).
+    presumed_theorems_and_dependencies = None
 
-     # set if theorems and theories excluded from presumptions
-    presuming_exclusions = None 
     qed_in_progress = False  # set to true when "%qed" is in progress
 
     # Judgments for which derive_side_effects is in progress, tracked to 
@@ -108,9 +111,11 @@ class Judgment:
         Judgment.lookup_dict.clear()
         Judgment.sideeffect_processed.clear()
         Judgment.theorem_being_proven = None
+        Judgment.theorem_being_proven_str = None
         Judgment.has_been_proven = None
-        Judgment.presuming_theorems = None
-        Judgment.presuming_prefixes = None
+        Judgment.presumed_theorems_and_theories = None
+        Judgment.presuming_theorem_and_theory_exclusions = None
+        Judgment.presumed_theorems_and_dependencies = None
         Judgment.qed_in_progress = False
         _ExprProofs.all_expr_proofs.clear()
         assert len(Judgment.in_progress_to_derive_sideeffects) == 0, (
@@ -206,7 +211,7 @@ class Judgment:
             return  # automation disabled
         # Sort the assumptions according to hash key so that sets of
         # assumptions are unique for determining which side-effects have
-        # been processedalready.
+        # been processed already.
         sorted_assumptions = tuple(
             sorted(
                 assumptions,
@@ -298,8 +303,10 @@ class Judgment:
             raise CircularLogic(theorem, theorem)
 
         Judgment.theorem_being_proven = theorem
+        Judgment.theorem_being_proven_str = str(theorem)
         Judgment.presumed_theorems_and_theories = presumptions
         Judgment.presuming_theorem_and_theory_exclusions = exclusions
+        Judgment.presumed_theorems_and_dependencies = set()
         Theorem.update_usability()
 
         # change Judgment.has_been_proven
@@ -542,7 +549,8 @@ class Judgment:
 
     def _updateProof(self, new_proof):
         '''
-        Update the proof of this Judgment.  Return True iff the proof actually changed to something usable.
+        Update the proof of this Judgment.  Return True iff the proof 
+        actually changed to something usable.
         '''
         meaning_data = self._meaning_data
 
@@ -777,7 +785,7 @@ class Judgment:
     """
 
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
-                    assumptions=USE_DEFAULTS):
+                    reductions=None, assumptions=USE_DEFAULTS):
         '''
         Performs an instantiation derivation step to be proven under the 
         given assumptions, in addition to the assumptions of the 
@@ -800,7 +808,14 @@ class Judgment:
         
         Replacements are made simultaneously.  For example, the 
         {x:y, y:x} mapping will swap x and y variables.
-
+        
+        If 'reductions' are provided, these are equality judgments
+        in which each occurrence of the left hand sides will be replaced
+        by the right hand sides during the instantiation.  There
+        may also be "auto-reductions" that work in a similar matter
+        via calling 'auto_reduction' on expressions as they are
+        generated during the instantiation.
+        
         Returns the proven instantiated Judgment, or throws an exception
         if the proof fails.  For the proof to succeed, all conditions of
         eliminated Forall operations, after replacements are made, must
@@ -811,11 +826,21 @@ class Judgment:
         '''
         from proveit import (Variable, Operation, Conditional, Lambda,
                              single_or_composite_expression,
-                             ExprTuple, IndexedVar)
+                             ExprTuple, ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
-        from proveit.logic import Forall
+        from proveit.logic import Forall, Equals
         from .proof import Instantiation, ProofFailure
+        
+        reduction_map = dict()
+        if reductions is not None:
+            for reduction in reductions:
+                if not isinstance(reduction, Judgment):
+                    raise TypeError("The 'reductions' must be Judgments")
+                if not isinstance(reduction.expr, Equals):
+                    raise TypeError(
+                            "The 'reductions' must be equality Judgments")
+                reduction_map[reduction.expr.lhs] = reduction
 
         if not self.is_usable():
             # If this Judgment is not usable, see if there is an alternate
@@ -865,16 +890,27 @@ class Judgment:
                         "as a repl_map key:\n%s" %
                         str(e))
                 if key.num_entries() == 1:
-                    # Replacement key for replacing a range of indexed
-                    # variables, or range of ranges of indexed variables
-                    # , etc.
-                    processed_repl_map[key] = replacement
-                    # Although this is redundant (not really necessary
-                    # as an entry in `equiv_alt_expansions` as far
-                    # as Lambda.apply is concerned) it is useful for
-                    # bookkeeping to extract all of the instantiation
-                    # mappings:
-                    equiv_alt_expansions[key] = replacement
+                    key_entry = key.entries[0]
+                    if (isinstance(key_entry, ExprRange) and
+                            key_entry.start_index == key_entry.end_index
+                            and isinstance(replacement, ExprTuple)
+                            and replacement.is_single()):
+                        # Special case of a singular range 
+                        # (e.g., x_1, ..., x1) and singlular
+                        # replacement.
+                        processed_repl_map[key_entry.first()] = \
+                            replacement.entries[0]
+                    else:
+                        # Replacement key for replacing a range of indexed
+                        # variables, or range of ranges of indexed variables
+                        # , etc.
+                        processed_repl_map[key] = replacement
+                        # Although this is redundant (not really necessary
+                        # as an entry in `equiv_alt_expansions` as far
+                        # as Lambda.apply is concerned) it is useful for
+                        # bookkeeping to extract all of the instantiation
+                        # mappings:
+                        equiv_alt_expansions[key] = replacement
                 else:
                     assert key.num_entries() > 1
                     # An "alternative equivalent expansion" of
@@ -882,7 +918,8 @@ class Judgment:
                     # ranges, etc.).    For example,
                     # (x_i, x_{i+1}, ..., x_j).
                     equiv_alt_expansions[key] = replacement
-            elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
+            elif (isinstance(key, Operation) 
+                    and isinstance(key.operator, Variable)):
                 operation = key
                 repl_var = operation.operator
                 replacement = Lambda(operation.operands, replacement)
@@ -943,6 +980,7 @@ class Judgment:
                           num_forall_eliminations=num_forall_eliminations,
                           repl_map=processed_repl_map,
                           equiv_alt_expansions=equiv_alt_expansions,
+                          reduction_map=reduction_map,
                           assumptions=assumptions))
 
     def generalize(self, forall_var_or_vars_or_var_lists,

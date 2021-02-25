@@ -2,7 +2,6 @@ from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
-
 class Conditional(Expression):
     '''
     A Conditional expression is one that may reduce to its 'value'
@@ -151,6 +150,13 @@ class Conditional(Expression):
             from proveit.core_expr_types.conditionals import \
                 true_condition_reduction
             return true_condition_reduction.instantiate({a: self.value})
+        elif (isinstance(self.value, Conditional) and
+              self.condition == self.value.condition):
+            from proveit.core_expr_types.conditionals import \
+                redundant_condition_reduction
+            return redundant_condition_reduction.instantiate(
+                    {a: self.value.value, Q: self.condition},
+                    assumptions = assumptions)            
         elif isinstance(self.condition, And):
             from proveit.core_expr_types.conditionals import \
                 (singular_conjunction_condition_reduction,
@@ -204,7 +210,7 @@ class Conditional(Expression):
                 return thm.instantiate({m: _m, a: _a, Q: _Q},
                                        assumptions=assumptions)
 
-    def _replaced(self, repl_map, allow_relabeling,
+    def _replaced(self, repl_map, allow_relabeling, reduction_map,
                   assumptions, requirements, equality_repl_requirements):
         '''
         Returns this expression with sub-expressions replaced
@@ -227,15 +233,74 @@ class Conditional(Expression):
         condition = self.condition
 
         # First perform substitution on the conditions:
-        subbed_cond = condition.replaced(repl_map, allow_relabeling,
-                                         assumptions, requirements,
-                                         equality_repl_requirements)
+        subbed_cond = condition.replaced(
+                repl_map, allow_relabeling, reduction_map,
+                assumptions, requirements, equality_repl_requirements)
 
         # Next perform substitution on the value, adding the condition
         # as an assumption.
-        subbed_val = value.replaced(repl_map, allow_relabeling,
-                                    assumptions + (subbed_cond,),
-                                    requirements,
-                                    equality_repl_requirements)
+        subbed_val = value.replaced(
+                repl_map, allow_relabeling, reduction_map,
+                assumptions + (subbed_cond,), requirements,
+                equality_repl_requirements)
 
         return Conditional(subbed_val, subbed_cond)
+    
+    def value_substitution(self, equality, assumptions=USE_DEFAULTS):
+        '''
+        Equate this Conditional to one that has the value
+        substituted.  For example,
+        {a if Q. = {b if Q.
+        given the "a = b" equality under the assumption of Q.
+        The 'equality' may be universally quantified.
+        '''
+        from proveit import (Lambda, ArgumentExtractionError,
+                             Judgment)
+        from proveit import a, b, Q
+        from proveit.logic import Equals, Forall
+        from proveit.core_expr_types.conditionals import (
+                conditional_substitution)
+        assumptions = defaults.checked_assumptions(assumptions)
+        def raise_type_error():
+            raise TypeError("'equality' expected to be of type Equals "
+                            "or a universally quantified equality, "
+                            "got %s of type %s instead."
+                            %(equality, equality.__class__))            
+        if isinstance(equality, Judgment):
+            equality = equality.expr
+        if isinstance(equality, Forall):
+            quantified_eq = equality
+            def raise_invalid_condition_error():
+                raise ValueError("Condition of universally quantified "
+                                 "equality, %s, expected to match %s."
+                                 %(quantified_eq, self.condition))      
+            equality = quantified_eq.instance_expr
+            if not isinstance(equality, Equals):
+                raise_type_error()
+            if not hasattr(quantified_eq, 'condition'):
+                raise_invalid_condition_error()
+            condition = quantified_eq.condition
+            _y = quantified_eq.instance_params
+            _Q = Lambda(_y, condition)
+            try:
+                _x = _Q.extract_arguments(self.condition)
+            except ArgumentExtractionError:
+                raise_invalid_condition_error()
+            equality = quantified_eq.instantiate(
+                    {_y:_x}, assumptions = assumptions + (condition,))
+            return self.value_substitution(equality, assumptions)
+        if not isinstance(equality, Equals):
+            raise_type_error()
+        if equality.lhs == self.value:
+            return conditional_substitution.instantiate(
+                    {a:equality.lhs, b:equality.rhs,
+                     Q:self.condition}, assumptions = assumptions)
+        elif equality.rhs == self.value:
+            return conditional_substitution.instantiate(
+                    {a:equality.rhs, b:equality.lhs,
+                     Q:self.condition}, assumptions = assumptions)
+        else:
+            raise ValueError("One of the sides of %s was expected to "
+                             "match the 'value' part of %s"
+                             %(equality, self))
+        

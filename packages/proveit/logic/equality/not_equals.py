@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import (Literal, Operation, USE_DEFAULTS, 
+                     UnsatisfiedPrerequisites)
 from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit import x, y, A, X
@@ -30,7 +31,7 @@ class NotEquals(Relation):
         yield self.unfold  # Not(x=y) from x != y
 
     def conclude(self, assumptions):
-        from proveit.logic import FALSE
+        from proveit.logic import FALSE, Not
         if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
             # prove that two irreducible values are not equal
             return self.lhs.not_equal(self.rhs, assumptions)
@@ -40,16 +41,20 @@ class NotEquals(Relation):
                 return self.conclude_via_double_negation(assumptions)
             except BaseException:
                 pass
-        if hasattr(self.lhs, 'not_equal') and is_irreducible_value(self.rhs):
-            try:
-                return self.lhs.not_equal(self.rhs, assumptions)
-            except BaseException:
-                pass
-        try:
+        if Not(Equals(self.lhs, self.rhs)).proven(assumptions):
+            # Conclude (x ≠ y) by knowing that Not(x = y) is true. 
             return self.conclude_as_folded(assumptions)
-        except BaseException:
-            # try the default (reduction)
-            return Operation.conclude(assumptions)
+        if hasattr(self.lhs, 'not_equal'):
+            # If there is a 'not_equal' method, use that.
+            # The responsibility then shifts to that method for
+            # determining what strategies should be attempted
+            # (with the recommendation that it should not attempt
+            # multiple non-trivial automation strategies).
+            # A good practice is to try the 'conclude_as_folded'
+            # strategy if it doesn't fall into any specially-handled
+            # case.
+            return self.lhs.not_equal(self.rhs, assumptions)
+        return self.conclude_as_folded(assumptions)
 
     def derive_reversed(self, assumptions=USE_DEFAULTS):
         '''

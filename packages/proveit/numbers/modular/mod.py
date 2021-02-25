@@ -69,6 +69,6 @@ class Mod(Operation):
             return mod_real_closure.instantiate(
                 {a: self.dividend, b: self.divisor}, assumptions=assumptions)
 
-        msg = ("'Mod.deduce_in_number_set()' not implemented for "
-               "the %s set" % str(number_set))
-        raise ProofFailure(InSet(self, number_set), assumptions, msg)
+        raise NotImplementedError(
+            "'Mod.deduce_in_number_set()' not implemented for the %s set" 
+            % str(number_set))

@@ -73,9 +73,10 @@ class Proof:
             # meanng data of proofs that directly require this one
             self._meaning_data._dependents = set()
 
-            # Is this a usable Proof?  An unusable proof occurs when trying to prove a Theorem
-            # that must explicitly presume Theorems that are not fully known in order to
-            # avoid circular logic.  They can also be manually introduced via
+            # Is this a usable Proof?  An unusable proof occurs when 
+            # trying to prove a Theorem that must explicitly presume 
+            # Theorems that are not fully known in order to avoid 
+            # circular logic.  They can also be manually introduced via
             # Proof.disable().
             # When unusable, this will point to the unusable theorem
             self._meaning_data._unusable_proof = None
@@ -88,12 +89,12 @@ class Proof:
                 lambda obj: hex(
                     obj._style_id)))
 
-        # reference this unchanging data of the unique 'meaning' data
+        # Reference this unchanging data of the unique 'meaning' data.
         self._meaning_id = self._meaning_data._unique_id
 
-        # reference this data of the unique 'meaning' data, but note that these
-        # are subject to change (as proofs are disabled and as new dependencies
-        # are added).
+        # Reference this data of the unique 'meaning' data, but note 
+        # that these are subject to change (as proofs are disabled and 
+        # as new dependencies are added).
         self.required_proofs = self._meaning_data.required_proofs
         self._dependents = self._meaning_data._dependents
 
@@ -103,10 +104,11 @@ class Proof:
         original_proof = self.proven_truth not in all_required_truths
 
         if original_proof:
-            # As long as this is not a useless self-dependent proof (a proof that depends upon
-            # a different proof of the same truth which should never actually get used),
-            # track the dependencies of required proofs so they can be updated appropriated if there are
-            # changes due to proof disabling.
+            # As long as this is not a useless self-dependent proof (a 
+            # proof that depends upon a different proof of the same
+            # truth which should never actually get used), track the 
+            # dependencies of required proofs so they can be updated 
+            # appropriated if there are changes due to proof disabling.
             for required_proof in self.required_proofs:
                 required_proof._dependents.add(self)
 
@@ -136,8 +138,9 @@ class Proof:
 
         # if it is a Theorem, set its "usability", avoiding circular logic
         if self.is_usable():
-            self._setUsability()
-        # this new proof may be the first proof, make an old one obselete, or be born obsolete itself.
+            self._mark_usability()
+        # This new proof may be the first proof, make an old one 
+        # obselete, or be born obsolete itself.
         #had_previous_proof = (proven_truth.proof() is not None and proven_truth.is_usable())
         proven_truth._addProof(self)
         if requiring_unusable_proof:
@@ -147,46 +150,45 @@ class Proof:
                 Judgment.theorem_being_proven,
                 self._meaning_data._unusable_proof)
         if proven_truth.proof() == self and self.is_usable(
-        ):  # don't bother with side effects if this proof was born obsolete or unusable
-            # May derive any side-effects that are obvious consequences arising from this truth
+        ):  # Don't bother with side effects if this proof was born 
+            # obsolete or unusable.  May derive any side-effects that 
+            # are obvious consequences arising from this truth
             # (if it has not already been processed):
             proven_truth.derive_side_effects(defaults.assumptions)
 
     def _updateDependencies(self, newproof):
         '''
-        Swap out this oldproof for the newproof in all dependents and update their num_steps
-        and usability status.
+        Swap out this oldproof for the newproof in all dependents and 
+        update their num_steps and usability status.
         '''
+        newproof._dependents.clear()
         oldproof = self
         for dependent in oldproof._dependents:
             revised_dependent = False
-            i = 0
-            try:
-                while True:
-                    i = dependent.required_proofs.index(oldproof, i)
+            for i in range(len(dependent.required_proofs)):
+                if dependent.required_proofs[i] == oldproof:
                     dependent.required_proofs[i] = newproof
                     revised_dependent = True
-            except ValueError:
-                pass
             assert revised_dependent, "Incorrect dependency relationship"
             newproof._dependents.add(dependent)
+            dependent._mark_num_steps_as_unknown()
             if all(required_proof.is_usable()
                    for required_proof in dependent.required_proofs):
                 dependent._meaning_data._unusable_proof = None  # it is usable again
-                dependent._meaning_data.num_steps = len(
-                    dependent.all_required_proofs())
                 dependent.proven_truth._addProof(
                     dependent)  # add it back as an option
 
-    def _setUsability(self):
+    def _mark_usability(self, set_to_disable=None):
         pass  # overloaded for the Theorem type Proof
 
     def _generate_unique_rep(self, object_rep_fn):
         '''
-        Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
+        Generate a unique representation string using the given function
+        to obtain representations of other referenced Prove-It objects.
         '''
-        # Internally, for self._meaning_rep and self._style_rep, we will use self.required_truths in the unique representation
-        # and the proofs are subject to change (if anything is disabled).
+        # Internally, for self._meaning_rep and self._style_rep, we will
+        # use self.required_truths in the unique representation and
+        # the proofs are subject to change (if anything is disabled).
         # For external storage (see _theory_storage.py), we will use
         # self.required_proofs, locking the mapping from KnonwTruths of
         # self.required_truths to Proofs.
@@ -204,8 +206,9 @@ class Proof:
     def _generate_step_info(self, object_rep_fn):
         '''
         Generate information about this proof step.
-        Overridden by Specialization which also needs to including the mapping information
-        and uses the given function to obtain representations of sub-Object.
+        Overridden by Specialization which also needs to including the 
+        mapping information and uses the given function to obtain 
+        representations of sub-Object.
         '''
         return self.step_type() + ':'
 
@@ -288,34 +291,56 @@ class Proof:
         that don't have an alternate proof that doesn't rely
         on this one.
         '''
-        # Get the set of all dependents via breadth-first search
-        all_dependents = set()
-        to_process = [self]
-        while len(to_process) > 0:
-            dependent_proof = to_process.pop()
-            if dependent_proof not in all_dependents:
-                all_dependents.add(dependent_proof)
-                if dependent_proof.proven_truth.proof() == dependent_proof:
-                    # include the sub-dependents iff this dependent is actually
-                    # in use
-                    to_process.extend(dependent_proof._dependents)
-
-        # Disable all dependents
-        for dependent_proof in all_dependents:
-            dependent_proof._meaning_data._unusable_proof = self
-            dependent_proof.proven_truth._discardProof(dependent_proof)
-
-        # Check if alternate usable proofs are available for the proofs that we disabled.
-        # Make multiple passes to ensure new possibilities and best options
-        # fully propagate.
-        continue_revisions = True
-        while continue_revisions:
-            continue_revisions = False
-            for dependent_proof in all_dependents:
-                if dependent_proof.proven_truth.proof() == dependent_proof:
-                    # Check for an alternate to this disabled dependent proof.
-                    if dependent_proof.proven_truth._reviseProof():
-                        continue_revisions = True
+        Proof._disable_all([self])
+    
+    @staticmethod
+    def _disable_all(to_disable):
+        '''
+        Disable all of the Theorems in 'to_disable', disabling
+        their dependencies or revising them to use alternate
+        proofs if available.
+        '''
+        # Disable in an order sorted according to the number
+        # of steps so that dependents are visited after
+        # everything they depend upon and we avoid revising
+        # and discarding proofs multiple times.
+        import heapq
+        # The 'sources' are the originally disabled proofs
+        # that may propagate to dependents.
+        dep_id_to_dep_and_source = dict()
+        for proof in to_disable:
+            dep_id_to_dep_and_source[id(proof)] = (proof, proof)
+        dependents_by_nsteps = [(proof.num_steps(), id(proof)) 
+                                for proof in to_disable]
+        heapq.heapify(dependents_by_nsteps)
+        while len(dependents_by_nsteps) > 0:
+            _, dependent_id = heapq.heappop(dependents_by_nsteps)
+            dependent, source = \
+                dep_id_to_dep_and_source[dependent_id]
+            if not dependent.is_usable():
+                # Already disabled, so we can skip it.
+                continue
+            is_defunct = (dependent.proven_truth.proof() == dependent)
+            dependent._meaning_data._unusable_proof = source
+            dependent.proven_truth._discardProof(dependent)
+            if not is_defunct:
+                # A different proof was active, so we don't have
+                # to revise it or worry about its dependents.
+                continue
+            if dependent.proven_truth._reviseProof():
+                # A new proof was found, so we do NOT have to
+                # propagate the disabling to its dependents.
+                continue
+            else:
+                # Push sub-dependents onto the heap.
+                for _dependent in dependent._dependents:
+                    if _dependent.is_usable():
+                        #assert _dependent.num_steps() > dependent.num_steps()
+                        dep_id_to_dep_and_source[id(_dependent)] = (
+                            _dependent, source)
+                        heapq.heappush(dependents_by_nsteps,
+                                       (_dependent.num_steps(),
+                                        id(_dependent)))
 
     def __eq__(self, other):
         if isinstance(other, Proof):
@@ -333,7 +358,23 @@ class Proof:
         '''
         Return the number of unique steps in the proof.
         '''
+        if self._meaning_data.num_steps is None:
+            # Compute the number of steps as needed.
+            self._meaning_data.num_steps = len(self.all_required_proofs())
         return self._meaning_data.num_steps
+
+    def _mark_num_steps_as_unknown(self):
+        '''
+        Mark the number of steps of this proof, and all
+        of its dependents, as unknown to force it to
+        be recomputed if it is needed.
+        '''
+        to_process = [self]
+        while len(to_process) > 0:
+            proof = to_process.pop()
+            if proof._meaning_data.num_steps is not None:
+                proof._meaning_data.num_steps = None
+                to_process.extend(proof._dependents)
 
     def used_axioms(self):
         '''
@@ -628,7 +669,7 @@ class Theorem(Proof):
         # keep track of proofs that may be used to prove the theorem
         # before 'begin_proof' is called so we will have the proof handy.
         self._possibleProofs = []
-        # Note that _setUsability will be called within Proof.__init__
+        # Note that _mark_usability will be called within Proof.__init__
         Proof.__init__(self, Judgment(expr, frozenset()), [])
         Theorem.all_theorems.append(self)
 
@@ -663,8 +704,10 @@ class Theorem(Proof):
 
     @staticmethod
     def update_usability():
+        set_to_disable = set()
         for theorem in Theorem.all_theorems:
-            theorem._setUsability()
+            theorem._mark_usability(set_to_disable)
+        Proof._disable_all(set_to_disable)
 
     def _stored_theorem(self):
         from ._theory_storage import StoredTheorem
@@ -767,12 +810,18 @@ class Theorem(Proof):
         '''
         return self._stored_theorem().all_requirements()
 
-    def all_used_theorem_names(self):
+    def all_used_or_presumed_theorem_names(self, names=None):
         '''
-        Returns the set of theorems used to prove the given theorem, directly
-        or indirectly.
+        Returns the set of theorems used to prove the theorem or to be presumed
+        in the proof of the theorem, directly or indirectly (i.e., applied
+        recursively); this theorem itself is also included.
+        If a set of 'names' is provided, this will add the 
+        names to that set and skip over anything that is already in the set, 
+        making the assumption that its dependents have already been
+        included (e.g., if the same set is used in multiple calls to this
+        method for different theorems).
         '''
-        return self._stored_theorem().all_used_theorem_names()
+        return self._stored_theorem().all_used_or_presumed_theorem_names(names)
 
     def direct_dependents(self):
         '''
@@ -787,19 +836,23 @@ class Theorem(Proof):
         '''
         return self._stored_theorem().all_dependents()
 
-    def _setUsability(self):
+    def _mark_usability(self, set_to_disable=None):
         '''
-        Sets the '_unusable_proof' attribute to disable the
-        theorem if some theorem is being proven and this
+        Determine whether or not we need to disable the
+        theorem -- if some theorem is being proven and this
         theorem is not presumed or is an alternate proof for the
         same theorem.  Also, if it is presumed, ensure the logic
         is not circular.  Generally, this is preventing circular
         logic.  This applies when a proof has begun
         (see Judgment.begin_proof in judgment.py).
-        When Judgment.theorem_being_proven is None, all Theorems are allowed.
-        Otherwise only Theorems named in the Judgment.presuming_theorem_names set
+        When Judgment.theorem_being_proven is None, all Theorems are 
+        allowed.  Otherwise only Theorems named in the 
+        Judgment.presuming_theorem_names set
         or contained within any of the Judgment.presuming_theories
         (i.e., theory) are allowed.
+        
+        If set_to_disable is provided, instead of actively disabling
+        proofs, collect them in a set to be disabled more efficiently.
         '''
         #from proveit.certify import is_fully_proven
         if Judgment.theorem_being_proven is None:
@@ -808,13 +861,18 @@ class Theorem(Proof):
             return
         legitimately_presumed = False
         stored_theorem = self._stored_theorem()
-        theorem_being_proven_str = str(Judgment.theorem_being_proven)
+        theorem_being_proven_str = Judgment.theorem_being_proven_str
+        presumed_theorems_and_dependencies = \
+            Judgment.presumed_theorems_and_dependencies
         if self.proven_truth == Judgment.theorem_being_proven.proven_truth:
             # Note that two differently-named theorems for the same thing may exists in
             # order to show an alternate proof.  In that case, we want to disable
             # the other alternates as well so we will be sure to generate the
             # new proof.
-            self.disable()
+            if set_to_disable is None:
+                self.disable()
+            else:
+                set_to_disable.add(self)
             return
         else:
             name_and_containing_theories = list(
@@ -827,22 +885,16 @@ class Theorem(Proof):
             else:
                 presumed = False
             if presumed:
-                # This Theorem is being presumed specifically, or a theory in which it is contained is presumed.
-                # Presumption via theory (a.k.a. prefix) is contingent upon not having a mutual presumption
-                # (that is, some theorem T can presume everything in another theory except for theorems
-                # that presume T or, if proven, depend upon T).
-                # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
-                # is being proven.
-                # check the "presuming information, recursively, for circular
-                # logic.
-                my_possible_dependents, _ = stored_theorem.get_presumptions_and_exclusions()
-                # If this theorem has a proof, include all dependent theorems as
-                # presumed (this may have been presumed via theory, so this can contain
-                # more information than the specifically presumed theorems).
-                if stored_theorem.has_proof():
-                    my_possible_dependents.update(
-                        stored_theorem.all_used_theorem_names())
-                if theorem_being_proven_str in my_possible_dependents:
+                # This Theorem is being presumed specifically, or a theory
+                # in which it is contained is presumed.  We'll check its
+                # dependencies to avoid circuit logic.  If there is a
+                # circular dependence, we'll either raise a CircularLogic
+                # exception if the theorm was presumed specifically or
+                # simply disregard it if it was presumed as part of a
+                # theory.
+                stored_theorem.all_used_or_presumed_theorem_names(
+                    presumed_theorems_and_dependencies)
+                if theorem_being_proven_str in presumed_theorems_and_dependencies:
                     if str(self) in Judgment.presumed_theorems_and_theories:
                         # Theorem-specific presumption or dependency is
                         # mutual.  Raise a CircularLogic error.
@@ -853,13 +905,22 @@ class Theorem(Proof):
                     print("%s is being implicitly excluded as a "
                           "presumption to avoid a Circular dependency."
                           % str(self))
+                    # We are no longer presuming this theorem, so disregard
+                    # its dependencies.  This may eliminate things from before,
+                    # but that's okay; it only impacts the efficiency of
+                    # future queries but not correctness.
+                    nevermind = stored_theorem.all_used_or_presumed_theorem_names()
+                    presumed_theorems_and_dependencies.difference_update(nevermind)
                 else:
                     legitimately_presumed = True
         if not legitimately_presumed:
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all
             # dependents.
-            self.disable()
+            if set_to_disable is None:
+                self.disable()
+            else:
+                set_to_disable.add(self)
 
 
 def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
@@ -968,7 +1029,7 @@ class Deduction(Proof):
 
 class Instantiation(Proof):
     def __init__(self, orig_judgment, num_forall_eliminations,
-                 repl_map, equiv_alt_expansions, assumptions):
+                 repl_map, equiv_alt_expansions, reduction_map, assumptions):
         '''
         Create the instantiation proof step that eliminates some number
         of nested Forall operations and simultaneously replaces 
@@ -981,7 +1042,8 @@ class Instantiation(Proof):
         See Expression.substituted for details regarding the replacement 
         rules.
         '''
-        from proveit import Variable, Function, Lambda, ExprTuple, ExprRange
+        from proveit import (Variable, Function, Lambda, ExprTuple, 
+                             ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var, valid_params, LambdaApplicationError)
         from proveit._core_.expression.label.var import safe_dummy_var
@@ -991,7 +1053,8 @@ class Instantiation(Proof):
         relabel_params = []
         relabel_param_replacements = []
         for key, repl in repl_map.items():
-            if isinstance(key, Variable) and isinstance(repl, Variable):
+            if ((isinstance(key, Variable) or isinstance(key, IndexedVar))
+                    and isinstance(repl, Variable)):
                 relabel_params.append(key)
                 relabel_param_replacements.append(repl)
             elif (isinstance(key, ExprTuple) and isinstance(repl, ExprTuple)
@@ -1020,6 +1083,7 @@ class Instantiation(Proof):
                 subbed_assumption = Lambda._apply(
                     relabel_params, assumption, *relabel_param_replacements,
                     allow_relabeling=True, equiv_alt_expansions=None,
+                    reduction_map=reduction_map,
                     assumptions=assumptions, requirements=requirements,
                     equality_repl_requirements=equality_repl_requirements)
                 if isinstance(assumption, ExprRange):
@@ -1042,8 +1106,9 @@ class Instantiation(Proof):
             instantiated_expr = \
                 Instantiation._instantiated_expr(orig_judgment, 
                     relabel_params, relabel_param_replacements,
-                    num_forall_eliminations, repl_map, 
-                    equiv_alt_expansions, assumptions, requirements,
+                    num_forall_eliminations, repl_map,
+                    equiv_alt_expansions, reduction_map,
+                    assumptions, requirements,
                     equality_repl_requirements)
 
             # Remove duplicates in the requirements.
@@ -1062,19 +1127,6 @@ class Instantiation(Proof):
                         assumptions.append(assumption)
             assumptions = list(OrderedDict.fromkeys(assumptions))
 
-            # Sort the replaced variables in order of their appearance
-            # in the original Judgment.
-            def get_key_var(key):
-                if isinstance(key, ExprTuple):
-                    assert key.num_entries() >= 1
-                    return get_param_var(key[0])
-                return get_param_var(key)
-            repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
-            repl_vars = repl_var_keys.keys()
-            repl_vars = list(orig_judgment.order_of_appearance(repl_vars))
-            # And remove duplicates.
-            repl_vars = list(OrderedDict.fromkeys(repl_vars))
-
             # Map variables to sets of tuples that represent the
             # same range of indexing for equivalent alternative
             # expansions.  For example,
@@ -1083,6 +1135,27 @@ class Instantiation(Proof):
             for var_range_form, expansion in equiv_alt_expansions.items():
                 var = get_param_var(var_range_form[0])
                 var_range_forms.setdefault(var, set()).add(var_range_form)
+            
+            # Sort the replaced variables in order of their appearance
+            # in the original Judgment.
+            def get_key_var(key):
+                if isinstance(key, ExprTuple):
+                    assert key.num_entries() >= 1
+                    var = get_param_var(key[0])
+                    var_range_forms.setdefault(var, set()).add(key)
+                    return var
+                elif isinstance(key, IndexedVar):
+                    var = get_param_var(key)
+                    var_range_forms.setdefault(var, set()).add(key)
+                    # For convenience to be used below:
+                    equiv_alt_expansions[key] = repl_map[key]
+                    return var
+                return get_param_var(key)
+            repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
+            repl_vars = repl_var_keys.keys()
+            repl_vars = list(orig_judgment.order_of_appearance(repl_vars))
+            # And remove duplicates.
+            repl_vars = list(OrderedDict.fromkeys(repl_vars))
 
             # We have what we need; set up the Instantiation Proof
             self.orig_judgment = orig_judgment
@@ -1091,13 +1164,16 @@ class Instantiation(Proof):
             mapping = dict()
             mapping_key_order = []
 
-            def var_range_form_sort(var_tuple):
+            def var_range_form_sort(var_form):
                 # For sorting equivalent ExprTuples of indexed
                 # variables (e.g., {(x_1, ..., x_{n+1}),
                 #                   (x_1, ..., x_n, x_{n+1})})
                 # put ones with the fewest number of entries first
                 # but break ties arbitrarily via the "meaning id".
-                return (var_tuple.num_entries(), var_tuple._meaning_id)
+                if isinstance(var_form, ExprTuple):
+                    return (var_form.num_entries(), var_form._meaning_id)
+                else:
+                    return (0, var_form._meaning_id)
             for var in repl_vars:
                 if var in repl_map:
                     # The variable itself is in the replacement map.
@@ -1215,7 +1291,7 @@ class Instantiation(Proof):
                            relabel_params, relabel_param_replacements,
                            num_forall_eliminations,
                            repl_map, equiv_alt_expansions,
-                           assumptions, requirements,
+                           reduction_map, assumptions, requirements,
                            equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
@@ -1226,7 +1302,7 @@ class Instantiation(Proof):
         according to repl_map.
         '''
         from proveit import (Lambda, Conditional, ExprTuple,
-                             ExprRange)
+                             ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
         from proveit.logic import Forall, And
@@ -1260,6 +1336,7 @@ class Instantiation(Proof):
             return Lambda._apply(
                 params, expr, *operands, allow_relabeling=True,
                 equiv_alt_expansions=active_equiv_alt_expansions,
+                reduction_map=reduction_map,
                 assumptions=assumptions, requirements=requirements,
                 equality_repl_requirements=equality_repl_requirements)
 
@@ -1290,7 +1367,10 @@ class Instantiation(Proof):
                     # is already included.
                     continue
                 param_vars.add(param_var)
-                param_var_repl = repl_map.get(param_var, None)
+                if isinstance(param, IndexedVar):
+                    param_var_repl = repl_map.get(param, None)
+                else:
+                    param_var_repl = repl_map.get(param_var, None)
                 new_param = None
                 new_operands = None
                 if isinstance(param, ExprRange):
@@ -1600,6 +1680,12 @@ class ProofFailure(Exception):
         else:
             return "Proof step failed" + assumptions_str + ":\n" + self.message
 
+class UnsatisfiedPrerequisites(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    
+    def __str__(self):
+        return "Prerequisites not met: " + self.msg
 
 class ModusPonensFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):

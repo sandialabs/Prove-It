@@ -25,6 +25,7 @@ from ._core_ import (
     Deduction, Instantiation, Generalization,
     UnusableProof, ProofFailure,
     ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
+    UnsatisfiedPrerequisites,
     StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
 from .relation import (
     TransitiveRelation,

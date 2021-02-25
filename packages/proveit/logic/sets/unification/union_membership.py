@@ -19,7 +19,7 @@ class UnionMembership(Membership):
         '''
         yield self.unfold
 
-    def equivalence(self, element, assumptions=USE_DEFAULTS):
+    def equivalence(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return and [element in (A union B ...)] = [(element in A) or (element in B) ...]
         where self = (A union B ...).
@@ -70,7 +70,7 @@ class UnionNonmembership(Nonmembership):
 
     def side_effects(self, judgment):
         '''
-        Currently non side-effects for union nonmembership.
+        Currently no side-effects for union nonmembership.
         '''
         return
         yield

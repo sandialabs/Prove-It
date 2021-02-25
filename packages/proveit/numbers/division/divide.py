@@ -1,7 +1,8 @@
-from proveit import (Literal, maybe_fenced_latex, Operation, InnerExpr,
-                     StyleOptions, USE_DEFAULTS)
+from proveit import (Judgment, Expression, Literal, maybe_fenced_latex, 
+                     Operation, ExprTuple, InnerExpr, USE_DEFAULTS,
+                     UnsatisfiedPrerequisites)
 from proveit import TransRelUpdater
-from proveit import a, b, c, m, n, x, y, z
+from proveit import a, b, c, m, n, w, x, y, z
 
 
 class Div(Operation):
@@ -38,13 +39,13 @@ class Div(Operation):
         '''
         Return the StyleOptions object for this Div.
         '''
-        options = StyleOptions(self)
+        options = Operation.style_options(self)
         options.add_option(
             name='division',
             description=("'inline': uses '/'; 'fraction': "
                          "numerator over the denominator "
                          "(also see 'frac' function)"),
-            default='inline',
+            default='fraction',
             related_methods=('with_inline_style', 
                              'with_fraction_style'))
         return options
@@ -214,6 +215,133 @@ class Div(Operation):
         return frac_one_denom.instantiate({x: self.numerator},
                                           assumptions=assumptions)
 
+    def factorization(self, the_factor, pull="left",
+                      group_factor=True, group_remainder=True,
+                      assumptions=USE_DEFAULTS):
+        '''
+        Return the proven factorization (equality with the factored
+        form) from pulling "the_factor" from this division to the "left"
+        or "right".  If there are multiple occurrences, the first 
+        occurrence is used.  If group_factor is True and the_factor is 
+        a product, these operands are grouped together as a sub-product.
+        If group_remainder is True and there are multiple remaining 
+        operands (those not in "the_factor"), then these remaining
+        operands are grouped together as a sub-product.
+        The group_remainder parameter is not relevant but kept
+        for consistency with other factorization methods.
+        
+        Examples:
+        
+            [(a*b)/(c*d)].factorization((a/c))
+            proves (a*b)/(c*d) = (a/c)*(b/d)
+            [(a*b)/(c*d)].factorization((1/c))
+            proves (a*b)/(c*d) = (1/c)*(a*b/d)
+            [(a*b)/(c*d)].factorization(a, pull='right')
+            proves (a*b)/(c*d) = (b/(c*d))*a
+            [a/(c*d)].factorization(a, pull='right')
+            proves a/(c*d) = (1/(c*d))*a
+            [(a*b)/d].factorization((a/d), pull='right')
+            proves (a*b)/d = b*(a/d)
+        '''
+        from proveit.numbers import one, Mult
+        from . import mult_frac_left, mult_frac_right, prod_of_fracs
+        expr = self
+        eq = TransRelUpdater(expr, assumptions)
+        if the_factor == self:
+            return eq.relation # self = self
+        if isinstance(the_factor, Div):
+            the_factor_numer = the_factor.numerator
+            the_factor_denom = the_factor.denominator
+        else:
+            the_factor_numer = the_factor
+            the_factor_denom = one
+        reductions = []
+        # Factor out a fraction.
+        if expr.denominator == the_factor_denom:
+            # Factor (x/z) from (x*y)/z.
+            # x or y may be 1.
+            if the_factor_numer not in (one, expr.numerator):
+                expr = eq.update(expr.inner_expr().numerator.factorization(
+                        the_factor.numerator, pull=pull,
+                        group_factor=True, group_remainder=True,
+                    assumptions=assumptions))
+            if pull == 'left':
+                # factor (x*y)/z into (x/z)*y
+                thm = mult_frac_left
+                if the_factor_numer == one:
+                    # factor y/z into (1/z)*y
+                    _x = one
+                    _y = expr.numerator
+                    reductions.append(Mult(_x, _y).one_elimination(
+                            0, assumptions))
+            else:
+                # factor (x*y)/z into x*(y/z)
+                thm = mult_frac_right
+                if the_factor_numer == one:
+                    # factor x/z into x*(1/z)
+                    _x = expr.numerator
+                    _y = one
+                    reductions.append(Mult(_x, _y).one_elimination(
+                            1, assumptions))
+            if the_factor_numer != one:
+                assert expr.numerator.operands.num_entries() == 2
+                _x = expr.numerator.operands.entries[0]
+                _y = expr.numerator.operands.entries[1]
+            _z = expr.denominator
+            eq.update(thm.instantiate({x:_x, y:_y, z:_z},
+                                      reductions=reductions,
+                                      assumptions=assumptions))
+        else:
+            # Factor (x*y)/(z*w) into (x/z)*(y/w).
+            thm = prod_of_fracs
+            if the_factor_denom not in (one, expr.denominator):
+                expr = eq.update(expr.inner_expr().denominator.factorization(
+                        the_factor_denom, pull=pull,
+                        group_factor=True, assumptions=assumptions))
+                assert expr.denominator.operands.num_entries() == 2
+                _z = expr.denominator.operands.entries[0]
+                _w = expr.denominator.operands.entries[1]
+            elif (pull == 'left') == (the_factor_denom == one):
+                # Factor (x*y)/w into x*(y/w).
+                _z = one
+                _w = expr.denominator
+                reductions.append(Mult(_z, _w).one_elimination(
+                        0, assumptions))
+            else:
+                # Factor (x*y)/z into (x/z)*y.
+                _z = expr.denominator
+                _w = one
+                reductions.append(Mult(_z, _w).one_elimination(
+                        1, assumptions))
+            # Factor the numerator parts unless there is a 1 numerator.
+            if the_factor_numer not in (one, expr.numerator):
+                expr = eq.update(expr.inner_expr().numerator.factorization(
+                        the_factor.numerator, pull=pull,
+                        group_factor=True, group_remainder=True,
+                        assumptions=assumptions))
+                assert expr.numerator.operands.num_entries() == 2
+                # Factor (x*y)/(z*w) into (x/z)*(y/w)
+                _x = expr.numerator.operands.entries[0]
+                _y = expr.numerator.operands.entries[1]
+            elif (pull == 'left') == (the_factor_numer == one):
+                # Factor y/(z*w) into (1/z)*(y/w)
+                _x = one
+                _y = expr.numerator
+                reductions.append(Mult(_x, _y).one_elimination(
+                        0, assumptions))
+            else:
+                # Factor x/(y*z) into (x/y)*(1/z)
+                _x = expr.numerator
+                _y = one
+                reductions.append(Mult(_x, _y).one_elimination(
+                        1, assumptions))      
+            eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
+                                      reductions=reductions,
+                                      assumptions=assumptions))
+        
+        return eq.relation
+
+
     def distribution(self, assumptions=USE_DEFAULTS):
         r'''
         Distribute the denominator through the numerate.
@@ -349,69 +477,197 @@ class Div(Operation):
         if thm is not None:
             return thm.instantiate({a: self.numerator, b: self.denominator},
                                    assumptions=assumptions)
+        raise NotImplementedError(
+            "'Div.deduce_in_number_set()' not implemented for the %s set" 
+            % str(number_set))
 
-    """
-    def factor(self,the_factor,pull="left", group_factor=False, group_remainder=None, assumptions=frozenset()):
+    def deduce_bound(self, relation_or_relations, 
+                     assumptions=USE_DEFAULTS):
         '''
-        Pull out a factor from a fraction, pulling it either to the "left" or "right".
-        The factor may be a product or fraction itself.
-        If group_factor is True and the_factor is a product, it will be grouped together as a
-        sub-product.  group_remainder is not relevant kept for compatibility with other factor
-        methods.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
-        the associative and commutation theorems are applicable.
+        Given relations applicable to the numerator and/or
+        denominator,  bound this division accordingly.  For example, 
+        if self is "a / b" and the relations are
+            a < x and b > y
+        return (a / b) < (x / y), provided b and y are known to be
+        greater than zero.
+        
+        Also see Div.deduce_bound_by_numerator and
+        Div.deduce_bound_by_denominator which bounds the fraction
+        by the numerator or denominator respectively..
         '''
-        from . import frac_in_prod_rev, prod_of_fracs_rev, prod_of_fracs_left_numer_one_rev, prod_of_fracs_right_numer_one_rev
-        from proveit.numbers import Mult, num
-        dummy_var = safe_dummy_var(self)
-        eqns = []
-        if isinstance(the_factor, frac):
-            # factor the operand denominator out of self's denominator
-            denom_factor_eqn = self.denominator.factor(the_factor.denominator, pull, group_factor=True, group_remainder=True, assumptions=assumptions)
-            factored_denom = denom_factor_eqn.rhs
-            eqns.append(denom_factor_eqn.substitution(frac(self.numerator, dummy_var), dummy_var))
-            if the_factor.numerator != num(1) and self.numerator != num(1):
-                # factor the operand numerator out of self's numerator
-                numer_factor_eqn = self.numerator.factor(the_factor.numerator, pull, group_factor=True, group_remainder=True, assumptions=assumptions)
-                factored_numer = numer_factor_eqn.rhs
-                eqns.append(numer_factor_eqn.substitution(frac(dummy_var, factored_denom), dummy_var))
-                # factor the two fractions
-                eqns.append(prod_of_fracs_rev.instantiate({x:factored_numer.operands[0], y:factored_numer.operands[1],
-                                                    z:factored_denom.operands[0], w:factored_denom.operands[1]}))
-            else:
-                # special case: one of the numerators is equal to one, no numerator factoring to be done
-                if (pull == 'left') == (the_factor.numerator == num(1)):
-                    thm = prod_of_fracs_left_numer_one_rev
-                else:
-                    thm = prod_of_fracs_right_numer_one_rev
-                # factor the two fractions
-                eqns.append(thm.instantiate({x:self.numerator, y:factored_denom.operands[0], z:factored_denom.operands[1]}))
+        from proveit.numbers import Less, LessEq
+        if isinstance(relation_or_relations, Judgment):
+            relation_or_relations = relation_or_relations.expr
+        if isinstance(relation_or_relations, ExprTuple):
+            relations = relation_or_relations.entries
+        elif isinstance(relation_or_relations, Expression):
+            relations = [relation_or_relations]
         else:
-            numer_factor_eqn = self.numerator.factor(the_factor, pull, group_factor=False, group_remainder=True, assumptions=assumptions)
-            factored_numer = numer_factor_eqn.rhs
-            eqns.append(numer_factor_eqn.substitution(frac(dummy_var, self.denominator), dummy_var))
-            # factor the numerator factor from the fraction
-            if pull == 'left':
-                w_etc_sub = factored_numer.operands[:-1]
-                x_sub = factored_numer.operands[-1]
-                z_etc_sub = []
-            elif pull == 'right':
-                w_etc_sub = []
-                x_sub = factored_numer.operands[0]
-                z_etc_sub = factored_numer.operands[1:]
-            eqns.append(frac_in_prod_rev.instantiate({w_etc:w_etc_sub, x:x_sub, y:self.denominator, z_etc:z_etc_sub}))
-            num = len(the_factor.operands) if isinstance(the_factor, Mult) else 1
-            if group_factor and num > 1:
-                if pull=='left':
-                    eqns.append(eqns[-1].rhs.group(end_idx=num, assumptions=assumptions))
-                elif pull=='right':
-                    eqns.append(eqns[-1].rhs.group(start_idx=-num, assumptions=assumptions))
-        return Equals(eqns[0].lhs, eqns[-1].rhs).prove(assumptions)
-    """
+            relations = [(relation.expr 
+                          if isinstance(relation, Judgment) else relation)
+                         for relation in relation_or_relations]
+        if len(set(relations)) != len(relations):
+            raise ValueError("'relations' should be distinct: %s"
+                             % relations)
+        expr = self
+        updater = TransRelUpdater(expr, assumptions)
+        for relation in relations:
+            if not (isinstance(relation, Less) or
+                    isinstance(relation, LessEq)):
+                raise TypeError("relations are expected to be Less "
+                                "or LessEq number relations, not %s"
+                                %relation)
+            if self.numerator in relation.operands:
+                expr = updater.update(expr.deduce_bound_by_numerator(
+                        relation, assumptions))
+            elif self.denominator in relation.operands:
+                expr = updater.update(expr.deduce_bound_by_denominator(
+                        relation, assumptions))
+            else:
+                raise ValueError("relations are expected to be relations "
+                                 "(< or <=) involving the numerator or " 
+                                 "denominator of %s.  %s does not involve "
+                                 "either"%(self, relation))
+        return updater.relation
+
+    def deduce_bound_by_numerator(self, relation, assumptions=USE_DEFAULTS):
+        '''
+        Given a relation applicable to the numerator,  bound this 
+        division accordingly.  For example, 
+        if self is "a / b" and the relation is a < x
+        return (a / b) < (x / b), provided b > 0.
+        
+        Also see Div.deduce_bound
+        '''
+        from proveit.numbers import zero, Less, LessEq, greater
+        from . import (strong_div_from_numer_bound__pos_denom,
+                       weak_div_from_numer_bound__pos_denom,
+                       strong_div_from_numer_bound__neg_denom,
+                       weak_div_from_numer_bound__neg_denom)
+        if not (isinstance(relation, Less) or
+                isinstance(relation, LessEq)):
+            raise TypeError("relation is expected to be Less "
+                            "or LessEq number relations, not %s"
+                            %relation)
+        if self.numerator not in relation.operands:
+            raise ValueError("relation is expected to involve the "
+                             "numerator of %s.  %s does not."
+                             %(self, relation))
+        _a = self.denominator
+        _x = relation.normal_lhs
+        _y = relation.normal_rhs
+        if greater(self.denominator, zero).proven(assumptions):
+            if isinstance(relation, Less):
+                bound = strong_div_from_numer_bound__pos_denom.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+            elif isinstance(relation, LessEq):
+                bound =  weak_div_from_numer_bound__pos_denom.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)                
+        elif Less(self.denominator, zero).proven(assumptions):
+            if isinstance(relation, Less):
+                bound =  strong_div_from_numer_bound__neg_denom.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+            elif isinstance(relation, LessEq):
+                bound =  weak_div_from_numer_bound__neg_denom.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)                        
+        else:
+            raise UnsatisfiedPrerequisites(
+                    "We must know whether the denominator of %s "
+                    "is positive or negative before we can use "
+                    "'deduce_bound_by_numerator'."%self)
+        if bound.rhs == self:
+            return bound.with_direction_reversed()
+        return bound
+
+    def deduce_bound_by_denominator(self, relation, 
+                                    assumptions=USE_DEFAULTS):
+        '''
+        Given a relation applicable to the numerator,  bound this 
+        division accordingly.  For example, 
+        if self is "a / b" and the relation is b > y
+        return (a / b) < (a / y), provided a, b, and y are positive.
+        
+        Also see Div.deduce_bound
+        '''
+        from proveit.numbers import zero, Less, LessEq, greater, greater_eq
+        from . import (strong_div_from_denom_bound__all_pos,
+                       weak_div_from_denom_bound__all_pos,
+                       strong_div_from_denom_bound__all_neg,
+                       weak_div_from_denom_bound__all_neg,
+                       strong_div_from_denom_bound__neg_over_pos,
+                       weak_div_from_denom_bound__neg_over_pos,
+                       strong_div_from_denom_bound__pos_over_neg,
+                       weak_div_from_denom_bound__pos_over_neg)
+        if not (isinstance(relation, Less) or
+                isinstance(relation, LessEq)):
+            raise TypeError("relation is expected to be Less "
+                            "or LessEq number relations, not %s"
+                            %relation)
+        if self.denominator not in relation.operands:
+            raise ValueError("relation is expected to involve the "
+                             "denominator of %s.  %s does not."
+                             %(self, relation))
+        _a = self.numerator
+        _x = relation.normal_lhs
+        _y = relation.normal_rhs
+        try:
+            # Ensure that we relate both _x and _y to zero by knowing
+            # one of these.
+            ordering = LessEq.sort((_x, _y, zero),
+                                   assumptions=assumptions)
+            ordering.operands[0].apply_transitivity(
+                    ordering.operands[1], assumptions=assumptions)
+        except:
+            pass # We'll generate an appropriate error below.
+        pos_numer = greater_eq(self.numerator, zero).proven(assumptions)
+        neg_numer = LessEq(self.numerator, zero).proven(assumptions)
+        pos_denom = greater(self.denominator, zero).proven(assumptions)
+        neg_denom = Less(self.denominator, zero).proven(assumptions)
+        if not (pos_numer or neg_numer) or not (pos_denom or neg_denom):
+            raise UnsatisfiedPrerequisites(
+                    "We must know the sign of the numerator and "
+                    "denominator of %s before we can use "
+                    "'deduce_bound_by_denominator'."%self)        
+        if pos_numer and pos_denom:
+            if isinstance(relation, Less):
+                bound = strong_div_from_denom_bound__all_pos.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+            elif isinstance(relation, LessEq):
+                bound = weak_div_from_denom_bound__all_pos.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)                
+        elif neg_numer and neg_denom:
+            if isinstance(relation, Less):
+                bound = strong_div_from_denom_bound__all_neg.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+            elif isinstance(relation, LessEq):
+                bound = weak_div_from_denom_bound__all_neg.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)             
+        elif pos_numer and neg_denom:
+            if isinstance(relation, Less):
+                bound = strong_div_from_denom_bound__pos_over_neg.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+            elif isinstance(relation, LessEq):
+                bound = weak_div_from_denom_bound__pos_over_neg.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+        elif neg_numer and pos_denom:
+            if isinstance(relation, Less):
+                bound = strong_div_from_denom_bound__neg_over_pos.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+            elif isinstance(relation, LessEq):
+                bound = weak_div_from_denom_bound__neg_over_pos.instantiate(
+                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+        else:
+            raise UnsatisfiedPrerequisites(
+                    "We must know whether or not the denominator of %s "
+                    "is positive or negative before we can use "
+                    "'deduce_bound_by_numerator'."%self)
+        if bound.rhs == self:
+            return bound.with_direction_reversed()
+        return bound
 
 
 def frac(numer, denom):
-    return Div(numer, denom).with_styles(division='fraction')
+    return Div(numer, denom)
 
 
 # Register these expression equivalence methods:
@@ -425,3 +681,5 @@ InnerExpr.register_equivalence_method(
     'exponent_combination',
     'combined_exponents',
     'combine_exponents')
+InnerExpr.register_equivalence_method(
+    Div, 'factorization', 'factorized', 'factor')

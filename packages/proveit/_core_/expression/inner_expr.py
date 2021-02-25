@@ -41,7 +41,7 @@ class InnerExpr:
     with the inner expression replaced by its equivalent form.
 
     For example, let "expr = [((a - 1) + b + (a - 1)/d) < e]", and let
-    "inner_expr = expr.innter_expr().lhs.terms[2].numerator".  Then
+    "inner_expr = expr.inner_expr().lhs.terms[2].numerator".  Then
 
     1. inner_expr.repl_lambda() will return
        _x_ -> [((a - 1) + b + _x_/d) < e],
@@ -101,7 +101,7 @@ class InnerExpr:
         # list all of the lambda expression parameters encountered
         # along the way from the top-level expression to the inner
         # expression.
-        self.parameters = []
+        #self.parameters = []
         expr = self.expr_hierarchy[0]
         for idx in self.inner_expr_path:
             if isinstance(expr, Judgment) and idx == -1:
@@ -115,7 +115,8 @@ class InnerExpr:
                 if isinstance(expr, Lambda) and idx == expr.num_sub_expr() - 1:
                     # while descending into a lambda expression body, we
                     # pick up the lambda parameters.
-                    self.parameters.extend(expr.parameters.entries)
+                    #self.parameters.extend(expr.parameters.entries)
+                    pass
                 expr = expr.sub_expr(idx)
                 if isinstance(expr, tuple):
                     # A slice `idx` will yield a tuple sub expression.
@@ -432,13 +433,15 @@ class InnerExpr:
             """
         else:
             lambda_params = [top_level_expr.safe_dummy_var()]
-            if len(self.parameters) == 0:
-                lambda_body = lambda_params[0]
+            #if len(self.parameters) == 0:
+            lambda_body = lambda_params[0]
+            '''
             else:
                 # The replacements should be a function of the
                 # parameters encountered between the top-level
                 # expression and the inner expression.
                 lambda_body = Function(lambda_params[0], self.parameters)
+            '''
         # Build the expression with replacement parameters from
         # the inside out.
         lambda_body = self._rebuild(lambda_body)
@@ -484,7 +487,8 @@ class InnerExpr:
         from proveit.logic import Equals
         cur_inner_expr = self.expr_hierarchy[-1]
         equality = Equals(cur_inner_expr, replacement).prove(assumptions)
-        equality.substitution(self.repl_lambda(), assumptions=assumptions)
+        return equality.substitution(self.repl_lambda(), 
+                                     assumptions=assumptions)
 
     def substitute(self, replacement, assumptions=USE_DEFAULTS):
         '''
@@ -523,16 +527,18 @@ class InnerExpr:
         # else:
         sub_exprs = [cur_sub_expr]
         named_expr_dict = [('lambda', repl_lambda)]
-        if len(self.parameters) == 0:
-            named_expr_dict += [('$%s$' % lambda_param.latex(), sub_expr)
-                                for lambda_param, sub_expr
-                                in zip(lambda_params, sub_exprs)]
+        #if len(self.parameters) == 0:
+        named_expr_dict += [('$%s$' % lambda_param.latex(), sub_expr)
+                            for lambda_param, sub_expr
+                            in zip(lambda_params, sub_exprs)]
+        '''
         else:
             def make_fn(lambda_param): return Function(lambda_param,
                                                        self.parameters)
             named_expr_dict += \
                 [('$%s$' % make_fn(lambda_param).latex(), sub_expr)
                  for lambda_param, sub_expr in zip(lambda_params, sub_exprs)]
+        '''
         return NamedExprs(named_expr_dict)
 
     def cur_sub_expr(self):

@@ -26,7 +26,8 @@ from .theory import Theory, TheoryException
 from .proof import (Proof, Assumption, Axiom, Theorem, ModusPonens,
                     Deduction, Instantiation, Generalization)
 from .proof import (UnusableProof, ProofFailure, ModusPonensFailure,
-                    InstantiationFailure, GeneralizationFailure)
+                    InstantiationFailure, GeneralizationFailure,
+                    UnsatisfiedPrerequisites)
 #import _theory_storage
 from ._theory_storage import (relurl, TheoryStorage, StoredSpecialStmt,
                               StoredAxiom, StoredTheorem)

@@ -287,7 +287,6 @@ def rounding_deduce_in_number_set(expr, number_set, rounding_real_closure_thm,
         return rounding_real_pos_closure_thm.instantiate(
             {x: expr.operand}, assumptions=assumptions)
 
-    msg = ("The rounding_methods.py function "
-           "'rounding_deduce_in_number_set()' is not implemented for the "
-           "%s set" % str(number_set))
-    raise ProofFailure(InSet(expr, number_set), assumptions, msg)
+    raise NotImplementedError(
+        "The rounding_methods.py function 'rounding_deduce_in_number_set()'"
+        "is not implemented for the %s set" % str(number_set))

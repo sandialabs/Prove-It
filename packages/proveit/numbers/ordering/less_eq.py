@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS, as_expression
+from proveit import (Literal, Operation, USE_DEFAULTS, as_expression,
+                     UnsatisfiedPrerequisites)
 from proveit.logic import Equals
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
@@ -22,7 +23,7 @@ class LessEq(NumberOrderingRelation):
         Create an expression representing a <= b.
         '''
         NumberOrderingRelation.__init__(self, LessEq._operator_, a, b)
-    
+
     @staticmethod
     def reversed_operator_str(formatType):
         '''
@@ -36,12 +37,72 @@ class LessEq(NumberOrderingRelation):
             return 'greater_eq'
         # Use the default.
         return Operation.remake_constructor(self)
-    
+
+    def conclude(self, assumptions):
+        '''
+        Conclude something of the form 
+        a ≤ b.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import Add, zero, RealNonNeg
+        from . import non_neg_if_real_non_neg
+        if Equals(self.lower, self.upper).proven(assumptions):
+            # We know that a = b, therefore a ≤ b.
+            return self.conclude_via_equality(assumptions)
+        if self.upper == zero:
+            # Special case with upper bound of zero.
+            from . import non_pos_if_real_non_pos
+            concluded = non_pos_if_real_non_pos.instantiate(
+                {a: self.lower}, assumptions=assumptions)
+            return concluded.with_matching_style(self)            
+        if self.lower == zero:
+            # Special case with lower bound of zero.
+            if InSet(self.upper, RealNonNeg).proven(assumptions):
+                return non_neg_if_real_non_neg.instantiate(
+                        {a: self.upper}, assumptions=assumptions)
+        if ((isinstance(self.lower, Add) and 
+                self.upper in self.lower.terms.entries) or
+             (isinstance(self.upper, Add) and 
+                self.lower in self.upper.terms.entries)):
+            try:
+                # Conclude an sum is bounded by one of its terms.
+                return self.conclude_as_bounded_by_term(assumptions)
+            except UnsatisfiedPrerequisites:
+                # If prerequisites weren't satisfied to do this,
+                # we can still try something else.
+                pass
+        return NumberOrderingRelation.conclude(self, assumptions)
+
     def conclude_via_equality(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude a ≤ b from a = b.
+        '''
         from . import relax_equal_to_less_eq
         return relax_equal_to_less_eq.instantiate(
             {x: self.operands[0], y: self.operands[1]},
             assumptions=assumptions)
+
+    def conclude_as_bounded_by_term(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude something of the form
+            a_1 + ... + a_i + b + c_1 + ... + c_j ≥ b 
+            assuming a_1, ..., a_i and c_1, ..., c_j all in RealNonNeg
+        or
+            a_1 + ... + a_i + b + c_1 + ... + c_j ≤ b 
+            assuming a_1, ..., a_i and c_1, ..., c_j all in RealNonPos
+        '''
+        from proveit.numbers import Add
+        if (isinstance(self.lower, Add) and 
+                self.upper in self.lower.terms.entries):
+            return self.lower.deduce_bound_by_term(self.upper, assumptions)
+        elif (isinstance(self.upper, Add) and 
+                self.lower in self.upper.terms.entries):
+            return self.upper.deduce_bound_by_term(self.lower, assumptions)
+        else:
+            raise ValueError("LessEq.conclude_as_bounded_by_term is only "
+                             "applicable if one side of the Less "
+                             "expression is an addition and the other "
+                             "side is one of the terms")
     
     def deduce_in_bool(self, assumptions=frozenset()):
         from . import less_than_equals_is_bool
@@ -50,8 +111,8 @@ class LessEq(NumberOrderingRelation):
         return is_bool_stmt.inner_expr().element.with_matching_style(self)
 
     def unfold(self, assumptions=frozenset()):
-        from . import less_than_equals_def
-        unfolded = less_than_equals_def.instantiate(
+        from . import less_eq_def
+        unfolded = less_eq_def.instantiate(
                 {x: self.lower, y: self.upper}, assumptions=assumptions)
         return unfolded.inner_expr().operands[0].with_mimicked_style(self)
     
@@ -238,21 +299,20 @@ class LessEq(NumberOrderingRelation):
         '''
         from proveit.numbers import Less, zero
         from proveit.numbers.division import (
-            div_pos_lesseq, div_neg_lesseq)
+            weak_div_from_numer_bound__pos_denom, 
+            weak_div_from_numer_bound__neg_denom)
         if Less(zero, divisor).proven(assumptions):
-            new_rel = div_pos_lesseq.instantiate(
-                {a: divisor, x: self.lower, y: self.upper},
-                assumptions=assumptions)._simplify_both_sides(
-                simplify=simplify, assumptions=assumptions)
+            thm = weak_div_from_numer_bound__pos_denom
         elif Less(divisor, zero).proven(assumptions):
-            new_rel = div_neg_lesseq.instantiate(
-                {a: divisor, x: self.lower, y: self.upper},
-                assumptions=assumptions)._simplify_both_sides(
-                simplify=simplify, assumptions=assumptions)
+            thm = weak_div_from_numer_bound__neg_denom
         else:
             raise Exception("Cannot 'divide' a LessEq relation without "
                             "knowing whether the divisor is greater than "
                             "or less than zero.")
+        new_rel = thm.instantiate(
+                {a: divisor, x: self.lower, y: self.upper},
+                assumptions=assumptions)._simplify_both_sides(
+                simplify=simplify, assumptions=assumptions)
         return new_rel.with_mimicked_style(self)
 
     def left_add_both_sides(self, addend, *, simplify=True,
@@ -260,8 +320,8 @@ class LessEq(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the left.
         '''
-        from proveit.numbers.addition import left_add_lesseq
-        new_rel = left_add_lesseq.instantiate(
+        from proveit.numbers.addition import weak_bound_by_right_term
+        new_rel = weak_bound_by_right_term.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
@@ -272,8 +332,8 @@ class LessEq(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the right.
         '''
-        from proveit.numbers.addition import right_add_lesseq
-        new_rel = right_add_lesseq.instantiate(
+        from proveit.numbers.addition import weak_bound_by_left_term
+        new_rel = weak_bound_by_left_term.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
