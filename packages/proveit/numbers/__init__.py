@@ -6,7 +6,9 @@ from .number_sets import (
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
-    Complex, ComplexNonZero)
+    Complex, ComplexNonZero,
+    complex_polar_coordinates, 
+    unit_length_complex_polar_angle)
 
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
