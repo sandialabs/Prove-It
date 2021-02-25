@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-from proveit import a, b, x
+from proveit import a, b, r, x, theta
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
 from proveit.numbers import Add, Mult
@@ -88,18 +88,22 @@ class Abs(Operation):
 
     def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
         '''
-        For the case Abs(x) where the operand x is already known to
-        be or assumed to be a non-negative real, derive and return
-        this Abs expression equated with the operand itself:
-        |- Abs(x) = x. For the case where x is already known or assumed
-        to be a negative real, return the Abs expression equated with
-        the negative of the operand: |- Abs(x) = -x.
-        Assumptions may be necessary to deduce necessary conditions for
-        the simplification.
+        Returns a proven simplification equation for this absolute
+        value expression if a simplification is known.
+        
+        Handles a number of absolute value simplifications:
+            1. |x| = x given x in RealNonNeg 
+                             (may try to prove this if easy to do)
+            2. |x| = -x given x in RealNeg
+                             (may try to prove this if easy to do)
+            3. |r exp(i a)| = r given r in RealNonNeg, x in Real
+            4. |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2)
+                given a and b in Real.
         '''
-        from proveit.numbers import greater, greater_eq, Mult, Neg
-        from proveit.numbers import (zero, Natural, NaturalPos, RealNeg,
-                                     RealNonNeg, RealPos)
+        from proveit.logic import Equals
+        from proveit.numbers import greater, greater_eq, Neg
+        from proveit.numbers import (zero, Natural, NaturalPos, 
+                                     RealNeg, RealNonNeg, RealPos)
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
         assumptions = defaults.checked_assumptions(assumptions)
@@ -224,13 +228,38 @@ class Abs(Operation):
                             {a: negated_op_simp}, assumptions=assumptions)
                         return self.abs_elimination(operand_type='negative',
                                                     assumptions=assumptions)
+        
+        #-- -------------------------------------------------------- --#
+        #-- Case (5):   |r exp(i a)| = r   or   |x exp(i a)| = |x|   --#
+        #-- -------------------------------------------------------- --#
+        try:
+            # Grab polar coordinates without automation so we don't
+            # waste time if it isn't in a complex polar form (or 
+            # obviously equivalent to this form).
+            return self.complex_magnitude_simplification(
+                    assumptions=assumptions, automation=False)
+        except ValueError:
+            # Not in a complex polar form.
+            pass
 
-        # for updating our equivalence claim(s) for the
-        # remaining possibilities
-        from proveit import TransRelUpdater
-        eq = TransRelUpdater(self, assumptions)
-        return eq.relation
+        #-- -------------------------------------------------------- --#
+        #-- Case (6): |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2) --#
+        #-- -------------------------------------------------------- --#
+        if (isinstance(self.operand, Add) and 
+                self.operand.operands.is_double()):
+            try:
+                # Grab polar coordinates without automation so we don't
+                # waste time if it isn't in a complex polar form (or 
+                # obviously equivalent to this form).
+                return self.complex_circle_coord_length_simplification(
+                        assumptions=assumptions, automation=False)
+            except ValueError:
+                # Not in a complex polar form.
+                pass
 
+        # Default is no simplification.
+        return Equals(self, self).prove(assumptions)
+    
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
         Given a number set number_set (such as Integer, Real, etc),
@@ -243,7 +272,7 @@ class Abs(Operation):
             abs_complex_closure_non_neg_real)
         from proveit.numbers import (
             Rational, RationalNonZero, RationalPos, RationalNeg,
-            RationalNonNeg, Real, RealNonNeg, RealPos, Complex)
+            RationalNonNeg, Real, RealNonNeg, RealPos)
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
@@ -297,6 +326,81 @@ class Abs(Operation):
                "the %s set" % str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
 
+    def complex_magnitude_simplification(self, assumptions=USE_DEFAULTS,
+                                         automation=True):
+        from proveit.numbers import (one, RealNonNeg,
+                                     complex_polar_coordinates)
+        from proveit.trigonometry import (complex_unit_circle_mag,
+                                          complex_polar_mag,
+                                          complex_polar_mag_using_abs)
+        reductions = set()
+        _r, _theta = complex_polar_coordinates(
+                self.operand, assumptions=assumptions,
+                automation=automation, simplify=True, 
+                radius_must_be_nonneg=False, nonneg_radius_preferred=True, 
+                reductions=reductions)
+        if _r == one:
+            # |exp(i*theta)| = 1
+            return complex_unit_circle_mag.instantiate(
+                    {theta:_theta}, reductions=reductions,
+                    assumptions=assumptions)
+        elif InSet(_r, RealNonNeg).proven(assumptions):
+            # |r exp(i*theta)| = r
+            return complex_polar_mag.instantiate(
+                    {r: _r, theta: _theta}, reductions=reductions,
+                    assumptions=assumptions)
+        else:
+            # |r exp(i*theta)| = |r|, is the best we can do.
+            return complex_polar_mag_using_abs.instantiate(
+                    {r: _r, theta: _theta}, reductions=reductions,
+                    assumptions=assumptions)
+
+    def complex_circle_coord_length_simplification(
+            self, assumptions=USE_DEFAULTS, automation=True):
+        from proveit.numbers import (one, Neg, subtract, 
+                                     complex_polar_coordinates)
+        from proveit.trigonometry import (complex_unit_circle_chord_length,
+                                          complex_circle_chord_length)
+        def raise_not_valid_form():
+            raise ValueError(
+                    "Complex circle coord length is only applicable to "
+                    "expressions of the form |r exp(i a) - r exp(i b)| "
+                    "or obviously equivalent. "
+                    "%s does not qualify."%self)
+            
+        if not (isinstance(self.operand, Add) and 
+                self.operand.operands.is_double()):
+            raise_not_valid_form()
+        
+        reductions = set()
+        # Grab polar coordinates without automation so we don't
+        # waste time if it isn't in a complex polar form (or 
+        # obviously equivalent to this form).
+        term1 = self.operand.terms[0]
+        term2 = self.operand.terms[1]
+        if isinstance(term2, Neg):
+            term2 = term2.operand
+        else:
+            term2 = Neg(term2)
+        _r1, _theta1 = complex_polar_coordinates(
+                term1, assumptions=assumptions,
+                automation=automation, simplify=True, reductions=reductions)
+        _r2, _theta2 = complex_polar_coordinates(
+                term2, assumptions=assumptions,
+                automation=automation, simplify=True, reductions=reductions)
+        if _r1 == _r2:
+            # Only applicable if the magnitudes are the same.
+            reductions.add(Abs(subtract(_theta1, _theta2)).simplification(
+                    assumptions=assumptions))
+            if _r1 == one:
+                return complex_unit_circle_chord_length.instantiate(
+                        {a:_theta1, b:_theta2}, 
+                        reductions=reductions, assumptions=assumptions)
+            else:
+                return complex_circle_chord_length.instantiate(
+                        {r: _r1, a:_theta1, b:_theta2}, 
+                        reductions=reductions, assumptions=assumptions)
+        raise_not_valid_form()
 
 def is_equal_to_or_subset_eq_of(
         number_set, equal_sets=None, subset_sets=None, subset_eq_sets=None,
