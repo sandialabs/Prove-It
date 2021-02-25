@@ -1,26 +1,13 @@
 # Arithmetic and number theory concepts.
 
 from .number_sets import (
-    Integer,
-    IntegerNonZero,
-    IntegerNeg,
-    IntegerNonPos,
-    Natural,
-    NaturalPos,
-    Rational,
-    RationalNonZero,
-    RationalPos,
-    RationalNeg,
-    RationalNonNeg,
+    Natural, NaturalPos,
+    Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
+    Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
-    Real,
-    RealNonZero,
-    RealNeg,
-    RealPos,
-    RealNonNeg,
-    RealNonPos,
-    Complex,
-    ComplexNonZero)
+    Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
+    Complex, ComplexNonZero)
+
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
 from .numerals import num, Numeral, DecimalSequence, Digits, DIGITS, is_literal_int
@@ -50,7 +37,9 @@ if proveit.defaults.automation:
     from .numerals.decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
     from .numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5, posnat6, posnat7, posnat8, posnat9
     from .negation import negated_zero
-
+    from .number_sets.real_numbers import e_is_real_pos, pi_is_real_pos
+    from .number_sets.complex_numbers import (
+            i_is_complex, i_is_complex_nonzero)
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
