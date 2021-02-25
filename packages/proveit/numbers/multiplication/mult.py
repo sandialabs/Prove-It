@@ -301,7 +301,7 @@ class Mult(Operation):
 
         if self.operands[idx] != one:
             raise ValueError(
-                "Operand at the index %d expected to be zero for %s" %
+                "Operand at the index %d expected to be 1 for %s" %
                 (idx, str(self)))
 
         if self.operands.is_double():
@@ -822,7 +822,7 @@ class Mult(Operation):
             raise Exception(
                 "Unsupported operand type to distribute over: " + str(operand.__class__))
 
-    def factorization(self, the_factor, pull="left",
+    def factorization(self, the_factor_or_index, pull="left",
                       group_factor=True,
                       group_remainder=False,
                       assumptions=USE_DEFAULTS):
@@ -837,32 +837,36 @@ class Mult(Operation):
         '''
         expr = self
         eq = TransRelUpdater(expr, assumptions)
-        if the_factor == self:
+        if the_factor_or_index == self:
             return eq.relation # self = self
-        idx, num = self.index(the_factor, also_return_num=True)
+        if isinstance(the_factor_or_index, int):
+            idx, num = the_factor_or_index, 1
+        else:
+            the_factor = the_factor_or_index
+            idx, num = self.index(the_factor, also_return_num=True)
         expr = eq.update(self.group_commutation(
             idx, 0 if pull == 'left' else -num, length=num,
             assumptions=assumptions))
         if group_factor and num > 1:
-            if pull == 'left':  # use 0:num type of convention like standard pythong
+            # use 0:num type of convention like standard python
+            if pull == 'left':  
                 expr = eq.update(expr.association(0, num,
                                                   assumptions=assumptions))
             elif pull == 'right':
                 expr = eq.update(expr.association(-num, num,
                                                   assumptions=assumptions))
         if group_remainder and self.operands.num_entries() - num > 1:
-            # if the factor has been group, effectively there is just 1 factor
-            # operand now
+            # if the factor has been group, effectively there is just 1
+            # factor operand now
             num_factor_operands = 1 if group_factor else num
+            num_remainder_operands = self.operands.num_entries() - num_factor_operands
             if pull == 'left':
-                expr = eq.update(
-                    expr.association(
-                        num_factor_operands, 
-                        self.operands.num_entries() - num_factor_operands, 
+                expr = eq.update(expr.association(
+                        num_factor_operands, num_remainder_operands, 
                         assumptions=assumptions))
             elif pull == 'right':
-                expr = eq.update(expr.association(0, num_factor_operands,
-                                                  assumptions=assumptions))
+                expr = eq.update(expr.association(
+                        0, num_remainder_operands, assumptions=assumptions))
         return eq.relation
 
     def exponent_combination(self, start_idx=None, end_idx=None,
@@ -1115,6 +1119,16 @@ class Mult(Operation):
 
 
 # Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(
+    Mult,
+    'one_elimination',
+    'eliminated_one',
+    'eliminate_one')
+InnerExpr.register_equivalence_method(
+    Mult,
+    'one_eliminations',
+    'eliminated_ones',
+    'eliminate_ones')
 InnerExpr.register_equivalence_method(
     Mult,
     'deep_one_eliminations',
