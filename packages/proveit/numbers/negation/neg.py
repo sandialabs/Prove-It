@@ -1,6 +1,12 @@
 from proveit import Literal, Operation, maybe_fenced_string, maybe_fenced_latex, InnerExpr, USE_DEFAULTS, ProofFailure
 from proveit.logic import is_irreducible_value
-from proveit.numbers.number_sets import Integer, Real, Complex
+from proveit.numbers.number_sets import (
+        Natural, NaturalPos, 
+        Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
+        Rational, RationalNonZero, RationalPos, RationalNeg,
+        RationalNonNeg, RationalNonPos,
+        Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
+        Complex, ComplexNonZero)
 from proveit import a, b, c, m, n, x, y, B
 
 
@@ -20,14 +26,77 @@ class Neg(Operation):
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
         '''
-        from . import int_closure, real_closure, complex_closure
+        from . import (nat_closure, nat_pos_closure, 
+                       int_closure, int_nonzero_closure, 
+                       int_neg_closure, int_nonpos_closure,
+                       rational_closure, rational_nonzero_closure,
+                       rational_pos_closure, rational_neg_closure,
+                       rational_nonneg_closure, rational_nonpos_closure,
+                       real_closure, real_nonzero_closure, 
+                       real_pos_closure, real_neg_closure,
+                       real_nonneg_closure, real_nonpos_closure, 
+                       complex_closure, complex_nonzero_closure)
         from proveit.logic import InSet
-        if NumberSet == Integer:
-            return int_closure.instantiate({a: self.operand})
+        if NumberSet == Natural:
+            return nat_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == NaturalPos:
+            return nat_pos_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == Integer:
+            return int_closure.instantiate(
+                    {a: self.operand},  assumptions=assumptions)
+        elif NumberSet == IntegerNonZero:
+            return int_nonzero_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == IntegerNeg:
+            return int_neg_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == IntegerNonPos:
+            return int_nonpos_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == Rational:
+            return rational_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RationalNonZero:
+            return rational_nonzero_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RationalPos:
+            return rational_pos_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RationalNeg:
+            return rational_neg_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RationalNonNeg:
+            return rational_nonneg_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RationalNonPos:
+            return rational_nonpos_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
         elif NumberSet == Real:
-            return real_closure.instantiate({a: self.operand})
+            return real_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RealNonZero:
+            return real_nonzero_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RealPos:
+            return real_pos_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RealNeg:
+            return real_neg_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RealNonNeg:
+            return real_nonneg_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == RealNonPos:
+            return real_nonpos_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
         elif NumberSet == Complex:
-            return complex_closure.instantiate({a: self.operand})
+            return complex_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
+        elif NumberSet == ComplexNonZero:
+            return complex_nonzero_closure.instantiate(
+                    {a: self.operand}, assumptions=assumptions)
         else:
             raise ProofFailure(
                 InSet(
@@ -194,8 +263,8 @@ class Neg(Operation):
                 thm = pos_times_neg
             else:
                 thm = neg_times_pos
-        if hasattr(self.operand, 'factor'):
-            operand_factor_eqn = self.operand.factor(
+        if hasattr(self.operand, 'factorization'):
+            operand_factor_eqn = self.operand.factorization(
                 the_factor,
                 pull,
                 group_factor=True,
@@ -208,10 +277,10 @@ class Neg(Operation):
                     x: new_operand.operands[0],
                     y: new_operand.operands[1]},
                 assumptions=assumptions).derive_reversed(assumptions)
-            return eqn1.apply_transitivity(eqn2)
+            return eqn1.apply_transitivity(eqn2, assumptions=assumptions)
         else:
             if self.operand != the_factor:
-                raise ValueError("%s is a factor in %s!" % (the_factor, self))
+                raise ValueError("%s is not a factor in %s!" % (the_factor, self))
             if thm == neg_times_pos:
                 thm = mult_neg_one_left
             if thm == pos_times_neg:
