@@ -12,26 +12,27 @@ from .number_sets import (
 
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
+from .rounding import Floor, Ceil, Round
+from .absolute_value import Abs
 from .numerals import num, Numeral, DecimalSequence, Digits, DIGITS, is_literal_int
 from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
 from .addition import (Add, subtract, dist_subtract, dist_add,
                        const_shift_decomposition, const_shift_composition)
 from .negation import Neg
-from .multiplication import Mult
-from .product import Prod
-from .division import Div, frac
-from .exponentiation import Exp, sqrt, sqrd
-from .summation import Sum
-from .integration import Integrate
-from .absolute_value import Abs
-from .modular import Mod, ModAbs
-from .rounding import Floor, Ceil, Round
 from .ordering import (Less, LessEq, greater, greater_eq, number_ordering,
                        Min, Max)
+from .multiplication import Mult
+from .division import Div, frac
 from .divisibility import Divides, DividesProper, GCD
+from .modular import Mod, ModAbs
+from .exponentiation import Exp, sqrt, sqrd
+from .summation import Sum
+from .product import Prod
+from .integration import Integrate
 
 import proveit
 
+"""
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     from .number_sets.natural_numbers import zero_in_nats
@@ -42,6 +43,7 @@ if proveit.defaults.automation:
     from .number_sets.real_numbers import e_is_real_pos, pi_is_real_pos
     from .number_sets.complex_numbers import (
             i_is_complex, i_is_complex_nonzero)
+"""
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
