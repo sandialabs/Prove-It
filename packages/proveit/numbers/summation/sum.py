@@ -2,13 +2,12 @@ from proveit import (Literal, Lambda, Function, Operation,
                      OperationOverInstances, InnerExpr,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
                      ProofFailure, defaults)
-from proveit.logic import Forall, InSet
-from proveit.numbers import subtract
-from proveit.numbers.number_sets import (
-        Complex, Integer, Interval, Natural, NaturalPos, Real, RealInterval)
-from proveit.numbers.negation import Neg
-from proveit.numbers.ordering import LessEq, Less
 from proveit import a, b, c, f, i, j, k, x, P, Q, S
+from proveit.logic import Forall, InSet
+from proveit.numbers import one, Add, Neg, subtract
+from proveit.numbers import (Complex, Integer, Interval, Natural,
+                             NaturalPos, Real, RealInterval)
+from proveit.numbers.ordering import Less, LessEq
 from proveit import TransRelUpdater
 
 
@@ -213,9 +212,9 @@ class Sum(OperationOverInstances):
                 "Sum.shift() only implemented for summations with a single "
                 "index over an Interval. The sum {} has indices {}."
                 .format(self, self.indices))
-        # the following constraint can eventually be modified to deal
+        # The following constraint can eventually be modified to deal
         # with a domain like all Natural … but for now limited to
-        # integer Interval domain
+        # integer Interval domain.
         if not isinstance(self.domain, Interval):
             raise Exception(
                 "Sum.shift() only implemented for summations with a single "
@@ -223,7 +222,7 @@ class Sum(OperationOverInstances):
                 .format(self, self.domain))
 
         # Among other things, convert any assumptions=None
-        # to assumptions=()
+        # to assumptions=().
         assumptions = defaults.checked_assumptions(assumptions)
 
         from . import index_shift
@@ -246,16 +245,19 @@ class Sum(OperationOverInstances):
         # will ignore/eliminate it.
         if (simplify_idx):
             lower_bound_shifted = (
-                Add(_a, _c).do_reduced_simplification(assumptions=assumptions))
-            if lower_bound_shifted.lhs is not lower_bound_shifted.rhs:
-                user_reductions = [*user_reductions, lower_bound_shifted]
-            upper_bound_shifted = (
-                Add(_b, _c).do_reduced_simplification(assumptions=assumptions))
+                Add(_a, _c).simplification(
+                    shallow=True, assumptions=assumptions))
+            print("lower_bound_shifted: {}".format(lower_bound_shifted))
             user_reductions = [*user_reductions, lower_bound_shifted]
+            upper_bound_shifted = (
+                Add(_b, _c).simplification(
+                    shallow=True, assumptions=assumptions))
+            print("upper_bound_shifted: {}".format(upper_bound_shifted))
+            user_reductions = [*user_reductions, upper_bound_shifted]
         if (simplify_summand):
             summand_shifted = f_op_sub.replaced({_i:subtract(_i, _c)})
             summand_shifted = (
-                summand_shifted.do_reduced_simplification(
+                summand_shifted.simplification(shallow=True, 
                     assumptions=[*assumptions, InSet(_i, Interval(_a, _b))]))
             print("summand_shifted: {}".format(summand_shifted))
             user_reductions = [*user_reductions, summand_shifted]
@@ -335,47 +337,109 @@ class Sum(OperationOverInstances):
     #         "split_off_last only implemented for a summation over a Interval of one instance variable")
 
     def split(self, split_index, side='after', simplify_idx=True,
-              assumptions=USE_DEFAULTS):
+              user_reductions=[], assumptions=USE_DEFAULTS):
         r'''
         Split summation over one integral Interval {a ... c} into two
         summations. If side == 'after', it splits into a summation over
         {a ... split_index} plus a summation over {split_index+1 ... c}.
         If side == 'before', it splits into a summation over
-        {a ... split_index-1} plus a summation over {split_index ... c}.
+        {a ... split_index-1} plus a summation over {split_index ... c},
+        deducing and returning the equivalence of this summation with
+        the split version. When the simplify_idx is True, a shallow
+        simplification is applied to the new indices (for example,
+        a new index of i = 4 + 1 may be expressed as i = 5).
+        Eventually plan to accept and act on user-supplied reductions
+        as well, but not implemented at this time.
+        This split() method is implemented only for a Sum with a single
+        index and only when the domain is an integer Interval.
+        Eventually this should also be implemented for domains of
+        Natural, NaturalPos, etc.
         As special cases, split_index==a with side == 'after' splits
         off the first single term.  Also, split_index==c with
         side == 'before' splits off the last single term.
+        Example usage: Let S = Sum(i, i+2, Interval(0, 10)). Then
+        S.split(four, side='after') will return
+        |- S = Sum(i, i+2, Interval(0, 4)) +
+               Sum(i, i+2, Interval(5, 10))
         '''
-        if not isinstance(self.domain, Interval):
+        # The following constraint can eventually be modified to allow
+        # a domain like Natural or NaturalPos, but for now limited
+        # to integer Interval domain.
+        if (not isinstance(self.domain, Interval) or hasattr(self, 'indices')):
             raise Exception(
-                'Sum splitting only implemented for Interval domains')
-        if side == 'before' and self.domain.upper_bound == split_index:
-            return self.split_off_last()
-        if side == 'after' and self.domain.lower_bound == split_index:
-            return self.split_off_first()
-        if isinstance(self.domain, Interval) and self.instance_vars.is_single():
-            from theorems import sum_split_after, sum_split_before
-            sum_split = sum_split_after if side == 'after' else sum_split_before
-            deduce_in_integer(self.domain.lower_bound, assumptions)
-            deduce_in_integer(self.domain.upper_bound, assumptions)
-            deduce_in_integer(split_index, assumptions)
-            # Also needs lower_bound <= split_index and split_index <
-            # upper_bound
-            return sum_split.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
-                {a: self.domain.lower_bound, b: split_index, c: self.domain.upper_bound, x: self.indices[0]})
-        raise Exception(
-            "split_off_last only implemented for a summation over a Interval of one instance variable")
+                "Sum.split() only implemented for summations with a single "
+                "index over an integer Interval. The sum {} has indices {} "
+                "and domain {}."
+                .format(self, self.indices, self.domain))
 
-    def split_off_last(self, assumptions=frozenset()):
-        from axioms import sum_split_last
-        if isinstance(self.domain, Interval) and self.instance_vars.is_single():
-            deduce_in_integer(self.domain.lower_bound, assumptions)
-            deduce_in_integer(self.domain.upper_bound, assumptions)
+        # Among other things, convert any assumptions=None
+        # to assumptions=().
+        assumptions = defaults.checked_assumptions(assumptions)
+
+        # Special cases: splitting off last or first item
+        if side == 'before' and self.domain.upper_bound == split_index:
+            return self.split_off_last(assumptions=assumptions)
+        if side == 'after' and self.domain.lower_bound == split_index:
+            return self.split_off_first(assumptions=assumptions)
+
+        _i = self.index
+        _a = self.domain.lower_bound
+        _b = split_index
+        _c = self.domain.upper_bound
+        f_op, f_op_sub = Operation(f, self.index), self.summand
+
+        # Create a (possible) reduction formula for the split
+        # components' index expression, which will then be passed
+        # through to the instantiation as a "reduction" for simpifying
+        # the final form of the indices. If the (supposed) reduction is
+        # trivial (like |– x = x), the eventual instantiation process
+        # will ignore/eliminate it.
+        if (simplify_idx):
+            # 2 Cases to consider: side = 'after' vs. side = 'before'
+            if side == 'after':
+                # simplify lower index expr for 2nd sum of split
+                new_idx = Add(_b, one).simplification(
+                        shallow=True, assumptions=assumptions)
+            else:
+                # simplify upper index expr for 1st sum of split
+                new_idx = subtract(_b, one).simplification(
+                        shallow=True, assumptions=assumptions)
+            print("new_idx = {}".format(new_idx))
+            user_reductions = [*user_reductions, new_idx]
+
+        from . import sum_split_after, sum_split_before
+        sum_split = sum_split_after if side == 'after' else sum_split_before
+        return sum_split.instantiate(
+                {f_op: f_op_sub}, assumptions=assumptions).instantiate(
+                {a: _a, b: _b, c: _c, x: _i}, reductions=user_reductions,
+                assumptions=assumptions)
+
+    # def split_off_last(self, assumptions=frozenset()):
+    #     from axioms import sum_split_last
+    #     if isinstance(self.domain, Interval) and self.instance_vars.is_single():
+    #         deduce_in_integer(self.domain.lower_bound, assumptions)
+    #         deduce_in_integer(self.domain.upper_bound, assumptions)
+    #         # Also needs lower_bound < upper_bound
+    #         return sum_split_last.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
+    #             {a: self.domain.lower_bound, b: self.domain.upper_bound, x: self.indices[0]})
+    #     raise Exception(
+    #         "split_off_last only implemented for a summation over a Interval of one instance variable")
+
+    def split_off_last(self, assumptions=USE_DEFAULTS):
+        from . import sum_split_last
+        if isinstance(self.domain, Interval) and not hasattr(self, 'inidices'):
+            # deduce_in_integer(self.domain.lower_bound, assumptions)
+            # deduce_in_integer(self.domain.upper_bound, assumptions)
             # Also needs lower_bound < upper_bound
-            return sum_split_last.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
-                {a: self.domain.lower_bound, b: self.domain.upper_bound, x: self.indices[0]})
+            return sum_split_last.instantiate(
+                {Operation(f, self.instance_vars): self.summand}).instantiate(
+                {a: self.domain.lower_bound, b: self.domain.upper_bound,
+                 x: self.indices[0]})
         raise Exception(
-            "split_off_last only implemented for a summation over a Interval of one instance variable")
+                "Sum.split_off_last() only implemented for summations with a "
+                "single index over an integer Interval. The sum {} has "
+                "indices {} and domain {}."
+                .format(self, self.indices, self.domain))
 
     def split_off_first(self, assumptions=frozenset()):
         from theorems import sum_split_first  # only for associative summation
