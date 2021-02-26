@@ -241,7 +241,9 @@ class Sum(OperationOverInstances):
         # instantiation as "reductions" for simpifying the final form
         # of the indices and summand. Notice that when attempting to
         # simplify the summand, we need to send along the assumption
-        # about the index domain.
+        # about the index domain. If the (supposed) reduction is
+        # trivial (like |– x = x), the eventual instantiation process
+        # will ignore/eliminate it.
         if (simplify_idx):
             lower_bound_shifted = (
                 Add(_a, _c).do_reduced_simplification(assumptions=assumptions))
@@ -249,16 +251,14 @@ class Sum(OperationOverInstances):
                 user_reductions = [*user_reductions, lower_bound_shifted]
             upper_bound_shifted = (
                 Add(_b, _c).do_reduced_simplification(assumptions=assumptions))
-            if upper_bound_shifted.lhs is not upper_bound_shifted.rhs:
-                user_reductions = [*user_reductions, lower_bound_shifted]
+            user_reductions = [*user_reductions, lower_bound_shifted]
         if (simplify_summand):
             summand_shifted = f_op_sub.replaced({_i:subtract(_i, _c)})
             summand_shifted = (
                 summand_shifted.do_reduced_simplification(
                     assumptions=[*assumptions, InSet(_i, Interval(_a, _b))]))
             print("summand_shifted: {}".format(summand_shifted))
-            if summand_shifted.lhs is not summand_shifted.rhs:
-                user_reductions = [*user_reductions, summand_shifted]
+            user_reductions = [*user_reductions, summand_shifted]
         
         return index_shift.instantiate(
             {f_op: f_op_sub, x: self.index},
