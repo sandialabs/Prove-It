@@ -20,15 +20,13 @@ class Sum(OperationOverInstances):
     _init_argname_mapping_ = {'index_or_indices': 'instance_param_or_params',
                               'summand': 'instance_expr'}
 
-#    def __init__(self, summand-instance_expression, indices-instance_vars, domains):
-#    def __init__(self, instance_vars, instance_expr, conditions = tuple(), domain=EVERYTHING):
-#
     def __init__(self, index_or_indices, summand, *,
                  domain=None, domains=None, condition=None,
                  conditions=None, _lambda_map=None):
         r'''
         Sum summand over indices over domains.
-        Arguments serve analogous roles to Forall arguments (found in basiclogic.booleanss):
+        Arguments serve analogous roles to Forall arguments (found in
+        basiclogic.booleanss):
         indices: instance vars
         summand: instance_expressions
         domains: conditions (except no longer optional)
@@ -115,37 +113,43 @@ class Sum(OperationOverInstances):
 
     def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
         '''
-        For the trivial case of summing over only one item (currently implemented just
-        for a Interval where the endpoints are equal),
-        derive and return this summation expression equated the simplified form of
-        the single term.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        For the trivial case of summing over only one item (currently
+        implemented just for a Interval where the endpoints are equal),
+        derive and return this summation expression equated the
+        simplified form of the single term.
+        Assumptions may be necessary to deduce necessary conditions
+        for the simplification.
+        NEEDS UPDATING
         '''
         from proveit.logic import SimplificationError
         from . import sum_single
-        if isinstance(
-                self.domain,
-                Interval) and self.domain.lower_bound == self.domain.upper_bound:
+        if (isinstance(self.domain,Interval) and
+            self.domain.lower_bound == self.domain.upper_bound):
             if self.instance_vars.is_single():
-                return sum_single.instantiate({Operation(
-                    f, self.instance_vars): self.summand}).instantiate({a: self.domain.lower_bound})
+                return sum_single.instantiate(
+                    {Operation(f, self.instance_vars): self.summand,
+                     a: self.domain.lower_bound})
         raise SimplificationError(
-            "Sum simplification only implemented for a summation over a Interval of one instance variable where the upper and lower bound is the same")
+            "Sum simplification only implemented for a summation over an "
+            "integer Interval of one instance variable where the upper "
+            "and lower bound is the same.")
 
     def simplified(self, assumptions=frozenset()):
         '''
-        For the trivial case of summing over only one item (currently implemented just
-        for a Interval where the endpoints are equal),
-        derive and return this summation expression equated the simplified form of
-        the single term.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        For the trivial case of summing over only one item (currently
+        implemented just for a Interval where the endpoints are equal),
+        derive and return this summation expression equated the
+        simplified form of the single term.
+        Assumptions may be necessary to deduce necessary conditions
+        for the simplification.
         '''
         return self.simplification(assumptions).rhs
 
     def reduce_geom_sum(self, assumptions=frozenset()):
         r'''
-        If sum is geometric sum (finite or infinite), provide analytic expression for sum.
-        May need assumptions to proven prerequisite number set conditions.
+        If sum is geometric sum (finite or infinite), provide analytic
+        expression for sum. May need assumptions to proven prerequisite
+        number set conditions.
         '''
         from theorems import inf_geom_sum, fin_geom_sum
         m_val = self.indices[0]
@@ -173,22 +177,6 @@ class Sum(OperationOverInstances):
                     {x: x_val, m: m_val, k: k_val, l: l_val})
 #        else:
 #            print "Not a geometric sum!"
-
-    # def shift(self, shift_amount, assumptions=frozenset()):
-    #     '''
-    #     Shift the summation indices by the shift amount, deducing and returning
-    #     the equivalence of this summation with a index-shifted version.
-    #     '''
-    #     from theorems import index_shift
-    #     if not self.indices.is_single() or not isinstance(self.domain, Interval):
-    #         raise Exception(
-    #             'Sum shift only implemented for summations with one index over a Interval')
-    #     f_op, f_op_sub = Operation(f, self.index), self.summand
-    #     deduce_in_integer(self.domain.lower_bound, assumptions)
-    #     deduce_in_integer(self.domain.upper_bound, assumptions)
-    #     deduce_in_integer(shift_amount, assumptions)
-    #     return index_shift.instantiate({f_op: f_op_sub, x: self.index}).instantiate(
-    #         {a: self.domain.lower_bound, b: self.domain.upper_bound, c: shift_amount})
 
     def shift(self, shift_amount, simplify_idx=True, simplify_summand=True,
               assumptions=USE_DEFAULTS):
@@ -267,43 +255,105 @@ class Sum(OperationOverInstances):
              c: shift_amount}, reductions=user_reductions,
              assumptions=assumptions)
 
-    def join(self, second_summation, assumptions=frozenset()):
+    def join(self, second_summation, simplify_idx=True,
+             assumptions=USE_DEFAULTS):
         '''
-        Join the "second summation" with "this" summation, deducing and returning
-        the equivalence of these summations added with the joined summation.
-        Both summation must be over Intervals.
-        The relation between the first summation upper bound, UB1, and the second
-        summation lower bound, LB2 must be explicitly either UB1 = LB2-1 or LB2=UB1+1.
+        Join the "second summation" with "this" (self) summation,
+        deducing and returning the equivalence of the sum of the self
+        and second_summation with the joined summation.
+        Both summations must be over integer Intervals.
+        The relation between the first summation upper bound, UB1,
+        and the second summation lower bound, LB2, must be *explicitly*
+        either UB1 = LB2-1 or LB2=UB1+1 *or* easily-derivable
+        mathematical equivalents of those equalities.
+        Example usage: let S1 = Sum(i, i^2, Interval(1,10)) and
+        S2 = Sum(i, i^2, Interval(1,10)). Then S1.join(S2) returns
+        |- S1 + S2 = Sum(i, i^2, Interval(1,20))
         '''
-        from theorems import sum_split_after, sum_split_before
-        from proveit.numbers.common import one
-        from proveit.numbers import Sub, Add
-        if not isinstance(
-                self.domain,
-                Interval) or not isinstance(
-                second_summation.domain,
-                Interval):
+
+        if (not isinstance(self.domain,Interval) or
+            not isinstance(second_summation.domain,Interval)):
             raise Exception(
-                'Sum joining only implemented for Interval domains')
+                "Sum.join() is only implemented for summations with a "
+                "single index over an integer Interval. The sum {0} has "
+                "indices {1} and domain {2}; the sum {3} has indices "
+                "{4} and domain {5}.".
+                format(self, self.indices, self.domain, second_summation,
+                       second_summation.indices, second_summation.domain))
+
         if self.summand != second_summation.summand:
             raise Exception(
-                'Sum joining only allowed when the summands are the same')
-        if self.domain.upper_bound == Sub(
-                second_summation.domain.lower_bound, one):
+                "Sum joining using Sum.join() is only allowed when the "
+                "summands are identical. The sum {0} has summand {1} "
+                "while the sum {2} has summand {3}. If the summands are "
+                "equal but do not appear identical, you will have to "
+                "establish an appropriate substituion before calling the "
+                "Sum.join() method.".
+                format(self, self.summand, second_summation,
+                       second_summation.summand))
+
+        from . import sum_split_after, sum_split_before
+        from proveit import a
+        user_reductions = []
+
+        _i = self.index
+        _a1 = self.domain.lower_bound
+        _b1 = self.domain.upper_bound
+        _a2 = second_summation.domain.lower_bound
+        _b2 = second_summation.domain.upper_bound
+        f_op, f_op_sub = Operation(f, self.index), self.summand
+
+        # Create low-effort, simplified versions of transition index
+        # values, if possible
+        _b1_plus_1_simplified = Add(_b1, one).simplification(shallow=True,
+                        assumptions=assumptions)
+        _a2_minus_1_simplified = subtract(_a2, one).simplification(shallow=True,
+                        assumptions=assumptions)
+
+        # This breaks into four cases (despite the temptation to
+        # combine some of the cases):
+        if (_b1 == subtract(_a2, one)):
+            # UB1 == LB2 - 1 (literally)
             sum_split = sum_split_before
-            split_index = second_summation.domain.lower_bound
-        elif second_summation.domain.lower_bound == Add(self.domain.upper_bound, one):
+            split_index = _a2
+            if simplify_idx:
+                user_reductions = [*user_reductions, _a2_minus_1_simplified]
+        elif (_a2 == Add(_b1, one)):
+            # LB2 == UB1 + 1 (literally)
             sum_split = sum_split_after
-            split_index = self.domain.upper_bound
+            split_index = _b1
+            if simplify_idx:
+                user_reductions = [*user_reductions, _b1_plus_1_simplified]
+        elif (_b1 == _a2_minus_1_simplified.rhs):
+            # UB1 == LB2 - 1 (after simplification)
+            sum_split = sum_split_before
+            split_index = _a2
+            if simplify_idx:
+                user_reductions = [*user_reductions, _a2_minus_1_simplified]
+        elif (_a2 == _b1_plus_1_simplified.rhs):
+            # LB2 == UB1 + 1 (after simplification)
+            sum_split = sum_split_after
+            split_index = _b1
+            if simplify_idx:
+                user_reductions = [*user_reductions, _b1_plus_1_simplified]
         else:
             raise Exception(
-                'Sum joining only implemented when there is an explicit increment of one from the upper bound and the second summations lower bound')
-        lower_bound, upper_bound = self.domain.lower_bound, second_summation.domain.upper_bound
-        deduce_in_integer(lower_bound, assumptions)
-        deduce_in_integer(upper_bound, assumptions)
-        deduce_in_integer(split_index, assumptions)
-        return sum_split.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
-            {a: lower_bound, b: split_index, c: upper_bound, x: self.indices[0]}).derive_reversed()
+                "Sum joining using Sum.join() only implemented for when "
+                "there is an explicit (or easily verified) increment "
+                "of one unit from the first summation's upper bound "
+                "to the second summation's lower bound (or decrement "
+                "of one unit from second summation's lower bound to "
+                "first summation's upper bound). We have first "
+                "summation upper bound of {0} with the second summation "
+                "lower bound of {1}. If these appear to have the "
+                "necessary relationship, you might need to prove this "
+                "before calling the Sum.join() method.".
+                format(_b1, _a2))
+
+        return sum_split.instantiate(
+            {f_op: f_op_sub, a: _a1, b: split_index, c: _b2, x: _i},
+            reductions=user_reductions,
+            assumptions=assumptions).derive_reversed()
 
     def split(self, split_index, side='after', simplify_idx=True,
               simplify_summand=True, assumptions=USE_DEFAULTS):
@@ -596,7 +646,7 @@ class Sum(OperationOverInstances):
         return eq.relation
     
     def deduce_bound(self, summand_relation, assumptions=USE_DEFAULTS):
-        '''
+        r'''
         Given a universally quantified ordering relation over all 
         summand instances, return a bounding relation for the
         summation.  For example, using the summand relation
