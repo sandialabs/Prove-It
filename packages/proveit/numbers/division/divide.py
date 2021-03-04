@@ -165,14 +165,14 @@ class Div(Operation):
                 assumptions=assumptions))
         if term_to_cancel == self.numerator:
             from . import frac_cancel_numer_left
-            assert len(expr.denominator.operands) == 2, "Should be grouped"
+            assert expr.denominator.operands.is_double(), "Should be grouped"
             expr = eq.update(frac_cancel_numer_left.instantiate(
                 {x: term_to_cancel, y: expr.denominator.operands[1]},
                 assumptions=assumptions))
             return eq.relation
         elif term_to_cancel == self.denominator:
             from . import frac_cancel_denom_left
-            assert len(expr.numerator.operands) == 2, "Should be grouped"
+            assert expr.numerator.operands.is_double(), "Should be grouped"
             expr = eq.update(frac_cancel_denom_left.instantiate(
                 {x: term_to_cancel, y: expr.numerator.operands[1]},
                 assumptions=assumptions))
@@ -683,3 +683,8 @@ InnerExpr.register_equivalence_method(
     'combine_exponents')
 InnerExpr.register_equivalence_method(
     Div, 'factorization', 'factorized', 'factor')
+InnerExpr.register_equivalence_method(
+    Div,
+    'cancelation',
+    'canceled',
+    'cancel')
