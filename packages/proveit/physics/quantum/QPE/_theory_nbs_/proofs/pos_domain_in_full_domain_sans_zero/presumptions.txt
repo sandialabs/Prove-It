@@ -81,7 +81,6 @@ proveit.numbers.number_sets.complex_numbers.nat_within_complex
 proveit.numbers.number_sets.complex_numbers.nonzero_if_in_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_nonzero_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_within_complex
-proveit.numbers.number_sets.integers.all_in_positive_interval_are_positive
 proveit.numbers.number_sets.integers.in_interval
 proveit.numbers.number_sets.integers.interval_in_nat_pos
 proveit.numbers.number_sets.integers.interval_is_int
