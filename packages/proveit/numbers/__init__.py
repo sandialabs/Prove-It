@@ -19,8 +19,8 @@ from .numerals import zero, one, two, three, four, five, six, seven, eight, nine
 from .addition import (Add, subtract, dist_subtract, dist_add,
                        const_shift_decomposition, const_shift_composition)
 from .negation import Neg
-from .ordering import (Less, LessEq, greater, greater_eq, number_ordering,
-                       Min, Max)
+from .ordering import (NumberOrderingRelation, number_ordering,
+                       Less, LessEq, greater, greater_eq, Min, Max)
 from .multiplication import Mult
 from .division import Div, frac
 from .divisibility import Divides, DividesProper, GCD
@@ -32,7 +32,6 @@ from .integration import Integrate
 
 import proveit
 
-"""
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     from .number_sets.natural_numbers import zero_in_nats
@@ -43,7 +42,6 @@ if proveit.defaults.automation:
     from .number_sets.real_numbers import e_is_real_pos, pi_is_real_pos
     from .number_sets.complex_numbers import (
             i_is_complex, i_is_complex_nonzero)
-"""
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
