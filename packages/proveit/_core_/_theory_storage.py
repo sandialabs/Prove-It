@@ -2757,10 +2757,10 @@ class StoredTheorem(StoredSpecialStmt):
         from proveit._core_.proof import Theorem
         with open(os.path.join(proof_path, 'presumptions.txt'), 'w') as f:
             f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
-            usable_theorem_names = set(str(theorem) for theorem
-                                       in Theorem.all_theorems
-                                       if theorem.is_usable())
-            for theorem in sorted(usable_theorem_names):
+            used_theorem_names = set(str(theorem) for theorem
+                                     in Theorem.all_used_theorems
+                                     if theorem.is_usable())
+            for theorem in sorted(used_theorem_names):
                 f.write(str(theorem) + '\n')
             f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
 

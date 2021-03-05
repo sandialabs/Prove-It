@@ -1,5 +1,4 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.sub_left_side_into
-proveit.logic.equality.substitute_in_true
 # THEOREMS AND THEORIES TO EXCLUDE:
