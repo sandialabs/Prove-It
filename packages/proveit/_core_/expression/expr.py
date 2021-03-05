@@ -1054,7 +1054,7 @@ class Expression(metaclass=ExprType):
    """
 
     def simplification(self, assumptions=USE_DEFAULTS, *, automation=True,
-                       **kwargs):
+                       shallow=False, **kwargs):
         '''
         If possible, return a Judgment of this expression equal to a
         canonically simplified form. Checks for an existing simplifcation.
@@ -1074,13 +1074,16 @@ class Expression(metaclass=ExprType):
 
         method_called = None
         try:
-            # First try the default tricks. If a reduction succesfully occurs,
+            # If shallow = False,
+            # First try the default tricks.
+            # If a reduction succesfully occurs,
             # simplification will be called on that reduction.
+            assert not shallow
             simplification = default_simplification(self.inner_expr(),
                                                     assumptions=assumptions,
                                                     automation=automation)
             method_called = default_simplification
-        except SimplificationError:
+        except (AssertionError, SimplificationError):
             if automation is False:
                 # When automation is False, we raise an exception if there
                 # is not a known simplification.
@@ -1128,10 +1131,15 @@ class Expression(metaclass=ExprType):
                 (method_called, simplification, self, assumptions))
             raise ValueError(msg)
 
+        # If this was not a shallow simplification request,
         # Remember this simplification for next time:
-        assumptions_sorted = sorted(assumptions, key=lambda expr: hash(expr))
-        known_simplifications_key = (self, tuple(assumptions_sorted))
-        Equals.known_simplifications[known_simplifications_key] = simplification
+        # assumptions_sorted = sorted(assumptions, key=lambda expr: hash(expr))
+        # known_simplifications_key = (self, tuple(assumptions_sorted))
+        # Equals.known_simplifications[known_simplifications_key] = simplification
+        if not shallow:
+            assumptions_sorted = sorted(assumptions, key=lambda expr: hash(expr))
+            known_simplifications_key = (self, tuple(assumptions_sorted))
+            Equals.known_simplifications[known_simplifications_key] = simplification
 
         return simplification
 
