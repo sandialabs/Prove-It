@@ -40,7 +40,6 @@ proveit.logic.sets.equivalence.set_equiv_is_bool
 proveit.logic.sets.inclusion.fold_subset_eq
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
-proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.logic.sets.subtraction.all_but_one_membership_folding
 proveit.logic.sets.subtraction.all_but_one_membership_unfolding
 proveit.logic.sets.subtraction.membership_folding
@@ -76,7 +75,6 @@ proveit.numbers.negation.int_closure
 proveit.numbers.negation.negated_positive_is_negative
 proveit.numbers.negation.negated_zero
 proveit.numbers.negation.real_closure
-proveit.numbers.number_sets.complex_numbers.complex_non_zero_within_complex
 proveit.numbers.number_sets.complex_numbers.int_within_complex
 proveit.numbers.number_sets.complex_numbers.nat_within_complex
 proveit.numbers.number_sets.complex_numbers.nonzero_if_in_complex_nonzero

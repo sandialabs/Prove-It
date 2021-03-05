@@ -31,7 +31,6 @@ proveit.logic.sets.equivalence.set_equiv_is_bool
 proveit.logic.sets.inclusion.fold_subset_eq
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
-proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.addition.add_complex_closure
 proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure
