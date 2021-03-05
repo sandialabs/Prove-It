@@ -133,20 +133,44 @@ class Exp(Function):
 
     def do_reduced_evaluation(self, assumptions=USE_DEFAULTS):
         '''
-        For trivial cases, a zero or one exponent or zero or one base,
-        derive and return this exponential expression equated with a
-        evaluated form. Assumptions may be necessary to deduce
-        necessary conditions for the simplification.
+        Handles the following exponential evaluations:
+            a^0 = 1 for any complex a
+            0^x = 0 for any positive x
+            1^x = 1 for any complex x
+            x^n = x*x*...*x = ? for a natural n and irreducible x.
         '''
-        from proveit.logic import EvaluationError
-        from proveit.numbers import zero, one
-        from . import exp_zero_eq_one, exponentiated_zero, exponentiated_one
+        from proveit.relation import TransRelUpdater
+        from proveit.logic import EvaluationError, is_irreducible_value
+        from proveit.numbers import (zero, one, is_literal_int,
+                                     DecimalSequence)
+        from . import (exp_zero_eq_one, exponentiated_zero, 
+                       exponentiated_one, exp_nat_pos_expansion)
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
         elif self.base == zero:
             return exponentiated_zero.instantiate({x: self.exponent})  # =0
         elif self.base == one:
             return exponentiated_one.instantiate({x: self.exponent})  # =1
+        elif (is_irreducible_value(self.base) and 
+                  is_literal_int(self.exponent) and 
+                  self.exponent.as_int() > 1):
+            expr = self
+            eq = TransRelUpdater(expr, assumptions=assumptions)
+            expr = eq.update(exp_nat_pos_expansion.instantiate(
+                    {x:self.base, n:self.exponent}, assumptions=assumptions))
+            # We should come up with a better way of reducing
+            # ExprRanges representing repetitions:
+            _n = self.exponent.as_int()
+            if _n <= 0 or _n > 9:
+                raise NotImplementedError("Currently only implemented for 1-9")
+            repetition_thm = proveit.numbers.numerals.decimals \
+                .__getattr__('reduce_%s_repeats' % _n)
+            rep_reduction = repetition_thm.instantiate(
+                    {x: self.base}, assumptions=assumptions)
+            expr = eq.update(expr.inner_expr().operands.substitution(
+                    rep_reduction.rhs, assumptions=assumptions))
+            expr = eq.update(expr.evaluation(assumptions=assumptions))
+            return eq.relation
         else:
             raise EvaluationError('Only trivial evaluation is implemented '
                                   '(zero or one for the base or exponent).',
@@ -277,8 +301,8 @@ class Exp(Function):
             if self.base.operands.is_double():
                 _a, _b = self.base.operands
             else:
-                _m = self.operands.num_elements(assumptions)
-                _a = self.operands
+                _m = self.base.operands.num_elements(assumptions)
+                _a = self.base.operands
             if InSet(exponent, NaturalPos).proven(assumptions):
                 if self.base.operands.is_double():
                     return posnat_power_of_product.instantiate(

@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import Literal, Operation, defaults, USE_DEFAULTS
 
 
 class InSet(Operation):
@@ -92,21 +92,47 @@ class InSet(Operation):
         from proveit import ProofFailure
         from proveit.logic import SimplificationError
 
-        # See if the membership is already known.
-        if self.element in InSet.known_memberships:
-            for known_membership in InSet.known_memberships[self.element]:
-                if known_membership.is_sufficient(assumptions):
-                    # x in R is a judgment; if we know that R subseteq S,
-                    # or R = S we are done.
-                    eq_rel = Equals(known_membership.domain, self.domain)
-                    if eq_rel.proven(assumptions):
-                        return eq_rel.sub_right_side_into(
-                            known_membership.inner_expr().domain)
-                    sub_rel = SubsetEq(known_membership.domain, self.domain)
-                    if sub_rel.proven(assumptions):
-                        # S is a superset of R, so now we can prove x in S.
-                        return sub_rel.derive_superset_membership(self.element,
-                                                                  assumptions)
+        # See if the element, or something known to be equal to
+        # the element, is known to be a member of the domain or a subset
+        # of the domain.
+        for elem_sub in Equals.yield_known_equal_expressions(
+                self.element, assumptions=assumptions):
+            same_membership = None # membership in self.domain
+            eq_membership = None # membership in an equal domain
+            subset_membership = None # membership in a subset
+            for known_membership in InSet.yield_known_memberships(
+                    elem_sub, assumptions):
+                eq_rel = Equals(known_membership.domain, self.domain)
+                sub_rel = SubsetEq(known_membership.domain, self.domain)
+                if known_membership.domain == self.domain:
+                    same_membership = known_membership
+                    break # this is the best to use; we are done
+                elif eq_rel.proven(assumptions):
+                    eq_membership = known_membership
+                elif sub_rel.proven(assumptions):
+                    subset_membership = known_membership
+            elem_sub_in_domain = None
+            if same_membership is not None:
+                elem_sub_in_domain = same_membership
+            elif eq_membership is not None:
+                # domains are equal -- just substitute to domain.
+                eq_rel = Equals(known_membership.domain, self.domain)
+                elem_sub_in_domain = eq_rel.sub_right_side_into(
+                    eq_membership.inner_expr().domain)
+            elif subset_membership is not None:
+                # S is a superset of R, so now we can prove x in S.
+                sub_rel = SubsetEq(known_membership.domain, self.domain)
+                elem_sub_in_domain = sub_rel.derive_superset_membership(
+                        elem_sub, assumptions)
+            if elem_sub_in_domain is not None:
+                # We found what we are looking for.
+                if elem_sub == self.element:
+                    return elem_sub_in_domain # done
+                # Just need to sub in the element for _elem_sub.
+                Equals(elem_sub, self.element).conclude_via_transitivity(
+                        assumptions)
+                return elem_sub_in_domain.inner_expr().element.substitute(
+                        self.element, assumptions=assumptions)
 
         # No known membership works.  Let's see if there is a known
         # simplification of the element before trying anything else.
@@ -147,6 +173,18 @@ class InSet(Operation):
                                "the domain, %s, has no 'membership_object' "
                                "method with a strategy for proving "
                                "membership." % self.domain)
+    
+    @staticmethod
+    def yield_known_memberships(element, assumptions=USE_DEFAULTS):
+        '''
+        Yield the known memberships of the given element applicable
+        under the given assumptions.
+        '''
+        assumptions = defaults.checked_assumptions(assumptions)       
+        if element in InSet.known_memberships:
+            for known_membership in InSet.known_memberships[element]:
+                if known_membership.is_sufficient(assumptions):
+                    yield known_membership
 
     def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''

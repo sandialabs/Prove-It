@@ -5,6 +5,7 @@ def complex_polar_coordinates(expr, *, assumptions=USE_DEFAULTS,
                               automation=False, simplify=True,
                               radius_must_be_nonneg=True,
                               nonneg_radius_preferred=True,
+                              do_include_unit_length_reduction=True,
                               reductions=None):
     '''
     Given an expression, expr, of the complex number polar form,
@@ -29,21 +30,31 @@ def complex_polar_coordinates(expr, *, assumptions=USE_DEFAULTS,
     original form on the right.  This may be useful to use as
     'reductions' in instantiations of theorems that employ the
     complex number polar form so it may perform proper reductions
-    to the desired form.  For example, if expr=1 is provided,
+    to the desired form.  For example, if expr=5 is provided,
     the added reduction will be
-        1 * exp(i * 0) = 1
+        5 * exp(i * 0) = 5.
+    
+    If do_include_unit_length_reduction is True, and we will included
+    reductions so that it will reduction from the unit length
+    form as well.  For example, if expr=1 is provided, the added
+    reductions will be
+        exp(i * 0) = 1
+        1 * 1 = 1.
+    This also works in a way that cascades when reducing from the
+    general polar form:
+        1 * exp(i * 0) = 1 * 1 = 1
     
     Raise ValueError if the expr is not obviously equivalent to a
     complex number polar form.
 
     Also see unit_length_complex_polar_angle.
     '''
-    from proveit.trigonometry import (
-            complex_polar_negation, complex_polar_radius_negation)
+    from . import complex_polar_negation, complex_polar_radius_negation
     from proveit.logic import InSet, Equals
     from proveit.numbers import zero, one, e, i, pi, Real, RealNonNeg
     from proveit.numbers import Add, LessEq, Neg, Mult, Exp
     orig_expr = expr
+    if reductions is None: reductions = set()
 
     def add_reduction(reduction, _radius, _theta):
         '''
@@ -55,8 +66,20 @@ def complex_polar_coordinates(expr, *, assumptions=USE_DEFAULTS,
         assert (isinstance(reduction, Judgment) 
                 and isinstance(reduction.expr, Equals) 
                 and reduction.lhs == polar_form
-                and reduction.rhs == orig_expr)
-        if reductions is not None:
+                and reduction.rhs == orig_expr), (
+                        "Reduction, %s, not a judgement "
+                        "for %s = %s"%(reduction, polar_form, orig_expr))
+        if do_include_unit_length_reduction and _radius == one:
+            # As a unit length complex number, let's include the
+            # reduction from the unit length form in case a unit length 
+            # formula is applied (cover the bases).
+            reductions.add(reduction.inner_expr().lhs.eliminate_one(
+                    0, assumptions))
+            # But prepare for a multi-stage reduction:
+            # 1 * exp[i * theta] = 1 * orig_expr = orig_expr
+            reductions.add(Mult(one, orig_expr).one_elimination(
+                    0, assumptions))
+        elif reduction.lhs != reduction.rhs:
             reductions.add(reduction)
     def raise_not_valid_form(extra_msg=None):
         if extra_msg is None: extra_msg = ""
@@ -103,7 +126,7 @@ def complex_polar_coordinates(expr, *, assumptions=USE_DEFAULTS,
         # reduction: 1*exp(i * theta) = orig_expr
         if len(inner_reductions) > 0:
             reduction = reduction.inner_expr().rhs.substitute(
-                    inner_reductions.pop())
+                    inner_reductions.pop().rhs, assumptions=assumptions)
         # Add the reduction and return the coordinates.
         add_reduction(reduction, _r, _theta)
         return (_r, _theta)
@@ -144,6 +167,7 @@ def complex_polar_coordinates(expr, *, assumptions=USE_DEFAULTS,
                 automation=automation, simplify=simplify,
                 radius_must_be_nonneg=radius_must_be_nonneg,
                 nonneg_radius_preferred=nonneg_radius_preferred,
+                do_include_unit_length_reduction=False,
                 reductions=inner_reductions)
         # reduction: r * exp(i * theta) = orig_expr * exp(i * 0)
         if len(inner_reductions) > 0:
@@ -213,7 +237,8 @@ def complex_polar_coordinates(expr, *, assumptions=USE_DEFAULTS,
             radius_relation_with_zero = LessEq.sort([zero, _r0],
                                                     assumptions=assumptions)
         except ProofFailure:
-            raise_not_valid_form("Relation of %s to 0 is unknown."%_r0)
+            raise_not_valid_form("Relation of %s to 0 is unknown and "
+                                 "radius_must_be_nonneg is True."%_r0)
     elif nonneg_radius_preferred:
         # We would prefer to know the relationship between r0 and 0
         # for r to be non-negative as preferred.
@@ -285,11 +310,13 @@ def unit_length_complex_polar_angle(expr, *, assumptions=USE_DEFAULTS,
     
     Also see complex_polar_coordinates.
     '''
+    from proveit import ExprRange
     from proveit.logic import Equals, InSet
     from proveit.numbers import zero, one, e, i, pi
     from proveit.numbers import Add, Neg, Mult, Exp, Real
-    from proveit.trigonometry import (
-            unit_length_complex_polar_negation)
+    from . import unit_length_complex_polar_negation
+    if reductions is None: reductions = set()
+
     def raise_not_valid_form():
         raise ValueError("%s not in a form that is obviously "
                          "reducible from an exp(i*theta) form. ")
@@ -305,8 +332,9 @@ def unit_length_complex_polar_angle(expr, *, assumptions=USE_DEFAULTS,
                 and isinstance(reduction.expr, Equals)
                 and reduction.lhs == polar_form
                 and reduction.rhs == orig_expr)
-        if reductions is not None:
+        if reduction.lhs != reduction.rhs:
             reductions.add(reduction)
+
     if expr == one:
         # expr = 1 = exp(i * 0)
         _theta = zero
@@ -353,7 +381,17 @@ def unit_length_complex_polar_angle(expr, *, assumptions=USE_DEFAULTS,
                     # We'll allow this low-level automation to
                     # prove -theta is real given theta is real.
                     InSet(_theta, Real).prove(
-                            assumptions=assumptions, automation=True)     
+                            assumptions=assumptions, automation=True)
+                elif (not automation and isinstance(_theta, Mult) and 
+                        all(InSet(Mult(factor), Real).proven(assumptions) if
+                            isinstance(factor, ExprRange) else
+                            InSet(factor, Real).proven(assumptions) for
+                            factor in _theta.factors)):
+                    # We'll allow this low-level automation to
+                    # prove a product is real given that the factors
+                    # are known to be real.
+                    InSet(_theta, Real).prove(
+                            assumptions=assumptions, automation=True)                    
                 else:
                     InSet(_theta, Real).prove(
                         assumptions=assumptions, automation=automation)

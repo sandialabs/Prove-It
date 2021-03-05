@@ -1,7 +1,7 @@
 from proveit import Function, Literal
 
 class Cos(Function):
-    # operator of the Abs operation.
+    # operator of the Cos operation.
     _operator_ = Literal(string_format='cos', theory=__file__)
     
     def __init__(self, angle):

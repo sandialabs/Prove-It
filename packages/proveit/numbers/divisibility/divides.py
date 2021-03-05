@@ -1,7 +1,7 @@
-from proveit import (as_expression, Theory, defaults, Literal, Operation,
-                     ProofFailure, TransitiveRelation, USE_DEFAULTS)
+from proveit import (as_expression, defaults, Literal,
+                     ProofFailure, TransitiveRelation, 
+                     TransitivityException, USE_DEFAULTS)
 from proveit.logic import Equals, InSet, NotEquals
-from proveit.numbers import Exp, Mult, num
 from proveit.numbers import zero, Complex, Integer, NaturalPos
 
 
@@ -18,7 +18,8 @@ class DividesRelation(TransitiveRelation):
         attempt (where applicable) eliminate_dividen_exponent,
         eliminate_common_exponent, and eliminate_common_factor.
         '''
-        from proveit.numbers import two
+        from proveit.numbers import two, Exp, Mult
+
 
         for side_effect in TransitiveRelation.side_effects(self, judgment):
             yield side_effect
@@ -101,6 +102,8 @@ class Divides(DividesRelation):
         (5) x|y if (x^n)|(y^n) is known or assumed
         (6) via transitivity.
         '''
+        from proveit.numbers import Exp
+        
         # Check validity of assumptions (and convert assumptions=None
         # to assumptions=(), thus averting len(None) errors).
         assumptions = defaults.checked_assumptions(assumptions)
@@ -283,7 +286,7 @@ class Divides(DividesRelation):
         for k=2.  This method is called from the
         DividesRelation.side_effects() method.
         '''
-        from proveit.numbers import two
+        from proveit.numbers import two, Exp
         from . import even__if__power_is_even
         if not isinstance(self.rhs, Exp):
             raise ValueError(
@@ -305,6 +308,7 @@ class Divides(DividesRelation):
         k, a, must be integers, with n a positive integer. This method
         is called from the DividesRelation side_effects() method.
         '''
+        from proveit.numbers import Exp
         if (isinstance(self.lhs, Exp) and
             isinstance(self.rhs, Exp) and
                 self.lhs.exponent == self.rhs.exponent):
@@ -353,6 +357,7 @@ class Divides(DividesRelation):
         Need to generalize this later for more than two operands on
         each side! Could use sets for detecting common factors.
         '''
+        from proveit.numbers import Mult
         if (isinstance(self.lhs, Mult) and
                 isinstance(self.rhs, Mult)):
 
