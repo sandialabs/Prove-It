@@ -804,12 +804,12 @@ class Mult(Operation):
             equiv = distribute_through_abs_sum.instantiate(
                 {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
                 assumptions=assumptions)                
-            # As a convenient side-effect of this derivation,
+            # As a convenient "side-effect" of this derivation,
             # if we know that the original was positive,
             # so is the new one.
             if all(InSet(operand, RealPos).proven(assumptions) for 
                    operand in self.operands):
-                pass
+                InSet(self, RealPos).prove(assumptions)
             return equiv
         elif isinstance(operand, Div):
             raise NotImplementedError("Mult.distribution must be updated "
