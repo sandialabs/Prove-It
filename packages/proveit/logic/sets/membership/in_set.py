@@ -116,12 +116,12 @@ class InSet(Operation):
                 elem_sub_in_domain = same_membership
             elif eq_membership is not None:
                 # domains are equal -- just substitute to domain.
-                eq_rel = Equals(known_membership.domain, self.domain)
+                eq_rel = Equals(eq_membership.domain, self.domain)
                 elem_sub_in_domain = eq_rel.sub_right_side_into(
                     eq_membership.inner_expr().domain)
             elif subset_membership is not None:
                 # S is a superset of R, so now we can prove x in S.
-                sub_rel = SubsetEq(known_membership.domain, self.domain)
+                sub_rel = SubsetEq(subset_membership.domain, self.domain)
                 elem_sub_in_domain = sub_rel.derive_superset_membership(
                         elem_sub, assumptions)
             if elem_sub_in_domain is not None:
