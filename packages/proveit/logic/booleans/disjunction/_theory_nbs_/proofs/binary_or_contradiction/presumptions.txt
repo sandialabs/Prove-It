@@ -2,7 +2,6 @@
 proveit.logic.booleans.disjunction.neither_intro
 proveit.logic.booleans.negation.negation_contradiction
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.not_false
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.sub_left_side_into
 # THEOREMS AND THEORIES TO EXCLUDE:
