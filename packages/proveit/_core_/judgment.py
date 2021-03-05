@@ -830,7 +830,7 @@ class Judgment:
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
         from proveit.logic import Forall, Equals
-        from .proof import Instantiation, ProofFailure
+        from .proof import Theorem, Instantiation, ProofFailure
         
         reduction_map = dict()
         if reductions is not None:
@@ -853,6 +853,9 @@ class Judgment:
             except ProofFailure:
                 self.raise_unusable_proof()
             return alternate.instantiate(repl_map, assumptions)
+        _proof = self.proof()
+        if isinstance(_proof, Theorem):
+            Theorem.all_used_theorems.add(_proof)
 
         # If no repl_map is provided, instantiate the 
         # "explicit_instance_vars" of the Forall with default mappings
