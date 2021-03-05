@@ -491,6 +491,14 @@ class Equals(TransitiveRelation):
         from proveit.logic import TRUE, FALSE
         lambda_map = Equals._lambda_expr(lambda_map, self.rhs)
 
+        # Check if we want to use the reverse equality for a shorter
+        # proof.
+        reversed_eq = Equals(self.rhs, self.lhs).prove(assumptions)
+        if (reversed_eq.proof().num_steps() <
+                self.prove(assumptions).proof().num_steps()):
+            # Reverse it for a shorter proof.
+            return reversed_eq.sub_right_side_into(lambda_map, assumptions)
+        
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use sub_in_left_operands for ExprTuple
             # substitution.
@@ -541,6 +549,15 @@ class Equals(TransitiveRelation):
         from . import sub_right_side_into
         from . import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
         from proveit.logic import TRUE, FALSE
+        
+        # Check if we want to use the reverse equality for a shorter
+        # proof.
+        reversed_eq = Equals(self.rhs, self.lhs).prove(assumptions)
+        if (reversed_eq.proof().num_steps() <
+                self.prove(assumptions).proof().num_steps()):
+            # Reverse it for a shorter proof.
+            return reversed_eq.sub_left_side_into(lambda_map, assumptions)
+        
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
 
         if isinstance(lambda_map.parameters[0], ExprRange):
