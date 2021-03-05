@@ -31,6 +31,7 @@ class Proof:
         Proof.unique_proofs.clear()
         Assumption.all_assumptions.clear()
         Theorem.all_theorems.clear()
+        Theorem.all_used_theorems.clear()
         _ShowProof.show_proof_by_id.clear()
 
     def __init__(self, proven_truth, required_truths,
@@ -125,7 +126,11 @@ class Proof:
 
         requiring_unusable_proof = False
         for required_proof in self.required_proofs:
-            if not required_proof.is_usable():
+            if required_proof.is_usable():
+                # Required proof is a theorem being used.
+                if isinstance(required_proof, Theorem):
+                    Theorem.all_used_theorems.add(required_proof)
+            else:
                 # Mark proofs as unusable when using an "unusable" theorem
                 # directly or indirectly.  Theorems are marked as unusable
                 # when a proof for some Theorem is being generated as a
@@ -658,6 +663,7 @@ class Axiom(Proof):
 
 class Theorem(Proof):
     all_theorems = []
+    all_used_theorems = set()
 
     def __init__(self, expr, theory, name):
         if not isinstance(theory, Theory):
