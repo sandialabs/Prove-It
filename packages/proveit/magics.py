@@ -534,7 +534,7 @@ class ProveItMagicCommands:
             if os.path.isfile(import_failure_filename):
                 # Start with a clean slate
                 os.remove(import_failure_filename)
-            proveit.defaultsimport_failure_filename = \
+            proveit.defaults.import_failure_filename = \
                 import_failure_filename
         proveit.defaults._running_proveit_notebook = (theory, kind)
 

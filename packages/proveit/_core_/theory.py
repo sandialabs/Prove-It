@@ -699,7 +699,7 @@ class UnsetCommonExpressionPlaceholder(object):
         # import a common expression:
         import proveit
         import_failure_filename = \
-            proveit.defaultsimport_failure_filename
+            proveit.defaults.import_failure_filename
         assert proveit.defaults._running_proveit_notebook is not None, (
             "Should only use UnsetCommonExpressionPlaceholder when "
             "executing a common expression notebook.")
