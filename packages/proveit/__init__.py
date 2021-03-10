@@ -7,7 +7,7 @@ from ._core_ import (
     TheoryException,
     Expression, traverse_inner_expressions, used_vars,
     possibly_free_var_ranges, free_vars, attempt_to_simplify,
-    InnerExpr, expression_depth,
+    InnerExpr, shallowest_inner_expr, expression_depth,
     Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError,
     Conditional, ConditionalSet,
