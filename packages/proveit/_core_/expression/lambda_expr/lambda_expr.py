@@ -267,6 +267,7 @@ class Lambda(Expression):
             defaults.auto_reduce = orig_auto_reduce
             defaults.automation = prev_automation
         self._canonical_expr = canonical_expr
+        canonical_expr._canonical_expr = canonical_expr
         return canonical_expr
 
     def extract_argument(self, mapped_expr):

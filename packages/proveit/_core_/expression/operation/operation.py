@@ -1,7 +1,7 @@
 import inspect
 from proveit._core_.expression.expr import Expression, ImproperReplacement
 from proveit._core_.expression.style_options import StyleOptions
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 
 class Operation(Expression):
@@ -543,7 +543,8 @@ class Operation(Expression):
                 # operation.
                 subbed_sub_exprs = (subbed_operator, subbed_operands)
                 substituted = op_class._checked_make(
-                    ['Operation'], sub_expressions=subbed_sub_exprs)
+                    ['Operation'], sub_expressions=subbed_sub_exprs,
+                    styles=self._style_data.styles)
                 return substituted._reduced(
                     reduction_map, assumptions, requirements,
                     equality_repl_requirements)
@@ -551,7 +552,7 @@ class Operation(Expression):
         subbed_sub_exprs = (subbed_operator,
                             subbed_operands)
         substituted = self.__class__._checked_make(
-            self._core_info, subbed_sub_exprs)
+            self._core_info, subbed_sub_exprs, self._style_data.styles)
         return substituted._reduced(reduction_map, assumptions, requirements,
                                     equality_repl_requirements)
 

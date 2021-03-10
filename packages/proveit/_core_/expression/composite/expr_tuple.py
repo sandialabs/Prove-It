@@ -390,7 +390,7 @@ class ExprTuple(Composite, Expression):
                 subbed_exprs.append(subbed_expr)
 
         return self.__class__._checked_make(
-            self._core_info, subbed_exprs)
+            self._core_info, subbed_exprs, self._style_data.styles)
 
     def merger(self, assumptions=USE_DEFAULTS):
         '''

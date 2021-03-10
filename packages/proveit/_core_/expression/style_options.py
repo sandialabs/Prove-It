@@ -1,4 +1,3 @@
-
 class StyleOptions:
     '''
     An Object for displaying the valid style options of an Expression.
@@ -17,6 +16,12 @@ class StyleOptions:
         typically only the 'default' is specific to the expression.
         '''
         self.options.append((name, description, default, related_methods))
+    
+    def option_names(self):
+        '''
+        Return the list of active style option names.
+        '''
+        return [option[0] for option in self.options]
 
     def standardized_styles(self, styles, styles_must_exist=True):
         '''
@@ -24,11 +29,17 @@ class StyleOptions:
         as appropriate and checking to make sure that unknown
         styles aren't used.
         '''
+        from proveit._core_.defaults import defaults
         styles = dict(styles)
         known_style_names = set()
         for name, _, default, _ in self.options:
             known_style_names.add(name)
-            if name not in styles and default is not None:
+            if name in defaults.styles:
+                # A default style specified in proveit.defaults
+                # overrides the default of the StyleOptions.
+                styles[name] = defaults.styles[name]
+            elif name not in styles and default is not None:
+                # Use the default of the StyleOptions.
                 styles[name] = default
         if len(styles) > len(known_style_names):
             for style_name in list(styles.keys()):                    
@@ -37,9 +48,11 @@ class StyleOptions:
                         styles.pop(style_name)
                     else:
                         raise StyleError(
-                                "%s is not a known style option for %s "
-                                "type expressions"%(style_name, 
-                                                    self.expr.__class__))
+                                "%s is not a known style option for this %s "
+                                "expression with the following "
+                                "sub-expressions: %s"%
+                                (style_name, self.expr.__class__,
+                                 self.expr._sub_expressions))
         return styles
 
     def __repr__(self):

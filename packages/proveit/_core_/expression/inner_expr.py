@@ -4,6 +4,7 @@ from .lambda_expr import Lambda
 from .composite import ExprTuple, Composite, NamedExprs, composite_expression
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 import inspect
+from collections import deque
 
 
 class InnerExpr:
@@ -125,6 +126,8 @@ class InnerExpr:
             self.expr_hierarchy.append(expr)
 
     def __eq__(self, other):
+        if not isinstance(other, InnerExpr):
+            return False
         return (self.inner_expr_path == other.inner_expr_path and
                 self.expr_hierarchy == other.expr_hierarchy)
 
@@ -190,7 +193,7 @@ class InnerExpr:
                     # need to check it.
                     return deeper_inner_expr[:]
                 repl_lambda = deeper_inner_expr.repl_lambda()
-                sub_expr = repl_lambda .body
+                sub_expr = repl_lambda.body
                 for j in self.inner_expr_path[:cur_depth]:
                     if isinstance(sub_expr, ExprTuple):
                         sub_expr = sub_expr[j]
@@ -310,7 +313,7 @@ class InnerExpr:
         elif attr == 'relabeled' or attr[:4] == 'with':
             def revise_inner_expr(*args, **kwargs):
                 # call the 'with...' method on the inner expression:
-                expr = getattr(cur_inner_expr, attr)(*args, **kwargs)
+                expr = inner_attr_val(*args, **kwargs)
                 # Rebuild the expression (or Judgment) with the
                 # inner expression replaced.
                 return self._rebuild(expr)
@@ -323,7 +326,7 @@ class InnerExpr:
 
         # not a sub-expression, so just return the attribute for the actual
         # Expression object of the sub-expression
-        return getattr(cur_inner_expr, attr)
+        return inner_attr_val
 
     @staticmethod
     def register_equivalence_method(
@@ -467,9 +470,10 @@ class InnerExpr:
                 # Convert from a Judgment to an Expression.
                 expr = expr.expr
             expr_subs = tuple(expr.sub_expr_iter())
-            inner_expr = expr.__class__._make(
+            inner_expr = expr.__class__._checked_make(
                 expr.core_info(), 
-                expr_subs[:idx] + (inner_expr,) + expr_subs[idx + 1:])
+                expr_subs[:idx] + (inner_expr,) + expr_subs[idx + 1:],
+                styles = expr._style_data.styles)
         revised_expr = inner_expr
         if (isinstance(self.expr_hierarchy[0], Judgment) and
                 self.expr_hierarchy[0].expr == revised_expr):
