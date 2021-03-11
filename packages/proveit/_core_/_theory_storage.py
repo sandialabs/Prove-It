@@ -1889,9 +1889,8 @@ class TheoryFolderStorage:
             return constructor
         if isinstance(expr, NamedExprs):
             # convert to (name, value) tuple form
-            arg_str = ', '.join('(' +
-                                arg_to_string(arg).replace(' = ', ',') +
-                                ')' for arg in expr.remake_arguments())
+            arg_str = ', '.join('(%s, %s)'%(name, arg_to_string(expr))
+                                for name, expr in expr.remake_arguments())
         else:
             arg_str = ', '.join(arg_to_string(arg) for
                                 arg in expr.remake_arguments())
@@ -1905,7 +1904,7 @@ class TheoryFolderStorage:
             else:
                 assert isinstance(expr, NamedExprs)
                 # list of (name, value) tuples
-                composite_str = '[' + arg_str.replace(' = ', ':') + ']'
+                composite_str = '[' + arg_str + ']'
             if is_sub_expr and expr.__class__ in (ExprTuple,
                                                   NamedExprs, ExprArray):
                 # It is a sub-Expression and a standard composite class.
