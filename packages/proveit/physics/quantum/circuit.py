@@ -85,13 +85,14 @@ class Input(Function):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
     
-    def formatted(self, format_type, fence=False):
+    def formatted(self, format_type, solo=True, fence=False):
         formatted_state = self.state.formatted(format_type, fence=False)
         if format_type == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
-            out_str += r'\lstick{' + formatted_state + r'}'
-            out_str += ' \n' + r'} \hspace{2em}'
+            out_str = r'\lstick{' + formatted_state + r'}'
+            if solo:
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str + r' & \qw'
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Input(' + formatted_state + ')'
@@ -127,13 +128,15 @@ class Output(Function):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, fence=False):
+    def formatted(self, format_type, solo=True, fence=False):
         formatted_state = self.state.formatted(format_type, fence=False)
         if format_type == 'latex':
+
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
-            out_str += r'\rstick{' + formatted_state + r'} \qw'
-            out_str += ' \n' + r'} \hspace{2em}'
+            out_str = r'\rstick{' + formatted_state + r'} \qw'
+            if solo:
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Output(' + formatted_state + ')'
@@ -155,28 +158,29 @@ class IdentityOp(Literal):
         If not 'explicit', just use a wire.
         '''
         if explicit:
-            styles = {'gate': 'explicit'}
+            styles = {'representation': 'explicit'}
         else:
-            styles = {'gate': 'wire'}
+            styles = {'representation': 'implicit'}
         Literal.__init__(self, 'I', styles=styles)
 
     def style_options(self):
         '''
-        Return the StyleOptions object for this IdendityOp.
+        Return the StyleOptions object for this IdentityOp.
         '''
         options = StyleOptions(self)
         options.add_option(
-            name = 'gate',
+            name = 'representation',
             description = (
-                    "The 'wire' option formats the identity operation as "
+                    "The 'implicit' option formats the identity operation as "
                     "a quantum wire and the 'explicit' option formats it "
                     "as a box containing the I literal"),
-            default = 'wire',
+            default = 'implicit',
             related_methods = ())
+
         return options
 
     def remake_arguments(self):
-        if self.get_style('gate', 'wire') == 'explicit':
+        if self.get_style('representation', 'wire') == 'explicit':
             yield('explicit', True)
 
     def string(self, **kwargs):
@@ -185,20 +189,25 @@ class IdentityOp(Literal):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, gate=None, fence=False):
-        if gate is None:
-            gate = self.get_style('gate', 'wire')
+    def formatted(self, format_type, representation=None, solo=True, fence=False):
+        if representation is None:
+            representation = self.get_style('representation', 'implicit')
         if format_type == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
-            if gate == 'wire':
+            out_str = ''
+            if representation == 'implicit':
                 out_str += r'\qw'
             else:
-                out_str += r'\gate{I}'
-            out_str += ' \n' + r'} \hspace{2em}'
+                if solo:
+                    out_str += r'\gate{I}'
+                else:
+                    out_str += r'I'
+            if solo:
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
-            if gate == 'wire':
+            if representation == 'implicit':
                 return '--'
             else:
                 return '[I]'
@@ -260,23 +269,45 @@ class Gate(Function):
             return output_gate_to_ket.instantiate(
                 {U: self.gate_operation.state}, assumptions=assumptions)
 
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this Gate object.
+        '''
+        options = StyleOptions(self)
+        options.add_option(
+            name='representation',
+            description=(
+                "The 'implicit' option formats the identity operation as "
+                "a quantum wire and the X gate as a target. The 'explicit' "
+                "option formats the identity operation as a box containing the "
+                "I literal and the X gate as a box containing an X"),
+            default='wire',
+            related_methods=())
+
+        return options
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, **kwargs):
+    def formatted(self, format_type, representation=None, solo=True, **kwargs):
         if self.gate_operation is None:
             formatted_gate_operation = '[]'
+
         else:
             formatted_gate_operation = self.gate_operation.formatted(
-                format_type, fence=False)
-        if isinstance(self.gate_operation, IdentityOp):
-            formatted_gate_operation = 'I'
+                format_type, fence=False, solo=False)
+        if representation is None:
+            representation = self.get_style('representation', 'explicit')
+
+        # if isinstance(self.gate_operation, IdentityOp):
+        #     formatted_gate_operation = self.gate_operation.formatted(format_type, solo=True)
         if format_type == 'latex':
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = ''
+
             if formatted_gate_operation == 'MES':
                 out_str += r'\meter'
             elif formatted_gate_operation == 'SPACE':
@@ -287,9 +318,17 @@ class Gate(Function):
             elif isinstance(self.gate_operation, Output):
                 out_str += r'\gate{ Output(' + self.gate_operation.state.formatted(
                     format_type='latex') + ')}'
+            elif isinstance(self.gate_operation, IdentityOp):
+                return self.gate_operation.formatted(
+                    format_type, fence=False, solo=solo)
+            elif formatted_gate_operation == 'X' and representation == 'implicit':
+                # this is formatted as a target.
+                out_str += r'\targ'
             else:
                 out_str += r'\gate{' + formatted_gate_operation + r'}'
-            out_str += ' \n' + r'} \hspace{2em}'
+            if solo:
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return 'Gate(' + formatted_gate_operation + ')'
@@ -364,13 +403,16 @@ class MultiQubitGate(Function):
         # It would be better to make this only an option when it is
         # applicable.  Just doing this for now.
         options.add_option(
-            name = 'representation',
-            description = ("'implicit' representation displays X gates "
-                           "as a target, while 'explicit' representation "
-                           "always displays the type of gate in a box. "
-                           "Ex. |X|"),
-            default = 'explicit',
-            related_methods = ())
+            name='representation',
+            description=("'implicit' representation displays X gates "
+                         "as a target, while 'explicit' representation "
+                         "always displays the type of gate in a box. "
+                         "Ex. |X|. 'Block' displays the MultiQubitGate "
+                         "as a block gate assuming all other gates within"
+                         " the MultiQubitGate are the same."),
+            default='explicit',
+            related_methods=())
+
         return options
 
     def string(self, **kwargs):
@@ -382,7 +424,7 @@ class MultiQubitGate(Function):
     def unary_reduction(self, assumptions=USE_DEFAULTS):
         from proveit.physics.quantum import unary_multi_qubit_gate_reduction
 
-        if not self.gate_set.operands.singular():
+        if not self.gate_set.operands.is_single():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unary_reduction")
         operand = self.gate_set.operands[0]
@@ -402,38 +444,40 @@ class MultiQubitGate(Function):
             return empty_multi_qubit_gate_reduction.instantiate(
                 {U: self.gate}, assumptions=assumptions)
 
-    def formatted(self, format_type, representation=None, **kwargs):
+    def formatted(self, format_type, representation=None, solo=True, **kwargs):
         if representation is None:
             representation = self.get_style('representation', 'explicit')
 
-        formatted_gate_operation = (
-            self.gate.formatted(format_type, fence=False))
-        if isinstance(self.gate, IdentityOp):
-            formatted_gate_operation = 'I'
-        if isinstance(self.gate, Input):
-            formatted_gate_operation = 'Input(' + self.gate.state.formatted(
-                format_type, fence=False) + ')'
-        if isinstance(self.gate, Output):
-            formatted_gate_operation = 'Output(' + self.gate.state.formatted(
-                format_type, fence=False) + ')'
+        formatted_gate_operation = self.gate.formatted(format_type, solo=False, fence=False)
+
+        if isinstance(self.gate, IdentityOp) and solo:
+            # if the MQG is not contained and the gate is an IdentityOp(),
+            # but the representation of the IdentityOp is implicit, represent it as
+            # 2 dashes "--"
+            formatted_gate_operation = self.gate.formatted(format_type, solo=False, representation='explicit')
         if format_type == 'latex':
-            if r'\Qcircuit' in formatted_gate_operation:
-                idx = formatted_gate_operation.index('\n')
-                formatted_gate_operation = formatted_gate_operation[idx + 3:len(
-                    formatted_gate_operation) - 16]
-                #add = '& '
-                # we add three  to include the n and the & and the space after then &
-                # we subtract 16 to get rid of the ending bracket, the \hspace,
-                # and \n
+            if isinstance(self.gate, Input):
+                formatted_gate_operation = 'Input: ' + self.gate.state.formatted(format_type)
+            elif isinstance(self.gate, Output):
+                formatted_gate_operation = 'Output: ' + self.gate.state.formatted(format_type)
+            # if r'\Qcircuit' in formatted_gate_operation:
+            #     idx = formatted_gate_operation.index('\n')
+            #     formatted_gate_operation = formatted_gate_operation[idx + 3:len(
+            #         formatted_gate_operation) - 16]
+            #     # add = '& '
+            #     # we add three  to include the n and the & and the space after then &
+            #     # we subtract 16 to get rid of the ending bracket, the \hspace,
+            #     # and \n
             spacing = '@C=1em @R=.7em'
-            out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& '
+            out_str = ''
+
             if formatted_gate_operation == 'X' and representation == 'implicit':
-               # this is formatted as a target.
+                # this is formatted as a target.
                 out_str += r'\targ'
             elif formatted_gate_operation == 'CONTROL':
                 # this is formatted as a solid dot using \control
                 out_str += r'\control \qw'
-            elif formatted_gate_operation == 'MES':
+            elif formatted_gate_operation == 'MEAS':
                 # this is formatted as a solid dot using \control
                 out_str += r'\meter'
             elif formatted_gate_operation == r'CLASSICAL\_CONTROL':
@@ -443,23 +487,28 @@ class MultiQubitGate(Function):
                 out_str += r'\qswap'
             elif formatted_gate_operation == 'SPACE':
                 out_str += formatted_gate_operation
-
             else:
                 from proveit.numbers import is_literal_int
                 if isinstance(
                         self.gate_set, Set) and all(
                         is_literal_int(entry) for entry in self.gate_set.operands):
                     # everything is a literal
-                    if self.gate_set.operands.num_entries() <= 1:
+                    if solo:
                         out_str += r'\gate{' + formatted_gate_operation + \
                             r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
                     else:
                         out_str += formatted_gate_operation
+                # elif isinstance(self.gate, IdentityOp()):
+                #     out_str += formatted_gate_operation + \
+                #                r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
                 else:
                     out_str += r'\gate{' + formatted_gate_operation + \
                         r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
                     #out_str += formatted_gate_operation + r'{\Big \{}' + self.gate_set.formatted(format_type)
-            out_str += ' \n' + r'} \hspace{2em}'
+
+            if solo:
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
+                out_str += ' \n' + r'} \hspace{2em}'
             return out_str
         else:
             return "MultiQubitGate(" + formatted_gate_operation + \
@@ -477,6 +526,45 @@ class MultiQubitGate(Function):
  #     if format_type == 'latex':
  #         return r'\gate{' + formatted_gate_operation + r'}'
  #     else: return Operation._formatted(self, format_type, fence)
+
+
+class MultiWire(Function):
+    '''
+    Marks a "wire" as a bundle with a number of individual wires.
+    '''
+    _operator_ = Literal('MULTI_WIRE', theory=__file__)
+
+    def __init__(self, number):
+        '''
+        Create a multi-wire.
+        '''
+        Function.__init__(self, MultiWire._operator_, number)
+        self.number = number
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+
+    def formatted(self, format_type, fence=False, solo=True, **kwargs):
+        formatted_number = self.number.formatted(format_type, fence=False)
+        spacing = Circuit.DEFAULT_SPACING
+        if format_type == 'latex':
+            if solo:
+                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + r'{ /^{' + formatted_number \
+                          + r'} } \qw'
+                out_str += ' \n' + r'} \hspace{2em}'
+                return out_str
+            else:
+                return r'{ /^{' + formatted_number + r'} } \qw'
+        else:
+            return "MultiWire(" + formatted_number + ')'
+
+    def _config_latex_tool(self, lt):
+        Function._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
 
 
 class TargetOperator(Literal):
@@ -512,7 +600,7 @@ class Target(Function):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, fence=False):
+    def formatted(self, format_type, fence=False, **kwargs):
         if format_type == 'latex':
             return r'\targ'
         else:
@@ -724,26 +812,6 @@ class CircuitEquiv(TransitiveRelation):
     #        return Operation._formatted(self, format_type)
 
 # TARGET = Literal(pkg, 'TARGET', {STRING:'TARGET', LATEX:r'\targ'}, lambda operands : Target(*operands))
-
-# class MultiWire(Operation):
-#     '''
-#     Marks a "wire" as a bundle with a number of individual wires.
-#     '''
-
-#     def __init__(self, number):
-#         '''
-#         Create a multi-wire.
-#         '''
-#         Operation.__init__(self, MULTI_WIRE, number)
-#         self.number = number
-
-#     def formatted(self, format_type, fence=False):
-#         formatted_number = self.number.formatted(format_type, fence=False)
-#         if format_type == LATEX:
-#             return r'/^{' + formatted_number + r'} \qw'
-#         else: return Operation.formatted(self, format_type, fence)
-
-# MULTI_WIRE = Literal(pkg, 'MULTI_WIRE', operation_maker = lambda operands : MultiWire(*operands))
 
 
 class Circuit(Function):
@@ -1099,25 +1167,43 @@ class Circuit(Function):
                     # are on.
                     if isinstance(value, MultiQubitGate):
                         inset = False
+                        block = False
                         # a check to see if the current row index is in the set
                         # of MultiQubitGate indices
                         if value.indices is not None:
                             for n, number in enumerate(value.indices, 0):
                                 # cycle through each row location of each
-                                # QubitGate; n keeps track of which gate we are
+                                # multiQubitGate; n keeps track of which gate we are
                                 # on.
-                                if self.array.entries[number.as_int(
-                                ) - 1].entries[i].indices != value.indices:
-                                    # each list of indices for each MultiQubitGate must match the current one (starting
-                                    # at 0).
+
+                                try:
+                                    if self.array.entries[number.as_int(
+                                    ) - 1].entries[i].indices != value.indices:
+                                        # each list of indices for each MultiQubitGate must match
+                                        # the current one (starting
+                                        # at 0).
+                                        raise ValueError(
+                                            'Each linked MultiQubitGate must contain the indices of all other '
+                                            'linked MultiQubitGates, the MultiQubitGate in row %d does not contain '
+                                            'all the indices that are referenced by the MultiQubitGate in row %d'
+                                            % (n + 1, k))
+                                except IndexError:
                                     raise ValueError(
-                                        'Each linked MultiQubitGate must contain the indices of all other '
-                                        'linked MultiQubitGate')
+                                            'Each linked MultiQubitGate must contain the indices of all other '
+                                            'linked MultiQubitGates, the MultiQubitGate in row %d does not contain '
+                                            'all the indices that are referenced by the MultiQubitGate in row %d' %
+                                            (n + 1, k))
+                                if self.array.entries[number.as_int()
+                                                      - 1].entries[i].get_style('representation', 'explicit') \
+                                        == "block" and value.get_style('representation', 'explicit') != "block":
+                                    from proveit._core_.expression.style_options import StyleError
+                                    raise StyleError("If one linked MultiQubitGate has 'block' representation, "
+                                                     "all linked MultiQubitGates must have 'block' representation.")
                                 if number.as_int() == k:
                                     inset = True
-                        # if not inset:
-                         #   print(self)
-                          #  raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
+                        if not inset:
+                            # print(self)
+                            raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
                     elif isinstance(value, ExprRange):
                         pass
                 k += 1
@@ -1156,6 +1242,9 @@ class Circuit(Function):
         col_with_mqg = dict()
         # keeps track of which columns have a MQG, columns start at 0, rows
         # (top/bottom) start at 1
+
+        # This first loop determines which columns contain MQGs as well as
+        # which rows they start and end on
         for k, entry in enumerate(self.array, 1):
             # loop through each row; k tells us which row we are on
             if isinstance(entry, ExprTuple):
@@ -1214,6 +1303,7 @@ class Circuit(Function):
                         else:
                             col += 1
 
+        # This loop determines the actual wire placement
         for k, entry in enumerate(self.array, 1):
             # cycle through each ExprTuple; k keeps track of which row we are
             # on.
@@ -1242,8 +1332,9 @@ class Circuit(Function):
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
                         # across all gates in the MultiQubitGate
                         if value.gate.string() != 'CONTROL' and \
-                                value.gate.string() != 'CLASSICAL\\_CONTROL':
-                            # control gates should not be inside of a
+                                value.gate.string() != 'CLASSICAL\\_CONTROL' and \
+                                value.gate.string() != '--':
+                            # control gates and implicit IdentityOp()'s should not be inside of a
                             # MultiQubit block gate
                             if index < value.indices.num_entries() - 1:
                                 # if this is not the last gate in the
@@ -1252,8 +1343,9 @@ class Circuit(Function):
                                         self.array.entries[value.indices[index + 1].as_int() - 1].entries[col].gate:
                                     # if this gate is the same as the next and the current gate is not the last one in
                                     # the multi_qubit gate
-                                    if index == 0 or value.indices[index - 1].as_int() != k - 1 or value.gate != \
-                                            self.array.entries[value.indices[index - 1].as_int() - 1].entries[col].gate:
+                                    if (index == 0 or value.indices[index - 1].as_int() != k - 1 or value.gate !=
+                                            self.array.entries[value.indices[index - 1].as_int()
+                                                               - 1].entries[col].gate):
                                         # This is the first in the multi_qubit
                                         # block gate!
                                         length = 0
@@ -1265,13 +1357,27 @@ class Circuit(Function):
                                             n += 1
                                             # count the number of gates that are the same and then add it to the wire
                                             # direction array
-                                        row[col] = ['first', length]
+                                        if self.array.entries[value.indices[index - 1].as_int()
+                                                              - 1].entries[col].get_style('representation',
+                                                                                          'explicit') == "block":
+                                            row[col] = ['first', length]
+                                        else:
+                                            row[col] = ['gate', 1]
+                                            # we just use 1 instead of length because it is only connecting to the next
+                                    elif self.array.entries[value.indices[index - 1].as_int()
+                                                              - 1].entries[col].get_style('representation',
+                                                                                          'explicit') != "block":
+                                        row[col] = ['gate', 1]
                                     else:
                                         # this is not the first in the
                                         # multi_qubit block gate
                                         row[col] = 'ghost'
                                 elif index != 0 and value.indices[index - 1].as_int() == k - 1 and value.gate == \
-                                        self.array.entries[value.indices[index - 1].as_int() - 1].entries[col].gate:
+                                        self.array.entries[value.indices[index - 1].as_int() - 1].entries[col].gate \
+                                        and self.array.entries[value.indices[index - 1].as_int()
+                                                               - 1].entries[col].get_style('representation',
+                                                                                           'explicit') \
+                                        == "block":
                                     # this is the last in the block gate, but it is not the last gate in the
                                     # MultiQubitGate
                                     row[col] = ['ghost',
@@ -1287,7 +1393,11 @@ class Circuit(Function):
                                     # as long as this is not the only gate in
                                     # the MultiQubitGate
                                     if value.indices[index - 1].as_int() == k - 1 and value.gate == \
-                                            self.array.entries[k - 2].entries[col].gate:
+                                            self.array.entries[k - 2].entries[col].gate \
+                                            and self.array.entries[value.indices[index - 1].as_int()
+                                                                   - 1].entries[col].get_style('representation',
+                                                                                               'explicit')\
+                                            == "block":
                                         # if this gate equals the gate right above it then this is part of a
                                         # block gate even though it is the last element
                                         # (we have to subtract 2 because just one takes us to the base 0 index and we
@@ -1324,7 +1434,7 @@ class Circuit(Function):
                                     # wires
                                     row[col] = 'skip'
                         else:
-                            # there is a control or a classical control
+                            # there is a control, a classical control, or the IdentityOp()
                             # Define the wire_direction for the MultiQubitGate by taking the next index and
                             # subtracting the current one
                             if index < value.indices.num_entries() - 1:
@@ -1577,7 +1687,7 @@ class Circuit(Function):
             spacing=None,
             **kwargs):
         from proveit._core_.expression.expr import Expression
-        default_style = ("explicit" if format_type == 'string' else 'implicit')
+        default_style = ('explicit' if format_type == 'string' else 'implicit')
         out_str = ''
         if self.array.num_entries() == 0 and fence:
             # for an empty list, show the parenthesis to show something.
@@ -1587,7 +1697,7 @@ class Circuit(Function):
             orientation = self.get_style('orientation', 'horizontal')
 
         if spacing is None:
-            spacing = self.get_style('spacing', '@C=1em @R=.7em')
+            spacing = self.get_style('spacing', Circuit.DEFAULT_SPACING)
 
         if format_type == 'latex':
             out_str += r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n'
@@ -1613,13 +1723,13 @@ class Circuit(Function):
                     add = '& '
                 else:
                     add = ' '
-                if r'\Qcircuit' in entry:
-                    idx = entry.index('\n')
-                    entry = entry[idx + 3:len(entry) - 16]
-                    add = '& '
-                    # we add three  to include the n and the & and the space after then &
-                    # we subtract 16 to get rid of the ending bracket, the
-                    # \hspace, and \n
+                # if r'\Qcircuit' in entry:
+                #     idx = entry.index('\n')
+                #     entry = entry[idx + 3:len(entry) - 16]
+                #     add = '& '
+                #     # we add three  to include the n and the & and the space after then &
+                #     # we subtract 16 to get rid of the ending bracket, the
+                #     # \hspace, and \n
                 entry_str = ''
 
                 if entry == 'SPACE':
@@ -1648,6 +1758,15 @@ class Circuit(Function):
                                 if r'\gate' in entry:
                                     entry_str += add + entry + r' \qwx[' + str(wires[row][column][1]) + r'] ' \
                                         r'\qwx[' + str(wires[row][column][2]) + r']'
+                                elif r'\qw' in entry:
+                                    entry_str += add + r'\qw' + r' \qwx[' + str(wires[row][column][1]) + r'] \
+                                            qwx[' + str(wires[row][column][2]) + r']'
+                                elif r'\qswap' in entry:
+                                    entry_str += add + r'\qswap' + r' \qwx[' + str(wires[row][column][1]) + r'] \
+                                            qwx[' + str(wires[row][column][2]) + r']'
+                                elif r'\targ' in entry:
+                                    entry_str += add + r'\targ' + r' \qwx[' + str(wires[row][column][1]) + r'] \
+                                            qwx[' + str(wires[row][column][2]) + r']'
                                 else:
                                     entry_str += add + r'\gate{' + entry + r'} \qwx[' + str(
                                         wires[row][column][1]) + r'] \qwx[' + str(wires[row][column][2]) + r']'
@@ -1655,6 +1774,15 @@ class Circuit(Function):
                                 if r'\gate' in entry:
                                     entry_str += add + entry + \
                                         r' \qwx[' + str(wires[row][column][1]) + r']'
+                                elif r'\qw' in entry:
+                                    entry_str += add + r'\qw' + \
+                                                 r' \qwx[' + str(wires[row][column][1]) + r']'
+                                elif r'\qswap' in entry:
+                                    entry_str += add + r'\qswap' + \
+                                                 r' \qwx[' + str(wires[row][column][1]) + r']'
+                                elif r'\targ' in entry:
+                                    entry_str += add + r'\targ' + \
+                                                 r' \qwx[' + str(wires[row][column][1]) + r']'
                                 else:
                                     entry_str += add + \
                                         r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
@@ -1678,7 +1806,7 @@ class Circuit(Function):
                         elif entry == r'\meter':
                             entry_str += add + entry
                         else:
-                            if r'\gate' in entry:
+                            if r'\gate' in entry or r'\qw' in entry or r'\qswap' in entry:
                                 entry_str += add + entry
                             else:
                                 entry_str += add + r'\gate{' + entry + r'}'
@@ -1690,7 +1818,7 @@ class Circuit(Function):
                             entry_str += add + entry
                         elif entry == r'\meter':
                             entry_str += add + entry
-                        elif r'\gate' in entry:
+                        elif r'\gate' in entry or r'\qw' in entry or r'\qswap' in entry:
                             entry_str += add + entry
                         else:
                             entry_str += add + r'\gate{' + entry + r'}'
@@ -1708,7 +1836,7 @@ class Circuit(Function):
                         elif entry == r'\targ':
                             entry_str += add + \
                                 r'\targ \qwx[' + str(wires[row][column]) + r']'
-                        elif r'\gate' in entry or entry == r'\meter':
+                        elif r'\gate' in entry or entry == r'\meter' or r'\qw' in entry or r'\qswap' in entry:
                             entry_str += add + entry + \
                                 r' \qwx[' + str(wires[row][column]) + r']'
                         else:
@@ -1738,7 +1866,7 @@ class Circuit(Function):
                             r'\control \cw \cwx[' + str(wires[row][column]) + r']'
                     elif entry == r'\meter':
                         entry_str += add + entry
-                    elif r'\gate' in entry:
+                    elif r'\gate' in entry or r'\qw' in entry or r'\qswap' in entry:
                         entry_str += add + entry + \
                             r' \qwx[' + str(wires[row][column]) + r']'
                     else:
@@ -1749,10 +1877,15 @@ class Circuit(Function):
 
                     formatted_sub_expressions.append(entry_str)
                 else:
-                    formatted_sub_expressions.append(add + entry)
+                    if entry == 'I':
+                        formatted_sub_expressions.append(add + r'\gate{I}')
+                    else:
+                        formatted_sub_expressions.append(add + entry)
             else:
-
-                formatted_sub_expressions.append(add + entry)
+                if entry == 'I':
+                    formatted_sub_expressions.append(add + r'\gate{I}')
+                else:
+                    formatted_sub_expressions.append(add + entry)
             column += 1
 
         if orientation == "vertical":

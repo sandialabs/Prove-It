@@ -332,8 +332,8 @@ class OperationOverInstances(Operation):
         elif arg_name == 'domain' or arg_name == 'domains':
             # return the proper single domain or list of domains
             domains = OperationOverInstances.explicit_domains(self)
-            if not hasattr(self, 'domain') or domains != [
-                    self.domain] * len(domains):
+            if (not hasattr(self, 'domain') or 
+                    domains != tuple([self.domain] * len(domains))):
                 if arg_name == 'domains' and len(domains) > 0:
                     return ExprTuple(*domains)
                 else:
