@@ -165,6 +165,8 @@ class Equals(TransitiveRelation):
             # There is mutual implication both sides are known to be
             # boolean.  Conclude equality via mutual implication.
             return Iff(self.lhs, self.rhs).derive_equality(assumptions)
+        
+        # check the equivalence set.
 
         if hasattr(self.lhs, 'deduce_equality'):
             # If there is a 'deduce_equality' method, use that.
@@ -255,6 +257,29 @@ class Equals(TransitiveRelation):
         from this one.  This is not a derivation: see derive_reversed().
         '''
         return Equals(self.rhs, self.lhs)
+
+    @staticmethod
+    def yield_known_equal_expressions(expr, assumptions=USE_DEFAULTS):
+        '''
+        Yield everything known to be equal to the given expression
+        under the given assumptions directly or indirectly through 
+        the transitive property of equality.
+        '''
+        assumptions = defaults.checked_assumptions(assumptions)
+        to_process = {expr}
+        processed = set()
+        while len(to_process) > 0:
+            expr = to_process.pop()
+            yield expr
+            processed.add(expr)
+            if expr not in Equals.known_equalities:
+                continue
+            for known_equality in Equals.known_equalities[expr]:
+                if known_equality.is_sufficient(assumptions):
+                    # A valid equality.  See if something is new.
+                    for operand in known_equality.operands:
+                        if operand not in processed:
+                            to_process.add(operand)
 
     def deduce_not_equals(self, assumptions=USE_DEFAULTS):
         r'''
@@ -466,6 +491,15 @@ class Equals(TransitiveRelation):
         from proveit.logic import TRUE, FALSE
         lambda_map = Equals._lambda_expr(lambda_map, self.rhs)
 
+        # Check if we want to use the reverse equality for a shorter
+        # proof.
+        reversed_eq = Equals(self.rhs, self.lhs)
+        if reversed_eq.proven(assumptions):
+            if (reversed_eq.prove(assumptions).proof().num_steps() <
+                    self.prove(assumptions).proof().num_steps()):
+                # Reverse it for a shorter proof.
+                return reversed_eq.sub_right_side_into(lambda_map, assumptions)
+        
         if isinstance(lambda_map.parameters[0], ExprRange):
             # We must use sub_in_left_operands for ExprTuple
             # substitution.
@@ -516,6 +550,16 @@ class Equals(TransitiveRelation):
         from . import sub_right_side_into
         from . import substitute_truth, substitute_in_true, substitute_falsehood, substitute_in_false
         from proveit.logic import TRUE, FALSE
+        
+        # Check if we want to use the reverse equality for a shorter
+        # proof.
+        reversed_eq = Equals(self.rhs, self.lhs)
+        if reversed_eq.proven(assumptions):
+            if (reversed_eq.prove(assumptions).proof().num_steps() <
+                    self.prove(assumptions).proof().num_steps()):
+                # Reverse it for a shorter proof.
+                return reversed_eq.sub_left_side_into(lambda_map, assumptions)
+        
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
 
         if isinstance(lambda_map.parameters[0], ExprRange):

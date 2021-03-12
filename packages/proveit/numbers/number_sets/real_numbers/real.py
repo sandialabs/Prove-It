@@ -33,6 +33,10 @@ class RealNonZeroSet(NumberSet):
         NumberSet.__init__(self, 'RealNonZero', r'\mathbb{R}^{\neq 0}',
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .real_membership import RealNonZeroMembership    
+        return RealNonZeroMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealNonZero' for a given n.
@@ -74,6 +78,10 @@ class RealPosSet(NumberSet):
         NumberSet.__init__(self, 'RealPos', r'\mathbb{R}^+', 
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .real_membership import RealPosMembership    
+        return RealPosMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealPos' for a given n.
@@ -89,7 +97,7 @@ class RealPosSet(NumberSet):
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import positive_if_in_real_pos
         return positive_if_in_real_pos.instantiate(
-            {a: member}, assumptions=assumptions)
+            {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_pos_membership_is_bool
@@ -120,6 +128,10 @@ class RealNegSet(NumberSet):
         NumberSet.__init__(self, 'RealNeg', r'\mathbb{R}^-', 
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .real_membership import RealNegMembership    
+        return RealNegMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealNeg' for a given n.
@@ -135,7 +147,7 @@ class RealNegSet(NumberSet):
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import negative_if_in_real_neg
         return negative_if_in_real_neg.instantiate(
-            {a: member}, assumptions=assumptions)
+            {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_neg_membership_is_bool
@@ -166,6 +178,10 @@ class RealNonNegSet(NumberSet):
         NumberSet.__init__(self, 'RealNonNeg', r'\mathbb{R}^{\ge 0}',
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .real_membership import RealNonNegMembership    
+        return RealNonNegMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealNonNeg' for a given n.
@@ -177,7 +193,7 @@ class RealNonNegSet(NumberSet):
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonneg_if_in_real_nonneg
         return nonneg_if_in_real_nonneg.instantiate(
-            {a: member}, assumptions=assumptions)
+            {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_nonneg_membership_is_bool
@@ -196,6 +212,10 @@ class RealNonPosSet(NumberSet):
         NumberSet.__init__(self, 'RealNonPos', r'\mathbb{R}^{\le 0}',
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .real_membership import RealNonPosMembership    
+        return RealNonPosMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in RealNonNeg' for a given n.
@@ -207,11 +227,10 @@ class RealNonPosSet(NumberSet):
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonpos_if_in_real_nonpos
         return nonpos_if_in_real_nonpos.instantiate(
-            {a: member}, assumptions=assumptions)
+            {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_nonpos_membership_is_bool
-        from proveit import x
         return real_nonpos_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 

@@ -41,6 +41,10 @@ class IntegerNonZeroSet(NumberSet):
         NumberSet.__init__(self, 'IntegerNonZero', r'\mathbb{Z}^{\neq 0}', 
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .integer_membership import IntegerNonZeroMembership    
+        return IntegerNonZeroMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in Integer' for a given n.
@@ -56,11 +60,10 @@ class IntegerNonZeroSet(NumberSet):
     def deduce_member_not_zero(self, member, assumptions=USE_DEFAULTS):
         from . import nonzero_if_in_nonzero_int
         return nonzero_if_in_nonzero_int.instantiate(
-            {x: member}, assumptions=assumptions)
+            {a: member}, assumptions=assumptions)
     
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import nonzero_int_membership_is_bool
-        from proveit import x
         return nonzero_int_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
@@ -81,6 +84,10 @@ class IntegerNegSet(NumberSet):
         NumberSet.__init__(self, 'IntegerNeg', r'\mathbb{Z}^{-}', 
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .integer_membership import IntegerNegMembership    
+        return IntegerNegMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in Integer' for a given n.
@@ -100,7 +107,7 @@ class IntegerNegSet(NumberSet):
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import negative_if_in_neg_int
         return negative_if_in_neg_int.instantiate(
-            {x: member}, assumptions=assumptions)
+            {a: member}, assumptions=assumptions)
     
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import neg_int_membership_is_bool
@@ -134,6 +141,10 @@ class IntegerNonPosSet(NumberSet):
         NumberSet.__init__(self, 'IntegerNonPos', r'\mathbb{Z}^{\leq 0}', 
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .integer_membership import IntegerNonPosMembership    
+        return IntegerNonPosMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in Integer' for a given n.
@@ -149,7 +160,7 @@ class IntegerNonPosSet(NumberSet):
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonpos_if_in_nonpos_int
         return nonpos_if_in_nonpos_int.instantiate(
-            {x: member}, assumptions=assumptions)
+            {a: member}, assumptions=assumptions)
     
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import nonpos_int_membership_is_bool

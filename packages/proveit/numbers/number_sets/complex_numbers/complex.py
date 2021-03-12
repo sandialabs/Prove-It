@@ -248,6 +248,10 @@ class ComplexNonZeroSet(NumberSet):
         NumberSet.__init__(self, 'ComplexNonZero', r'\mathbb{C}^{\neq 0}',
                            theory=__file__, fence_when_forced=True)
 
+    def membership_object(self, element):
+        from .complex_membership import ComplexNonZeroMembership    
+        return ComplexNonZeroMembership(element)
+
     def membership_side_effects(self, judgment):
         '''
         Yield side-effects when proving 'q in RationalPos'
@@ -265,14 +269,14 @@ class ComplexNonZeroSet(NumberSet):
             {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from . import complex_non_zero_membership_is_bool
+        from . import complex_nonzero_membership_is_bool
         from proveit import x
-        return complex_non_zero_membership_is_bool.instantiate(
+        return complex_nonzero_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 
     def deduce_member_in_complex(self, member, assumptions=USE_DEFAULTS):
-        from . import complex_non_zero_within_complex
-        return complex_non_zero_within_complex.derive_superset_membership(
+        from . import complex_nonzero_within_complex
+        return complex_nonzero_within_complex.derive_superset_membership(
             member, assumptions)
     
 

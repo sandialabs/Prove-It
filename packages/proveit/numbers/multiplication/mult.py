@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, ExprTuple,
-                     ProofFailure, InnerExpr)
+                     Judgment, ProofFailure, InnerExpr)
 from proveit.logic import Equals, InSet
 from proveit.numbers import num
 from proveit.numbers.number_sets import (Integer, Natural, NaturalPos, Real,
@@ -43,7 +43,9 @@ class Mult(Operation):
                     pass  # and that's okay
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
-        # edited by JML 7/20/19
+        '''
+        Attempt to prove that this product is in the given number_set.
+        '''
         from . import (
             mult_int_closure,
             mult_int_closure_bin,
@@ -105,9 +107,9 @@ class Mult(Operation):
             else:
                 thm = mult_real_non_neg_closure
         else:
-            msg = ("'Mult.deduce_in_number_set()' not implemented for the "
-                   "%s set" % str(number_set))
-            raise ProofFailure(InSet(self, number_set), assumptions, msg)
+            raise NotImplementedError(
+                "'Mult.deduce_in_number_set()' not implemented for the "
+                "%s set" % str(number_set))
         # print("thm", thm)
         # print("self in deduce in number set", self)
         # print("self.operands", self.operands)
@@ -301,7 +303,7 @@ class Mult(Operation):
 
         if self.operands[idx] != one:
             raise ValueError(
-                "Operand at the index %d expected to be zero for %s" %
+                "Operand at the index %d expected to be 1 for %s" %
                 (idx, str(self)))
 
         if self.operands.is_double():
@@ -657,7 +659,7 @@ class Mult(Operation):
         if is_irreducible_value(expr):
             return eq.relation  # done
 
-        if self.operands.num_entries() > 2:
+        if isinstance(expr, Mult) and expr.operands.num_entries() > 2:
             eq.update(pairwise_evaluation(expr, assumptions))
             return eq.relation
 
@@ -761,9 +763,10 @@ class Mult(Operation):
         Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
-        from . import distribute_through_sum, distribute_through_subtract  # , distribute_through_summation
+        from . import (distribute_through_sum, distribute_through_subtract,
+                       distribute_through_abs_sum)# , distribute_through_summation
         from proveit.numbers.division import prod_of_fracs  # , frac_in_prod
-        from proveit.numbers import Add, Div, Neg, Sum
+        from proveit.numbers import Add, Neg, Abs, Div, Sum
         if (idx is None and self.factors.is_double() and 
                 all(isinstance(factor, Div) for factor in self.factors)):
             return prod_of_fracs.instantiate(
@@ -778,13 +781,7 @@ class Mult(Operation):
         _c = self.operands[idx + 1:]
         _i = _a.num_elements(assumptions)
         _k = _c.num_elements(assumptions)
-        if isinstance(operand, Add):
-            _b = self.operands[idx].operands
-            _j = _b.num_elements(assumptions)
-            return distribute_through_sum.instantiate(
-                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
-                assumptions=assumptions)
-        elif (isinstance(operand, Add) and operand.operands.is_double()
+        if (isinstance(operand, Add) and operand.operands.is_double()
               and isinstance(operand.operands[0], Neg)):
             _j = _k
             _x = self.operands[idx].operands[0]
@@ -792,6 +789,28 @@ class Mult(Operation):
             return distribute_through_subtract.instantiate(
                 {i: _i, j: _j, a: _a, x: _x, y: _y, c: _c},
                 assumptions=assumptions)
+        elif isinstance(operand, Add):
+            _b = self.operands[idx].operands
+            _j = _b.num_elements(assumptions)
+            return distribute_through_sum.instantiate(
+                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
+                assumptions=assumptions)
+        elif isinstance(operand, Abs) and isinstance(operand.operand, Add):
+            # For example, 
+            # x * |a + b + c| * y * z = |x*a*y*z + x*b*y*z + x*c*y*z|
+            # if x, y, and z are non-negative.
+            _b = self.operands[idx].operand.operands
+            _j = _b.num_elements(assumptions)
+            equiv = distribute_through_abs_sum.instantiate(
+                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
+                assumptions=assumptions)                
+            # As a convenient "side-effect" of this derivation,
+            # if we know that the original was positive,
+            # so is the new one.
+            if all(InSet(operand, RealPos).proven(assumptions) for 
+                   operand in self.operands):
+                InSet(self, RealPos).prove(assumptions)
+            return equiv
         elif isinstance(operand, Div):
             raise NotImplementedError("Mult.distribution must be updated "
                                       "for Div case.")
@@ -822,7 +841,7 @@ class Mult(Operation):
             raise Exception(
                 "Unsupported operand type to distribute over: " + str(operand.__class__))
 
-    def factorization(self, the_factor, pull="left",
+    def factorization(self, the_factor_or_index, pull="left",
                       group_factor=True,
                       group_remainder=False,
                       assumptions=USE_DEFAULTS):
@@ -837,32 +856,36 @@ class Mult(Operation):
         '''
         expr = self
         eq = TransRelUpdater(expr, assumptions)
-        if the_factor == self:
+        if the_factor_or_index == self:
             return eq.relation # self = self
-        idx, num = self.index(the_factor, also_return_num=True)
+        if isinstance(the_factor_or_index, int):
+            idx, num = the_factor_or_index, 1
+        else:
+            the_factor = the_factor_or_index
+            idx, num = self.index(the_factor, also_return_num=True)
         expr = eq.update(self.group_commutation(
             idx, 0 if pull == 'left' else -num, length=num,
             assumptions=assumptions))
         if group_factor and num > 1:
-            if pull == 'left':  # use 0:num type of convention like standard pythong
+            # use 0:num type of convention like standard python
+            if pull == 'left':  
                 expr = eq.update(expr.association(0, num,
                                                   assumptions=assumptions))
             elif pull == 'right':
                 expr = eq.update(expr.association(-num, num,
                                                   assumptions=assumptions))
         if group_remainder and self.operands.num_entries() - num > 1:
-            # if the factor has been group, effectively there is just 1 factor
-            # operand now
+            # if the factor has been group, effectively there is just 1
+            # factor operand now
             num_factor_operands = 1 if group_factor else num
+            num_remainder_operands = self.operands.num_entries() - num_factor_operands
             if pull == 'left':
-                expr = eq.update(
-                    expr.association(
-                        num_factor_operands, 
-                        self.operands.num_entries() - num_factor_operands, 
+                expr = eq.update(expr.association(
+                        num_factor_operands, num_remainder_operands, 
                         assumptions=assumptions))
             elif pull == 'right':
-                expr = eq.update(expr.association(0, num_factor_operands,
-                                                  assumptions=assumptions))
+                expr = eq.update(expr.association(
+                        0, num_remainder_operands, assumptions=assumptions))
         return eq.relation
 
     def exponent_combination(self, start_idx=None, end_idx=None,
@@ -1113,8 +1136,123 @@ class Mult(Operation):
         from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation, assumptions)
 
+    def deduce_bound(self, factor_relation_or_relations, 
+                     assumptions=USE_DEFAULTS):
+        from proveit.numbers import NumberOrderingRelation
+        expr = self
+        eq = TransRelUpdater(expr, assumptions)
+        if (isinstance(factor_relation_or_relations, Judgment) or
+                isinstance(factor_relation_or_relations,
+                           NumberOrderingRelation)):
+            # Just a single relation.
+            factor_relations = [factor_relation_or_relations]
+        else:
+            factor_relations = factor_relation_or_relations
+        for factor_relation in factor_relations:
+            expr = eq.update(expr.deduce_bound_by_factor(
+                    factor_relation, assumptions=assumptions))
+        assert eq.relation.lhs == self
+        return eq.relation        
+
+    def deduce_bound_by_factor(self, factor_relation,
+                               assumptions=USE_DEFAULTS):
+        from proveit.numbers import (zero, NumberOrderingRelation,
+                                     Less, greater, greater_eq)
+        if isinstance(factor_relation, Judgment):
+            factor_relation = factor_relation.expr
+        if not isinstance(factor_relation, NumberOrderingRelation):
+            raise TypeError("'factor_relation' expected to be a number "
+                            "relation (<, >, ≤, or ≥)")
+        idx = None
+        for side in factor_relation.operands:
+            try:
+                idx, num = self.index(side, also_return_num=True)
+                break
+            except ValueError:
+                pass
+        if idx is None:
+            raise TypeError("'factor_relation' expected to be a relation "
+                            "for one of the factors; neither factor of %s "
+                            "appears in the %s relation."
+                            %(self, factor_relation))
+        expr = self
+        eq = TransRelUpdater(expr, assumptions)
+        if num > 1:
+            expr = eq.update(expr.association(idx, num,
+                                              assumptions=assumptions))
+        if expr.operands.is_double():
+            # Handle the binary cases.
+            assert 0 <= idx < 2
+            if idx == 0:
+                relation = factor_relation.right_mult_both_sides(
+                        expr.factors[1], assumptions=assumptions)
+            elif idx == 1:
+                relation = factor_relation.left_mult_both_sides(
+                        expr.factors[0], assumptions=assumptions)
+            expr = eq.update(relation)
+        else:
+            thm = None
+            if (isinstance(factor_relation, Less) and 
+                    all(greater(factor, zero).proven(assumptions) for
+                        factor in self.factors)):
+                # We can use the strong bound.
+                from . import strong_bound_by_factor
+                thm = strong_bound_by_factor
+            elif all(greater_eq(factor, zero).proven(assumptions) for
+                     factor in self.factors):
+                # We may only use the weak bound.
+                from . import weak_bound_by_factor
+                thm = weak_bound_by_factor
+            if thm is not None:
+                _a = self.factors[:idx]
+                _b = self.factors[idx+1:]
+                _i = _a.num_elements(assumptions)
+                _j = _b.num_elements(assumptions)
+                _x = factor_relation.normal_lhs
+                _y = factor_relation.normal_rhs
+                expr = eq.update(thm.instantiate(
+                        {i: _i, j: _j, a: _a, b: _b, x: _x, y: _y},
+                        assumptions=assumptions))
+            else:
+                # Not so simple.  Let's make it simpler by
+                # factoring it into a binary multiplication.
+                expr = eq.update(expr.factorization(
+                        idx, pull='left', group_factor=True, 
+                        group_remainder=True, assumptions=assumptions))
+                expr = eq.update(expr.deduce_bound_by_factor(
+                        factor_relation, assumptions=assumptions))
+                # Put things back as the were before the factorization.
+                if isinstance(expr.factors[1], Mult):
+                    expr = eq.update(expr.disassociation(1, assumptions))
+                if idx != 0:
+                    expr = eq.update(expr.commutation(0, idx, assumptions))
+        if num > 1 and isinstance(expr.factors[idx], Mult):
+            expr = eq.update(expr.disassociation(idx, assumptions))            
+        relation = eq.relation
+        if relation.lhs != self:
+            relation = relation.with_direction_reversed()
+        assert relation.lhs == self
+        return relation
+            
+    def deduce_positive(self, assumptions=USE_DEFAULTS):
+        # Deduce that this absolute value is greater than zero
+        # given its argument is not equal zero.
+        from proveit.numbers import RealPos, zero, greater
+        InSet(self, RealPos).prove(assumptions)
+        return greater(self, zero).prove(assumptions)
+
 
 # Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(
+    Mult,
+    'one_elimination',
+    'eliminated_one',
+    'eliminate_one')
+InnerExpr.register_equivalence_method(
+    Mult,
+    'one_eliminations',
+    'eliminated_ones',
+    'eliminate_ones')
 InnerExpr.register_equivalence_method(
     Mult,
     'deep_one_eliminations',

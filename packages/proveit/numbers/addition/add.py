@@ -881,7 +881,7 @@ class Add(Operation):
             expr = eq.update(pairwise_evaluation(expr, assumptions))
             return eq.relation
 
-        if expr.operands.num_entries() == 2:
+        if expr.operands.is_double():
             # If both operands are negated, factor out the negation.
             if all(isinstance(operand, Neg) for operand in expr.operands):
                 negated = Neg(
@@ -1058,9 +1058,9 @@ class Add(Operation):
             _i = _a.num_elements(assumptions)
             return add_complex_closure.instantiate(
                 {i: _i, a: _a}, assumptions=assumptions)
-        msg = "'deduce_in_number_set' not implemented for the %s set" % str(
-            number_set)
-        raise ProofFailure(InSet(self, number_set), assumptions, msg)
+        raise NotImplementedError(
+            "'deduce_in_number_set' not implemented for the %s set"
+            % str(number_set))
 
     def deduce_difference_in_natural(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import Neg

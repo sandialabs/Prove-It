@@ -467,6 +467,9 @@ class Expression(metaclass=ExprType):
                                 "proven equality with 'self' on the "
                                 "left side: got %s for %s"
                                 % (reduction, self))
+            if not reduction.is_sufficient(assumptions):
+                # The assumptions aren't adequate to use this reduction.
+                return self
             requirements.append(reduction)
             equality_repl_requirements.add(reduction)
             return reduction.expr.rhs
@@ -1097,7 +1100,7 @@ class Expression(metaclass=ExprType):
                 if simplification is None:
                     raise EvaluationError(self, assumptions)
                 method_called = self.do_reduced_evaluation
-            except (NotImplementedError, EvaluationError):
+            except (NotImplementedError, EvaluationError, ProofFailure):
                 try:
                     simplification = self.do_reduced_simplification(
                         assumptions, **kwargs)

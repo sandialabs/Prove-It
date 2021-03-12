@@ -1,7 +1,6 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.not_false
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.sub_left_side_into
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
