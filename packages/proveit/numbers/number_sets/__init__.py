@@ -9,7 +9,10 @@ from .real_numbers import (
     Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
     RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC,
     e, pi)
-from .complex_numbers import Complex, ComplexNonZero, i
+from .complex_numbers import (
+        Complex, ComplexNonZero, i,
+        complex_polar_coordinates, 
+        unit_length_complex_polar_angle)
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

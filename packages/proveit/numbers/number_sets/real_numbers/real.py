@@ -97,7 +97,7 @@ class RealPosSet(NumberSet):
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import positive_if_in_real_pos
         return positive_if_in_real_pos.instantiate(
-            {a: member}, assumptions=assumptions)
+            {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_pos_membership_is_bool
@@ -147,7 +147,7 @@ class RealNegSet(NumberSet):
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import negative_if_in_real_neg
         return negative_if_in_real_neg.instantiate(
-            {a: member}, assumptions=assumptions)
+            {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_neg_membership_is_bool
@@ -193,7 +193,7 @@ class RealNonNegSet(NumberSet):
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonneg_if_in_real_nonneg
         return nonneg_if_in_real_nonneg.instantiate(
-            {a: member}, assumptions=assumptions)
+            {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_nonneg_membership_is_bool
@@ -227,11 +227,10 @@ class RealNonPosSet(NumberSet):
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonpos_if_in_real_nonpos
         return nonpos_if_in_real_nonpos.instantiate(
-            {a: member}, assumptions=assumptions)
+            {x: member}, assumptions=assumptions)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_nonpos_membership_is_bool
-        from proveit import x
         return real_nonpos_membership_is_bool.instantiate(
             {x: member}, assumptions=assumptions)
 

@@ -510,7 +510,7 @@ class InnerExpr:
                 {P: self.repl_lambda(), x: replacement},
                 assumptions=assumptions)
         else:
-            Equals(cur_inner_expr, replacement).sub_right_side_into(
+            return Equals(cur_inner_expr, replacement).sub_right_side_into(
                 self.repl_lambda(), assumptions=assumptions)
 
     def _expr_rep(self):

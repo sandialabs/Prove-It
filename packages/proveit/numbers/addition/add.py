@@ -881,7 +881,7 @@ class Add(Operation):
             expr = eq.update(pairwise_evaluation(expr, assumptions))
             return eq.relation
 
-        if expr.operands.num_entries() == 2:
+        if expr.operands.is_double():
             # If both operands are negated, factor out the negation.
             if all(isinstance(operand, Neg) for operand in expr.operands):
                 negated = Neg(

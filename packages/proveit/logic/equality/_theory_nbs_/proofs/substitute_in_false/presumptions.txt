@@ -2,6 +2,5 @@
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
-proveit.logic.equality.substitute_in_true
 proveit.logic.equality.substitute_truth
 # THEOREMS AND THEORIES TO EXCLUDE:
