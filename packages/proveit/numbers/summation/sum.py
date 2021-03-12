@@ -179,7 +179,7 @@ class Sum(OperationOverInstances):
 #            print "Not a geometric sum!"
 
     def shift(self, shift_amount, simplify_idx=True, simplify_summand=True,
-              assumptions=USE_DEFAULTS):
+              reductions=USE_DEFAULTS, assumptions=USE_DEFAULTS):
         '''
         Shift the summation indices by the shift_amount, and shift
         the summand by a corresponding compensating amount, deducing
@@ -212,7 +212,8 @@ class Sum(OperationOverInstances):
         # Among other things, convert any assumptions=None
         # to assumptions=().
         assumptions = defaults.checked_assumptions(assumptions)
-        user_reductions = []
+        if reductions is None:
+            reductions = []
 
         from . import index_shift
         from proveit.numbers import Add
@@ -236,23 +237,22 @@ class Sum(OperationOverInstances):
             lower_bound_shifted = (
                 Add(_a, _c).simplification(
                     shallow=True, assumptions=assumptions))
-            user_reductions = [*user_reductions, lower_bound_shifted]
+            reductions = [*reductions, lower_bound_shifted]
             upper_bound_shifted = (
                 Add(_b, _c).simplification(
                     shallow=True, assumptions=assumptions))
-            user_reductions = [*user_reductions, upper_bound_shifted]
+            reductions = [*reductions, upper_bound_shifted]
         if (simplify_summand):
             summand_shifted = f_op_sub.replaced({_i:subtract(_i, _c)})
             summand_shifted = (
                 summand_shifted.simplification(shallow=True, 
                     assumptions=[*assumptions, InSet(_i, Interval(_a, _b))]))
-            user_reductions = [*user_reductions, summand_shifted]
+            reductions = [*reductions, summand_shifted]
         
         return index_shift.instantiate(
-            {f_op: f_op_sub, x: self.index},
-            assumptions=assumptions).instantiate(
-            {a: self.domain.lower_bound, b: self.domain.upper_bound,
-             c: shift_amount}, reductions=user_reductions,
+            {f_op: f_op_sub, x: self.index, a: self.domain.lower_bound,
+             b: self.domain.upper_bound, c: shift_amount},
+             reductions=reductions,
              assumptions=assumptions)
 
     def join(self, second_summation, simplify_idx=True,
