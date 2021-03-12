@@ -50,7 +50,6 @@ class ProperSubset(InclusionRelation):
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         '''
-        print("Entering the ProperSubset.conclude() method!")                   # for testing; delete later
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
