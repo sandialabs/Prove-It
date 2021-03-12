@@ -1,7 +1,6 @@
 from proveit import Literal, Operation
 from proveit.logic import Equals
 from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
-# from proveit.linalg.matrix_ops import ScalarProd
 from proveit.linear_algebra.matrix_ops import ScalarProd
 
 pkg = __package__
