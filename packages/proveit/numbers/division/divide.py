@@ -2,7 +2,8 @@ from proveit import (Judgment, Expression, Literal, maybe_fenced_latex,
                      Operation, ExprTuple, InnerExpr, USE_DEFAULTS,
                      UnsatisfiedPrerequisites)
 from proveit import TransRelUpdater
-from proveit import a, b, c, m, n, w, x, y, z
+from proveit import a, b, c, m, n, w, x, y, z, P, S
+from proveit.numbers import Neg, num
 
 
 class Div(Operation):
@@ -344,36 +345,54 @@ class Div(Operation):
 
     def distribution(self, assumptions=USE_DEFAULTS):
         r'''
-        Distribute the denominator through the numerate.
-        Returns the equality that equates self to this new version.
+        Distribute the denominator through the numerator, returning
+        the equality that equates self to this new version.
         Examples:
             :math:`(a + b + c) / d = a / d + b / d + c / d`
             :math:`(a - b) / d = a / d - b / d`
             :math:`\left(\sum_x f(x)\right / y = \sum_x [f(x) / y]`
-        Give any assumptions necessary to prove that the operands are in the Complex
-        numbers so that the associative and commutation theorems are applicable.
+        Give any assumptions necessary to prove that the operands are
+        in the Complex numbers so that the associative and commutation
+        theorems are applicable.
         '''
         from proveit.numbers import Add, subtract, Sum
-        from . import distributefrac_through_sum, distributefrac_through_subtract, distributefrac_through_summation
+        from . import (distribute_frac_through_sum,
+                       distribute_frac_through_subtract,
+                       distribute_frac_through_summation)
         if isinstance(self.numerator, Add):
-            return distributefrac_through_sum.instantiate(
-                {x_etc: self.numerator.operands, y: self.denominator})
-        elif isinstance(self.numerator, subtract):
-            return distributefrac_through_subtract.instantiate(
-                {x: self.numerator.operands[0], y: self.numerator.operands[1], z: self.denominator})
+            # Catch the special case where we have a subtraction of
+            # the form (a - b)/c
+            if (self.numerator.operands.num_entries()==2 and
+                isinstance(self.numerator.operands[1], Neg)):
+                _x_sub = self.numerator.operands[0]
+                _y_sub = self.numerator.operands[1].operand # inside the Neg
+                _z_sub = self.denominator
+                return distribute_frac_through_subtract.instantiate(
+                    {x: _x_sub, y: _y_sub, z: _z_sub}, assumptions=assumptions)
+            else: # Otherwise proceed with more general Add
+                _n_sub = num(self.numerator.operands.num_entries())
+                _x_sub = self.numerator.operands
+                _y_sub = self.denominator
+                return distribute_frac_through_sum.instantiate(
+                    {n: _n_sub, x: _x_sub, y: _y_sub}, assumptions=assumptions)
         elif isinstance(self.numerator, Sum):
-            # Should deduce in Complex, but distribute_through_summation doesn't have a domain restriction right now
-            # because this is a little tricky.   To do.
-            #deduce_in_complex(self.operands, assumptions)
-            y_etc_sub = self.numerator.indices
-            Pop, Pop_sub = Operation(
-                P, self.numerator.indices), self.numerator.summand
-            S_sub = self.numerator.domain
-            dummy_var = safe_dummy_var(self)
-            spec1 = distributefrac_through_summation.instantiate(
-                {Pop: Pop_sub, S: S_sub, y_etc: y_etc_sub, z: dummy_var})
-            return spec1.derive_conclusion().instantiate(
-                {dummy_var: self.denominator})
+            # Should deduce in Complex, but
+            # distribution_through_summation doesn't have a domain
+            # restriction right now because this is a little tricky.To do.
+            # As in other situations involving summations, this only
+            # works for summations with a single index.
+            _P_op, _P_op_sub = (
+                Operation(P, self.numerator.index), self.numerator.summand)
+            _S_sub = self.numerator.domain
+            _y_sub = self.numerator.index
+            _dummy_var = self.safe_dummy_var()
+            _z_sub = self.denominator
+            spec_01 = distribute_frac_through_summation.instantiate(
+                {_P_op: _P_op_sub, S: _S_sub, y: _y_sub, z: _dummy_var},
+                assumptions=assumptions)
+            return spec_01.derive_consequent(
+                assumptions=assumptions).instantiate(
+                {_dummy_var: _z_sub}, assumptions=assumptions)
         else:
             raise Exception(
                 "Unsupported operand type to distribute over: " +
@@ -688,3 +707,5 @@ InnerExpr.register_equivalence_method(
     'cancelation',
     'canceled',
     'cancel')
+InnerExpr.register_equivalence_method(
+    Div, 'distribution', 'distributed', 'distribute')
