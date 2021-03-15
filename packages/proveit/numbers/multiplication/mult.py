@@ -1033,7 +1033,7 @@ class Mult(Operation):
             known_exponent_type = possible_exponent_types[0]
 
             if known_exponent_type == NaturalPos:
-                if self.base.operands.is_double():
+                if self.operands.is_double():
                     _m, _n = operand_exponents
                     return product_of_posnat_powers.instantiate(
                         {a: same_base, m: _m, n: _n}, assumptions=assumptions)
