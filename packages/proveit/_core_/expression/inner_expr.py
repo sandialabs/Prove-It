@@ -547,6 +547,11 @@ class InnerExpr:
 
     def cur_sub_expr(self):
         return self.expr_hierarchy[-1]
+    
+    def sub_expr(self, k):
+        return InnerExpr(self.expr_hierarchy[0],
+                         self.inner_expr_path + (k,),
+                         assumptions=self.assumptions)
 
     def simplify_operands(self, assumptions=USE_DEFAULTS):
         from proveit.logic import default_simplification
@@ -565,14 +570,11 @@ class InnerExpr:
     def __repr__(self):
         return self._expr_rep().__repr__()
 
-def shallowest_inner_expr(expr, inner):
+def generate_inner_expressions(expr, inner):
     '''
-    Return the InnerExpr that represent inner as an 'inner' expression
-    of 'expr' which is the most shallow such possibility.  This is
-    found using a breadth-first search.
-    
-    Raise a ValueError if 'inner' is not found as an inner expression
-    of 'expr'.
+    Yield the InnerExpr objects that represent 'inner' as an 
+    inner expression of 'expr'.  There may be multiple occurrences.
+    They are found using a breadth-first search approach.
     '''
     next_inner_exprs = deque([InnerExpr(expr)])
     while len(next_inner_exprs) > 0:
@@ -581,13 +583,11 @@ def shallowest_inner_expr(expr, inner):
         cur_sub_expr = next_inner_expr.cur_sub_expr()
         if cur_sub_expr == inner:
             # Found it!
-            return next_inner_expr
+            yield next_inner_expr
         # Append the sub-expressions of next_inner_expr for deeper
         # exploration.
         for k, sub_expr in enumerate(cur_sub_expr.sub_expr_iter()):
             next_inner_exprs.append(next_inner_expr.sub_expr(k))
-    raise ValueError("%s not found as an inner expression of %s"
-                   %(inner, expr))
 
 
 # Register these generic expression equivalence methods:
