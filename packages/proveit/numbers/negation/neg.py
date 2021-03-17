@@ -8,9 +8,9 @@ from proveit.numbers.number_sets import (
         Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
         Complex, ComplexNonZero)
 from proveit import a, b, c, m, n, x, y, B
+from proveit.numbers import NumberOperation
 
-
-class Neg(Operation):
+class Neg(NumberOperation):
     # operator of the Neg operation.
     _operator_ = Literal(string_format='-', theory=__file__)
 

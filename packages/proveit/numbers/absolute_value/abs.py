@@ -3,9 +3,10 @@ from proveit import (defaults, Literal, Operation, ExprRange, InnerExpr,
 from proveit import a, b, c, n, r, x, theta
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
+from proveit.numbers import NumberOperation
 
 
-class Abs(Operation):
+class Abs(NumberOperation):
     # operator of the Abs operation.
     _operator_ = Literal(string_format='Abs', theory=__file__)
 

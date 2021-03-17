@@ -4,9 +4,10 @@ from proveit.logic import InSet, Membership
 import proveit
 from proveit import a, b, c, k, m, n, x, S
 from proveit.numbers import one, two, Div, frac, num, Real
+from proveit.numbers import NumberOperation
 
 
-class Exp(Function):
+class Exp(NumberOperation):
     '''
     An Expression class to represent an exponentiation.  Derive from
     Function since infix notation should not be a style option.

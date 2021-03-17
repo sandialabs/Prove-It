@@ -10,9 +10,10 @@ import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
 from proveit import TransRelUpdater
 import bisect
+from proveit.numbers import NumberOperation
 
 
-class Add(Operation):
+class Add(NumberOperation):
     # operator of the Add operation
     _operator_ = Literal(string_format='+', theory=__file__)
 
@@ -1092,6 +1093,37 @@ class Add(Operation):
         return thm.instantiate({a: self.terms[0], b: self.terms[1].operand},
                                assumptions=assumptions)
 
+    def index(self, the_term, also_return_num=False):
+        '''
+        Return the starting index of the_term, which may be a single 
+        operand, a list of consecutive operands, or a Add expression 
+        that represents the sum of the list of consecutive operands.
+        If also_return_num is True, return a tuple of the index and 
+        number of operands for the_term.
+        '''
+        if isinstance(the_term, Add):
+            the_term = the_term.operands.entries
+        if (hasattr(the_term, '__getitem__') and 
+                hasattr(the_term, '__len__')):
+            # multiple operands in the_term
+            first_term = the_term[0]
+            num = len(the_term)
+            idx = -1
+            try:
+                while True:
+                    idx = self.operands.index(first_term, start=idx + 1)
+                    if self.operands[idx:idx + num].entries == tuple(the_term):
+                        break  # found it all!
+            except ValueError:
+                raise ValueError("Term is absent!")
+        else:
+            num = 1
+            try:
+                idx = self.operands.index(the_term)
+            except ValueError:
+                raise ValueError("Term is absent!")
+        return (idx, num) if also_return_num else idx
+
     def factorization(
             self,
             the_factor,
@@ -1278,96 +1310,91 @@ class Add(Operation):
         '''
         return eq
 
-    def deduce_bound(self, term_relation_or_relations, 
-                     assumptions=USE_DEFAULTS):
+    def bound_via_operand_bound(self, operand_relation, assumptions=USE_DEFAULTS):
         '''
-        Given relations applicable to one or more of the terms,
-        bound this addition accordingly.  For example, if self is
-        "x + a" and the term_relations are
-            x < y and a < b
-        return x + a < y + b.
-        
-        Also see Add.deduce_bound_by_term which bounds the sum
-        by one of the terms.
+        Alias for bound_via_term_bound.
+        Also see NumberOperation.deduce_bound.
         '''
-        from proveit.numbers import Less, LessEq
-        from . import (
-                strong_bound_by_right_term, strong_bound_by_left_term,
-                weak_bound_by_right_term, weak_bound_by_left_term)
-        if isinstance(term_relation_or_relations, Judgment):
-            term_relation_or_relations = term_relation_or_relations.expr
-        if isinstance(term_relation_or_relations, ExprTuple):
-            term_relations = term_relation_or_relations.entries
-        elif isinstance(term_relation_or_relations, Expression):
-            term_relations = [term_relation_or_relations]
-        else:
-            term_relations = term_relation_or_relations
-        if len(set(term_relations)) != len(term_relations):
-            raise ValueError("'term_relations' should be distinct: %s"
-                             % term_relations)
-        term_indices_with_relations = set()
-        for term_relation in term_relations:
-            if isinstance(term_relation, Judgment):
-                term_relation = term_relation.expr
-            if not (isinstance(term_relation, Less) or
-                    isinstance(term_relation, LessEq)):
-                raise TypeError("term_relations are expected to be Less "
-                                "or LessEq number relations, not %s"
-                                %term_relation)
-            term_index = None
-            for rel_side in (term_relation.normal_lhs, 
-                             term_relation.normal_rhs):
-                try:
-                    term_index = self.terms.entries.index(rel_side)
-                except ValueError:
-                    pass
-            if term_index is None:
-                raise ValueError("term_relations are expected to be "
-                                 "relations (< or <=) involving terms of "
-                                 "%s.  %s does not involve any"
-                                 %(self, term_relation))
-            term_indices_with_relations.add(term_index)
-        if not self.terms.is_double():
-            raise NotImplementedError("Add.deduce_bound is currently only "
-                                      "implemented for binary addition.")
-        if len(term_relations) == 2:
-            # Do this in two passes.
-            first_rel = self.deduce_bound(term_relations[0], assumptions)
-            next_rel = first_rel.rhs.deduce_bound(term_relations[1],
-                                                  assumptions)
-            return first_rel.apply_transitivity(next_rel, assumptions)
-        term_relation = term_relations[0]
-        _x = term_relation.normal_lhs
-        _y = term_relation.normal_rhs            
-        if 0 in term_indices_with_relations:
-            # bounded by left term
-            _a = self.terms[1]
-            if isinstance(term_relations[0], Less):
-                thm = strong_bound_by_left_term # strong bound
-            else:
-                assert isinstance(term_relations[0], LessEq)
-                thm = weak_bound_by_left_term # weak bound
-        else:
-            # bounded by right term
-            assert 1 in term_indices_with_relations
-            _a = self.terms[0]
-            if isinstance(term_relations[0], Less):
-                thm = strong_bound_by_right_term # strong bound
-            else:
-                assert isinstance(term_relations[0], LessEq)
-                thm = weak_bound_by_right_term # weak bound
-        bound = thm.instantiate({a:_a, x:_x, y:_y},
-                                assumptions=assumptions)
-        if bound.rhs == self:
-            return bound.with_direction_reversed()
-        assert bound.lhs == self
-        return bound
+        return self.bound_via_term_bound(operand_relation, assumptions)
 
-    def deduce_bound_by_term(
+    def bound_via_term_bound(self, term_relation, assumptions=USE_DEFAULTS):
+        '''
+        Deduce a bound of this sum via the bound on
+        one of its terms.  For example
+            a + b + c + d < a + z + c + d   given   b < z.
+
+        Also see NumberOperation.deduce_bound.            
+        '''
+        from proveit.numbers import NumberOrderingRelation, Less
+        if isinstance(term_relation, Judgment):
+            term_relation = term_relation.expr
+        if not isinstance(term_relation, NumberOrderingRelation):
+            raise TypeError("'term_relation' expected to be a number "
+                            "relation (<, >, ≤, or ≥)")
+        idx = None
+        for side in term_relation.operands:
+            try:
+                idx, num = self.index(side, also_return_num=True)
+                break
+            except ValueError:
+                pass
+        if idx is None:
+            raise TypeError("'term_relation' expected to be a relation "
+                            "for one of the terms; neither term of %s "
+                            "appears in the %s relation."
+                            %(self, term_relation))
+        expr = self
+        eq = TransRelUpdater(expr, assumptions)
+        if num > 1:
+            expr = eq.update(expr.association(idx, num,
+                                              assumptions=assumptions))
+        if expr.operands.is_double():
+            # Handle the binary cases.
+            assert 0 <= idx < 2
+            if idx == 0:
+                relation = term_relation.right_add_both_sides(
+                        expr.terms[1], assumptions=assumptions)
+            elif idx == 1:
+                relation = term_relation.left_add_both_sides(
+                        expr.terms[0], assumptions=assumptions)
+            expr = eq.update(relation)
+        else:
+            thm = None
+            if isinstance(term_relation, Less):
+                # We can use the strong bound.
+                from . import strong_bound_via_term_bound
+                thm = strong_bound_via_term_bound
+            else:
+                # We may only use the weak bound.
+                from . import weak_bound_via_term_bound
+                thm = weak_bound_via_term_bound
+            _a = self.terms[:idx]
+            _b = self.terms[idx+1:]
+            _i = _a.num_elements(assumptions)
+            _j = _b.num_elements(assumptions)
+            _x = term_relation.normal_lhs
+            _y = term_relation.normal_rhs
+            expr = eq.update(thm.instantiate(
+                    {i: _i, j: _j, a: _a, b: _b, x: _x, y: _y},
+                    assumptions=assumptions))
+        if num > 1 and isinstance(expr.terms[idx], Add):
+            expr = eq.update(expr.disassociation(idx, assumptions))            
+        relation = eq.relation
+        if relation.lhs != self:
+            relation = relation.with_direction_reversed()
+        assert relation.lhs == self
+        return relation    
+
+    def bound_by_term(
             self, term_or_idx, assumptions=USE_DEFAULTS):
         '''
-        Deduce that this sum is bound be the given term (or term at
-        the given index).  To use this method, we must know that the
+        Deduce that this sum is bound by the given term (or term at
+        the given index).
+        
+        For example,
+        a + b + c + d ≥ b provided that a ≥ 0, c ≥ 0, and d ≥ 0.
+        
+        To use this method, we must know that the
         other terms are all in RealPos, RealNeg, RealNonNeg, or
         RealNonPos and will call
         deduce_weak_upper_bound_by_term,

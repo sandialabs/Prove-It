@@ -250,24 +250,25 @@ class LessEq(NumberOrderingRelation):
         '''
         from proveit.numbers import greater_eq, zero
         from proveit.numbers.multiplication import (
-            weak_bound_by_right_factor,
-            reversed_weak_bound_by_right_factor)
+            weak_bound_via_right_factor_bound,
+            reversed_weak_bound_via_right_factor_bound)
         was_reversed = False
         if greater_eq(multiplier, zero).proven(assumptions):
-            new_rel = weak_bound_by_right_factor.instantiate(
+            new_rel = weak_bound_via_right_factor_bound.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper},
                 assumptions=assumptions)._simplify_both_sides(
                 simplify=simplify, assumptions=assumptions)
         elif LessEq(multiplier, zero).proven(assumptions):
-            new_rel = reversed_weak_bound_by_right_factor.instantiate(
+            new_rel = reversed_weak_bound_via_right_factor_bound.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper},
                 assumptions=assumptions)._simplify_both_sides(
                 simplify=simplify, assumptions=assumptions)
             was_reversed = True
         else:
             raise Exception(
-                "Cannot 'left_mult_both_sides' a LessEq relation without "
-                "knowing the multiplier's relation with zero.")
+                "Cannot left-multiply both sides of %s by %s "
+                "without knowing the multiplier's relation with zero."
+                %(self, multiplier))
         new_rel = new_rel.with_mimicked_style(self)
         if was_reversed:
             new_rel = new_rel.with_direction_reversed()
@@ -281,24 +282,25 @@ class LessEq(NumberOrderingRelation):
         '''
         from proveit.numbers import zero
         from proveit.numbers.multiplication import (
-            weak_bound_by_left_factor,
-            reversed_weak_bound_by_left_factor)
+            weak_bound_via_left_factor_bound,
+            reversed_weak_bound_via_left_factor_bound)
         was_reversed = False
         if LessEq(zero, multiplier).proven(assumptions):
-            new_rel = weak_bound_by_left_factor.instantiate(
+            new_rel = weak_bound_via_left_factor_bound.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper},
                 assumptions=assumptions)._simplify_both_sides(
                 simplify=simplify, assumptions=assumptions)
         elif LessEq(multiplier, zero).proven(assumptions):
-            new_rel = reversed_weak_bound_by_left_factor.instantiate(
+            new_rel = reversed_weak_bound_via_left_factor_bound.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper},
                 assumptions=assumptions)._simplify_both_sides(
                 simplify=simplify, assumptions=assumptions)
             was_reversed = True
         else:
             raise Exception(
-                "Cannot 'right_mult_both_sides' a LessEq relation without "
-                "knowing the multiplier's relation with zero.")
+                "Cannot right-multiply both sides of %s by %s "
+                "without knowing the multiplier's relation with zero."
+                %(self, multiplier))
         new_rel = new_rel.with_mimicked_style(self)
         if was_reversed:
             new_rel = new_rel.with_direction_reversed()
@@ -318,9 +320,9 @@ class LessEq(NumberOrderingRelation):
         elif Less(divisor, zero).proven(assumptions):
             thm = weak_div_from_numer_bound__neg_denom
         else:
-            raise Exception("Cannot 'divide' a LessEq relation without "
-                            "knowing whether the divisor is greater than "
-                            "or less than zero.")
+            raise Exception("Cannot divide both sides of %s by %s "
+                            "without knowing the divisors "
+                            "relation to zero."%(self, divisor))
         new_rel = thm.instantiate(
                 {a: divisor, x: self.lower, y: self.upper},
                 assumptions=assumptions)._simplify_both_sides(
@@ -332,8 +334,8 @@ class LessEq(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the left.
         '''
-        from proveit.numbers.addition import weak_bound_by_right_term
-        new_rel = weak_bound_by_right_term.instantiate(
+        from proveit.numbers.addition import weak_bound_via_right_term_bound
+        new_rel = weak_bound_via_right_term_bound.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
@@ -344,8 +346,8 @@ class LessEq(NumberOrderingRelation):
         '''
         Add to both sides of the relation by the 'addend' on the right.
         '''
-        from proveit.numbers.addition import weak_bound_by_left_term
-        new_rel = weak_bound_by_left_term.instantiate(
+        from proveit.numbers.addition import weak_bound_via_left_term_bound
+        new_rel = weak_bound_via_left_term_bound.instantiate(
             {a: addend, x: self.lower, y: self.upper},
             assumptions=assumptions)._simplify_both_sides(
             simplify=simplify, assumptions=assumptions)
@@ -383,8 +385,9 @@ class LessEq(NumberOrderingRelation):
                 assumptions=assumptions)  ._simplify_both_sides(
                 simplify=simplify, assumptions=assumptions)
         else:
-            raise Exception("Cannot 'exponentiate' a Less relation without "
-                            "knowing the exponent's relation with zero")
+            raise Exception("Cannot exponentiate both sides of %s by %s "
+                            "without knowing the exponent's relation with "
+                            "zero"%(self, exponent))
         return new_rel.with_mimicked_style(self)
 
 
