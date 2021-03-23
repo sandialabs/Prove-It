@@ -1,8 +1,9 @@
-from proveit import (Literal, Function, ExprTuple, InnerExpr, ProofFailure,
-                     maybe_fenced_string, USE_DEFAULTS, StyleOptions)
-from proveit.logic import InSet, Membership
 import proveit
 from proveit import a, b, c, k, m, n, x, S
+from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
+                     ProofFailure, maybe_fenced_string, USE_DEFAULTS,
+                     StyleOptions)
+from proveit.logic import InSet, Membership
 from proveit.numbers import one, two, Div, frac, num, Real
 
 
@@ -97,7 +98,8 @@ class Exp(Function):
         from proveit.relation import TransRelUpdater
         from . import complex_x_to_first_power_is_x
         if self.exponent == one:
-            return complex_x_to_first_power_is_x.instantiate({a: self.base})
+            return complex_x_to_first_power_is_x.instantiate(
+                {x: self.base}, assumptions=assumptions)
         if (isinstance(self.base, Exp) and
             isinstance(self.base.exponent, Div) and
             self.base.exponent.numerator == one and
@@ -105,7 +107,8 @@ class Exp(Function):
             from . import nth_power_of_nth_root
             _n, _x = nth_power_of_nth_root.instance_params
             return nth_power_of_nth_root.instantiate(
-                {_n: self.exponent, _x: self.base.base}, assumptions=assumptions)
+                    {_n: self.exponent, _x: self.base.base},
+                    assumptions=assumptions)
 
         expr = self
         # for convenience updating our equation:
@@ -427,6 +430,44 @@ class Exp(Function):
         return thm.instantiate({n: n_sub}).instantiate(
             {a: a_sub, b: b_sub}).derive_reversed()
 
+    def exponent_separation(self, assumptions=USE_DEFAULTS):
+        '''
+        From self of the form x^{a+b} deduce and return the equality
+        x^{a+b} = x^a x^b. For example,
+            Exp(x, Add(two, c)).split_exponent_sum()
+        (with the apprpriate assumptions) should return:
+            |- (x^{2+c}) =  x^2 x^c.
+        '''
+        # among other things, convert any assumptions=None
+        # to assumptions=()
+        # assumptions = defaults.checkedAssumptions(assumptions)
+
+        from proveit.numbers import Add, Mult
+
+        # implement only for the case in which exponent is an Add
+        if not isinstance(self.exponent, Add):
+            raise NotImplementedError(
+            "'Exp.exponent_separation()' implemented only for cases in which "
+            "the exponent appears as a sum (i.e. in the Add class). The "
+            "exponent in this case is {0}.".format(self.exponent))
+
+        # list the addends in the exponent, which become exponents
+        the_exponents = self.exponent.operands
+
+        # list the new exponential factors
+        the_new_factors = [Exp(self.base, new_exp) for new_exp in the_exponents]
+
+        # create the new equivalent product (Mult)
+        mult_equiv = Mult(*the_new_factors)
+
+        # use the Mult.exponent_combination() to deduce equality to self
+        exp_separated = mult_equiv.exponent_combination(
+                    simplify_exp=False, assumptions=assumptions)
+
+        # reverse the equality relationship and return
+        return exp_separated.derive_reversed(assumptions=assumptions)
+
+
     def lower_outer_exp(self, assumptions=frozenset()):
         #
         from proveit.numbers import Neg
@@ -575,7 +616,6 @@ class ExpSetMembership(Membership):
         exponent_eval = domain.exponent.evaluation(assumptions=assumptions)
         exponent = exponent_eval.rhs
         base = domain.base
-        #print(exponent, base, exponent.as_int(),element, domain, len(element))
         if is_literal_int(exponent):
             if exponent == zero:
                 return exp_set_0.instantiate(
@@ -636,3 +676,5 @@ def sqrd(base):
 # Register these expression equivalence methods:
 InnerExpr.register_equivalence_method(
     Exp, 'distribution', 'distributed', 'distribute')
+InnerExpr.register_equivalence_method(
+    Exp, 'exponent_separation', 'exponent_separated', 'exponent_separate')
