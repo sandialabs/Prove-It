@@ -144,13 +144,17 @@ class Sum(OperationOverInstances):
         '''
         return self.simplification(assumptions).rhs
 
-    def reduce_geom_sum(self, assumptions=frozenset()):
+    def geom_sum_reduction(self, assumptions=frozenset()):
         r'''
-        If sum is geometric sum (finite or infinite), provide analytic
-        expression for sum. May need assumptions to proven prerequisite
-        number set conditions.
+        If this summation is in the form of a geometric sum 
+        (finite or infinite), equate it to an analytical form.
+
+        Examples:
+        ∑_{n=0}^{∞} x^n = 1 / (1 - x)
+        ∑_{n=j}^{k} x^n = (x^{k + 1} - x^j) / (x - 1)
         '''
         from theorems import inf_geom_sum, fin_geom_sum
+        from proveit.numbers import zero, infinity
         m_val = self.indices[0]
 
         try:
@@ -161,9 +165,9 @@ class Sum(OperationOverInstances):
         if not isinstance(self.domain, Interval):
             raise ValueError("Not explicitly summing over Interval!")
         else:
-            if self.domain.lower_bound == zero and self.domain.upper_bound == infinity:
+            if (self.domain.lower_bound == zero and 
+                    self.domain.upper_bound == infinity):
                 # We're in the infinite geom sum domain!
-                deduce_in_complex(x_val, assumptions)
                 return inf_geom_sum.instantiate({x: x_val, m: m_val})
             else:
                 # We're in the finite geom sum domain!
