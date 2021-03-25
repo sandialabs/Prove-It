@@ -11,7 +11,9 @@ class NumberOperation(Operation):
     def __init__(self, operator, operands, *, styles=None):
         Operation.__init__(operator, operands)
     
-    def deduce_bound(self, inner_expr_bound_or_bounds, assumptions=USE_DEFAULTS):
+    def deduce_bound(self, inner_expr_bound_or_bounds, 
+                     inner_exprs_to_bound = None,
+                     assumptions=USE_DEFAULTS):
         '''
         Return a bound of this arithmetic expression based upon
         the bounds of any number of inner expressions.  The inner 
@@ -20,6 +22,10 @@ class NumberOperation(Operation):
         The returned, proven bound will have this expression on the 
         left-hand side.  The bounds of the inner expressions will be
         processed in the order they are provided.
+        
+        If inner_exprs_to_bound is provided, restrict the bounding
+        to these particular InnerExpr objects.  Otherwise, all inner
+        expressions are fair game.
         '''
         if isinstance(inner_expr_bound_or_bounds, Judgment):
             inner_expr_bound_or_bounds = inner_expr_bound_or_bounds.expr
@@ -50,7 +56,11 @@ class NumberOperation(Operation):
             no_such_inner_expr = True
             no_such_number_op_inner_expr = True
             # Apply bound to each inner expression as applicable.
-            for inner_expr in generate_inner_expressions(self, inner):
+            if inner_exprs_to_bound is None:
+                inner_exprs = generate_inner_expressions(self, inner) 
+            else:
+                inner_exprs = inner_exprs_to_bound                                
+            for inner_expr in inner_exprs:
                 no_such_inner_expr = False
                 inner_expr_depth = len(inner_expr.expr_hierarchy)
                 assert inner_expr_depth > 1, (
