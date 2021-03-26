@@ -319,21 +319,21 @@ class Exp(Function):
                         {a: _a, b: _b, c: exponent}, assumptions=assumptions)
                 else:
                     return pos_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent}, assumptions=assumptions)
+                        {m: _m, a: _a, b: exponent}, assumptions=assumptions)
             elif InSet(exponent, Real).proven(assumptions):
                 if self.base.operands.is_double():
                     return real_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent}, assumptions=assumptions)
                 else:
                     return real_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent}, assumptions=assumptions)
+                        {m: _m, a: _a, b: exponent}, assumptions=assumptions)
             else:  # Complex is the default
                 if self.base.operands.is_double():
                     return complex_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent}, assumptions=assumptions)
                 else:
                     return complex_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent}, assumptions=assumptions)
+                        {m: _m, a: _a, b: exponent}, assumptions=assumptions)
         elif isinstance(base, Div):
             assert self.base.operands.is_double()
             _a, _b = self.base.operands
