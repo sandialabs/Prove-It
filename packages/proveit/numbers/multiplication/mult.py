@@ -1,13 +1,15 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, ExprTuple,
                      Judgment, ProofFailure, InnerExpr)
+from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import Equals, InSet
-from proveit.numbers import num
+from proveit.numbers import one, Add, num
 from proveit.numbers.number_sets import (Integer, Natural, NaturalPos, Real,
                                          RealNonNeg, RealPos, Complex)
 import proveit.numbers.numerals.decimals
 from proveit.numbers.numerals.decimals import DIGITS
-from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
-from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
+from proveit.abstract_algebra.generic_methods import (
+        apply_commutation_thm, apply_association_thm, apply_disassociation_thm,
+        group_commutation, pairwise_evaluation)
 from proveit import TransRelUpdater
 
 
@@ -110,9 +112,6 @@ class Mult(Operation):
             raise NotImplementedError(
                 "'Mult.deduce_in_number_set()' not implemented for the "
                 "%s set" % str(number_set))
-        # print("thm", thm)
-        # print("self in deduce in number set", self)
-        # print("self.operands", self.operands)
         if bin:
             return thm.instantiate({a: self.operands[0], b: self.operands[1]},
                                    assumptions=assumptions)
@@ -760,8 +759,9 @@ class Mult(Operation):
             :math:`a (b + c + a) d = a b d + a c d + a a d`
             :math:`a (b - c) d = a b d - a c d`
             :math:`a \left(\sum_x f(x)\right c = \sum_x a f(x) c`
-        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
-        the associative and commutation theorems are applicable.
+        Give any assumptions necessary to prove that the operands are
+        in the Complex numbers so that the associative and commutation
+        theorems are applicable.
         '''
         from . import (distribute_through_sum, distribute_through_subtract,
                        distribute_through_abs_sum)# , distribute_through_summation
@@ -889,11 +889,33 @@ class Mult(Operation):
         return eq.relation
 
     def exponent_combination(self, start_idx=None, end_idx=None,
-                             assumptions=USE_DEFAULTS):
+                             simplify_exp=True, simplify_base=True,
+                             reductions=None, assumptions=USE_DEFAULTS):
         '''
-        Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$,
-        $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b}, or
-        $a^c b^c$ to $(a b)^c$.
+        Derive and return this Mult expression equated to the
+        expression in which some or all of the exponential factors
+        with common bases have been combined, or all or some of the
+        exponential factors with common exponents have been combined.
+        For example:
+        |- a^b a^c    = a^{b+c},
+        |- a^b a^{-c} = a^{b-c},
+        |- a^b a      = a^{b+1},
+        |- a a^b      = a^{1+b},
+        |- a^c b^c    = (a b)^c.
+        This also should work more generally with more than 2 factors,
+        for example taking a^b a^c a^d to
+        |- (a^b a^c a^d) = a^{b+c+d}.
+        The start_idx and end_idx can be used to apply the process to
+        a contiguous subset of factors within a larger set of factors.
+        Automatically attempts to reduce the resulting new exponent sum
+        or new base product, unless the simplify_exp or simplify_base
+        flags set to False, and will consider user-supplied reductions
+        in doing so.
+        Planned but not implemented: allow user to specify non-
+        contiguous factors to combine. For example, given self as
+        a^b a^c b^a a^d
+        allow user to specify indices 0, 1, 3 to produce something like
+        |- a^{b+c+d} b^a
         '''
         from proveit import ExprRange, free_vars
         from proveit.logic import And
@@ -902,59 +924,190 @@ class Mult(Operation):
             product_of_pos_powers, products_of_pos_powers,
             product_of_real_powers, products_of_real_powers,
             product_of_complex_powers, products_of_complex_powers)
-        # from proveit.numbers.exponentiation import (
-        #        sum_in_exp, diff_in_exp, diff_frac_in_exp)
         from proveit.numbers.exponentiation import (
             add_one_right_in_exp, add_one_left_in_exp)
         from proveit.numbers import Exp
+
+        if reductions is None:
+            reductions = []
+
+        error_msg = ""
+
+        # If the start_idx and/or end_idx has been specified
         if start_idx is not None or end_idx is not None:
-            dummy_var = self.safe_dummy_var()
-            grouped = self.group(start_idx, end_idx, assumptions=assumptions)
+
+            # Compensate for potential missing indices in this block:
+            # omission of either start or end idx defaults to a pair
+            # of contiguous multiplicands
+            if end_idx == None:
+                end_idx = min(start_idx + 1, self.factors.num_entries())
+            elif start_idx == None:
+                start_idx = max(0, end_idx - 1)
+
+            assoc_length = end_idx - start_idx + 1
+
+            # associate the factors intended for combination
+            # warning: 2nd arg of association fxn is length not index
+            grouped = self.association(start_idx, assoc_length,
+                                       assumptions=assumptions)
+            # isolate the targeted factors and combine them as desired
+            # using call to this same method
             inner_combination = (
-                grouped.rhs.factors[start_idx].
-                exponent_combination(assumptions=assumptions))
-            combine_in_group = (
-                inner_combination.
-                substitution(Mult(*(self.factors[:start_idx]
-                                    + (dummy_var,)
-                                    + self.factors[end_idx:])), dummy_var))
-            return grouped.apply_transitivity(combine_in_group)
-        # if all(isinstance(factor, Sqrt) for factor in self.factors):
-        #     # combine the square roots into one square root
-        #     factor_bases = [factor.base for factor in self.factors]
-        #     return prod_of_sqrts.instantiate({x_multi:factor_bases},
-        #                                   assumptions=assumptions)
-        # the following sqrt instantiation modified by wdc on 2/29/2020
-        # based on the above-commented-out code (kept here temporarily
-        # until we're sure this works ok)
+                    grouped.rhs.factors[start_idx].
+                    exponent_combination(reductions=reductions,
+                                         assumptions=assumptions))
+            # substitute the combined factors back into the
+            # grouped expression and return the deduced equality
+            return inner_combination.sub_right_side_into(
+                    grouped, assumptions=assumptions)
+
+        
+        # Else neither the start_idx nor the end_idx has been specified,
+        # indicating we intend to combine all possible factors, either:
+        # (1) all like-bases combined with a single exponent, such as
+        #     a^b a^c a^d = a^{b+c+d},
+        # OR
+        # (2) all like-exponents
+        #     a^z b^z c^z = (abc)^z
+        # for the moment assuming we have all exponential factors of
+        # the form Exp(a, b) instead of something like a^b * a
+        if (all(isinstance(factor, Exp) for factor in self.factors)):
+
+            factor_bases = [factor.base for factor in self.factors]
+            factor_exponents = [factor.exponent for factor in self.factors]
+            from proveit.numbers.exponentiation import (
+                    products_of_complex_powers)
+
+            # (1) all same bases to combine with a single exponent,
+            # such as a^b a^c a^d = a^{b+c+d}
+            if len(set(factor_bases))==1:
+                # Create some (possible) reduction formulas for the
+                # combined exponents expression which will then be passed
+                # through to the instantiation as "reductions" for
+                # simpifying the final form of the new exponent(s).
+                # If the (supposed) reduction is trivial (like |– x = x),
+                # the instantiation process itself will ignore or
+                # eventually eliminate it.
+                if (simplify_exp):
+                    new_exp_simplified = (
+                        Add(*factor_exponents).simplification(
+                            shallow=True, assumptions=assumptions))
+                    reductions = [*reductions, new_exp_simplified]
+
+                _m_sub = num(len(factor_exponents))
+                _a_sub = factor_bases[0]
+                _b_sub = factor_exponents
+                try:
+                    return products_of_complex_powers.instantiate(
+                            {m: _m_sub, a: _a_sub, b:_b_sub},
+                            reductions=reductions, assumptions=assumptions)
+                except Exception as the_exception:
+                    # something went wrong
+                    error_msg = (error_msg +
+                            "All factors appeared to have same base, but "
+                            "attempt failed with error message: \n" +
+                            str(the_exception))
+                    pass
+
+            # (2) all same exponent to combine with a single base,
+            # such as a^d b^d c^d = (a b c)^d.
+            # Less common but sometimes useful.
+            if len(set(factor_exponents))==1:
+                # Create some (possible) reduction formulas for the
+                # combined bases expression which will then be passed
+                # through to the instantiation as "reductions" for
+                # simpifying the final form of the new exponent(s).
+                # If the (supposed) reduction produced is trivial
+                # (like |– x = x), the instantiation process itself
+                # will ignore or eventually eliminate it.
+                if (simplify_base):
+                    new_base_simplified = (
+                        Mult(*factor_bases).simplification(
+                            shallow=True, assumptions=assumptions))
+                    reductions = [*reductions, new_base_simplified]
+
+                # Same exponent: equate $a^c b^c = (a b)^c$
+                # Combining the exponents in this case is the reverse
+                # of disibuting an exponent.
+                # will need to add a reductions to the distribution() method!
+                _new_prod = Mult(*factor_bases)
+                _new_exp  = Exp(_new_prod, factor_exponents[0])
+                try:
+                    return (_new_exp.distribution(assumptions=assumptions).
+                           derive_reversed(assumptions=assumptions))
+                except Exception as the_exception:
+                    # something went wrong; append to error message
+                    error_msg = (error_msg +
+                            "All factors appeared to have the same exponent, "
+                            "but attempt failed with error message: \n" +
+                            str(the_exception)) + "\n"
+                    pass
 
         exp_operand_msg = (
             'Combine exponents only implemented for a product '
             'of two exponentiated operands (or a simple variant)')
 
-        if not self.operands.is_double() or not isinstance(
-                self.operands[0], Exp) or not isinstance(
-                self.operands[1], Exp):
-            if self.operands.is_double() and isinstance(
-                    self.operands[0], Exp) and self.operands[0].base == self.operands[1]:
-                # Of the form a^b a
+        # I wonder if we might simply take any non-exp factor a and 
+        # convert it to Exp(a, one) (i.e. a^1). This might simplify
+        # the process, making things a bit more mechanical ....
+
+        if (not self.operands.is_double() or
+            not isinstance(self.operands[0], Exp) or
+            not isinstance(self.operands[1], Exp)):
+
+            if (self.operands.is_double() and
+                isinstance(self.operands[0], Exp) and
+                self.operands[0].base == self.operands[1]):
+                # self is of the form: (a^b) a
+
+                # Create some (possible) reduction formulas for the
+                # combined exponents expression which will then be
+                # passed through to the instantiation as "reductions"
+                # for simpifying the final form of the new exponent(s).
+                # If the (supposed) reduction produced is trivial,
+                # like |– x = x, the instantiation process itself will
+                # ignore or eventually eliminate it.
+                if (simplify_exp):
+                    new_exp_simplified = (
+                        Add(self.operands[0].exponent, one).simplification(
+                            shallow=True, assumptions=assumptions))
+                    reductions = reductions + [new_exp_simplified]
+
                 return add_one_right_in_exp.instantiate(
-                    {
-                        a: self.operands[1],
-                        b: self.operands[0].exponent},
-                    assumptions=assumptions).derive_reversed(assumptions)
-            elif self.operands.is_double() and isinstance(self.operands[1], Exp) and self.operands[1].base == self.operands[0]:
-                # Of the form a a^b
+                    {a: self.operands[1], b: self.operands[0].exponent},
+                    reductions=reductions, assumptions=assumptions)
+
+            elif (self.operands.is_double() and
+                  isinstance(self.operands[1], Exp) and
+                  self.operands[1].base == self.operands[0]):
+                # self is of the form: a (a^b)
+
+                # Create some (possible) reduction formulas for the
+                # combined exponents expression which will then be
+                # passed through to the instantiation as "reductions"
+                # for simpifying the final form of the new exponent(s).
+                # If the (supposed) reduction produced is trivial,
+                # like |– x = x, the instantiation process itself will
+                # ignore or eventually eliminate it.
+                if (simplify_exp):
+                    new_exp_simplified = (
+                        Add(one, self.operands[1].exponent).simplification(
+                            shallow=True, assumptions=assumptions))
+                    reductions = reductions + [new_exp_simplified]
+
                 return add_one_left_in_exp.instantiate(
-                    {
-                        a: self.operands[0],
-                        b: self.operands[1].exponent},
-                    assumptions=assumptions).derive_reversed(assumptions)
+                    {a: self.operands[0], b: self.operands[1].exponent},
+                    reductions=reductions, assumptions=assumptions)
+
             raise NotImplementedError(
+                "Accumulated error_msg: " + error_msg + "\n"
                 "Need to better implement degenerate cases "
                 "of a^b*a and a*a^b.")
             #raise ValueError(exp_operand_msg)
 
+        # More complex efforts if code above does not catch the
+        # specific instance. The code below remains from earlier.
+        # ============================================================
         # Create a list of bases and ranges of bases,
         # and a list of exponents and ranges of exponents,
         # and determine if all of the represented bases are the same
@@ -1119,9 +1272,12 @@ class Mult(Operation):
 
     def association(self, start_idx, length, assumptions=USE_DEFAULTS):
         '''
-        Given numerical operands, deduce that this expression is equal to a form in which operands in the
-        range [start_idx, start_idx+length) are grouped together.
-        For example, (a + b + ... + y + z) = (a + b ... + (l + ... + m) + ... + y + z)
+        Given numerical operands, deduce that this expression is equal
+        to a form in which operands in the range
+            [start_idx, start_idx+length)
+        are grouped together. For example,
+            (a + b + ... + y + z) =
+            (a + b ... + (l + ... + m) + ... + y + z)
         '''
         from . import association
         return apply_association_thm(
