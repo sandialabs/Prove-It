@@ -11,7 +11,7 @@ class Literal(Label):
     label.
     """
 
-    instances = dict()  # map core information to Literal instances
+    instances = dict()  # map style information to Literal instances.
 
     @staticmethod
     def _clear_():
@@ -59,18 +59,13 @@ class Literal(Label):
                 Theory()
                 theory = Theory.get_theory(theory)
         Label.__init__(
-            self,
-            string_format,
-            latex_format,
-            'Literal',
-            (theory.name,
-             ) + tuple(extra_core_info),
-            styles=styles,
+            self, string_format, latex_format, 'Literal',
+            tuple(extra_core_info) + (theory.name,), styles=styles,
             fence_when_forced=fence_when_forced)
         self.theory = theory
         # if self._core_info in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same theory and string/latex formats")
-        Literal.instances[self._core_info] = self
+        Literal.instances.setdefault(self._style_id, self)
 
     @classmethod
     def instance(literal_class, theory, string_format, latex_format):
@@ -104,50 +99,56 @@ class Literal(Label):
         if core_info[0] != 'Literal':
             raise ValueError("Expecting core_info[0] to be 'Literal'")
         core_info = tuple(core_info)  # make it hashable
-        if core_info in Literal.instances:
-            return Literal.instances[core_info]
-        else:
-            # If the Literal is not in the instances dictionary, just make it independently
-            # without storing it in the instances dictionary.  This allows us to create
-            # Expression objects out of the __pv_it database without causing
-            # a DuplicateLiteralError.
-            string_format, latex_format = core_info[1:3]
-            theory = Theory.get_theory(core_info[3])
-            prev_theory_default = Theory.default
-            Theory.default = theory
-            try:
-                extra_core_info = core_info[4:]
-                init_args = inspect.getargspec(literal_class.__init__)[0]
-                kwargs = dict()
-                if 'theory' in init_args:
-                    kwargs['theory'] = theory
-                if len(extra_core_info) > 0:
-                    # If there is extra core information, we need to call
-                    # a make_literal method.
-                    if hasattr(literal_class, 'make_literal'):
-                        made_obj = literal_class.make_literal(
-                            string_format, latex_format, extra_core_info, theory)
-                    else:
-                        raise NotImplementedError(
-                            "Must implement the 'make_literal(string_format, latex_format, extra_core_info, theory)' static method for class %s which uses 'extra_core_info'" %
-                            str(literal_class))
-                elif literal_class == Literal:
-                    made_obj = Literal(
-                        string_format, latex_format, extra_core_info, theory)
-                elif len(init_args) == 1:
-                    made_obj = literal_class()  # no arguments (except self) are taken
-                elif len(init_args) == 2 and init_args[1] == 'string_format' and core_info[1] == core_info[2]:
-                    made_obj = literal_class(string_format, theory)
-                elif len(init_args) >= 3 and init_args[1] == 'string_format' and init_args[2] == 'latex_format':
-                    made_obj = literal_class(
-                        string_format, latex_format, **kwargs)
-                else:
-                    made_obj = literal_class(**kwargs)
-            finally:
-                Theory.default = prev_theory_default  # restore the default
 
-            Literal.instances.pop(core_info)
-            return made_obj
+        # If the Literal is not in the instances dictionary, just make it independently
+        # without storing it in the instances dictionary.  This allows us to create
+        # Expression objects out of the __pv_it database without causing
+        # a DuplicateLiteralError.
+        string_format, latex_format = core_info[1:3]
+        if core_info[3] == 'fence_when_forced':
+            fence_when_forced = True
+            extra_core_info = core_info[4:-1]
+        else:
+            fence_when_forced = False
+            extra_core_info = core_info[3:-1]
+        theory = Theory.get_theory(core_info[-1])
+        prev_theory_default = Theory.default
+        Theory.default = theory
+        try:
+            if len(extra_core_info) > 0:
+                # If there is extra core information, we need to call
+                # a make_literal method.
+                if hasattr(literal_class, 'make_literal'):
+                    made_obj = literal_class.make_literal(
+                        string_format, latex_format, extra_core_info, theory)
+                else:
+                    raise NotImplementedError(
+                        "Must implement the 'make_literal(string_format, latex_format, extra_core_info, theory)' static method for class %s which uses 'extra_core_info'" %
+                        str(literal_class))
+            elif literal_class == Literal:
+                made_obj = Literal(
+                    string_format, latex_format, extra_core_info, theory,
+                    fence_when_forced=fence_when_forced)
+            else:
+                sig = inspect.signature(literal_class.__init__)
+                kwargs = dict()
+                for param in sig.parameters:
+                    if param == 'string_format':
+                        kwargs['string_format'] = string_format
+                    elif param == 'latex_format':
+                        kwargs['latex_format'] = latex_format
+                    elif param == 'fence_when_forced':
+                        kwargs['fence_when_forced'] = fence_when_forced
+                    elif param == 'theory':
+                        kwargs['theory'] = theory
+                made_obj = literal_class(**kwargs)
+        finally:
+            Theory.default = prev_theory_default  # restore the default
+
+        if made_obj._style_id in Literal.instances:
+            # We'll can use the pre-existing instance.
+            return Literal.instances[made_obj._style_id]
+        return made_obj
 
     def remake_arguments(self):
         '''

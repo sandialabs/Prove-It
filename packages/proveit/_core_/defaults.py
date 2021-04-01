@@ -16,6 +16,12 @@ class Defaults:
         
         # Default styles to use as applicable.
         self.styles = dict()
+        
+        # When True, match the style of newly created Expression
+        # objects to the last "touched" (created or styled) Expression
+        # of the same meaning (when use_consistent_styles was True).  
+        # This overrides defaults.styles.
+        self.use_consistent_styles = True
 
         # Enable/disable `automation` by performing automatic
         # side-effects (via `side_effects` methods) when proving
@@ -159,6 +165,8 @@ class TemporaryDefaults(object):
         if attr == '_original_values':
             object.__setattr__(self, attr, val)
             return
+        if defaults.__dict__[attr] == val:
+            return # Nothing needs to be done.
         self._safekeep_original(attr)    
         defaults.__dict__[attr] = val
     

@@ -2181,7 +2181,7 @@ class TheoryFolderStorage:
             # theory.  First, import the module of the theory
             # which should import any modules containing operation
             # classes with _operator_ Literals, then "retreive"
-            # Literals of the theory as currently references objects.
+            # Literals of the theory as currently referenced objects.
             importlib.import_module(self.theory.name)
             for literal in Literal.instances.values():
                 if literal.theory == self.theory:

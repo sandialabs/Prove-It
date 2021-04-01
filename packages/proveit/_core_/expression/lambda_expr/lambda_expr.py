@@ -240,13 +240,15 @@ class Lambda(Expression):
             safe_dummy_vars(len(bound_parameter_vars), *lambda_free_vars,
                             start_index=start_index)))
 
-        orig_auto_reduce = defaults.auto_reduce
-        try:
+        with defaults.temporary() as temp_defaults:
             # Don't auto-reduce or use automation when making the
-            # canonical version.
-            defaults.auto_reduce = False
-            prev_automation = defaults.automation
-            defaults.automation = False
+            # canonical version.  Also, don't apply "consistent
+            # styles" -- we need use "canonical" styles.
+            temp_defaults.auto_reduce = False
+            temp_defaults.automation = False
+            temp_defaults.use_consistent_styles = False
+            # Canonical Lambda styles are always empty.
+            canonical_styles = dict()
             if canonical_param_vars != bound_parameter_vars:
                 # Create the canonical version via relabeling.
                 relabel_map = \
@@ -258,14 +260,12 @@ class Lambda(Expression):
                 canonical_body = canonical_body.replaced(
                     relabel_map, assumptions=tuple())._canonical_version()
                 canonical_expr = Lambda(canonical_parameters, canonical_body)
-            elif (canonical_body._style_id != self.body._style_id or
-                  canonical_parameters._style_id != self.parameters._style_id):
-                canonical_expr = Lambda(canonical_parameters, canonical_body)
-            else:
+            elif (self._style_data.styles == canonical_styles and
+                  canonical_body._style_id == self.body._style_id and
+                  canonical_parameters._style_id == self.parameters._style_id):
                 canonical_expr = self
-        finally:
-            defaults.auto_reduce = orig_auto_reduce
-            defaults.automation = prev_automation
+            else:
+                canonical_expr = Lambda(canonical_parameters, canonical_body)
         self._canonical_expr = canonical_expr
         canonical_expr._canonical_expr = canonical_expr
         return canonical_expr
