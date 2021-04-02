@@ -253,7 +253,21 @@ class ExprRange(Expression):
         if use_explicit_parameterization is None:
             use_explicit_parameterization = (
                 self._use_explicit_parameterization(format_type))
-        check_points = [self.first(), self.last()]
+
+        # reduce for formatting purposes
+        try:
+            if self.first().auto_reduction() is not None:
+                first = self.first().auto_reduction()
+            else:
+                first = self.first()
+            if self.last().auto_reduction() is not None:
+                last = self.last().auto_reduction()
+            else:
+                last = self.last()
+        except:
+            first = self.first()
+            last = self.last()
+        check_points = [first, last]
         if use_explicit_parameterization and not self.is_parameter_independent:
             check_points.insert(1, self.body)
         formatted_sub_expressions = \
@@ -313,7 +327,7 @@ class ExprRange(Expression):
             formatted_operator = operator.formatted(format_type)
         formatted_sub_expressions = self._formatted_checkpoints(
             format_type, fence=sub_fence, with_ellipses=True,
-            operator=operator)
+            operator=operator, reduce=True)
         # Normally the range will be wrapped in an ExprTuple and
         # fencing will be handled externally.  When it isn't, we don't
         # want to fence it  anyway.

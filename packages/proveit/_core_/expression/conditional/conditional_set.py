@@ -17,8 +17,7 @@ class ConditionalSet(Operation):
         Automatically reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE.
         '''
-        pass
-        # self.reduce_to_true_case(assumptions=assumptions)
+        return self.reduce_to_true_case(assumptions=assumptions)
 
     def reduce_to_true_case(self, assumptions=USE_DEFAULTS):
         '''
