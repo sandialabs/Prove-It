@@ -494,10 +494,10 @@ class Div(NumberOperation):
                             "relation (<, >, ≤, or ≥)")
         lhs = operand_relation.lhs
         if lhs == self.numerator:
-            return self.deduce_bound_via_numerator_bound(
+            return self.bound_via_numerator_bound(
                     operand_relation, assumptions=assumptions)
         elif lhs == self.denominator:
-            return self.deduce_bound_via_denominator_bound(
+            return self.bound_via_denominator_bound(
                     operand_relation, assumptions=assumptions)
         else:
             raise ValueError("Left side of %s expected to be the numerator "
@@ -548,7 +548,7 @@ class Div(NumberOperation):
             raise UnsatisfiedPrerequisites(
                     "We must know whether the denominator of %s "
                     "is positive or negative before we can use "
-                    "'deduce_bound_by_numerator'."%self)
+                    "'bound_via_numerator_bound'."%self)
         if bound.rhs == self:
             return bound.with_direction_reversed()
         return bound
@@ -601,7 +601,7 @@ class Div(NumberOperation):
             raise UnsatisfiedPrerequisites(
                     "We must know the sign of the numerator and "
                     "denominator of %s before we can use "
-                    "'deduce_bound_by_denominator'."%self)        
+                    "'bound_via_denominator_bound'."%self)        
         if pos_numer and pos_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__all_pos.instantiate(
@@ -634,7 +634,7 @@ class Div(NumberOperation):
             raise UnsatisfiedPrerequisites(
                     "We must know whether or not the denominator of %s "
                     "is positive or negative before we can use "
-                    "'deduce_bound_by_numerator'."%self)
+                    "'bound_via_denominator_bound'."%self)
         if bound.rhs == self:
             return bound.with_direction_reversed()
         return bound

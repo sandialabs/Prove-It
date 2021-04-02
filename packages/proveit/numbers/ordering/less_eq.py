@@ -94,10 +94,10 @@ class LessEq(NumberOrderingRelation):
         from proveit.numbers import Add
         if (isinstance(self.lower, Add) and 
                 self.upper in self.lower.terms.entries):
-            return self.lower.deduce_bound_by_term(self.upper, assumptions)
+            return self.lower.bound_by_term(self.upper, assumptions)
         elif (isinstance(self.upper, Add) and 
                 self.lower in self.upper.terms.entries):
-            return self.upper.deduce_bound_by_term(self.lower, assumptions)
+            return self.upper.bound_by_term(self.lower, assumptions)
         else:
             raise ValueError("LessEq.conclude_as_bounded_by_term is only "
                              "applicable if one side of the Less "

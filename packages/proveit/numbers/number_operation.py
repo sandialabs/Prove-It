@@ -121,7 +121,5 @@ class NumberOperation(Operation):
         Also see NumberOperation.deduce_bound.
         '''
         raise NotImplementedError(
-                "'bound_via_operand_bound' must be implemented for each "
-                "particular NumberOperation")
-        
-        
+                "'bound_via_operand_bound' not implemented for %s of type %s."
+                %(self, self.__class__))

@@ -95,7 +95,7 @@ class Less(NumberOrderingRelation):
                                               less_than_an_left_increase)
         if (isinstance(self.lower, Add) and 
                 self.upper in self.lower.terms.entries):
-            concluded = self.lower.deduce_bound_by_term(self.upper, assumptions)
+            concluded = self.lower.bound_by_term(self.upper, assumptions)
         elif (isinstance(self.upper, Add) and 
                 self.lower in self.upper.terms.entries):
             if self.upper.terms.is_double():
@@ -122,7 +122,7 @@ class Less(NumberOrderingRelation):
                             {a: self.lower, b: self.upper.terms[0]}, 
                             assumptions=assumptions)                    
             else:
-                concluded = self.upper.deduce_bound_by_term(self.lower, assumptions)
+                concluded = self.upper.bound_by_term(self.lower, assumptions)
         else:
             raise ValueError("Less.conclude_as_bounded_by_term is only "
                              "applicable if one side of the Less "
