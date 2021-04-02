@@ -19,7 +19,7 @@ git add .
 git commit -a -m "Git-Hub Pages update"
 git push -f origin gh-pages-update:gh-pages
 
-git checkout gh-pages
+git checkout master
 git branch -D gh-pages-update
 
 
@@ -29,7 +29,7 @@ git branch -D gh-pages-update
 
 in ProveItWeb folder (where Prove-It is cloned for this purpose)
 
-git checkout --orphan gh-pages-update ; git rm -rf . ; mv ../pv_it_web.tar.gz . ; tar -xzf pv_it_web.tar.gz; rm pv_it_web.tar.gz ; git add . ; git commit -a -m "Git-Hub Pages update" ; git push -f origin gh-pages-update:gh-pages ; git checkout gh-pages ; git branch -D gh-pages-update
+git checkout master ; git branch -D gh-pages-update ; git checkout --orphan gh-pages-update ; git rm -rf . ; cp ../pv_it_web.tar.gz . ; tar -xzf pv_it_web.tar.gz; rm pv_it_web.tar.gz ; git add . ; git commit -a -m "Git-Hub Pages update" ; git push -f origin gh-pages-update:gh-pages
 
 << A useful command for adding all notebook updates to the repository >>
 find . \( -name __pv_it -o -name .ipynb_checkpoints \) -prune -o -name "*.ipynb" -not -name "*stashed*.ipynb" -print | xargs git add
