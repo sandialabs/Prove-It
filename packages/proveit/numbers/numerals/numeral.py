@@ -64,7 +64,7 @@ class Numeral(Literal, IrreducibleValue):
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.numbers import Natural, NaturalPos, Digits
-        from proveit.logic import InSet
+        from proveit.logic import InSet, SubsetEq
         if number_set == Natural:
             return self.deduce_in_natural(assumptions)
         elif number_set == NaturalPos:
@@ -88,7 +88,12 @@ class Numeral(Literal, IrreducibleValue):
                 self.deduce_in_natural()
                 if self.n > 0:
                     self.deduce_in_natural_pos()
-            return InSet(self, number_set).conclude(assumptions)
+            if self.n > 0:
+                sub_rel = SubsetEq(NaturalPos, number_set)
+            else:
+                sub_rel = SubsetEq(Natural, number_set)
+            # Prove membership via inclusion:
+            return sub_rel.derive_superset_membership(self, assumptions)
 
     def deduce_in_natural(self, assumptions=USE_DEFAULTS):
         if Numeral._inNaturalStmts is None:
