@@ -2889,8 +2889,11 @@ class StoredTheorem(StoredSpecialStmt):
         method for different theorems).
         '''
         from .theory import Theory, TheoryException
-        if names is None: names = set()
         my_name = str(self)
+        if names is None: 
+            names = set()
+        elif my_name in names:
+            return # already processed 'my_name', so nothing to do.
         to_process = {my_name}
         while len(to_process) > 0:
             next_theorem_name = to_process.pop()

@@ -883,13 +883,18 @@ class Theorem(Proof):
         else:
             name_and_containing_theories = list(
                 self.theorem_name_and_containing_theories())
-            exclusions = Judgment.presuming_theorem_and_theory_exclusions
-            if exclusions.isdisjoint(name_and_containing_theories):
-                presumptions = Judgment.presumed_theorems_and_theories
-                presumed = not presumptions.isdisjoint(
-                    name_and_containing_theories)
+            specifically_presumed = (str(self) in 
+                                     Judgment.presumed_theorems_and_theories)
+            if specifically_presumed:
+                presumed = True
             else:
-                presumed = False
+                exclusions = Judgment.presuming_theorem_and_theory_exclusions
+                if exclusions.isdisjoint(name_and_containing_theories):
+                    presumptions = Judgment.presumed_theorems_and_theories
+                    presumed = not presumptions.isdisjoint(
+                        name_and_containing_theories)
+                else:
+                    presumed = False
             if presumed:
                 # This Theorem is being presumed specifically, or a theory
                 # in which it is contained is presumed.  We'll check its
@@ -901,22 +906,11 @@ class Theorem(Proof):
                 stored_theorem.all_used_or_presumed_theorem_names(
                     presumed_theorems_and_dependencies)
                 if theorem_being_proven_str in presumed_theorems_and_dependencies:
-                    if str(self) in Judgment.presumed_theorems_and_theories:
-                        # Theorem-specific presumption or dependency is
-                        # mutual.  Raise a CircularLogic error.
-                        raise CircularLogic(
-                            Judgment.theorem_being_proven, self)
-                    # We must exclude this theorem implicitly to
-                    # avoid a circular dependency.
-                    print("%s is being implicitly excluded as a "
-                          "presumption to avoid a Circular dependency."
-                          % str(self))
-                    # We are no longer presuming this theorem, so disregard
-                    # its dependencies.  This may eliminate things from before,
-                    # but that's okay; it only impacts the efficiency of
-                    # future queries but not correctness.
-                    nevermind = stored_theorem.all_used_or_presumed_theorem_names()
-                    presumed_theorems_and_dependencies.difference_update(nevermind)
+                    # Theorem-specific presumption or dependency is
+                    # mutual.  Raise a CircularLogic error.
+                    raise CircularLogic(
+                        Judgment.theorem_being_proven, self,
+                        implicitly_presumed = not specifically_presumed)
                 else:
                     legitimately_presumed = True
         if not legitimately_presumed:
@@ -1739,21 +1733,22 @@ class UnusableProof(ProofFailure):
             return 'Cannot use disabled proof for ' + self.unusable_item_str
 
 
-class CircularLogic(ProofFailure):
-    def __init__(self, proving_theorem, presumed_theorem):
-        ProofFailure.__init__(
-            self,
-            presumed_theorem.proven_truth.expr,
-            [],
-            "Circular Logic")
+class CircularLogic(Exception):
+    def __init__(self, proving_theorem, presumed_theorem, implicitly_presumed=False):
         self.proving_theorem = proving_theorem
         self.presumed_theorem = presumed_theorem
+        self.implicitly_presumed = implicitly_presumed
 
     def __str__(self):
-        return str(self.presumed_theorem) + ' cannot be presumed while proving ' + \
-            str(self.proving_theorem) + ' due to a circular dependence'
+        if self.implicitly_presumed:
+            return str(self.presumed_theorem) + ' cannot be implicitly presumed while proving ' + \
+                str(self.proving_theorem) + ' due to a circular dependence/presumptions; it must be excluded.'
+        else:
+            return str(self.presumed_theorem) + ' cannot be explicitly presumed while proving ' + \
+                str(self.proving_theorem) + ' due to a circular dependence/presumptions.'
 
 
+"""
 class CircularLogicLoop(ProofFailure):
     def __init__(self, presumption_loop, presumed_theorem):
         assert presumption_loop[0] == presumption_loop[-1], "expecting a loop"
@@ -1768,3 +1763,4 @@ class CircularLogicLoop(ProofFailure):
     def __str__(self):
         return "Circular presumption dependency detected: %s" % str(
             self.presumption_loop)
+"""

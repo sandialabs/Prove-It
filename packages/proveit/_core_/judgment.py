@@ -297,9 +297,8 @@ class Judgment:
         presumptions, exclusions = theorem.get_presumptions_and_exclusions()
 
         if str(self) in presumptions:
+            # A theorem may not presume itself!
             from .proof import CircularLogic
-            # extra sanity check (should be caught within
-            # get_all_presumed_theorem_names)
             raise CircularLogic(theorem, theorem)
 
         Judgment.theorem_being_proven = theorem
