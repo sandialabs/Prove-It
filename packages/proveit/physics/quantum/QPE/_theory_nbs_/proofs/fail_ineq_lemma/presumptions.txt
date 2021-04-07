@@ -25,7 +25,6 @@ proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.logic.sets.subtraction.all_but_one_membership_unfolding
-proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.add_real_closure_bin
 proveit.numbers.addition.commutation
@@ -33,8 +32,8 @@ proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.nonzero_difference_if_different
 proveit.numbers.addition.subtraction.subtract_from_add
 proveit.numbers.addition.subtraction.subtract_from_add_reversed
-proveit.numbers.addition.weak_bound_by_left_term
-proveit.numbers.addition.weak_bound_by_right_term
+proveit.numbers.addition.weak_bound_via_left_term_bound
+proveit.numbers.addition.weak_bound_via_right_term_bound
 proveit.numbers.division.div_real_closure
 proveit.numbers.division.divide_complex_closure
 proveit.numbers.division.prod_of_fracs

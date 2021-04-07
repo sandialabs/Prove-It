@@ -1422,7 +1422,7 @@ class Add(NumberOperation):
                     relevant_number_sets.discard(number_set)
         if len(relevant_number_sets) == 0:
             raise UnsatisfiedPrerequisites(
-                    "In order to use Add.deduce_bound_by_term, the "
+                    "In order to use Add.bound_by_term, the "
                     "'other' terms must all be known to be contained "
                     "in RealPos, RealNeg, RealNonNeg, RealNonPos")
         # If a strong bound is applicable, use that.

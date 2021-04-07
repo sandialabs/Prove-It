@@ -79,8 +79,8 @@ proveit.numbers.multiplication.mult_real_pos_closure_bin
 proveit.numbers.multiplication.mult_zero_any
 proveit.numbers.multiplication.mult_zero_right
 proveit.numbers.multiplication.rightward_commutation
-proveit.numbers.multiplication.strong_bound_by_factor
-proveit.numbers.multiplication.weak_bound_by_factor
+proveit.numbers.multiplication.strong_bound_via_factor_bound
+proveit.numbers.multiplication.weak_bound_via_factor_bound
 proveit.numbers.negation.complex_closure
 proveit.numbers.negation.double_negation
 proveit.numbers.negation.int_closure

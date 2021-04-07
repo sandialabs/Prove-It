@@ -54,6 +54,14 @@ class StyleOptions:
                                 (style_name, self.expr.__class__,
                                  self.expr._sub_expressions))
         return styles
+    
+    def canonical_styles(self):
+        '''
+        Return the styles that should be used for canonical
+        expressions by choosing the defaults of the options.
+        '''
+        return {name:default for name, _, default, _ in self.options
+                if default is not None}
 
     def __repr__(self):
         if len(self.options) == 0:
