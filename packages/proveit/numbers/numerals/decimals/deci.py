@@ -10,8 +10,9 @@ class DecimalSequence(NumeralSequence):
     # operator of the WholeDecimal operation.
     _operator_ = Literal(string_format='Decimal', theory=__file__)
 
-    def __init__(self, *digits):
-        NumeralSequence.__init__(self, DecimalSequence._operator_, *digits)
+    def __init__(self, *digits, styles=None):
+        NumeralSequence.__init__(self, DecimalSequence._operator_, *digits,
+                                 styles=styles)
         for digit in self.digits:
             if isinstance(digit, Literal) and digit not in DIGITS:
                 raise Exception(
@@ -287,12 +288,10 @@ class DecimalSequence(NumeralSequence):
 
 
 class DigitSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(
-            self,
-            'Digits',
-            r'\mathbb{N}^{\leq 9}',
-            theory=__file__)
+            self, 'Digits', r'\mathbb{N}^{\leq 9}',
+            theory=__file__, styles=styles)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import digits_lower_bound

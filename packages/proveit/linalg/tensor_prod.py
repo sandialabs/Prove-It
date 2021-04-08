@@ -16,8 +16,9 @@ class TensorProd(Operation):
     _operator_ = Literal(string_format=r'otimes', latex_format=r'{\otimes}',
                          theory=__file__)
 
-    def __init__(self, *operands):
-        Operation.__init__(self, TensorProd._operator_, operands)
+    def __init__(self, *operands, styles=None):
+        Operation.__init__(self, TensorProd._operator_, operands,
+                           styles=styles)
         self.factors = self.operands
 
     def factor(self, scalar):
@@ -86,11 +87,12 @@ class TensorExp(Operation):
     _operator_ = Literal(string_format=r'otimes', latex_format=r'{\otimes}',
                          theory=__file__)
 
-    def __init__(self, base, exponent):
+    def __init__(self, base, exponent, *, styles=None):
         r'''
         Tensor exponentiation to any natural number exponent.
         '''
-        Operation.__init__(self, TensorExp._operator_, (base, exponent))
+        Operation.__init__(self, TensorExp._operator_, (base, exponent),
+                           styles=styles)
         self.base = self.operands[0]
         self.exponent = self.operands[1]
 

@@ -12,8 +12,8 @@ class Bra(Function):
     # the literal operator of the Bra operation
     _operator_ = Literal(string_format='BRA', theory=__file__)
 
-    def __init__(self, label):
-        Function.__init__(self, Bra._operator_, label)
+    def __init__(self, label, *, styles=None):
+        Function.__init__(self, Bra._operator_, label, styles=styles)
         self.label = self.operands[0]  # might need to change
 
     def string(self, **kwargs):
@@ -42,8 +42,8 @@ class Ket(Function):
     # the literal operator of the Ket operation
     _operator_ = Literal(string_format='KET', theory=__file__)
 
-    def __init__(self, label):
-        Function.__init__(self, Ket._operator_, label)
+    def __init__(self, label, *, styles=None):
+        Function.__init__(self, Ket._operator_, label, styles=styles)
         self.label = self.operands[0]
 
     def string(self, **kwargs):
@@ -74,8 +74,9 @@ class RegisterBra(Function):
     # the literal operator of the RegisterBra operation
     _operator_ = Literal(string_format='REGISTER_BRA', theory=__file__)
 
-    def __init__(self, label, size):
-        Function.__init__(self, RegisterBra._operator_, (label, size))
+    def __init__(self, label, size, *, styles=None):
+        Function.__init__(self, RegisterBra._operator_, (label, size),
+                          styles=styles)
         self.label = self.operands[0]   # value
         self.size = self.operands[1]   # size of the register
 
@@ -116,8 +117,9 @@ class RegisterKet(Function):
     # the literal operator of the RegisterKet operation
     _operator_ = Literal(string_format='REGISTER_KET', theory=__file__)
 
-    def __init__(self, label, size):
-        Function.__init__(self, RegisterKet._operator_, (label, size))
+    def __init__(self, label, size, *, styles=None):
+        Function.__init__(self, RegisterKet._operator_, (label, size),
+                          styles=styles)
         self.label = self.operands[0]   # value for the ket
         self.size = self.operands[1]   # size of the register
 
@@ -149,8 +151,8 @@ class Meas(Function):
     _operator_ = Literal(string_format='MEAS', latex_format=r'\mathcal{M}',
                          theory=__file__)
 
-    def __init__(self, ket):
-        Function.__init__(self, Meas._operator_, ket)
+    def __init__(self, ket, *, styles=None):
+        Function.__init__(self, Meas._operator_, ket, styles=styles)
         self.ket = ket
 
 

@@ -23,28 +23,23 @@ class StyleOptions:
         '''
         return [option[0] for option in self.options]
 
-    def standardized_styles(self, styles, styles_must_exist=True):
+    def standardized_styles(self, styles, ignore_inapplicable_styles=False):
         '''
         Create a proper styles dictionary using defaults
         as appropriate and checking to make sure that unknown
         styles aren't used.
         '''
-        from proveit._core_.defaults import defaults
         styles = dict(styles)
         known_style_names = set()
         for name, _, default, _ in self.options:
             known_style_names.add(name)
-            if name in defaults.styles:
-                # A default style specified in proveit.defaults
-                # overrides the default of the StyleOptions.
-                styles[name] = defaults.styles[name]
-            elif name not in styles and default is not None:
+            if name not in styles and default is not None:
                 # Use the default of the StyleOptions.
                 styles[name] = default
         if len(styles) > len(known_style_names):
             for style_name in list(styles.keys()):                    
                 if style_name not in known_style_names:
-                    if not styles_must_exist:
+                    if ignore_inapplicable_styles:
                         styles.pop(style_name)
                     else:
                         raise StyleError(

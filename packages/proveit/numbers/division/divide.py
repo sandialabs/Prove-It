@@ -1,5 +1,5 @@
 from proveit import (Judgment, Expression, Literal, maybe_fenced_latex, 
-                     Operation, ExprTuple, InnerExpr, USE_DEFAULTS,
+                     Function, ExprTuple, InnerExpr, USE_DEFAULTS,
                      UnsatisfiedPrerequisites)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
@@ -12,11 +12,12 @@ class Div(NumberOperation):
         latex_format=r'\div',
         theory=__file__)
 
-    def __init__(self, numerator, denominator):
+    def __init__(self, numerator, denominator, *, styles=None):
         r'''
         Divide two operands.
         '''
-        Operation.__init__(self, Div._operator_, [numerator, denominator])
+        NumberOperation.__init__(self, Div._operator_, [numerator, denominator],
+                                 styles=styles)
         self.numerator = self.operands[0]
         self.denominator = self.operands[1]
     
@@ -33,13 +34,14 @@ class Div(NumberOperation):
                 '}',
                 **kwargs)
         else:
-            return Operation.latex(self, **kwargs)  # normal division
+            # normal division
+            return NumberOperation.latex(self, **kwargs)
     
     def style_options(self):
         '''
         Return the StyleOptions object for this Div.
         '''
-        options = Operation.style_options(self)
+        options = NumberOperation.style_options(self)
         options.add_option(
             name='division',
             description=("'inline': uses '/'; 'fraction': "
@@ -366,7 +368,7 @@ class Div(NumberOperation):
             # because this is a little tricky.   To do.
             #deduce_in_complex(self.operands, assumptions)
             y_etc_sub = self.numerator.indices
-            Pop, Pop_sub = Operation(
+            Pop, Pop_sub = Function(
                 P, self.numerator.indices), self.numerator.summand
             S_sub = self.numerator.domain
             dummy_var = safe_dummy_var(self)

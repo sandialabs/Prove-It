@@ -9,8 +9,9 @@ class Function(Operation):
     Operation into a 'function' style rather than 'infix'.
     '''
 
-    def __init__(self, operator, operand_or_operands):
-        Operation.__init__(self, operator, operand_or_operands)
+    def __init__(self, operator, operand_or_operands, *, styles=None):
+        Operation.__init__(self, operator, operand_or_operands,
+                           styles=styles)
 
     def style_options(self):
         '''

@@ -1,7 +1,7 @@
 import os
+from inspect import signature
 from .label import Label
 from .var import Variable
-
 
 class Literal(Label):
     """
@@ -22,14 +22,9 @@ class Literal(Label):
         '''
         Literal.instances.clear()
 
-    def __init__(
-            self,
-            string_format,
-            latex_format=None,
-            extra_core_info=tuple(),
-            theory=None,
-            fence_when_forced=False,
-            styles=None):
+    def __init__(self, string_format, latex_format=None, *,
+                 extra_core_info=tuple(), theory=None,
+                 fence_when_forced=False, styles=None):
         '''
         Create a Literal.  If latex_format is not supplied, the
         string_format is used for both.  The Literal will be stored
@@ -80,13 +75,12 @@ class Literal(Label):
         return Variable(self.string_format, self.latex_format)
 
     @classmethod
-    def _make(literal_class, core_info, sub_expressions):
+    def _make(literal_class, core_info, sub_expressions, *, styles):
         '''
         Make the object of class `literal_class` matching the core information
         and sub expressions.
         '''
         from proveit import Theory
-        import inspect
         if len(sub_expressions) > 0:
             raise ValueError('Not expecting any sub_expressions of Literal')
         if len(core_info) < 4:
@@ -120,17 +114,22 @@ class Literal(Label):
                 # a make_literal method.
                 if hasattr(literal_class, 'make_literal'):
                     made_obj = literal_class.make_literal(
-                        string_format, latex_format, extra_core_info, theory)
+                        string_format, latex_format, 
+                        extra_core_info=extra_core_info,
+                        theory=theory, styles=styles)
                 else:
                     raise NotImplementedError(
-                        "Must implement the 'make_literal(string_format, latex_format, extra_core_info, theory)' static method for class %s which uses 'extra_core_info'" %
-                        str(literal_class))
+                        "Must implement the 'make_literal(string_format, "
+                        "latex_format, *, extra_core_info, theory, styles)' "
+                        "static method for class %s which uses "
+                        "'extra_core_info'"%str(literal_class))
             elif literal_class == Literal:
                 made_obj = Literal(
-                    string_format, latex_format, extra_core_info, theory,
-                    fence_when_forced=fence_when_forced)
+                    string_format, latex_format, 
+                    extra_core_info=extra_core_info, theory=theory,
+                    fence_when_forced=fence_when_forced, styles=styles)
             else:
-                sig = inspect.signature(literal_class.__init__)
+                sig = signature(literal_class.__init__)
                 kwargs = dict()
                 for param in sig.parameters:
                     if param == 'string_format':
@@ -141,39 +140,16 @@ class Literal(Label):
                         kwargs['fence_when_forced'] = fence_when_forced
                     elif param == 'theory':
                         kwargs['theory'] = theory
+                # styles are mandatory keyword argument
+                kwargs['styles'] = styles
                 made_obj = literal_class(**kwargs)
         finally:
             Theory.default = prev_theory_default  # restore the default
 
         if made_obj._style_id in Literal.instances:
-            # We'll can use the pre-existing instance.
+            # We can use the pre-existing instance.
             return Literal.instances[made_obj._style_id]
         return made_obj
-
-    def remake_arguments(self):
-        '''
-        Yield the argument values that could be used to recreate the
-        Literal.
-        '''
-        import inspect
-        init_args = inspect.getargspec(self.__class__.__init__)[0]
-        if len(init_args) == 1:
-            return  # nothing needed
-        for arg in Label.remake_arguments(self):
-            yield arg
-        if len(init_args) == 3:
-            return  # nothing more
-        if self.__class__ == Literal:
-            core_info = self.core_info()
-            theory_name = core_info[3]
-            extra_core_info = core_info[4:]
-            if len(extra_core_info) > 0:
-                yield ('extra_core_info', extra_core_info)
-            yield ('theory', '"' + theory_name + '"')
-        else:
-            raise NotImplementedError("Must properly implement the "
-                                      "'remake_arguments' method for "
-                                      "class %s" % str(self.__class__))
 
 
 class DuplicateLiteralError(Exception):

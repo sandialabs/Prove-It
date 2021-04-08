@@ -8,8 +8,8 @@ class NumberOperation(Operation):
     Base class for number operation (i.e. arithmetic operations).
     '''
     
-    def __init__(self, operator, operands, *, styles=None):
-        Operation.__init__(operator, operands)
+    def __init__(self, operator, operand_or_operands, *, styles=None):
+        Operation.__init__(self, operator, operand_or_operands, styles=styles)
     
     def deduce_bound(self, inner_expr_bound_or_bounds, 
                      inner_exprs_to_bound = None,

@@ -16,7 +16,7 @@ class Forall(OperationOverInstances):
 
     def __init__(self, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None,
-                 conditions=None, _lambda_map=None):
+                 conditions=None, styles=None, _lambda_map=None):
         '''
         Create a Forall expression:
         forall_{instance_param_or_params | conditions} instance_expr.
@@ -28,7 +28,7 @@ class Forall(OperationOverInstances):
         OperationOverInstances.__init__(
             self, Forall._operator_, instance_param_or_params,
             instance_expr, domain=domain, domains=domains,
-            condition=condition, conditions=conditions,
+            condition=condition, conditions=conditions, styles=styles,
             _lambda_map=_lambda_map)
     
     def side_effects(self, judgment):

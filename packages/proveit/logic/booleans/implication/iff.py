@@ -21,8 +21,9 @@ class Iff(TransitiveRelation):
     #   (populated in TransitivityRelation.derive_side_effects)
     known_right_sides = dict()
 
-    def __init__(self, A, B):
-        TransitiveRelation.__init__(self, Iff._operator_, A, B)
+    def __init__(self, A, B, *, styles=None):
+        TransitiveRelation.__init__(self, Iff._operator_, A, B,
+                                    styles=styles)
         self.A = A
         self.B = B
 

@@ -8,7 +8,7 @@ from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaning_data, style_data
 import sys
 import re
-import os
+import inspect
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -56,7 +56,23 @@ class ExprType(type):
                     raise TypeError("'_operator_' class attributes must be "
                                     "Literal expressions.")
                 Operation.operation_class_of_operator[cls._operator_] = cls
-
+        if not hasattr(cls, '__init__'):
+            raise TypeError("%s, an Expression-derived class, must have an "
+                            "__init__ method"%cls)
+        def raise_invalid_styles_init_arg():
+            raise TypeError(
+                    "The __init__ method of %s, an Expression-derived "
+                    "class must accept 'styles' as a keyword-only "
+                    "argument, with 'None' as its default if it has a one. "
+                    "Simply pass the 'styles' along to parent __init__ "
+                    "method)."%cls)            
+        init_sig = inspect.signature(cls.__init__)
+        if 'styles' not in init_sig.parameters.keys():
+            raise_invalid_styles_init_arg()
+        styles_param = init_sig.parameters['styles']
+        if (styles_param.kind != inspect.Parameter.KEYWORD_ONLY or
+                styles_param.default not in (None, inspect.Parameter.empty)):
+            raise_invalid_styles_init_arg()
 
 class Expression(metaclass=ExprType):
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
@@ -90,7 +106,7 @@ class Expression(metaclass=ExprType):
         Expression.class_paths.clear()
         Expression.default_labeled_expr_styles.clear()
 
-    def __init__(self, core_info, sub_expressions=tuple(), styles=None):
+    def __init__(self, core_info, sub_expressions=tuple(), *, styles):
         '''
         Initialize an expression with the given core_info (information relevant
         at the core Expression-type level) which should be a list (or tuple) of
@@ -120,10 +136,14 @@ class Expression(metaclass=ExprType):
         if any(',' in info for info in core_info):
             raise ValueError("core_info is not allowed to contain a comma.")
         if styles is not None:
+            ignore_inapplicable_styles = (
+                    styles.pop('__IGNORE_INAPPLICABLE_STYLES__', False))
             for style in styles.values():
                 if not {',', ':', ';'}.isdisjoint(style):
                     raise ValueError(
                         "Styles are not allowed to contain a ',', ':', or ';'.  Just use spaces.")
+        else:
+            ignore_inapplicable_styles = False
 
         # Create the "labeled" meaning data.  This is data common
         # to equivalent expressions which use the same lambda labels.
@@ -158,7 +178,8 @@ class Expression(metaclass=ExprType):
             for name, val in styles_to_emulate.items():
                 if name not in styles and name in option_names:
                     styles[name] = val
-        styles = style_options.standardized_styles(styles)
+        styles = style_options.standardized_styles(
+                styles, ignore_inapplicable_styles=ignore_inapplicable_styles)
 
         # The style data is shared among Expressions with the same structure
         # and style -- this will contain the 'png' generated on demand.
@@ -239,7 +260,7 @@ class Expression(metaclass=ExprType):
             temp_defaults.use_consistent_styles = False
             canonical_expr = self.__class__._checked_make(
                 self._core_info, canonical_sub_expressions, 
-                styles=canonical_styles)
+                style_preferences=canonical_styles)
         assert canonical_expr._canonical_version() == canonical_expr, (
                 "The canonical version of a canonical expression should "
                 "be itself.")
@@ -436,7 +457,8 @@ class Expression(metaclass=ExprType):
             return self.latex(**kwargs)
 
     @classmethod
-    def _make(cls, core_info, sub_expressions, canonical_version=None):
+    def _make(cls, core_info, sub_expressions, *, styles, 
+              canonical_version=None):
         '''
         Should make the Expression object for the specific Expression sub-class
         based upon the core_info and sub_expressions.  Must be implemented for
@@ -445,7 +467,7 @@ class Expression(metaclass=ExprType):
         raise MakeNotImplemented(cls)
 
     @classmethod
-    def _checked_make(cls, core_info, sub_expressions, styles,
+    def _checked_make(cls, core_info, sub_expressions, *, style_preferences,
                       canonical_version=None):
         '''
         Check that '_make' is done appropriately since it is not
@@ -453,16 +475,17 @@ class Expression(metaclass=ExprType):
         '''
         core_info = tuple(core_info)
         sub_expressions = tuple(sub_expressions)
-        with defaults.temporary() as temp_defaults:
-            # Use the styles of this expression as the default
-            # (as applicable).
-            if styles != defaults.styles:
-                temp_defaults.styles = styles
-            if canonical_version is not None:
-                made = cls._make(core_info, sub_expressions,
-                                 canonical_version)
-            else:
-                made = cls._make(core_info, sub_expressions)
+        # Indicate that inapplicable styles can simply be ignored
+        # rather than raising an expection.
+        style_preferences = dict(style_preferences)
+        style_preferences['__IGNORE_INAPPLICABLE_STYLES__'] = True
+        if canonical_version is None:
+            made = cls._make(core_info, sub_expressions,
+                             styles=style_preferences)
+        else:
+            made = cls._make(core_info, sub_expressions,
+                             canonical_version=canonical_version, 
+                             styles=style_preferences)
         assert made._core_info == core_info, (
             "%s vs %s" % (made._core_info, core_info))
         assert made._sub_expressions == sub_expressions, (
@@ -567,12 +590,12 @@ class Expression(metaclass=ExprType):
         styles.discard(name)
         return self._with_these_styles(styles)
     
-    def _with_these_styles(self, styles, styles_must_exist=True):
+    def _with_these_styles(self, styles, ignore_inapplicable_styles=False):
         '''
         Helper for with_styles and without_style methods.
         '''
         styles = self.style_options().standardized_styles(
-                styles, styles_must_exist)
+                styles, ignore_inapplicable_styles)
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
         if defaults.use_consistent_styles:
@@ -611,10 +634,10 @@ class Expression(metaclass=ExprType):
         # Note, within lambda maps, "meanings" may diverge.
         # We only "guarantee" the new styles exist where "meanings"
         # are the same.
-        styles_must_exist = (self == expr_with_different_style)
+        ignore_inapplicable_styles = (self != expr_with_different_style)
         return self._with_these_styles(
                 expr_with_different_style.get_styles(),
-                styles_must_exist = styles_must_exist)
+                ignore_inapplicable_styles = ignore_inapplicable_styles)
     
     def with_mimicked_style(self, other_expr):
         '''
@@ -925,7 +948,8 @@ class Expression(metaclass=ExprType):
                         assumptions, requirements, equality_repl_requirements)
                       for sub_expr in self._sub_expressions)
             replaced = self.__class__._checked_make(
-                self._core_info, subbed_sub_exprs, self._style_data.styles)
+                self._core_info, subbed_sub_exprs,
+                style_preferences=self._style_data.styles)
         return replaced
 
     def copy(self):

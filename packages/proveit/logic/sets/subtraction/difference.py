@@ -6,8 +6,9 @@ class Difference(Operation):
     # operator of the Difference operation
     _operator_ = Literal(string_format='-', theory=__file__)
 
-    def __init__(self, A, B):
-        Operation.__init__(self, Difference._operator_, [A, B])
+    def __init__(self, A, B, *, styles=None):
+        Operation.__init__(self, Difference._operator_, [A, B],
+                           styles=styles)
     
     def membership_object(self, element):
         from .difference_membership import DifferenceMembership

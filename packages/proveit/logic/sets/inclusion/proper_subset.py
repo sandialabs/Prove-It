@@ -26,12 +26,12 @@ class ProperSubset(InclusionRelation):
     #   (populated in TransitivityRelation.side_effects)
     known_right_sides = dict()
 
-    def __init__(self, A, B):
+    def __init__(self, A, B, *, styles=None):
         '''
         Create the expression for (A proper_subset B).
         '''
         InclusionRelation.__init__(
-            self, ProperSubset._operator_, A, B)
+            self, ProperSubset._operator_, A, B, styles=styles)
 
     @staticmethod
     def reversed_operator_str(format_type):

@@ -87,7 +87,7 @@ class Lambda(Expression):
     satisfied.
     '''
 
-    def __init__(self, parameter_or_parameters, body):
+    def __init__(self, parameter_or_parameters, body, *, styles=None):
         '''
         Initialize a Lambda function expression given parameter(s) and a
         body. Each parameter must be a Variable or a range (ExprRange)
@@ -152,10 +152,10 @@ class Lambda(Expression):
              if var in self.parameter_var_set}
 
         sub_exprs = (self.parameter_or_parameters, self.body)
-        Expression.__init__(self, ['Lambda'], sub_exprs)
+        Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles)
 
     @classmethod
-    def _make(sub_class, core_info, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions, *, styles):
         if len(core_info) != 1 or core_info[0] != 'Lambda':
             raise ValueError(
                 "Expecting Lambda core_info to contain exactly one "
@@ -165,7 +165,7 @@ class Lambda(Expression):
         if len(sub_expressions) != 2:
             raise ValueError("Expected Lambda to have two sub-expressions")
         parameters, body = sub_expressions
-        return Lambda(parameters, body)
+        return Lambda(parameters, body, styles=styles)
 
     def _possibly_free_vars_of_parameter_indices(self):
         '''

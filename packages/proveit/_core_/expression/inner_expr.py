@@ -473,7 +473,7 @@ class InnerExpr:
             inner_expr = expr.__class__._checked_make(
                 expr.core_info(), 
                 expr_subs[:idx] + (inner_expr,) + expr_subs[idx + 1:],
-                styles = expr._style_data.styles)
+                style_preferences = expr._style_data.styles)
         revised_expr = inner_expr
         if (isinstance(self.expr_hierarchy[0], Judgment) and
                 self.expr_hierarchy[0].expr == revised_expr):

@@ -10,8 +10,9 @@ class Abs(NumberOperation):
     # operator of the Abs operation.
     _operator_ = Literal(string_format='Abs', theory=__file__)
 
-    def __init__(self, A):
-        Operation.__init__(self, Abs._operator_, A)
+    def __init__(self, A, *, styles=None):
+        NumberOperation.__init__(self, Abs._operator_, A, 
+                                 styles=styles)
 
     def string(self, **kwargs):
         return '|' + self.operand.string() + '|'

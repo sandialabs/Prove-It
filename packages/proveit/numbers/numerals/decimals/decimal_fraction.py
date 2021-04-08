@@ -6,10 +6,10 @@ class Decimal_fraction(Operation):
     # operator of the Decimal_fraction operation.
     _operator_ = Literal(string_format='Decimal_fraction', theory=__file__)
 
-    def __init__(self, integer_part, fractional_part):
+    def __init__(self, integer_part, fractional_part, *, styles=None):
         Operation.__init__(
-            self, Decimal_fraction._operator_, [
-                integer_part, fractional_part])
+            self, Decimal_fraction._operator_, 
+            [integer_part, fractional_part], styles=styles)
         self.integer_part = integer_part
         self.fractional_part = fractional_part
         if not all(isinstance(part, WholeDecimal)

@@ -35,8 +35,8 @@ class TransitiveRelation(Relation):
     TransitiveRelation which is also symmetric (x=y means that y=x).
     '''
 
-    def __init__(self, operator, lhs, rhs):
-        Relation.__init__(self,operator, lhs, rhs)
+    def __init__(self, operator, lhs, rhs, *, styles):
+        Relation.__init__(self,operator, lhs, rhs, styles=styles)
         # lhs and rhs with the "direction" style of "normal"
         # (not subject to reversal)
         self.normal_lhs = self.operands[0]

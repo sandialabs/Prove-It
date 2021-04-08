@@ -22,7 +22,7 @@ class Sum(OperationOverInstances):
 
     def __init__(self, index_or_indices, summand, *,
                  domain=None, domains=None, condition=None,
-                 conditions=None, _lambda_map=None):
+                 conditions=None, styles=None, _lambda_map=None):
         r'''
         Sum summand over indices over domains.
         Arguments serve analogous roles to Forall arguments (found in
@@ -39,7 +39,7 @@ class Sum(OperationOverInstances):
         OperationOverInstances.__init__(
             self, Sum._operator_, index_or_indices, summand,
             domain=domain, domains=domains, condition=condition,
-            conditions=conditions, _lambda_map=_lambda_map)
+            conditions=conditions, styles=styles, _lambda_map=_lambda_map)
         if hasattr(self, 'instance_param'):
             self.index = self.instance_param
         if hasattr(self, 'instance_vars'):
@@ -126,7 +126,7 @@ class Sum(OperationOverInstances):
             self.domain.lower_bound == self.domain.upper_bound):
             if self.instance_vars.is_single():
                 return sum_single.instantiate(
-                    {Operation(f, self.instance_vars): self.summand,
+                    {Function(f, self.instance_vars): self.summand,
                      a: self.domain.lower_bound})
         raise SimplificationError(
             "Sum simplification only implemented for a summation over an "
@@ -225,7 +225,7 @@ class Sum(OperationOverInstances):
         _b = self.domain.upper_bound
         _c = shift_amount
 
-        f_op, f_op_sub = Operation(f, self.index), self.summand
+        f_op, f_op_sub = Function(f, self.index), self.summand
 
         # Create some (possible) reduction formulas for the shifted
         # components, which will then be passed through to the
@@ -304,7 +304,7 @@ class Sum(OperationOverInstances):
         _b1 = self.domain.upper_bound
         _a2 = second_summation.domain.lower_bound
         _b2 = second_summation.domain.upper_bound
-        f_op, f_op_sub = Operation(f, self.index), self.summand
+        f_op, f_op_sub = Function(f, self.index), self.summand
 
         # Create low-effort, simplified versions of transition index
         # values, if possible
@@ -411,7 +411,7 @@ class Sum(OperationOverInstances):
         _a = self.domain.lower_bound
         _b = split_index
         _c = self.domain.upper_bound
-        f_op, f_op_sub = Operation(f, self.index), self.summand
+        f_op, f_op_sub = Function(f, self.index), self.summand
 
         # Create a (possible) reduction formula for the split
         # components' index expression, which will then be passed
@@ -472,7 +472,7 @@ class Sum(OperationOverInstances):
             _i = self.index
             _a = self.domain.lower_bound
             _b = self.domain.upper_bound
-            f_op, f_op_sub = Operation(f, self.index), self.summand
+            f_op, f_op_sub = Function(f, self.index), self.summand
 
             # Create (possible) reduction formulas for the upper
             # index expression of the resulting sum, and for the
@@ -542,7 +542,7 @@ class Sum(OperationOverInstances):
             _i = self.index
             _a = self.domain.lower_bound
             _b = self.domain.upper_bound
-            f_op, f_op_sub = Operation(f, self.index), self.summand
+            f_op, f_op_sub = Function(f, self.index), self.summand
 
             # Create (possible) reduction formulas for the lower
             # index expression of the resulting sum, and for the

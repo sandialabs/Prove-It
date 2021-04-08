@@ -21,8 +21,8 @@ class Set(Function):
     _operator_ = Literal(string_format='Set',
                          latex_format=r'\textrm{Set}', theory=__file__)
 
-    def __init__(self, *elems):
-        Function.__init__(self, Set._operator_, elems)
+    def __init__(self, *elems, styles=None):
+        Function.__init__(self, Set._operator_, elems, styles=styles)
         self.elements = self.operands
 
     def membership_object(self, element):

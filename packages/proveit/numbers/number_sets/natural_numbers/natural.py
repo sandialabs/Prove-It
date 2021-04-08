@@ -6,8 +6,9 @@ from proveit import n
 
 
 class NaturalSet(NumberSet):
-    def __init__(self):
-        NumberSet.__init__(self, 'Natural', r'\mathbb{N}', theory=__file__)
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'Natural', r'\mathbb{N}', 
+                           theory=__file__, styles=styles)
 
     def membership_object(self, element):
         from .natural_membership import NaturalMembership    
@@ -46,12 +47,10 @@ class NaturalSet(NumberSet):
 
 
 class NaturalPosSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(
-            self,
-            'NaturalPos',
-            r'\mathbb{N}^+',
-            theory=__file__)
+            self, 'NaturalPos', r'\mathbb{N}^+',
+            theory=__file__, styles=styles)
 
     def membership_object(self, element):
         from .natural_membership import NaturalPosMembership    

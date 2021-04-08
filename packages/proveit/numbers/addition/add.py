@@ -25,11 +25,12 @@ class Add(NumberOperation):
     # Track which ones we have encountered already.
     added_numerals = set()
 
-    def __init__(self, *operands):
+    def __init__(self, *operands, styles=None):
         r'''
         Add together any number of operands.
         '''
-        Operation.__init__(self, Add._operator_, operands)
+        NumberOperation.__init__(self, Add._operator_, operands, 
+                                 styles=styles)
         self.terms = self.operands
 
     @staticmethod

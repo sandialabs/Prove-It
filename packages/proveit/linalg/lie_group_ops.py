@@ -12,11 +12,11 @@ class SU(Operation):
     # the literal operator of the SU operation
     _operator_ = Literal(string_format='SU', theory=__file__)
 
-    def __init__(self, n):
+    def __init__(self, n, *, styles=None):
         '''
         Create some SU(n), the special unitary of degree n.
         '''
-        Operation.__init__(self, SU._operator_, n)
+        Operation.__init__(self, SU._operator_, n, styles=styles)
         # self.operand = n
         self.degree = n
 

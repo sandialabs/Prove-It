@@ -17,9 +17,10 @@ class Implies(TransitiveRelation):
     #   (populated in TransitivityRelation.derive_side_effects)
     known_right_sides = dict()
 
-    def __init__(self, antecedent, consequent):
+    def __init__(self, antecedent, consequent, *, styles=None):
         TransitiveRelation.__init__(
-            self, Implies._operator_, antecedent, consequent)
+            self, Implies._operator_, antecedent, consequent,
+            styles=styles)
         self.antecedent = antecedent
         self.consequent = consequent
 

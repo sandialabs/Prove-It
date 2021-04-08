@@ -20,7 +20,7 @@ class Exists(OperationOverInstances):
 
     def __init__(self, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None,
-                 conditions=None, _lambda_map=None):
+                 conditions=None, styles=None, _lambda_map=None):
         '''
         Create a exists (there exists) expression:
         exists_{instance_param_or_params | condition} instance_expr
@@ -32,7 +32,7 @@ class Exists(OperationOverInstances):
         OperationOverInstances.__init__(
             self, Exists._operator_, instance_param_or_params, instance_expr,
             domain=domain, domains=domains, condition=condition,
-            conditions=conditions, _lambda_map=_lambda_map)
+            conditions=conditions, _lambda_map=_lambda_map, styles=styles)
     
     def conclude(self, assumptions):
         from proveit.logic import SubsetEq

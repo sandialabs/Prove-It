@@ -10,12 +10,13 @@ class Numeral(Literal, IrreducibleValue):
     _notZeroStmts = None  # initializes when needed
     _positiveStmts = None  # initializes when needed
 
-    def __init__(self, n, string_format=None, latex_format=None):
+    def __init__(self, n, string_format=None, latex_format=None, *,
+                 styles=None):
         if string_format is None:
             string_format = str(n)
         Literal.__init__(
-            self, string_format, extra_core_info=[
-                str(n)], theory=__file__)
+            self, string_format, extra_core_info=[str(n)],
+            theory=__file__, styles=styles)
         if not isinstance(n, int):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
@@ -51,7 +52,8 @@ class Numeral(Literal, IrreducibleValue):
         return self.n
 
     @staticmethod
-    def make_literal(string_format, latex_format, extra_core_info, theory):
+    def make_literal(string_format, latex_format, *,
+                     extra_core_info, theory, styles):
         '''
         Make the DigitLiteral that matches the core information.
         '''
@@ -60,7 +62,7 @@ class Numeral(Literal, IrreducibleValue):
             "Expecting a different Theory for a DigitLiteral: "
             "%s vs %s" % (theory.name, Theory(__file__).name))
         n = int(extra_core_info[0])
-        return Numeral(n, string_format, latex_format)
+        return Numeral(n, string_format, latex_format, styles=styles)
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.numbers import Natural, NaturalPos, Digits
@@ -174,9 +176,9 @@ class NumeralSequence(Operation, IrreducibleValue):
     Base class of BinarySequence, DecimalSequence, and HexSequence.
     """
 
-    def __init__(self, operator, *digits):
+    def __init__(self, operator, *digits, styles=None):
         from proveit import ExprRange
-        Operation.__init__(self, operator, digits)
+        Operation.__init__(self, operator, digits, styles=styles)
         # if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
         #     raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
         self.digits = self.operands

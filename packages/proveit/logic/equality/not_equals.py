@@ -13,8 +13,9 @@ class NotEquals(Relation):
         latex_format=r'\neq',
         theory=__file__)
 
-    def __init__(self, a, b):
-        Operation.__init__(self, NotEquals._operator_, (a, b))
+    def __init__(self, a, b, *, styles=None):
+        Operation.__init__(self, NotEquals._operator_, (a, b),
+                           styles=styles)
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
 

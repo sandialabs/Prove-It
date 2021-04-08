@@ -19,7 +19,7 @@ class ExprTuple(Composite, Expression):
     n+4 elements.
     """
 
-    def __init__(self, *expressions):
+    def __init__(self, *expressions, styles=None):
         '''
         Initialize an ExprTuple from an iterable over Expression
         objects.
@@ -36,7 +36,8 @@ class ExprTuple(Composite, Expression):
             assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
-        Expression.__init__(self, ['ExprTuple'], self.entries)
+        Expression.__init__(self, ['ExprTuple'], self.entries,
+                            styles=styles)
 
     def style_options(self):
         options = StyleOptions(self)
@@ -66,13 +67,13 @@ class ExprTuple(Composite, Expression):
         return self.with_styles(justification=justification)
 
     @classmethod
-    def _make(sub_class, core_info, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions, *, styles):
         if sub_class != ExprTuple:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("Expecting ExprTuple core_info to contain "
                              "exactly one item: 'ExprTuple'")
-        return ExprTuple(*sub_expressions)
+        return ExprTuple(*sub_expressions, styles=styles)
 
     def remake_arguments(self):
         '''
@@ -390,7 +391,8 @@ class ExprTuple(Composite, Expression):
                 subbed_exprs.append(subbed_expr)
 
         return self.__class__._checked_make(
-            self._core_info, subbed_exprs, self._style_data.styles)
+            self._core_info, subbed_exprs, 
+            style_preferences=self._style_data.styles)
 
     def merger(self, assumptions=USE_DEFAULTS):
         '''

@@ -20,8 +20,9 @@ class SetNotEquiv(Operation):
                          latex_format=r'\ncong',
                          theory=__file__)
 
-    def __init__(self, a, b):
-        Operation.__init__(self, SetNotEquiv._operator_, (a, b))
+    def __init__(self, a, b, *, styles=None):
+        Operation.__init__(self, SetNotEquiv._operator_, (a, b),
+                           styles=styles)
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
 

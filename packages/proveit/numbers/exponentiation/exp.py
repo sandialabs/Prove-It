@@ -15,13 +15,14 @@ class Exp(NumberOperation):
     # operator of the Exp operation.
     _operator_ = Literal(string_format='Exp', theory=__file__)
 
-    def __init__(self, base, exponent):
+    def __init__(self, base, exponent, *, styles=None):
         r'''
         Raise base to exponent power.
         '''
         self.base = base
         self.exponent = exponent
-        Function.__init__(self, Exp._operator_, (base, exponent))
+        NumberOperation.__init__(self, Exp._operator_, (base, exponent),
+                                 styles=styles)
     
     def remake_constructor(self):
         if self.get_style('exponent') == 'radical':

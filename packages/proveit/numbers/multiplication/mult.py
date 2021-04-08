@@ -22,11 +22,12 @@ class Mult(NumberOperation):
     # Track which ones we have encountered already.
     multiplied_numerals = set()
 
-    def __init__(self, *operands):
+    def __init__(self, *operands, styles=None):
         r'''
         Multiply together any number of operands from first operand.
         '''
-        Operation.__init__(self, Mult._operator_, operands)
+        NumberOperation.__init__(self, Mult._operator_, operands,
+                                 styles=styles)
         self.factors = self.operands
         if self.factors.is_double() and all(
                 factor in DIGITS for factor in self.factors):
@@ -829,7 +830,7 @@ class Mult(NumberOperation):
                                       "for Sum case.")
             '''
             y_multi_sub = operand.indices
-            Pop, Pop_sub = Operation(P, operand.indices), operand.summand
+            Pop, Pop_sub = Function(P, operand.indices), operand.summand
             S_sub = operand.domain
             x_dummy, z_dummy = self.safe_dummy_vars(2)
             spec1 = distribute_through_summation.instantiate({Pop:Pop_sub, S:S_sub, y_multi:y_multi_sub,

@@ -13,11 +13,11 @@ class And(Operation):
         latex_format=r'\land',
         theory=__file__)
 
-    def __init__(self, *operands):
+    def __init__(self, *operands, styles=None):
         r'''
         And together any number of operands: :math:`A \land B \land C`
         '''
-        Operation.__init__(self, And._operator_, operands)
+        Operation.__init__(self, And._operator_, operands, styles=styles)
 
     def _formatted(self, format_type, **kwargs):
         '''

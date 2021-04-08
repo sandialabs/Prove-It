@@ -43,8 +43,9 @@ class SetEquiv(TransitiveRelation):
     # set).
     initializing = set()
 
-    def __init__(self, a, b):
-        TransitiveRelation.__init__(self, SetEquiv._operator_, a, b)
+    def __init__(self, a, b, *, styles=None):
+        TransitiveRelation.__init__(self, SetEquiv._operator_, a, b, 
+                                    styles=styles)
         if self not in SetEquiv.initializing:
             SetEquiv.initializing.add(self)
             try:

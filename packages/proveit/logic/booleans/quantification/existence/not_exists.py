@@ -12,7 +12,7 @@ class NotExists(OperationOverInstances):
 
     def __init__(self, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None,
-                 conditions=None, _lambda_map=None):
+                 conditions=None, styles=None, _lambda_map=None):
         '''
         Create a exists (there exists) expression:
         exists_{instance_param_or_params | conditions} instance_expr
@@ -22,15 +22,10 @@ class NotExists(OperationOverInstances):
         be singular or plural (iterable).
         '''
         OperationOverInstances.__init__(
-            self,
-            NotExists._operator_,
-            instance_param_or_params,
-            instance_expr,
-            domain=domain,
-            domains=domains,
-            condition=condition,
-            conditions=conditions,
-            _lambda_map=_lambda_map)
+            self, NotExists._operator_, instance_param_or_params,
+            instance_expr, domain=domain, domains=domains,
+            condition=condition, conditions=conditions,
+            styles=styles, _lambda_map=_lambda_map)
 
     def side_effects(self, judgment):
         '''
@@ -43,9 +38,9 @@ class NotExists(OperationOverInstances):
         Derive and return Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x)
         '''
         from . import not_exists_unfolding
-        P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
+        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Etcetera(
-            Operation(Q, self.instance_vars)), self.conditions
+            Function(Q, self.instance_vars)), self.conditions
         return not_exists_unfolding.instantiate(
             {
                 P_op: P_op_sub,
@@ -59,9 +54,9 @@ class NotExists(OperationOverInstances):
         This is automatically derived; see Not.derive_side_effects(..) and Not.derive_not_exists(..).
         '''
         from . import not_exists_folding
-        P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
+        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Etcetera(
-            Operation(Q, self.instance_vars)), self.conditions
+            Function(Q, self.instance_vars)), self.conditions
         folding = not_exists_folding.instantiate(
             {P_op: P_op_sub, Q_op: Q_op_sub, x_multi: self.instance_vars, S: self.domain})
         return folding.derive_conclusion(assumptions)
@@ -77,14 +72,14 @@ class NotExists(OperationOverInstances):
         from proveit.logic.equality.eq_ops import NotEquals
         from bool_ops import Not
         from bool_set import TRUE
-        Q_op, Q_op_sub = Operation(Q, self.instance_vars), self.conditions
+        Q_op, Q_op_sub = Function(Q, self.instance_vars), self.conditions
         operand = self.operans[0]
         if isinstance(self.instance_expr, Not):
-            P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr.etc_expr
+            P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr.etc_expr
             assumption = Forall(operand.arguments, operand.expression.etc_expr, operand.domain_condition)
             return forall_implies_not_exists_not.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instance_vars}).derive_conclusion().checked({assumption})
         else:
-            P_op, P_op_sub = Operation(P, self.instance_vars), self.instance_expr
+            P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
             assumption = Forall(operand.arguments, NotEquals(operand.expression, TRUE), operand.domain_condition)
             return exists_def_negation.instantiate({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instance_vars}).derive_left_via_equality().checked({assumption})
     """

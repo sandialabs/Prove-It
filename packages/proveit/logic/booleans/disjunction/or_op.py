@@ -15,11 +15,11 @@ class Or(Operation):
     # used to avoid infinite recursion inside of unary_reduction
     trivial_disjunctions = set()
 
-    def __init__(self, *operands):
+    def __init__(self, *operands, styles=None):
         '''
         Or together any number of operands: A or B or C
         '''
-        Operation.__init__(self, Or._operator_, operands)
+        Operation.__init__(self, Or._operator_, operands, styles=None)
         # deduce trivial disjunctive equivalances with 0 or 1 operand
         # avoid infinite recursion by storing previously encountered
         # expressions

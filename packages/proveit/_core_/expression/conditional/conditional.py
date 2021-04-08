@@ -20,7 +20,7 @@ class Conditional(Expression):
     instances and the rest are disregarded.
     '''
 
-    def __init__(self, value, condition_or_conditions):
+    def __init__(self, value, condition_or_conditions, *, styles=None):
         '''
         Create a Conditional with the given particular value
         and the given condition.  If multiple conditions are
@@ -51,13 +51,14 @@ class Conditional(Expression):
         assert (isinstance(condition, Expression) and
                 not isinstance(condition, Composite))
 
-        Expression.__init__(self, ['Conditional'], (value, condition))
+        Expression.__init__(self, ['Conditional'], (value, condition),
+                            styles=styles)
 
         self.value = value
         self.condition = condition
 
     @classmethod
-    def _make(sub_class, core_info, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions, *, styles):
         if len(core_info) != 1 or core_info[0] != 'Conditional':
             raise ValueError(
                 "Expecting Conditional core_info to contain exactly "
@@ -68,7 +69,7 @@ class Conditional(Expression):
             raise ValueError(
                 "Expecting Conditional to have two sub-expressions.")
         value, condition = sub_expressions
-        return Conditional(value, condition)
+        return Conditional(value, condition, styles=styles)
 
     def remake_arguments(self):
         '''

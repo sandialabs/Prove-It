@@ -55,30 +55,26 @@ def composite_expression(expressions):
     from proveit._core_.judgment import Judgment
     from proveit._core_.theory import UnsetCommonExpressionPlaceholder
     
-    with defaults.temporary() as temp_defaults:
-        # If there are default styles, don't apply them to here.
-        temp_defaults.styles = dict()
-        
-        if isinstance(expressions, UnsetCommonExpressionPlaceholder):
-            expressions.raise_attempted_use_error()
-        if isinstance(expressions, Judgment):
-            expressions = expressions.expr
-        if (isinstance(expressions, ExprTuple) 
-                or isinstance(expressions, NamedExprs)):
-            return expressions  # already in a multi-expression wrapper
-        elif isinstance(expressions, Expression):
-            # A single expression that we will wrap in an ExprTuple:
-            return ExprTuple(expressions)
-        else:
-            if len(expressions) == 0:
-                return ExprTuple()
-            try:
-                # try to see if we can use expressions to generate a
-                # NamedExpressions object
-                return NamedExprs(expressions)
-            except (TypeError, ValueError):
-                # See if we can build an ExprTuple.
-                return ExprTuple(*expressions)
+    if isinstance(expressions, UnsetCommonExpressionPlaceholder):
+        expressions.raise_attempted_use_error()
+    if isinstance(expressions, Judgment):
+        expressions = expressions.expr
+    if (isinstance(expressions, ExprTuple) 
+            or isinstance(expressions, NamedExprs)):
+        return expressions  # already in a multi-expression wrapper
+    elif isinstance(expressions, Expression):
+        # A single expression that we will wrap in an ExprTuple:
+        return ExprTuple(expressions)
+    else:
+        if len(expressions) == 0:
+            return ExprTuple()
+        try:
+            # try to see if we can use expressions to generate a
+            # NamedExpressions object
+            return NamedExprs(expressions)
+        except (TypeError, ValueError):
+            # See if we can build an ExprTuple.
+            return ExprTuple(*expressions)
 
 
 def single_or_composite_expression(expr_or_exprs,
@@ -92,31 +88,27 @@ def single_or_composite_expression(expr_or_exprs,
     the result is an ExprTuple with one item that is neither an
     ExprRange nor a nested ExprTuple, return the single item.
     '''
-    with defaults.temporary() as temp_defaults:
-        # If there are default styles, don't apply them to here.
-        temp_defaults.styles = dict()
-        
-        from proveit._core_.judgment import Judgment
-        from proveit._core_.theory import UnsetCommonExpressionPlaceholder
-        from .expr_tuple import ExprTuple
-        from .expr_range import ExprRange
-        if isinstance(expr_or_exprs, UnsetCommonExpressionPlaceholder):
-            expr_or_exprs.raise_attempted_use_error()
-        if isinstance(expr_or_exprs, Judgment):
-            expr_or_exprs = expr_or_exprs.expr
-        if wrap_expr_range_in_tuple and isinstance(expr_or_exprs, ExprRange):
-            # An ExprRange must be wrapped in an ExprTuple in the
-            # situations when either a single or composite are allowed.
-            return ExprTuple(expr_or_exprs)
-        if not isinstance(expr_or_exprs, Expression):
-            expr_or_exprs = composite_expression(expr_or_exprs)
-        if (do_singular_reduction and isinstance(expr_or_exprs, ExprTuple)
-                and expr_or_exprs.num_entries() == 1):
-            if (not isinstance(expr_or_exprs[0], ExprTuple) and
-                    not isinstance(expr_or_exprs[0], ExprRange)):
-                # Reduce it to a singular expression.
-                return expr_or_exprs[0]
-        return expr_or_exprs
+    from proveit._core_.judgment import Judgment
+    from proveit._core_.theory import UnsetCommonExpressionPlaceholder
+    from .expr_tuple import ExprTuple
+    from .expr_range import ExprRange
+    if isinstance(expr_or_exprs, UnsetCommonExpressionPlaceholder):
+        expr_or_exprs.raise_attempted_use_error()
+    if isinstance(expr_or_exprs, Judgment):
+        expr_or_exprs = expr_or_exprs.expr
+    if wrap_expr_range_in_tuple and isinstance(expr_or_exprs, ExprRange):
+        # An ExprRange must be wrapped in an ExprTuple in the
+        # situations when either a single or composite are allowed.
+        return ExprTuple(expr_or_exprs)
+    if not isinstance(expr_or_exprs, Expression):
+        expr_or_exprs = composite_expression(expr_or_exprs)
+    if (do_singular_reduction and isinstance(expr_or_exprs, ExprTuple)
+            and expr_or_exprs.num_entries() == 1):
+        if (not isinstance(expr_or_exprs[0], ExprTuple) and
+                not isinstance(expr_or_exprs[0], ExprRange)):
+            # Reduce it to a singular expression.
+            return expr_or_exprs[0]
+    return expr_or_exprs
 
 
 def _generateCoordOrderAssumptions(coords):

@@ -9,8 +9,8 @@ class Min(Function):
         latex_format=r'{\rm Min}',
         theory=__file__)
 
-    def __init__(self, *operands):
-        Function.__init__(self, Min._operator_, operands)
+    def __init__(self, *operands, styles=None):
+        Function.__init__(self, Min._operator_, operands, styles=styles)
 
     def _closureTheorem(self, number_set):
         from . import theorems

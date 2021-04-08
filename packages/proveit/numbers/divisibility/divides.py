@@ -7,8 +7,9 @@ from proveit.numbers import zero, Complex, Integer, NaturalPos
 
 class DividesRelation(TransitiveRelation):
 
-    def __init__(self, operator, lhs, rhs):
-        TransitiveRelation.__init__(self, operator, lhs, rhs)
+    def __init__(self, operator, lhs, rhs, *, styles):
+        TransitiveRelation.__init__(self, operator, lhs, rhs,
+                                    styles=styles)
         self.divisor = self.lhs
         self.dividend = self.rhs
 
@@ -89,8 +90,9 @@ class Divides(DividesRelation):
     #   (populated in TransitivityRelation.side_effects)
     known_right_sides = dict()
 
-    def __init__(self, a, b):
-        DividesRelation.__init__(self, Divides._operator_, a, b)
+    def __init__(self, a, b, *, styles=None):
+        DividesRelation.__init__(self, Divides._operator_, a, b,
+                                 styles=styles)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -455,5 +457,6 @@ class DividesProper(DividesRelation):
     #   (populated in TransitivityRelation.side_effects)
     known_right_sides = dict()
 
-    def __init__(self, a, b):
-        DividesRelation.__init__(self, DividesProper._operator_, a, b)
+    def __init__(self, a, b, *, styles=None):
+        DividesRelation.__init__(self, DividesProper._operator_, a, b,
+                                 styles=styles)

@@ -13,7 +13,7 @@ class UnionAll(OperationOverInstances):
 
     def __init__(self, instance_param_or_params, instance_element,
                  domain=None, *, domains=None, condition=None,
-                 conditions=None, _lambda_map=None):
+                 conditions=None, styles=None, _lambda_map=None):
         '''
         Create an expression representing the union of all
         instance_element for instance parameter(s) such that the conditions
@@ -21,15 +21,10 @@ class UnionAll(OperationOverInstances):
         {instance_element | conditions}_{instance_param_or_params \in S}
         '''
         OperationOverInstances.__init__(
-            self,
-            UnionAll._operator_,
-            instance_param_or_params,
-            instance_element,
-            domain=domain,
-            domains=domains,
-            condition=condition,
-            conditions=conditions,
-            _lambda_map=_lambda_map)
+            self, UnionAll._operator_, instance_param_or_params,
+            instance_element, domain=domain, domains=domains,
+            condition=condition, conditions=conditions,
+            styles=styles, _lambda_map=_lambda_map)
         self.instance_element = self.instance_expr
         if hasattr(self, 'instance_param'):
             if not hasattr(self, 'domain'):

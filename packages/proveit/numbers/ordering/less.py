@@ -15,11 +15,12 @@ class Less(NumberOrderingRelation):
     #   (populated in TransitivityRelation.side_effects)
     known_right_sides = dict()
 
-    def __init__(self, lhs, rhs):
+    def __init__(self, lhs, rhs, *, styles=None):
         r'''
         Create an expression of the form lhs < rhs.
         '''
-        NumberOrderingRelation.__init__(self, Less._operator_, lhs, rhs)
+        NumberOrderingRelation.__init__(self, Less._operator_, lhs, rhs,
+                                        styles=styles)
     
     def side_effects(self, judgment):
         '''

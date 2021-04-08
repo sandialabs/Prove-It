@@ -18,11 +18,12 @@ class LessEq(NumberOrderingRelation):
     #   (populated in TransitivityRelation.derive_side_effects)
     known_right_sides = dict()
 
-    def __init__(self, a, b):
+    def __init__(self, a, b, *, styles=None):
         r'''
         Create an expression representing a <= b.
         '''
-        NumberOrderingRelation.__init__(self, LessEq._operator_, a, b)
+        NumberOrderingRelation.__init__(self, LessEq._operator_, a, b,
+                                        styles=styles)
 
     @staticmethod
     def reversed_operator_str(formatType):

@@ -9,8 +9,8 @@ class Max(Operation):
         latex_format=r'{\rm Max}',
         theory=__file__)
 
-    def __init__(self, *operands):
-        Operation.__init__(self, Max._operator_, operands)
+    def __init__(self, *operands, styles=None):
+        Operation.__init__(self, Max._operator_, operands, styles=styles)
 
     def _closureTheorem(self, number_set):
         from . import theorems

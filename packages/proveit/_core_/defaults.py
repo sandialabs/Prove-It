@@ -14,13 +14,15 @@ class Defaults:
         # Default assumptions to use for proofs.
         self.assumptions = tuple()
         
-        # Default styles to use as applicable.
-        self.styles = dict()
+        # Expressions that should be 'preserved' and not simplified.
+        self.preserved_exprs = set()
         
         # When True, match the style of newly created Expression
         # objects to the last "touched" (created or styled) Expression
         # of the same meaning (when use_consistent_styles was True).  
         # This overrides defaults.styles.
+        # Note, this feature is disabled in the notebooks that define
+        # common expressions, axioms, and theorems.
         self.use_consistent_styles = True
 
         # Enable/disable `automation` by performing automatic
@@ -168,7 +170,7 @@ class TemporaryDefaults(object):
         if defaults.__dict__[attr] == val:
             return # Nothing needs to be done.
         self._safekeep_original(attr)    
-        defaults.__dict__[attr] = val
+        setattr(defaults, attr, val)
     
     def __getattr__(self, attr):
         '''

@@ -8,8 +8,9 @@ class Mod(NumberOperation):
     _operator_ = Literal(string_format='mod ', latex_format=r'~\textup{mod}~',
                          theory=__file__)
 
-    def __init__(self, dividend, divisor):
-        Operation.__init__(self, Mod._operator_, (dividend, divisor))
+    def __init__(self, dividend, divisor, *, styles=None):
+        NumberOperation.__init__(self, Mod._operator_, (dividend, divisor),
+                                 styles=styles)
         self.dividend = self.operands[0]
         self.divisor = self.operands[1]
 

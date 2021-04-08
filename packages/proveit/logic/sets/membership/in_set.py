@@ -11,8 +11,9 @@ class InSet(Operation):
     # For example, map x to (x in S) if (x in S) is a Judgment.
     known_memberships = dict()
 
-    def __init__(self, element, domain):
-        Operation.__init__(self, InSet._operator_, (element, domain))
+    def __init__(self, element, domain, *, styles=None):
+        Operation.__init__(self, InSet._operator_, (element, domain),
+                           styles=styles)
         self.element = self.operands[0]
         self.domain = self.operands[1]
         if hasattr(self.domain, 'membership_object'):
@@ -137,7 +138,7 @@ class InSet(Operation):
         # No known membership works.  Let's see if there is a known
         # simplification of the element before trying anything else.
         try:
-            elem_simplification = self.element.simplification(assumptions,
+            elem_simplification = self.element.simplification(assumptions=assumptions,
                                                               automation=False)
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None  # reflection doesn't count
@@ -147,7 +148,7 @@ class InSet(Operation):
         if elem_simplification is None:
             # Let's try harder to simplify the element.
             try:
-                elem_simplification = self.element.simplification(assumptions)
+                elem_simplification = self.element.simplification(assumptions=assumptions)
                 if elem_simplification.lhs == elem_simplification.rhs:
                     elem_simplification = None  # reflection doesn't count
             except SimplificationError:
@@ -166,7 +167,7 @@ class InSet(Operation):
             # Unable to simplify the element.  Try to conclude via
             # the 'membership_object' if there is one.
             if hasattr(self, 'membership_object'):
-                return self.membership_object.conclude(assumptions)
+                return self.membership_object.conclude(assumptions=assumptions)
 
             raise ProofFailure(self, assumptions,
                                "Unable to conclude automatically; "

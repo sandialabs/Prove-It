@@ -15,9 +15,9 @@ class Interval(Operation):
     assurances about the elements being in a particular order.
     '''
 
-    def __init__(self, lower_bound, upper_bound):
+    def __init__(self, lower_bound, upper_bound, *, styles=None):
         Operation.__init__(self, Interval._operator_,
-                           (lower_bound, upper_bound))
+                           (lower_bound, upper_bound), styles=styles)
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 

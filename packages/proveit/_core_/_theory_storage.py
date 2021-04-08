@@ -304,13 +304,13 @@ class TheoryStorage:
             raise ValueError("Expecting 'axioms', 'theorems' or 'common', "
                              "not %s." % folder)
 
-    def set_common_expressions(self, names, definitions):
+    def set_common_expressions(self, definitions):
         '''
         Set the common expressions of the theory.
         '''
-        return self.set_special_expressions(names, definitions, 'common')
+        return self.set_special_expressions(definitions, 'common')
 
-    def set_special_expressions(self, names, definitions, kind):
+    def set_special_expressions(self, definitions, kind):
         '''
         Set the common expressions, axioms, or theorems of the theory.
         '''
@@ -332,9 +332,9 @@ class TheoryStorage:
             # "Retrieve" the proofs to make sure they are stored
             # for future needs.
             self.theory_folder_storage(kind + 's')
-        self._setSpecialObjects(names, definitions, kind)
+        self._set_special_objects(definitions, kind)
 
-    def _setSpecialObjects(self, names, definitions, kind):
+    def _set_special_objects(self, definitions, kind):
         folder = TheoryStorage._kind_to_folder(kind)
         name_to_hash_file = os.path.join(self.pv_it_dir, folder,
                                          'name_to_hash.txt')
@@ -356,7 +356,7 @@ class TheoryStorage:
 
         # determine hash ids
         obsolete_hash_ids = set()  # for modified statements
-        for name in names:
+        for name, obj in definitions.items():
             obj = definitions[name]
             if kind == 'common':
                 expr = obj
@@ -434,6 +434,7 @@ class TheoryStorage:
                     self.theory, kind, hash_id)
 
         # Now we'll write the new name to hash information.
+        names = definitions.keys()
         self._update_name_to_kind(names, kind)
         new_lines = []
         for name in names:
@@ -1966,7 +1967,7 @@ class TheoryFolderStorage:
                 sub_expressions):
             expr_class = expr_class_map[expr_class_str]
             expr = expr_class._checked_make(expr_info, sub_expressions, 
-                                            styles)
+                                            style_preferences=styles)
             return expr
         # Load the "special names" of the theory so we
         # will know, for future reference, if this is a special

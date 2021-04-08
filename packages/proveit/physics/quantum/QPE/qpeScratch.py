@@ -25,10 +25,10 @@ u = Variable('ket_u', {LATEX: r'|u\rangle'})
 zero_to_one = Variable('zero_to_one', {LATEX: r'[0,1]'})
 
 t_func = Variable('t_func')
-t_func_n_eps = Operation(t_func, (n, eps))
+t_func_n_eps = Function(t_func, (n, eps))
 
 QPE = Variable('QPE')
-QPEfunc = Operation(QPE, (U, u, t))
+QPEfunc = Function(QPE, (U, u, t))
 
 
 # Forall_{m, n, t in Z+, e in [0, 1]   |   t = n + ceil[log_2(2 + 1 / (2 e)]}

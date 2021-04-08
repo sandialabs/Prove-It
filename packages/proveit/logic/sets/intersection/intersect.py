@@ -9,11 +9,12 @@ class Intersect(Operation):
         latex_format=r'\cap',
         theory=__file__)
 
-    def __init__(self, *operands):
+    def __init__(self, *operands, styles=None):
         '''
         Intersect any number of set: A intersect B intersect C
         '''
-        Operation.__init__(self, Intersect._operator_, operands)
+        Operation.__init__(self, Intersect._operator_, operands,
+                           styles=styles)
 
     def membership_object(self, element):
         from .intersect_membership import IntersectMembership

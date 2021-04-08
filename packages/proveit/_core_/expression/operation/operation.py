@@ -20,7 +20,7 @@ class Operation(Expression):
         '''
         Operation.operation_class_of_operator.clear()
 
-    def __init__(self, operator, operand_or_operands, *, styles=None):
+    def __init__(self, operator, operand_or_operands, *, styles):
         '''
         Create an operation with the given operator and operands.
         The operator must be a Label (a Variable or a Literal).
@@ -211,9 +211,9 @@ class Operation(Expression):
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
             raise OperationError("An implicit operator may not be changed")
-        args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
-            inspect.getfullargspec(cls.__init__)
-        args = args[1:]  # skip over the 'self' arg
+        sig = inspect.signature(cls.__init__)
+        Parameter = inspect.Parameter
+        init_params = sig.parameters
         if obj is None:
             def extract_init_arg_value_fn(arg): 
                 return cls.extract_init_arg_value(arg, operator, operands)
@@ -221,42 +221,51 @@ class Operation(Expression):
             extract_init_arg_value_fn = \
                 lambda arg: obj.extract_my_init_arg_value(arg)
         try:
-            arg_vals = [extract_init_arg_value_fn(arg) for arg in args]
-            if varargs is not None:
-                arg_vals += extract_init_arg_value_fn(varargs)
-            if defaults is None:
-                defaults = []
-            for k, (arg, val) in enumerate(zip(args, arg_vals)):
-                if len(defaults) - len(args) + k < 0:
+            first_param = True
+            for param_name, param in init_params.items():
+                if first_param:
+                    # Skip the 'self' parameter.
+                    first_param = False
+                    continue
+                param = init_params[param_name]
+                val = extract_init_arg_value_fn(param_name)
+                default = param.default
+                if default is param.empty or val != default:
+                    # Override the default if there is one.
                     if not isinstance(val, Expression):
                         raise TypeError(
-                            "extract_init_arg_val for %s should return an Expression but is returning a %s" %
-                            (arg, type(val)))
-                    yield val  # no default specified; just supply the value, not the argument name
-                else:
-                    if val == defaults[len(defaults) - len(args) + k]:
-                        continue  # using the default value
+                            "extract_init_arg_val for %s should return "
+                            "an Expression but is returning a %s" %
+                            (param_name, type(val)))
+                    if param.kind == Parameter.POSITIONAL_ONLY:
+                        yield val
                     else:
-                        yield (arg, val)  # override the default
-            if varkw is not None:
-                kw_arg_vals = extract_init_arg_value_fn(varkw)
-                for arg, val in kw_arg_vals.items():
-                    yield (arg, val)
-            if kwonlyargs is not None:
-                for kwonlyarg in kwonlyargs:
-                    val = extract_init_arg_value_fn(kwonlyarg)
-                    if val != kwonlydefaults[kwonlyarg]:
-                        yield (kwonlyarg, val)
+                        yield (param_name, val)
         except NotImplementedError:
-            # and (operation_class.extract_init_arg_value ==
-            # Operation.extract_init_arg_value):
+            # Try some default scenarios that don't require
+            # extract_init_arg_value_fn to be implemented.
+            pos_params = []
+            var_params = None
+            kwonly_params = []
+            varkw = None
+            for name, param in init_params.items():
+                if param.kind in (Parameter.POSITIONAL_ONLY,
+                                  Parameter.POSITIONAL_OR_KEYWORD):
+                    pos_params.append(name)
+                elif param.kind == Parameter.VAR_POSITIONAL:
+                    var_params = name
+                elif param.kind == Parameter.KEYWORD_ONLY:
+                    kwonly_params.append(name)
+                elif param.kind == Parameter.VAR_KEYWORD:
+                    varkw = name
+            pos_params = pos_params[1:] # skip 'self'
+            
             if (varkw is None):
-                # try some default scenarios (that do not involve 
-                # keyword arguments) handle default implicit operator
-                # case
+                # handle default implicit operator case
                 if implicit_operator and (
-                    (len(args) == 0 and varargs is not None) or (
-                        len(args) == operands.num_entries() and varargs is None)):
+                    (len(pos_params) == 0 and var_params is not None) or (
+                        len(pos_params) == operands.num_entries() 
+                        and var_params is None)):
                     # yield each operand separately
                     for operand in operands:
                         yield operand
@@ -264,15 +273,15 @@ class Operation(Expression):
 
                 # handle default explicit operator case
                 if (implicit_operator is None) and (varkw is None):
-                    if varargs is None and len(args) == 2:
+                    if var_params is None and len(pos_params) == 2:
                         # assume one argument for the operator and one
                         # argument for the operands
                         yield operator
                         yield operands
                         return
-                    elif ((varargs is not None and len(args) == 1) or 
-                          (len(args) == operands.num_entries() + 1 
-                           and varargs is None)):
+                    elif ((var_params is not None and len(pos_params) == 1) or 
+                          (len(pos_params) == operands.num_entries() + 1 
+                           and var_params is None)):
                         # yield the operator and each operand separately
                         yield operator
                         for operand in operands:
@@ -285,7 +294,7 @@ class Operation(Expression):
                     % str(cls))
 
     @classmethod
-    def _make(operation_class, core_info, sub_expressions):
+    def _make(operation_class, core_info, sub_expressions, *, styles):
         '''
         Make the appropriate Operation.  core_info should equal 
         ('Operation',).  The first of the sub_expressions should be 
@@ -313,7 +322,7 @@ class Operation(Expression):
             else:
                 kw, val = arg
                 kw_args[kw] = val
-        return operation_class(*args, **kw_args)
+        return operation_class(*args, **kw_args, styles=styles)
 
     def remake_arguments(self):
         '''
@@ -544,7 +553,7 @@ class Operation(Expression):
                 subbed_sub_exprs = (subbed_operator, subbed_operands)
                 substituted = op_class._checked_make(
                     ['Operation'], sub_expressions=subbed_sub_exprs,
-                    styles=self._style_data.styles)
+                    style_preferences=self._style_data.styles)
                 return substituted._reduced(
                     reduction_map, assumptions, requirements,
                     equality_repl_requirements)
@@ -552,7 +561,8 @@ class Operation(Expression):
         subbed_sub_exprs = (subbed_operator,
                             subbed_operands)
         substituted = self.__class__._checked_make(
-            self._core_info, subbed_sub_exprs, self._style_data.styles)
+            self._core_info, subbed_sub_exprs, 
+            style_preferences=self._style_data.styles)
         return substituted._reduced(reduction_map, assumptions, requirements,
                                     equality_repl_requirements)
 

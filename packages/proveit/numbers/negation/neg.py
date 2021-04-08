@@ -14,8 +14,8 @@ class Neg(NumberOperation):
     # operator of the Neg operation.
     _operator_ = Literal(string_format='-', theory=__file__)
 
-    def __init__(self, A):
-        Operation.__init__(self, Neg._operator_, A)
+    def __init__(self, A, *, styles=None):
+        NumberOperation.__init__(self, Neg._operator_, A, styles=styles)
 
     def irreducible_value(self):
         from proveit.numbers import zero

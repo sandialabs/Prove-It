@@ -9,11 +9,12 @@ class PowerSet(Function):
         latex_format=r'\mathbb{P}',
         theory=__file__)
 
-    def __init__(self, operand):
+    def __init__(self, operand, *, styles=None):
         '''
         Power set of a set.
         '''
-        Function.__init__(self, PowerSet._operator_, operand)
+        Function.__init__(self, PowerSet._operator_, operand,
+                          styles=styles)
 
     """
     # Needs implementation

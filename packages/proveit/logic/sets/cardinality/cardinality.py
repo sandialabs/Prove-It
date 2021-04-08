@@ -7,8 +7,8 @@ class Card(Function):
     _operator_ = Literal(string_format='card',
                          latex_format=r'\textrm{card}', theory=__file__)
 
-    def __init__(self, domain):
-        Function.__init__(self, Card._operator_, domain)
+    def __init__(self, domain, *, styles=None):
+        Function.__init__(self, Card._operator_, domain, styles=styles)
         self.domain = self.operands[0]
 
     def string(self, fence=False):

@@ -36,8 +36,9 @@ class Equals(TransitiveRelation):
     # recursion while automatically deducing an equality is in Boolean).
     initializing = set()
 
-    def __init__(self, a, b):
-        TransitiveRelation.__init__(self, Equals._operator_, a, b)
+    def __init__(self, a, b, *, styles=None):
+        TransitiveRelation.__init__(self, Equals._operator_, a, b,
+                                    styles=styles)
         '''
         # May be better not to be proactive but we need to see if this
         # breaks anything.

@@ -71,12 +71,12 @@ class Input(Function):
     # the literal operator of the Input operation class
     _operator_ = Literal('INPUT', theory=__file__)
 
-    def __init__(self, state):
+    def __init__(self, state, *, styles=None):
         '''
         Create an INPUT operation (for entering the left-hand side
         of a circuit) with the given input state.
         '''
-        Function.__init__(self, Input._operator_, state)
+        Function.__init__(self, Input._operator_, state, styles=styles)
         self.state = state
 
     def string(self, **kwargs):
@@ -115,11 +115,11 @@ class Output(Function):
     # the literal operator of the Output operation class
     _operator_ = Literal('OUTPUT', theory=__file__)
 
-    def __init__(self, state):
+    def __init__(self, state, *, styles=None):
         '''
         Create an OUTPUT operation with the given input state.
         '''
-        Function.__init__(self, Output._operator_, state)
+        Function.__init__(self, Output._operator_, state, styles=styles)
         self.state = state
 
     def string(self, **kwargs):
@@ -152,7 +152,7 @@ class IdentityOp(Literal):
     The quantum identity operator 'I'
     '''
 
-    def __init__(self, explicit=False):
+    def __init__(self, *, explicit=False, styles=None):
         '''
         Create the Literal 'I'.
         If not 'explicit', just use a wire.
@@ -228,7 +228,7 @@ class Gate(Function):
     # the literal operator of the Gate operation class
     _operator_ = Literal('GATE', theory=__file__)
 
-    def __init__(self, *operand):
+    def __init__(self, *operand, styles=None):
         '''
         Create a quantum circuit gate performing the given operation.
         '''
@@ -237,7 +237,7 @@ class Gate(Function):
                 'Expected one operand, got %s instead.' %
                 len(operand))
 
-        Function.__init__(self, Gate._operator_, operand)
+        Function.__init__(self, Gate._operator_, operand, styles=styles)
 
         if len(operand) == 0:
             self.gate_operation = None
@@ -353,7 +353,7 @@ class MultiQubitGate(Function):
     # the literal operator of the Gate operation class
     _operator_ = Literal('MULTI_QUBIT_GATE', theory=__file__)
 
-    def __init__(self, gate, gate_set):
+    def __init__(self, gate, gate_set, *, styles=None):
         '''
         Create a quantum circuit gate performing the given operation.
         '''
@@ -364,7 +364,7 @@ class MultiQubitGate(Function):
         self.gate_set = gate_set
         self.gate = gate
         Function.__init__(self, MultiQubitGate._operator_,
-                           (gate, gate_set))
+                           (gate, gate_set), styles=styles)
 
     def remake_with_style_calls(self):
         '''
@@ -534,11 +534,12 @@ class MultiWire(Function):
     '''
     _operator_ = Literal('MULTI_WIRE', theory=__file__)
 
-    def __init__(self, number):
+    def __init__(self, number, *, styles=None):
         '''
         Create a multi-wire.
         '''
-        Function.__init__(self, MultiWire._operator_, number)
+        Function.__init__(self, MultiWire._operator_, number,
+                          styles=styles)
         self.number = number
 
     def string(self, **kwargs):
@@ -568,8 +569,10 @@ class MultiWire(Function):
 
 
 class TargetOperator(Literal):
-    def __init__(self, string_format, latex_format=None, theory=None):
-        Literal.__init__(self, string_format, latex_format, theory)
+    def __init__(self, string_format, latex_format=None, *, 
+                 theory=None, styles=None):
+        Literal.__init__(self, string_format, latex_format, 
+                         theory=theory, styles=styles)
 
     def latex(self, **kwargs):
         return r'\oplus'
@@ -586,12 +589,13 @@ class Target(Function):
         latex_format=r'\targ',
         theory=__file__)
 
-    def __init__(self, target_gate):
+    def __init__(self, target_gate, *, styles=None):
         '''
         Create a Target operation with the given target_gate as the type
         of the gate for the target (e.g., X for CNOT and Z for Controlled-Z).
         '''
-        Function.__init__(self, Target._operator_, target_gate)
+        Function.__init__(self, Target._operator_, target_gate,
+                          styles=styles)
         self.target_gate = target_gate
 
     def string(self, **kwargs):
@@ -626,8 +630,9 @@ class CircuitEquiv(TransitiveRelation):
     #   (populated in TransitivityRelation.derive_side_effects)
     known_right_sides = dict()
 
-    def __init__(self, a, b):
-        TransitiveRelation.__init__(self, CircuitEquiv._operator_, a, b)
+    def __init__(self, a, b, *, styles=None):
+        TransitiveRelation.__init__(self, CircuitEquiv._operator_, a, b,
+                                    styles=styles)
         self.a = a
         self.b = b
 
@@ -822,12 +827,13 @@ class Circuit(Function):
     _operator_ = Literal('CIRCUIT', theory=__file__)
     DEFAULT_SPACING = '@C=1em @R=.7em'
 
-    def __init__(self, array):
+    def __init__(self, array, *, styles=None):
         '''
         Initialize an ExprTuple from an iterable over Expression
         objects.
         '''
-        Function.__init__(self, Circuit._operator_, [array])
+        Function.__init__(self, Circuit._operator_, [array],
+                          styles=styles)
 
         self.array = array
 
