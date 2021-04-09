@@ -12,8 +12,8 @@ class Label(Expression):
     with string and latex formatting.
     """
 
-    def __init__(self, string_format, latex_format=None, label_type='Label',
-                 extra_core_info=tuple(), sub_expressions=tuple(), *,
+    def __init__(self, string_format, latex_format=None,
+                 label_type='Label', extra_core_info=tuple(), *,
                  fence_when_forced=False, styles=None):
         '''
         Create a Label with the given string and latex formatting.
@@ -39,7 +39,7 @@ class Label(Expression):
         core_info = ((label_type, self.string_format, self.latex_format) + 
                      extra_core_info)
         self.fence_when_forced = fence_when_forced
-        Expression.__init__(self, core_info, sub_expressions=sub_expressions,
+        Expression.__init__(self, core_info, sub_expressions=tuple(),
                             styles=styles)
 
     def string(self, **kwargs):
@@ -101,6 +101,8 @@ class Label(Expression):
         known_param_names = {'self', 'string_format', 'latex_format', 
                              'fence_when_forced', 'extra_core_info',
                              'styles'}
+        if self.__class__ == Label:
+            known_param_names.add('label_type')
         if is_literal_instance:
             known_param_names.add('theory')
         unknown_param_names = init_params.keys() - known_param_names
