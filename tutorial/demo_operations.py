@@ -12,13 +12,12 @@ class Factorial(Operation):
     # substitutions for rebuilding expressions.
     _operator_ = Literal('!')
 
-    def __init__(self, operand):
+    def __init__(self, operand, *, styles=None):
         # creates the Operation with FACTORIAL as the operator and the provided
         # operand as its only operand.
-        Operation.__init__(
-            self,
-            Factorial._operator_,
-            operand)  # initializes self.operand
+        Operation.__init__(self, Factorial._operator_, operand,
+                           styles=styles)
+        # self.operand is automatically initialized.
 
     def string(self, **kwargs):  # should accept kwargs even when not used (e.g., 'fence')
         # the operand should be fenced (wrapped in parentheses) to prevent
@@ -37,9 +36,11 @@ class Multiply(Operation):
     # format.
     _operator_ = Literal('*', r'\times')
 
-    def __init__(self, *operands):  # takes a list of arguments as the operands
+    # takes a list of arguments as the operands
+    def __init__(self, *operands, styles=None):  
         # creates the AssociativeOperation with TIMES as the operator and any
         # number of operands.
-        Operation.__init__(self, Multiply._operator_, operands)
+        Operation.__init__(self, Multiply._operator_, operands,
+                           styles=styles)
 
     # The default formatting will display the operator between the operands
