@@ -106,7 +106,7 @@ class Expression(metaclass=ExprType):
                 "(should have been temporary)")
         Expression.labeled_to_canonical_meaning_data.clear()
         Expression.class_paths.clear()
-        Expression.default_labeled_expr_styles.clear()
+        #Expression.default_labeled_expr_styles.clear()
 
     def __init__(self, core_info, sub_expressions=tuple(), *, styles):
         '''
