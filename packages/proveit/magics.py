@@ -526,7 +526,7 @@ class ProveItMagicCommands:
     def prepare_notebook(self, kind):
         import proveit
         proveit.defaults.automation = False
-        proveit.defaults.use_consistent_styles = False
+        #proveit.defaults.use_consistent_styles = False
         theory = Theory()
         if kind == 'common':
             import_failure_filename = os.path.join(

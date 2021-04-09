@@ -86,11 +86,13 @@ class Expression(metaclass=ExprType):
     # by the Expression._class_path method).
     class_paths = dict()
     
+    """
     # Map "labeled meaning ids" of expressions to default styles.
     # That is, expressions with a specific labeling will establish
     # default styles; expressions with the same meaning but different
     # labels with have their own separate default style.
     default_labeled_expr_styles = dict()
+    """
 
     @staticmethod
     def _clear_():
@@ -167,6 +169,7 @@ class Expression(metaclass=ExprType):
         if styles is None:
             styles = dict()
         style_options = self.style_options()
+        """
         if (defaults.use_consistent_styles and 
                 self._labeled_meaning_id in 
                 Expression.default_labeled_expr_styles):
@@ -178,6 +181,7 @@ class Expression(metaclass=ExprType):
             for name, val in styles_to_emulate.items():
                 if name not in styles and name in option_names:
                     styles[name] = val
+        """
         styles = style_options.standardized_styles(
                 styles, ignore_inapplicable_styles=ignore_inapplicable_styles)
 
@@ -201,11 +205,13 @@ class Expression(metaclass=ExprType):
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
         
+        """
         if defaults.use_consistent_styles:
             # Make this the default style.
             Expression.default_labeled_expr_styles[
                     self._labeled_meaning_id] = styles
-    
+        """
+
     def _canonical_version(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
@@ -255,12 +261,17 @@ class Expression(metaclass=ExprType):
         # The 'canonical' sub-expressions are different than the
         # sub-expressions, so that propagates to this Expression's
         # canonical version.
+        """
         with defaults.temporary() as temp_defaults:
             # Force the canonical styles.
             temp_defaults.use_consistent_styles = False
             canonical_expr = self.__class__._checked_make(
                 self._core_info, canonical_sub_expressions, 
                 style_preferences=canonical_styles)
+        """
+        canonical_expr = self.__class__._checked_make(
+            self._core_info, canonical_sub_expressions, 
+            style_preferences=canonical_styles)
         assert canonical_expr._canonical_version() == canonical_expr, (
                 "The canonical version of a canonical expression should "
                 "be itself.")
@@ -598,9 +609,11 @@ class Expression(metaclass=ExprType):
                 styles, ignore_inapplicable_styles)
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
+        """
         if defaults.use_consistent_styles:
             Expression.default_labeled_expr_styles[
                     self._labeled_meaning_id] = styles
+        """
         new_style_expr = copy(self)
         new_style_expr._style_data = style_data(
             new_style_expr._generate_unique_rep(lambda expr: hex(expr._style_id),

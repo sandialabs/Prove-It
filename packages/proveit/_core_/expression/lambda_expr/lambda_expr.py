@@ -246,7 +246,7 @@ class Lambda(Expression):
             # styles" -- we need use "canonical" styles.
             temp_defaults.auto_reduce = False
             temp_defaults.automation = False
-            temp_defaults.use_consistent_styles = False
+            #temp_defaults.use_consistent_styles = False
             # Canonical Lambda styles are always empty.
             canonical_styles = dict()
             if canonical_param_vars != bound_parameter_vars:
