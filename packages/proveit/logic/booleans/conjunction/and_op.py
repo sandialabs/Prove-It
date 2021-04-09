@@ -151,13 +151,15 @@ class And(Operation):
                 true_and_false_negated.expr,
                 false_and_true_negated.expr,
                 false_and_false_negated.expr}:
-            # should be disproven via one of the imported theorems as a simple
-            # special case
+            # should be disproven via one of the imported theorems as a
+            # simple special case
             return not_self.prove()
-            # Prove that the conjunction is true by proving that one of its operands is false and then negate it.
-        # In the first attempt, don't use automation to prove any of the operands so that
-        # we don't waste time trying to prove operands when we already know one
-        # to be false
+            # Prove that the conjunction is true by proving that one of 
+            # its operands is false and then negate it.
+        # In the first attempt, don't use automation to prove any of the
+        # operands so that
+        # we don't waste time trying to prove operands when we already 
+        # know oneto be false
         for use_automation_for_operand in [False, True]:
             disproven_operand_indices = []
             for _k, operand in enumerate(self.operands):
@@ -166,12 +168,15 @@ class And(Operation):
                         assumptions, automation=use_automation_for_operand)
                     disproven_operand_indices.append(_k)
                     # possible way to prove it
-                    self.conclude_via_example(operand, assumptions=assumptions)
+                    self.conclude_negation_via_example(operand, 
+                                                       assumptions=assumptions)
                 except ProofFailure:
                     pass
             if self.operands.is_double() and len(disproven_operand_indices) > 0:
-                # One or both of the two operands were known to be true (without automation).
-                # Try a possibly simpler proof than conclude_via_example.
+                # One or both of the two operands were known to be true 
+                # (without automation).
+                # Try a possibly simpler proof than 
+                # conclude_negation_via_example.
                 try:
                     if len(disproven_operand_indices) == 2:
                         return nand_if_neither.instantiate(
@@ -186,14 +191,15 @@ class And(Operation):
                     pass
             if len(disproven_operand_indices) > 0:
                 # Not(self) should have been proven via
-                # conclude_via_example above
+                # conclude_negation_via_example above
                 try:
                     return not_self.prove(assumptions, automation=False)
                 except BaseException:
-                    # If it wasn't proven via conclude_via_example, let's
+                    # If it wasn't proven via 
+                    # conclude_negation_via_example, let's
                     # call it again to raise the appropriate exception.
                     operand = self.operands[disproven_operand_indices[0]]
-                    return self.conclude_via_example(
+                    return self.conclude_negation_via_example(
                         operand, assumptions=assumptions)
         raise ProofFailure(not_self, assumptions,
                            "Unable to conclude the negated conjunction; "
@@ -428,10 +434,12 @@ class And(Operation):
             return demorgans_law_or_to_and.instantiate(
                 {m: _m, A: _A}, assumptions=assumptions)
 
-    def conclude_via_example(self, true_operand, assumptions=USE_DEFAULTS):
+    def conclude_negation_via_example(self, true_operand,
+                                      assumptions=USE_DEFAULTS):
         '''
-        From one true operand, conclude that this 'or' expression is true.
-        Requires all of the operands to be in the BOOLEAN set.
+        From one false operand, conclude that the negation of this 
+        conjunction.  Requires all of the operands to be in the
+        BOOLEAN set.
         '''
         from . import nand_if_not_one, nand_if_not_left, nand_if_not_right
         index = self.operands.index(true_operand)
