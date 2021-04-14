@@ -1,5 +1,6 @@
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, USE_DEFAULTS, StyleOptions, 
+                     prover, equivalence_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites)
 from proveit import a, b, c, d, i, j, k, l, n, x, y
@@ -525,7 +526,7 @@ class Add(NumberOperation):
         return expanded_add_neg_self.instantiate({m:num(one_idx),n:num(len(expr.operands)-1-two_idx), AA:expr.operands[:one_idx], y:one, x:two, BB:expr.operands[two_idx + 1:]}, assumptions=assumptions)
     """
 
-    def _createDict(self, assumptions=USE_DEFAULTS):
+    def _create_dict(self):
         '''
         created by JML 7/24/19
         Creates a dictionary from an addition expression where the keys are common terms and values
@@ -610,11 +611,69 @@ class Add(NumberOperation):
 
         return hold, order
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **kwargs):
         '''
-        Perform a number of possible simplification of a Add
-        expression after the operands have individually been
-        simplified.  Disassociate grouped terms, eliminate zero terms,
+        Returns a proven evaluation equation for this Add
+        expression assuming the operands have been simplified or
+        raises an EvaluationError or ProofFailure (e.g., if appropriate
+        number set membership has not been proven).       
+        '''
+        from proveit.logic import EvaluationError
+        from proveit.numbers import Neg, is_literal_int
+
+        abs_terms = [
+            term.operand if isinstance(
+                term, Neg) else term for term in self.terms]
+        if len(abs_terms) == 2 and all(is_literal_int(abs_term)
+                                       for abs_term in abs_terms):
+            evaluation = self._integerBinaryEval()
+            return evaluation
+
+        expr = self
+        # for convenience updating our equation
+        eq = TransRelUpdater(expr)
+
+        # start with cancelations (maybe everything cancels to zero)
+        expr = eq.update(expr.cancelations())
+        if is_irreducible_value(expr):
+            return eq.relation
+
+        if not isinstance(expr, Add):
+            raise EvaluationError(eq.expr)
+
+        # If all the operands are the same, combine via multiplication and then
+        # evaluate.
+        if all(operand == expr.operands[0] for operand in expr.operands):
+            expr = eq.update(expr.conversion_to_multiplication())
+            eq.update(expr.evaluation())
+            return eq.relation
+
+        if expr.operands.num_entries() > 2:
+            expr = eq.update(pairwise_evaluation(expr))
+            return eq.relation
+
+        if expr.operands.is_double():
+            # If both operands are negated, factor out the negation.
+            if all(isinstance(operand, Neg) for operand in expr.operands):
+                negated = Neg(
+                    Add(*[operand.operand for operand in expr.operands]))
+                neg_distribution = negated.distribution()
+                expr = eq.update(neg_distribution.derive_reversed())
+                eq.update(expr.evaluation())
+                return eq.relation
+
+        raise EvaluationError(self)
+
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
+        '''
+        Returns a proven simplification equation for this Add
+        expression assuming the operands have been simplified.
+        
+        Perform a number of possible simplifications of an Add
+        expression after the operands have been simplified.  
+        Disassociate grouped terms, eliminate zero terms,
         cancel common terms that are subtracted, combine like terms,
         convert repeated addition to multiplication, etc.
         '''
@@ -622,7 +681,7 @@ class Add(NumberOperation):
 
         expr = self
         # for convenience updating our equation
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
 
         # ungroup the expression (disassociate nested additions).
         _n = 0
@@ -634,26 +693,26 @@ class Add(NumberOperation):
                     operand.is_parameter_independent):
                 # A range of repeated terms may be simplified to
                 # a multiplication, but we need to group it first.
-                expr = eq.update(expr.association(_n, 1, assumptions))
-                expr = eq.update(expr.inner_expr().operands[_n].simplification(
-                    assumptions))
+                expr = eq.update(expr.association(_n, 1))
+                expr = eq.update(
+                        expr.inner_expr().operands[_n].simplification())
             # print("n, length", n, length)
             if (isinstance(operand, Add) or
                     (isinstance(operand, Neg) and
                      isinstance(operand.operand, Add))):
                 # if it is grouped, ungroup it
-                expr = eq.update(expr.disassociation(_n, assumptions))
+                expr = eq.update(expr.disassociation(_n))
             length = expr.operands.num_entries()
             _n += 1
 
         # eliminate zeros where possible
-        expr = eq.update(expr.zero_eliminations(assumptions))
+        expr = eq.update(expr.zero_eliminations())
         if not isinstance(expr, Add):
             # eliminated all but one term
             return eq.relation
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations(assumptions))
+        expr = eq.update(expr.cancelations())
         if not isinstance(expr, Add):
             # canceled all but one term
             return eq.relation
@@ -666,11 +725,10 @@ class Add(NumberOperation):
                     isinstance(expr.operands[_i].operand, Neg)):
                 inner_expr = expr.inner_expr().operands[_i]
                 expr = eq.update(
-                    inner_expr.double_neg_simplification(
-                        assumptions=assumptions))
+                    inner_expr.double_neg_simplification())
 
         # separate the types of operands in a dictionary
-        hold, order = expr._createDict(assumptions)
+        hold, order = expr._create_dict()
 
         # Have the basic numbers come at the end.
         if order[-1] != one and one in hold:
@@ -690,10 +748,7 @@ class Add(NumberOperation):
                         pos += 1
                         continue  # no change. move on.
                     expr = eq.update(
-                        expr.commutation(
-                            start_idx,
-                            pos,
-                            assumptions=assumptions))
+                        expr.commutation(start_idx, pos))
                     old2new[new2old[start_idx]] = pos
                     orig_old_idx = new2old[start_idx]
                     if start_idx < pos:
@@ -713,8 +768,7 @@ class Add(NumberOperation):
             for _m, key in enumerate(order):
                 if len(hold[key]) > 1:
                     expr = eq.update(expr.association(
-                        _m, length=len(hold[key]),
-                        assumptions=assumptions))
+                        _m, length=len(hold[key])))
 
         if len(order) == 1:
             # All operands are like terms.  Simplify by combining them.
@@ -725,34 +779,29 @@ class Add(NumberOperation):
                              isinstance(expr.operands[0], ExprRange) and
                              not expr.operands[0].is_parameter_independent)):
                 expr = eq.update(
-                    expr.conversion_to_multiplication(assumptions))
-                expr = eq.update(expr.simplification(assumptions))
+                    expr.conversion_to_multiplication())
+                expr = eq.update(expr.simplification())
                 return eq.relation
             elif key != one:
                 # for all the keys that are not basic numbers, derive the multiplication from the addition
                 # make sure all the operands in the key are products (multiplication)
                 # if it's grouped, send it to become a multiplication
                 expr = eq.update(
-                    expr.factorization(
-                        key,
-                        pull="right",
-                        assumptions=assumptions))
-                sub = expr.operands[0].simplification(assumptions)
+                    expr.factorization(key, pull="right"))
+                sub = expr.operands[0].simplification()
                 eq.update(
-                    sub.substitution(
-                        expr.inner_expr().operands[0],
-                        assumptions))
+                    sub.substitution(expr.inner_expr().operands[0]))
                 return eq.relation
 
         # simplify the combined terms
         for _i, operand in enumerate(expr.operands.entries):
             if isinstance(operand, Add):
                 expr = eq.update(
-                    expr.inner_expr().operands[_i].simplification(assumptions))
+                    expr.inner_expr().operands[_i].simplification())
             elif isinstance(operand, Mult):
                 if isinstance(operand.operands[0], Add):
                     expr = eq.update(
-                        expr.inner_expr().operands[_i].operands[0].simplification(assumptions))
+                        expr.inner_expr().operands[_i].operands[0].simplification())
                 if (isinstance(expr.operands[_i].operands[0], Add) and
                         expr.operands[_i].operands[0].operands.num_entries()
                         == 1):
@@ -762,8 +811,7 @@ class Add(NumberOperation):
                     # print("single Add", sub)
                     expr = eq.update(
                         sub.substitution(
-                            expr.inner_expr().operands[_i].operands[0],
-                            assumptions))
+                            expr.inner_expr().operands[_i].operands[0]))
 
         # ungroup the expression
         _n = 0
@@ -774,7 +822,7 @@ class Add(NumberOperation):
             if isinstance(expr.operands[_n], Add):
                 # if it is grouped, ungroup it
                 # print("to ungroup")
-                expr = eq.update(expr.disassociation(_n, assumptions))
+                expr = eq.update(expr.disassociation(_n))
             length = expr.operands.num_entries()
             _n += 1
         # print("expr after initial ungroup", expr)
@@ -843,57 +891,6 @@ class Add(NumberOperation):
                 "are in the Complex set." %
                 self)
         return self.evaluation()
-
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
-        '''
-        created by JML on 7/31/19. modified by WMW on 9/7/19.
-        evaluate literals in a given expression (used for simplification)
-        '''
-        from proveit.logic import EvaluationError
-        from proveit.numbers import Neg, is_literal_int
-
-        abs_terms = [
-            term.operand if isinstance(
-                term, Neg) else term for term in self.terms]
-        if len(abs_terms) == 2 and all(is_literal_int(abs_term)
-                                       for abs_term in abs_terms):
-            evaluation = self._integerBinaryEval(assumptions=assumptions)
-            return evaluation
-
-        expr = self
-        # for convenience updating our equation
-        eq = TransRelUpdater(expr, assumptions)
-
-        # start with cancelations (maybe everything cancels to zero)
-        expr = eq.update(expr.cancelations(assumptions))
-        if is_irreducible_value(expr):
-            return eq.relation
-
-        if not isinstance(expr, Add):
-            raise EvaluationError(eq.expr, assumptions)
-
-        # If all the operands are the same, combine via multiplication and then
-        # evaluate.
-        if all(operand == expr.operands[0] for operand in expr.operands):
-            expr = eq.update(expr.conversion_to_multiplication(assumptions))
-            eq.update(expr.evaluation(assumptions))
-            return eq.relation
-
-        if expr.operands.num_entries() > 2:
-            expr = eq.update(pairwise_evaluation(expr, assumptions))
-            return eq.relation
-
-        if expr.operands.is_double():
-            # If both operands are negated, factor out the negation.
-            if all(isinstance(operand, Neg) for operand in expr.operands):
-                negated = Neg(
-                    Add(*[operand.operand for operand in expr.operands]))
-                neg_distribution = negated.distribution(assumptions)
-                expr = eq.update(neg_distribution.derive_reversed())
-                eq.update(expr.evaluation(assumptions))
-                return eq.relation
-
-        raise EvaluationError(self, assumptions)
 
     def subtraction_folding(self, term_idx=None, assumptions=frozenset()):
         '''
@@ -1138,7 +1135,6 @@ class Add(NumberOperation):
         Give any assumptions necessary to prove that the operands are in the Complex numbers so that
         the associative and commutation theorems are applicable.
         '''
-        from proveit import ExprTuple
         from proveit.numbers.multiplication import distribute_through_sum
         from proveit.numbers import one, Mult
         expr = self

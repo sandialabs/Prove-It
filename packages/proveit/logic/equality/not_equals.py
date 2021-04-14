@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, 
-                     UnsatisfiedPrerequisites)
+                     UnsatisfiedPrerequisites, equivalence_prover)
 from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit import x, y, A, X
@@ -124,19 +124,14 @@ class NotEquals(Relation):
         return fold_not_equals.instantiate(
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **kwargs):
         '''
-        Given operands that may be evaluated to irreducible values that
-        may be compared, or if there is a known evaluation of this
-        inequality, derive and return this expression equated to
-        TRUE or FALSE.
+        Evaluate A ≠ B via evaluating ￢(A = B), 
         '''
-        if automation:
-            definition_equality = self.definition()
-            unfolded_evaluation = definition_equality.rhs.evaluation(
-                assumptions)
-            return Equals(self, unfolded_evaluation.rhs).prove(assumptions)
-        return Operation.evaluation(self, assumptions, automation)
+        definition_equality = self.definition()
+        unfolded_evaluation = definition_equality.rhs.evaluation()
+        return definition_equality.apply_transitivity(unfolded_evaluation)
 
     def derive_contradiction(self, assumptions=USE_DEFAULTS):
         r'''

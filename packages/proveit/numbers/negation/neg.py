@@ -1,4 +1,6 @@
-from proveit import Literal, Operation, maybe_fenced_string, maybe_fenced_latex, InnerExpr, USE_DEFAULTS, ProofFailure
+from proveit import (Literal, Operation, maybe_fenced_string, 
+                     maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS, 
+                     ProofFailure, equivalence_prover)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
         Natural, NaturalPos, 
@@ -100,12 +102,36 @@ class Neg(NumberOperation):
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **kwargs):
         '''
-        Derive and return this negation expression equated with a simpler form.
-        Deals with double negation specifically.
+        Returns a proven evaluation equation for this Neg
+        expression assuming the operands have been simplified or
+        raises an EvaluationError or ProofFailure (e.g., if appropriate
+        number set membership has not been proven).
+        
+        Handles -0 = 0 or double negation.
+        '''
+        from proveit.logic import EvaluationError
+        from . import negated_zero
+        from proveit.numbers import zero
+        if self.operand == zero:
+            return negated_zero
+        if isinstance(self.operand, Neg) and is_irreducible_value(
+                self.operand.operand):
+            return self.double_neg_simplification(assumptions)
+        raise EvaluationError(self)
+
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
+        '''
+        Returns a proven simplification equation for this Neg
+        expression assuming the operands have been simplified.
+        
+        Handles double negation specifically.
         '''
         from proveit.relation import TransRelUpdater
+        assumptions = defaults.assumptions
 
         expr = self
         # For convenience updating our equation:
@@ -117,22 +143,6 @@ class Neg(NumberOperation):
             # simplify what is inside the double-negation.
             expr = eq.update(expr.simplification(assumptions))
         return eq.relation
-
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
-        '''
-        Only handles -0 = 0 or double negation.
-        '''
-        from proveit.logic import EvaluationError
-        from . import negated_zero
-        from proveit.numbers import zero
-        if self.operand == zero:
-            return negated_zero
-        if isinstance(
-                self.operand,
-                Neg) and is_irreducible_value(
-                self.operand.operand):
-            return self.double_neg_simplification(assumptions)
-        raise EvaluationError(self, assumptions)
 
     def double_neg_simplification(self, assumptions=USE_DEFAULTS):
         from . import double_negation

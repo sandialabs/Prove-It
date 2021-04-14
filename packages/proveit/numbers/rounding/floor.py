@@ -1,4 +1,5 @@
-from proveit import defaults, Function, InnerExpr, Literal, USE_DEFAULTS
+from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
+                     equivalence_prover)
 from proveit.numbers.number_sets import Integer, Natural
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
@@ -23,8 +24,12 @@ class Floor(Function):
     def latex(self, **kwargs):
         return r'\lfloor ' + self.operand.latex(fence=False) + r'\rfloor'
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
         '''
+        Returns a proven simplification equation for this Floor
+        expression assuming the operands have been simplified.
+        
         For the trivial case Floor(x) where the operand x is already
         known to be or assumed to be an integer, derive and return this
         Floor expression equated with the operand itself: Floor(x) = x.
@@ -33,7 +38,7 @@ class Floor(Function):
         form x = real + int, derive and return this Floor expression
         equated with Floor(real) + int.
         '''
-        return apply_reduced_simplification(self, assumptions)
+        return apply_reduced_simplification(self, defaults.assumptions)
 
     def rounding_elimination(self, assumptions=USE_DEFAULTS):
         '''

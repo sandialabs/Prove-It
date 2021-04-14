@@ -1,5 +1,5 @@
-from proveit import (Literal, Operation, USE_DEFAULTS, ExprTuple,
-                     Judgment, ProofFailure, InnerExpr)
+from proveit import (defaults, Literal, Operation, USE_DEFAULTS, ExprTuple,
+                     Judgment, ProofFailure, InnerExpr, equivalence_prover)
 from proveit.logic import Equals, InSet
 from proveit.numbers import num
 from proveit.numbers.number_sets import (Integer, Natural, NaturalPos, Real,
@@ -165,13 +165,83 @@ class Mult(NumberOperation):
                                                 assumptions=assumptions)
         return NotEquals(self, zero).conclude_as_folded(assumptions)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **kwargs):
         '''
-        Derive and return this multiplication expression equated with a simpler form.
-        Deals with disassociating any nested multiplications,simplifying negations, and
-        factors of one, in that order.
-        do_reduced_evaluation deals with factors of 0.
+        Returns a proven evaluation equation for this Mult
+        expression assuming the operands have been simplified or
+        raises an EvaluationError or ProofFailure (e.g., if appropriate
+        number set membership has not been proven).
+        
+        Handle the trivial case of a zero factor or do pairwise
+        evaluation after simplifying negations and eliminating one 
+        factors.
         '''
+        from . import mult_zero_left, mult_zero_right, mult_zero_any
+        from proveit.logic import is_irreducible_value, EvaluationError
+        from proveit.numbers import zero
+        
+        assumptions = defaults.assumptions
+
+        # First check for any zero factors -- quickest way to do an evaluation.
+        try:
+            zero_idx = self.operands.index(zero)
+            if self.operands.is_double():
+                if zero_idx == 0:
+                    return mult_zero_left.instantiate(
+                        {x: self.operands[1]}, assumptions=assumptions)
+                else:
+                    return mult_zero_right.instantiate(
+                        {x: self.operands[0]}, assumptions=assumptions)
+            _a = self.operands[:zero_idx]
+            _b = self.operands[zero_idx + 1:]
+            _i = _a.num_elements(assumptions)
+            _j = _b.num_elements(assumptions)
+            return mult_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b},
+                                             assumptions=assumptions)
+        except (ValueError, ProofFailure):
+            pass  # No such "luck" regarding a simple multiplication by zero.
+
+        expr = self
+
+        # A convenience to allow successive update to the equation via transitivities.
+        # (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+
+        # Simplify negations -- factor them out.
+        expr = eq.update(expr.neg_simplifications(assumptions))
+
+        if not isinstance(expr, Mult):
+            # The expression may have changed to a negation after doing
+            # neg_simplification.  Start the simplification of this new
+            # expression fresh at this point.
+            eq.update(expr.evaluation(assumptions))
+            return eq.relation
+
+        # Eliminate any factors of one.
+        expr = eq.update(expr.one_eliminations(assumptions))
+
+        if is_irreducible_value(expr):
+            return eq.relation  # done
+
+        if isinstance(expr, Mult) and expr.operands.num_entries() > 2:
+            eq.update(pairwise_evaluation(expr, assumptions))
+            return eq.relation
+
+        raise EvaluationError(self, assumptions)
+
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
+        '''
+        Returns a proven simplification equation for this Mult
+        expression assuming the operands have been simplified.
+        
+        Deals with disassociating any nested multiplications,
+        simplifying negations, and factors of one, in that order.
+        Factors of 0 are dealt with in shallow_evaluation.
+        '''
+        
+        assumptions = defaults.assumptions
 
         expr = self
         # for convenience updating our equation
@@ -608,63 +678,6 @@ class Mult(NumberOperation):
             expr.inner_expr().commutation(
                 numer_idx, denom_idx, assumptions=assumptions))
         return eq.relation
-
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
-        '''
-        Derive and return this multiplication expression equated with an irreducible value.
-        Handle the trivial case of a zero factor or do pairwise evaluation
-        after simplifying negations and eliminating one factors.
-        '''
-        from . import mult_zero_left, mult_zero_right, mult_zero_any
-        from proveit.logic import is_irreducible_value, EvaluationError
-        from proveit.numbers import zero
-
-        # First check for any zero factors -- quickest way to do an evaluation.
-        try:
-            zero_idx = self.operands.index(zero)
-            if self.operands.is_double():
-                if zero_idx == 0:
-                    return mult_zero_left.instantiate(
-                        {x: self.operands[1]}, assumptions=assumptions)
-                else:
-                    return mult_zero_right.instantiate(
-                        {x: self.operands[0]}, assumptions=assumptions)
-            _a = self.operands[:zero_idx]
-            _b = self.operands[zero_idx + 1:]
-            _i = _a.num_elements(assumptions)
-            _j = _b.num_elements(assumptions)
-            return mult_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b},
-                                             assumptions=assumptions)
-        except (ValueError, ProofFailure):
-            pass  # No such "luck" regarding a simple multiplication by zero.
-
-        expr = self
-
-        # A convenience to allow successive update to the equation via transitivities.
-        # (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
-
-        # Simplify negations -- factor them out.
-        expr = eq.update(expr.neg_simplifications(assumptions))
-
-        if not isinstance(expr, Mult):
-            # The expression may have changed to a negation after doing
-            # neg_simplification.  Start the simplification of this new
-            # expression fresh at this point.
-            eq.update(expr.evaluation(assumptions))
-            return eq.relation
-
-        # Eliminate any factors of one.
-        expr = eq.update(expr.one_eliminations(assumptions))
-
-        if is_irreducible_value(expr):
-            return eq.relation  # done
-
-        if isinstance(expr, Mult) and expr.operands.num_entries() > 2:
-            eq.update(pairwise_evaluation(expr, assumptions))
-            return eq.relation
-
-        raise EvaluationError(self, assumptions)
 
     def conversion_to_addition(self, assumptions=USE_DEFAULTS):
         '''

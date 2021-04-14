@@ -1,6 +1,7 @@
 from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
-                     defaults, USE_DEFAULTS, ProofFailure)
+                     defaults, USE_DEFAULTS, ProofFailure,
+                     equivalence_prover)
 from proveit import k, n, x, A, B, P, S
 from proveit._core_.proof import Generalization
 
@@ -333,10 +334,11 @@ class Forall(OperationOverInstances):
         return self.prove(assumptions).instantiate(
             repl_map, assumptions=assumptions)
     
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self,**kwargs):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if
-        possible by calling the condition's forall_evaluation method
+        possible by calling the domain's forall_evaluation method
         '''
         assert self.has_domain(), ("Cannot automatically evaluate a forall "
                                    "statement with no domain")
@@ -344,12 +346,12 @@ class Forall(OperationOverInstances):
         if len(list(self.instance_param_lists())) == 1:
             if hasattr(self.domain, 'forall_evaluation'):
                 # Use the domain's forall_evaluation method
-                return self.domain.forall_evaluation(self, assumptions)
+                return self.domain.forall_evaluation(self)
         else:
             # Evaluate an unravelled version
             unravelled_equiv = self.derive_unraveled_equiv(
                 [var for var in (list(self.instance_var_lists()))])
-            return unravelled_equiv.rhs.evaluation(assumptions)
+            return unravelled_equiv.rhs.evaluation()
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''

@@ -58,17 +58,14 @@ class Not(Operation):
         Try to automatically conclude this negation via evaluation reductions
         or double negation.
         '''
-        from proveit.logic import SimplificationError
+        from proveit.logic import EvaluationError
         # as a last resort (conclude_negation on the operand should have been
         # tried first), conclude negation via evaluating the operand as false.
         try:
             self.operand.evaluation(assumptions=assumptions)
-        except SimplificationError:
-            raise ProofFailure(
-                self,
-                assumptions,
-                "Unable to evaluate %s" % str(
-                    self.operand))
+        except EvaluationError:
+            raise ProofFailure(self, assumptions,
+                               "Unable to evaluate %s" % str(self.operand))
         return self.conclude_via_falsified_negation(assumptions=assumptions)
 
     def conclude_negation(self, assumptions):
@@ -92,8 +89,8 @@ class Not(Operation):
             out_str += ')'
         return out_str
 
-    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
-                   **kwargs):
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **kwargs):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
@@ -101,11 +98,10 @@ class Not(Operation):
         from . import not_t, not_f  # load in truth-table evaluations
         from proveit.logic.booleans import TRUE
         from proveit.logic.booleans.negation import falsified_negation_intro
-        if self.operand.proven(assumptions) and self.operand != TRUE:
+        if self.operand.proven() and self.operand != TRUE:
             # evaluate to FALSE via falsified_negation_intro
-            return falsified_negation_intro.instantiate(
-                {A: self.operand}, assumptions=assumptions)
-        return Operation.evaluation(self, assumptions, automation=automation)
+            return falsified_negation_intro.instantiate({A: self.operand})
+        return Operation.evaluation(self)
 
     def substitute_in_false(self, lambda_map, assumptions=USE_DEFAULTS):
         '''

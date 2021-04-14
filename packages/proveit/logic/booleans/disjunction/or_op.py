@@ -1,5 +1,6 @@
-from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
-                     ProofFailure, InnerExpr, UnusableProof)
+from proveit import (Expression, Literal, Operation, defaults, USE_DEFAULTS,
+                     ProofFailure, InnerExpr, UnusableProof,
+                     equivalence_prover)
 from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
@@ -39,23 +40,6 @@ class Or(Operation):
                 in_bool(operand).prove(automation=False)
                 self.unary_reduction()
             except BaseException:
-                pass
-
-    def auto_reduction(self, assumptions=USE_DEFAULTS):
-        '''
-        Automatically reduce "Or() = FALSE" and "Or(a) = a".
-        '''
-        if self.operands.num_entries() == 0:
-            from proveit.logic.booleans.disjunction import \
-                empty_disjunction_eval
-            if empty_disjunction_eval.is_usable():
-                return empty_disjunction_eval
-        elif self.operands.is_single():
-            try:
-                return self.unary_reduction(assumptions=assumptions)
-            except BaseException:
-                # Cannot do the reduction if the operand is not known
-                # to be a boolean.
                 pass
 
     def conclude(self, assumptions=USE_DEFAULTS):
@@ -407,8 +391,46 @@ class Or(Operation):
                 C: conclusion},
             assumptions=assumptions).derive_conclusion(assumptions).derive_conclusion(assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
-                   minimal_automation=False, **kwargs):
+    @equivalence_prover('evaluated', 'evaluate')
+    def shallow_evaluation(self, **kwargs):
+        '''
+        Attempt to determine whether this disjunction, with
+        simplified operands, evaluates to TRUE or FALSE under the given 
+        assumptions.  If all operands have simplified to FALSE,
+        the disjunction is FALSE.  If any of the operands have
+        simplified to TRUE, the disjunction is TRUE (if the
+        other operands are provably Boolean).
+        '''
+        from proveit.logic import Equals, FALSE, TRUE, EvaluationError
+        # load in truth-table evaluations
+        from . import or_t_t, or_t_f, or_f_t, or_f_f
+        if self.operands.num_entries() == 0:
+            from proveit.logic.booleans.disjunction import \
+                empty_disjunction_eval
+            # And() = TRUE
+            return empty_disjunction_eval
+        
+        all_are_false = True
+        for operand in self.operands:
+            if operand != FALSE:
+                all_are_false = False
+            if operand == TRUE:
+                # If any simplified operand is FALSE, the conjunction 
+                # may only evaluate to FALSE if it can be evaluated.
+                self.prove()
+                return Equals(self, TRUE).prove()
+        # If no simplified operand is FALSE, it may only evaluate to
+        # FALSE if it can be evaluated.
+        if not all_are_false:
+            # Can't evaluate the disjunction if no operand was
+            # TRUE but they aren't all FALSE.
+            raise EvaluationError(self)
+        self.disprove()
+        return Equals(self, FALSE).prove()
+
+    """
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **kwargs):
         '''
         Attempt to determine whether this disjunction evaluates
         to true or false under the given assumptions.  If automation
@@ -421,18 +443,21 @@ class Or(Operation):
         # load in truth-table evaluations
         from . import or_t_t, or_t_f, or_f_t, or_f_f
         if self.operands.num_entries() == 0:
-            return self.unary_reduction(assumptions=assumptions)
+            from proveit.logic.booleans.disjunction import \
+                empty_disjunction_eval
+            # Or() = TRUE     
+            return empty_disjunction_eval
 
         # First just see if it has a known evaluation.
         try:
-            return Operation.evaluation(self, assumptions, automation=False)
+            return Operation.evaluation(self, automation=False)
         except SimplificationError as e:
-            if not automation:
+            if not defaults.automation:
                 raise e
 
         # Depending upon evaluations of operands, we will either
         # attempt to prove or disprove this conjunction.
-        if minimal_automation:
+        if defaults.minimal_automation:
             # Only do non-automated evaluations of operands
             # if minimal_automation is True.
             operand_automations = (False,)
@@ -445,25 +470,36 @@ class Or(Operation):
             for operand in self.operands:
                 try:
                     operand_eval = operand.evaluation(
-                        assumptions, automation=operand_automations)
+                            automation=operand_automations)
                     operands_evals.append(operand_eval.rhs)
                 except BaseException:
                     operands_evals.append(None)
             if TRUE in operands_evals:
                 # If any operand is true, the disjunction may
                 # only evaluate to true if it can be evaluated.
-                self.prove(assumptions)
+                self.prove()
                 break
             elif None not in operands_evals:
                 # If no operand is true and all the evaluations
                 # are known, the conjunction may only evaluate
                 # to false if it can be evaluated.
-                self.disprove(assumptions)
+                self.disprove()
                 break
 
         # If we had any success proving or disproving this conjunction
         # there should be a known evaluation now.
-        return Operation.evaluation(self, assumptions, automation=False)
+        return Operation.evaluation(self, automation=False)
+    """
+    
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
+        '''
+        Return the "And(a) = a" simplification if applicable,
+        or the default reflexive equality otherwise.
+        '''
+        if self.operands.is_single():
+            return self.unary_reduction()
+        return Expression.shallow_simplification()
 
     def derive_contradiction(self, assumptions=USE_DEFAULTS):
         r'''

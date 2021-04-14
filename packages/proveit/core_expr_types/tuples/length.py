@@ -1,6 +1,7 @@
 from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
                      single_or_composite_expression, ExprTuple,
-                     ExprRange, InnerExpr, defaults, USE_DEFAULTS)
+                     ExprRange, InnerExpr, defaults, USE_DEFAULTS,
+                     equivalence_prover)
 from proveit import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
 
@@ -434,15 +435,27 @@ class Len(Operation):
             return lhs_computation.apply_transitivity(
                 eq, assumptions=assumptions)
 
-    def simplification(self, assumptions=USE_DEFAULTS, automation=True):
-        if not automation:
-            return Expression.simplification(
-                self, assumptions, automation=False)
-        from proveit.relation import TransRelUpdater
-        eq = TransRelUpdater(self, assumptions)
-        expr = eq.update(self.computation(assumptions))
-        expr = eq.update(expr.simplification(assumptions))
-        return eq.relation
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **kwargs):
+        '''
+        Returns a proven evaluations equation for this Len
+        expression assuming.  Performs the "computation" of the
+        Len expression and then evaluates the right side.
+        '''
+        assumptions = defaults.assumptions
+        computation = self.computation(assumptions)
+        return computation.inner_expr().rhs.evaluate()
+
+    @equivalence_prover('simplified', 'simplify')
+    def simplification(self, **kwargs):
+        '''
+        Returns a proven simplification equation for this Len
+        expression assuming.  Performs the "computation" of the
+        Len expression and then simplifies the right side.
+        '''
+        assumptions = defaults.assumptions
+        computation = self.computation(assumptions)
+        return computation.inner_expr().rhs.simplify()
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.core_expr_types.tuples import (
@@ -466,22 +479,6 @@ class Len(Operation):
                         {f: range_lambda, i: range_start, j: range_end},
                         assumptions=assumptions)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
-        '''
-        A simplification of a Len operation computes the length as a sum
-        of the lengths of each item of the ExprTuple operand, returning
-        the equality between the Len expression and this computation,
-        simplified to the extent possible.  An item may be a singular element
-        (contribution 1 to the length) or an iteration contributing its length.
-        '''
-        return self._computation(must_evaluate=False, assumptions=assumptions)
-
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
-        '''
-        Return the evaluation of the length which equates that Len expression
-        to an irreducible result.
-        '''
-        return self._computation(must_evaluate=True, assumptions=assumptions)
 
 
 # Register these expression equivalence methods:

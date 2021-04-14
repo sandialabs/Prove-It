@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, defaults, USE_DEFAULTS, composite_expression, ProofFailure
+from proveit import (Literal, Operation, defaults, USE_DEFAULTS, 
+                     composite_expression, ProofFailure,
 from proveit.logic.booleans.negation import Not
 from proveit import A, B, C
 from proveit import TransitiveRelation
@@ -88,7 +89,7 @@ class Implies(TransitiveRelation):
             # should be proven via one of the imported theorems as a simple
             # special case
             try:
-                return self.evaluation(assumptions)
+                return self.evaluation(assumptions=assumptions)
             except BaseException:
                 return self.prove()
 
@@ -318,7 +319,8 @@ class Implies(TransitiveRelation):
             return to_contraposition.instantiate(
                 {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **kwargs):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
@@ -326,7 +328,7 @@ class Implies(TransitiveRelation):
         # load in truth-table evaluations
         from . import implies_t_f
         from . import implies_t_t, implies_f_t, implies_f_f
-        return Operation.evaluation(self, assumptions, automation=automation)
+        return Operation.evaluation(self)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''

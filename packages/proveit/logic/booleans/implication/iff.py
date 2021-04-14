@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import (Literal, Operation, USE_DEFAULTS, equivalence_prover)
 from proveit.logic.booleans.conjunction import compose
 from .implies import Implies
 from proveit import A, B, C
@@ -51,14 +51,14 @@ class Iff(TransitiveRelation):
             # should be proven via one of the imported theorems as a simple
             # special case
             try:
-                self.evaluation(assumptions)
+                self.evaluation(assumptions=assumptions)
             except BaseException:
                 return self.prove()
         try:
             # try to prove the bi-directional implication via evaluation reduction.
             # if that is possible, it is a relatively straightforward thing to
             # do.
-            return Operation.conclude(assumptions)
+            return Operation.conclude()
         except BaseException:
             pass
         try:
@@ -165,13 +165,14 @@ class Iff(TransitiveRelation):
         return iff_intro.instantiate(
             {A: self.A, B: self.B}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **kwargs):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
         '''
         from . import iff_t_t, iff_t_f, iff_f_t, iff_f_f  # IMPORTANT: load in truth-table evaluations
-        return Operation.evaluation(self, assumptions, automation)
+        return Operation.evaluation(self)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''

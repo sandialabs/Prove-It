@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, defaults, USE_DEFAULTS
+from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
+                     equivalence_prover)
 
 
 class InSet(Operation):
@@ -187,24 +188,28 @@ class InSet(Operation):
                 if known_membership.is_sufficient(assumptions):
                     yield known_membership
 
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **kwargs):
         '''
-        Attempt to form evaluation of whether (element in domain) is
-        TRUE or FALSE.  If the domain has a 'membership_object' method,
-        attempt to use the 'equivalence' method from the object it generates.
+        Attempt to evaluate whether some x ∊ S is TRUE or FALSE
+        using the 'equivalence' method of the domain's 
+        'membership_object' if there is one.
         '''
-        from proveit.logic import TRUE, NotInSet
+        from proveit.logic import TRUE, NotInSet, EvaluationError
         # try an 'equivalence' method (via the membership object)
+        if not hasattr(self, 'membership_object'):
+            # Don't know what to do otherwise.
+            raise EvaluationError(self)
+        assumptions = defaults.assumptions
         equiv = self.membership_object.equivalence(assumptions)
-        rhs_eval = equiv.rhs.evaluation(assumptions=assumptions)
-        evaluation = equiv.apply_transitivity(
-            rhs_eval, assumptions=assumptions)
-        # try also to evaluate this by deducing membership
+        rhs_eval = equiv.rhs.evaluation()
+        evaluation = equiv.apply_transitivity(rhs_eval)
+        
+        # Try also to evaluate this by deducing membership
         # or non-membership in case it generates a shorter proof.
         try:
             if evaluation.rhs == TRUE:
-                if hasattr(self, 'membership_object'):
-                    self.membership_object.conclude(assumptions=assumptions)
+                self.membership_object.conclude(assumptions=assumptions)
             else:
                 not_in_domain = NotInSet(self.element, self.domain)
                 if hasattr(not_in_domain, 'nonmembership_object'):

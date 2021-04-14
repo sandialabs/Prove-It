@@ -1,5 +1,5 @@
 from proveit import (defaults, Literal, Operation, ExprRange, InnerExpr,
-                     ProofFailure, USE_DEFAULTS)
+                     ProofFailure, USE_DEFAULTS, equivalence_prover)
 from proveit import a, b, c, n, r, x, theta
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
@@ -98,10 +98,11 @@ class Abs(NumberOperation):
                                            assumptions=assumptions,
                                            reductions=reductions)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, assumptions=USE_DEFAULTS):
         '''
-        Returns a proven simplification equation for this absolute
-        value expression if a simplification is known.
+        Returns a proven simplification equation for this Abs
+        expression assuming the operand has been simplified.
         
         Handles a number of absolute value simplifications:
             1. ||x|| = |x| given x is complex

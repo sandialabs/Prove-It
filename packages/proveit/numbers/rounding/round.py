@@ -1,5 +1,5 @@
 from proveit import (defaults, Function, InnerExpr, Literal, ProofFailure,
-                     USE_DEFAULTS)
+                     USE_DEFAULTS, equivalence_prover)
 from proveit.logic import InSet
 from proveit.numbers.number_sets import Integer, Natural, Real
 from proveit.numbers.rounding.rounding_methods import (
@@ -14,8 +14,13 @@ class Round(Function):
     def __init__(self, A, *, styles=None):
         Function.__init__(self, Round._operator_, A, styles=styles)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
         '''
+        Returns a proven simplification equation for this Round
+        expression assuming the operands have been simplified.
+        
         For the trivial case Round(x) where the operand x is already
         known to be or assumed to be an integer, derive and return this
         Round expression equated with the operand itself: Round(x) = x.
@@ -24,7 +29,7 @@ class Round(Function):
         form x = real + int, derive and return this Round expression
         equated with Round(real) + int.
         '''
-        return apply_reduced_simplification(self, assumptions)
+        return apply_reduced_simplification(self, defaults.assumptions)
 
     def rounding_elimination(self, assumptions=USE_DEFAULTS):
         '''

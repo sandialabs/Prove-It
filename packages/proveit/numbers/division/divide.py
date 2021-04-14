@@ -1,6 +1,6 @@
 from proveit import (Judgment, Expression, Literal, maybe_fenced_latex, 
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
-                     UnsatisfiedPrerequisites)
+                     UnsatisfiedPrerequisites, equivalence_prover)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.numbers import NumberOperation
@@ -63,11 +63,13 @@ class Div(NumberOperation):
             return 'frac'  # use a different constructor if using the fraction style
         return Operation.remake_constructor(self)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
         '''
-        Perform simplifications of a Divide expression after the
-        operands have individually been simplified.
-        Cancels common factors...
+        Returns a proven simplification equation for this Divide
+        expression assuming the operands have been simplified.
+
+        Specifically, cancels common factors and eliminates ones.
         '''
         from proveit.numbers import one
         expr = self

@@ -1,7 +1,7 @@
 from proveit import (Literal, Lambda, Function, Operation, 
                      OperationOverInstances, InnerExpr,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
-                     ProofFailure, defaults)
+                     ProofFailure, defaults, equivalence_prover)
 from proveit import a, b, c, f, i, j, k, x, P, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
@@ -110,8 +110,12 @@ class Sum(OperationOverInstances):
         else:
             return OperationOverInstances._formatted(self, format_type, fence)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
         '''
+        Returns a proven simplification equation for this Sum
+        expression assuming the operands have been simplified.
+        
         For the trivial case of summing over only one item (currently
         implemented just for a Interval where the endpoints are equal),
         derive and return this summation expression equated the
@@ -132,17 +136,6 @@ class Sum(OperationOverInstances):
             "Sum simplification only implemented for a summation over an "
             "integer Interval of one instance variable where the upper "
             "and lower bound is the same.")
-
-    def simplified(self, assumptions=frozenset()):
-        '''
-        For the trivial case of summing over only one item (currently
-        implemented just for a Interval where the endpoints are equal),
-        derive and return this summation expression equated the
-        simplified form of the single term.
-        Assumptions may be necessary to deduce necessary conditions
-        for the simplification.
-        '''
-        return self.simplification(assumptions).rhs
 
     def geom_sum_reduction(self, assumptions=frozenset()):
         r'''

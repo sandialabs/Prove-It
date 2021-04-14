@@ -1,4 +1,5 @@
-from proveit import defaults, Function, InnerExpr, Literal, USE_DEFAULTS
+from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
+                     equivalence_prover)
 from proveit.numbers.number_sets import Integer, Natural, NaturalPos
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
@@ -15,8 +16,12 @@ class Ceil(Function):
     def latex(self, **kwargs):
         return r'\lceil ' + self.operand.latex(fence=False) + r'\rceil'
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
         '''
+        Returns a proven simplification equation for this Ceil
+        expression assuming the operands have been simplified.
+        
         For the trivial case Ceil(x) where the operand x is already
         known to be or assumed to be an integer, derive and return this
         Ceil expression equated with the operand itself: Ceil(x) = x.
@@ -25,7 +30,7 @@ class Ceil(Function):
         form x = real + int, derive and return this Ceil expression
         equated with Ceil(real) + int.
         '''
-        return apply_reduced_simplification(self, assumptions)
+        return apply_reduced_simplification(self, defaults.assumptions)
 
     def rounding_elimination(self, assumptions=USE_DEFAULTS):
         '''

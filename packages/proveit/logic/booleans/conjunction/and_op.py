@@ -1,5 +1,6 @@
-from proveit import (Literal, Operation, Conditional,
-                     defaults, USE_DEFAULTS, ProofFailure, InnerExpr)
+from proveit import (Expression, Literal, Operation, Conditional,
+                     defaults, USE_DEFAULTS, ProofFailure, InnerExpr,
+                     equivalence_prover)
 from proveit.logic.equality import SimplificationError
 from proveit import j, k, l, m, n, A, B, C, D, E, F, G
 from proveit.logic.booleans.booleans import in_bool
@@ -103,23 +104,6 @@ class And(Operation):
         self._check_total_ordering_applicability()
         return self.with_styles(as_total_ordering='True')
     
-    def auto_reduction(self, assumptions=USE_DEFAULTS):
-        '''
-        Automatically reduce "And() = TRUE" and "And(a) = a".
-        '''
-        if self.operands.num_entries() == 0:
-            from proveit.logic.booleans.conjunction import \
-                empty_conjunction_eval
-            if empty_conjunction_eval.is_usable():
-                return empty_conjunction_eval
-        elif self.operands.is_single():
-            try:
-                return self.unary_reduction(assumptions)
-            except BaseException:
-                # Cannot do the reduction if the operand is not known
-                # to be a boolean.
-                pass
-
     def conclude(self, assumptions):
         '''
         Try to automatically conclude this conjunction via composing the constituents.
@@ -484,32 +468,87 @@ class And(Operation):
         return redundant_conjunction.instantiate(
             {n: self.operands[0].end_index, A: _A}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
-                   minimal_automation=False, **kwargs):
+    @equivalence_prover('evaluated', 'evaluate')
+    def shallow_evaluation(self, **kwargs):
         '''
-        Attempt to determine whether this conjunction evaluates
-        to true or false under the given assumptions.  If automation
-        is False, it will only succeed if the evaluation is already
-        known.  If automation and minimal_automation are True, it will
-        only rely upon known  evaluations of the operands to determine
-        whether to try to prove or disprove the conjunction.
+        Attempt to determine whether this conjunction, with
+        simplified operands, evaluates to TRUE or FALSE under the given 
+        assumptions.  If all operands have simplified to TRUE,
+        the conjunction is TRUE.  If any of the operands have
+        simplified to FALSE, the conjunction is FALSE (if the
+        other operands are provably Boolean).
         '''
-        from proveit.logic import FALSE
+        from proveit.logic import Equals, FALSE, TRUE, EvaluationError
         # load in truth-table evaluations
         from . import and_t_t, and_t_f, and_f_t, and_f_f
         if self.operands.num_entries() == 0:
-            return self.unary_reduction(assumptions)
+            from proveit.logic.booleans.conjunction import \
+                empty_conjunction_eval
+            # And() = TRUE
+            return empty_conjunction_eval
+        
+        all_are_true = True
+        for operand in self.operands:
+            if operand != TRUE:
+                all_are_true = False
+            if operand == FALSE:
+                # If any simplified operand is FALSE, the conjunction 
+                # may only evaluate to FALSE if it can be evaluated.
+                self.disprove()
+                return Equals(self, FALSE).prove()
+        # If no simplified operand is FALSE, it may only evaluate to
+        # TRUE if it can be evaluated.
+        if not all_are_true:
+            # Can't evaluate the conjunction if no operand was
+            # FALSE but they aren't all TRUE.
+            raise EvaluationError(self)
+        self.prove()
+        return Equals(self, TRUE).prove()
+
+    
+    """
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **kwargs):
+        '''
+        Attempt to determine whether this conjunction evaluates
+        to true or false under the given assumptions.  If 
+        defaults.automation is False, it will only succeed if the 
+        evaluation is already known.  If defaults.automation and 
+        defaults.minimal_automation are True, it will only rely upon 
+        known evaluations of the operands to determine
+        whether to try to prove or disprove the conjunction.
+        '''
+        from proveit.logic import Equals, FALSE, TRUE
+        # load in truth-table evaluations
+        from . import and_t_t, and_t_f, and_f_t, and_f_f
+        if self.operands.num_entries() == 0:
+            from proveit.logic.booleans.conjunction import \
+                empty_conjunction_eval
+            # And() = TRUE
+            return empty_conjunction_eval
+        
+        for operand in self.operands:
+            if operand == FALSE:
+                # If any operand simplified to FALSE the conjunction may
+                # only evaluate to FALSE if it can be evaluated.
+                self.disprove()
+                return Equals(self, FALSE).prove()
+        # If no operand simplified to FALSE, see if they can
+        # all be proven TRUE to prove the conjunction TRUE.
+        self.prove()
+        return Equals(self, TRUE).prove()
+                
 
         # First just see if it has a known evaluation.
         try:
-            return Operation.evaluation(self, assumptions, automation=False)
+            return Operation.evaluation(self, automation=False)
         except SimplificationError as e:
-            if not automation:
+            if not defaults.automation:
                 raise e
 
         # Depending upon evaluations of operands, we will either
         # attempt to prove or disprove this conjunction.
-        if minimal_automation:
+        if defaults.minimal_automation:
             # Only do non-automated evaluations of operands
             # if minimal_automation is True.
             operand_automations = (False,)
@@ -522,26 +561,37 @@ class And(Operation):
             for operand in self.operands:
                 try:
                     operand_eval = operand.evaluation(
-                        assumptions, automation=operand_automations)
+                        automation=operand_automations)
                     operands_evals.append(operand_eval.rhs)
                 except BaseException:
                     operands_evals.append(None)
             if FALSE in operands_evals:
                 # If any operand is untrue, the conjunction may
                 # only evaluate to false if it can be evaluated.
-                self.disprove(assumptions)
+                self.disprove()
                 break
             elif None not in operands_evals:
                 # If no operand is untrue and all the evaluations
                 # are known, the conjunction may only evaluate
                 # to true if it can be evaluated.
-                self.prove(assumptions)
+                self.prove()
                 break
 
         # If we had any success proving or disproving this conjunction
         # there should be a known evaluation now.
-        return Operation.evaluation(self, assumptions, automation=False)
-
+        return Operation.evaluation(self, automation=False)
+    """
+    
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
+        '''
+        Return the "And(a) = a" simplification if applicable,
+        or the default reflexive equality otherwise.
+        '''
+        if self.operands.is_single():
+            return self.unary_reduction()
+        return Expression.shallow_simplification(self)
+        
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'and' expression is in the BOOLEAN set.
