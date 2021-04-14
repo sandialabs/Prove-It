@@ -112,11 +112,12 @@ class ModAdd(Operation):
 
 class SubIndexed(Operation):
     '''
-    Provide subscript indexing of a label.
-    Updated by wdc starting 1/24/2020.
+    Provide subscript indexing of a label/literal (in contrast to
+    IndexedVar, which provides subscript indexing of a variable).
     '''
     # the literal operator of the Subscript operation
-    _operator_ = Literal(string_format='SUB_INDEXED',
+    _operator_ = Literal(string_format=r"SUB_INDEXED",
+                         latex_format=r'SUB\_INDEXED',
                          theory=__file__)
 
     def __init__(self, label, index):
