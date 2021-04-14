@@ -33,6 +33,10 @@ from .relation import (
     TransRelUpdater,
     total_ordering)
 
+# @prover and @equivalence_prover are useful decorators for many
+# Expression class methods:
+from .decorators import prover, equivalence_prover
+
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet
 
@@ -47,7 +51,6 @@ from .relation import (
 # %begin_axioms, %end_axioms, %begin_theorems, %end_theorems, %begin_proof, and %display_assignment
 # from . import _core_.magics
 from . import magics
-
 
 def reset():
     '''

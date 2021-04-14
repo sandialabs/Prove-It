@@ -1,6 +1,7 @@
 import functools
-from inspect import signature
+from inspect import signature, Parameter
 from proveit._core_.defaults import defaults
+
 
 def _make_decorated_prover(func):
     '''
@@ -12,25 +13,47 @@ def _make_decorated_prover(func):
     It will then check to see if the return type is a Judgment that is
     valid under "active" assumptions.
     '''    
+    sig = signature(func)
+    if ('defaults_config' not in sig.parameters or
+            sig.parameters['defaults_config'].kind != Parameter.VAR_KEYWORD):
+        raise Exception("As a @prover or any @..._prover method, the final "
+                        "parameter of %s must be a keyword argument called "
+                        "'defaults_config' to signify that it accepts "
+                        "keyword arguments for temporarily re-configuring "
+                        "attributes of proveit.defaults "
+                        "('assumptions', 'styles', etc.)"%func)
+    
     def decorated_prover(*args, **kwargs):
         from proveit import Judgment
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
+        # Check to see if there are any unexpected keyword
+        # arguments.
+        for key in kwargs.keys():
+            if key in defaults_to_change: continue
+            if key not in sig.parameters:
+                raise TypeError(
+                        "%s got an unexpected keyword argument '%s' which "
+                        "is not an attribute of proveit.defaults"%
+                        (func, key))
+        def public_attributes_dict(obj):
+            # Return a dictionary of public attributes and values of
+            # an object.
+            return {key:val for key, val in obj.__dict__.items() 
+                    if key[0] != '_'}
         if len(defaults_to_change) > 0:
-            sig = signature(func)            
+            # Temporarily reconfigure defaults with 
             with defaults.temporary() as temp_defaults:
                 for key in defaults_to_change:
                     # Temporarily alter a default:
                     setattr(temp_defaults, key, kwargs[key])
-                    if key not in sig.parameters:
-                        # Don't pass on this keyword if it isn't
-                        # an explicit parameter in the 'func'
-                        # signature.
-                        kwargs.pop(key)
                 assumptions = temp_defaults.assumptions
+                kwargs.update(public_attributes_dict(defaults))
                 proven_truth = func(*args, **kwargs)
         else:
+            # No defaults reconfiguration.
             assumptions = defaults.assumptions
+            kwargs.update(public_attributes_dict(defaults))
             proven_truth = func(*args, **kwargs)
         
         is_conclude_method = func.__name__.startswith('conclude')
@@ -65,6 +88,21 @@ def _make_decorated_prover(func):
     return decorated_prover    
     
 
+def _wraps(func, wrapper):
+    '''
+    Perform functools.wraps as well as add an extra message to the doc
+    string.
+    '''
+    wrapped = functools.wraps(func)(wrapper)
+    if wrapped.__doc__ is None:
+        wrapped.__doc__ = ""
+    wrapped.__doc__ += """
+    
+    Keyword arguments are accepted for temporarily changing any
+    of the attributes of proveit.defaults.
+    """
+    return wrapped
+
 def prover(func):
     '''
     @prover is a decorators for methods that are to return a proven
@@ -75,7 +113,7 @@ def prover(func):
     It will then check to see if the return type is a Judgment that is
     valid under "active" assumptions.
     '''
-    return functools.wraps(func)(_make_decorated_prover(func))
+    return _wraps(func, _make_decorated_prover(func))
 
 
 class equivalence_prover:
@@ -95,6 +133,8 @@ class equivalence_prover:
     expression in the defaults before the equivalence method is called.
     '''    
     
+    name_to_past_and_present_tense = dict()
+    
     def __init__(self, past_tense, present_tense):
         self.past_tense = past_tense
         self.present_tense = present_tense
@@ -103,21 +143,56 @@ class equivalence_prover:
         # Solution for obtaining the method class (owner) seen at: 
         # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
-        print(owner, name)
+        if name in equivalence_prover.name_to_past_and_present_tense:
+            # This name was used before; make sure past and present
+            # tenses are consistent.
+            previous_tenses = (
+                    equivalence_prover.name_to_past_and_present_tense[name])
+            current_tenses = (self.past_tense, self.present_tense)
+            if (previous_tenses != current_tenses):
+                raise InconsistentTenseNames(name, previous_tenses, 
+                                             current_tenses)
+        else:
+            equivalence_prover.name_to_past_and_present_tense[name] = (
+                    self.past_tense, self.present_tense)
+
         # Register the equivalence method:
         _register_equivalence_method(
             owner, name, self.past_tense, self.present_tense)    
     
     def __call__(self, func):
-        @functools.wraps(func)
+        _decorated_prover = _make_decorated_prover(func)
         def wrapper(*args, **kwargs):
             from proveit.relation import TransitiveRelation
             # 'preserve' it so it will be on the left side without
             # simplification.
             _self = args[0]
             kwargs['preserved_exprs'] = set(defaults.preserved_exprs)
-            kwargs['preserved_exprs'].add(_self)
-            proven_truth = _make_decorated_prover(func)(*args, **kwargs)
+            kwargs['preserved_exprs'].add(_self)     
+            proven_truth = None
+            if func.name in ('simplification', 'evaluation'):
+                from proveit.logic import (Equals, SimplificationError,
+                                           EvaluationError)
+                known_evaluation = Equals.get_known_evaluation(self)
+                if known_evaluation is None:
+                    if func.name == 'simplification':
+                        known_simplification = (
+                                Equals.get_known_simplification(self))
+                        if known_simplification is not None:
+                            proven_truth = known_simplification
+                else:
+                    proven_truth = known_evaluation
+                if proven_truth is None:
+                    if func.name == 'simplification':
+                        raise SimplificationError(
+                                "Unable to perform simplification with "
+                                "automation disabled")
+                    if func.name == 'evaluation':
+                        raise EvaluationError(
+                                "Unable to perform evaluation "
+                                "with automation disabled")
+            if proven_truth is None:
+                proven_truth = _decorated_prover(*args, **kwargs)
             proven_expr = proven_truth.expr
             if not isinstance(proven_expr, TransitiveRelation):
                 raise TypeError("@equivalence_prover expected to prove a "
@@ -131,13 +206,31 @@ class equivalence_prover:
                                 "TranstiveRelation of the EquivalenceClass, "
                                 "not %s of type %s"
                                 %(proven_expr, proven_expr.__class__))
+            if func.name in ('simplification', 'evaluation'):
+                from proveit.logic import Equals
+                if not isinstance(proven_expr, Equals):
+                    raise TypeError("%s method expected to prove an equality"
+                                    %str(func))
             if proven_expr.lhs != _self:
                 raise TypeError("@equivalence_prover expected to prove an "
                                 "equivalence relation with 'self', %s, on "
                                 "its left side ('lhs').  %s does not satisfy "
                                 "this requirement"%(self, proven_expr))
+            if func.name == 'simplification':
+                from proveit.logic import Equals
+                Equals.remember_simplification(proven_truth)
+            elif func.name in ('evaluation', 'shallow_evaluation'):
+                # The right side of an evaluation must be irreducible.
+                from proveit.logic import is_irreducible_value
+                if not is_irreducible_value(proven_expr.rhs):
+                    raise TypeError(
+                            "An 'evaluation' must have an irreducible "
+                            "value in the right side, "
+                            "is_irreducible_value(%s) is False"
+                            %proven_expr.rhs)
+                    
             return proven_truth
-        return wrapper
+        return _wraps(func, wrapper)
 
 """
 def equivalence_prover(past_tense, present_tense):
@@ -258,3 +351,15 @@ def _register_equivalence_method(
             "Return an equivalent form of this expression derived via '%s'." 
             % equiv_method)
     setattr(expr_class, past_tense_name, equiv_rhs)
+
+class InconsistentTenseNames(Exception):
+    def __init__(self, noun, previous_tenses, current_tenses):
+        self.noun = noun
+        self.previous_tenses = previous_tenses
+        self.current_tenses = current_tenses
+    
+    def __str__(self):
+        return ("Past and present tenses of an @equivalence_prover called "
+                "%s are inconsistent with another occurrence: %s vs %s. "
+                "It may be a typo."%(self.noun, self.previous_tenses,
+                                     self.current_tenses))
