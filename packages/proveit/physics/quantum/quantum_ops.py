@@ -1,5 +1,6 @@
 from proveit import Literal, Function
-from proveit.linalg import SU, TensorExp
+# from proveit.linalg import SU, TensorExp
+from proveit.linear_algebra import SU, TensorExp
 from proveit.numbers import num, Complex, Exp
 
 pkg = __package__  # delete this later; will no longer be needed
