@@ -6,6 +6,7 @@ from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.theory import Theory
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaning_data, style_data
+from proveit.decorators import prover, equivalence_prover
 import sys
 import re
 import inspect
@@ -503,43 +504,55 @@ class Expression(metaclass=ExprType):
             "%s vs %s" % (made._sub_expressions, sub_expressions))
         return made
     
-    def _reduced(self, reduction_map, assumptions, requirements,
-                 equality_repl_requirements):
+    def _equality_replaced(self, requirements, equality_repl_requirements):
         '''
-        Return a possibly reduced version of this expression.  It may
-        be reduced due to a reduction_map replacement or due to an 
-        automatic reduction via the 'auto_reduction' method.
+        Return this expression or an expression that is proven to
+        be equal to this expression.  It may be a simplificiation
+        or a replacement specified in defaults.equality_repl_map
+        (which maps expressions to equalities having the expression
+        on the left side and replacement on the right side).
         '''
-        if reduction_map is not None and self in reduction_map:
-            reduction = reduction_map[self]
-        elif defaults.auto_reduce and hasattr(self, 'auto_reduction'):
-            reduction = self.auto_reduction(assumptions=assumptions)
+        from proveit import Judgment        
+        from proveit._core_.proof import ProofFailure
+        from proveit.logic import Equals, SimplificationError
+        
+        if self in defaults.preserved_exprs:
+            # This expression should be preserved, so don't make
+            # any equality-based replacement.
+            return self
+        equality_repl_map = defaults.equality_repl_map
+        if self in equality_repl_map:
+            replacement = equality_repl_map[self]
+        elif defaults.auto_simplify:
+            try:
+                replacement = self.simplification()
+            except (SimplificationError, ProofFailure):
+                # Failure in the simplification attempt; just skip it.
+                return self
+            if replacement.rhs == self:
+                # Trivial simplification -- don't use it.
+                return self
         else:
             return self
-        if reduction is None:
-            return self # no reduction
-        else:
-            from proveit import Judgment
-            from proveit.logic import Equals
-            if not isinstance(reduction, Judgment):
-                raise TypeError("'auto_reduction' must return a "
-                                "proven equality as a Judgment: "
-                                "got %s for %s" % (reduction, self))
-            if not isinstance(reduction.expr, Equals):
-                raise TypeError("'auto_reduction' must return a "
-                                "proven equality: got %s for %s"
-                                % (reduction, self))
-            if reduction.expr.lhs != self:
-                raise TypeError("'auto_reduction' must return a "
-                                "proven equality with 'self' on the "
-                                "left side: got %s for %s"
-                                % (reduction, self))
-            if not reduction.is_sufficient(assumptions):
-                # The assumptions aren't adequate to use this reduction.
-                return self
-            requirements.append(reduction)
-            equality_repl_requirements.add(reduction)
-            return reduction.expr.rhs
+        if not isinstance(replacement, Judgment):
+            raise TypeError("'replacement' must be a "
+                            "proven equality as a Judgment: "
+                            "got %s for %s" % (replacement, self))
+        if not isinstance(replacement.expr, Equals):
+            raise TypeError("'replacement' must be a "
+                            "proven equality: got %s for %s"
+                            % (replacement, self))
+        if replacement.expr.lhs != self:
+            raise TypeError("'replacement' must be a "
+                            "proven equality with 'self' on the "
+                            "left side: got %s for %s"
+                            % (replacement, self))
+        if not replacement.is_sufficient(defaults.assumptions):
+            # The assumptions aren't adequate to use this reduction.
+            return self
+        requirements.append(replacement)
+        equality_repl_requirements.add(replacement)
+        return replacement.expr.rhs
 
     def core_info(self):
         '''
@@ -749,11 +762,8 @@ class Expression(metaclass=ExprType):
         # Use Expression.in_progress_to_conclude set to prevent an infinite
         # recursion
         in_progress_key = (
-            self,
-            tuple(
-                sorted(
-                    assumptions,
-                    key=lambda expr: hash(expr))))
+            self, tuple(sorted(assumptions,
+                               key=lambda expr: hash(expr))))
         if in_progress_key in Expression.in_progress_to_conclude:
             raise ProofFailure(
                 self,
@@ -761,53 +771,57 @@ class Expression(metaclass=ExprType):
                 "Infinite 'conclude' recursion blocked.")
         Expression.in_progress_to_conclude.add(in_progress_key)
 
-        try:
-            concluded_truth = None
-            if isinstance(self, Not):
-                # if it is a Not expression, try conclude_negation on the
-                # operand
-                try:
-                    concluded_truth = self.operands[0].conclude_negation(
-                        assumptions=assumptions)
-                except NotImplementedError:
-                    pass  # that didn't work, try conclude on the Not expression itself
-            if concluded_truth is None:
-                try:
-                    # first attempt to prove via implication
-                    concluded_truth = self.conclude_via_implication(
-                        assumptions)
-                except ProofFailure:
-                    # try the 'conclude' method of the specific Expression
-                    # class
-                    concluded_truth = self.conclude(assumptions)
-            if concluded_truth is None:
+        with defaults.temporary() as temp_defaults:
+            # We must preserve 'self' if we are attempting to prove it
+            # (don't automatically simplify it).
+            temp_defaults.preserved_exprs.add(self)
+            try:
+                concluded_truth = None
+                if isinstance(self, Not):
+                    # if it is a Not expression, try conclude_negation on the
+                    # operand
+                    try:
+                        concluded_truth = self.operands[0].conclude_negation(
+                            assumptions=assumptions)
+                    except NotImplementedError:
+                        pass  # that didn't work, try conclude on the Not expression itself
+                if concluded_truth is None:
+                    try:
+                        # first attempt to prove via implication
+                        concluded_truth = self.conclude_via_implication(
+                            assumptions)
+                    except ProofFailure:
+                        # try the 'conclude' method of the specific Expression
+                        # class
+                        concluded_truth = self.conclude(assumptions)
+                if concluded_truth is None:
+                    raise ProofFailure(
+                        self, assumptions, "Failure to automatically 'conclude'")
+                if not isinstance(concluded_truth, Judgment):
+                    raise ValueError(
+                        "'conclude' method should return a Judgment (or raise an exception)")
+                if concluded_truth.expr != self:
+                    raise ValueError(
+                        "'conclude' method should return a Judgment for this Expression object: " + str(
+                            concluded_truth.expr) + " does not match " + str(self))
+                if not concluded_truth.assumptions_set.issubset(assumptions_set):
+                    raise ValueError("While proving " +
+                                     str(self) +
+                                     ", 'conclude' method returned a Judgment with extra assumptions: " +
+                                     str(set(concluded_truth.assumptions) -
+                                         assumptions_set))
+                if concluded_truth.expr._style_id == self._style_id:
+                    # concluded_truth with the same style as self.
+                    return concluded_truth
+                return concluded_truth.with_matching_styles(
+                    self, assumptions)  # give it the appropriate style
+            except NotImplementedError:
                 raise ProofFailure(
-                    self, assumptions, "Failure to automatically 'conclude'")
-            if not isinstance(concluded_truth, Judgment):
-                raise ValueError(
-                    "'conclude' method should return a Judgment (or raise an exception)")
-            if concluded_truth.expr != self:
-                raise ValueError(
-                    "'conclude' method should return a Judgment for this Expression object: " + str(
-                        concluded_truth.expr) + " does not match " + str(self))
-            if not concluded_truth.assumptions_set.issubset(assumptions_set):
-                raise ValueError("While proving " +
-                                 str(self) +
-                                 ", 'conclude' method returned a Judgment with extra assumptions: " +
-                                 str(set(concluded_truth.assumptions) -
-                                     assumptions_set))
-            if concluded_truth.expr._style_id == self._style_id:
-                # concluded_truth with the same style as self.
-                return concluded_truth
-            return concluded_truth.with_matching_styles(
-                self, assumptions)  # give it the appropriate style
-        except NotImplementedError:
-            raise ProofFailure(
-                self,
-                assumptions,
-                "'conclude' method not implemented for proof automation")
-        finally:
-            Expression.in_progress_to_conclude.remove(in_progress_key)
+                    self,
+                    assumptions,
+                    "'conclude' method not implemented for proof automation")
+            finally:
+                Expression.in_progress_to_conclude.remove(in_progress_key)
 
     def proven(self, assumptions=USE_DEFAULTS):
         '''
@@ -894,16 +908,18 @@ class Expression(metaclass=ExprType):
         '''
         return iter(())
 
-    def replaced(self, repl_map, allow_relabeling=False, reduction_map=None,
-                 assumptions=USE_DEFAULTS, requirements=None,
-                 equality_repl_requirements=None):
+    def replaced(self, repl_map, allow_relabeling=False, 
+                 requirements=None, equality_repl_requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary
         which maps Expressions to Expressions.  When used for
         instantiation, this should specifically map variables,
         indexed variables, or ranges of indexed variables to
-        Expressions.
+        Expressions.  Additionally, if defaults.auto_simplify is
+        True and/or defaults.equality_repl_map has applicable
+        replacements, we may make automatic equality-based replacements
+        subject to defaults.preserved_exprs limitations.
 
         If allow_relabeling is True then internal Lambda parameters
         may be replaced when it is a valid replacement of parameter(s)
@@ -914,40 +930,36 @@ class Expression(metaclass=ExprType):
         varaibles is not allowed and will cause an error.
         For example, we cannot replace (x_1, ..., x_{n+1}) within
         (x_1, ..., x_n) -> f(x_1, ..., x_n).
-
-        'assumptions' and 'requirements' are used when an operator is
-        replaced by a Lambda map that has a range of parameters
-        (e.g., x_1, ..., x_n) such that the length of the parameters
-        and operands must be proven to be equal.  For more details,
-        see Operation.replaced, Lambda.apply, and ExprRange.replaced
-        (which is the sequence of calls involved).  They may also
-        be used to ensure indices match when performing parameter-
-        dependent ExprRange expansions that require indices to match.
-        'requirements' are also needed to perform ExprRange
-        reductions (for empty or singular ExprRanges).  They are
-        also used for automatic equality replacements; for example,
-        "And() = TRUE".  Such requirements are also recorded in the
-        'equality_repl_requirements' set if one is provided.
+        
+        'requirements' (and defaults.assumptions) are used when an 
+        operator is replaced by a Lambda map that has a range of 
+        parameters (e.g., x_1, ..., x_n) such that the length of the 
+        parameters and operands must be proven to be equal. For more 
+        details, see Operation.replaced, Lambda.apply, and 
+        ExprRange.replaced (which is the sequence of calls involved).
+        They may also be used to ensure indices match when performing
+        parameter-dependent ExprRange expansions that require indices
+        to match.  'requirements' are also needed to perform ExprRange
+        reductions (for empty or singular ExprRanges).  When equality-
+        based replacements are made, the equality requirements are
+        recorded in both requirements and equality_repl_requirements.
 
         Also applies any enabled automatic reductions.
         '''
         if requirements is None:
             requirements = []  # Not passing back requirements.
-        if assumptions is None:
-            assumptions = defaults.checked_assumptions(assumptions)
         if equality_repl_requirements is None:
             # Not passing back the equality replacement requirements.
             equality_repl_requirements = set()
         replacement = self._replaced(
             repl_map, allow_relabeling=allow_relabeling,
-            reduction_map=reduction_map, assumptions=assumptions, 
             requirements=requirements,
             equality_repl_requirements=equality_repl_requirements)
-        return replacement._reduced(reduction_map, assumptions,
-                                    requirements, equality_repl_requirements)
+        return replacement._equality_replaced(
+                requirements, equality_repl_requirements)
 
-    def _replaced(self, repl_map, allow_relabeling, reduction_map,
-                  assumptions, requirements, equality_repl_requirements):
+    def _replaced(self, repl_map, allow_relabeling,
+                  requirements, equality_repl_requirements):
         '''
         Implementation for Expression.replaced except for the
         final automatic reduction (if applicalbe).
@@ -957,8 +969,8 @@ class Expression(metaclass=ExprType):
         else:
             subbed_sub_exprs = \
                 tuple(sub_expr.replaced(
-                        repl_map, allow_relabeling, reduction_map,
-                        assumptions, requirements, equality_repl_requirements)
+                        repl_map, allow_relabeling,
+                        requirements, equality_repl_requirements)
                       for sub_expr in self._sub_expressions)
             replaced = self.__class__._checked_make(
                 self._core_info, subbed_sub_exprs,
@@ -1026,220 +1038,108 @@ class Expression(metaclass=ExprType):
     def safe_dummy_vars(self, n):
         from proveit._core_.expression.label.var import safe_dummy_vars
         return safe_dummy_vars(n, self)
-
-    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
-                   **kwargs):
+    
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **kwargs):
         '''
-        If possible, return a Judgment of this expression equal to its
-        irreducible value.  Checks for an existing evaluation.  If it
-        doesn't exist, try some default strategies including a reduction.
-        Attempt the Expression-class-specific "do_reduced_evaluation"
-        when necessary.
+        If possible, return a Judgment of this expression equal to an
+        irreducible value.  In the @equivalence_prover decorator
+        for any 'evaluation' method, there is a check for an
+        existing evaluation and a check that the resulting proven
+        statement equates self with an irreducible value.
 
-        If automation is False, this may only succeed if the evaluation
-        is already known.  Other keyword arguments will be passed
-        along to do_reduced_evaluation to instruct it on how it
-        should behave (e.g., 'minimal_automation').
+        The default Expression.evaluation only checks to see if the
+        expression has been proven or disproven (and therefore equal
+        to TRUE or FALSE respectively) or known to be equal to another
+        expression that has been evaluated.  This method may be
+        overridden for particular Expression types.
+        
+        See also Operation.evaluation and Expression.shallow_evaluation.
         '''
-        from proveit.logic import (Equals, default_simplification,
-                                   SimplificationError, EvaluationError)
-        from proveit import Judgment
-        from proveit.logic.irreducible_value import is_irreducible_value
+        from proveit.logic import (Equals, evaluate_truth,  
+                                   evaluate_falsehood, EvaluationError)
 
-        assumptions = defaults.checked_assumptions(assumptions)
+        # If self is proven or disproven, we can equate it to
+        # TRUE or FALSE respectively.
+        if self.proven():
+            return evaluate_truth(self)
+        elif self.disproven():
+            return evaluate_falsehood(self)
 
-        method_called = None
+        # See if there is a known equal expression that has an
+        # evaluation.
+        for eq_expr in Equals.yield_known_equal_expressions(self):
+            known_evaluation = Equals.get_known_evaluation(self)
+            if known_evaluation is not None:
+                # Found a known evaluation of an expression equal to 
+                # self, so self is equal to the evaluation via
+                # transitivity.
+                return Equals(self, known_evaluation.rhs).prove()
+        
+        # No other default options (though the Operation class
+        # has some options via simplifying operands).
+        raise EvaluationError(self)
+
+    @equivalence_prover('simplified', 'simplify')
+    def simplification(self, **kwargs):
+        '''
+        If possible, return a Judgment of this expression equal to a
+        simplified form (according to strategies specified in 
+        proveit.defaults).  In the @equivalence_prover decorator for any
+        'simplification' method, there is a check for an existing 
+        simplification, a check that the resulting proven statement is 
+        an equality with self on the lhs, and it remembers the 
+        simplification for next time.
+        
+        The default Expression.simplification only checks to see
+        if there is an evaluation to be used as the simplification, but
+        this may be overridden for particular Expression types.
+        
+        See also Operation.simplification and 
+        Expression.shallow_simplification.
+
+        '''
+        # The only default simplification is an evaluations (though the
+        # Operation class has some options via simplifying operands).
+        from proveit.logic import Equals, EvaluationError
         try:
-            # First try the default tricks. If a reduction succesfully
-            # occurs, evaluation will be called on that reduction.
-            evaluation = default_simplification(
-                self.inner_expr(), must_evaluate=True,
-                assumptions=assumptions, automation=automation)
-            method_called = default_simplification
-        except SimplificationError:
-            if automation is False:
-                raise EvaluationError(self, assumptions)
-            # The default failed, let's try the Expression-class specific
-            # version.
-            try:
-                evaluation = self.do_reduced_evaluation(assumptions, **kwargs)
-                if evaluation is None:
-                    raise EvaluationError(self, assumptions)
-                method_called = self.do_reduced_evaluation
-            except NotImplementedError:
-                # We have nothing but the default evaluation strategy to try,
-                # and that failed.
-                raise EvaluationError(self, assumptions)
+            return self.evaluation()
+        except EvaluationError:
+            # Use the trivial reflexive equality as a last resort
+            # (no simplification).
+            return Equals(self, self).prove()
 
-        if not isinstance(
-                evaluation,
-                Judgment) or not isinstance(
-                evaluation.expr,
-                Equals):
-            msg = ("%s must return an Judgment, "
-                   "not %s for %s assuming %s"
-                   % (method_called, evaluation, self, assumptions))
-            raise ValueError(msg)
-        if evaluation.lhs != self:
-            msg = ("%s must return an Judgment "
-                   "equality with self on the left side, "
-                   "not %s for %s assuming %s"
-                   % (method_called, evaluation, self, assumptions))
-            raise ValueError(msg)
-        if not is_irreducible_value(evaluation.rhs):
-            msg = ("%s must return an Judgment "
-                   "equality with an irreducible value on the right side, "
-                   "not %s for %s assuming %s"
-                   % (method_called, evaluation, self, assumptions))
-            raise ValueError(msg)
-        # Note: No need to store in Equals.known_evaluation_sets or
-        # Equals.known_simplifications; this is done automatically as
-        # a side-effect for proven equalities with irreducible right
-        # sides.
-
-        return evaluation
-
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_evaluated', 
+                        'shallow_evaluate')
+    def shallow_evaluation(self, **kwargs):
         '''
-        Attempt to evaluate 'self', which should be a reduced
-        expression with operands already evaluated.
-        Return the evaluation as a Judgment equality
-        with 'self' on the left side.
+        Attempt to evaluate 'self' under the assumption that it's
+        operands (sub-expressions) have already been simplified.
+        Return the evaluation as a Judgment equality with 'self' on 
+        the left side and an irreducible value on the right side.
+        
         Must be overridden for class-specific evaluation.
         Raise a SimplificationError if the evaluation
         cannot be done.
-
-        The kwargs may provide instructions on how this method
-        should behave (e.g., minimal_automation).
         '''
         raise NotImplementedError(
-            "'do_reduced_evaluation' not implemented for %s class" % str(
+            "'post_reduction_evaluation' not implemented for %s class" % str(
                 self.__class__))
 
-    """
-    # Generated automatically via InnerExpr.register_equivalence_method.
-    def evaluated(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 
+                        'shallow_simplify')
+    def shallow_simplification(self, **kwargs):
         '''
-        Return the right side of an evaluation.
-        '''
-        return self.evaluation(assumptions=assumptions).rhs
-   """
-
-    def simplification(self, assumptions=USE_DEFAULTS, *, automation=True,
-                       shallow=False, **kwargs):
-        '''
-        If possible, return a Judgment of this expression equal to a
-        canonically simplified form. Checks for an existing simplifcation.
-        If it doesn't exist and automation is True, try some default strategies
-        including a reduction.  Attempt the Expression-class-specific
-        "do_reduced_simplication" when necessary.
-
-        If automation is False, this may only succeed if the
-        simplification is already known.  Other keyword arguments will
-        be passed along to do_reduced_evaluation to instruct it on how it
-        should behave (e.g., 'minimal_automation').
-        '''
-        from proveit import Judgment, ProofFailure
-        from proveit.logic import (Equals, default_simplification,
-                                   SimplificationError, EvaluationError)
-        assumptions = defaults.checked_assumptions(assumptions)
-
-        method_called = None
-        try:
-            # If shallow = False,
-            # First try the default tricks.
-            # If a reduction succesfully occurs,
-            # simplification will be called on that reduction.
-            assert not shallow
-            simplification = default_simplification(self.inner_expr(),
-                                                    assumptions=assumptions,
-                                                    automation=automation)
-            method_called = default_simplification
-        except (AssertionError, SimplificationError):
-            if automation is False:
-                # When automation is False, we raise an exception if there
-                # is not a known simplification.
-                raise SimplificationError(
-                    "Unknown simplification of %s under "
-                    "assumptions %s" %
-                    (self, assumptions))
-            # The default did nothing, let's try the Expression-class specific
-            # versions of evaluation and simplification.
-            try:
-                # first try evaluation.  that is as simple as it gets.
-                simplification = self.do_reduced_evaluation(
-                    assumptions, **kwargs)
-                if simplification is None:
-                    raise EvaluationError(self, assumptions)
-                method_called = self.do_reduced_evaluation
-            except (NotImplementedError, EvaluationError, ProofFailure):
-                try:
-                    simplification = self.do_reduced_simplification(
-                        assumptions, **kwargs)
-                    if simplification is None:
-                        raise SimplificationError('Unable to simplify: ',
-                                                  str(self))
-                    method_called = self.do_reduced_simplification
-                except (NotImplementedError, SimplificationError, ProofFailure):
-                    # Simplification did not work.  Just use self-equality.
-                    self_eq = Equals(self, self)
-                    simplification = self_eq.prove()
-                    method_called = self_eq.prove
-
-        if not isinstance(
-                simplification,
-                Judgment) or not isinstance(
-                simplification.expr,
-                Equals):
-            msg = ("%s must return a Judgment "
-                   "equality, not %s for %s assuming %s"
-                   % (method_called, simplification, self, assumptions))
-            raise ValueError(msg)
-        if simplification.lhs != self:
-            msg = (
-                "%s must return a Judgment "
-                "equality with 'self' on the left side, not %s for %s "
-                "assuming %s" %
-                (method_called, simplification, self, assumptions))
-            raise ValueError(msg)
-
-        # If this was not a shallow simplification request,
-        # Remember this simplification for next time:
-        # assumptions_sorted = sorted(assumptions, key=lambda expr: hash(expr))
-        # known_simplifications_key = (self, tuple(assumptions_sorted))
-        # Equals.known_simplifications[known_simplifications_key] = simplification
-        if not shallow:
-            assumptions_sorted = sorted(assumptions, key=lambda expr: hash(expr))
-            known_simplifications_key = (self, tuple(assumptions_sorted))
-            Equals.known_simplifications[known_simplifications_key] = simplification
-
-        return simplification
-
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
-        '''
-        Attempt to simplify 'self', which should be a reduced
-        expression with operands already simplified.
-        Return the evaluation as a Judgment equality
-        with 'self' on the left side.
+        Attempt to simplify 'self' under the assumption that it's
+        operands (sub-expressions) have already been simplified.
+        Returns the simplification as a Judgment equality with 'self'
+        on the left side.
+        
+        The default is to return the trivial reflexive equality.
         Must be overridden for class-specific simplification.
-        Raise a SimplificationError if the simplification
-        cannot be done.
-
-        The kwargs may provide instructions on how this method
-        should behave (e.g., minimal_automation).
         '''
-        raise NotImplementedError(
-            "'do_reduced_simplification' not implemented for %s class" % str(
-                self.__class__))
-
-    """
-    # Generated automatically via InnerExpr.register_equivalence_method.
-    def simplified(self, assumptions=USE_DEFAULTS):
-        '''
-        Return the right side of a simplification.
-        '''
-        return self.simplification(assumptions=assumptions).rhs
-    """
+        from proveit.logic import Equals
+        return Equals(self, self).prove()
 
     def order_of_appearance(self, sub_expressions):
         '''
@@ -1380,27 +1280,6 @@ def _entirely_unbound_vars(expr):
     if isinstance(expr, Lambda):
         return ubound_vars.difference(expr.parameter_vars)
     return ubound_vars
-
-
-def attempt_to_simplify(expr, assumptions, requirements=None):
-    '''
-    Attempt to simplify the given expression under the given
-    assumptions.  If successful, return the simplified expression;
-    otherwise, return the original expression.  Append to
-    'requirements' if simplification is successful and not
-    trivial (the simplified expression is not the same as the
-    original).
-    '''
-    from proveit.logic import SimplificationError
-    try:
-        simplification = expr.simplification(assumptions)
-        simplified = simplification.rhs
-        if requirements is not None:
-            if expr != simplified:
-                requirements.append(simplification)
-        return simplified
-    except SimplificationError:
-        return expr
 
 
 def expression_depth(expr):

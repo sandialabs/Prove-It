@@ -211,8 +211,8 @@ class Conditional(Expression):
                 return thm.instantiate({m: _m, a: _a, Q: _Q},
                                        assumptions=assumptions)
 
-    def _replaced(self, repl_map, allow_relabeling, reduction_map,
-                  assumptions, requirements, equality_repl_requirements):
+    def _replaced(self, repl_map, allow_relabeling,
+                  requirements, equality_repl_requirements):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary.
@@ -235,15 +235,16 @@ class Conditional(Expression):
 
         # First perform substitution on the conditions:
         subbed_cond = condition.replaced(
-                repl_map, allow_relabeling, reduction_map,
-                assumptions, requirements, equality_repl_requirements)
+                repl_map, allow_relabeling, 
+                requirements, equality_repl_requirements)
 
         # Next perform substitution on the value, adding the condition
         # as an assumption.
-        subbed_val = value.replaced(
-                repl_map, allow_relabeling, reduction_map,
-                assumptions + (subbed_cond,), requirements,
-                equality_repl_requirements)
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.assumptions = defaults.assumptions + (subbed_cond,)
+            subbed_val = value.replaced(
+                    repl_map, allow_relabeling, requirements,
+                    equality_repl_requirements)
 
         return Conditional(subbed_val, subbed_cond)
     

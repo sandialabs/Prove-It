@@ -14,18 +14,38 @@ class Defaults:
         # Default assumptions to use for proofs.
         self.assumptions = tuple()
         
-        # Expressions that should be 'preserved' and not simplified.
-        self.preserved_exprs = set()
-
         # Enable/disable `automation` by performing automatic
         # side-effects (via `side_effects` methods) when proving
         # statements as well as automatically concluding
         # statements (via `conclude` methods) when possible.
         self.automation = True
+        
+        # If True, limit the amount of automation that will be
+        # employed, making it apply only locally.
+        self.minimal_automation = False
 
         # Display LaTeX versions of expressions.
         self.display_latex = True
+        
+        # Map expressions to proven equalities in which the expression
+        # appears on the left hand side that will be used for performing
+        # automatic replacements (e.g. during instantiations).
+        self.equality_repl_map = dict()
+        
+        # Automatically simplify expressions as replacements are
+        # made (e.g. during instantiations), except for the
+        # 'preserved_exprs' (see below).
+        self.auto_simplify = True
 
+        # Expressions that should be 'preserved' and not simplified
+        # or replaced using an equality-base replacement.
+        self.preserved_exprs = set()
+        
+        # Map expression classes to directives that should be
+        # employed when simplifying expressions with that class.
+        self.simplification_directives_by_expr_class = dict()
+        
+        """
         # Automatic reductions may be applied to expressions that
         # have an "auto_reduction" method if 'auto_reduce' is True
         # and the Expression class is not in
@@ -36,6 +56,7 @@ class Defaults:
         # set.  See DisabledAutoReductionTypes class definition
         # below.
         self.disabled_auto_reduction_types = DisabledAutoReductionTypes()
+        """
 
         # Put expression pngs inline versus using links.
         self.inline_pngs = True
@@ -57,11 +78,10 @@ class Defaults:
         
         For example:
             with defaults.temporary() as temp_defaults:
-                temp_defaults.styles['direction'] = 'reversed'
+                temp_defaults.assumptions = inner_assumptoins
                 ...
         
-        Will temporarily set the 'direction' style to 'reversed'
-        within the "with" block.
+        Will temporarily set defaults.assumptions to inner_assumptions.
         '''
         return TemporaryDefaults()
 

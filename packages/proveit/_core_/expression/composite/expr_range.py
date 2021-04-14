@@ -453,7 +453,7 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
 
-    def _possibly_reduced_range_entries(self, assumptions, requirements):
+    def _possibly_reduced_range_entries(self, requirements):
         '''
         Yield the entries corresponding to the given expr_range after
         the possible reduction.  If there is no reduction, the
@@ -490,12 +490,10 @@ class ExprRange(Expression):
                     reduction = singular_nested_range_reduction.instantiate(
                         {f: lambda_map, m: start_index,
                          i: self.first().start_index,
-                         j: self.first().end_index},
-                        assumptions=assumptions)
+                         j: self.first().end_index})
                 else:
                     reduction = singular_range_reduction.instantiate(
-                        {f: lambda_map, i: start_index},
-                        assumptions=assumptions)
+                        {f: lambda_map, i: start_index})
             finally:
                 # Re-enable automation.
                 defaults.disabled_auto_reduction_types.remove(ExprRange)
@@ -508,7 +506,7 @@ class ExprRange(Expression):
             if is_literal_int(start_index) and is_literal_int(end_index):
                 if end_index.as_int() + 1 == start_index.as_int():
                     empty_req.prove()
-            if empty_req.proven(assumptions):
+            if empty_req.proven():
                 # We can do an empty range reduction
                 # Temporarily disable automation to avoid infinite
                 # recursion.
@@ -528,8 +526,8 @@ class ExprRange(Expression):
                         lambda_map = Lambda(
                             (self.parameter, self.body.parameter), self.body.body)
                         reduction = empty_outside_range_of_range.instantiate(
-                            {f: lambda_map, m: start_index, n: end_index, i: nest_start_index, j: nest_end_index},
-                            assumptions=assumptions)
+                            {f: lambda_map, m: start_index, n: end_index,
+                             i: nest_start_index, j: nest_end_index})
                     finally:
                         # Re-enable automation.
                         defaults.disabled_auto_reduction_types.remove(
@@ -540,8 +538,7 @@ class ExprRange(Expression):
                     defaults.disabled_auto_reduction_types.add(ExprRange)
                     try:
                         reduction = empty_range_def.instantiate(
-                            {f: lambda_map, i: start_index, j: end_index},
-                            assumptions=assumptions)
+                            {f: lambda_map, i: start_index, j: end_index})
                     finally:
                         # Re-enable automation.
                         defaults.disabled_auto_reduction_types.remove(
@@ -561,7 +558,7 @@ class ExprRange(Expression):
                     if self.first().end_index.as_int() + \
                             1 == self.first().start_index.as_int():
                         empty_req.prove()
-                if empty_req.proven(assumptions):
+                if empty_req.proven():
                     # We can do an empty range reduction on the entire expression
                     # Temporarily disable automation to avoid infinite
                     # recursion.
@@ -576,8 +573,7 @@ class ExprRange(Expression):
                             self.body.body)
                         reduction = empty_inside_range_of_range.instantiate(
                             {f: lambda_map, m: start_index, n: end_index, 
-                             i: nest_start_index, j: nest_end_index},
-                            assumptions=assumptions)
+                             i: nest_start_index, j: nest_end_index})
                     finally:
                         # Re-enable automation.
                         defaults.disabled_auto_reduction_types.remove(
@@ -599,18 +595,17 @@ class ExprRange(Expression):
         for entry in reduced_tuple:
             yield entry
 
-    def _replaced_entries(self, repl_map, allow_relabeling, reduction_map,
-                          assumptions, requirements,
+    def _replaced_entries(self, repl_map, allow_relabeling, requirements,
                           equality_repl_requirements):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary.
 
-        'assumptions' and 'requirements' are used when an operator is
-        replaced by a Lambda map that has a range of parameters such
-        that the length of the parameters and operands must be proven
-        to be equal.  See the Operation.replaced and Lambda.apply
-        documentation for more details.
+        'requirements' (and defaults.assumptions) are used when an 
+        operator is replaced by a Lambda map that has a range of 
+        parameters such that the length of the parameters and operands 
+        must be proven to be equal.  See the Operation.replaced and 
+        Lambda.apply documentation for more details.
 
         Expansion replacements of a range of indexed variables must
         be made explicit for the corresponding range (and therefore
@@ -667,7 +662,6 @@ class ExprRange(Expression):
 
         if requirements is None:
             requirements = []
-        assumptions = defaults.checked_assumptions(assumptions)
         # We will turn on the `indices_must_match` flag when the
         # replacement index ranges must match the original range of
         # indices and not just match in length:
@@ -724,18 +718,17 @@ class ExprRange(Expression):
         # result will be used for getting the start and end indices
         # ('starts' and 'ends').
         subbed_expr_range = self.replaced(
-            repl_map, allow_relabeling, reduction_map, 
-            assumptions, requirements, equality_repl_requirements)
+            repl_map, allow_relabeling, requirements, 
+            equality_repl_requirements)
         if len(var_range_forms) == 0:
             # Nothing to expand.
             # However, we may perform a reduction of the range
             # if it is known to be empty or singular.
             for entry in subbed_expr_range._possibly_reduced_range_entries(
-                    assumptions, requirements):
+                    requirements):
                 if entry != subbed_expr_range:
                     entry = entry._replaced(repl_map, allow_relabeling,
-                          reduction_map, assumptions, requirements,
-                          equality_repl_requirements)
+                          requirements, equality_repl_requirements)
                 yield entry
             return  # Done.
 
@@ -748,8 +741,7 @@ class ExprRange(Expression):
         new_params, inner_repl_map, inner_assumptions \
             = self.lambda_map._inner_scope_sub(
                     [self.parameter], repl_map, allow_relabeling, 
-                    reduction_map, assumptions, dummy_reqs, 
-                    dummy_equality_repl_reqs)
+                    dummy_reqs, dummy_equality_repl_reqs)
         # Sanity check that we didn't introduce new requirements.
         # "_inner_scope_sub" should not introduce anything that
         # wasn't introduced when we called `self.replaced`.
@@ -835,8 +827,8 @@ class ExprRange(Expression):
                     % (self, occurrence, orig_parameter))
             orig_occurrence = occurrence
             occurrence = occurrence.replaced(
-                occurrence_map, allow_relabeling, reduction_map, 
-                assumptions, requirements, equality_repl_requirements)
+                occurrence_map, allow_relabeling, requirements,
+                equality_repl_requirements)
             if safe_dummy_var in free_vars(occurrence, err_inclusively=True):
                 # There was an instance of the original parameter with a
                 # different shift than what we used.  That's not allowed.
@@ -948,8 +940,7 @@ class ExprRange(Expression):
                     # to use the 'extract_param_replacements' method).
                     extract_param_replacements(
                         parameters, parameter_vars, body,
-                        expansion_iter, assumptions, requirements,
-                        entry_repl_map)
+                        expansion_iter, requirements, entry_repl_map)
                     # Mark as a non-ExprRange entry by simply appending
                     # None.
                     expansion_entry_ranges.append(None)
@@ -1054,22 +1045,22 @@ class ExprRange(Expression):
                 param_repl_map = {orig_parameter: new_param}
                 full_entry_repl_map = update_map(
                     full_entry_repl_map, param_repl_map)
-                entry = ExprRange(new_param,
-                                  body.replaced(full_entry_repl_map,
-                                                allow_relabeling,
-                                                reduction_map,
-                                                entry_assumptions,
-                                                requirements,
-                                                equality_repl_requirements),
-                                  start_index, end_index)
+                with defaults.temporary() as temp_defaults:
+                    temp_defaults.assumptions = entry_assumptions
+                    entry = ExprRange(new_param,
+                                      body.replaced(
+                                              full_entry_repl_map,
+                                              allow_relabeling,
+                                              requirements,
+                                              equality_repl_requirements),
+                                      start_index, end_index)
                 # We may perform a reduction of the range if it is known
                 # to be empty or singular.
                 for entry in entry._possibly_reduced_range_entries(
-                        assumptions, requirements):
+                        requirements):
                     if entry != entry:
                         entry = entry._replaced(repl_map, allow_relabeling,
-                              reduction_map, assumptions, requirements,
-                              equality_repl_requirements)
+                              requirements, equality_repl_requirements)
                     yield entry
                 if indices_must_match:
                     # We need to know the new_indices to match with the
@@ -1083,26 +1074,26 @@ class ExprRange(Expression):
                 if indices_must_match:
                     # Attempt to simplify the 'next_index' only when
                     # we need it.
-                    next_index = attempt_to_simplify(
-                        next_index, assumptions, requirements)
+                    next_index = next_index._equality_replaced(
+                            requirements, equality_repl_requirements)
                     # The actual range parameter index is needed:
                     param_repl_map = {orig_parameter: next_index}
                     full_entry_repl_map = update_map(
                         full_entry_repl_map, param_repl_map)
                     #full_entry_repl_map[orig_parameter] = next_index
 
-                if isinstance(body, ExprRange):
-                    # A nested ExprRange may need to be expanded.
-                    for subentry in body._replaced_entries(
-                            full_entry_repl_map, allow_relabeling,
-                            reduction_map, inner_assumptions, requirements,
-                            equality_repl_requirements):
-                        yield subentry
-                else:
-                    yield body.replaced(
-                            full_entry_repl_map, allow_relabeling,
-                            reduction_map, inner_assumptions, requirements,
-                            equality_repl_requirements)
+                with defaults.temporary() as temp_defaults:
+                    temp_defaults.assumptions = inner_assumptions
+                    if isinstance(body, ExprRange):
+                        # A nested ExprRange may need to be expanded.
+                        for subentry in body._replaced_entries(
+                                full_entry_repl_map, allow_relabeling,
+                                requirements, equality_repl_requirements):
+                            yield subentry
+                    else:
+                        yield body.replaced(
+                                full_entry_repl_map, allow_relabeling,
+                                requirements, equality_repl_requirements)
 
                 if indices_must_match:
                     # We need to know the new_indices to match with the
@@ -1123,7 +1114,7 @@ class ExprRange(Expression):
                 # reflexive identity.
                 return
             try:
-                requirements.append(requirement.prove(assumptions))
+                requirements.append(requirement.prove())
             except ProofFailure as e:
                 raise ImproperReplacement(
                     self, repl_map,
