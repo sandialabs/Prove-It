@@ -244,7 +244,6 @@ class Lambda(Expression):
             # Don't auto-reduce or use automation when making the
             # canonical version.  Also, don't apply "consistent
             # styles" -- we need use "canonical" styles.
-            temp_defaults.auto_reduce = False
             temp_defaults.automation = False
             temp_defaults.assumptions = tuple()
             #temp_defaults.use_consistent_styles = False
@@ -256,9 +255,9 @@ class Lambda(Expression):
                     {param_var: canonical_param_var
                      for param_var, canonical_param_var
                      in zip(bound_parameter_vars, canonical_param_vars)}
-                canonical_parameters = parameters.replaced(
+                canonical_parameters = parameters.basic_replaced(
                     relabel_map)._canonical_version()
-                canonical_body = canonical_body.replaced(
+                canonical_body = canonical_body.basic_replaced(
                     relabel_map)._canonical_version()
                 canonical_expr = Lambda(canonical_parameters, canonical_body)
             elif (self._style_data.styles == canonical_styles and
@@ -401,9 +400,8 @@ class Lambda(Expression):
         return out_str
 
     def apply(self, *operands, equiv_alt_expansions=None,
-              allow_relabeling=False, equality_repl_map=USE_DEFAULTS,
-              assumptions=USE_DEFAULTS, requirements=None, 
-              equality_repl_requirements=None):
+              allow_relabeling=False, assumptions=USE_DEFAULTS, 
+              requirements=None):
         '''
         Apply this lambda map onto the given operands (a beta reduction
         in the lambda calculus terminology), returning the
@@ -468,38 +466,26 @@ class Lambda(Expression):
 
         There may be additional requirements introduced when expanding
         ranges.  For example, indices may need to match, not just
-        lengths.  Also, we may perform equality replacements
-        in the process of performing the lambda application, either
-        via the 'reduction_map' or Expression.auto_reduction calls.  For
-        example, "And() = TRUE".  Any employed replacements will be
-        added to the requirements list and added to the
-        'equality_repl_requirements' set (if one is provided).
+        lengths.
         '''
-        if (equality_repl_map is not USE_DEFAULTS or
-                assumptions is not USE_DEFAULTS):
+        if assumptions is not USE_DEFAULTS:
             with defaults.temporary() as temp_defaults:
-                if assumptions is not USE_DEFAULTS:
-                    temp_defaults.assumptions = assumptions
-                if equality_repl_map is not USE_DEFAULTS:
-                    temp_defaults.equality_repl_map = equality_repl_map
+                temp_defaults.assumptions = assumptions
                 return Lambda._apply(
                     self.parameters, self.body, *operands,
                     equiv_alt_expansions=equiv_alt_expansions,
                     allow_relabeling=allow_relabeling, 
                     requirements=requirements,
-                    equality_repl_requirements=equality_repl_requirements,
                     parameter_vars=self.parameter_vars)
         return Lambda._apply(
             self.parameters, self.body, *operands,
             equiv_alt_expansions=equiv_alt_expansions,
             allow_relabeling=allow_relabeling, requirements=requirements,
-            equality_repl_requirements=equality_repl_requirements,
             parameter_vars=self.parameter_vars)
 
     @staticmethod
     def _apply(parameters, body, *operands, equiv_alt_expansions=None,
                allow_relabeling=False, requirements=None,
-               equality_repl_requirements=None,
                parameter_vars=None):
         '''
         Static method version of Lambda.apply which is convenient for
@@ -617,9 +603,8 @@ class Lambda(Expression):
             repl_map.update(repl_map_extensions)
             repl_map.update(var_range_forms)
         try:
-            return body.replaced(
-                repl_map, allow_relabeling, requirements=requirements,
-                equality_repl_requirements=equality_repl_requirements)
+            return body.basic_replaced(
+                repl_map, allow_relabeling, requirements=requirements)
         except ImproperReplacement as e:
             raise LambdaApplicationError(
                 parameters, body, operands, equiv_alt_expansions,
@@ -629,8 +614,7 @@ class Lambda(Expression):
                 parameters, body, operands, equiv_alt_expansions,
                 "TypeError: %s " % str(e))
 
-    def _replaced(self, repl_map, allow_relabeling, requirements,
-                  equality_repl_requirements):
+    def basic_replaced(self, repl_map, allow_relabeling, requirements):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary
@@ -665,20 +649,17 @@ class Lambda(Expression):
         new_params = []
         for param in self.parameters:
             if isinstance(param, IndexedVar):
-                subbed_index = param.index._replaced(
-                        repl_map, allow_relabeling, requirements,
-                        equality_repl_requirements)
+                subbed_index = param.index.basic_replaced(
+                        repl_map, allow_relabeling, requirements)
                 new_params.append(IndexedVar(param.var, subbed_index))
             elif isinstance(param, ExprRange):
                 param_var = get_param_var(param)
                 subbed_start = \
-                    ExprTuple(*extract_start_indices(param))._replaced(
-                        repl_map, allow_relabeling, requirements,
-                        equality_repl_requirements)
+                    ExprTuple(*extract_start_indices(param)).basic_replaced(
+                        repl_map, allow_relabeling, requirements)
                 subbed_end = \
-                    ExprTuple(*extract_end_indices(param))._replaced(
-                        repl_map, allow_relabeling, requirements,
-                        equality_repl_requirements)
+                    ExprTuple(*extract_end_indices(param)).basic_replaced(
+                        repl_map, allow_relabeling, requirements)
                 range_param = var_range(param_var, subbed_start, subbed_end)
                 for param in range_param._possibly_reduced_range_entries(
                         requirements):
@@ -690,14 +671,13 @@ class Lambda(Expression):
         new_params, inner_repl_map, inner_assumptions \
             = self._inner_scope_sub(
                     new_params, repl_map, allow_relabeling,
-                    requirements, equality_repl_requirements)
+                    requirements)
 
         # The lambda body with the substitutions.
         with defaults.temporary() as temp_defaults:
             temp_defaults.assumptions = inner_assumptions
-            subbed_body = self.body.replaced(
-                inner_repl_map, allow_relabeling, requirements,
-                equality_repl_requirements)
+            subbed_body = self.body.basic_replaced(
+                inner_repl_map, allow_relabeling, requirements)
 
         try:
             replaced = Lambda(new_params, subbed_body)
@@ -709,8 +689,7 @@ class Lambda(Expression):
         return replaced
 
     def _inner_scope_sub(self, parameters, repl_map, 
-                         allow_relabeling, requirements,
-                         equality_repl_requirements):
+                         allow_relabeling, requirements):
         '''
         Helper method for _replaced (and used by ExprRange._replaced)
         which handles the change in scope properly as well as parameter
@@ -780,9 +759,8 @@ class Lambda(Expression):
                     for mask_indices in (mask_start, mask_end):
                         for _, idx in enumerate(mask_indices):
                             mask_indices[_] = \
-                                idx.replaced(repl_map, allow_relabeling,
-                                             requirements,
-                                             equality_repl_requirements)
+                                idx.basic_replaced(repl_map, allow_relabeling,
+                                                   requirements)
                     # We may only use the variable range forms of
                     # key_repl that carve out the masked indices (e.g.
                     # (x_1, ..., x_n, x_{n+1}) is usable if the masked
@@ -900,12 +878,12 @@ class Lambda(Expression):
             if isinstance(parameter, ExprRange):
                 for subbed_param in parameter._replaced_entries(
                         inner_repl_map, allow_relabeling,
-                        requirements, equality_repl_requirements):
+                        requirements):
                     new_params.append(subbed_param)
             else:
-                subbed_param = parameter.replaced(
+                subbed_param = parameter.basic_replaced(
                     inner_repl_map, allow_relabeling,
-                    requirements, equality_repl_requirements)
+                    requirements)
                 new_params.append(subbed_param)
 
         if len({get_param_var(param)
@@ -942,7 +920,7 @@ class Lambda(Expression):
                 raise TypeError("May only relabel Variables/IndexedVars "
                                 "to Variables/IndexedVars; "
                                 "may not relabel to %s" % key)
-        relabeled = self.replaced(relabel_map, allow_relabeling=True)
+        relabeled = self.basic_replaced(relabel_map, allow_relabeling=True)
         for orig_param_var, new_param_var in zip(self.parameter_vars,
                                                  relabeled.parameter_vars):
             # Presume that if one of the parameters did not actually

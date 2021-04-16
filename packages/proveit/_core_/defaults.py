@@ -27,10 +27,12 @@ class Defaults:
         # Display LaTeX versions of expressions.
         self.display_latex = True
         
-        # Map expressions to proven equalities in which the expression
-        # appears on the left hand side that will be used for performing
-        # automatic replacements (e.g. during instantiations).
-        self.equality_repl_map = dict()
+        # Proven equalities which specify desired replacements.
+        # Occurrences of the left side will be replaced with
+        # occurrences of the right side during instantiations
+        # (and calls to Expression.replaced or 
+        # Expression.equality_replaced).
+        self.replacements = tuple()
         
         # Automatically simplify expressions as replacements are
         # made (e.g. during instantiations), except for the

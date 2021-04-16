@@ -1029,7 +1029,7 @@ class Deduction(Proof):
 
 class Instantiation(Proof):
     def __init__(self, orig_judgment, num_forall_eliminations,
-                 repl_map, equiv_alt_expansions, reduction_map, assumptions):
+                 repl_map, equiv_alt_expansions, assumptions):
         '''
         Create the instantiation proof step that eliminates some number
         of nested Forall operations and simultaneously replaces 
@@ -1083,9 +1083,10 @@ class Instantiation(Proof):
                 subbed_assumption = Lambda._apply(
                     relabel_params, assumption, *relabel_param_replacements,
                     allow_relabeling=True, equiv_alt_expansions=None,
-                    reduction_map=reduction_map,
-                    assumptions=assumptions, requirements=requirements,
-                    equality_repl_requirements=equality_repl_requirements)
+                    assumptions=assumptions, requirements=requirements)
+                subbed_assumption = subbed_assumption.equality_replaced(
+                        requirements=requirements,
+                        equality_repl_requirements=equality_repl_requirements)
                 if isinstance(assumption, ExprRange):
                     # An iteration of assumptions to expand.
                     orig_subbed_assumptions.extend(subbed_assumption)
@@ -1107,8 +1108,7 @@ class Instantiation(Proof):
                 Instantiation._instantiated_expr(orig_judgment, 
                     relabel_params, relabel_param_replacements,
                     num_forall_eliminations, repl_map,
-                    equiv_alt_expansions, reduction_map,
-                    assumptions, requirements,
+                    equiv_alt_expansions, assumptions, requirements,
                     equality_repl_requirements)
 
             # Remove duplicates in the requirements.
@@ -1291,7 +1291,7 @@ class Instantiation(Proof):
                            relabel_params, relabel_param_replacements,
                            num_forall_eliminations,
                            repl_map, equiv_alt_expansions,
-                           reduction_map, assumptions, requirements,
+                           assumptions, requirements,
                            equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
@@ -1333,12 +1333,13 @@ class Instantiation(Proof):
             '''
             if len(params) == 0:
                 return expr
-            return Lambda._apply(
+            instantiated = Lambda._apply(
                 params, expr, *operands, allow_relabeling=True,
                 equiv_alt_expansions=active_equiv_alt_expansions,
-                reduction_map=reduction_map,
-                assumptions=assumptions, requirements=requirements,
-                equality_repl_requirements=equality_repl_requirements)
+                assumptions=assumptions)
+            return instantiated.equality_replaced(
+                    requirements=requirements,
+                    equality_repl_requirements=equality_repl_requirements)
 
         remaining_forall_eliminations = num_forall_eliminations
         while remaining_forall_eliminations > 0:

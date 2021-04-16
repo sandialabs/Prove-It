@@ -26,7 +26,8 @@ class ExprType(type):
     # These attributes should not be overridden by classes outside
     # of the core.
     protected = ('_canonical_version',
-                 'replaced', '_replaced', '_replaced_entries', 'relabeled',
+                 'replaced', 'basic_replaced', '_replaced_entries', 
+                 'equality_replaced', '_equality_replaced', 'relabeled',
                  '_make', '_checked_make', '_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
@@ -503,56 +504,6 @@ class Expression(metaclass=ExprType):
         assert made._sub_expressions == sub_expressions, (
             "%s vs %s" % (made._sub_expressions, sub_expressions))
         return made
-    
-    def _equality_replaced(self, requirements, equality_repl_requirements):
-        '''
-        Return this expression or an expression that is proven to
-        be equal to this expression.  It may be a simplificiation
-        or a replacement specified in defaults.equality_repl_map
-        (which maps expressions to equalities having the expression
-        on the left side and replacement on the right side).
-        '''
-        from proveit import Judgment        
-        from proveit._core_.proof import ProofFailure
-        from proveit.logic import Equals, SimplificationError
-        
-        if self in defaults.preserved_exprs:
-            # This expression should be preserved, so don't make
-            # any equality-based replacement.
-            return self
-        equality_repl_map = defaults.equality_repl_map
-        if self in equality_repl_map:
-            replacement = equality_repl_map[self]
-        elif defaults.auto_simplify:
-            try:
-                replacement = self.simplification()
-            except (SimplificationError, ProofFailure):
-                # Failure in the simplification attempt; just skip it.
-                return self
-            if replacement.rhs == self:
-                # Trivial simplification -- don't use it.
-                return self
-        else:
-            return self
-        if not isinstance(replacement, Judgment):
-            raise TypeError("'replacement' must be a "
-                            "proven equality as a Judgment: "
-                            "got %s for %s" % (replacement, self))
-        if not isinstance(replacement.expr, Equals):
-            raise TypeError("'replacement' must be a "
-                            "proven equality: got %s for %s"
-                            % (replacement, self))
-        if replacement.expr.lhs != self:
-            raise TypeError("'replacement' must be a "
-                            "proven equality with 'self' on the "
-                            "left side: got %s for %s"
-                            % (replacement, self))
-        if not replacement.is_sufficient(defaults.assumptions):
-            # The assumptions aren't adequate to use this reduction.
-            return self
-        requirements.append(replacement)
-        equality_repl_requirements.add(replacement)
-        return replacement.expr.rhs
 
     def core_info(self):
         '''
@@ -951,38 +902,136 @@ class Expression(metaclass=ExprType):
         if equality_repl_requirements is None:
             # Not passing back the equality replacement requirements.
             equality_repl_requirements = set()
-        replacement = self._replaced(
+        replacement = self.basic_replaced(
             repl_map, allow_relabeling=allow_relabeling,
-            requirements=requirements,
-            equality_repl_requirements=equality_repl_requirements)
-        return replacement._equality_replaced(
+            requirements=requirements)
+        return replacement.equality_replaced(
                 requirements, equality_repl_requirements)
 
-    def _replaced(self, repl_map, allow_relabeling,
-                  requirements, equality_repl_requirements):
+    def basic_replaced(self, repl_map, allow_relabeling, requirements):
         '''
-        Implementation for Expression.replaced except for the
-        final automatic reduction (if applicalbe).
+        Implementation for Expression.replaced except for equality
+        replacements.
         '''
         if len(repl_map) > 0 and (self in repl_map):
             replaced = repl_map[self]
         else:
-            subbed_sub_exprs = \
-                tuple(sub_expr.replaced(
-                        repl_map, allow_relabeling,
-                        requirements, equality_repl_requirements)
-                      for sub_expr in self._sub_expressions)
+            sub_exprs = self._sub_expressions
+            subbed_sub_exprs = tuple(
+                    sub_expr.basic_replaced(repl_map, allow_relabeling,
+                                            requirements)
+                    for sub_expr in sub_exprs)
+            if all(subbed_sub._style_id == sub._style_id for
+                   subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+                # Nothing change, so don't remake anything.
+                return self
             replaced = self.__class__._checked_make(
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)
         return replaced
+
+    def equality_replaced(self, requirements, equality_repl_requirements):
+        '''
+        Return something equal to this expression with replacements
+        made via proven equalities, either simplifications or
+        replacements specified in defaults.equality_repl_map (which maps
+        expressions to equalities having the expression on the left side
+        and replacement on the right side).
+        '''
+        from proveit import Judgment  
+        from proveit.logic import Equals
+
+        # Convert the replacements tuple to an equality_repl_map.
+        equality_repl_map = dict()
+        for replacement in defaults.replacements:
+            if not isinstance(replacement, Judgment):
+                raise TypeError("The 'reductions' must be Judgments")
+            if not isinstance(replacement.expr, Equals):
+                raise TypeError(
+                        "The 'reductions' must be equality Judgments")
+            if replacement.expr.lhs == replacement.expr.rhs:
+                # Don't bother with reflexive (x=x) reductions.
+                continue
+            equality_repl_map[replacement.expr.lhs] = replacement
+
+        # Use the recursive helper method.
+        return self._equality_replaced(equality_repl_map, requirements,
+                                       equality_repl_requirements)
+
+    def _equality_replaced(self, equality_repl_map, requirements, 
+                           equality_repl_requirements):
+        '''
+        Recursive helper method for equality_replaced.
+        '''        
+        from proveit import Judgment        
+        from proveit._core_.proof import (
+                ProofFailure, UnsatisfiedPrerequisites)
+        from proveit.logic import Equals, SimplificationError
+        if self in defaults.preserved_exprs:
+            # This expression should be preserved, so don't make
+            # any equality-based replacement.
+            return self
+
+        # Check for an equality replacement via equality_repl_map
+        # or as a simplification.
+        replacement = None
+        if self in equality_repl_map:
+            replacement = equality_repl_map[self]
+        elif defaults.auto_simplify and not self.is_simplified():
+            try:
+                replacement = self.simplification()
+            except (SimplificationError, UnsatisfiedPrerequisites, 
+                    ProofFailure):
+                # Failure in the simplification attempt; just skip it.
+                replacement = None
+            if replacement.rhs == self:
+                # Trivial simplification -- don't use it.
+                replacement = None
+
+        # Do we have a replacement at this level?
+        if replacement is None:
+            # Recurse into the sub-expressions.
+            sub_exprs = self._sub_expressions
+            subbed_sub_exprs = \
+                tuple(sub_expr.equality_replaced(
+                        equality_repl_map, requirements,
+                        equality_repl_requirements)
+                      for sub_expr in sub_exprs)
+            if all(subbed_sub._style_id == sub._style_id for
+                   subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+                # Nothing change, so don't remake anything.
+                return self
+            return self.__class__._checked_make(
+                self._core_info, subbed_sub_exprs,
+                style_preferences=self._style_data.styles)
+
+        # We have a replacement here; make sure it is a valid one.
+        if not isinstance(replacement, Judgment):
+            raise TypeError("'replacement' must be a "
+                            "proven equality as a Judgment: "
+                            "got %s for %s" % (replacement, self))
+        if not isinstance(replacement.expr, Equals):
+            raise TypeError("'replacement' must be a "
+                            "proven equality: got %s for %s"
+                            % (replacement, self))
+        if replacement.expr.lhs != self:
+            raise TypeError("'replacement' must be a "
+                            "proven equality with 'self' on the "
+                            "left side: got %s for %s"
+                            % (replacement, self))
+        if not replacement.is_sufficient(defaults.assumptions):
+            # The assumptions aren't adequate to use this reduction.
+            return self
+        requirements.append(replacement)
+        equality_repl_requirements.add(replacement)
+        return replacement.expr.rhs
 
     def copy(self):
         '''
         Make a copy of the Expression with the same styles.
         '''
         # vacuous substitution makes a copy
-        expr_copy = self.replaced({})
+        expr_copy = self.basic_replaced({})
         return expr_copy
 
     def _used_vars(self):

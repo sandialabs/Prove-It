@@ -8,6 +8,7 @@ with possibly fewer assumptions, suffices).
 
 from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaning_data, style_data
+from proveit.decorators import prover
 from .defaults import defaults, USE_DEFAULTS
 import re
 from copy import copy
@@ -783,8 +784,9 @@ class Judgment:
         return self._checkedTruth(Specialization(self, num_forall_eliminations=0, relabel_map=relabel_map, assumptions=self.assumptions))
     """
 
+    @prover
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
-                    reductions=None, assumptions=USE_DEFAULTS):
+                    **kwargs):
         '''
         Performs an instantiation derivation step to be proven under the 
         given assumptions, in addition to the assumptions of the 
@@ -828,30 +830,17 @@ class Judgment:
                              ExprTuple, ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
-        from proveit.logic import Forall, Equals
+        from proveit.logic import Forall
         from .proof import Theorem, Instantiation, ProofFailure
         
-        reduction_map = dict()
-        if reductions is not None:
-            for reduction in reductions:
-                if not isinstance(reduction, Judgment):
-                    raise TypeError("The 'reductions' must be Judgments")
-                if not isinstance(reduction.expr, Equals):
-                    raise TypeError(
-                            "The 'reductions' must be equality Judgments")
-                if reduction.expr.lhs == reduction.expr.rhs:
-                    # Don't bother with reflexive (x=x) reductions.
-                    continue
-                reduction_map[reduction.expr.lhs] = reduction
-
         if not self.is_usable():
             # If this Judgment is not usable, see if there is an alternate
             # under the set of assumptions that is usable.
             try:
-                alternate = self.expr.prove(assumptions, automation=False)
+                alternate = self.expr.prove(automation=False)
             except ProofFailure:
                 self.raise_unusable_proof()
-            return alternate.instantiate(repl_map, assumptions)
+            return alternate.instantiate(repl_map)
         _proof = self.proof()
         if isinstance(_proof, Theorem):
             Theorem.all_used_theorems.add(_proof)
@@ -861,10 +850,6 @@ class Judgment:
         # (mapping instance variables to themselves)
         if repl_map is None:
             repl_map = {ivar: ivar for ivar in self.explicit_instance_vars()}
-
-        # Include the Judgment assumptions along with any provided 
-        # assumptions
-        assumptions = defaults.checked_assumptions(assumptions)
 
         # For any entrys in repl_map with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
@@ -985,8 +970,7 @@ class Judgment:
                           num_forall_eliminations=num_forall_eliminations,
                           repl_map=processed_repl_map,
                           equiv_alt_expansions=equiv_alt_expansions,
-                          reduction_map=reduction_map,
-                          assumptions=assumptions))
+                          assumptions=defaults.assumptions))
 
     def generalize(self, forall_var_or_vars_or_var_lists,
                    domain_lists=None, domain=None, conditions=tuple()):

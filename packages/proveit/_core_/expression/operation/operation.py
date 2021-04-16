@@ -477,8 +477,7 @@ class Operation(Expression):
                 formatted_str += ')' if format_type == 'string' else r'\right)'
             return formatted_str
 
-    def _replaced(self, repl_map, allow_relabeling,
-                  requirements, equality_repl_requirements):
+    def basic_replaced(self, repl_map, allow_relabeling, requirements):
         '''
         Returns this expression with sub-expressions substituted
         according to the replacement map (repl_map) dictionary.
@@ -513,13 +512,11 @@ class Operation(Expression):
 
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator = \
-            self.operator.replaced(
-                    repl_map, allow_relabeling, 
-                    requirements, equality_repl_requirements)
+            self.operator.basic_replaced(repl_map, allow_relabeling,
+                                         requirements)
         subbed_operands = \
-            self.operands.replaced(
-                    repl_map, allow_relabeling, 
-                    requirements, equality_repl_requirements)
+            self.operands.basic_replaced(repl_map, allow_relabeling,
+                                         requirements)
 
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
@@ -537,8 +534,7 @@ class Operation(Expression):
                     % (self.operator, subbed_operator))
             return Lambda._apply(
                 subbed_operator.parameters, subbed_operator.body,
-                *subbed_operands.entries, requirements=requirements,
-                equality_repl_requirements=equality_repl_requirements)
+                *subbed_operands.entries, requirements=requirements)
         
         # If the operator is a literal operator of
         # an Operation class defined via an "_operator_" class
@@ -550,19 +546,15 @@ class Operation(Expression):
                 # the same manner in the setting of the new
                 # operation.
                 subbed_sub_exprs = (subbed_operator, subbed_operands)
-                substituted = op_class._checked_make(
+                return op_class._checked_make(
                     ['Operation'], sub_expressions=subbed_sub_exprs,
                     style_preferences=self._style_data.styles)
-                return substituted._equality_replaced(
-                    requirements, equality_repl_requirements)
         
         subbed_sub_exprs = (subbed_operator,
                             subbed_operands)
-        substituted = self.__class__._checked_make(
+        return self.__class__._checked_make(
             self._core_info, subbed_sub_exprs, 
             style_preferences=self._style_data.styles)
-        return substituted._equality_replaced(
-                requirements, equality_repl_requirements)
 
     @equivalence_prover('evaluated', 'evaluate')
     def evaluation(self, **kwargs):

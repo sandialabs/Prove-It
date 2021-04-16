@@ -19,8 +19,7 @@ class Variable(Label):
         Label.__init__(self, string_format, latex_format, 'Variable',
                        fence_when_forced=fence_when_forced, styles=None)
 
-    def _replaced(self, repl_map, allow_relabeling, 
-                  requirements, equality_repl_requirements):
+    def basic_replaced(self, repl_map, allow_relabeling, requirements):
         '''
         Returns this Variable possibly replaced according to the
         replacement map (repl_map) dictionary.  See the
