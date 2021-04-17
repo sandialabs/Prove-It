@@ -341,7 +341,7 @@ class Mult(Operation):
     def cancelations(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return an equality between self and a form in which
-        all simple division cancellations are performed across the
+        all simple division cancelations are performed across the
         factors of this multiplication.
         '''
         from proveit.numbers import Div
@@ -369,7 +369,7 @@ class Mult(Operation):
                     else:
                         denom_factors.append(factor.denominator)
             elif isinstance(factor, Mult):
-                numer_factors.extend(factor.factors)
+                numer_factors.extend(factor.factors.entries)
             else:
                 numer_factors.append(factor)
         denom_factors_set = set(denom_factors)
@@ -427,7 +427,7 @@ class Mult(Operation):
             set(denom_occurrence_indices))
         if len(intersection_indices) > 0:
             idx = sorted(intersection_indices)[0]
-            eq.update(expr.inner_expr().factors[idx].cancellation(
+            eq.update(expr.inner_expr().factors[idx].cancelation(
                 term_to_cancel, assumptions=assumptions))
             return eq.relation
 
@@ -436,10 +436,10 @@ class Mult(Operation):
         if expr.factors.is_double():
             from proveit.numbers.division import (
                 mult_frac_cancel_numer_left, mult_frac_cancel_denom_left)
-
+            
             # First, let's eliminate any ones from the canceling
             # parts (and division by one).  We'll also do this
-            # for the instantiated theorm to ensure there is a match.
+            # for the instantiated theorem to ensure there is a match.
             numer_idx = numer_occurrence_indices[0]
             denom_idx = denom_occurrence_indices[0]
 
@@ -552,6 +552,7 @@ class Mult(Operation):
                 cancelation = mult_frac_cancel_denom_left.instantiate(
                     {a: _a, b: _b, c: _c, d: _d, e: _e},
                     assumptions=assumptions)
+
             # Eliminate ones in the cancelation; it should now
             # match with the expression where we have already
             # eliminated ones.
@@ -577,7 +578,7 @@ class Mult(Operation):
             expr = eq.update(expr.inner_expr().association(
                 left_idx, 2, assumptions=assumptions))
             expr = eq.update(
-                expr.inner_expr().factors[left_idx].cancellation(
+                expr.inner_expr().factors[left_idx].cancelation(
                     term_to_cancel, assumptions=assumptions))
             if isinstance(expr.factors[left_idx], Mult):
                 expr = eq.update(
@@ -597,11 +598,24 @@ class Mult(Operation):
                 denom_idx, numer_idx, assumptions=assumptions))
         expr = eq.update(expr.inner_expr().cancelation(
             term_to_cancel, assumptions=assumptions))
-        if expr.factors.num_entries() < self.factors.num_entries():
-            # It must have been a complete cancelation, so no
-            # reason to move anything back.
+
+        # Recursive cancelation process might return a 1, in which case
+        # the eq.relation will look like |- old = 1*(something),
+        # so check and simplify once more
+        if isinstance(expr, Mult):
+            if expr.factors[0] == one:
+                expr = eq.update(expr.inner_expr().deep_one_eliminations(
+                        assumptions=assumptions))
+
+        if ((not isinstance(expr, Mult)) or
+            expr.factors.num_entries() < self.factors.num_entries()):
+            # It must have been a complete cancelation, producing a
+            # single non-Mult element or a Mult with fewer factors,
+            # so no reason to move anything back.
             return eq.relation
-        # We should put things back where they were to play nice.
+
+        # If not already finished and returned, we should put things
+        # back where they were to play nice.
         expr = eq.update(
             expr.inner_expr().commutation(
                 numer_idx, denom_idx, assumptions=assumptions))
@@ -1437,3 +1451,8 @@ InnerExpr.register_equivalence_method(
     'exponent_combination',
     'combined_exponents',
     'combine_exponents')
+InnerExpr.register_equivalence_method(
+    Mult,
+    'cancelation',
+    'canceled',
+    'cancel')
