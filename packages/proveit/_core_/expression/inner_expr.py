@@ -479,7 +479,7 @@ class InnerExpr:
                 self.expr_hierarchy[0].expr == revised_expr):
             # Make a Judgment with only the style modified.
             kt = Judgment(revised_expr, self.expr_hierarchy[0].assumptions)
-            kt._addProof(self.expr_hierarchy[0].proof())
+            kt._add_proof(self.expr_hierarchy[0].proof())
             return kt
         return revised_expr
 
