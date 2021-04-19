@@ -18,7 +18,7 @@ proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.addition.commutation
 proveit.numbers.addition.subtraction.add_cancel_basic
-proveit.numbers.addition.weak_bound_by_left_term
+proveit.numbers.addition.weak_bound_via_left_term_bound
 proveit.numbers.negation.negated_zero
 proveit.numbers.negation.real_closure
 proveit.numbers.number_sets.complex_numbers.int_within_complex

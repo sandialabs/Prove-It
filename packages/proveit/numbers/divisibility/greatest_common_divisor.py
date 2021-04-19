@@ -7,8 +7,8 @@ class GCD(Function):
 
     _operator_ = Literal('gcd', theory=__file__)
 
-    def __init__(self, a, b):
-        Function.__init__(self, GCD._operator_, [a, b])
+    def __init__(self, a, b, *, styles=None):
+        Function.__init__(self, GCD._operator_, [a, b], styles=styles)
 
     def deduce_relatively_prime(self, assumptions=USE_DEFAULTS):
         '''

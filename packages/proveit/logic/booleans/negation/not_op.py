@@ -10,8 +10,8 @@ class Not(Operation):
         latex_format=r'\lnot',
         theory=__file__)
 
-    def __init__(self, A):
-        Operation.__init__(self, Not._operator_, A)
+    def __init__(self, A, *, styles=None):
+        Operation.__init__(self, Not._operator_, A, styles=styles)
 
     def side_effects(self, judgment):
         '''

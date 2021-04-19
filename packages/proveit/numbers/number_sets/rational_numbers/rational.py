@@ -7,9 +7,9 @@ from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 
 class RationalSet(NumberSet):
 
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'Rational', r'\mathbb{Q}',
-                           theory=__file__)
+                           theory=__file__, styles=styles)
 
     def membership_object(self, element):
         from .rational_membership import RationalMembership    
@@ -37,9 +37,10 @@ class RationalSet(NumberSet):
 
 class RationalNonZeroSet(NumberSet):
 
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RationalNonZero', r'\mathbb{Q}^{\neq 0}',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .rational_membership import RationalNonZeroMembership    
@@ -83,9 +84,10 @@ class RationalNonZeroSet(NumberSet):
 
 class RationalPosSet(NumberSet):
 
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RationalPos', r'\mathbb{Q}^+',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .rational_membership import RationalPosMembership    
@@ -145,9 +147,10 @@ class RationalPosSet(NumberSet):
 
 class RationalNegSet(NumberSet):
 
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RationalNeg', r'\mathbb{Q}^-',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .rational_membership import RationalNegMembership    
@@ -209,9 +212,10 @@ class RationalNegSet(NumberSet):
 
 class RationalNonNegSet(NumberSet):
 
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RationalNonNeg', r'\mathbb{Q}^{\geq 0}',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .rational_membership import RationalNonNegMembership    
@@ -255,9 +259,10 @@ class RationalNonNegSet(NumberSet):
 
 class RationalNonPosSet(NumberSet):
 
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RationalNonPos', r'\mathbb{Q}^{\leq 0}',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .rational_membership import RationalNonPosMembership    

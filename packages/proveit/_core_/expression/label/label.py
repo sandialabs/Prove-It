@@ -1,9 +1,9 @@
+import re
+from inspect import signature
 from proveit._core_.expression.expr import Expression
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.expression.fencing import (
     maybe_fenced_string, maybe_fenced_latex)
-import re
-
 
 class Label(Expression):
     """
@@ -12,8 +12,8 @@ class Label(Expression):
     with string and latex formatting.
     """
 
-    def __init__(self, string_format, latex_format=None, label_type='Label',
-                 extra_core_info=tuple(), sub_expressions=tuple(),
+    def __init__(self, string_format, latex_format=None,
+                 label_type='Label', extra_core_info=tuple(), *,
                  fence_when_forced=False, styles=None):
         '''
         Create a Label with the given string and latex formatting.
@@ -34,29 +34,19 @@ class Label(Expression):
             raise TypeError("'latex_format' must be a str")
         if ',' in self.string_format or ',' in self.latex_format:
             raise ValueError("Comma not allowed within a label's formatting")
-        if styles is None:
-            styles = dict()
         if fence_when_forced:
-            styles['fence'] = 'when forced'
-        core_info = [label_type] + self._labelInfo() + list(extra_core_info)
-        Expression.__init__(self, core_info, sub_expressions=sub_expressions,
+            extra_core_info = ('fence_when_forced',) + extra_core_info
+        core_info = ((label_type, self.string_format, self.latex_format) + 
+                     extra_core_info)
+        self.fence_when_forced = fence_when_forced
+        Expression.__init__(self, core_info, sub_expressions=tuple(),
                             styles=styles)
-
-    def style_options(self):
-        options = StyleOptions(self)
-        options.add_option(
-            name = 'fence',
-            description = ("Do we need to wrap in paranthesis: "
-                           "'when forced' or 'never'?"),
-            default = 'never',
-            related_methods = ())
-        return options
 
     def string(self, **kwargs):
         '''
         Return a string representation of the Label.
         '''
-        if self.get_style('fence', 'never') == 'when forced':
+        if self.fence_when_forced:
             kwargs['fence'] = (kwargs['force_fence'] if 'force_fence' in
                                kwargs else False)
             return maybe_fenced_string(self.string_format, **kwargs)
@@ -66,35 +56,35 @@ class Label(Expression):
         '''
         Return a latex representation of the Label.
         '''
-        if self.get_style('fence', 'never') == 'when forced':
+        if self.fence_when_forced:
             kwargs['fence'] = (kwargs['force_fence'] if 'force_fence' in
                                kwargs else False)
             return maybe_fenced_latex(self.latex_format, **kwargs)
         return self.latex_format
 
-    def _labelInfo(self):
-        '''
-        Return the Label's info to be used in the expr's core info.
-        '''
-        return [self.string_format, self.latex_format]
-
     @classmethod
-    def _make(label_class, core_info, sub_expressions):
+    def _make(label_class, core_info, sub_expressions, *, styles):
         if len(sub_expressions) > 0:
             raise ValueError('Not expecting any sub_expressions of Label')
-        if len(core_info) != 3:
+        fence_when_forced = False
+        if len(core_info) == 4 and core_info[3] == 'fence_when_forced':
+                fence_when_forced = True
+        elif len(core_info) != 3:
             raise ValueError(
-                "Expecting " +
-                label_class.__name__ +
+                "Expecting " + label_class.__name__ +
                 " core_info to contain 3 items: '" +
                 label_class.__name +
                 "', string_format, and latex_format")
         if core_info[0] != label_class.__name__:
             raise ValueError(
-                "Expecting core_info[0] to be '" +
-                label_class.__name__ +
-                "'")
-        made_label =  label_class(core_info[1], core_info[2])
+                "Expecting core_info[0] to be '%s'"%label_class.__name__)
+        if fence_when_forced:
+            made_label = label_class(core_info[1], core_info[2],
+                                     fence_when_forced=True,
+                                     styles=styles)
+        else:
+            made_label = label_class(core_info[1], core_info[2], 
+                                     styles=styles)
         return made_label
 
     def remake_arguments(self):
@@ -102,24 +92,44 @@ class Label(Expression):
         Yield the argument values that could be used to recreate the
         Label.  This is a default for simple Labels, Variables, or Literals.
         '''
-        import inspect
-        init_args = inspect.getargspec(self.__class__.__init__)[0]
-        if len(init_args) == 1:
+        from .literal import Literal
+        sig = signature(self.__class__.__init__)
+        init_params = sig.parameters
+        if len(init_params) == 1:
             return  # no arguments (except self) are taken
-        if (len(init_args) >= 3 and init_args[1] == 'string_format' and 
-                init_args[2] == 'latex_format'):
-            string_format, latex_format = self.core_info()[1:3]
-            yield '"' + string_format + '"'
-            if latex_format != string_format:
-                yield ('latex_format', 'r"' + latex_format + '"')
-        else:
+        is_literal_instance = isinstance(self, Literal)
+        known_param_names = {'self', 'string_format', 'latex_format', 
+                             'fence_when_forced', 'extra_core_info',
+                             'styles'}
+        if self.__class__ == Label:
+            known_param_names.add('label_type')
+        if is_literal_instance:
+            known_param_names.add('theory')
+        unknown_param_names = init_params.keys() - known_param_names
+        if len(unknown_param_names) > 0:
             raise LabelError(
-                "Must properly implement the 'remake_arguments' method for class %s" % str(
-                    self.__class__))
-        if 'fence_when_forced' in init_args and self.get_style(
-                'fence', 'never') == 'when forced':
+                "Must properly implement the 'remake_arguments' method for class %s "
+                "given unkown parameter names, %s"
+                %(self.__class__, ', '.join(unknown_param_names)))
+        core_info = self.core_info()
+        string_format, latex_format = core_info[1:3]
+        yield '"' + string_format + '"'
+        if 'latex_format' in init_params and latex_format != string_format:
+            yield ('latex_format', 'r"' + latex_format + '"')
+        if self.fence_when_forced:
+            assert core_info[3] == 'fence_when_forced'
+            extra_core_info = core_info[4:]
+        else:
+            extra_core_info = core_info[3:]
+        if 'fence_when_forced' in init_params and self.fence_when_forced:
             yield ('fence_when_forced', True)
-
+        if is_literal_instance:
+            theory_name = extra_core_info[0]
+            extra_core_info = extra_core_info[1:]
+            if 'theory' in init_params:
+                yield ('theory', '"' + theory_name + '"')
+        if 'extra_core_info' in init_params and len(extra_core_info) > 0:
+            yield ('extra_core_info', extra_core_info)
 
 class LabelError(Exception):
     def __init__(self, msg):

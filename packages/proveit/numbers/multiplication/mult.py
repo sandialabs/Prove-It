@@ -9,9 +9,9 @@ from proveit.numbers.numerals.decimals import DIGITS
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
 from proveit import TransRelUpdater
+from proveit.numbers import NumberOperation
 
-
-class Mult(Operation):
+class Mult(NumberOperation):
     # operator of the Mult operation.
     _operator_ = Literal(
         string_format='*',
@@ -22,11 +22,12 @@ class Mult(Operation):
     # Track which ones we have encountered already.
     multiplied_numerals = set()
 
-    def __init__(self, *operands):
+    def __init__(self, *operands, styles=None):
         r'''
         Multiply together any number of operands from first operand.
         '''
-        Operation.__init__(self, Mult._operator_, operands)
+        NumberOperation.__init__(self, Mult._operator_, operands,
+                                 styles=styles)
         self.factors = self.operands
         if self.factors.is_double() and all(
                 factor in DIGITS for factor in self.factors):
@@ -829,7 +830,7 @@ class Mult(Operation):
                                       "for Sum case.")
             '''
             y_multi_sub = operand.indices
-            Pop, Pop_sub = Operation(P, operand.indices), operand.summand
+            Pop, Pop_sub = Function(P, operand.indices), operand.summand
             S_sub = operand.domain
             x_dummy, z_dummy = self.safe_dummy_vars(2)
             spec1 = distribute_through_summation.instantiate({Pop:Pop_sub, S:S_sub, y_multi:y_multi_sub,
@@ -1136,26 +1137,23 @@ class Mult(Operation):
         from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation, assumptions)
 
-    def deduce_bound(self, factor_relation_or_relations, 
-                     assumptions=USE_DEFAULTS):
-        from proveit.numbers import NumberOrderingRelation
-        expr = self
-        eq = TransRelUpdater(expr, assumptions)
-        if (isinstance(factor_relation_or_relations, Judgment) or
-                isinstance(factor_relation_or_relations,
-                           NumberOrderingRelation)):
-            # Just a single relation.
-            factor_relations = [factor_relation_or_relations]
-        else:
-            factor_relations = factor_relation_or_relations
-        for factor_relation in factor_relations:
-            expr = eq.update(expr.deduce_bound_by_factor(
-                    factor_relation, assumptions=assumptions))
-        assert eq.relation.lhs == self
-        return eq.relation        
 
-    def deduce_bound_by_factor(self, factor_relation,
+    def bound_via_operand_bound(self, operand_relation, assumptions=USE_DEFAULTS):
+        '''
+        Alias for bound_via_factor_bound.
+        Also see NumberOperation.deduce_bound.
+        '''
+        return self.bound_via_factor_bound(operand_relation, assumptions)
+
+    def bound_via_factor_bound(self, factor_relation,
                                assumptions=USE_DEFAULTS):
+        '''
+        Deduce a bound of this multiplication via the bound on
+        one of its factors.  For example
+            a*b*c*d < a*z*c*d   given   b < z and a, c, d positive.
+
+        Also see NumberOperation.deduce_bound.
+        '''
         from proveit.numbers import (zero, NumberOrderingRelation,
                                      Less, greater, greater_eq)
         if isinstance(factor_relation, Judgment):
@@ -1196,13 +1194,13 @@ class Mult(Operation):
                     all(greater(factor, zero).proven(assumptions) for
                         factor in self.factors)):
                 # We can use the strong bound.
-                from . import strong_bound_by_factor
-                thm = strong_bound_by_factor
+                from . import strong_bound_via_factor_bound
+                thm = strong_bound_via_factor_bound
             elif all(greater_eq(factor, zero).proven(assumptions) for
                      factor in self.factors):
                 # We may only use the weak bound.
-                from . import weak_bound_by_factor
-                thm = weak_bound_by_factor
+                from . import weak_bound_via_factor_bound
+                thm = weak_bound_via_factor_bound
             if thm is not None:
                 _a = self.factors[:idx]
                 _b = self.factors[idx+1:]
@@ -1219,7 +1217,7 @@ class Mult(Operation):
                 expr = eq.update(expr.factorization(
                         idx, pull='left', group_factor=True, 
                         group_remainder=True, assumptions=assumptions))
-                expr = eq.update(expr.deduce_bound_by_factor(
+                expr = eq.update(expr.bound_via_factor_bound(
                         factor_relation, assumptions=assumptions))
                 # Put things back as the were before the factorization.
                 if isinstance(expr.factors[1], Mult):

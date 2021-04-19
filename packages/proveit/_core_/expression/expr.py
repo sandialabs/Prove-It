@@ -8,7 +8,7 @@ from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaning_data, style_data
 import sys
 import re
-import os
+import inspect
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -56,7 +56,23 @@ class ExprType(type):
                     raise TypeError("'_operator_' class attributes must be "
                                     "Literal expressions.")
                 Operation.operation_class_of_operator[cls._operator_] = cls
-
+        if not hasattr(cls, '__init__'):
+            raise TypeError("%s, an Expression-derived class, must have an "
+                            "__init__ method"%cls)
+        def raise_invalid_styles_init_arg():
+            raise TypeError(
+                    "The __init__ method of %s, an Expression-derived "
+                    "class must accept 'styles' as a keyword-only "
+                    "argument, with 'None' as its default if it has a one. "
+                    "Simply pass the 'styles' along to parent __init__ "
+                    "method)."%cls)            
+        init_sig = inspect.signature(cls.__init__)
+        if 'styles' not in init_sig.parameters.keys():
+            raise_invalid_styles_init_arg()
+        styles_param = init_sig.parameters['styles']
+        if (styles_param.kind != inspect.Parameter.KEYWORD_ONLY or
+                styles_param.default not in (None, inspect.Parameter.empty)):
+            raise_invalid_styles_init_arg()
 
 class Expression(metaclass=ExprType):
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
@@ -70,8 +86,13 @@ class Expression(metaclass=ExprType):
     # by the Expression._class_path method).
     class_paths = dict()
     
-    # Map each expression to its default style.
-    default_expr_styles = dict()
+    """
+    # Map "labeled meaning ids" of expressions to default styles.
+    # That is, expressions with a specific labeling will establish
+    # default styles; expressions with the same meaning but different
+    # labels with have their own separate default style.
+    default_labeled_expr_styles = dict()
+    """
 
     @staticmethod
     def _clear_():
@@ -85,9 +106,9 @@ class Expression(metaclass=ExprType):
                 "(should have been temporary)")
         Expression.labeled_to_canonical_meaning_data.clear()
         Expression.class_paths.clear()
-        Expression.default_expr_styles.clear()
+        #Expression.default_labeled_expr_styles.clear()
 
-    def __init__(self, core_info, sub_expressions=tuple(), styles=None):
+    def __init__(self, core_info, sub_expressions=tuple(), *, styles):
         '''
         Initialize an expression with the given core_info (information relevant
         at the core Expression-type level) which should be a list (or tuple) of
@@ -117,10 +138,14 @@ class Expression(metaclass=ExprType):
         if any(',' in info for info in core_info):
             raise ValueError("core_info is not allowed to contain a comma.")
         if styles is not None:
+            ignore_inapplicable_styles = (
+                    styles.pop('__IGNORE_INAPPLICABLE_STYLES__', False))
             for style in styles.values():
                 if not {',', ':', ';'}.isdisjoint(style):
                     raise ValueError(
                         "Styles are not allowed to contain a ',', ':', or ';'.  Just use spaces.")
+        else:
+            ignore_inapplicable_styles = False
 
         # Create the "labeled" meaning data.  This is data common
         # to equivalent expressions which use the same lambda labels.
@@ -143,15 +168,23 @@ class Expression(metaclass=ExprType):
 
         if styles is None:
             styles = dict()
-        if self in Expression.default_expr_styles:
+        style_options = self.style_options()
+        """
+        if (defaults.use_consistent_styles and 
+                self._labeled_meaning_id in 
+                Expression.default_labeled_expr_styles):
             # Any styles that have not been explicitly set will
             # use the default style for an expression of this "meaning".
-            styles_to_emulate = Expression.default_expr_styles[self]
+            styles_to_emulate = (
+                Expression.default_labeled_expr_styles[self._labeled_meaning_id])
+            option_names = set(style_options.option_names())
             for name, val in styles_to_emulate.items():
-                if name not in styles:
+                if name not in styles and name in option_names:
                     styles[name] = val
-        styles = self.style_options().standardized_styles(styles)
-        
+        """
+        styles = style_options.standardized_styles(
+                styles, ignore_inapplicable_styles=ignore_inapplicable_styles)
+
         # The style data is shared among Expressions with the same structure
         # and style -- this will contain the 'png' generated on demand.
         self._style_data = style_data(
@@ -162,8 +195,9 @@ class Expression(metaclass=ExprType):
         # expression
         self._style_data.styles = styles
         self._style_id = self._style_data._unique_id
-
-        if len(self._sub_expressions) == 0:
+        
+        if (styles == style_options.canonical_styles() and
+                len(self._sub_expressions) == 0):
             # When there are no sub-expressions, we can immediately
             # declare that the canonical expression is simply "self"
             # and the "true" meaning data is the "labeled" meaning data.
@@ -171,14 +205,18 @@ class Expression(metaclass=ExprType):
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
         
-        # Make this the default style.
-        Expression.default_expr_styles[self] = styles
-    
+        """
+        if defaults.use_consistent_styles:
+            # Make this the default style.
+            Expression.default_labeled_expr_styles[
+                    self._labeled_meaning_id] = styles
+        """
+
     def _canonical_version(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
         expression in which deterministic 'dummy' variables are used as
-        Lambda parameters, determines the 'meaning' of the expression.
+        Lambda parameters, determining the 'meaning' of the expression.
         '''
         if hasattr(self, '_canonical_expr'):
             return self._canonical_expr
@@ -186,13 +224,13 @@ class Expression(metaclass=ExprType):
             # Set via '_meaning_data':
             self._canonical_expr = self._meaning_data.canonical_expr
             return self._canonical_expr
-        labeled_to_canonical_meaning_data = \
-            Expression.labeled_to_canonical_meaning_data
+        labeled_to_canonical_meaning_data = (
+            Expression.labeled_to_canonical_meaning_data)
         if self._labeled_meaning_data in labeled_to_canonical_meaning_data:
             # Set the '_meaning_data' via '_labeled_meaning_data' and
             # 'labeled_to_canonical_meaning_data'.
-            self._meaning_data = \
-                labeled_to_canonical_meaning_data[self._labeled_meaning_data]
+            self._meaning_data = (
+                labeled_to_canonical_meaning_data[self._labeled_meaning_data])
             self._meaning_id = self._meaning_data._unique_id
             # Now we can set the _canonical_expr via the '_meaning_data'.
             return self._canonical_version()
@@ -209,8 +247,13 @@ class Expression(metaclass=ExprType):
         canonical_sub_expression_styles = \
             tuple(canonical_sub_expr._style_data
                   for canonical_sub_expr in canonical_sub_expressions)
-
-        if sub_expression_styles == canonical_sub_expression_styles:
+        
+        # See if this is a canonical version already by virtue of having
+        # canonical styles and sub-expressions.
+        style_options = self.style_options()
+        canonical_styles = style_options.canonical_styles()
+        if (self._style_data.styles == canonical_styles and
+                sub_expression_styles == canonical_sub_expression_styles):
             # This is the canonical version.
             self._canonical_expr = self
             return self
@@ -218,9 +261,22 @@ class Expression(metaclass=ExprType):
         # The 'canonical' sub-expressions are different than the
         # sub-expressions, so that propagates to this Expression's
         # canonical version.
-        self._canonical_expr = self.__class__._checked_make(
-            self._core_info, canonical_sub_expressions)
-        return self._canonical_expr
+        """
+        with defaults.temporary() as temp_defaults:
+            # Force the canonical styles.
+            temp_defaults.use_consistent_styles = False
+            canonical_expr = self.__class__._checked_make(
+                self._core_info, canonical_sub_expressions, 
+                style_preferences=canonical_styles)
+        """
+        canonical_expr = self.__class__._checked_make(
+            self._core_info, canonical_sub_expressions, 
+            style_preferences=canonical_styles)
+        assert canonical_expr._canonical_version() == canonical_expr, (
+                "The canonical version of a canonical expression should "
+                "be itself.")
+        self._canonical_expr = canonical_expr
+        return canonical_expr
 
     def _establish_and_get_meaning_id(self):
         '''
@@ -360,6 +416,10 @@ class Expression(metaclass=ExprType):
 
     def __eq__(self, other):
         if isinstance(other, Expression):
+            if self._labeled_meaning_id == other._labeled_meaning_id:
+                # Equal in a strong sense -- not only the same meaning
+                # but the same labeling.
+                return True
             return (self._establish_and_get_meaning_id() ==
                     other._establish_and_get_meaning_id())
         else:
@@ -408,7 +468,8 @@ class Expression(metaclass=ExprType):
             return self.latex(**kwargs)
 
     @classmethod
-    def _make(cls, core_info, sub_expressions, canonical_version=None):
+    def _make(cls, core_info, sub_expressions, *, styles, 
+              canonical_version=None):
         '''
         Should make the Expression object for the specific Expression sub-class
         based upon the core_info and sub_expressions.  Must be implemented for
@@ -417,7 +478,7 @@ class Expression(metaclass=ExprType):
         raise MakeNotImplemented(cls)
 
     @classmethod
-    def _checked_make(cls, core_info, sub_expressions,
+    def _checked_make(cls, core_info, sub_expressions, *, style_preferences,
                       canonical_version=None):
         '''
         Check that '_make' is done appropriately since it is not
@@ -425,11 +486,17 @@ class Expression(metaclass=ExprType):
         '''
         core_info = tuple(core_info)
         sub_expressions = tuple(sub_expressions)
-        if canonical_version is not None:
+        # Indicate that inapplicable styles can simply be ignored
+        # rather than raising an expection.
+        style_preferences = dict(style_preferences)
+        style_preferences['__IGNORE_INAPPLICABLE_STYLES__'] = True
+        if canonical_version is None:
             made = cls._make(core_info, sub_expressions,
-                             canonical_version)
+                             styles=style_preferences)
         else:
-            made = cls._make(core_info, sub_expressions)
+            made = cls._make(core_info, sub_expressions,
+                             canonical_version=canonical_version, 
+                             styles=style_preferences)
         assert made._core_info == core_info, (
             "%s vs %s" % (made._core_info, core_info))
         assert made._sub_expressions == sub_expressions, (
@@ -534,15 +601,19 @@ class Expression(metaclass=ExprType):
         styles.discard(name)
         return self._with_these_styles(styles)
     
-    def _with_these_styles(self, styles, styles_must_exist=True):
+    def _with_these_styles(self, styles, ignore_inapplicable_styles=False):
         '''
         Helper for with_styles and without_style methods.
         '''
         styles = self.style_options().standardized_styles(
-                styles, styles_must_exist)
+                styles, ignore_inapplicable_styles)
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
-        Expression.default_expr_styles[self] = styles
+        """
+        if defaults.use_consistent_styles:
+            Expression.default_labeled_expr_styles[
+                    self._labeled_meaning_id] = styles
+        """
         new_style_expr = copy(self)
         new_style_expr._style_data = style_data(
             new_style_expr._generate_unique_rep(lambda expr: hex(expr._style_id),
@@ -576,10 +647,10 @@ class Expression(metaclass=ExprType):
         # Note, within lambda maps, "meanings" may diverge.
         # We only "guarantee" the new styles exist where "meanings"
         # are the same.
-        styles_must_exist = (self == expr_with_different_style)
+        ignore_inapplicable_styles = (self != expr_with_different_style)
         return self._with_these_styles(
                 expr_with_different_style.get_styles(),
-                styles_must_exist = styles_must_exist)
+                ignore_inapplicable_styles = ignore_inapplicable_styles)
     
     def with_mimicked_style(self, other_expr):
         '''
@@ -890,7 +961,8 @@ class Expression(metaclass=ExprType):
                         assumptions, requirements, equality_repl_requirements)
                       for sub_expr in self._sub_expressions)
             replaced = self.__class__._checked_make(
-                self._core_info, subbed_sub_exprs)
+                self._core_info, subbed_sub_exprs,
+                style_preferences=self._style_data.styles)
         return replaced
 
     def copy(self):

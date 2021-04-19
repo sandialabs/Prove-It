@@ -1,5 +1,6 @@
 import hashlib
 import os
+import copy
 
 
 class Defaults:
@@ -10,7 +11,11 @@ class Defaults:
         self.reset()
 
     def reset(self):
+        # Default assumptions to use for proofs.
         self.assumptions = tuple()
+        
+        # Expressions that should be 'preserved' and not simplified.
+        self.preserved_exprs = set()
 
         # Enable/disable `automation` by performing automatic
         # side-effects (via `side_effects` methods) when proving
@@ -41,9 +46,24 @@ class Defaults:
         # When running a common expressions notebook, this will be
         # set to the appropriate file to send information about failed
         # imports of other common expressions.
-        selfimport_failure_filename = None
+        self.import_failure_filename = None
 
         Defaults.considered_assumption_sets.clear()
+
+    def temporary(self):
+        '''
+        Return a context manager that acts as 'defaults' but
+        will revert 'defaults' to its original state upon exiting.
+        
+        For example:
+            with defaults.temporary() as temp_defaults:
+                temp_defaults.styles['direction'] = 'reversed'
+                ...
+        
+        Will temporarily set the 'direction' style to 'reversed'
+        within the "with" block.
+        '''
+        return TemporaryDefaults()
 
     def checked_assumptions(self, assumptions):
         '''
@@ -112,12 +132,66 @@ class Defaults:
             value = tuple(self.checked_assumptions(value))
         self.__dict__[attr] = value
 
+class TemporaryDefaults(object):
+    '''
+    TemporaryDefaults is a context manager that allows us to
+    temporarily modify attributes of defaults.  These will revert
+    back to the original settings upon exiting the context manager.
+    See Defaults.temporary.
+    '''
+    def __init__(self):
+        self._original_values = dict()
+
+    def _safekeep_original(self, attr):
+        '''
+        Make a copy of the original attribute if we haven't already.
+        '''
+        if attr not in self._original_values:
+            # Remember the original.
+            self._original_values[attr] = defaults.__dict__[attr]
+            # Use a copy for now. A shallow copy should be sufficient.
+            defaults.__dict__[attr] = copy.copy(defaults.__dict__[attr])
+
+    def __setattr__(self, attr, val):
+        '''
+        Temporarily set the default attribute.
+        '''
+        if attr == '_original_values':
+            object.__setattr__(self, attr, val)
+            return
+        if defaults.__dict__[attr] == val:
+            return # Nothing needs to be done.
+        self._safekeep_original(attr)    
+        setattr(defaults, attr, val)
+    
+    def __getattr__(self, attr):
+        '''
+        Return the attribute of the aliased attribute of defaults.
+        '''
+        self._safekeep_original(attr)
+        return getattr(defaults, attr)
+
+    def __enter__(self):
+        '''
+        Return this TemporaryDefaults object as the proper interface 
+        into 'defaults' so that the original attribute values of
+        'defaults' can be restored upon exiting.
+        '''
+        return self
+    
+    def __exit__(self, type, value, traceback):
+        '''
+        Return the original values of 'defaults'.
+        '''
+        # Restore to the state of when we "entered".
+        for attr, val in self._original_values.items():
+            defaults.__dict__[attr] = val
 
 class DisabledAutoReductionTypes(set):
     '''
     The DisabledAutoReductionTypes class stores the set of Expression
     class types whose auto-reduction feature is currently disabled.
-    It is a "theory manager" with an __enter__() and __exit__()
+    It is a "context manager" with an __enter__() and __exit__()
     method such that one may do the following:
 
     with defaults.disabled_auto_reduction_types as disabled_types:

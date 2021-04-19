@@ -162,7 +162,7 @@ class Judgment:
                 expr_proofs = _ExprProofs(self.expr)
             self._meaning_data._expr_proofs = expr_proofs
             # Initially, _proof is None but will be assigned and updated
-            # via _addProof()
+            # via _add_proof()
             self._meaning_data._proof = None
 
         # The style data is shared among Judgments with the same 
@@ -297,9 +297,8 @@ class Judgment:
         presumptions, exclusions = theorem.get_presumptions_and_exclusions()
 
         if str(self) in presumptions:
+            # A theorem may not presume itself!
             from .proof import CircularLogic
-            # extra sanity check (should be caught within
-            # get_all_presumed_theorem_names)
             raise CircularLogic(theorem, theorem)
 
         Judgment.theorem_being_proven = theorem
@@ -415,7 +414,7 @@ class Judgment:
         for theorem in sorted(dependents):
             print(theorem)
 
-    def _discardProof(self, proof):
+    def _discard_proof(self, proof):
         '''
         Discard a disabled proof as an option in the _ExprProofs object.
         Don't change self._meaning_data._proof, now, however.  It will 
@@ -424,17 +423,19 @@ class Judgment:
         '''
         self._expr_proofs.discard(proof)
 
-    def _addProof(self, newproof=None):
+    def _add_proof(self, newproof=None):
         '''
         After a Proof is finished being constructed, record the best
-        proof for the Judgment which may be the new proof, 'proof',
-        or a pre-existing one.  Update all Judgments
-        with the same 'truth' expression that should be updated.
+        proof for the Judgment which may be the new proof, 'newproof',
+        or a pre-existing one.  Update other Judgments that use the
+        same 'truth' expression as needed.
         '''
-        # print 'record best', self.expr, 'under', self.assumptions
         # update Judgment.lookup_dict and use find all of the Judgments
         # with this expr to see if the proof should be updated with the
         # new proof.
+
+        if self._meaning_data._proof == newproof:
+            return # Not a new proof.
 
         if not newproof.is_usable():
             # Don't bother with a disabled proof unless it is the only
@@ -448,10 +449,11 @@ class Judgment:
         # Check to see if the new proof is applicable to any other 
         # Judgment.  It can replace an old proof if it became unusable 
         # or if the newer one uses fewer steps.
+        newproof_numsteps = newproof.num_steps()
         expr_judgments = Judgment.lookup_dict.setdefault(self.expr, set())
         expr_judgments.add(self)
         for expr_judgment in expr_judgments:
-            # Is 'proof' applicable to 'expr_judgment'?
+            # Is 'newproof' applicable to 'expr_judgment'?
             if newproof.proven_truth.assumptions_set.issubset(
                     expr_judgment.assumptions_set):
                 # replace if there was no pre-existing usable proof or 
@@ -460,16 +462,16 @@ class Judgment:
                 if (preexisting_proof is None or
                         not preexisting_proof.is_usable() or
                         newproof.num_steps() < preexisting_proof.num_steps()):
-                    expr_judgment._updateProof(
+                    expr_judgment._update_proof(
                         newproof)  # replace an old proof
 
-    def _reviseProof(self):
+    def _revise_proof(self):
         '''
         After a proof and its dependents have been disabled, we will see
         if there is another proof that is usable (see Proof.disable()).
         Return True iff the proof actually changed to something usable.
         '''
-        return self._updateProof(self._expr_proofs.best_proof(self))
+        return self._update_proof(self._expr_proofs.best_proof(self))
 
     """
     def _recordBestProof(self, new_proof):
@@ -485,7 +487,7 @@ class Judgment:
         same Judgment as a dependent will necessarily include the
         number of steps of the original proof plus more).
         '''
-        self._updateProof(self._expr_proofs.best_proof(self))
+        self._update_proof(self._expr_proofs.best_proof(self))
 
 
         from proof import Theorem
@@ -507,14 +509,14 @@ class Judgment:
             if self.assumptions_set == other.assumptions_set:
                 if not other._proof.is_usable():
                     # use the new proof since the old one is unusable.
-                    other._updateProof(new_proof)
+                    other._update_proof(new_proof)
                 elif new_proof.num_steps <= other._proof.num_steps:
                     if new_proof.required_proofs != other._proof.required_proofs:
                         # use the new (different) proof that does the job as well or better
                         if isinstance(new_proof, Theorem):
                             # newer proof is a theorem; record the existing proof as a possible proof for that theorem
                             new_proof._possibleProofs.append(other._proof)
-                        other._updateProof(new_proof)
+                        other._update_proof(new_proof)
                 else:
                     # the new proof was born obsolete, taking more steps than an existing one
                     if isinstance(other._proof, Theorem):
@@ -525,7 +527,7 @@ class Judgment:
                     born_obsolete = True
             elif self.assumptions_set.issubset(other.assumptions_set):
                 # use the new proof that does the job better
-                other._updateProof(new_proof)
+                other._update_proof(new_proof)
             elif self.assumptions_set.issuperset(other.assumptions_set) and other._proof.is_usable():
                 # the new proof was born obsolete, requiring more assumptions than an existing one
                 self._proof = other._proof # use an old proof that does the job better
@@ -547,7 +549,7 @@ class Judgment:
         Judgment.lookup_dict[self.expr] = kept_truths
     """
 
-    def _updateProof(self, new_proof):
+    def _update_proof(self, new_proof):
         '''
         Update the proof of this Judgment.  Return True iff the proof 
         actually changed to something usable.
@@ -576,7 +578,7 @@ class Judgment:
             return False  # no change
 
         # swap out the old proof for the new proof in all dependencies
-        meaning_data._proof._updateDependencies(new_proof)
+        meaning_data._proof._update_dependencies(new_proof)
         meaning_data._proof = new_proof  # set to the new proof
 
         return True

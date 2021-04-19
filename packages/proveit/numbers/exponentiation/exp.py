@@ -4,9 +4,10 @@ from proveit.logic import InSet, Membership
 import proveit
 from proveit import a, b, c, k, m, n, x, S
 from proveit.numbers import one, two, Div, frac, num, Real
+from proveit.numbers import NumberOperation
 
 
-class Exp(Function):
+class Exp(NumberOperation):
     '''
     An Expression class to represent an exponentiation.  Derive from
     Function since infix notation should not be a style option.
@@ -14,13 +15,14 @@ class Exp(Function):
     # operator of the Exp operation.
     _operator_ = Literal(string_format='Exp', theory=__file__)
 
-    def __init__(self, base, exponent):
+    def __init__(self, base, exponent, *, styles=None):
         r'''
         Raise base to exponent power.
         '''
         self.base = base
         self.exponent = exponent
-        Function.__init__(self, Exp._operator_, (base, exponent))
+        NumberOperation.__init__(self, Exp._operator_, (base, exponent),
+                                 styles=styles)
     
     def remake_constructor(self):
         if self.get_style('exponent') == 'radical':

@@ -11,16 +11,13 @@ class Variable(Label):
     with a general Expression.
     """
 
-    def __init__(
-            self,
-            string_format,
-            latex_format=None,
-            fence_when_forced=False):
+    def __init__(self, string_format, latex_format=None, *,
+                 fence_when_forced=False, styles=None):
         '''
         Create a Variable.  If latex_format is not supplied, the string_format is used for both.
         '''
         Label.__init__(self, string_format, latex_format, 'Variable',
-                       fence_when_forced=fence_when_forced)
+                       fence_when_forced=fence_when_forced, styles=None)
 
     def _replaced(self, repl_map, allow_relabeling, reduction_map,
                   assumptions, requirements, equality_repl_requirements):

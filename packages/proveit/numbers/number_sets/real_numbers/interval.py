@@ -10,8 +10,9 @@ class RealInterval(Operation):
     Instead, use IntervalOO or IntervalOC etc.
     '''
 
-    def __init__(self, operator, lower_bound, upper_bound):
-        Operation.__init__(self, operator, (lower_bound, upper_bound))
+    def __init__(self, operator, lower_bound, upper_bound, *, styles=None):
+        Operation.__init__(self, operator, (lower_bound, upper_bound),
+                           styles=styles)
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 
@@ -20,12 +21,10 @@ class IntervalOO(RealInterval):
     # operator of the IntervalOO operation.
     _operator_ = Literal(string_format='IntervalOO', theory=__file__)
 
-    def __init__(self, lower_bound, upper_bound):
+    def __init__(self, lower_bound, upper_bound, *, styles=None):
         RealInterval.__init__(
-            self,
-            IntervalOO._operator_,
-            lower_bound,
-            upper_bound)
+            self, IntervalOO._operator_, lower_bound, upper_bound,
+            styles=styles)
 
     def string(self, **kwargs):
         return '(' + self.lower_bound.string() + \
@@ -99,12 +98,10 @@ class IntervalOC(RealInterval):
     # operator of the IntervalOC operation.
     _operator_ = Literal(string_format='IntervalOC', theory=__file__)
 
-    def __init__(self, lower_bound, upper_bound):
+    def __init__(self, lower_bound, upper_bound, *, styles=None):
         RealInterval.__init__(
-            self,
-            IntervalOC._operator_,
-            lower_bound,
-            upper_bound)
+            self, IntervalOC._operator_, lower_bound, upper_bound,
+            styles=styles)
 
     def string(self, **kwargs):
         return '(' + self.lower_bound.string() + \
@@ -164,12 +161,10 @@ class IntervalCO(RealInterval):
     # operator of the IntervalCO operation.
     _operator_ = Literal(string_format='IntervalCO', theory=__file__)
 
-    def __init__(self, lower_bound, upper_bound):
+    def __init__(self, lower_bound, upper_bound, *, styles=None):
         RealInterval.__init__(
-            self,
-            IntervalCO._operator_,
-            lower_bound,
-            upper_bound)
+            self, IntervalCO._operator_, lower_bound, upper_bound,
+            styles=styles)
 
     def string(self, **kwargs):
         return '[' + self.lower_bound.string() + ',' + \
@@ -229,12 +224,10 @@ class IntervalCC(RealInterval):
     # operator of the IntervalCC operation.
     _operator_ = Literal(string_format='IntervalCC', theory=__file__)
 
-    def __init__(self, lower_bound, upper_bound):
+    def __init__(self, lower_bound, upper_bound, *, styles=None):
         RealInterval.__init__(
-            self,
-            IntervalCC._operator_,
-            lower_bound,
-            upper_bound)
+            self, IntervalCC._operator_, lower_bound, upper_bound,
+            styles=styles)
 
     def string(self, **kwargs):
         return '[' + self.lower_bound.string() + ',' + \

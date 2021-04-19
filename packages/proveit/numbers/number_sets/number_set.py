@@ -3,8 +3,8 @@ from proveit.logic import Equals, InSet, Membership
 
 
 class NumberSet(Literal):
-    def __init__(self, string, latex, theory, fence_when_forced=False):
-        Literal.__init__(self, string, latex, theory=theory,
+    def __init__(self, string, latex, *, theory, styles, fence_when_forced=False):
+        Literal.__init__(self, string, latex, theory=theory, styles=styles,
                          fence_when_forced=fence_when_forced)
 
     def membership_object(self, element):

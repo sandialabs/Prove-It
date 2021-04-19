@@ -5,8 +5,9 @@ from proveit.numbers.number_sets.number_set import NumberSet
 
 
 class IntegerSet(NumberSet):
-    def __init__(self):
-        NumberSet.__init__(self, 'Integer', r'\mathbb{Z}', theory=__file__)
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'Integer', r'\mathbb{Z}', 
+                           theory=__file__, styles=styles)
 
     def membership_side_effects(self, judgment):
         '''
@@ -37,9 +38,10 @@ class IntegerSet(NumberSet):
 
 
 class IntegerNonZeroSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'IntegerNonZero', r'\mathbb{Z}^{\neq 0}', 
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .integer_membership import IntegerNonZeroMembership    
@@ -80,9 +82,10 @@ class IntegerNonZeroSet(NumberSet):
 
 
 class IntegerNegSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'IntegerNeg', r'\mathbb{Z}^{-}', 
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .integer_membership import IntegerNegMembership    
@@ -137,9 +140,10 @@ class IntegerNegSet(NumberSet):
             member, assumptions)
 
 class IntegerNonPosSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'IntegerNonPos', r'\mathbb{Z}^{\leq 0}', 
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .integer_membership import IntegerNonPosMembership    

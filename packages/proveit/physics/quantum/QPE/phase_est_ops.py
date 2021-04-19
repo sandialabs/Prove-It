@@ -14,11 +14,12 @@ class QPE(Operation):
     _operator_ = Literal(string_format='QPE', latex_format=r'{\rm QPE}',
                          theory=__file__)
 
-    def __init__(self, U, t):
+    def __init__(self, U, t, *, styles=None):
         '''
         Phase estimator circuit for Unitary U and t register qubits.
         '''
-        Operation.__init__(self, QPE._operator_, (U, t))
+        Operation.__init__(self, QPE._operator_, (U, t),
+                           styles=styles)
 
 
 class PhaseEst(Operation):
@@ -31,11 +32,12 @@ class PhaseEst(Operation):
     _operator_ = Literal(string_format='PHASE_EST',
                          latex_format=r'{\rm PHASE\_EST}', theory=__file__)
 
-    def __init__(self, U, t):
+    def __init__(self, U, t, *, styles=None):
         '''
         Phase estimator circuit for Unitary U and t register qubits.
         '''
-        Operation.__init__(self, PhaseEst._operator_, (U, t))
+        Operation.__init__(self, PhaseEst._operator_, (U, t),
+                           styles=styles)
 
 
 class Psuccess(Operation):
@@ -48,11 +50,12 @@ class Psuccess(Operation):
     _operator_ = Literal(string_format='Psuccess',
                          latex_format=r'P_{\rm success}', theory=__file__)
 
-    def __init__(self, eps):
+    def __init__(self, eps, *, styles=None):
         '''
         P_success(eps)
         '''
-        Operation.__init__(self, Psuccess._operator_, eps)
+        Operation.__init__(self, Psuccess._operator_, eps,
+                           styles=styles)
 
 
 class Pfail(Operation):
@@ -65,11 +68,12 @@ class Pfail(Operation):
     _operator_ = Literal(string_format='Pfail',
                          latex_format=r'P_{\rm fail}', theory=__file__)
 
-    def __init__(self, eps):
+    def __init__(self, eps, *, styles=None):
         '''
         P_fail(eps)
         '''
-        Operation.__init__(self, Pfail._operator_, eps)
+        Operation.__init__(self, Pfail._operator_, eps,
+                           styles=styles)
 
 
 # Comment from wdc on Sun 1/26/2020
@@ -101,8 +105,9 @@ class ModAdd(Operation):
     _operator_ = Literal('MOD_ADD', latex_format=r'\oplus',
                          theory=__file__)
 
-    def __init__(self, a, b):
-        Operation.__init__(self, ModAdd._operator_, (a, b))
+    def __init__(self, a, b, *, styles=None):
+        Operation.__init__(self, ModAdd._operator_, (a, b),
+                           styles=styles)
 
     def _closureTheorem(self, number_set):
         from .theorems import mod_add_closure
@@ -119,8 +124,9 @@ class SubIndexed(Operation):
     _operator_ = Literal(string_format='SUB_INDEXED',
                          theory=__file__)
 
-    def __init__(self, label, index):
-        Operation.__init__(self, SubIndexed._operator_, (label, index))
+    def __init__(self, label, index, *, styles=None):
+        Operation.__init__(self, SubIndexed._operator_, (label, index),
+                           styles=styles)
         self.label = self.operands[0]
         self.index = self.operands[1]
 

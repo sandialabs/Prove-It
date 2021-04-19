@@ -17,11 +17,12 @@ class MatrixProd(Operation):
     _operator_ = Literal(string_format=r'.', latex_format=r'\thinspace',
                          theory=__file__)
 
-    def __init__(self, *operands):
+    def __init__(self, *operands, styles=None):
         r'''
         Matrix dot product of any number of operands.
         '''
-        Operation.__init__(self, MatrixProd._operator_, operands)
+        Operation.__init__(self, MatrixProd._operator_, operands,
+                           styles=styles)
 
     def formatted(self, format_type, fence=False, sub_fence=True):
         # Temporary hack to get quantum bra and ket products to display properly.
@@ -55,11 +56,12 @@ class ScalarProd(Operation):
     _operator_ = Literal(string_format=r'*', latex_format=r'\thinspace',
                          theory=__file__)
 
-    def __init__(self, scalar, scaled):
+    def __init__(self, scalar, scaled, *, styles=None):
         r'''
         Product between a scalar and a matrix (or vector).
         '''
-        Operation.__init__(self, ScalarProd._operator_, [scalar, scaled])
+        Operation.__init__(self, ScalarProd._operator_, [scalar, scaled],
+                           styles=styles)
         self.scalar = scalar
         self.scaled = scaled
 

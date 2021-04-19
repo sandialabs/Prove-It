@@ -8,7 +8,7 @@ class Len(Operation):
     # operator of the Length operation.
     _operator_ = Literal(string_format='length', theory=__file__)
 
-    def __init__(self, operand):
+    def __init__(self, operand, *, styles=None):
         '''
         Len takes a single operand which should properly be an
         ExprTuple or an expression (such as a variable) that
@@ -22,7 +22,7 @@ class Len(Operation):
             operand = ExprTuple(operand)
         # In order to always recognize that Len only takes a single
         # operand, we must wrap it as an ExprTuple with one entry.
-        Operation.__init__(self, Len._operator_, operand)
+        Operation.__init__(self, Len._operator_, operand, styles=styles)
 
     @staticmethod
     def extract_init_arg_value(

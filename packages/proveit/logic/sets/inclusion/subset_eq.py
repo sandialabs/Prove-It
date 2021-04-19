@@ -17,11 +17,12 @@ class SubsetEq(InclusionRelation):
     #   (populated in TransitivityRelation.derive_side_effects)
     known_right_sides = dict()
 
-    def __init__(self, A, B):
+    def __init__(self, A, B, *, styles=None):
         '''
         Create the expression for (A subset_eq B)
         '''
-        InclusionRelation.__init__(self, SubsetEq._operator_, A, B)
+        InclusionRelation.__init__(self, SubsetEq._operator_, A, B,
+                                   styles=styles)
 
     @staticmethod
     def reversed_operator_str(format_type):

@@ -12,8 +12,9 @@ class NotInSet(Operation):
     # For example, map x to (x \nin S) if (x \nin S) is a Judgment.
     known_nonmemberships = dict()
 
-    def __init__(self, element, domain):
-        Operation.__init__(self, NotInSet._operator_, (element, domain))
+    def __init__(self, element, domain, *, styles=None):
+        Operation.__init__(self, NotInSet._operator_, (element, domain),
+                           styles=styles)
         self.element = self.operands[0]
         self.domain = self.operands[1]
         if hasattr(self.domain, 'nonmembership_object'):

@@ -11,7 +11,7 @@ class SetOfAll(OperationOverInstances):
 
     def __init__(self, instance_param_or_params, instance_element,
                  domain=None, *, domains=None, condition=None,
-                 conditions=None, _lambda_map=None):
+                 conditions=None, styles=None, _lambda_map=None):
         '''
         Create an expression representing the set of all
         instance_element for instance parameter(s) such that the conditions
@@ -19,15 +19,10 @@ class SetOfAll(OperationOverInstances):
         {instance_element | conditions}_{instance_param_or_params \in S}
         '''
         OperationOverInstances.__init__(
-            self,
-            SetOfAll._operator_,
-            instance_param_or_params,
-            instance_element,
-            domain=domain,
-            domains=domains,
-            condition=condition,
-            conditions=conditions,
-            _lambda_map=_lambda_map)
+            self, SetOfAll._operator_, instance_param_or_params,
+            instance_element, domain=domain, domains=domains,
+            condition=condition, conditions=conditions,
+            styles=styles, _lambda_map=_lambda_map)
         self.instance_element = self.instance_expr
         if hasattr(self, 'instance_param'):
             if not hasattr(self, 'domain'):
@@ -92,16 +87,16 @@ class SetOfAll(OperationOverInstances):
         Also derive x in S, but this is not returned.
         '''
         from . import unfold_comprehension, unfold_basic_comprehension, unfold_basic1_cond_comprehension, in_superset_if_in_comprehension
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_var), self.conditions
+        Q_op, Q_op_sub = Function(Qmulti, self.instance_var), self.conditions
         if len(self.instance_vars) == 1 and self.instance_element == self.instance_vars[0]:
             in_superset_if_in_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instance_vars[0]}, assumptions=assumptions) # x in S side-effect
             if len(self.conditions) == 1:
-                Q_op, Q_op_sub = Operation(Q, self.instance_vars), self.conditions[0]
+                Q_op, Q_op_sub = Function(Q, self.instance_vars), self.conditions[0]
                 return unfold_basic1_cond_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, x:element},  {y:self.instance_vars[0]}, assumptions=assumptions)
             else:
                 return unfold_basic_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instance_vars[0]}, assumptions=assumptions)
         else:
-            f_op, f_sub = Operation(f, self.instance_vars), self.instance_element
+            f_op, f_sub = Function(f, self.instance_vars), self.instance_element
             return unfold_comprehension.instantiate({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {y_multi:self.instance_vars}).derive_conclusion(assumptions)
 
     def deduce_membership(self, element, assumptions=USE_DEFAULTS):
@@ -109,11 +104,11 @@ class SetOfAll(OperationOverInstances):
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''
         from . import fold_comprehension, fold_basic_comprehension
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
+        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
         if len(self.instance_vars) == 1 and self.instance_element == self.instance_vars[0] and len(self.conditions) == 1:
-            Pop, Psub = Operation(P, self.instance_vars), self.conditions[0]
+            Pop, Psub = Function(P, self.instance_vars), self.conditions[0]
             return fold_basic_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instance_vars[0]}, assumptions=assumptions)
         else:
-            f_op, f_sub = Operation(f, self.instance_vars), self.instance_element
+            f_op, f_sub = Function(f, self.instance_vars), self.instance_element
             return fold_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, f_op:f_sub, x:element}, {y_multi:self.instance_vars}).derive_conclusion(assumptions)
     """

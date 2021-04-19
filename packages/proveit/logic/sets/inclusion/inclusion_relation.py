@@ -10,8 +10,9 @@ class InclusionRelation(TransitiveRelation):
     Instead, use Subset, SubsetEq, Superset, or SupersetEq.
     '''
 
-    def __init__(self, operator, lhs, rhs):
-        TransitiveRelation.__init__(self, operator, lhs, rhs)
+    def __init__(self, operator, lhs, rhs, *, styles):
+        TransitiveRelation.__init__(self, operator, lhs, rhs,
+                                    styles=styles)
         self.subset = self.operands[0]
         self.superset = self.operands[1]
 

@@ -10,12 +10,12 @@ class NotProperSubset(Relation):
                          latex_format=r'\not\subset',
                          theory=__file__)
 
-    def __init__(self, A, B):
+    def __init__(self, A, B, *, styles=None):
         '''
         Create the expression for (A not_proper_subset B)
         '''
         Operation.__init__(
-            self, NotProperSubset._operator_, (A, B))
+            self, NotProperSubset._operator_, (A, B), styles=styles)
         # Need 'direction' style
 
     @staticmethod

@@ -33,7 +33,8 @@ class ExprRange(Expression):
     '''
 
     def __init__(self, parameter, body, start_index, end_index, *,
-                 parameterization=None, lambda_map=None):
+                 parameterization=None, lambda_map=None,
+                 styles=None):
         '''
         Create an ExprRange that represents a range of expressions
         to be embedded within an ExprTuple.  Each element of the
@@ -71,8 +72,9 @@ class ExprRange(Expression):
         if parameterization not in (None, 'implicit', 'explicit'):
             raise ValueError("'parameterization' must be 'implicit', "
                              "'explicit', or None; not %s" % parameterization)
-        styles = ({'parameterization': parameterization} if
-                  parameterization is not None else dict())
+        if parameterization is not None:
+            if styles is None: styles = dict()
+            styles['parameterization'] = parameterization
 
         Expression.__init__(self, ['ExprRange'],
                             [lambda_map, start_index, end_index],
@@ -87,7 +89,7 @@ class ExprRange(Expression):
             free_vars(self.body, err_inclusively=True))
 
     @classmethod
-    def _make(sub_class, core_info, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions, *, styles):
         if sub_class != ExprRange:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprRange':
@@ -95,7 +97,7 @@ class ExprRange(Expression):
                              "exactly one item: 'ExprRange'")
         lambda_map, start_index, end_index = sub_expressions
         return ExprRange(None, None, start_index, end_index,
-                         lambda_map=lambda_map)
+                         styles=styles, lambda_map=lambda_map)
 
     def literal_int_extent(self):
         '''

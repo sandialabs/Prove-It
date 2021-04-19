@@ -5,8 +5,9 @@ from proveit.numbers.number_sets.number_set import NumberSet
 
 
 class ComplexSet(NumberSet):
-    def __init__(self):
-        NumberSet.__init__(self, 'Complex', r'\mathbb{C}', theory=__file__)
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'Complex', r'\mathbb{C}', 
+                           theory=__file__, styles=styles)
 
     def deduce_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
         from .theorems import in_complex_is_bool
@@ -244,9 +245,10 @@ class ComplexSet(NumberSet):
         return new_rel
 
 class ComplexNonZeroSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'ComplexNonZero', r'\mathbb{C}^{\neq 0}',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .complex_membership import ComplexNonZeroMembership    

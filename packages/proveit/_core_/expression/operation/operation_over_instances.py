@@ -68,7 +68,7 @@ class OperationOverInstances(Operation):
 
     def __init__(self, operator, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None, conditions=None,
-                 _lambda_map=None):
+                 styles=None, _lambda_map=None):
         '''
         Create an Operation for the given operator that is applied over
         instances of the given instance parameter(s), instance_param_or_params,
@@ -259,7 +259,7 @@ class OperationOverInstances(Operation):
         if isinstance(lambda_map.body, Conditional):
             self.condition = lambda_map.body.condition
 
-        Operation.__init__(self, operator, [lambda_map])
+        Operation.__init__(self, operator, [lambda_map], styles=styles)
 
     def remake_with_style_calls(self):
         '''
@@ -352,7 +352,7 @@ class OperationOverInstances(Operation):
             return None
 
     @classmethod
-    def _make(cls, core_info, sub_expressions):
+    def _make(cls, core_info, sub_expressions, *, styles):
         if len(core_info) != 1 or core_info[0] != 'Operation':
             raise ValueError(
                 "Expecting Operation core_info to contain exactly one item: 'Operation'")
@@ -382,28 +382,32 @@ class OperationOverInstances(Operation):
             # Operation instead.  This can come up when creating
             # an InnerExpr replacement map when the inner expression
             # the the operand of an OperationOverInstances.
-            return Operation(cls._operator_, operands)
+            return Function(cls._operator_, operands, styles=styles)
             
         lambda_map = operands[0]
         if not isinstance(lambda_map, Lambda):
              raise ValueError("Expecting operands to have a single "
                               "lambda_map entry.")
         
-        args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
-            inspect.getfullargspec(cls.__init__)
-        if '_lambda_map' not in kwonlyargs:
+        sig = inspect.signature(cls.__init__)
+        Parameter = inspect.Parameter
+        if ('_lambda_map' not in sig.parameters or
+                sig.parameters['_lambda_map'].kind != Parameter.KEYWORD_ONLY):
             raise OperationError(
                 "'_lambda_map' must be a keyword only argument "
                 "for a constructor of a class %s derived from "
                 "OperationOverInstances." %
                 str(cls))
 
-        # Subtract 'self' from the number of args and set
-        # the rest to None.
-        num_remaining_args = len(args) - 1
+        npositional = 0
+        for param in sig.parameters.values():
+            if param.kind in (Parameter.POSITIONAL_ONLY, 
+                              Parameter.POSITIONAL_OR_KEYWORD):
+                npositional += 1
+        npositional -= 1 # exclude 'self'
         made_operation = cls(
-            *[None] * num_remaining_args,
-            _lambda_map=lambda_map)
+            *[None] * npositional,
+            styles=styles, _lambda_map=lambda_map)
         return made_operation
 
     def _all_instance_params(self):

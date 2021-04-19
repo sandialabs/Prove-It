@@ -4,8 +4,8 @@ class Cos(Function):
     # operator of the Cos operation.
     _operator_ = Literal(string_format='cos', theory=__file__)
     
-    def __init__(self, angle):
-        Function.__init__(self, Cos._operator_, angle)
+    def __init__(self, angle, *, styles=None):
+        Function.__init__(self, Cos._operator_, angle, styles=styles)
         self.angle = angle
     
     def latex(self, **kwargs):

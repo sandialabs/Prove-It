@@ -10,13 +10,13 @@ class Relation(Operation):
     are Equals, NotEquals, Less, Subset, etc.
     '''
 
-    def __init__(self, operator, lhs, rhs):
+    def __init__(self, operator, lhs, rhs, *, styles):
         # We need to pass along 'direction':'normal' rather than
         # relying about StyleOption defaults because we don't want
         # that to be overwritten by the style of the last expression
         # with the same meaning.
         Operation.__init__(self, operator, (lhs, rhs),
-                           styles={'direction':'normal'})
+                           styles=styles)
         assert(self.operands.is_double())
         # The 'lhs' and 'rhs' attributes will access the respective
         # operands, but this is effected in __getattr__ because

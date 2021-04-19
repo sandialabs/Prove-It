@@ -20,7 +20,7 @@ class IndexedVar(Function):
     x_{i, j+1}.
     '''
 
-    def __init__(self, var, index_or_indices):
+    def __init__(self, var, index_or_indices, *, styles=None):
         '''
         Initialize an IndexedVar to represent the given 'var' being indexed
         via 'index_or_indices'.  The 'var' must be a Variable.
@@ -36,18 +36,18 @@ class IndexedVar(Function):
             self.index_or_indices = self.index
         else:
             self.index_or_indices = self.indices
-        Function.__init__(self, var, self.index_or_indices)
+        Function.__init__(self, var, self.index_or_indices, styles=styles)
         self.var = var
 
     @classmethod
-    def _make(sub_class, core_info, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions, *, styles):
         if sub_class != IndexedVar:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'IndexedVar':
             raise ValueError(
                 "Expecting IndexedVar core_info to contain exactly"
                 " one item: 'IndexedVar'")
-        return IndexedVar(*sub_expressions)
+        return IndexedVar(*sub_expressions, styles=styles)
 
     def remake_arguments(self):
         '''

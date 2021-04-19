@@ -3,8 +3,9 @@ from proveit.relation import TransitiveRelation, total_ordering
 
 
 class NumberOrderingRelation(TransitiveRelation):
-    def __init__(self, operator, lhs, rhs):
-        TransitiveRelation.__init__(self, operator, lhs, rhs)
+    def __init__(self, operator, lhs, rhs, *, styles):
+        TransitiveRelation.__init__(self, operator, lhs, rhs,
+                                    styles=styles)
         # The lower bound side of this inequality.
         # (regardless of the 'direction' style).
         self.lower = self.operands[0]

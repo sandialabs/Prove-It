@@ -10,11 +10,12 @@ class NotSubsetEq(Relation):
                          latex_format=r'\nsubseteq',
                          theory=__file__)
 
-    def __init__(self, A, B):
+    def __init__(self, A, B, *, styles=None):
         '''
         Create the expression for (A not_subset_eq B)
         '''
-        Operation.__init__(self, NotSubsetEq._operator_, (A, B))
+        Operation.__init__(self, NotSubsetEq._operator_, (A, B),
+                           styles=styles)
 
     @staticmethod
     def reversed_operator_str(format_type):

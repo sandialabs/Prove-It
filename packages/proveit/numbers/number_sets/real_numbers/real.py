@@ -6,8 +6,9 @@ from proveit.numbers.number_sets.number_set import NumberSet
 
 
 class RealSet(NumberSet):
-    def __init__(self):
-        NumberSet.__init__(self, 'Real', r'\mathbb{R}', theory=__file__)
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'Real', r'\mathbb{R}',
+                           theory=__file__, styles=styles)
 
     def membership_side_effects(self, judgment):
         '''
@@ -29,9 +30,10 @@ class RealSet(NumberSet):
 
 
 class RealNonZeroSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RealNonZero', r'\mathbb{R}^{\neq 0}',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .real_membership import RealNonZeroMembership    
@@ -74,9 +76,10 @@ class RealNonZeroSet(NumberSet):
 
 
 class RealPosSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RealPos', r'\mathbb{R}^+', 
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .real_membership import RealPosMembership    
@@ -124,9 +127,10 @@ class RealPosSet(NumberSet):
 
 
 class RealNegSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RealNeg', r'\mathbb{R}^-', 
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .real_membership import RealNegMembership    
@@ -174,9 +178,10 @@ class RealNegSet(NumberSet):
 
 
 class RealNonNegSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RealNonNeg', r'\mathbb{R}^{\ge 0}',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .real_membership import RealNonNegMembership    
@@ -208,9 +213,10 @@ class RealNonNegSet(NumberSet):
 
 
 class RealNonPosSet(NumberSet):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'RealNonPos', r'\mathbb{R}^{\le 0}',
-                           theory=__file__, fence_when_forced=True)
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
     def membership_object(self, element):
         from .real_membership import RealNonPosMembership    

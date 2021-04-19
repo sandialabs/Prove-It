@@ -13,8 +13,9 @@ class Prob(Operation):
     # the literal operator of the Prob operation class
     _operator_ = Literal('PROB', theory=__file__)
 
-    def __init__(self, event, random_variable):
-        Operation.__init__(self, Prob._operator_, (event, random_variable))
+    def __init__(self, event, random_variable, *, styles=None):
+        Operation.__init__(self, Prob._operator_, (event, random_variable),
+                           styles=styles)
         self.event = self.operands[0]
         self.random_variable = self.operands[1]
 

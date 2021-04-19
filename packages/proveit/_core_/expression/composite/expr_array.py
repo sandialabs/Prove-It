@@ -1,4 +1,3 @@
-import inspect
 from .expr_tuple import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.style_options import StyleOptions
@@ -17,7 +16,7 @@ class ExprArray(ExprTuple):
         objects.
         '''
         from .expr_range import ExprRange
-        ExprTuple.__init__(self, *expressions)
+        ExprTuple.__init__(self, *expressions, styles=styles)
 
         for entry in self.entries:
             entry_or_body = entry
@@ -33,14 +32,14 @@ class ExprArray(ExprTuple):
         self.check_range()
 
     @classmethod
-    def _make(sub_class, core_info, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions, *, styles):
         if sub_class != ExprArray:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("An ExprArray is an ExprTuple of ExprTuples, "
                              "so the ExprArray core_info should contain "
                              "exactly one item: 'ExprTuple'")
-        return ExprArray(*sub_expressions)
+        return ExprArray(*sub_expressions, styles=styles)
 
     def remake_with_style_calls(self):
         '''

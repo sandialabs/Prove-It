@@ -8,8 +8,8 @@ class Sin(Function):
     # operator of the Sin operation.
     _operator_ = Literal(string_format='sin', theory=__file__)
     
-    def __init__(self, angle):
-        Function.__init__(self, Sin._operator_, angle)
+    def __init__(self, angle, *, styles=None):
+        Function.__init__(self, Sin._operator_, angle, styles=styles)
         self.angle = angle
     
     def latex(self, **kwargs):

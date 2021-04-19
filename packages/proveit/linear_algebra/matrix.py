@@ -5,8 +5,8 @@ pkg = __package__
 
 
 class Matrix(Operation):
-    def __init__(self, expr_tensor):
-        Operation.__init__(self, MATRIX, expr_tensor)
+    def __init__(self, expr_tensor, *, styles=None):
+        Operation.__init__(self, MATRIX, expr_tensor, styles=styles)
         self.tensor = self.operands
         if not isinstance(self.tensor, ExpressionTensor):
             raise ImproperMatrix(

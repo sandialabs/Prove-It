@@ -11,8 +11,8 @@ class Round(Function):
     # operator of the Round operation.
     _operator_ = Literal(string_format='round', theory=__file__)
 
-    def __init__(self, A):
-        Function.__init__(self, Round._operator_, A)
+    def __init__(self, A, *, styles=None):
+        Function.__init__(self, Round._operator_, A, styles=styles)
 
     def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
         '''

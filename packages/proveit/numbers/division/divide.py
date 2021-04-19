@@ -1,22 +1,23 @@
 from proveit import (Judgment, Expression, Literal, maybe_fenced_latex, 
-                     Operation, ExprTuple, InnerExpr, USE_DEFAULTS,
+                     Function, ExprTuple, InnerExpr, USE_DEFAULTS,
                      UnsatisfiedPrerequisites)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
+from proveit.numbers import NumberOperation
 
-
-class Div(Operation):
+class Div(NumberOperation):
     # operator of the Add operation
     _operator_ = Literal(
         string_format='/',
         latex_format=r'\div',
         theory=__file__)
 
-    def __init__(self, numerator, denominator):
+    def __init__(self, numerator, denominator, *, styles=None):
         r'''
         Divide two operands.
         '''
-        Operation.__init__(self, Div._operator_, [numerator, denominator])
+        NumberOperation.__init__(self, Div._operator_, [numerator, denominator],
+                                 styles=styles)
         self.numerator = self.operands[0]
         self.denominator = self.operands[1]
     
@@ -33,13 +34,14 @@ class Div(Operation):
                 '}',
                 **kwargs)
         else:
-            return Operation.latex(self, **kwargs)  # normal division
+            # normal division
+            return NumberOperation.latex(self, **kwargs)
     
     def style_options(self):
         '''
         Return the StyleOptions object for this Div.
         '''
-        options = Operation.style_options(self)
+        options = NumberOperation.style_options(self)
         options.add_option(
             name='division',
             description=("'inline': uses '/'; 'fraction': "
@@ -366,7 +368,7 @@ class Div(Operation):
             # because this is a little tricky.   To do.
             #deduce_in_complex(self.operands, assumptions)
             y_etc_sub = self.numerator.indices
-            Pop, Pop_sub = Operation(
+            Pop, Pop_sub = Function(
                 P, self.numerator.indices), self.numerator.summand
             S_sub = self.numerator.domain
             dummy_var = safe_dummy_var(self)
@@ -480,64 +482,38 @@ class Div(Operation):
         raise NotImplementedError(
             "'Div.deduce_in_number_set()' not implemented for the %s set" 
             % str(number_set))
-
-    def deduce_bound(self, relation_or_relations, 
-                     assumptions=USE_DEFAULTS):
+    
+    def bound_via_operand_bound(self, operand_relation, assumptions=USE_DEFAULTS):
         '''
-        Given relations applicable to the numerator and/or
-        denominator,  bound this division accordingly.  For example, 
-        if self is "a / b" and the relations are
-            a < x and b > y
-        return (a / b) < (x / y), provided b and y are known to be
-        greater than zero.
-        
-        Also see Div.deduce_bound_by_numerator and
-        Div.deduce_bound_by_denominator which bounds the fraction
-        by the numerator or denominator respectively..
+        Deduce a bound of this division (fraction) given a bound on
+        either the numerator or the denominatory.
         '''
-        from proveit.numbers import Less, LessEq
-        if isinstance(relation_or_relations, Judgment):
-            relation_or_relations = relation_or_relations.expr
-        if isinstance(relation_or_relations, ExprTuple):
-            relations = relation_or_relations.entries
-        elif isinstance(relation_or_relations, Expression):
-            relations = [relation_or_relations]
+        from proveit.numbers import NumberOrderingRelation
+        if isinstance(operand_relation, Judgment):
+            operand_relation = operand_relation.expr
+        if not isinstance(operand_relation, NumberOrderingRelation):
+            raise TypeError("'operand_relation' expected to be a number "
+                            "relation (<, >, ≤, or ≥)")
+        lhs = operand_relation.lhs
+        if lhs == self.numerator:
+            return self.bound_via_numerator_bound(
+                    operand_relation, assumptions=assumptions)
+        elif lhs == self.denominator:
+            return self.bound_via_denominator_bound(
+                    operand_relation, assumptions=assumptions)
         else:
-            relations = [(relation.expr 
-                          if isinstance(relation, Judgment) else relation)
-                         for relation in relation_or_relations]
-        if len(set(relations)) != len(relations):
-            raise ValueError("'relations' should be distinct: %s"
-                             % relations)
-        expr = self
-        updater = TransRelUpdater(expr, assumptions)
-        for relation in relations:
-            if not (isinstance(relation, Less) or
-                    isinstance(relation, LessEq)):
-                raise TypeError("relations are expected to be Less "
-                                "or LessEq number relations, not %s"
-                                %relation)
-            if self.numerator in relation.operands:
-                expr = updater.update(expr.deduce_bound_by_numerator(
-                        relation, assumptions))
-            elif self.denominator in relation.operands:
-                expr = updater.update(expr.deduce_bound_by_denominator(
-                        relation, assumptions))
-            else:
-                raise ValueError("relations are expected to be relations "
-                                 "(< or <=) involving the numerator or " 
-                                 "denominator of %s.  %s does not involve "
-                                 "either"%(self, relation))
-        return updater.relation
+            raise ValueError("Left side of %s expected to be the numerator "
+                             "or denominator of %s"%(operand_relation, self))
 
-    def deduce_bound_by_numerator(self, relation, assumptions=USE_DEFAULTS):
+    def bound_via_numerator_bound(self, relation, 
+                                  assumptions=USE_DEFAULTS):
         '''
         Given a relation applicable to the numerator,  bound this 
         division accordingly.  For example, 
         if self is "a / b" and the relation is a < x
         return (a / b) < (x / b), provided b > 0.
         
-        Also see Div.deduce_bound
+        Also see NumberOperation.deduce_bound.
         '''
         from proveit.numbers import zero, Less, LessEq, greater
         from . import (strong_div_from_numer_bound__pos_denom,
@@ -574,12 +550,12 @@ class Div(Operation):
             raise UnsatisfiedPrerequisites(
                     "We must know whether the denominator of %s "
                     "is positive or negative before we can use "
-                    "'deduce_bound_by_numerator'."%self)
+                    "'bound_via_numerator_bound'."%self)
         if bound.rhs == self:
             return bound.with_direction_reversed()
         return bound
 
-    def deduce_bound_by_denominator(self, relation, 
+    def bound_via_denominator_bound(self, relation, 
                                     assumptions=USE_DEFAULTS):
         '''
         Given a relation applicable to the numerator,  bound this 
@@ -587,7 +563,7 @@ class Div(Operation):
         if self is "a / b" and the relation is b > y
         return (a / b) < (a / y), provided a, b, and y are positive.
         
-        Also see Div.deduce_bound
+        Also see NumberOperation.deduce_bound.
         '''
         from proveit.numbers import zero, Less, LessEq, greater, greater_eq
         from . import (strong_div_from_denom_bound__all_pos,
@@ -627,7 +603,7 @@ class Div(Operation):
             raise UnsatisfiedPrerequisites(
                     "We must know the sign of the numerator and "
                     "denominator of %s before we can use "
-                    "'deduce_bound_by_denominator'."%self)        
+                    "'bound_via_denominator_bound'."%self)        
         if pos_numer and pos_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__all_pos.instantiate(
@@ -660,7 +636,7 @@ class Div(Operation):
             raise UnsatisfiedPrerequisites(
                     "We must know whether or not the denominator of %s "
                     "is positive or negative before we can use "
-                    "'deduce_bound_by_numerator'."%self)
+                    "'bound_via_denominator_bound'."%self)
         if bound.rhs == self:
             return bound.with_direction_reversed()
         return bound

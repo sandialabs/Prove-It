@@ -1,15 +1,14 @@
-from proveit import Operation, Literal, USE_DEFAULTS, ProofFailure
+from proveit import Function, Literal, USE_DEFAULTS, ProofFailure
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.sets.membership import Membership, Nonmembership
 from proveit import A, C, P, Q
 
 
 class BooleanSet(Literal):
-    def __init__(self):
+    def __init__(self, *, styles=None):
         Literal.__init__(
-            self,
-            string_format='BOOLEAN',
-            latex_format=r'\mathbb{B}')
+            self, string_format='BOOLEAN', latex_format=r'\mathbb{B}',
+            styles=styles)
 
     def membership_object(self, element):
         return BooleanMembership(element)
@@ -35,7 +34,7 @@ class BooleanSet(Literal):
         instance_list = list(forall_stmt.instance_param_lists())
         instance_var = instance_list[0][0]
         instance_expr = forall_stmt.instance_expr
-        P_op = Operation(P, instance_var)
+        P_op = Function(P, instance_var)
         true_instance = instance_expr.replaced({instance_var: TRUE})
         false_instance = instance_expr.replaced({instance_var: FALSE})
         if true_instance == TRUE and false_instance == FALSE:
@@ -95,7 +94,7 @@ class BooleanSet(Literal):
                ), "May only apply unfold_forall method of Boolean to a forall statement"
         assert(forall_stmt.domain ==
                Boolean), "May only apply unfold_forall method of Boolean to a forall statement with the Boolean domain"
-        Px = Operation(P, forall_stmt.instance_var)
+        Px = Function(P, forall_stmt.instance_var)
         _Px = forall_stmt.instance_expr
         _A = forall_stmt.instance_var
         return unfold_forall_over_bool.instantiate(
@@ -118,9 +117,9 @@ class BooleanSet(Literal):
                 condition = forall_stmt.conditions[1]
             else:
                 condition = And(*forall_stmt.conditions[1:].entries)
-            Qx = Operation(Q, forall_stmt.instance_param)
+            Qx = Function(Q, forall_stmt.instance_param)
             _Qx = condition
-            Px = Operation(P, forall_stmt.instance_param)
+            Px = Function(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
             return fold_conditioned_forall_over_bool.instantiate(
@@ -128,7 +127,7 @@ class BooleanSet(Literal):
                 assumptions=assumptions)
         else:
             # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
-            Px = Operation(P, forall_stmt.instance_param)
+            Px = Function(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
             return fold_forall_over_bool.instantiate(
@@ -248,8 +247,9 @@ class BooleanNonmembership(Nonmembership):
 
 
 class TrueLiteral(Literal, IrreducibleValue):
-    def __init__(self):
-        Literal.__init__(self, string_format='TRUE', latex_format=r'\top')
+    def __init__(self, *, styles=None):
+        Literal.__init__(self, string_format='TRUE', latex_format=r'\top',
+                         styles=styles)
 
     def conclude(self, assumptions):
         from . import true_axiom
@@ -280,8 +280,9 @@ class TrueLiteral(Literal, IrreducibleValue):
 
 
 class FalseLiteral(Literal, IrreducibleValue):
-    def __init__(self):
-        Literal.__init__(self, string_format='FALSE', latex_format=r'\bot')
+    def __init__(self, *, styles=None):
+        Literal.__init__(self, string_format='FALSE', latex_format=r'\bot',
+                         styles=styles)
 
     def eval_equality(self, other, assumptions=USE_DEFAULTS):
         from . import false_not_true

@@ -12,7 +12,7 @@ class Prod(OperationOverInstances):
 #    def __init__(self, instance_vars, instance_expr, conditions = tuple(), domain=EVERYTHING):
 #
     def __init__(self, indices, summand, domain, *, condition=None,
-                 conditions=None):
+                 conditions=None, styles=None):
         r'''
         Sum summand over indices over domains.
         Arguments serve analogous roles to Forall arguments (found in basiclogic.booleanss):
@@ -22,4 +22,5 @@ class Prod(OperationOverInstances):
         '''
         OperationOverInstances.__init__(
             self, Prod._operator_, indices, summand, domain=domain,
-            condition=condition, conditions=conditions)
+            condition=condition, conditions=conditions,
+            styles=styles)
