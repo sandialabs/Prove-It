@@ -36,6 +36,9 @@ class Operation(Expression):
             single_or_composite_expression, Composite, ExprTuple)
         from proveit._core_.expression.label.label import Label
         from .indexed_var import IndexedVar
+        if self.__class__ == Operation:
+            raise TypeError("Do not create an object of type Operation; "
+                            "use a derived class (e.g., Function) instead.")
         self.operator = operator
         operand_or_operands = single_or_composite_expression(
             operand_or_operands, do_singular_reduction=True)
