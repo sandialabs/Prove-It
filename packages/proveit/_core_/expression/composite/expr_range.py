@@ -173,7 +173,7 @@ class ExprRange(Expression):
                 "ellipses). Enter a positive integer to increase the number "
                 "of operands before the ellipses."),
             default = str(1),
-            related_methods=('with_expansion'))
+            related_methods=('with_expansion', 'get_range_expansion'))
         return options
 
     def with_explicit_parameterization(self):
@@ -273,6 +273,11 @@ class ExprRange(Expression):
         return False
 
     def get_range_expansion(self):
+        '''
+        returns a list of the expression objects before the ellipses including self.first().
+        For use when the ExprRange has the expansion style option, otherwise
+        this method just returns a list containing self.first().
+        '''
         default_expansion = str(1)
         expansion = int(self.get_style("expansion", default_expansion))
         from proveit.numbers import one, Add
