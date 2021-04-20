@@ -157,10 +157,11 @@ class IdentityOp(Literal):
         Create the Literal 'I'.
         If not 'explicit', just use a wire.
         '''
-        if explicit:
-            styles = {'representation': 'explicit'}
-        else:
-            styles = {'representation': 'implicit'}
+        if styles is None:
+            if explicit:
+                styles = {'representation': 'explicit'}
+            else:
+                styles = {'representation': 'implicit'}
         Literal.__init__(self, 'I', styles=styles)
 
     def style_options(self):

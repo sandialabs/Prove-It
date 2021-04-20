@@ -25,15 +25,9 @@ class Exp(NumberOperation):
                                  styles=styles)
     
     def remake_constructor(self):
-        if self.get_style('exponent') == 'radical':
-            # Use a different constructor if using the 'radical' style.
-            if self.exponent == frac(one, two):
-                return 'sqrt'
-            else:
-                raise ValueError(
-                    "Unkown radical type, exponentiating to the power "
-                    "of %s" % str(
-                        self.exponent))
+        if (self.get_style('exponent', 'raised') == 'radical' and
+                self.exponent == frac(one, two)):
+            return 'sqrt'
         return Function.remake_constructor(self)
 
     def remake_arguments(self):
@@ -41,7 +35,8 @@ class Exp(NumberOperation):
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Operation.
         '''
-        if self.get_style('exponent') == 'radical':
+        if (self.get_style('exponent', 'raised') == 'radical' and
+                self.exponent == frac(one, two)):
             yield self.base
         else:
             yield self.base
@@ -55,13 +50,13 @@ class Exp(NumberOperation):
         Returns the StyleOptions object for this Exp.
         '''
         options = StyleOptions(self)
-        default_exp_style = ('radical' if self.exponent==frac(one, two)
-                             else 'raised')
-        options.add_option(
+        if (isinstance(self.exponent, Div) and 
+                self.exponent.numerator == one):
+            options.add_option(
                 name = 'exponent',
                 description = ("'raised': exponent as a superscript; "
                                "'radical': using a radical sign"),
-                default = default_exp_style,
+                default = 'radical',
                 related_methods = ('with_radical', 'without_radical'))
         return options
         
@@ -245,31 +240,30 @@ class Exp(NumberOperation):
         # begin building the inner_str
         inner_str = self.base.formatted(
             format_type, fence=True, force_fence=True)
-        if self.get_style('exponent') == 'raised':
+        if self.get_style('exponent', 'raised') == 'raised':
             inner_str = (
                 inner_str
                 + r'^{' + self.exponent.formatted(format_type, fence=False)
                 + '}')
-        elif self.get_style('exponent') == 'radical':
-            if self.exponent == frac(one, two):
-                if format_type == 'string':
-                    inner_str = (
-                        r'sqrt('
-                        + self.base.formatted(format_type, fence=True,
-                                              force_fence=True)
-                        + ')')
-                elif format_type == 'latex':
-                    inner_str = (
-                        r'\sqrt{'
-                        + self.base.formatted(format_type, fence=True,
-                                              force_fence=True)
-                        + '}')
-            else:
+        else:
+            if not (isinstance(self.exponent, Div) and 
+                    self.exponent.numerator == one):
                 raise ValueError(
-                    "Unkown radical type, exponentiating to the power "
-                    "of %s" % str(
-                        self.exponent))
-
+                    "The 'exponent' style should only be applicable"
+                    "when the exponent is of the form 1/n")
+            if self.exponent == frac(one, two):
+                func_string = 'sqrt'
+            else:
+                if format_type == 'string':
+                    func_string = '(%s)-root'%self.exponent.denominator
+                else:
+                    func_string = 'sqrt[%s]'%self.exponent.denominator
+            formatted_base = self.base.formatted(format_type, fence=True,
+                                                 force_fence=True)
+            if format_type == 'string':
+                return "%s(%s)"%(func_string, formatted_base)
+            else:
+                return r"\%s{%s}"%(func_string, formatted_base)
         # only fence if force_fence=True (nested exponents is an
         # example of when fencing must be forced)
         kwargs['fence'] = (

@@ -150,7 +150,7 @@ class Add(NumberOperation):
                 self.operator,
                 self.operands,
                 self.wrap_positions(),
-                self.get_style('justification'),
+                self.get_style('justification', 'center'),
                 **kwargs)
 
     def remake_constructor(self):
