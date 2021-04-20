@@ -172,7 +172,7 @@ class ExprRange(Expression):
                 "The default expansion is 1 (a single operand before the "
                 "ellipses). Enter a positive integer to increase the number "
                 "of operands before the ellipses."),
-            default = str(2),
+            default = str(1),
             related_methods=('with_expansion'))
         return options
 
@@ -234,6 +234,12 @@ class ExprRange(Expression):
             self._last = self.body.replaced(expr_map)
         return self._last
 
+    def format_length(self, format_type='latex'):
+        '''
+        The length of the ExprRange when it is formatted according to the expansion.
+        '''
+        return len(self._formatted_checkpoints(format_type=format_type))
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -265,6 +271,21 @@ class ExprRange(Expression):
         if (self.get_style("parameterization", default_style) == "explicit"):
             return True
         return False
+
+    def get_range_expansion(self):
+        default_expansion = str(1)
+        expansion = int(self.get_style("expansion", default_expansion))
+        from proveit.numbers import one, Add
+        i = 1
+        prev = self.start_index
+        output = [self.first()]
+        while i < expansion:
+            expr_map = {self.lambda_map.parameter: Add(prev, one).simplification().rhs}
+            next_value = self.body.replaced(expr_map)
+            output.append(next_value)
+            prev = Add(prev, one).simplification().rhs
+            i += 1
+        return output
 
     def _formatted_checkpoints(self, format_type, *,
                                use_explicit_parameterization=None,
@@ -340,7 +361,7 @@ class ExprRange(Expression):
             formatted_sub_expressions.insert(1, ellipses)
 
         if expansion >= 1:
-            print(expansion)
+            # print(expansion)
             from proveit.numbers import one, Add
             i = 1
             prev = self.start_index
