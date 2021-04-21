@@ -641,7 +641,8 @@ def _inner_operands_simplification(inner_expr, *, in_place=True,
     while True:
         all_reduced = True
         for operand in inner.operands:
-            if (not is_irreducible_value(operand) and
+            if (not operand.simplified() and
+                    not is_irreducible_value(operand) and
                     not isinstance(operand, ExprRange)):
                 # The operand isn't already irreducible, so try to
                 # simplify it.

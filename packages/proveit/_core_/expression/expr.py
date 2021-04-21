@@ -206,6 +206,10 @@ class Expression(metaclass=ExprType):
             self._canonical_expr = self
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
+
+        # Used to indicate that this expression is a simplified
+        # expression under this set of simplification directive ids:
+        self._simplified_under_these_directive_ids = set()
         
         """
         if defaults.use_consistent_styles:
@@ -858,6 +862,10 @@ class Expression(metaclass=ExprType):
         It also may be desirable to store the judgment for future automation.
         '''
         return iter(())
+
+    def is_simplified(self):
+        return (defaults.get_simplification_directives_id() in
+                self._simplified_under_these_directive_ids)
 
     def replaced(self, repl_map, allow_relabeling=False, 
                  requirements=None, equality_repl_requirements=None):

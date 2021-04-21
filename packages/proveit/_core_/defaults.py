@@ -1,11 +1,14 @@
 import hashlib
 import os
 import copy
+import collections
 
 
 class Defaults:
     # used to avoid infinite recursion and extra work
     considered_assumption_sets = set()
+    
+    last_simplifications_directives_id = 0
 
     def __init__(self):
         self.reset()
@@ -45,7 +48,14 @@ class Defaults:
         
         # Map expression classes to directives that should be
         # employed when simplifying expressions with that class.
-        self.simplification_directives_by_expr_class = dict()
+        self._simplification_directives_by_expr_class = dict()
+        
+        # Hash that unique to the simplification directives.
+        self._simplification_directives_hash = None
+        
+        # Unique id given for a particular set of assumptions and
+        # simplification_directives_by_expr_class
+        self._assumptions_and_simplification_directives_id = None
         
         """
         # Automatic reductions may be applied to expressions that
@@ -72,6 +82,52 @@ class Defaults:
         self.import_failure_filename = None
 
         Defaults.considered_assumption_sets.clear()
+
+    def get_simplification_directives_id(self):
+        '''
+        Get the identifier of the current simplification directives,
+        unique for assumptions as well as expression class
+        simplification directives.
+        '''
+        if self._assumptions_and_simplification_directives_id is None:
+            # The id must be computed.
+            if self._simplification_directives_hash is None:
+                # Prepare the simplification directives hash.
+                self._simplification_directives_hash = hash(tuple(
+                        self._simplification_directives_by_expr_class.items()))   
+            # Compute the identifier for the assumptions and the
+            # simplification directives.
+            self._assumptions_and_simplification_directives_id = hash(
+                    (self.assumptions, self._simplification_directives_hash))
+        return self._assumptions_and_simplification_directives_id
+
+    def set_expr_class_simplification_directives(self, expr_class, 
+                                                 directives):
+        '''
+        Set the given simplification directives for the given
+        expression class and invalidate the simplification directives
+        identifier.  Note, directives must be immutable (therefore,
+        we check that it is hashable).
+        Generally, this should be called indirectly
+        via a staticmethod of the particular Expression class.
+        '''
+        if not isinstance(directives, collections.abs.Hashable):
+            raise ValueError("Simplification directives must be mutable "
+                             "(and therefore hashable)")
+        # Set the new directives:
+        self._simplification_directives_by_expr_class[expr_class] = (
+                directives)
+        # Invalidate directives hash and the assumption-and-directives
+        # identifier:
+        self._simplification_directives_hash = None
+        self._assumptions_and_simplification_directives_id = None        
+
+    def get_expr_class_simplification_directives(self, expr_class):
+        '''
+        Return simplification directives specified for the given
+        expression class.
+        '''
+        return self._simplification_directives_by_expr_class[expr_class]
 
     def temporary(self):
         '''
@@ -152,6 +208,11 @@ class Defaults:
         '''
         if attr == 'assumptions' and hasattr(self, attr):
             value = tuple(self.checked_assumptions(value))
+            if self.__dict__['assumptions'] == value:
+                return # Nothing has changed.
+            # Invalidate the _simplification_directives_id since the
+            # assumptions may have changed.
+            self._simplification_directives_id = None
         self.__dict__[attr] = value
 
 class TemporaryDefaults(object):

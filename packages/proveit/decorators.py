@@ -206,16 +206,20 @@ class equivalence_prover:
                                 "TranstiveRelation of the EquivalenceClass, "
                                 "not %s of type %s"
                                 %(proven_expr, proven_expr.__class__))
-            if func.name in ('simplification', 'evaluation'):
-                from proveit.logic import Equals
-                if not isinstance(proven_expr, Equals):
-                    raise TypeError("%s method expected to prove an equality"
-                                    %str(func))
             if proven_expr.lhs != _self:
                 raise TypeError("@equivalence_prover expected to prove an "
                                 "equivalence relation with 'self', %s, on "
                                 "its left side ('lhs').  %s does not satisfy "
                                 "this requirement"%(self, proven_expr))
+            if func.name in ('simplification', 'evaluation'):
+                from proveit.logic import Equals
+                if not isinstance(proven_expr, Equals):
+                    raise TypeError("%s method expected to prove an equality"
+                                    %str(func))
+                # Remember that the rhs is a simplified expression
+                # under current simplification directives.
+                proven_expr.rhs._simplified_under_these_directive_ids.add(
+                        defaults.get_simplification_directives_id())
             if func.name == 'simplification':
                 from proveit.logic import Equals
                 Equals.remember_simplification(proven_truth)
@@ -228,7 +232,6 @@ class equivalence_prover:
                             "value in the right side, "
                             "is_irreducible_value(%s) is False"
                             %proven_expr.rhs)
-                    
             return proven_truth
         return _wraps(func, wrapper)
 

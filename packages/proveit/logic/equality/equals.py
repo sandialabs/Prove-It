@@ -15,13 +15,10 @@ class Equals(TransitiveRelation):
     # the Expression on the left hand or right hand side.
     known_equalities = dict()
 
-    # Map each Expression/Assumptions combination to a single
-    # known_equality deemed to effect a simplification of the inner
-    # expression on the rhs according to some canonical method of
-    # simplification determined by each operation. For example, the
-    # Expression expr = Floor(Add(x, two)) under the assumption that x
-    # is a Real, would have dictionary key (expr, (InSet(x, Real))) with
-    # an eventual value of something like |- expr = Floor(x) + two.
+    # Map each Expression/defaults._simplification_directives_id 
+    # combination to a single known_equality deemed to effect a 
+    # simplification according to the simplification directives of 
+    # the id.
     known_simplifications = dict()
 
     # Specific simplifications that simplify the inner expression to
@@ -65,28 +62,18 @@ class Equals(TransitiveRelation):
         method is called.   Some side-effects derivations are also
         attempted depending upon the form of this equality.
         If the rhs is an "irreducible value" (see is_irreducible_value),
-        also record the judgment in the Equals.known_simplifications
-        and Equals.known_evaluation_sets dictionaries, for use when the
-        simplification or evaluation method is called. The key for the
-        known_simplifications dictionary is the specific *combination*
-        of the lhs expression along with the assumptions in the form
-        (expr, tuple(sorted(assumptions))); the key for the
-        known_evaluation_sets dictionary is just the lhs expression
-        without the specific assumptions. Some side-effects
-        derivations are also attempted depending upon the form of this
-        equality.
+        also record the judgment in the Equals.known_evaluation_sets 
+        dictionary, for use when the simplification or evaluation 
+        method is called. Some side-effects derivations are also 
+        attempted depending upon the form of this equality.
         '''
         from proveit.logic.booleans import TRUE, FALSE
         Equals.known_equalities.setdefault(self.lhs, set()).add(judgment)
         Equals.known_equalities.setdefault(self.rhs, set()).add(judgment)
 
         if is_irreducible_value(self.rhs):
-            assumptions_sorted = sorted(judgment.assumptions,
-                                        key=lambda expr: hash(expr))
-            lhs_key = (self.lhs, tuple(assumptions_sorted))
-            # n.b.: the values in the known_simplifications
-            # dictionary consist of single Judgments not sets
-            Equals.known_simplifications[lhs_key] = judgment
+            # With an irreducible right hand side, remember this as
+            # an evaluation.
             Equals.known_evaluation_sets.setdefault(
                 self.lhs, set()).add(judgment)
 
@@ -686,8 +673,7 @@ class Equals(TransitiveRelation):
         Return an applicable simplification (under current defaults) 
         for the given expression if one is known; otherwise return None.
         '''
-        key = (expr, tuple(sorted(defaults.assumptions)),
-               defaults.simplification_directives_by_expr_class) # TODO?? -- ALSO, MAYBE USE A _simplified flag in Expression, specific to default settings though.
+        key = (expr, defaults.get_simplification_directives_id())
         simplification = Equals.known_simplifications[key]
         if simplification.is_usable():
             return simplification
@@ -706,8 +692,7 @@ class Equals(TransitiveRelation):
             raise TypeError("Expecting 'simplification' to be an "
                             "equality Judgment")
         expr = simplification.expr.lhs
-        key = (expr, tuple(sorted(defaults.assumptions)),
-               defaults.simplification_directives_by_expr_class) # TODO??
+        key = (expr, defaults.get_simplification_directives_id())
         Equals.known_simplifications[key] = simplification
         
     @staticmethod
