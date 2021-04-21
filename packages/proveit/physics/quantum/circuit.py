@@ -190,7 +190,7 @@ class IdentityOp(Literal):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, representation=None, solo=True, fence=False):
+    def formatted(self, format_type, representation=None, solo=True, fence=False, **kwargs):
         if representation is None:
             representation = self.get_style('representation', 'implicit')
         if format_type == 'latex':
@@ -854,7 +854,7 @@ class Circuit(Function):
                     "Contents of an ExprArray must be wrapped in either an ExprRange or ExprTuple.")
 
         # check each column for same expression throughout
-        self.check_range()
+        # self.check_range()
         self.check_indices()
 
     def remake_with_style_calls(self):
@@ -948,24 +948,24 @@ class Circuit(Function):
                             placeholder = []
                             placeholder.append(i)
                             # adding the column number
-                            if isinstance(entry.first(), MultiQubitGate):
-                                placeholder.append(
-                                    entry.first().gate.indices[0])
-                            elif isinstance(entry.first(), Gate):
-                                placeholder.append(
-                                    entry.first().gate_operation.indices[0])
-                            else:
-                                placeholder.append(entry.first().start_index)
+                            # if isinstance(entry.first(), MultiQubitGate):
+                            #     placeholder.append(
+                            #         entry.first().gate.indices[0])
+                            # elif isinstance(entry.first(), Gate):
+                            #     placeholder.append(
+                            #         entry.first().gate_operation.indices[0])
+                            # else:
+                            placeholder.append(entry.start_index)
                             # add the row index, eg for Aij, we add j for the beginning and the end.
                             # accessing j is different for a MultiQubitGate.
-                            if isinstance(entry.last(), MultiQubitGate):
-                                placeholder.append(
-                                    entry.last().gate.indices[0])
-                            elif isinstance(entry.last(), Gate):
-                                placeholder.append(
-                                    entry.last().gate_operation.indices[0])
-                            else:
-                                placeholder.append(entry.last().end_index)
+                            # if isinstance(entry.last(), MultiQubitGate):
+                            #     placeholder.append(
+                            #         entry.last().gate.indices[0])
+                            # elif isinstance(entry.last(), Gate):
+                            #     placeholder.append(
+                            #         entry.last().gate_operation.indices[0])
+                            # else:
+                            placeholder.append(entry.end_index)
                             pos.append(placeholder)
                         else:
                             if len(pos) == 0:
@@ -1591,21 +1591,21 @@ class Circuit(Function):
                                             row[col] = ['gate', 1]
                                         j += 1
                                         col += 1
-                                elif not isinstance(item.first(), Gate):
-                                    if isinstance(item.first(), Literal):
-                                        from proveit.physics.quantum import SPACE, CONTROL, CLASSICAL_CONTROL
-                                        if item.first() != SPACE or item.first() != CONTROL or \
-                                                item.first() != CLASSICAL_CONTROL:
-                                            raise TypeError(
-                                                'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                                'Literal imported from proveit.physics.quantum  %s is not' %
-                                                item.first())
-                                    else:
-                                        raise TypeError(
-                                            'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                            'Literal imported from proveit.physics.quantum  %s is not' %
-                                            item.first())
-                                else:
+                                # elif not isinstance(item.first(), Gate):
+                                #     if isinstance(item.first(), Literal):
+                                #         from proveit.physics.quantum import SPACE, CONTROL, CLASSICAL_CONTROL
+                                #         if item.first() != SPACE or item.first() != CONTROL or \
+                                #                 item.first() != CLASSICAL_CONTROL:
+                                #             raise TypeError(
+                                #                 'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                                #                 'Literal imported from proveit.physics.quantum  %s is not' %
+                                #                 item.first())
+                                #     else:
+                                #         raise TypeError(
+                                #             'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                                #             'Literal imported from proveit.physics.quantum  %s is not' %
+                                #             item.first())
+                                elif isinstance(item.first(), Gate):
                                     # this is a gate
                                     if connect:
                                         # even though this is a gate, we are between the first and last MQG in this
@@ -1629,6 +1629,8 @@ class Circuit(Function):
                                             row[col] = 'gate'
                                             col += 1
                                             j += 1
+                                else:
+                                    col += 1
 
                             elif isinstance(item, MultiQubitGate):
                                 # ExprRange of an ExprTuple
@@ -1643,19 +1645,20 @@ class Circuit(Function):
                                 else:
                                     row[col] = ['gate', 1]
                                 col += 1
-                            elif not isinstance(item, Gate):
-                                if isinstance(item, Literal):
-                                    from proveit.physics.quantum import SPACE, CONTROL, CLASSICAL_CONTROL
-                                    if item != SPACE or item != CONTROL or \
-                                            item != CLASSICAL_CONTROL:
-                                        raise TypeError(
-                                            'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                            'Literal imported from proveit.physics.quantum  %s is not' % item)
-                                else:
-                                    raise TypeError(
-                                        'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
-                                        'Literal imported from proveit.physics.quantum  %s is not' % item)
-                            else:
+                            # elif not isinstance(item, Gate):
+                            #     if isinstance(item, Literal):
+                            #         from proveit.physics.quantum import SPACE, CONTROL, CLASSICAL_CONTROL
+                            #         if item != SPACE or item != CONTROL or \
+                            #                 item != CLASSICAL_CONTROL:
+                            #             raise TypeError(
+                            #                 'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                            #                 'Literal imported from proveit.physics.quantum  %s is not' % item)
+                            #     elif not isinstance(item, Input) and not isinstance(item, Output):
+                            #         raise TypeError(
+                            #             'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                            #             'Literal imported from proveit.physics.quantum  %s is not' % item)
+                            # else:
+                            elif isinstance(item, Gate):
                                 # this is a gate
                                 if connect:
                                     # even though this is a gate, we add a wire because it is in between the first and
@@ -1665,6 +1668,8 @@ class Circuit(Function):
                                     # we are not in between the first and last
                                     # MQG in this column so we don't add a wire
                                     row[col] = 'gate'
+                                col += 1
+                            else:
                                 col += 1
 
                         wire_placement.append(row)
@@ -1716,7 +1721,7 @@ class Circuit(Function):
         add = ' '
         # what we add in front of the entry
         for entry in self.array.get_formatted_sub_expressions(
-                format_type, orientation, default_style, operator_or_operators):
+                format_type, orientation, default_style, operator_or_operators, solo=False):
             if column == self.array.get_row_length() + 1:
                 # we add one to compensate for the added wrapping slash
                 row += 1

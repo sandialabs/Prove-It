@@ -18,8 +18,7 @@ class ConditionalSet(Operation):
         Automatically reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE.
         '''
-        pass
-        # self.reduce_to_true_case(assumptions=assumptions)
+        return self.reduce_to_true_case(assumptions=assumptions)
 
     def reduce_to_true_case(self, assumptions=USE_DEFAULTS):
         '''
@@ -52,9 +51,10 @@ class ConditionalSet(Operation):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, **kwargs):
+    def formatted(self, format_type, fence=None, **kwargs):
+        #print(solo)
         if format_type == 'string':
-            inner_str = '; '.join(conditional.string(fence=False)
+            inner_str = '; '.join(conditional.formatted('string', fence=False, **kwargs)
                                   for conditional in self.conditionals)
             return '{' + inner_str + '.'
         else:
@@ -62,11 +62,11 @@ class ConditionalSet(Operation):
             formatted_conditionals = []
             for conditional in self.conditionals:
                 if isinstance(conditional, ExprRange):
-                    formatted_conditionals.append(conditional.first().latex())
+                    formatted_conditionals.append(conditional.first().formatted(format_type, fence=False, **kwargs))
                     formatted_conditionals.append(r' \vdots')
-                    formatted_conditionals.append(conditional.last().latex())
+                    formatted_conditionals.append(conditional.last().formatted(format_type, fence=False, **kwargs))
                 else:
-                    formatted_conditionals.append(conditional.latex(fence=False))
+                    formatted_conditionals.append(conditional.formatted('latex', fence=False, **kwargs))
             inner_str = r' \\ '.join(formatted_conditionals)
             inner_str = r'\begin{array}{ccc}' + inner_str + r'\end{array}'
             inner_str = r'\left\{' + inner_str + r'\right..'
