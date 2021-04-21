@@ -18,16 +18,17 @@ class ConditionalSet(Operation):
         Automatically reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE.
         '''
-        self.reduce_to_truth(assumptions=assumptions)
+        pass
+        # self.reduce_to_true_case(assumptions=assumptions)
 
-    def reduce_to_truth(self, assumptions=USE_DEFAULTS):
+    def reduce_to_true_case(self, assumptions=USE_DEFAULTS):
         '''
         Automatically reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE.
         '''
-        from proveit import a, b, c, m, n
+        from proveit import a, b, c, m, n, ExprTuple
         from proveit.logic import FALSE, TRUE
-        from proveit.core_expr_types.conditionals import singular_truth_reduction
+        from proveit.core_expr_types.conditionals import true_case_reduction
 
         _b = None
         index = None
@@ -39,20 +40,34 @@ class ConditionalSet(Operation):
                 index = i
             else:
                 assert item.condition == FALSE
-        _a = [con.value for con in self.conditionals[:index]]
-        _c = [con.value for con in self.conditionals[index+1:]]
-        _m = self.conditionals[:index].num_elements(assumptions)
-        _n = self.conditionals[index+1:].num_elements(assumptions)
-        return singular_truth_reduction.instantiate({m: _m, n: _n, a: _a, b: _b, c: _c}, assumptions=assumptions)
+        _a = ExprTuple(*[con.value for con in self.conditionals[:index].entries])
+        _c = ExprTuple(*[con.value for con in self.conditionals[index+1:].entries])
+        _m = _a.num_elements(assumptions)
+        _n = _c.num_elements(assumptions)
+        return true_case_reduction.instantiate({m: _m, n: _n, a: _a, b: _b, c: _c}, assumptions=assumptions)
 
     def string(self, **kwargs):
-        inner_str = '; '.join(conditional.string(fence=False)
-                              for conditional in self.conditionals)
-        return '{' + inner_str + '.'
+        return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        inner_str = r' \\ '.join(conditional.latex(fence=False)
-                                 for conditional in self.conditionals)
-        inner_str = r'\begin{array}{ccc}' + inner_str + r'\end{array}'
-        inner_str = r'\left\{' + inner_str + r'\right..'
-        return inner_str
+        return self.formatted('latex', **kwargs)
+
+    def formatted(self, format_type, **kwargs):
+        if format_type == 'string':
+            inner_str = '; '.join(conditional.string(fence=False)
+                                  for conditional in self.conditionals)
+            return '{' + inner_str + '.'
+        else:
+            from proveit import ExprRange
+            formatted_conditionals = []
+            for conditional in self.conditionals:
+                if isinstance(conditional, ExprRange):
+                    formatted_conditionals.append(conditional.first().latex())
+                    formatted_conditionals.append(r' \vdots')
+                    formatted_conditionals.append(conditional.last().latex())
+                else:
+                    formatted_conditionals.append(conditional.latex(fence=False))
+            inner_str = r' \\ '.join(formatted_conditionals)
+            inner_str = r'\begin{array}{ccc}' + inner_str + r'\end{array}'
+            inner_str = r'\left\{' + inner_str + r'\right..'
+            return inner_str
