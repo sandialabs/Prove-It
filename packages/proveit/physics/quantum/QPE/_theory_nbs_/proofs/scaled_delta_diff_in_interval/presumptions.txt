@@ -33,11 +33,9 @@ proveit.numbers.multiplication.disassociation
 proveit.numbers.multiplication.elim_one_left
 proveit.numbers.multiplication.elim_one_right
 proveit.numbers.multiplication.leftward_commutation
+proveit.numbers.multiplication.mult_neg_any
 proveit.numbers.multiplication.mult_neg_right
-proveit.numbers.multiplication.mult_real_closure
-proveit.numbers.multiplication.mult_real_pos_closure_bin
-proveit.numbers.multiplication.strong_bound_by_right_factor
-proveit.numbers.multiplication.weak_bound_by_right_factor
+proveit.numbers.multiplication.mult_real_closure_bin
 proveit.numbers.negation.int_closure
 proveit.numbers.negation.nat_closure
 proveit.numbers.negation.negated_zero
@@ -128,6 +126,7 @@ proveit.numbers.number_sets.real_numbers.real_nonzero_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonzero
+proveit.numbers.number_sets.real_numbers.rescale_interval_co_membership
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
 proveit.numbers.numerals.decimals.less_2_3
@@ -162,8 +161,6 @@ proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
-proveit.numbers.numerals.decimals.tuple_len_3
-proveit.numbers.numerals.decimals.tuple_len_3_typical_eq
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.relax_less
 proveit.physics.quantum.QPE.delta_diff_in_interval
