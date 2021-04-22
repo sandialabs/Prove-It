@@ -23,8 +23,15 @@ def _make_decorated_prover(func):
                         "attributes of proveit.defaults "
                         "('assumptions', 'styles', etc.)"%func)
     
+    is_conclude_method = func.__name__.startswith('conclude')
+
     def decorated_prover(*args, **kwargs):
         from proveit import Judgment
+        preserve_self = kwargs.pop('preserve_self', False)
+        if is_conclude_method:
+            # If the method starts with conclude 'conclude', we must
+            # preserve _self.
+            preserve_self = True
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
         # Check to see if there are any unexpected keyword
@@ -41,6 +48,19 @@ def _make_decorated_prover(func):
             # an object.
             return {key:val for key, val in obj.__dict__.items() 
                     if key[0] != '_'}
+        
+        if preserve_self:
+            # Preserve the 'self' expression.
+            _self = args[0]
+            if ('preserved_exprs' in defaults_to_change
+                    or  _self not in defaults.preserved_exprs):
+                if 'preserved_exprs' in kwargs:
+                    kwargs['preserved_exprs'].add(_self)
+                else:
+                    defaults_to_change.add('preserved_exprs')
+                    kwargs['preserved_exprs'] = (
+                            defaults.preserved_exprs.union({_self}))
+            
         if len(defaults_to_change) > 0:
             # Temporarily reconfigure defaults with 
             with defaults.temporary() as temp_defaults:
@@ -55,12 +75,7 @@ def _make_decorated_prover(func):
             assumptions = defaults.assumptions
             kwargs.update(public_attributes_dict(defaults))
             proven_truth = func(*args, **kwargs)
-        
-        is_conclude_method = func.__name__.startswith('conclude')
-        if not is_conclude_method and proven_truth is None:
-            # It is okay for a prover method to return None.
-            return None
-        
+                
         if not isinstance(proven_truth, Judgment):
             raise TypeError("@prover method %s is expected to return "
                             "a proven Judgment, not %s of type %s."
@@ -116,7 +131,12 @@ def prover(func):
     return _wraps(func, _make_decorated_prover(func))
 
 
-class equivalence_prover:
+# Keep track of equivalence provers so we may register them during
+# Expression class construction (see ExprType.__init__ in expr.py).
+_equiv_prover_fn_to_tenses = dict()
+_equiv_prover_name_to_tenses = dict()
+
+def equivalence_prover(past_tense, present_tense):
     '''
     @equivalence_prover works the same way as the @prover decorator
     except that it also registers the "equivalence method" in
@@ -133,97 +153,96 @@ class equivalence_prover:
     expression in the defaults before the equivalence method is called.
     '''    
     
-    name_to_past_and_present_tense = dict()
-    
-    def __init__(self, past_tense, present_tense):
-        self.past_tense = past_tense
-        self.present_tense = present_tense
-
-    def __set_name__(self, owner, name):
-        # Solution for obtaining the method class (owner) seen at: 
-        # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
-
-        if name in equivalence_prover.name_to_past_and_present_tense:
+    def wrapper_maker(func):
+        '''
+        Make the wrapper for the equivalence_prover decorator.
+        '''
+        name = func.__name__
+        if name in _equiv_prover_name_to_tenses:
             # This name was used before; make sure past and present
             # tenses are consistent.
             previous_tenses = (
-                    equivalence_prover.name_to_past_and_present_tense[name])
-            current_tenses = (self.past_tense, self.present_tense)
+                _equiv_prover_name_to_tenses[name])
+            current_tenses = (past_tense, present_tense)
             if (previous_tenses != current_tenses):
-                raise InconsistentTenseNames(name, previous_tenses, 
+                raise InconsistentTenseNames(func, previous_tenses, 
                                              current_tenses)
         else:
-            equivalence_prover.name_to_past_and_present_tense[name] = (
-                    self.past_tense, self.present_tense)
+            _equiv_prover_name_to_tenses[name] = (
+                    past_tense, present_tense)
+        is_simplification_method = (name == 'simplification')
+        is_evaluation_method = (name == 'evaluation')
+        is_shallow_evaluation_method = (name == 'shallow_evaluation')
+        decorated_prover = _make_decorated_prover(func)
 
-        # Register the equivalence method:
-        _register_equivalence_method(
-            owner, name, self.past_tense, self.present_tense)    
-    
-    def __call__(self, func):
-        _decorated_prover = _make_decorated_prover(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):   
+            '''
+            The wrapper for the equivalence_prover decorator.
+            '''
+            from proveit._core_.expression.expr import Expression
             from proveit.relation import TransitiveRelation
-            # 'preserve' it so it will be on the left side without
-            # simplification.
+            # 'preserve' the 'self' expression so it will be on the 
+            # left side without simplification.
             _self = args[0]
-            kwargs['preserved_exprs'] = set(defaults.preserved_exprs)
-            kwargs['preserved_exprs'].add(_self)     
+            kwargs['preserve_self'] = True
             proven_truth = None
-            if func.name in ('simplification', 'evaluation'):
-                from proveit.logic import (Equals, SimplificationError,
+            if is_simplification_method or is_evaluation_method:
+                from proveit.logic import (is_irreducible_value,
+                                           Equals, SimplificationError,
                                            EvaluationError)
-                known_evaluation = Equals.get_known_evaluation(self)
+                # See if there is a known evaluation.
+                known_evaluation = Equals.get_known_evaluation(_self)
                 if known_evaluation is None:
-                    if func.name == 'simplification':
+                    if is_irreducible_value(_self):
+                        # Already irreducible.
+                        proven_truth = Equals(_self, _self).prove()
+                    elif is_simplification_method:
+                        # See if there is a known simplification.
                         known_simplification = (
-                                Equals.get_known_simplification(self))
+                                Equals.get_known_simplification(_self))
                         if known_simplification is not None:
                             proven_truth = known_simplification
                 else:
                     proven_truth = known_evaluation
-                if proven_truth is None:
-                    if func.name == 'simplification':
-                        raise SimplificationError(
-                                "Unable to perform simplification with "
-                                "automation disabled")
-                    if func.name == 'evaluation':
-                        raise EvaluationError(
-                                "Unable to perform evaluation "
-                                "with automation disabled")
             if proven_truth is None:
-                proven_truth = _decorated_prover(*args, **kwargs)
+                proven_truth = decorated_prover(*args, **kwargs)
             proven_expr = proven_truth.expr
             if not isinstance(proven_expr, TransitiveRelation):
-                raise TypeError("@equivalence_prover expected to prove a "
-                                "TranstiveRelation expression (more "
-                                "specifically, the EquivalenceClass type of "
-                                "relation), not %s of type %s"
-                                %(proven_expr, proven_expr.__class__))
+                raise TypeError(
+                        "@equivalence_prover expected to prove a "
+                        "TranstiveRelation expression (more "
+                        "specifically, the EquivalenceClass type "
+                        "of relation), not %s of type %s"
+                        %(proven_expr, proven_expr.__class__))
             if not isinstance(proven_expr, 
                               proven_expr.__class__.EquivalenceClass()):
-                raise TypeError("@equivalence_prover expected to prove a "
-                                "TranstiveRelation of the EquivalenceClass, "
-                                "not %s of type %s"
-                                %(proven_expr, proven_expr.__class__))
+                raise TypeError(
+                        "@equivalence_prover expected to prove a "
+                        "TranstiveRelation of the EquivalenceClass, "
+                        "not %s of type %s"
+                        %(proven_expr, proven_expr.__class__))
             if proven_expr.lhs != _self:
-                raise TypeError("@equivalence_prover expected to prove an "
-                                "equivalence relation with 'self', %s, on "
-                                "its left side ('lhs').  %s does not satisfy "
-                                "this requirement"%(self, proven_expr))
-            if func.name in ('simplification', 'evaluation'):
+                raise TypeError(
+                        "@equivalence_prover expected to prove an "
+                        "equivalence relation with 'self', %s, on "
+                        "its left side ('lhs').  %s does not satisfy "
+                        "this requirement"%(_self, proven_expr))
+            if is_simplification_method or is_evaluation_method:
                 from proveit.logic import Equals
                 if not isinstance(proven_expr, Equals):
-                    raise TypeError("%s method expected to prove an equality"
-                                    %str(func))
+                    raise TypeError(
+                            "%s method expected to prove an equality"
+                            %str(func))
                 # Remember that the rhs is a simplified expression
                 # under current simplification directives.
-                proven_expr.rhs._simplified_under_these_directive_ids.add(
-                        defaults.get_simplification_directives_id())
-            if func.name == 'simplification':
+                directive_id = defaults.get_simplification_directives_id()
+                Expression.simplified_exprs.setdefault(
+                        directive_id, set()).add(
+                                proven_expr.rhs)
+            if is_simplification_method:
                 from proveit.logic import Equals
                 Equals.remember_simplification(proven_truth)
-            elif func.name in ('evaluation', 'shallow_evaluation'):
+            elif is_evaluation_method or is_shallow_evaluation_method:
                 # The right side of an evaluation must be irreducible.
                 from proveit.logic import is_irreducible_value
                 if not is_irreducible_value(proven_expr.rhs):
@@ -233,7 +252,11 @@ class equivalence_prover:
                             "is_irreducible_value(%s) is False"
                             %proven_expr.rhs)
             return proven_truth
+
+        _equiv_prover_fn_to_tenses[wrapper] = (past_tense, present_tense)
         return _wraps(func, wrapper)
+
+    return wrapper_maker
 
 """
 def equivalence_prover(past_tense, present_tense):
@@ -296,73 +319,14 @@ def equivalence_prover(past_tense, present_tense):
     return EquivalenceProverDecorator
 """
 
-
-def _register_equivalence_method(
-        expr_class, equiv_method, past_tense_name, present_tense_name):
-    '''
-    Register a method of an expression class that is used to derive and 
-    return (as a Judgment) the equivalence of that expression on the
-    left side with a new form on the right side.
-    (e.g., 'simplification', 'evaluation', 'commutation', 
-    'association').
-    In addition to the expression class and the method (as a name or 
-    function object), also provide the "past-tense" form of the name 
-    for deriving the equivalence and returning the right side, and 
-    provide the "action" form of the name that may be used to make
-    the replacement directly within a Judgment to produce a revised 
-    Judgment.  The "past-tense" version will be added automatically as 
-    a method to the given expression class with an appropriate doc 
-    string.
-    '''
-    if not isinstance(equiv_method, str):
-        # can be a string or a function:
-        equiv_method = equiv_method.__name__
-    if not hasattr(expr_class, equiv_method):
-        raise Exception(
-            "Must have '%s' method defined in class '%s' in order to register it as an equivalence method in InnerExpr." %
-            (equiv_method, str(expr_class)))
-
-    # Store information in the Expression class that will enable calling
-    # InnerExpr methods when an expression of that type
-    # is the inner expression for generating equivalences or performing
-    # in-place replacements.
-    setattr(
-        expr_class, '_equiv_method_%s_' %
-        equiv_method, ('equiv', equiv_method))
-    setattr(
-        expr_class, '_equiv_method_%s_' %
-        past_tense_name, ('rhs', equiv_method))
-    setattr(
-        expr_class, '_equiv_method_%s_' %
-        present_tense_name, ('action', equiv_method))
-
-    # Automatically create the "paste-tense" equivalence method for the
-    # expression class which returns the right side.
-    """
-    if hasattr(expr_class, past_tense_name):
-        raise Exception(
-            "Should not manually define '%s' in class '%s'.  This "
-            "'past-tense' equivalence method will be generated "
-            "automatically by registering it in InnerExpr." %
-            (past_tense_name, str(expr_class)))
-    """
-
-    def equiv_rhs(expr, *args, **kwargs):
-        return getattr(expr, equiv_method)(*args, **kwargs).rhs
-    equiv_rhs.__name__ = past_tense_name
-    equiv_rhs.__doc__ = (
-            "Return an equivalent form of this expression derived via '%s'." 
-            % equiv_method)
-    setattr(expr_class, past_tense_name, equiv_rhs)
-
 class InconsistentTenseNames(Exception):
-    def __init__(self, noun, previous_tenses, current_tenses):
-        self.noun = noun
+    def __init__(self, func, previous_tenses, current_tenses):
+        self.func = func
         self.previous_tenses = previous_tenses
         self.current_tenses = current_tenses
     
     def __str__(self):
-        return ("Past and present tenses of an @equivalence_prover called "
-                "%s are inconsistent with another occurrence: %s vs %s. "
-                "It may be a typo."%(self.noun, self.previous_tenses,
-                                     self.current_tenses))
+        return ("Past and present tenses for %s are inconsistent "
+                "with another occurrence: %s vs %s.  It may be a typo."
+                %(self.func, self.previous_tenses, 
+                  self.current_tenses))

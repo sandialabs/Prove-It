@@ -111,7 +111,7 @@ class Sum(OperationOverInstances):
             return OperationOverInstances._formatted(self, format_type, fence)
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Sum
         expression assuming the operands have been simplified.

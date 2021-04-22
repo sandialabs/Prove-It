@@ -477,7 +477,8 @@ class Operation(Expression):
                 formatted_str += ')' if format_type == 'string' else r'\right)'
             return formatted_str
 
-    def basic_replaced(self, repl_map, allow_relabeling, requirements):
+    def basic_replaced(self, repl_map, *, 
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions substituted
         according to the replacement map (repl_map) dictionary.
@@ -512,11 +513,13 @@ class Operation(Expression):
 
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator = \
-            self.operator.basic_replaced(repl_map, allow_relabeling,
-                                         requirements)
+            self.operator.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
         subbed_operands = \
-            self.operands.basic_replaced(repl_map, allow_relabeling,
-                                         requirements)
+            self.operands.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
 
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
@@ -557,18 +560,18 @@ class Operation(Expression):
             style_preferences=self._style_data.styles)
 
     @equivalence_prover('evaluated', 'evaluate')
-    def evaluation(self, **kwargs):
+    def evaluation(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to an
         irreducible value.  This Operation.evaluation version
         tries Expression.evaluation; if that fails, it simplifies
         the operands and calls "shallow_evaluation".
         '''
-        from proveit import EvaluationError
+        from proveit.logic import EvaluationError
         try:
             # First try default, generic Expression strategies.
             return Expression.evaluation(self)
-        except EvaluationError:
+        except (EvaluationError, NotImplementedError):
             pass
         
         # If the default didn't work, try to simplify the operands
@@ -581,7 +584,7 @@ class Operation(Expression):
         return reduction.apply_transitivity(evaluation)
 
     @equivalence_prover('simplified', 'simplify')
-    def simplification(self, **kwargs):
+    def simplification(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
@@ -592,7 +595,7 @@ class Operation(Expression):
         simplifying to an irreducible value).  If that fails, it
         simplifies the operands and calls "shallow_simplification".
         '''
-        from proveit import EvaluationError
+        from proveit.logic import EvaluationError
         try:
             # First try to perform an evaluation (which is the best
             # possible simplification).

@@ -260,11 +260,8 @@ class ComplexNonZeroSet(NumberSet):
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_complex(member,
-                                                                assumptions)
-        yield lambda assumptions: self.deduce_member_not_zero(member, 
-                                                              assumptions)
-    
+        yield lambda: self.deduce_member_in_complex(member)
+        yield lambda: self.deduce_member_not_zero(member)
     def deduce_member_not_zero(self, member, assumptions=USE_DEFAULTS):
         from . import nonzero_if_in_complex_nonzero
         return nonzero_if_in_complex_nonzero.instantiate(

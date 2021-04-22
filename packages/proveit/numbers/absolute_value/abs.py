@@ -35,8 +35,7 @@ class Abs(NumberOperation):
         return abs_is_non_neg.instantiate(
             {a: self.operand}, assumptions=assumptions)
 
-    def distribution(self, assumptions=USE_DEFAULTS,
-                     reductions=USE_DEFAULTS):
+    def distribution(self, assumptions=USE_DEFAULTS):
         '''
         Equate this absolute value with its distribution over a product
         or fraction.
@@ -45,19 +44,14 @@ class Abs(NumberOperation):
         from proveit import n, x
         from proveit.numbers import Neg, Div, Mult
         if isinstance(self.operand, Neg):
-            return abs_even.instantiate({x: self.operand.operand},
-                                        assumptions=assumptions,
-                                        reductions=reductions)
+            return abs_even.instantiate({x: self.operand.operand})
         elif isinstance(self.operand, Div):
             return abs_frac.instantiate(
-                {a: self.operand.numerator, b: self.operand.denominator},
-                assumptions=assumptions, reductions=reductions)
+                {a: self.operand.numerator, b: self.operand.denominator})
         elif isinstance(self.operand, Mult):
             _x = self.operand.operands
             _n = _x.num_elements(assumptions)
-            return abs_prod.instantiate(
-                {n: _n, x: _x},
-                assumptions=assumptions, reductions=reductions)
+            return abs_prod.instantiate({n: _n, x: _x})
         else:
             raise ValueError(
                 'Unsupported operand type for Abs.distribution() '
@@ -99,7 +93,7 @@ class Abs(NumberOperation):
                                            reductions=reductions)
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, assumptions=USE_DEFAULTS):
+    def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Abs
         expression assuming the operand has been simplified.
@@ -124,7 +118,6 @@ class Abs(NumberOperation):
         from proveit.numbers import zero, RealNonNeg, RealNonPos
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
-        assumptions = defaults.checked_assumptions(assumptions)
 
         # Check if we can establish the relationship between
         # self.operand and zero.
@@ -133,17 +126,14 @@ class Abs(NumberOperation):
             # be fairly efficient, as long as there aren't too
             # many known relationship directly or indirectly involving
             # self.operand or zero.
-            relation_with_zero = LessEq.sort([zero, self.operand],
-                                             assumptions=assumptions)
+            relation_with_zero = LessEq.sort([zero, self.operand])
             if relation_with_zero.normal_lhs == zero:
                 # x ≥ 0 so that |x| = x
-                return self.abs_elimination(operand_type='non-negative',
-                                            assumptions=assumptions)
+                return self.abs_elimination(operand_type='non-negative')
             else:
                 # x ≤ 0 so that |x| = -x
                 assert relation_with_zero.normal_rhs == zero
-                return self.abs_elimination(operand_type='negative',
-                                            assumptions=assumptions)
+                return self.abs_elimination(operand_type='negative')
         except ProofFailure:
             # We don't know whether self.operand is less than
             # or greater than zero.  Carry on.
@@ -151,24 +141,15 @@ class Abs(NumberOperation):
         
         if isinstance(self.operand, Abs):
             # Double absolute-value.  We can remove one of them.
-            return self.double_abs_elimination(assumptions=assumptions)
+            return self.double_abs_elimination()
 
         # Distribute over a product or division.
         if (isinstance(self.operand, Mult) or isinstance(self.operand, Div)
                 or isinstance(self.operand, Neg)):
             # Let's distribute the absolute values over the product
-            # or division, simplifying the absolute value of the 
-            # fatcors/components seperately.
-            reductions = set()
-            for component in self.operand.operands:
-                reductions.add(Abs(component).simplification(
-                        assumptions=assumptions))
-            # Update with the distribution.
-            distribution = self.distribution(reductions=reductions,
-                                     assumptions=assumptions)
-            # Try a shallow simplification now.  TODO
-            return distribution.inner_expr().rhs.simplify(
-                    assumptions=assumptions) # shallow=True
+            # or division (the absolute value of the factors/components
+            # will be simplified seperately if auto_simplify is True).
+            return self.distribution()
 
         # |exp(i a)| = 1
         if isinstance(self.operand, Exp) and self.operand.base == e:
@@ -176,8 +157,7 @@ class Abs(NumberOperation):
                 # Grab the polar coordinate angle without automation so we 
                 # don't waste time if it isn't in a unit complex polar form
                 # (or obviously equivalent to this form).
-                return self.unit_length_simplification(
-                        assumptions=assumptions, automation=False)
+                return self.unit_length_simplification(automation=False)
             except ValueError:
                 # Not in a complex polar form.
                 pass
@@ -189,8 +169,7 @@ class Abs(NumberOperation):
                 # Grab polar coordinates without automation so we don't
                 # waste time if it isn't in a complex polar form (or 
                 # obviously equivalent to this form).
-                return self.chord_length_simplification(
-                        assumptions=assumptions, automation=False)
+                return self.chord_length_simplification(automation=False)
             except ValueError:
                 # Not in a complex polar form.
                 pass
@@ -205,21 +184,21 @@ class Abs(NumberOperation):
                 # Note that "not proven" is not the same as "disproven".
                 # Not proven means there is something we do not know.
                 # Disproven means that we do know the converse.
-                if all_nonneg and not LessEq(zero, term).proven(assumptions):
+                if all_nonneg and not LessEq(zero, term).proven():
                     all_nonneg = False
-                if all_nonpos and not LessEq(term, zero).proven(assumptions):
+                if all_nonpos and not LessEq(term, zero).proven():
                     all_nonpos = False
             if all_nonpos:
-                InSet(self.operand, RealNonPos).prove(assumptions)
+                InSet(self.operand, RealNonPos).prove()
             elif all_nonneg:
-                InSet(self.operand, RealNonNeg).prove(assumptions)
+                InSet(self.operand, RealNonNeg).prove()
             if all_nonpos or all_nonneg:
                 # Do another pass now that we know the sign of
                 # the operand.
-                return self.do_reduced_simplification(assumptions)
+                return self.do_reduced_simplification()
 
         # Default is no simplification.
-        return Equals(self, self).prove(assumptions)
+        return Equals(self, self).prove()
     
     def difference_reversal(self, assumptions=USE_DEFAULTS):
         '''

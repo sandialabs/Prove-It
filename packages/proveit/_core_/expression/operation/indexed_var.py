@@ -57,7 +57,8 @@ class IndexedVar(Function):
         yield self.var
         yield self.index_or_indices
 
-    def basic_replaced(self, repl_map, allow_relabeling,  requirements):
+    def basic_replaced(self, repl_map, *,
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions substituted
         according to the replacement map (repl_map) dictionary.
@@ -70,8 +71,9 @@ class IndexedVar(Function):
         base_var = self.var
         base_var_sub = repl_map.pop(base_var, None)
         replaced_sans_base_var_sub = \
-            Expression.basic_replaced(self, repl_map, allow_relabeling,
-                                      requirements)
+            Expression.basic_replaced(self, repl_map, 
+                                      allow_relabeling=allow_relabeling,
+                                      requirements=requirements)
         if base_var_sub is None:
             # base_var wasn't in repl_map in the first place, so
             # attempting to remove it had no effect.
@@ -83,8 +85,9 @@ class IndexedVar(Function):
             repl_map[base_var] = base_var_sub
         # As the last resort, do the replacement with the
         # base_var in the repl_map.
-        return Expression.basic_replaced(self, repl_map, allow_relabeling,
-                                         requirements)
+        return Expression.basic_replaced(
+                self, repl_map, allow_relabeling=allow_relabeling,
+                requirements=requirements)
 
     def _function_formatted(self, format_type, **kwargs):
         indices_str = self.index_or_indices.formatted(format_type, fence=False)

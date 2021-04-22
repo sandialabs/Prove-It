@@ -1,6 +1,7 @@
 import sys
 from proveit import (Lambda, Literal, Function, TransitiveRelation, 
-                     StyleOptions, USE_DEFAULTS, defaults)
+                     StyleOptions, USE_DEFAULTS, defaults,
+                     prover, equivalence_prover)
 from proveit import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
@@ -244,30 +245,24 @@ class Gate(Function):
         else:
             self.gate_operation = self.operands[0]
 
-    def auto_reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
-        Automatically reduce "Gate() = IdentityOp()".
+        Handles "Gate() = IdentityOp()", "Gate(Input(U)) = Input(U)",
+        and  "Gate(Output(U)) = Output(U)".
         '''
         if self.operands.num_entries() == 0:
             from proveit.physics.quantum import empty_gate
-            with defaults.disabled_auto_reduction_types as disable_reduction_types:
-                disable_reduction_types.add(Gate)
-                return empty_gate
+            return empty_gate
 
         if isinstance(self.gate_operation, Input):
             from proveit.physics.quantum import input_gate_to_ket
-            # with defaults.disabled_auto_reduction_types as disable_reduction_types:
-            #   disable_reduction_types.add(Gate)
-
             return input_gate_to_ket.instantiate(
-                {U: self.gate_operation.state}, assumptions=assumptions)
+                {U: self.gate_operation.state})
         elif isinstance(self.gate_operation, Output):
             from proveit.physics.quantum import output_gate_to_ket
-            # with defaults.disabled_auto_reduction_types as disable_reduction_types:
-            #   disable_reduction_types.add(Gate)
-
             return output_gate_to_ket.instantiate(
-                {U: self.gate_operation.state}, assumptions=assumptions)
+                {U: self.gate_operation.state})
 
     def style_options(self):
         '''
@@ -377,15 +372,17 @@ class MultiQubitGate(Function):
             call_strs.append("with_styles(representation='implicit')")
         return call_strs
 
-    def auto_reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
-        Automatically reduce "MultiQubitGate(a, Set()) = IdentityOp()" and "MultiQubitGate(a, Set(n)) = Gate(a)".
+        Handles "MultiQubitGate(a, Set()) = IdentityOp()" and
+        "MultiQubitGate(a, Set(n)) = Gate(a)".
         '''
         from proveit.numbers import is_literal_int
         if (isinstance(self.gate_set, Set) and self.gate_set.operands.is_single()
                 and is_literal_int(self.gate_set.operands[0])):
             try:
-                return self.unary_reduction(assumptions)
+                return self.unary_reduction()
             except BaseException:
                 # Cannot do the reduction if the operand is not known
                 # to be in NaturalPos.
@@ -393,7 +390,7 @@ class MultiQubitGate(Function):
 
         if (isinstance(self.gate_set, Set) and 
                 self.gate_set.operands.num_entries() == 0):
-            return self.empty_set_reduction(assumptions)
+            return self.empty_set_reduction()
             # need to implement an empty set reduction theorem
 
     def style_options(self):
@@ -421,28 +418,26 @@ class MultiQubitGate(Function):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def unary_reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('unary_reduced', 'unary_reduce')
+    def unary_reduction(self, **defaults_config):
         from proveit.physics.quantum import unary_multi_qubit_gate_reduction
 
         if not self.gate_set.operands.is_single():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unary_reduction")
         operand = self.gate_set.operands[0]
-        with defaults.disabled_auto_reduction_types as disable_reduction_types:
-            disable_reduction_types.add(MultiQubitGate)
-            return unary_multi_qubit_gate_reduction.instantiate(
-                {U: self.gate, A: operand}, assumptions=assumptions)
+        return unary_multi_qubit_gate_reduction.instantiate(
+            {U: self.gate, A: operand})
 
-    def empty_set_reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('empty_set_reduced', 'empty_set_reduce')
+    def empty_set_reduction(self, **defaults_config):
         from proveit.physics.quantum import empty_multi_qubit_gate_reduction
         if not self.gate_set.operands.num_entries() == 0:
             raise ValueError("Expression must have an empty Set() in "
                              "order to invoke empty_set_reduction")
         #operand = self.gate_set
-        with defaults.disabled_auto_reduction_types as disable_reduction_types:
-            disable_reduction_types.add(MultiQubitGate)
-            return empty_multi_qubit_gate_reduction.instantiate(
-                {U: self.gate}, assumptions=assumptions)
+        return empty_multi_qubit_gate_reduction.instantiate(
+            {U: self.gate})
 
     def formatted(self, format_type, representation=None, solo=True, **kwargs):
         if representation is None:

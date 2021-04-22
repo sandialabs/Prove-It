@@ -89,7 +89,7 @@ class Exp(NumberOperation):
             return complex.theorems.pow_closure
 
     @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **kwargs):
+    def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Exp
         expression assuming the operands have been simplified or
@@ -141,7 +141,7 @@ class Exp(NumberOperation):
                                   assumptions)
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Exp
         expression assuming the operands have been simplified.

@@ -391,8 +391,8 @@ class Or(Operation):
                 C: conclusion},
             assumptions=assumptions).derive_conclusion(assumptions).derive_conclusion(assumptions)
 
-    @equivalence_prover('evaluated', 'evaluate')
-    def shallow_evaluation(self, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this disjunction, with
         simplified operands, evaluates to TRUE or FALSE under the given 
@@ -430,7 +430,7 @@ class Or(Operation):
 
     """
     @equivalence_prover('evaluated', 'evaluate')
-    def evaluation(self, **kwargs):
+    def evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this disjunction evaluates
         to true or false under the given assumptions.  If automation
@@ -492,7 +492,7 @@ class Or(Operation):
     """
     
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Return the "And(a) = a" simplification if applicable,
         or the default reflexive equality otherwise.
@@ -660,7 +660,8 @@ class Or(Operation):
 
         return permuted_disjunction
 
-    def unary_reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('unary_reduced', 'unary_reduce')
+    def unary_reduction(self, **defaults_config):
         '''
         For the degenerate case of Or(A), where A is Boolean, derive
         and return |–[V](A) = A. For example, calling
@@ -675,10 +676,7 @@ class Or(Operation):
                              "single operand in order to invoke the "
                              "unary_or_reduction theorem.")
         operand = self.operands[0]
-        with defaults.disabled_auto_reduction_types as disable_reduction_types:
-            disable_reduction_types.add(Or)
-            return unary_or_reduction.instantiate({A: operand},
-                                                  assumptions=assumptions)
+        return unary_or_reduction.instantiate({A: operand})
 
     def commutation(
             self,

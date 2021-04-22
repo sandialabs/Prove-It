@@ -17,13 +17,6 @@ class IrreducibleValue:
     def irreducible_value(self):
         return True
 
-    def evaluation(self):
-        '''
-        IrreducibleValues evaluate to themselves.
-        '''
-        from proveit.logic import Equals
-        return Equals(self, self).prove()
-
     def eval_equality(self, other_irreducible, assumptions=USE_DEFAULTS):
         '''
         Returns the evaluation of the equality between this irreducible

@@ -6,7 +6,8 @@ from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.theory import Theory
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaning_data, style_data
-from proveit.decorators import prover, equivalence_prover
+from proveit.decorators import (prover, equivalence_prover,
+                                _equiv_prover_fn_to_tenses)
 import sys
 import re
 import inspect
@@ -50,6 +51,8 @@ class ExprType(type):
 
     def __init__(cls, *args, **kwargs):
         type.__init__(cls, *args, **kwargs)
+        
+        # Register the '_operator_' if there is one.
         if hasattr(cls, '_operator_'):
             from proveit._core_.expression.operation import Operation
             from proveit._core_.expression.label.literal import Literal
@@ -61,6 +64,9 @@ class ExprType(type):
         if not hasattr(cls, '__init__'):
             raise TypeError("%s, an Expression-derived class, must have an "
                             "__init__ method"%cls)
+        
+        # Check that the __init__ method of the Expression class
+        # has a 'styles' method that is keyword only.
         def raise_invalid_styles_init_arg():
             raise TypeError(
                     "The __init__ method of %s, an Expression-derived "
@@ -75,6 +81,76 @@ class ExprType(type):
         if (styles_param.kind != inspect.Parameter.KEYWORD_ONLY or
                 styles_param.default not in (None, inspect.Parameter.empty)):
             raise_invalid_styles_init_arg()
+        
+        # Register @equivalence_prover methods.
+        for attr, val in list(cls.__dict__.items()):
+            if callable(val) and val in _equiv_prover_fn_to_tenses:
+                fn = val
+                past_tense, present_tense = _equiv_prover_fn_to_tenses[fn]
+                cls._register_equivalence_method(
+                        fn, past_tense, present_tense)
+
+    def _register_equivalence_method(
+            cls, equiv_method, past_tense_name, present_tense_name):
+        '''
+        Register a method of an expression class that is used to derive
+        and return (as a Judgment) the equivalence of that expression 
+        on the left side with a new form on the right side.
+        (e.g., 'simplification', 'evaluation', 'commutation', 
+        'association').
+        In addition to the expression class and the method (as a name or 
+        function object), also provide the "past-tense" form of the name 
+        for deriving the equivalence and returning the right side, and 
+        provide the "action" form of the name that may be used to make
+        the replacement directly within a Judgment to produce a revised 
+        Judgment.  The "past-tense" version will be added automatically
+        as a method to the given expression class with an appropriate
+        doc string.
+        '''
+        if not isinstance(equiv_method, str):
+            # can be a string or a function:
+            equiv_method = equiv_method.__name__
+        if not hasattr(cls, equiv_method):
+            raise Exception(
+                "Must have '%s' method defined in class '%s' in order to "
+                "register it as an equivalence method in InnerExpr." %
+                (equiv_method, str(cls)))
+    
+        # Store information in the Expression class that will enable 
+        # calling InnerExpr methods when an expression of that type
+        # is the inner expression for generating equivalences or
+        # performing in-place replacements.
+        setattr(
+            cls, '_equiv_method_%s_' %
+            equiv_method, ('equiv', equiv_method))
+        setattr(
+            cls, '_equiv_method_%s_' %
+            past_tense_name, ('rhs', equiv_method))
+        setattr(
+            cls, '_equiv_method_%s_' %
+            present_tense_name, ('action', equiv_method))
+    
+        # Automatically create the "past-tense" equivalence method for
+        # the expression class which returns the right side.
+        """
+        # Doesn't work with overloading.  Must be fixed. To use this
+        # check.
+        if hasattr(cls, past_tense_name):
+            raise Exception(
+                "Should not manually define '%s' in class '%s'.  This "
+                "'past-tense' equivalence method will be generated "
+                "automatically by registering it in InnerExpr." %
+                (past_tense_name, str(cls)))
+        """
+    
+        def equiv_rhs(expr, *args, **kwargs):
+            return getattr(expr, equiv_method)(*args, **kwargs).rhs
+        equiv_rhs.__name__ = past_tense_name
+        equiv_rhs.__doc__ = (
+                "Return an equivalent form of this expression derived "
+                "via '%s'."% equiv_method)
+        setattr(cls, past_tense_name, equiv_rhs)
+
 
 class Expression(metaclass=ExprType):
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
@@ -87,6 +163,11 @@ class Expression(metaclass=ExprType):
     # Map Expression classes to their proper paths (as returned
     # by the Expression._class_path method).
     class_paths = dict()
+    
+    # Map simplification directive identifiers to expressions
+    # that have been simplified under the corresponding directive.
+    # See decorators.py in the proveit package.
+    simplified_exprs = dict()
     
     """
     # Map "labeled meaning ids" of expressions to default styles.
@@ -206,10 +287,6 @@ class Expression(metaclass=ExprType):
             self._canonical_expr = self
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
-
-        # Used to indicate that this expression is a simplified
-        # expression under this set of simplification directive ids:
-        self._simplified_under_these_directive_ids = set()
         
         """
         if defaults.use_consistent_styles:
@@ -382,40 +459,6 @@ class Expression(metaclass=ExprType):
         if attr[0] != '_' and attr in self.__dict__:
             raise Exception("Attempting to alter read-only value '%s'" % attr)
         self.__dict__[attr] = value
-
-    def __getattribute__(self, name):
-        '''
-        Intercept the application of 'auto_reduction', not executing
-        it if the reduction is disabled for its particular type, and
-        temporarily disabling it during the execution to avoid
-        infinite recursion
-        '''
-        attr = object.__getattribute__(self, name)
-        if name == 'auto_reduction':
-            # The class where the "auto_reduction" method is actually
-            # defined (which may be different than self.__class__ and
-            # is more appropriate):
-            attr_self_class = attr.__self__.__class__
-            if (attr_self_class
-                    in defaults.disabled_auto_reduction_types):
-                # This specific auto reduction is disabled, so skip it.
-                return lambda assumptions: None
-
-            def safe_auto_reduction(assumptions=USE_DEFAULTS):
-                was_disabled = (attr_self_class in
-                                defaults.disabled_auto_reduction_types)
-                try:
-                    # The specific auto reduction must be disabled
-                    # to avoid infinite recursion.
-                    defaults.disabled_auto_reduction_types.add(attr_self_class)
-                    return attr.__call__(assumptions=assumptions)
-                finally:
-                    # Re-enable the reduction.
-                    if not was_disabled:
-                        defaults.disabled_auto_reduction_types.remove(
-                            attr_self_class)
-            return safe_auto_reduction
-        return attr
 
     def __repr__(self):
         return str(self)  # just use the string representation
@@ -744,11 +787,11 @@ class Expression(metaclass=ExprType):
                     try:
                         # first attempt to prove via implication
                         concluded_truth = self.conclude_via_implication(
-                            assumptions)
+                                assumptions=assumptions)
                     except ProofFailure:
                         # try the 'conclude' method of the specific Expression
                         # class
-                        concluded_truth = self.conclude(assumptions)
+                        concluded_truth = self.conclude(assumptions=assumptions)
                 if concluded_truth is None:
                     raise ProofFailure(
                         self, assumptions, "Failure to automatically 'conclude'")
@@ -830,13 +873,14 @@ class Expression(metaclass=ExprType):
         raise NotImplementedError(
             "'conclude' not implemented for " + str(self.__class__))
 
-    def conclude_via_implication(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_implication(self, **defaults_config):
         '''
         Attempt to conclude this expression via applying
         modus ponens of known implications.
         '''
         from proveit.logic import conclude_via_implication
-        return conclude_via_implication(self, assumptions)
+        return conclude_via_implication(self)
 
     def conclude_negation(self, assumptions=USE_DEFAULTS):
         '''
@@ -864,10 +908,10 @@ class Expression(metaclass=ExprType):
         return iter(())
 
     def is_simplified(self):
-        return (defaults.get_simplification_directives_id() in
-                self._simplified_under_these_directive_ids)
+        directive_id = defaults.get_simplification_directives_id()
+        return self in Expression.simplified_exprs.get(directive_id, tuple())
 
-    def replaced(self, repl_map, allow_relabeling=False, 
+    def replaced(self, repl_map, *, allow_relabeling=False, 
                  requirements=None, equality_repl_requirements=None):
         '''
         Returns this expression with sub-expressions replaced
@@ -916,7 +960,8 @@ class Expression(metaclass=ExprType):
         return replacement.equality_replaced(
                 requirements, equality_repl_requirements)
 
-    def basic_replaced(self, repl_map, allow_relabeling, requirements):
+    def basic_replaced(self, repl_map, *, 
+                       allow_relabeling=False, requirements=None):
         '''
         Implementation for Expression.replaced except for equality
         replacements.
@@ -926,8 +971,9 @@ class Expression(metaclass=ExprType):
         else:
             sub_exprs = self._sub_expressions
             subbed_sub_exprs = tuple(
-                    sub_expr.basic_replaced(repl_map, allow_relabeling,
-                                            requirements)
+                    sub_expr.basic_replaced(
+                            repl_map, allow_relabeling=allow_relabeling,
+                            requirements=requirements)
                     for sub_expr in sub_exprs)
             if all(subbed_sub._style_id == sub._style_id for
                    subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
@@ -988,12 +1034,12 @@ class Expression(metaclass=ExprType):
         elif defaults.auto_simplify and not self.is_simplified():
             try:
                 replacement = self.simplification()
+                if replacement.rhs == self:
+                    # Trivial simplification -- don't use it.
+                    replacement = None
             except (SimplificationError, UnsatisfiedPrerequisites, 
-                    ProofFailure):
+                    NotImplementedError, ProofFailure):
                 # Failure in the simplification attempt; just skip it.
-                replacement = None
-            if replacement.rhs == self:
-                # Trivial simplification -- don't use it.
                 replacement = None
 
         # Do we have a replacement at this level?
@@ -1001,7 +1047,7 @@ class Expression(metaclass=ExprType):
             # Recurse into the sub-expressions.
             sub_exprs = self._sub_expressions
             subbed_sub_exprs = \
-                tuple(sub_expr.equality_replaced(
+                tuple(sub_expr._equality_replaced(
                         equality_repl_map, requirements,
                         equality_repl_requirements)
                       for sub_expr in sub_exprs)
@@ -1097,7 +1143,7 @@ class Expression(metaclass=ExprType):
         return safe_dummy_vars(n, self)
     
     @equivalence_prover('evaluated', 'evaluate')
-    def evaluation(self, **kwargs):
+    def evaluation(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to an
         irreducible value.  In the @equivalence_prover decorator
@@ -1138,7 +1184,7 @@ class Expression(metaclass=ExprType):
         raise EvaluationError(self)
 
     @equivalence_prover('simplified', 'simplify')
-    def simplification(self, **kwargs):
+    def simplification(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
@@ -1166,9 +1212,8 @@ class Expression(metaclass=ExprType):
             # (no simplification).
             return Equals(self, self).prove()
 
-    @equivalence_prover('shallow_evaluated', 
-                        'shallow_evaluate')
-    def shallow_evaluation(self, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate 'self' under the assumption that it's
         operands (sub-expressions) have already been simplified.
@@ -1180,12 +1225,11 @@ class Expression(metaclass=ExprType):
         cannot be done.
         '''
         raise NotImplementedError(
-            "'post_reduction_evaluation' not implemented for %s class" % str(
+            "'shallow_evaluation' not implemented for %s class" % str(
                 self.__class__))
 
-    @equivalence_prover('shallow_simplified', 
-                        'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
         Attempt to simplify 'self' under the assumption that it's
         operands (sub-expressions) have already been simplified.

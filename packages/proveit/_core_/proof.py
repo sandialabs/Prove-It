@@ -154,12 +154,12 @@ class Proof:
             raise UnusableProof(
                 Judgment.theorem_being_proven,
                 self._meaning_data._unusable_proof)
-        if proven_truth.proof() == self and self.is_usable(
-        ):  # Don't bother with side effects if this proof was born 
+        if proven_truth.proof() == self and self.is_usable(): 
+            # Don't bother with side effects if this proof was born 
             # obsolete or unusable.  May derive any side-effects that 
             # are obvious consequences arising from this truth
             # (if it has not already been processed):
-            proven_truth.derive_side_effects(defaults.assumptions)
+            proven_truth.derive_side_effects()
 
     def _updateDependencies(self, newproof):
         '''
@@ -611,7 +611,9 @@ class Assumption(Proof):
             # given assumptions.
             # This can happen when automation is temporarily disabled or
             # when assumptions change.
-            preexisting.proven_truth.derive_side_effects(assumptions)
+            with defaults.temporary() as temp_defaults:
+                temp_defaults.assumptions = assumptions
+                preexisting.proven_truth.derive_side_effects()
             return preexisting
         return Assumption(expr, assumptions)
 
@@ -1083,7 +1085,7 @@ class Instantiation(Proof):
                 subbed_assumption = Lambda._apply(
                     relabel_params, assumption, *relabel_param_replacements,
                     allow_relabeling=True, equiv_alt_expansions=None,
-                    assumptions=assumptions, requirements=requirements)
+                    requirements=requirements)
                 subbed_assumption = subbed_assumption.equality_replaced(
                         requirements=requirements,
                         equality_repl_requirements=equality_repl_requirements)
@@ -1335,11 +1337,11 @@ class Instantiation(Proof):
                 return expr
             instantiated = Lambda._apply(
                 params, expr, *operands, allow_relabeling=True,
-                equiv_alt_expansions=active_equiv_alt_expansions,
-                assumptions=assumptions)
-            return instantiated.equality_replaced(
+                equiv_alt_expansions=active_equiv_alt_expansions)
+            eq_replaced = instantiated.equality_replaced(
                     requirements=requirements,
                     equality_repl_requirements=equality_repl_requirements)
+            return eq_replaced
 
         remaining_forall_eliminations = num_forall_eliminations
         while remaining_forall_eliminations > 0:

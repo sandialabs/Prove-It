@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
+from proveit import (Literal, Operation, USE_DEFAULTS, ProofFailure,
+                     prover, equivalence_prover)
 from proveit.logic.booleans.booleans import in_bool
 from proveit import A, x, y, S
 
@@ -90,7 +91,7 @@ class Not(Operation):
         return out_str
 
     @equivalence_prover('evaluated', 'evaluate')
-    def evaluation(self, **kwargs):
+    def evaluation(self, **defaults_config):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
@@ -102,6 +103,16 @@ class Not(Operation):
             # evaluate to FALSE via falsified_negation_intro
             return falsified_negation_intro.instantiate({A: self.operand})
         return Operation.evaluation(self)
+
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **defaults_config):
+        from proveit.logic import TRUE, FALSE, EvaluationError
+        from . import not_t, not_f  # load in truth-table evaluations
+        if self.operand == TRUE:
+            return not_t
+        elif self.operand == FALSE:
+            return not_f
+        raise EvaluationError(self)
 
     def substitute_in_false(self, lambda_map, assumptions=USE_DEFAULTS):
         '''

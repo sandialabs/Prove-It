@@ -64,7 +64,7 @@ class Div(NumberOperation):
         return Operation.remake_constructor(self)
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Divide
         expression assuming the operands have been simplified.
@@ -74,17 +74,17 @@ class Div(NumberOperation):
         from proveit.numbers import one
         expr = self
         # for convenience updating our equation
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations(assumptions))
+        expr = eq.update(expr.cancelations())
         if not isinstance(expr, Div):
             # complete cancelation.
             return eq.relation
 
         if self.denominator == one:
             # eliminate division by one
-            eq.update(expr.eliminate_divide_by_one(assumptions))
+            eq.update(expr.eliminate_divide_by_one())
             return eq.relation  # no more division simplifications.
 
         return eq.relation

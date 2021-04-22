@@ -6,7 +6,7 @@ from ._core_ import (
     defaults, USE_DEFAULTS, InvalidAssumptions, Theory,
     TheoryException,
     Expression, traverse_inner_expressions, used_vars,
-    possibly_free_var_ranges, free_vars, attempt_to_simplify,
+    possibly_free_var_ranges, free_vars,
     InnerExpr, generate_inner_expressions, expression_depth,
     Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError,

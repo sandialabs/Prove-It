@@ -1,3 +1,4 @@
+from proveit.decorators import prover, equivalence_prover
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -134,16 +135,36 @@ class Conditional(Expression):
         raise EvaluationError(self, assumptions)
     '''
 
-    def auto_reduction(self, assumptions=USE_DEFAULTS):
+
+    @equivalence_prover('simplified', 'simplify')
+    def simplification(self, **defaults_config):
+        from proveit.relation import TransRelUpdater
+        
+        expr = self
+        eq = TransRelUpdater(expr)
+        if not self.value.is_simplified():
+            # Simplify the 'value'.
+            expr = eq.update(
+                    expr.value_substitution(self.value.simplification()))
+        if not self.condition.is_simplified():
+            # Simplify the 'condition'.
+            expr = eq.update(
+                    expr.condition_substitution(
+                            self.condition.simplification()))
+        # Perform a shallow simplifation on this Conditional.
+        eq.update(expr.shallow_simplification())
+        
+        return eq.relation
+
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
-        Automatically reduce a conditional with a TRUE condition
-        or with a condition that is a conjunction of two conjunctions,
-        merging them into one.  This latter reduction is useful when
-        merging conditions from two sources.  For example, showing\
-        that
-        \forall_{x | A, B} \forall_{y | C, D} P(x, y) =
-           \forall_{x, y | A, B, C, D} P(x, y)
-        would make use of this reduction.
+        Handles various Conditional reductions:
+            {a if T.  =  a
+            {{a if Q. if Q.  =  {a if Q.
+            {a if [⋀](Q).  =  {a if Q.
+            {a if a ⋀ b, c ⋀ d.  =  {a if a ⋀ b ⋀ c ⋀ d.
+            etc.
         '''
         from proveit import a, m, n, Q, R
         from proveit.logic import And, TRUE
@@ -156,8 +177,7 @@ class Conditional(Expression):
             from proveit.core_expr_types.conditionals import \
                 redundant_condition_reduction
             return redundant_condition_reduction.instantiate(
-                    {a: self.value.value, Q: self.condition},
-                    assumptions = assumptions)            
+                    {a: self.value.value, Q: self.condition})            
         elif isinstance(self.condition, And):
             from proveit.core_expr_types.conditionals import \
                 (singular_conjunction_condition_reduction,
@@ -167,35 +187,29 @@ class Conditional(Expression):
                  condition_with_true_on_right_reduction)
             conditions = self.condition.operands
             if is_single(conditions):
-                with defaults.disabled_auto_reduction_types as disabled_types:
-                    # Don't auto-reduce 'And' in this process
-                    disabled_types.discard(And)
-                    return singular_conjunction_condition_reduction \
-                        .instantiate({a: self.value, Q: conditions[0]})
+                return singular_conjunction_condition_reduction \
+                    .instantiate({a: self.value, Q: conditions[0]})
             elif (conditions.num_entries() == 2 
                       and isinstance(conditions[0], And)):
                 _Q = conditions[0].operands
-                _m = _Q.num_elements(assumptions)
+                _m = _Q.num_elements()
                 return condition_append_reduction.instantiate(
-                    {a: self.value, m: _m, Q: _Q, R: conditions[1]},
-                    assumptions=assumptions)
+                    {a: self.value, m: _m, Q: _Q, R: conditions[1]})
             elif (conditions.num_entries() == 2 
                       and isinstance(conditions[1], And)):
                 _R = conditions[1].operands
-                _n = _R.num_elements(assumptions)
+                _n = _R.num_elements()
                 return condition_prepend_reduction.instantiate(
-                    {a: self.value, n: _n, Q: conditions[0], R: _R},
-                    assumptions=assumptions)
+                    {a: self.value, n: _n, Q: conditions[0], R: _R})
             elif (conditions.num_entries() == 2 and
                     all(isinstance(cond, And) for cond in conditions)):
                 _Q = conditions[0].operands
                 _R = conditions[1].operands
-                _m = _Q.num_elements(assumptions)
-                _n = _R.num_elements(assumptions)
+                _m = _Q.num_elements()
+                _n = _R.num_elements()
                 _a = self.value
                 return condition_merger_reduction.instantiate(
-                    {m: _m, n: _n, a: _a, Q: _Q, R: _R},
-                    assumptions=assumptions)
+                    {m: _m, n: _n, a: _a, Q: _Q, R: _R})
             elif (conditions.num_entries() == 2 and
                     any(isinstance(cond, And) for cond in conditions) and
                     any(cond == TRUE for cond in conditions)):
@@ -206,12 +220,12 @@ class Conditional(Expression):
                     assert conditions[1] == TRUE
                     thm = condition_with_true_on_right_reduction
                     _Q = conditions[0].operands
-                _m = _Q.num_elements(assumptions)
+                _m = _Q.num_elements()
                 _a = self.value
-                return thm.instantiate({m: _m, a: _a, Q: _Q},
-                                       assumptions=assumptions)
+                return thm.instantiate({m: _m, a: _a, Q: _Q})
 
-    def basic_replaced(self, repl_map, allow_relabeling, requirements):
+    def basic_replaced(self, repl_map, *,
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary.
@@ -233,15 +247,17 @@ class Conditional(Expression):
         condition = self.condition
 
         # First perform substitution on the conditions:
-        subbed_cond = condition.basic_replaced(repl_map, allow_relabeling,
-                                               requirements)
+        subbed_cond = condition.basic_replaced(
+                repl_map, allow_relabeling=allow_relabeling,
+                requirements=requirements)
 
         # Next perform substitution on the value, adding the condition
         # as an assumption.
         with defaults.temporary() as temp_defaults:
             temp_defaults.assumptions = defaults.assumptions + (subbed_cond,)
-            subbed_val = value.basic_replaced(repl_map, allow_relabeling,
-                                              requirements)
+            subbed_val = value.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
 
         return Conditional(subbed_val, subbed_cond)
     
@@ -302,4 +318,24 @@ class Conditional(Expression):
             raise ValueError("One of the sides of %s was expected to "
                              "match the 'value' part of %s"
                              %(equality, self))
-        
+
+    def condition_substitution(self, equality, assumptions=USE_DEFAULTS):
+        '''
+        Equate this Conditional to one that has the condition
+        substituted.  For example,
+        {a if Q. = {a if R.
+        given "Q = R".
+        '''
+        from proveit import a, Q, R
+        from . import condition_substitution
+        if equality.lhs == self.condition:
+            return condition_substitution.instantiate(
+                    {a:self.value, Q:equality.lhs, R:equality.rhs})
+        elif equality.rhs == self.condition:
+            return condition_substitution.instantiate(
+                    {a:self.value, Q:equality.rhs, R:equality.lhs})
+        else:
+            raise ValueError("%s is not an appropriate 'equality' for "
+                             "condition_substitution on %s (the 'condition' "
+                             "is not matched on either side)"
+                             %(equality, self))

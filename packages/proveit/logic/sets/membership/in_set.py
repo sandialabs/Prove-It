@@ -189,7 +189,7 @@ class InSet(Operation):
                     yield known_membership
 
     @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **kwargs):
+    def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate whether some x ∊ S is TRUE or FALSE
         using the 'equivalence' method of the domain's 

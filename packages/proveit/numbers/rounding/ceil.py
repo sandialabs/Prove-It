@@ -17,7 +17,7 @@ class Ceil(Function):
         return r'\lceil ' + self.operand.latex(fence=False) + r'\rceil'
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Ceil
         expression assuming the operands have been simplified.

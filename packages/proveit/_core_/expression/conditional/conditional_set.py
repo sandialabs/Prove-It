@@ -2,7 +2,7 @@ from proveit.decorators import equivalence_prover
 from proveit._core_.expression.label.literal import Literal
 from proveit._core_.expression.operation import Operation
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit._core_.proofs import UnsatisfiedPrerequisites
+from proveit._core_.proof import UnsatisfiedPrerequisites
 
 
 class ConditionalSet(Operation):
@@ -16,7 +16,7 @@ class ConditionalSet(Operation):
         self.conditionals = self.operands
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE if applicable.

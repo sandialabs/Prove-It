@@ -24,10 +24,9 @@ class NaturalSet(NumberSet):
         Yield side-effects when proving 'n in Natural' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_lower_bound(member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_int(member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_nonneg(
-                member, assumptions)
+        yield lambda: self.deduce_member_lower_bound(member)
+        yield lambda: self.deduce_member_in_int(member)
+        yield lambda: self.deduce_member_in_rational_nonneg(member)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from proveit.numbers.number_sets.natural_numbers import nat_membership_is_bool
@@ -66,18 +65,12 @@ class NaturalPosSet(NumberSet):
         Yield side-effects when proving 'n in NaturalPos' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_lower_bound(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_nat(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_int(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_nonzero_int(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_nonzero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_pos(
-                member, assumptions)
+        yield lambda: self.deduce_member_lower_bound(member)
+        yield lambda: self.deduce_member_in_nat(member)
+        yield lambda: self.deduce_member_in_int(member)
+        yield lambda: self.deduce_member_in_nonzero_int(member)
+        yield lambda: self.deduce_member_nonzero(member)
+        yield lambda: self.deduce_member_in_rational_pos(member)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)

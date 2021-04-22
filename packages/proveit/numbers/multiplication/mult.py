@@ -166,7 +166,7 @@ class Mult(NumberOperation):
         return NotEquals(self, zero).conclude_as_folded(assumptions)
 
     @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **kwargs):
+    def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Mult
         expression assuming the operands have been simplified or
@@ -231,7 +231,7 @@ class Mult(NumberOperation):
         raise EvaluationError(self, assumptions)
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Mult
         expression assuming the operands have been simplified.

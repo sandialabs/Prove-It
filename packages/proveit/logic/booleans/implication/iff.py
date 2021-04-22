@@ -166,7 +166,7 @@ class Iff(TransitiveRelation):
             {A: self.A, B: self.B}, assumptions=assumptions)
 
     @equivalence_prover('evaluated', 'evaluate')
-    def evaluation(self, **kwargs):
+    def evaluation(self, **defaults_config):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.

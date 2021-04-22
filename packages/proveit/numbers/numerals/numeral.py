@@ -1,4 +1,5 @@
-from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
+from proveit import (defaults, Literal, Operation, ProofFailure, 
+                     USE_DEFAULTS, prover)
 from proveit.logic import IrreducibleValue, Equals
 from proveit import a, b
 
@@ -27,15 +28,16 @@ class Numeral(Literal, IrreducibleValue):
         self_neq_other = self.not_equal(other, assumptions)
         return self_neq_other.unfold().equate_negated_to_false()
 
-    def not_equal(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def not_equal(self, other, **defaults_config):
         from proveit.numbers import Less
         from proveit.numbers.ordering import less_is_not_eq
-        _a, _b = Less.sorted_items([self, other], assumptions=assumptions)
+        _a, _b = Less.sorted_items([self, other])
         not_eq_stmt = less_is_not_eq.instantiate(
-            {a: _a, b: _b}, assumptions=assumptions)
+            {a: _a, b: _b}, auto_simplify=False)
         if not_eq_stmt.lhs != self:
             # We need to reverse the statement.
-            return not_eq_stmt.derive_reversed(assumptions)
+            return not_eq_stmt.derive_reversed()
         return not_eq_stmt       
     
     def remake_arguments(self):
@@ -177,11 +179,19 @@ class NumeralSequence(Operation, IrreducibleValue):
     """
 
     def __init__(self, operator, *digits, styles=None):
-        from proveit import ExprRange
         Operation.__init__(self, operator, digits, styles=styles)
-        # if len(digits) <= 1 and not isinstance(digits[0], ExprRange):
-        #     raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
         self.digits = self.operands
+        if self.digits.is_single():
+            raise Exception(
+                    "A NumeralSequence should have two or more digits. "
+                    "Single digit number should be represented as the "
+                    "corresponding Numeral.")
+
+    def irreducible_value(self):
+        '''
+        Only really an irreducible value if each digit is a Numeral.
+        '''
+        return all(isinstance(digit, Numeral) for digit in self.digits)
 
     def eval_equality(self, other, assumptions=USE_DEFAULTS):
         if other == self:

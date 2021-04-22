@@ -612,7 +612,7 @@ class Add(NumberOperation):
         return hold, order
 
     @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **kwargs):
+    def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Add
         expression assuming the operands have been simplified or
@@ -666,7 +666,7 @@ class Add(NumberOperation):
         raise EvaluationError(self)
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Add
         expression assuming the operands have been simplified.

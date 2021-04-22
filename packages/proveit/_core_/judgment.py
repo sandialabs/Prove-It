@@ -201,7 +201,7 @@ class Judgment:
         obj_ids = re.split(r";|\[|,|\]", unique_rep)
         return [obj_id for obj_id in obj_ids if len(obj_id) > 0]
 
-    def derive_side_effects(self, assumptions):
+    def derive_side_effects(self):
         '''
         Derive any side-effects that are obvious consequences arising 
         from this truth.  Called after the corresponding Proof is 
@@ -213,10 +213,9 @@ class Judgment:
         # Sort the assumptions according to hash key so that sets of
         # assumptions are unique for determining which side-effects have
         # been processed already.
+        assumptions = defaults.assumptions
         sorted_assumptions = tuple(
-            sorted(
-                assumptions,
-                key=lambda expr: hash(expr)))
+            sorted(assumptions, key=lambda expr: hash(expr)))
         if (self.expr, sorted_assumptions) in Judgment.sideeffect_processed:
             return  # has already been processed
         if self not in Judgment.in_progress_to_derive_sideeffects:
@@ -232,7 +231,7 @@ class Judgment:
                         # use the default assumptions which are 
                         # temporarily set to the assumptions utilized
                         # in the last derivation step.
-                        side_effect(assumptions=assumptions)
+                        side_effect()
                     except ProofFailure:
                         pass
                     except Exception as e:
@@ -639,8 +638,14 @@ class Judgment:
                     return self.with_matching_styles(new_style_expr, [])
                 return call_method_for_new_style
             argspec = inspect.getfullargspec(attr)
+
+            # TODO: Revisit this after we have switched to using
+            # @prover or @equivalence_prover for all the methods.
+            # This is more complicated than necessary for backward
+            # compatibility.
             if ('assumptions' in argspec.args
-                    or 'assumptions' in argspec.kwonlyargs):
+                    or 'assumptions' in argspec.kwonlyargs
+                    or  argspec.varkw == 'defaults_config'):
                 # The attribute is a callable function with
                 # 'assumptions' as an argument.
                 # Automatically include the Judgment assumptions.
@@ -786,7 +791,7 @@ class Judgment:
 
     @prover
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
-                    **kwargs):
+                    **defaults_config):
         '''
         Performs an instantiation derivation step to be proven under the 
         given assumptions, in addition to the assumptions of the 
@@ -810,12 +815,12 @@ class Judgment:
         Replacements are made simultaneously.  For example, the 
         {x:y, y:x} mapping will swap x and y variables.
         
-        If 'reductions' are provided, these are equality judgments
-        in which each occurrence of the left hand sides will be replaced
-        by the right hand sides during the instantiation.  There
-        may also be "auto-reductions" that work in a similar matter
-        via calling 'auto_reduction' on expressions as they are
-        generated during the instantiation.
+        If equality 'replacements' are specified or 'auto_simplify'
+        is True (in proveit.defaults which may be temporarily set
+        via keyword arguments), equality replacements may be made
+        in the process via equality judgements where the left-hand-side
+        is the expression being replaced and the right-hand-side is the
+        replacement.
         
         Returns the proven instantiated Judgment, or throws an exception
         if the proof fails.  For the proof to succeed, all conditions of

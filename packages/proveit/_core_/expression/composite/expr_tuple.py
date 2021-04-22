@@ -354,7 +354,8 @@ class ExprTuple(Composite, Expression):
                     return False  # end indices don't match
         return True  # everything matches.
 
-    def basic_replaced(self, repl_map, allow_relabeling, requirements):
+    def basic_replaced(self, repl_map, *,
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary.
@@ -384,7 +385,8 @@ class ExprTuple(Composite, Expression):
                     repl_map, allow_relabeling, requirements))
             else:
                 subbed_expr = expr.basic_replaced(
-                        repl_map, allow_relabeling, requirements)
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
                 subbed_exprs.append(subbed_expr)
 
         return self.__class__._checked_make(

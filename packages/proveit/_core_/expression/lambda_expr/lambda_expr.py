@@ -604,7 +604,8 @@ class Lambda(Expression):
             repl_map.update(var_range_forms)
         try:
             return body.basic_replaced(
-                repl_map, allow_relabeling, requirements=requirements)
+                repl_map, allow_relabeling=allow_relabeling, 
+                requirements=requirements)
         except ImproperReplacement as e:
             raise LambdaApplicationError(
                 parameters, body, operands, equiv_alt_expansions,
@@ -614,7 +615,8 @@ class Lambda(Expression):
                 parameters, body, operands, equiv_alt_expansions,
                 "TypeError: %s " % str(e))
 
-    def basic_replaced(self, repl_map, allow_relabeling, requirements):
+    def basic_replaced(self, repl_map, *,
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary
@@ -650,16 +652,19 @@ class Lambda(Expression):
         for param in self.parameters:
             if isinstance(param, IndexedVar):
                 subbed_index = param.index.basic_replaced(
-                        repl_map, allow_relabeling, requirements)
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
                 new_params.append(IndexedVar(param.var, subbed_index))
             elif isinstance(param, ExprRange):
                 param_var = get_param_var(param)
                 subbed_start = \
                     ExprTuple(*extract_start_indices(param)).basic_replaced(
-                        repl_map, allow_relabeling, requirements)
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
                 subbed_end = \
                     ExprTuple(*extract_end_indices(param)).basic_replaced(
-                        repl_map, allow_relabeling, requirements)
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
                 range_param = var_range(param_var, subbed_start, subbed_end)
                 for param in range_param._possibly_reduced_range_entries(
                         requirements):
@@ -677,7 +682,8 @@ class Lambda(Expression):
         with defaults.temporary() as temp_defaults:
             temp_defaults.assumptions = inner_assumptions
             subbed_body = self.body.basic_replaced(
-                inner_repl_map, allow_relabeling, requirements)
+                inner_repl_map, allow_relabeling=allow_relabeling, 
+                requirements=requirements)
 
         try:
             replaced = Lambda(new_params, subbed_body)
@@ -759,8 +765,10 @@ class Lambda(Expression):
                     for mask_indices in (mask_start, mask_end):
                         for _, idx in enumerate(mask_indices):
                             mask_indices[_] = \
-                                idx.basic_replaced(repl_map, allow_relabeling,
-                                                   requirements)
+                                idx.basic_replaced(
+                                        repl_map, 
+                                        allow_relabeling=allow_relabeling,
+                                        requirements=requirements)
                     # We may only use the variable range forms of
                     # key_repl that carve out the masked indices (e.g.
                     # (x_1, ..., x_n, x_{n+1}) is usable if the masked
@@ -882,8 +890,8 @@ class Lambda(Expression):
                     new_params.append(subbed_param)
             else:
                 subbed_param = parameter.basic_replaced(
-                    inner_repl_map, allow_relabeling,
-                    requirements)
+                    inner_repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
                 new_params.append(subbed_param)
 
         if len({get_param_var(param)

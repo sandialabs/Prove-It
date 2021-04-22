@@ -103,7 +103,7 @@ class Neg(NumberOperation):
             "No negation closure theorem for set %s" %str(number_set))
 
     @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **kwargs):
+    def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Neg
         expression assuming the operands have been simplified or
@@ -119,11 +119,11 @@ class Neg(NumberOperation):
             return negated_zero
         if isinstance(self.operand, Neg) and is_irreducible_value(
                 self.operand.operand):
-            return self.double_neg_simplification(assumptions)
+            return self.double_neg_simplification()
         raise EvaluationError(self)
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Neg
         expression assuming the operands have been simplified.
@@ -131,17 +131,16 @@ class Neg(NumberOperation):
         Handles double negation specifically.
         '''
         from proveit.relation import TransRelUpdater
-        assumptions = defaults.assumptions
 
         expr = self
         # For convenience updating our equation:
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
         # Handle double negation:
         if isinstance(self.operand, Neg):
             # simplify double negation
-            expr = eq.update(self.double_neg_simplification(assumptions))
+            expr = eq.update(self.double_neg_simplification())
             # simplify what is inside the double-negation.
-            expr = eq.update(expr.simplification(assumptions))
+            expr = eq.update(expr.simplification())
         return eq.relation
 
     def double_neg_simplification(self, assumptions=USE_DEFAULTS):

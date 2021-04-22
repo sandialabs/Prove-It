@@ -17,9 +17,8 @@ from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
 from .equality import (
     Equals,
     NotEquals,
-    reduce_operands,
-    default_simplification,
     evaluate_truth,
+    evaluate_falsehood,
     SimplificationError,
     EvaluationError)
 from .irreducible_value import IrreducibleValue, is_irreducible_value

@@ -458,16 +458,16 @@ class ExprRange(Expression):
         Yield the entries corresponding to the given expr_range after
         the possible reduction.  If there is no reduction, the
         'expr_range' itself is yielded.
-        Note: this cannot be done via the regular 'auto_reduction'
-        method because the reductions are of the form of reducing 'self'
+        Note: this cannot be done via simplification of the ExprRange
+        because the reductions are of the form of reducing 'self'
         wrapped in an ExprTuple rather than 'self' itself.
         '''
         from proveit import Judgment
         from proveit import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.numbers import Add, one
-        if (not defaults.auto_reduce
-                or ExprRange in defaults.disabled_auto_reduction_types):
+        if (not defaults.auto_simplify
+                or self in defaults.preserved_exprs):
             # Auto-reduction for this is disabled.
             yield self
             return
@@ -480,8 +480,9 @@ class ExprRange(Expression):
             # recursion.
             from proveit.core_expr_types.tuples import \
                 singular_range_reduction, singular_nested_range_reduction
-            defaults.disabled_auto_reduction_types.add(ExprRange)
-            try:
+            with defaults.temporary() as temp_defaults:
+                # Preserve 'self' on the left side of the reduction.
+                temp_defaults.preserved_exprs.add(self)
                 if self.nested_range_depth() > 1:
                     lambda_map = Lambda(
                         (self.parameter,
@@ -494,9 +495,6 @@ class ExprRange(Expression):
                 else:
                     reduction = singular_range_reduction.instantiate(
                         {f: lambda_map, i: start_index})
-            finally:
-                # Re-enable automation.
-                defaults.disabled_auto_reduction_types.remove(ExprRange)
         else:
             # If the start and end are literal integers and form an
             # empty range, then it should be straightforward to
@@ -519,8 +517,9 @@ class ExprRange(Expression):
                     # recursion.
                     from proveit.core_expr_types.tuples import \
                         empty_outside_range_of_range
-                    defaults.disabled_auto_reduction_types.add(ExprRange)
-                    try:
+                    with defaults.temporary() as temp_defaults:
+                        # Preserve 'self' on the left side of the reduction.
+                        temp_defaults.preserved_exprs.add(self)
                         nest_end_index = self.first().end_index
                         nest_start_index = self.first().start_index
                         lambda_map = Lambda(
@@ -528,21 +527,14 @@ class ExprRange(Expression):
                         reduction = empty_outside_range_of_range.instantiate(
                             {f: lambda_map, m: start_index, n: end_index,
                              i: nest_start_index, j: nest_end_index})
-                    finally:
-                        # Re-enable automation.
-                        defaults.disabled_auto_reduction_types.remove(
-                            ExprRange)
                 else:
                     from proveit.core_expr_types.tuples import \
                         empty_range_def
-                    defaults.disabled_auto_reduction_types.add(ExprRange)
-                    try:
+                    with defaults.temporary() as temp_defaults:
+                        # Preserve 'self' on the left side of the reduction.
+                        temp_defaults.preserved_exprs.add(self)
                         reduction = empty_range_def.instantiate(
                             {f: lambda_map, i: start_index, j: end_index})
-                    finally:
-                        # Re-enable automation.
-                        defaults.disabled_auto_reduction_types.remove(
-                            ExprRange)
             elif self.nested_range_depth() > 1:
                 # this is a nested range so the inner range could be empty.
 
@@ -564,8 +556,9 @@ class ExprRange(Expression):
                     # recursion.
                     from proveit.core_expr_types.tuples import \
                         empty_inside_range_of_range
-                    defaults.disabled_auto_reduction_types.add(ExprRange)
-                    try:
+                    with defaults.temporary() as temp_defaults:
+                        # Preserve 'self' on the left side of the reduction.
+                        temp_defaults.preserved_exprs.add(self)
                         nest_end_index = self.first().end_index
                         nest_start_index = self.first().start_index
                         lambda_map = Lambda(
@@ -574,10 +567,6 @@ class ExprRange(Expression):
                         reduction = empty_inside_range_of_range.instantiate(
                             {f: lambda_map, m: start_index, n: end_index, 
                              i: nest_start_index, j: nest_end_index})
-                    finally:
-                        # Re-enable automation.
-                        defaults.disabled_auto_reduction_types.remove(
-                            ExprRange)
                 else:
                     yield self  # no reduction
                     return
@@ -648,7 +637,6 @@ class ExprRange(Expression):
 
         See the Lambda.apply documentation for a related discussion.
         '''
-        from proveit._core_.expression.expr import attempt_to_simplify
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var, extract_param_replacements
         from proveit._core_.expression.label.var import safe_dummy_var
@@ -717,7 +705,8 @@ class ExprRange(Expression):
         # result will be used for getting the start and end indices
         # ('starts' and 'ends').
         subbed_expr_range = self.basic_replaced(
-            repl_map, allow_relabeling, requirements)
+            repl_map, allow_relabeling=allow_relabeling,
+            requirements=requirements)
         if len(var_range_forms) == 0:
             # Nothing to expand.
             # However, we may perform a reduction of the range
@@ -725,8 +714,9 @@ class ExprRange(Expression):
             for entry in subbed_expr_range._possibly_reduced_range_entries(
                     requirements):
                 if entry != subbed_expr_range:
-                    entry = entry.basic_replaced(repl_map, allow_relabeling,
-                                                 requirements)
+                    entry = entry.basic_replaced(
+                            repl_map, allow_relabeling=allow_relabeling,
+                            requirements=requirements)
                 yield entry
             return  # Done.
 
@@ -825,7 +815,8 @@ class ExprRange(Expression):
                     % (self, occurrence, orig_parameter))
             orig_occurrence = occurrence
             occurrence = occurrence.basic_replaced(
-                occurrence_map, allow_relabeling, requirements)
+                occurrence_map, allow_relabeling=allow_relabeling, 
+                requirements=requirements)
             if safe_dummy_var in free_vars(occurrence, err_inclusively=True):
                 # There was an instance of the original parameter with a
                 # different shift than what we used.  That's not allowed.
@@ -1044,19 +1035,21 @@ class ExprRange(Expression):
                     full_entry_repl_map, param_repl_map)
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.assumptions = entry_assumptions
-                    entry = ExprRange(new_param,
-                                      body.basic_replaced(
-                                              full_entry_repl_map,
-                                              allow_relabeling,
-                                              requirements),
-                                      start_index, end_index)
+                    entry = ExprRange(
+                            new_param,
+                            body.basic_replaced(
+                                    full_entry_repl_map,
+                                    allow_relabeling=allow_relabeling,
+                                    requirements=requirements),
+                            start_index, end_index)
                 # We may perform a reduction of the range if it is known
                 # to be empty or singular.
                 for entry in entry._possibly_reduced_range_entries(
                         requirements):
                     if entry != entry:
                         entry = entry.basic_replaced(
-                                repl_map, allow_relabeling, requirements)
+                                repl_map, allow_relabeling=allow_relabeling, 
+                                requirements=requirements)
                     yield entry
                 if indices_must_match:
                     # We need to know the new_indices to match with the
@@ -1087,8 +1080,9 @@ class ExprRange(Expression):
                             yield subentry
                     else:
                         yield body.basic_replaced(
-                                full_entry_repl_map, allow_relabeling,
-                                requirements)
+                                full_entry_repl_map, 
+                                allow_relabeling=allow_relabeling,
+                                requirements=requirements)
 
                 if indices_must_match:
                     # We need to know the new_indices to match with the

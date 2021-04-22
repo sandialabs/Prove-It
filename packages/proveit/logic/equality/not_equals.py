@@ -125,7 +125,7 @@ class NotEquals(Relation):
             {x: self.lhs, y: self.rhs}, assumptions=assumptions)
 
     @equivalence_prover('evaluated', 'evaluate')
-    def evaluation(self, **kwargs):
+    def evaluation(self, **defaults_config):
         '''
         Evaluate A ≠ B via evaluating ￢(A = B), 
         '''

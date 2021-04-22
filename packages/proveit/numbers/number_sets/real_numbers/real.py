@@ -15,8 +15,7 @@ class RealSet(NumberSet):
         Yield side-effects when proving 'n in RealPos' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_complex(member,
-                                                                assumptions)
+        yield lambda: self.deduce_member_in_complex(member)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import real_membership_is_bool
@@ -44,12 +43,9 @@ class RealNonZeroSet(NumberSet):
         Yield side-effects when proving 'n in RealNonZero' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_real(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_not_zero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_complex_nonzero(
-                member, assumptions)
+        yield lambda: self.deduce_member_in_real(member)
+        yield lambda: self.deduce_member_not_zero(member)
+        yield lambda: self.deduce_member_in_complex_nonzero(member)
 
     def deduce_member_not_zero(self, member, assumptions=USE_DEFAULTS):
         from . import nonzero_if_in_real_nonzero
@@ -90,12 +86,10 @@ class RealPosSet(NumberSet):
         Yield side-effects when proving 'n in RealPos' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_nonzero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_nonneg(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_lower_bound(member, assumptions)
+        yield lambda: self.deduce_member_in_real(member)
+        yield lambda: self.deduce_member_in_real_nonzero(member)
+        yield lambda: self.deduce_member_in_real_nonneg(member)
+        yield lambda: self.deduce_member_lower_bound(member)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import positive_if_in_real_pos
@@ -141,12 +135,10 @@ class RealNegSet(NumberSet):
         Yield side-effects when proving 'n in RealNeg' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_nonzero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_nonpos(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_upper_bound(member, assumptions)
+        yield lambda: self.deduce_member_in_real(member)
+        yield lambda: self.deduce_member_in_real_nonzero(member)
+        yield lambda: self.deduce_member_in_real_nonpos(member)
+        yield lambda: self.deduce_member_upper_bound(member)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import negative_if_in_real_neg
@@ -192,8 +184,8 @@ class RealNonNegSet(NumberSet):
         Yield side-effects when proving 'n in RealNonNeg' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
-        yield lambda assumptions: self.deduce_member_lower_bound(member, assumptions)
+        yield lambda: self.deduce_member_in_real(member)
+        yield lambda: self.deduce_member_lower_bound(member)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonneg_if_in_real_nonneg
@@ -227,8 +219,8 @@ class RealNonPosSet(NumberSet):
         Yield side-effects when proving 'n in RealNonNeg' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
-        yield lambda assumptions: self.deduce_member_upper_bound(member, assumptions)
+        yield lambda: self.deduce_member_in_real(member)
+        yield lambda: self.deduce_member_upper_bound(member)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonpos_if_in_real_nonpos

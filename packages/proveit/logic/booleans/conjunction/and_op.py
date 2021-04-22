@@ -261,8 +261,10 @@ class And(Operation):
         has_range_operands = any(isinstance(operand, ExprRange)
                                  for operand in self.operands)
         if self.operands.num_entries() == 1 and not has_range_operands:
-            with defaults.disabled_auto_reduction_types as disabled_types:
-                disabled_types.add(And)
+            with defaults.temporary() as temp_defaults:
+                # Preserve a unary conjunction to derive A from
+                # And(A).
+                temp_defaults.preserved_exprs.add(self)
                 return from_unary_and.instantiate({A: self.operands[0]},
                                                   assumptions=assumptions)
         if self.operands.is_double() and not has_range_operands:
@@ -332,17 +334,15 @@ class And(Operation):
                 'derive_right only applicable for binary conjunction operations')
         return self.derive_any(1, assumptions)
 
-    def unary_reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('unary_reduced', 'unary_reduce')
+    def unary_reduction(self, **defaults_config):
         from proveit.logic.booleans.conjunction import \
             unary_and_reduction
         if not self.operands.is_single():
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unary_reduction")
         operand = self.operands[0]
-        with defaults.disabled_auto_reduction_types as disable_reduction_types:
-            disable_reduction_types.add(And)
-            return unary_and_reduction.instantiate({A: operand},
-                                                   assumptions=assumptions)
+        return unary_and_reduction.instantiate({A: operand})
 
     def conclude_via_composition(self, assumptions=USE_DEFAULTS):
         '''
@@ -468,8 +468,8 @@ class And(Operation):
         return redundant_conjunction.instantiate(
             {n: self.operands[0].end_index, A: _A}, assumptions=assumptions)
 
-    @equivalence_prover('evaluated', 'evaluate')
-    def shallow_evaluation(self, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this conjunction, with
         simplified operands, evaluates to TRUE or FALSE under the given 
@@ -508,7 +508,7 @@ class And(Operation):
     
     """
     @equivalence_prover('evaluated', 'evaluate')
-    def evaluation(self, **kwargs):
+    def evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this conjunction evaluates
         to true or false under the given assumptions.  If 
@@ -583,7 +583,7 @@ class And(Operation):
     """
     
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **kwargs):
+    def shallow_simplification(self, **defaults_config):
         '''
         Return the "And(a) = a" simplification if applicable,
         or the default reflexive equality otherwise.
