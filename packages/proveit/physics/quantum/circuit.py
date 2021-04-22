@@ -543,23 +543,56 @@ class MultiWire(Function):
                           styles=styles)
         self.number = number
 
+    def style_options(self):
+        from proveit._core_.expression.style_options import StyleOptions
+
+        options = StyleOptions(self)
+        # It would be better to make this only an option when it is
+        # applicable.  Just doing this for now.
+        options.add_option(
+            name='representation',
+            description=("'implicit' representation displays MutiWire"
+                         "objects as an IdentityOp. 'explicit' representation "
+                         "displays MultiWire objects as a bundle using the "
+                         "backslash notation. "),
+            default=None,
+            related_methods=('with_implicit_style'))
+
+        return options
+
+    def with_implicit_style(self):
+        '''
+        return a MultiWire object with the implicit style
+        '''
+        return self.with_styles(representation='implicit')
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, fence=False, solo=True, **kwargs):
+    def formatted(self, format_type, fence=False, solo=True, representation=None, **kwargs):
         formatted_number = self.number.formatted(format_type, fence=False)
         spacing = Circuit.DEFAULT_SPACING
         if format_type == 'latex':
-            if solo:
-                out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + r'{ /^{' + formatted_number \
-                          + r'} } \qw'
-                out_str += ' \n' + r'} \hspace{2em}'
-                return out_str
+            if representation is None:
+                representation = self.get_style('representation', 'explicit')
+            if representation == 'explicit':
+                if solo:
+                    out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + r'{ /^{' + formatted_number \
+                              + r'} } \qw'
+                    out_str += ' \n' + r'} \hspace{2em}'
+                    return out_str
+                else:
+                    return r'{ /^{' + formatted_number + r'} } \qw'
             else:
-                return r'{ /^{' + formatted_number + r'} } \qw'
+                if solo:
+                    out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + r'\qw'
+                    out_str += ' \n' + r'} \hspace{2em}'
+                    return out_str
+                else:
+                    return r'\qw'
         else:
             return "MultiWire(" + formatted_number + ')'
 
@@ -856,6 +889,7 @@ class Circuit(Function):
         # check each column for same expression throughout
         # self.check_range()
         self.check_indices()
+        self.check_multi_wire()
 
     def remake_with_style_calls(self):
         '''
@@ -1235,6 +1269,63 @@ class Circuit(Function):
                 #   raise ValueError('The set indexed variable must be indexed the same way as the gate '
                 #                   'indexed variable')
                 # k += 3
+
+    def check_multi_wire(self):
+        '''
+        Ensures that multiwires across the circuit agree and
+        changes the style for consecutive multi_wires
+        '''
+        first = 0
+        for m, entry in enumerate(self.array):
+            if isinstance(entry, ExprRange):
+                if isinstance(entry.first(), ExprTuple):
+                    for item in entry.first().entries:
+                        if isinstance(item, MultiWire):
+                            if not first:
+                                first = item.number
+                                item.with_styles(representation='explicit')
+                            else:
+                                if item.number != first:
+                                    raise ValueError("All MultiWire objects on the same row must have the same "
+                                                     "argument.  The MultiWire objects in row %s do not agree."
+                                                     % (m + 1))
+                                else:
+
+                                    representation = item.get_style("representation", 'Test')
+                                    if representation == "Test":
+                                        item.with_implicit_style()
+                        elif isinstance(item, IdentityOp) and first:
+                            raise ValueError("Each row must have a consistent number of wires using the MultiWire "
+                                             "Object. Please replace the IdentityOp in row %s with a MultiWire.  "
+                                             "If you want to represent the MultiWire implicitly, use the "
+                                             "with_implicit_style method." % (m+1))
+
+            elif isinstance(entry, ExprTuple):
+                for item in entry.entries:
+                    if isinstance(item, MultiWire):
+                        if not first:
+                            first = item.number
+                            item.with_styles(representation='explicit')
+                        else:
+                            if item.number != first:
+                                raise ValueError("All MultiWire objects on the same row must have the same "
+                                                 "argument.  The MultiWire objects in row %s do not agree." % (m + 1))
+                            else:
+
+                                representation = item.get_style("representation", 'Test')
+                                if representation == "Test":
+                                    item.with_implicit_style()
+                    elif isinstance(item, IdentityOp) and first:
+                        raise ValueError("Each row must have a consistent number of wires using the MultiWire "
+                                         "Object. Please replace the IdentityOp in row %s with a MultiWire.  "
+                                         "If you want to represent the MultiWire implicitly, use the "
+                                         "'with_implicit_style()' method." % (m + 1))
+                    elif isinstance(item, ExprRange):
+                        # to be updated to handle expansions correctly:
+                        # first as normal, but expansions should be implicit style
+                        pass
+            first = 0
+
 
     def _find_wires(self):
         '''
