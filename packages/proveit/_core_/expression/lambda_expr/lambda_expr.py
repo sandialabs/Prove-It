@@ -5,6 +5,7 @@ from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
 from proveit._core_.expression.label.var import safe_dummy_var, safe_dummy_vars
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit.decorators import equivalence_prover
 
 def get_param_var(parameter, *, _required_indices=None):
     '''
@@ -694,6 +695,23 @@ class Lambda(Expression):
 
         return replaced
 
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
+                                     equality_repl_requirements):
+        '''
+        Properly handle the Lambda scope while doing equality
+        replacements.
+        '''
+        # Can't use assumptions involving lambda parameter variables
+        inner_assumptions = \
+            [assumption for assumption in defaults.assumptions if
+             free_vars(assumption, err_inclusively=True).isdisjoint(
+                 self.parameter_vars)]        
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.assumptions = inner_assumptions
+            return Expression._equality_replaced_sub_exprs(
+                    self, equality_repl_map, requirements,
+                    equality_repl_requirements)
+
     def _inner_scope_sub(self, parameters, repl_map, 
                          allow_relabeling, requirements):
         '''
@@ -952,46 +970,55 @@ class Lambda(Expression):
         y1, y2, ..., yn -> gn(y1, y2, ..., yn) for lambda2 returns
         x1, x2, ..., xn -> f(g1(x1, x2, ..., xn), g2(x1, x2, ..., xn), ..., gn(x1, x2, ..., xn)).
         '''
-        lambda1 = self
-        if is_single(lambda1.parameters):
-            if not is_single(lambda2.parameters):
-                raise TypeError(
-                    "lambda2 may only take 1 parameter if lambda1 takes only 1 parameter")
-            # g(x)
-            relabeled_expr2 = lambda2.body.replaced(
-                {lambda2.parameters[0]: lambda1.parameters[0]})
-            # x -> f(g(x))
-            return Lambda(lambda1.parameters[0], lambda1.body.replaced(
-                {lambda1.parameters[0]: relabeled_expr2}))
-        else:
-            if len(lambda2) != lambda1.parameters.num_entries():
-                raise TypeError(
-                    "Must supply a list of lambda2s with the same length as the number of lambda1 parameters")
-            relabeled_expr2s = []
-            for lambda2elem in lambda2:
-                if (lambda2elem.parameters.num_entries() != 
-                        lambda1.parameters.num_entries()):
+        with defaults.temporary() as temp_defaults:
+            # Don't auto-simplify anything when creating the composed
+            # map.
+            temp_defaults.auto_simplify = False
+            lambda1 = self
+            if is_single(lambda1.parameters):
+                if not is_single(lambda2.parameters):
                     raise TypeError(
-                        "Each lambda2 must have the same number of parameters as lambda1")
-                # gi(x1, x2, ..., xn)
-                param_repl_map = {
-                    param2: param1 for param1,
-                    param2 in zip(
+                        "lambda2 may only take 1 parameter if lambda1 "
+                        "takes only 1 parameter")
+                # g(x)
+                relabeled_expr2 = lambda2.body.replaced(
+                    {lambda2.parameters[0]: lambda1.parameters[0]})
+                # x -> f(g(x))
+                return Lambda(lambda1.parameters[0], lambda1.body.replaced(
+                    {lambda1.parameters[0]: relabeled_expr2}))
+            else:
+                if len(lambda2) != lambda1.parameters.num_entries():
+                    raise TypeError(
+                        "Must supply a list of lambda2s with the same "
+                        "length as the number of lambda1 parameters")
+                relabeled_expr2s = []
+                for lambda2elem in lambda2:
+                    if (lambda2elem.parameters.num_entries() != 
+                            lambda1.parameters.num_entries()):
+                        raise TypeError(
+                            "Each lambda2 must have the same number of "
+                            "parameters as lambda1")
+                    # gi(x1, x2, ..., xn)
+                    param_repl_map = {
+                        param2: param1 for param1,
+                        param2 in zip(
+                            lambda1.parameters,
+                            lambda2elem.parameters)}
+                    relabeled_expr2s.append(
+                        lambda2elem.body.replaced(param_repl_map))
+                # x1, x2, ..., xn -> f(g1(x1, x2, ..., xn), 
+                #                      g2(x1, x2, ..., xn), ...,
+                #                      gn(x1, x2, ..., xn)).
+                lambda1_expr_sub_map = {
+                    param1: relabeled_expr2 for param1,
+                    relabeled_expr2 in zip(
                         lambda1.parameters,
-                        lambda2elem.parameters)}
-                relabeled_expr2s.append(
-                    lambda2elem.body.replaced(param_repl_map))
-            # x1, x2, ..., xn -> f(g1(x1, x2, ..., xn), g2(x1, x2, ..., xn),
-            # ..., gn(x1, x2, ..., xn)).
-            lambda1_expr_sub_map = {
-                param1: relabeled_expr2 for param1,
-                relabeled_expr2 in zip(
-                    lambda1.parameters,
-                    relabeled_expr2s)}
-            return Lambda(lambda1.parameters,
-                          lambda1.body.replaced(lambda1_expr_sub_map))
+                        relabeled_expr2s)}
+                return Lambda(lambda1.parameters,
+                              lambda1.body.replaced(lambda1_expr_sub_map))
     
-    def substitution(self, universal_eq, assumptions=USE_DEFAULTS):
+    @equivalence_prover('substituted', 'substitute')
+    def substitution(self, universal_eq, **defaults_config):
         '''
         Equate this Lambda, 
         x_1, ..., x_n -> f(x_1, ..., x_n) if Q(x_1, ..., x_n),
@@ -1024,7 +1051,7 @@ class Lambda(Expression):
         equality = universal_eq.instance_expr
         _a = universal_eq.instance_params
         _b = _c = self.parameters
-        _i = _b.num_elements(assumptions)
+        _i = _b.num_elements()
         if isinstance(self.body, Conditional):
             _f = Lambda(self.parameters, self.body.value)
         else:
@@ -1047,14 +1074,13 @@ class Lambda(Expression):
             _Q = Lambda(self.parameters, self.body.condition)
             return general_lambda_substitution.instantiate(
                     {i: _i, f: _f, g: _g, Q: _Q, 
-                    a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c},
-                    assumptions=assumptions).derive_consequent(assumptions)
+                    a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c}
+                    ).derive_consequent()
         else:
             impl = lambda_substitution.instantiate(
                     {i: _i, f: _f, g: _g, 
-                     a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c}, 
-                    assumptions=assumptions)
-            return impl.derive_consequent(assumptions)
+                     a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c})
+            return impl.derive_consequent()
 
     @staticmethod
     def global_repl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
@@ -1077,28 +1103,32 @@ class Lambda(Expression):
         '''
         from proveit import ExprTuple, Operation
 
-        if isinstance(sub_expr, ExprTuple):
-            # If we are replacing an ExprTuple which are operands
-            # that transform to a single operand, we need to instead
-            # use a multi-parameter map.
-            for inner_expr in traverse_inner_expressions(master_expr):
-                if (isinstance(inner_expr, Operation) and
-                        inner_expr.operands == sub_expr):
-                    # We should use a multi-parameter map
-                    from proveit import safe_dummy_var, var_range
-                    from proveit.numbers import one
-                    n = sub_expr.num_elements(assumptions)
-                    parameters = ExprTuple(
-                            var_range(safe_dummy_var(master_expr),
-                                      one, n))
-                    body = master_expr.replaced({sub_expr: parameters},
-                                                assumptions=assumptions)
-                    return Lambda(parameters, body)
+        with defaults.temporary() as temp_defaults:
+            # Don't auto-simplify anything when creating our lambda
+            # map.
+            temp_defaults.auto_simplify = False
+            if isinstance(sub_expr, ExprTuple):
+                # If we are replacing an ExprTuple which are operands
+                # that transform to a single operand, we need to instead
+                # use a multi-parameter map.
+                for inner_expr in traverse_inner_expressions(master_expr):
+                    if (isinstance(inner_expr, Operation) and
+                            inner_expr.operands == sub_expr):
+                        # We should use a multi-parameter map
+                        from proveit import safe_dummy_var, var_range
+                        from proveit.numbers import one
+                        n = sub_expr.num_elements(assumptions)
+                        parameters = ExprTuple(
+                                var_range(safe_dummy_var(master_expr),
+                                          one, n))
+                        body = master_expr.replaced({sub_expr: parameters},
+                                                    assumptions=assumptions)
+                        return Lambda(parameters, body)
 
-        # Just make a single parameter replacement map.
-        lambda_param = master_expr.safe_dummy_var()
-        return Lambda(lambda_param, master_expr.replaced(
-            {sub_expr: lambda_param}))
+            # Just make a single parameter replacement map.
+            lambda_param = master_expr.safe_dummy_var()
+            return Lambda(lambda_param, master_expr.replaced(
+                {sub_expr: lambda_param}))
 
     @staticmethod
     def _possibly_free_var_ranges_static(parameters, parameter_vars, body,

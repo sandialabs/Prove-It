@@ -8,6 +8,7 @@ from proveit._core_.expression.composite import (
     composite_expression, ExprRange)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.defaults import USE_DEFAULTS
+from proveit.decorators import equivalence_prover
 from .operation import Operation, OperationError
 from .function import Function
 
@@ -841,7 +842,8 @@ class OperationOverInstances(Operation):
                     count += len(entry.formatted(format_type, fence=fence))
         return out_str
 
-    def instance_substitution(self, universal_eq, assumptions=USE_DEFAULTS):
+    @equivalence_prover('instance_substituted', 'instance_substitute')
+    def instance_substitution(self, universal_eq, **defaults_config):
         '''
         Equate this OperationOverInstances, 
         Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} f(x_1, ..., x_n),
@@ -854,9 +856,8 @@ class OperationOverInstances(Operation):
         Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} f(x_1, ..., x_n) 
           = Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} g(x_1, ..., x_n)
         '''
-        lambda_eq = self.operand.substitution(universal_eq, assumptions)
-        return lambda_eq.substitution(self.inner_expr().operand,
-                                      assumptions=assumptions)
+        lambda_eq = self.operand.substitution(universal_eq)
+        return lambda_eq.substitution(self.inner_expr().operand)
         
     """
     def substitute_instances(self, universality, assumptions=USE_DEFAULTS):

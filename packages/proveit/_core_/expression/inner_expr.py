@@ -232,14 +232,6 @@ class InnerExpr:
             equiv_method_type, equiv_method_name = \
                 getattr(cur_inner_expr.__class__, '_equiv_method_%s_' % attr)
             equiv_method = getattr(cur_inner_expr, equiv_method_name)
-            # Find out which argument is the 'assumptions' argument:
-            try:
-                argspec = inspect.getfullargspec(equiv_method)
-                assumptions_index = argspec.args.index('assumptions') - 1
-            except ValueError:
-                raise Exception(
-                    "Expecting method, %s, to have 'assumptions' argument." %
-                    str(equiv_method))
             repl_lambda = self.repl_lambda()
             if (isinstance(cur_inner_expr, ExprTuple)
                     and len(self.expr_hierarchy) > 2
@@ -249,22 +241,18 @@ class InnerExpr:
                 repl_lambda = self[:].repl_lambda()
 
             def inner_equiv(*args, **kwargs):
-                if 'assumptions' in kwargs:
-                    assumptions = kwargs['assumptions']
-                elif len(args) > assumptions_index:
-                    assumptions = args[assumptions_index]
-                else:
-                    assumptions = USE_DEFAULTS
+                assumptions = kwargs.get('assumptions', 
+                                         defaults.assumptions)
                 equivalence = equiv_method(*args, **kwargs)
                 if equiv_method_type == 'equiv':
                     return equivalence.substitution(
-                        repl_lambda, assumptions)
+                        repl_lambda, assumptions=assumptions)
                 elif equiv_method_type == 'rhs':
                     return equivalence.substitution(
-                        repl_lambda, assumptions).rhs
+                        repl_lambda, assumptions=assumptions).rhs
                 elif equiv_method_type == 'action':
                     return equivalence.sub_right_side_into(
-                        repl_lambda, assumptions)
+                        repl_lambda, assumptions=assumptions)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'." % equiv_method_name
             elif equiv_method_type == 'rhs':
@@ -318,6 +306,7 @@ class InnerExpr:
         # Expression object of the sub-expression
         return inner_attr_val
 
+    """
     @staticmethod
     def register_equivalence_method(
             expr_class,
@@ -369,6 +358,7 @@ class InnerExpr:
         equiv_rhs.__name__ = past_tense_name
         equiv_rhs.__doc__ = "Return an equivalent form of this expression derived via '%s'." % equiv_method
         setattr(expr_class, past_tense_name, equiv_rhs)
+    """
 
     def repl_lambda(self):
         '''
@@ -437,7 +427,11 @@ class InnerExpr:
             '''
         # Build the expression with replacement parameters from
         # the inside out.
-        lambda_body = self._rebuild(lambda_body)
+        with defaults.temporary() as temp_defaults:
+            # Don't auto-simplify anything when creating the replacement
+            # map.
+            temp_defaults.auto_simplify = False
+            lambda_body = self._rebuild(lambda_body)
         return Lambda(lambda_params, lambda_body)
 
     def _rebuild(self, inner_expr_replacement):
@@ -631,7 +625,7 @@ def _inner_operands_simplification(inner_expr, *, in_place=True,
     while True:
         all_reduced = True
         for operand in inner.operands:
-            if (not operand.simplified() and
+            if (not operand.is_simplified() and
                     not is_irreducible_value(operand) and
                     not isinstance(operand, ExprRange)):
                 # The operand isn't already irreducible, so try to

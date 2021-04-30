@@ -83,6 +83,16 @@ class Defaults:
 
         Defaults.considered_assumption_sets.clear()
 
+    def preserve_expr(self, expr):
+        '''
+        Preserve the given expression so it is not automatically
+        simplified.
+        '''
+        from proveit._core_.judgment import Judgment
+        if isinstance(expr, Judgment):
+            expr = expr.expr
+        self.preserved_exprs.add(expr)
+
     def get_simplification_directives_id(self):
         '''
         Get the identifier of the current simplification directives,
@@ -244,7 +254,7 @@ class TemporaryDefaults(object):
             return
         if defaults.__dict__[attr] == val:
             return # Nothing needs to be done.
-        self._safekeep_original(attr)    
+        self._safekeep_original(attr)
         setattr(defaults, attr, val)
     
     def __getattr__(self, attr):
@@ -269,6 +279,15 @@ class TemporaryDefaults(object):
         # Restore to the state of when we "entered".
         for attr, val in self._original_values.items():
             defaults.__dict__[attr] = val
+
+    def preserve_expr(self, expr):
+        '''
+        Preserve the given expression so it is not automatically
+        simplified.
+        '''
+        self._safekeep_original('preserved_exprs')
+        defaults.preserved_exprs.add(expr)
+
 
 class DisabledAutoReductionTypes(set):
     '''

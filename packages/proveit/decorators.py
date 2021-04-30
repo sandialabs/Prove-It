@@ -3,7 +3,7 @@ from inspect import signature, Parameter
 from proveit._core_.defaults import defaults
 
 
-def _make_decorated_prover(func):
+def _make_decorated_prover(func, is_generator=False):
     '''
     Use for decorating 'prover' methods 
     (@prover or @equivalence_prover).
@@ -27,11 +27,12 @@ def _make_decorated_prover(func):
 
     def decorated_prover(*args, **kwargs):
         from proveit import Judgment
-        preserve_self = kwargs.pop('preserve_self', False)
+        preserve_expr = kwargs.pop('preserve_expr', None)
         if is_conclude_method:
             # If the method starts with conclude 'conclude', we must
             # preserve _self.
-            preserve_self = True
+            _self = args[0]
+            preserve_expr = _self
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
         # Check to see if there are any unexpected keyword
@@ -49,18 +50,30 @@ def _make_decorated_prover(func):
             return {key:val for key, val in obj.__dict__.items() 
                     if key[0] != '_'}
         
-        if preserve_self:
+        if preserve_expr is not None:
             # Preserve the 'self' expression.
-            _self = args[0]
             if ('preserved_exprs' in defaults_to_change
-                    or  _self not in defaults.preserved_exprs):
+                    or  preserve_expr not in defaults.preserved_exprs):
                 if 'preserved_exprs' in kwargs:
-                    kwargs['preserved_exprs'].add(_self)
+                    kwargs['preserved_exprs'].add(preserve_expr)
                 else:
                     defaults_to_change.add('preserved_exprs')
                     kwargs['preserved_exprs'] = (
-                            defaults.preserved_exprs.union({_self}))
-            
+                            defaults.preserved_exprs.union({preserve_expr}))
+        
+        def checked_truth(proven_truth):
+            # Check that the proven_truth is a Judgment and has
+            # appropriate assumptions.
+            if not isinstance(proven_truth, Judgment):
+                raise TypeError("@prover method %s is expected to return "
+                                "a proven Judgment, not %s of type %s."
+                                %(func, proven_truth, proven_truth.__class__))
+            if not proven_truth.is_sufficient(assumptions):
+                raise TypeError("@prover method %s returned a Judgment "
+                                "that is not proven under the active "
+                                "assumptions: %s"%(func, assumptions)) 
+            return proven_truth
+        
         if len(defaults_to_change) > 0:
             # Temporarily reconfigure defaults with 
             with defaults.temporary() as temp_defaults:
@@ -69,21 +82,21 @@ def _make_decorated_prover(func):
                     setattr(temp_defaults, key, kwargs[key])
                 assumptions = temp_defaults.assumptions
                 kwargs.update(public_attributes_dict(defaults))
-                proven_truth = func(*args, **kwargs)
+                if is_generator:
+                    return (checked_truth(proven_truth) for proven_truth
+                            in func(*args, **kwargs))
+                else:
+                    proven_truth = checked_truth(func(*args, **kwargs))
         else:
             # No defaults reconfiguration.
             assumptions = defaults.assumptions
             kwargs.update(public_attributes_dict(defaults))
-            proven_truth = func(*args, **kwargs)
+            if is_generator:
+                return (checked_truth(proven_truth) for proven_truth
+                        in func(*args, **kwargs))
+            else:
+                proven_truth = checked_truth(func(*args, **kwargs))
                 
-        if not isinstance(proven_truth, Judgment):
-            raise TypeError("@prover method %s is expected to return "
-                            "a proven Judgment, not %s of type %s."
-                            %(func, proven_truth, proven_truth.__class__))
-        if not proven_truth.is_sufficient(assumptions):
-            raise TypeError("@prover method %s returned a Judgment "
-                            "that is not proven under the active "
-                            "assumptions: %s"%(func, assumptions))
         if is_conclude_method:
             self = args[0]
             if func.__name__.startswith('conclude_negation'):
@@ -93,12 +106,18 @@ def _make_decorated_prover(func):
                     raise ValueError(
                             "@prover method %s whose name starts with "
                             "'conclude_negation' must prove 'Not(self)', "
-                            "%s, but got %s."%(func, not_self, proven_truth))                
+                            "%s, but got %s."%(func, not_self, proven_truth))   
+                # Match the style of not_self.
+                return proven_truth.with_matching_style(not_self)
             else:
                 if proven_truth.expr != self:
+                    print(proven_truth.expr.expr_info())
+                    print(self.expr_info())
                     raise ValueError("@prover method %s whose name starts with "
                                      "'conclude' must prove 'self', %s, but got "
                                      "%s."%(func, self, proven_truth))
+                # Match the style of self.
+                return proven_truth.with_matching_style(self)
         return proven_truth
     return decorated_prover    
     
@@ -120,7 +139,7 @@ def _wraps(func, wrapper):
 
 def prover(func):
     '''
-    @prover is a decorators for methods that are to return a proven
+    @prover is a decorator for methods that are to return a proven
     judgment valid under "active" (default) assumptions.  As a special
     feature, this decorator allows for extra keyword arguments for
     temporarily altering any attributes of the Prove-It 'defaults'
@@ -130,6 +149,17 @@ def prover(func):
     '''
     return _wraps(func, _make_decorated_prover(func))
 
+def proof_generator(func):
+    '''
+    @proof_generator is a decorator for methods that yield any number
+    of proven judgments valid under "active" (default) assumptions. 
+    As a special feature, this decorator allows for extra keyword 
+    arguments for temporarily altering any attributes of the Prove-It 
+    'defaults' (e.g., defaults.assumptions) before calling the decorated
+    method.  It will then check to see if the yielded values are 
+    Judgments that are valid under "active" assumptions.
+    '''
+    return _wraps(func, _make_decorated_prover(func, is_generator=True))    
 
 # Keep track of equivalence provers so we may register them during
 # Expression class construction (see ExprType.__init__ in expr.py).
@@ -184,12 +214,11 @@ def equivalence_prover(past_tense, present_tense):
             # 'preserve' the 'self' expression so it will be on the 
             # left side without simplification.
             _self = args[0]
-            kwargs['preserve_self'] = True
+            kwargs['preserve_expr'] = _self
             proven_truth = None
             if is_simplification_method or is_evaluation_method:
                 from proveit.logic import (is_irreducible_value,
-                                           Equals, SimplificationError,
-                                           EvaluationError)
+                                           Equals)
                 # See if there is a known evaluation.
                 known_evaluation = Equals.get_known_evaluation(_self)
                 if known_evaluation is None:
@@ -209,24 +238,24 @@ def equivalence_prover(past_tense, present_tense):
             proven_expr = proven_truth.expr
             if not isinstance(proven_expr, TransitiveRelation):
                 raise TypeError(
-                        "@equivalence_prover expected to prove a "
+                        "@equivalence_prover, %s, expected to prove a "
                         "TranstiveRelation expression (more "
                         "specifically, the EquivalenceClass type "
-                        "of relation), not %s of type %s"
-                        %(proven_expr, proven_expr.__class__))
+                        "of relation), not %s of type %s."
+                        %(func, proven_expr, proven_expr.__class__))
             if not isinstance(proven_expr, 
                               proven_expr.__class__.EquivalenceClass()):
                 raise TypeError(
-                        "@equivalence_prover expected to prove a "
+                        "@equivalence_prover, %s, expected to prove a "
                         "TranstiveRelation of the EquivalenceClass, "
-                        "not %s of type %s"
-                        %(proven_expr, proven_expr.__class__))
+                        "not %s of type %s."
+                        %(func, proven_expr, proven_expr.__class__))
             if proven_expr.lhs != _self:
                 raise TypeError(
-                        "@equivalence_prover expected to prove an "
+                        "@equivalence_prover, %s, expected to prove an "
                         "equivalence relation with 'self', %s, on "
                         "its left side ('lhs').  %s does not satisfy "
-                        "this requirement"%(_self, proven_expr))
+                        "this requirement."%(func, _self, proven_expr))
             if is_simplification_method or is_evaluation_method:
                 from proveit.logic import Equals
                 if not isinstance(proven_expr, Equals):
@@ -247,10 +276,10 @@ def equivalence_prover(past_tense, present_tense):
                 from proveit.logic import is_irreducible_value
                 if not is_irreducible_value(proven_expr.rhs):
                     raise TypeError(
-                            "An 'evaluation' must have an irreducible "
-                            "value in the right side, "
-                            "is_irreducible_value(%s) is False"
-                            %proven_expr.rhs)
+                            "An 'evaluation' for %s via %s must have an "
+                            "irreducible value in the right side, "
+                            "is_irreducible_value(%s) is False."
+                            %(_self, func, proven_expr.rhs))
             return proven_truth
 
         _equiv_prover_fn_to_tenses[wrapper] = (past_tense, present_tense)

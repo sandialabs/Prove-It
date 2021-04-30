@@ -9,7 +9,7 @@ from proveit._core_.expression.composite import singular_expression, ExprTuple
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-
+from proveit.decorators import equivalence_prover
 
 class ExprRange(Expression):
     '''
@@ -1158,7 +1158,8 @@ class ExprRange(Expression):
         return nested_range(parameters, new_inner_body, start_indices,
                             end_indices)
 
-    def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
+    @equivalence_prover('partitioned', 'partition')
+    def partition(self, before_split_idx, **defaults_config):
         '''
         Return the equation between this range within an ExprTuple
         and a split version in the following manner:
@@ -1180,23 +1181,20 @@ class ExprRange(Expression):
         if end_index == Add(before_split_idx, one):
             # special case which uses the axiom:
             return range_extension_def.instantiate(
-                {f: lambda_map, i: start_index, j: before_split_idx},
-                assumptions=assumptions)
+                {f: lambda_map, i: start_index, j: before_split_idx})
         elif before_split_idx == self.start_index:
             # special case when peeling off the front
             return partition_front.instantiate(
-                {f: lambda_map, i: self.start_index, j: self.end_index},
-                assumptions=assumptions)
+                {f: lambda_map, i: self.start_index, j: self.end_index})
         elif (before_split_idx == subtract(end_index, one) or
-              Equals(before_split_idx, subtract(end_index, one)).proven(assumptions)):
+              Equals(before_split_idx, subtract(end_index, one)).proven()):
             # special case when peeling off the back
             return partition_back.instantiate(
-                {f: lambda_map, i: start_index, j: end_index},
-                assumptions=assumptions)
+                {f: lambda_map, i: start_index, j: end_index})
         else:
             return partition.instantiate(
                 {f: lambda_map, i: start_index, j: before_split_idx,
-                 k: end_index}, assumptions=assumptions)
+                 k: end_index})
 
     def shift_equivalence(self, *, old_shift=None, new_start=None,
                           new_end=None, new_shift=None,

@@ -139,6 +139,7 @@ class Conditional(Expression):
     @equivalence_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
         from proveit.relation import TransRelUpdater
+        from proveit.logic import And
         
         expr = self
         eq = TransRelUpdater(expr)
@@ -146,8 +147,14 @@ class Conditional(Expression):
             # Simplify the 'value'.
             expr = eq.update(
                     expr.value_substitution(self.value.simplification()))
-        if not self.condition.is_simplified():
-            # Simplify the 'condition'.
+        if isinstance(self.condition, And):
+            # Simplify the conditions.
+            if any(not condition.is_simplified() for condition 
+                   in self.condition.operands.entries):
+                inner_condition = expr.inner_expr().condition
+                expr = eq.update(inner_condition.simplification_of_operands())
+        elif not self.condition.is_simplified():
+            # Simplify the condition.
             expr = eq.update(
                     expr.condition_substitution(
                             self.condition.simplification()))
@@ -167,7 +174,7 @@ class Conditional(Expression):
             etc.
         '''
         from proveit import a, m, n, Q, R
-        from proveit.logic import And, TRUE
+        from proveit.logic import And, TRUE, Equals
         if self.condition == TRUE:
             from proveit.core_expr_types.conditionals import \
                 true_condition_reduction
@@ -189,19 +196,7 @@ class Conditional(Expression):
             if is_single(conditions):
                 return singular_conjunction_condition_reduction \
                     .instantiate({a: self.value, Q: conditions[0]})
-            elif (conditions.num_entries() == 2 
-                      and isinstance(conditions[0], And)):
-                _Q = conditions[0].operands
-                _m = _Q.num_elements()
-                return condition_append_reduction.instantiate(
-                    {a: self.value, m: _m, Q: _Q, R: conditions[1]})
-            elif (conditions.num_entries() == 2 
-                      and isinstance(conditions[1], And)):
-                _R = conditions[1].operands
-                _n = _R.num_elements()
-                return condition_prepend_reduction.instantiate(
-                    {a: self.value, n: _n, Q: conditions[0], R: _R})
-            elif (conditions.num_entries() == 2 and
+            elif (conditions.is_double() and
                     all(isinstance(cond, And) for cond in conditions)):
                 _Q = conditions[0].operands
                 _R = conditions[1].operands
@@ -223,6 +218,21 @@ class Conditional(Expression):
                 _m = _Q.num_elements()
                 _a = self.value
                 return thm.instantiate({m: _m, a: _a, Q: _Q})
+            elif (conditions.is_double() 
+                      and isinstance(conditions[0], And)):
+                _Q = conditions[0].operands
+                _m = _Q.num_elements()
+                return condition_append_reduction.instantiate(
+                    {a: self.value, m: _m, Q: _Q, R: conditions[1]})
+            elif (conditions.is_double()
+                      and isinstance(conditions[1], And)):
+                _R = conditions[1].operands
+                _n = _R.num_elements()
+                return condition_prepend_reduction.instantiate(
+                    {a: self.value, n: _n, Q: conditions[0], R: _R})
+        # Use trivial self-reflection if there is no other 
+        # simplification to do.
+        return Equals(self, self).prove()
 
     def basic_replaced(self, repl_map, *,
                        allow_relabeling=False, requirements=None):
@@ -259,7 +269,31 @@ class Conditional(Expression):
                     repl_map, allow_relabeling=allow_relabeling,
                     requirements=requirements)
 
-        return Conditional(subbed_val, subbed_cond)
+        return Conditional(subbed_val, subbed_cond,
+                           styles=self._style_data.styles)
+
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
+                                     equality_repl_requirements):
+        '''
+        Properly handle the Conditional scope while doing equality
+        replacements.
+        '''
+        # Add the 'condition' as an assumption for the 'value' scope.
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.assumptions = (
+                    defaults.assumptions + (self.condition,))
+            subbed_val = self.value._equality_replaced(
+                    equality_repl_map, requirements,
+                    equality_repl_requirements)
+        subbed_cond = self.condition._equality_replaced(
+                    equality_repl_map, requirements,
+                    equality_repl_requirements)
+        if (subbed_val._style_id == self.value._style_id and
+                subbed_cond._style_id == self.condition._style_id):
+            # Nothing change, so don't remake anything.
+            return self
+        return Conditional(subbed_val, subbed_cond,
+                           styles=self._style_data.styles)
     
     def value_substitution(self, equality, assumptions=USE_DEFAULTS):
         '''
@@ -327,7 +361,8 @@ class Conditional(Expression):
         given "Q = R".
         '''
         from proveit import a, Q, R
-        from . import condition_substitution
+        from proveit.core_expr_types.conditionals import (
+                condition_substitution)
         if equality.lhs == self.condition:
             return condition_substitution.instantiate(
                     {a:self.value, Q:equality.lhs, R:equality.rhs})

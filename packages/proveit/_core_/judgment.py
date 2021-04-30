@@ -970,12 +970,25 @@ class Judgment:
                         # default is to map instance variables to
                         # themselves
                         processed_repl_map[iparam_var] = iparam_var
-        return self._checkedTruth(
-            Instantiation(self,
-                          num_forall_eliminations=num_forall_eliminations,
-                          repl_map=processed_repl_map,
-                          equiv_alt_expansions=equiv_alt_expansions,
-                          assumptions=defaults.assumptions))
+        temporarily_preserved_exprs = set()
+        try:
+            # Preserve all replacement expressions -- don't simplify
+            # them given the directive to specifically use them.
+            temporarily_preserved_exprs = (
+                    set(processed_repl_map.values()) - 
+                    defaults.preserved_exprs)
+            defaults.preserved_exprs.update(temporarily_preserved_exprs)
+
+            return self._checkedTruth(
+                Instantiation(self,
+                              num_forall_eliminations=num_forall_eliminations,
+                              repl_map=processed_repl_map,
+                              equiv_alt_expansions=equiv_alt_expansions,
+                              assumptions=defaults.assumptions))
+        finally:
+            # Revert the preserve_exprs set back to what it was.
+            defaults.preserved_exprs.difference_update(
+                    temporarily_preserved_exprs)
 
     def generalize(self, forall_var_or_vars_or_var_lists,
                    domain_lists=None, domain=None, conditions=tuple()):

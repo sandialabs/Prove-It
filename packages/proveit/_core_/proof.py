@@ -1088,7 +1088,8 @@ class Instantiation(Proof):
                     requirements=requirements)
                 subbed_assumption = subbed_assumption.equality_replaced(
                         requirements=requirements,
-                        equality_repl_requirements=equality_repl_requirements)
+                        equality_repl_requirements=equality_repl_requirements,
+                        preserve_top_level=True)
                 if isinstance(assumption, ExprRange):
                     # An iteration of assumptions to expand.
                     orig_subbed_assumptions.extend(subbed_assumption)
@@ -1340,7 +1341,8 @@ class Instantiation(Proof):
                 equiv_alt_expansions=active_equiv_alt_expansions)
             eq_replaced = instantiated.equality_replaced(
                     requirements=requirements,
-                    equality_repl_requirements=equality_repl_requirements)
+                    equality_repl_requirements=equality_repl_requirements,
+                    preserve_top_level=True)
             return eq_replaced
 
         remaining_forall_eliminations = num_forall_eliminations

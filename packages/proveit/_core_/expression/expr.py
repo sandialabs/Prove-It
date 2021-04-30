@@ -28,7 +28,8 @@ class ExprType(type):
     # of the core.
     protected = ('_canonical_version',
                  'replaced', 'basic_replaced', '_replaced_entries', 
-                 'equality_replaced', '_equality_replaced', 'relabeled',
+                 'equality_replaced', '_equality_replaced', 
+                 '_equality_replaced_sub_exprs', 'relabeled',
                  '_make', '_checked_make', '_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
@@ -797,7 +798,8 @@ class Expression(metaclass=ExprType):
                         self, assumptions, "Failure to automatically 'conclude'")
                 if not isinstance(concluded_truth, Judgment):
                     raise ValueError(
-                        "'conclude' method should return a Judgment (or raise an exception)")
+                        "'conclude' method should return a Judgment "
+                        "(or raise an exception), not %s"%concluded_truth)
                 if concluded_truth.expr != self:
                     raise ValueError(
                         "'conclude' method should return a Judgment for this Expression object: " + str(
@@ -984,13 +986,17 @@ class Expression(metaclass=ExprType):
                 style_preferences=self._style_data.styles)
         return replaced
 
-    def equality_replaced(self, requirements, equality_repl_requirements):
+    def equality_replaced(self, requirements, equality_repl_requirements,
+                          preserve_top_level=False):
         '''
         Return something equal to this expression with replacements
         made via proven equalities, either simplifications or
         replacements specified in defaults.equality_repl_map (which maps
         expressions to equalities having the expression on the left side
         and replacement on the right side).
+        
+        If preserve_top_level is True, don't replace this top-level
+        expression but sub-expressions are fair game.
         '''
         from proveit import Judgment  
         from proveit.logic import Equals
@@ -1009,15 +1015,21 @@ class Expression(metaclass=ExprType):
             equality_repl_map[replacement.expr.lhs] = replacement
 
         # Use the recursive helper method.
-        return self._equality_replaced(equality_repl_map, requirements,
-                                       equality_repl_requirements)
+        if preserve_top_level:
+            return self._equality_replaced_sub_exprs(
+                    equality_repl_map, requirements, 
+                    equality_repl_requirements)
+        else:
+            return self._equality_replaced(
+                    equality_repl_map, requirements, 
+                    equality_repl_requirements)
 
     def _equality_replaced(self, equality_repl_map, requirements, 
                            equality_repl_requirements):
         '''
         Recursive helper method for equality_replaced.
-        '''        
-        from proveit import Judgment        
+        '''
+        from proveit import Judgment, Composite, ExprRange       
         from proveit._core_.proof import (
                 ProofFailure, UnsatisfiedPrerequisites)
         from proveit.logic import Equals, SimplificationError
@@ -1029,35 +1041,27 @@ class Expression(metaclass=ExprType):
         # Check for an equality replacement via equality_repl_map
         # or as a simplification.
         replacement = None
-        if self in equality_repl_map:
-            replacement = equality_repl_map[self]
-        elif defaults.auto_simplify and not self.is_simplified():
-            try:
-                replacement = self.simplification()
-                if replacement.rhs == self:
-                    # Trivial simplification -- don't use it.
+        if (not isinstance(self, Composite) and 
+                not isinstance(self, ExprRange)):
+            if self in equality_repl_map:
+                replacement = equality_repl_map[self]
+            elif defaults.auto_simplify and not self.is_simplified():
+                try:
+                    replacement = self.simplification()
+                    if replacement.rhs == self:
+                        # Trivial simplification -- don't use it.
+                        replacement = None
+                except (SimplificationError, UnsatisfiedPrerequisites, 
+                        NotImplementedError, ProofFailure):
+                    # Failure in the simplification attempt; just skip it.
                     replacement = None
-            except (SimplificationError, UnsatisfiedPrerequisites, 
-                    NotImplementedError, ProofFailure):
-                # Failure in the simplification attempt; just skip it.
-                replacement = None
 
         # Do we have a replacement at this level?
         if replacement is None:
             # Recurse into the sub-expressions.
-            sub_exprs = self._sub_expressions
-            subbed_sub_exprs = \
-                tuple(sub_expr._equality_replaced(
-                        equality_repl_map, requirements,
-                        equality_repl_requirements)
-                      for sub_expr in sub_exprs)
-            if all(subbed_sub._style_id == sub._style_id for
-                   subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
-                # Nothing change, so don't remake anything.
-                return self
-            return self.__class__._checked_make(
-                self._core_info, subbed_sub_exprs,
-                style_preferences=self._style_data.styles)
+            return self._equality_replaced_sub_exprs(
+                    equality_repl_map, requirements, 
+                    equality_repl_requirements)
 
         # We have a replacement here; make sure it is a valid one.
         if not isinstance(replacement, Judgment):
@@ -1080,6 +1084,26 @@ class Expression(metaclass=ExprType):
         equality_repl_requirements.add(replacement)
         return replacement.expr.rhs
 
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
+                                     equality_repl_requirements):
+        '''
+        Recursive helper method for equality_replaced.
+        '''
+        # Recurse into the sub-expressions.
+        sub_exprs = self._sub_expressions
+        subbed_sub_exprs = \
+            tuple(sub_expr._equality_replaced(
+                    equality_repl_map, requirements,
+                    equality_repl_requirements)
+                  for sub_expr in sub_exprs)
+        if all(subbed_sub._style_id == sub._style_id for
+               subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+            # Nothing change, so don't remake anything.
+            return self
+        return self.__class__._checked_make(
+            self._core_info, subbed_sub_exprs,
+            style_preferences=self._style_data.styles)
+            
     def copy(self):
         '''
         Make a copy of the Expression with the same styles.
