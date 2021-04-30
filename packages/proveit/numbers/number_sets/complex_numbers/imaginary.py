@@ -12,4 +12,6 @@ class ImaginaryLiteral(IrreducibleValue, Literal):
     def eval_equality(self, other, assumptions=USE_DEFAULTS):
         if other == self:
             return Equals(self, self).prove()
-        pass  # need axioms/theorems to prove inequality amongst different numerals
+        raise NotImplementedError("'eval_equality' not implemented for "
+                                  "%s to compare with %s"
+                                  %(self, other))

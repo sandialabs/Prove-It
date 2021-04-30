@@ -397,8 +397,7 @@ class Len(Operation):
         expression assuming.  Performs the "computation" of the
         Len expression and then simplifies the right side.
         '''
-        assumptions = defaults.assumptions
-        computation = self.computation(assumptions)
+        computation = self.computation()
         return computation.inner_expr().rhs.simplify()
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):

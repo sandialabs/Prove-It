@@ -1,5 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
-                     USE_DEFAULTS)
+                     USE_DEFAULTS, prover)
 from proveit import A, B, C, x
 from proveit import f, S
 from proveit.relation import Relation
@@ -35,29 +35,32 @@ class NotSubsetEq(Relation):
         # unfold as an automatic side-effect
         yield self.unfold
 
-    def conclude(self, assumptions):
-        return self.conclude_as_folded(assumptions)
+    @prover
+    def conclude(self, **defaults_config):
+        return self.conclude_as_folded()
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
         From A nsubseteq B, derive and return not(supseteq(A, B)).
         '''
         from . import unfold_not_subset_eq
         unfolded = unfold_not_subset_eq.instantiate(
-            {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+            {A: self.operands[0], B: self.operands[1]})
         return unfolded.inner_expr().operand.with_mimicked_style(self)
 
-    def conclude_as_folded(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_folded(self, **defaults_config):
         '''
         Derive this folded version, A nsupset B, from the unfolded
         version, not(A supset B).
         '''
         from . import fold_not_subset_eq
-        concluded = fold_not_subset_eq.instantiate(
-            {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-        return concluded.with_matching_style(self)
+        return fold_not_subset_eq.instantiate(
+            {A: self.operands[0], B: self.operands[1]})
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this NotSubsetEq statement is in the
         Boolean set.

@@ -286,7 +286,8 @@ class Exp(NumberOperation):
             kwargs['force_fence'] if 'force_fence' in kwargs else False)
         return maybe_fenced_string(inner_str, **kwargs)
 
-    def distribution(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('distributed', 'distribute')
+    def distribution(self, **defaults_config):
         '''
         Equate this exponential to a form in which the exponent
         is distributed over factors, or a power of a power reduces to
@@ -296,7 +297,6 @@ class Exp(NumberOperation):
             (a/b)^f = (a^f / b^f)
             (a^b)^c = a^(b*c)
         '''
-        from proveit.logic import InSet
         from proveit.numbers import Mult, Div, NaturalPos, RealPos, Real
         from . import (
             posnat_power_of_product, posnat_power_of_products,
@@ -313,67 +313,67 @@ class Exp(NumberOperation):
             if self.base.operands.is_double():
                 _a, _b = self.base.operands
             else:
-                _m = self.base.operands.num_elements(assumptions)
+                _m = self.base.operands.num_elements()
                 _a = self.base.operands
-            if InSet(exponent, NaturalPos).proven(assumptions):
+            if InSet(exponent, NaturalPos).proven():
                 if self.base.operands.is_double():
                     return posnat_power_of_product.instantiate(
-                        {a: _a, b: _b, n: exponent}, assumptions=assumptions)
+                        {a: _a, b: _b, n: exponent})
                 else:
                     return posnat_power_of_products.instantiate(
-                        {m: _m, a: _a, n: exponent}, assumptions=assumptions)
-            elif InSet(exponent, RealPos).proven(assumptions):
+                        {m: _m, a: _a, n: exponent})
+            elif InSet(exponent, RealPos).proven():
                 if self.base.operands.is_double():
                     return pos_power_of_product.instantiate(
-                        {a: _a, b: _b, c: exponent}, assumptions=assumptions)
+                        {a: _a, b: _b, c: exponent})
                 else:
                     return pos_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent}, assumptions=assumptions)
-            elif InSet(exponent, Real).proven(assumptions):
+                        {m: _m, a: _a, c: exponent})
+            elif InSet(exponent, Real).proven():
                 if self.base.operands.is_double():
                     return real_power_of_product.instantiate(
-                        {a: _a, b: _b, c: exponent}, assumptions=assumptions)
+                        {a: _a, b: _b, c: exponent})
                 else:
                     return real_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent}, assumptions=assumptions)
+                        {m: _m, a: _a, c: exponent})
             else:  # Complex is the default
                 if self.base.operands.is_double():
                     return complex_power_of_product.instantiate(
-                        {a: _a, b: _b, c: exponent}, assumptions=assumptions)
+                        {a: _a, b: _b, c: exponent})
                 else:
                     return complex_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent}, assumptions=assumptions)
+                        {m: _m, a: _a, c: exponent})
         elif isinstance(base, Div):
             assert self.base.operands.is_double()
             _a, _b = self.base.operands
-            if InSet(exponent, NaturalPos).proven(assumptions):
+            if InSet(exponent, NaturalPos).proven():
                 return posnat_power_of_quotient.instantiate(
-                    {a: _a, b: _b, n: exponent}, assumptions=assumptions)
+                    {a: _a, b: _b, n: exponent})
             else:
-                if InSet(exponent, RealPos).proven(assumptions):
+                if InSet(exponent, RealPos).proven():
                     thm = pos_power_of_quotient
-                elif InSet(exponent, Real).proven(assumptions):
+                elif InSet(exponent, Real).proven():
                     thm = real_power_of_quotient
                 else:  # Complex is the default
                     thm = complex_power_of_quotient
                 return thm.instantiate(
-                    {a: _a, b: _b, c: exponent}, assumptions=assumptions)
+                    {a: _a, b: _b, c: exponent})
         elif isinstance(base, Exp):
             _a = base.base
-            if InSet(exponent, NaturalPos).proven(assumptions):
+            if InSet(exponent, NaturalPos).proven():
                 _m, _n = base.exponent, exponent
                 return posnat_power_of_posnat_power.instantiate(
-                    {a: _a, m: _m, n: _n}, assumptions=assumptions)
+                    {a: _a, m: _m, n: _n})
             else:
                 _b, _c = base.exponent, exponent
-                if InSet(exponent, RealPos).proven(assumptions):
+                if InSet(exponent, RealPos).proven():
                     thm = pos_power_of_pos_power
-                elif InSet(exponent, Real).proven(assumptions):
+                elif InSet(exponent, Real).proven():
                     thm = real_power_of_real_power
                 else:  # Complex is the default
                     thm = complex_power_of_complex_power
                 return thm.instantiate(
-                    {a: _a, b: _b, c: _c}, assumptions=assumptions)
+                    {a: _a, b: _b, c: _c})
         else:
             raise ValueError("May only distribute an exponent over a "
                              "product or fraction.")
@@ -643,8 +643,3 @@ def sqrd(base):
     Special function for squaring root version of an exponential.
     '''
     return Exp(base, two)
-
-
-# Register these expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Exp, 'distribution', 'distributed', 'distribute')

@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS
+from proveit import USE_DEFAULTS, prover
 from proveit.relation import (
     TransitiveRelation, total_ordering)
 
@@ -42,15 +42,15 @@ class InclusionRelation(TransitiveRelation):
             yield self.derive_relaxed
     
     @staticmethod
-    def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivity(self, other, **defaults_config):
         '''
         apply_transitivity(Subset(A,B), SetEquiv(B,C)) 
         returns Subset(A,C)
         '''
         from proveit.logic import Equals, SetEquiv, SubsetEq
         if isinstance(other, Equals):
-            return TransitiveRelation.apply_transitivity(self, other,
-                                                         assumptions)
+            return TransitiveRelation.apply_transitivity(self, other)
         if isinstance(other, SetEquiv):
             # From set equivalence, derive the appropriate subset_eq
             # so we can use normal subset transitivity.
@@ -66,7 +66,7 @@ class InclusionRelation(TransitiveRelation):
             else:
                 raise ValueError("Unable to apply transitivity between %s "
                                  "and %s."%(self, other))
-            return self.apply_transitivity(other_as_subset_eq, assumptions)
+            return self.apply_transitivity(other_as_subset_eq)
 
 def inclusion_ordering(*relations):
     '''

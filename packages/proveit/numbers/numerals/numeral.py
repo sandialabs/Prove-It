@@ -22,10 +22,10 @@ class Numeral(Literal, IrreducibleValue):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
 
-    def eval_equality(self, other, assumptions=USE_DEFAULTS):
+    def eval_equality(self, other):
         if other == self:
             return Equals(self, self).prove().evaluation()
-        self_neq_other = self.not_equal(other, assumptions)
+        self_neq_other = self.not_equal(other)
         return self_neq_other.unfold().equate_negated_to_false()
 
     @prover
@@ -33,8 +33,7 @@ class Numeral(Literal, IrreducibleValue):
         from proveit.numbers import Less
         from proveit.numbers.ordering import less_is_not_eq
         _a, _b = Less.sorted_items([self, other])
-        not_eq_stmt = less_is_not_eq.instantiate(
-            {a: _a, b: _b}, auto_simplify=False)
+        not_eq_stmt = less_is_not_eq.instantiate({a: _a, b: _b})
         if not_eq_stmt.lhs != self:
             # We need to reverse the statement.
             return not_eq_stmt.derive_reversed()
@@ -66,15 +65,16 @@ class Numeral(Literal, IrreducibleValue):
         n = int(extra_core_info[0])
         return Numeral(n, string_format, latex_format, styles=styles)
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         from proveit.numbers import Natural, NaturalPos, Digits
         from proveit.logic import InSet, SubsetEq
         if number_set == Natural:
-            return self.deduce_in_natural(assumptions)
+            return self.deduce_in_natural()
         elif number_set == NaturalPos:
-            return self.deduce_in_natural_pos(assumptions)
+            return self.deduce_in_natural_pos()
         elif number_set == Digits:
-            return self.deduce_in_digits(assumptions)
+            return self.deduce_in_digits()
         else:
             try:
                 # Do this to avoid infinite recursion -- if
@@ -97,9 +97,10 @@ class Numeral(Literal, IrreducibleValue):
             else:
                 sub_rel = SubsetEq(Natural, number_set)
             # Prove membership via inclusion:
-            return sub_rel.derive_superset_membership(self, assumptions)
+            return sub_rel.derive_superset_membership(self)
 
-    def deduce_in_natural(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_natural(self, **defaults_config):
         if Numeral._inNaturalStmts is None:
             from proveit.numbers.number_sets.natural_numbers import zero_in_nats
             from .decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
@@ -117,7 +118,8 @@ class Numeral(Literal, IrreducibleValue):
         return Numeral._notZeroStmts[self.n]
     '''
 
-    def deduce_in_natural_pos(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_natural_pos(self, **defaults_config):
         if Numeral._inNaturalPosStmts is None:
             from .decimals import posnat1, posnat2, posnat3, posnat4, posnat5
             from .decimals import posnat6, posnat7, posnat8, posnat9
@@ -136,7 +138,8 @@ class Numeral(Literal, IrreducibleValue):
                                "Cannot prove %d in NaturalPos" % self.n)
         return Numeral._inNaturalPosStmts[self.n]
 
-    def deduce_in_digits(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_digits(self, **defaults_config):
         if Numeral._inDigitsStmts is None:
             from .decimals import digit0, digit1, digit2, digit3, digit4, digit5
             from .decimals import digit6, digit7, digit8, digit9
@@ -156,7 +159,8 @@ class Numeral(Literal, IrreducibleValue):
                                "Cannot prove %d in Digits" % self.n)
         return Numeral._inDigitsStmts[self.n]
 
-    def deduce_positive(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_positive(self, **defaults_config):
         if Numeral._positiveStmts is None:
             from .decimals import posnat1, posnat2, posnat3, posnat4, posnat5
             from .decimals import posnat6, posnat7, posnat8, posnat9

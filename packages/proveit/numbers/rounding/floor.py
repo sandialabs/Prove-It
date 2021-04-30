@@ -40,7 +40,8 @@ class Floor(Function):
         '''
         return apply_reduced_simplification(self, defaults.assumptions)
 
-    def rounding_elimination(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('rounding_eliminated', 'rounding_eliminate')
+    def rounding_elimination(self, **defaults_config):
         '''
         For the trivial case of Floor(x) where the operand x is already
         an integer, derive and return this Floor expression equated
@@ -55,12 +56,10 @@ class Floor(Function):
         '''
         from . import floor_of_integer
 
-        return apply_rounding_elimination(self, floor_of_integer, assumptions)
+        return apply_rounding_elimination(self, floor_of_integer)
 
-    def rounding_extraction(
-            self,
-            idx_to_extract=None,
-            assumptions=USE_DEFAULTS):
+    @equivalence_prover('rounding_extracted', 'rounding_extract')
+    def rounding_extraction(self, idx_to_extract=None, **defaults_config):
         '''
         For the case of Floor(x) where the operand x = x_real + x_int,
         derive and return Floor(x) = Floor(x_real) + int (thus
@@ -84,7 +83,7 @@ class Floor(Function):
         '''
         from . import floor_of_real_plus_int
         return apply_rounding_extraction(
-            self, floor_of_real_plus_int, idx_to_extract, assumptions)
+            self, floor_of_real_plus_int, idx_to_extract)
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -98,10 +97,3 @@ class Floor(Function):
         return rounding_deduce_in_number_set(
             self, number_set, floor_is_an_int, floor_real_pos_closure,
             assumptions)
-
-
-# Register these generic expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Floor, 'rounding_elimination', 'rounding_eliminated', 'rounding_eliminate')
-InnerExpr.register_equivalence_method(
-    Floor, 'rounding_extraction', 'rounding_extracted', 'rounding_extract')

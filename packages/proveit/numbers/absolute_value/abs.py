@@ -35,7 +35,8 @@ class Abs(NumberOperation):
         return abs_is_non_neg.instantiate(
             {a: self.operand}, assumptions=assumptions)
 
-    def distribution(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('distributed', 'distribute')
+    def distribution(self, **defaults_config):
         '''
         Equate this absolute value with its distribution over a product
         or fraction.
@@ -50,14 +51,15 @@ class Abs(NumberOperation):
                 {a: self.operand.numerator, b: self.operand.denominator})
         elif isinstance(self.operand, Mult):
             _x = self.operand.operands
-            _n = _x.num_elements(assumptions)
+            _n = _x.num_elements()
             return abs_prod.instantiate({n: _n, x: _x})
         else:
             raise ValueError(
                 'Unsupported operand type for Abs.distribution() '
                 'method: ', str(self.operand.__class__))
 
-    def abs_elimination(self, operand_type=None, assumptions=USE_DEFAULTS):
+    @equivalence_prover('abs_eliminated', 'abs_eliminate')
+    def abs_elimination(self, operand_type=None, **defaults_config):
         '''
         For some |x| expression, deduce either |x| = x (the default) OR
         |x| = -x (for operand_type = 'negative'). Assumptions may be
@@ -66,11 +68,9 @@ class Abs(NumberOperation):
         from . import abs_non_neg_elim, abs_neg_elim
         # deduce_non_neg(self.operand, assumptions) # NOT YET IMPLEMENTED
         if operand_type is None or operand_type == 'non-negative':
-            return abs_non_neg_elim.instantiate({x: self.operand},
-                                                assumptions=assumptions)
+            return abs_non_neg_elim.instantiate({x: self.operand})
         elif operand_type == 'negative':
-            return abs_neg_elim.instantiate({x: self.operand},
-                                            assumptions=assumptions)
+            return abs_neg_elim.instantiate({x: self.operand})
         else:
             raise ValueError(
                 "Unsupported operand type for Abs.abs_elimination() "
@@ -199,8 +199,9 @@ class Abs(NumberOperation):
 
         # Default is no simplification.
         return Equals(self, self).prove()
-    
-    def difference_reversal(self, assumptions=USE_DEFAULTS):
+
+    @equivalence_prover('reversed_difference', 'reverse_difference')
+    def difference_reversal(self, **defaults_config):
         '''
         Derive |a - b| = |b - a|.
         '''
@@ -214,8 +215,7 @@ class Abs(NumberOperation):
                              %self)
         _a = self.operand.operands[0]
         _b = self.operand.operands[1].operand
-        return abs_diff_reversal.instantiate({a:_a, b:_b},
-                                             assumptions=assumptions)
+        return abs_diff_reversal.instantiate({a:_a, b:_b})
     
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -301,8 +301,8 @@ class Abs(NumberOperation):
                 {theta:_theta}, reductions=reductions,
                 assumptions=assumptions)
 
-    def chord_length_simplification(
-            self, assumptions=USE_DEFAULTS, automation=True):
+    @equivalence_prover('chord_length_simplified', 'chord_length_simplify')
+    def chord_length_simplification(self, **defaults_config):
         '''
         |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2)   or
         |x exp(i a) - x exp(i b)| = 2 |x| sin(|a - b|/2)
@@ -334,25 +334,25 @@ class Abs(NumberOperation):
             term2 = term2.operand
         else:
             term2 = Neg(term2)
-            reductions.add(Neg(term2).double_neg_simplification(assumptions))
+            reductions.add(Neg(term2).double_neg_simplification())
+        automation = defaults.automation
         _r1, _theta1 = complex_polar_coordinates(
-                term1, assumptions=assumptions,
-                automation=automation, simplify=True, reductions=reductions)
+                term1, automation=automation, simplify=True, 
+                reductions=reductions)
         _r2, _theta2 = complex_polar_coordinates(
-                term2, assumptions=assumptions,
-                automation=automation, simplify=True, reductions=reductions)
+                term2, automation=automation, simplify=True,
+                reductions=reductions)
         if _r1 == _r2:
             # Only applicable if the magnitudes are the same.
             angle = Div(Abs(subtract(_theta1, _theta2)), two)
-            reductions.add(angle.simplification(assumptions=assumptions))
+            reductions.add(angle.simplification())
             if _r1 == one:
                 return complex_unit_circle_chord_length.instantiate(
-                        {a:_theta1, b:_theta2}, 
-                        reductions=reductions, assumptions=assumptions)
+                        {a:_theta1, b:_theta2}, reductions=reductions)
             else:
                 return complex_circle_chord_length.instantiate(
                         {r: _r1, a:_theta1, b:_theta2}, 
-                        reductions=reductions, assumptions=assumptions)
+                        reductions=reductions)
         raise_not_valid_form()
 
     def deduce_triangle_bound(self, assumptions=USE_DEFAULTS,
@@ -452,22 +452,3 @@ def is_equal_to_or_subset_eq_of(
             if ProperSubset(number_set, temp_set).proven(assumptions):
                 return True
     return False
-
-
-InnerExpr.register_equivalence_method(
-    Abs,
-    'chord_length_simplification',
-    'chord_length_simplified',
-    'chord_length_simplify')
-
-InnerExpr.register_equivalence_method(
-    Abs,
-    'distribution',
-    'distributed',
-    'distribute')
-
-InnerExpr.register_equivalence_method(
-    Abs,
-    'difference_reversal',
-    'reversed_difference',
-    'reverse_difference')

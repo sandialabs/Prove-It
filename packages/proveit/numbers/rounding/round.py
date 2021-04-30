@@ -31,7 +31,8 @@ class Round(Function):
         '''
         return apply_reduced_simplification(self, defaults.assumptions)
 
-    def rounding_elimination(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('rounding_eliminated', 'rounding_eliminate')
+    def rounding_elimination(self, **defaults_config):
         '''
         For the trivial case of Round(x) where the operand x is already
         an integer, derive and return this Round expression equated
@@ -44,15 +45,11 @@ class Round(Function):
         For the case where the operand is of the form x = real + int,
         see the rounding_extraction() method.
         '''
-        from proveit import x
         from . import round_of_integer
+        return apply_rounding_elimination(self, round_of_integer)
 
-        return apply_rounding_elimination(self, round_of_integer, assumptions)
-
-    def rounding_extraction(
-            self,
-            idx_to_extract=None,
-            assumptions=USE_DEFAULTS):
+    @equivalence_prover('rounding_extracted', 'rounding_extract')
+    def rounding_extraction(self, idx_to_extract=None, **defaults_config):
         '''
         For the case of Round(x) where the operand x = x_real + x_int,
         derive and return Round(x) = Round(x_real) + x_int (thus
@@ -76,7 +73,7 @@ class Round(Function):
         '''
         from . import round_of_real_plus_int
         return apply_rounding_extraction(
-            self, round_of_real_plus_int, idx_to_extract, assumptions)
+            self, round_of_real_plus_int, idx_to_extract)
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -90,10 +87,3 @@ class Round(Function):
         return rounding_deduce_in_number_set(
             self, number_set, round_is_an_int, round_real_pos_closure,
             assumptions)
-
-
-# Register these generic expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Round, 'rounding_elimination', 'rounding_eliminated', 'rounding_eliminate')
-InnerExpr.register_equivalence_method(
-    Round, 'rounding_extraction', 'rounding_extracted', 'rounding_extract')

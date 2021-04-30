@@ -1,4 +1,5 @@
-from proveit import (Literal, Operation, USE_DEFAULTS, equivalence_prover)
+from proveit import (Literal, Operation, USE_DEFAULTS, 
+                     prover, equivalence_prover)
 from proveit.logic.booleans.conjunction import compose
 from .implies import Implies
 from proveit import A, B, C
@@ -41,7 +42,8 @@ class Iff(TransitiveRelation):
         # A=B given A<=>B (assuming A and B are in booleans)
         yield self.derive_equality
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Try to automatically conclude this bi-directional implication by
         reducing its operands to true/false.
@@ -51,7 +53,7 @@ class Iff(TransitiveRelation):
             # should be proven via one of the imported theorems as a simple
             # special case
             try:
-                self.evaluation(assumptions=assumptions)
+                self.evaluation()
             except BaseException:
                 return self.prove()
         try:
@@ -64,13 +66,13 @@ class Iff(TransitiveRelation):
         try:
             # Use a breadth-first search approach to find the shortest
             # path to get from one end-point to the other.
-            return TransitiveRelation.conclude(self, assumptions)
+            return TransitiveRelation.conclude(self)
         except BaseException:
             pass
 
         # the last attempt is to introduce the Iff via implications each way, an
         # essentially direct consequence of the definition.
-        return self.conclude_by_definition(assumptions)
+        return self.conclude_by_definition()
 
     def conclude_negation(self, assumptions=USE_DEFAULTS):
         # implemented by Joaquin on 6/17/19
@@ -123,7 +125,8 @@ class Iff(TransitiveRelation):
         return iff_symmetry.instantiate(
             {A: self.A, B: self.B}, assumptions=assumptions)
 
-    def apply_transitivity(self, other_iff, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivity(self, other_iff, **defaults_config):
         '''
         From A <=> B (self) and the given B <=> C (other_iff) derive and return
         (A <=> C) assuming self and other_iff.
@@ -134,21 +137,21 @@ class Iff(TransitiveRelation):
         if self.B == other_iff.A:
             # from A <=> B, B <=> C, derive A <=> C
             return iff_transitivity.instantiate(
-                {A: self.A, B: self.B, C: other_iff.B}, assumptions=assumptions)
+                {A: self.A, B: self.B, C: other_iff.B})
         elif self.A == other_iff.A:
             # from y = x and y = z, derive x = z
-            return self.derive_reversed(
-                assumptions).apply_transitivity(other_iff, assumptions)
+            return self.derive_reversed().apply_transitivity(other_iff)
         elif self.A == other_iff.B:
             # from y = x and z = y, derive x = z
-            return self.derive_reversed(assumptions).apply_transitivity(
-                other_iff.derive_reversed(assumptions))
+            return self.derive_reversed().apply_transitivity(
+                other_iff.derive_reversed())
         elif self.B == other_iff.B:
             # from x = y and z = y, derive x = z
             return self.apply_transitivity(
-                other_iff.derive_reversed(assumptions))
+                other_iff.derive_reversed())
         else:
-            assert False, 'transitivity cannot be applied unless there is something in common in the equalities'
+            assert False, ('transitivity cannot be applied unless there '
+                           'is something in common in the equalities')
 
     def definition(self):
         '''
@@ -157,13 +160,13 @@ class Iff(TransitiveRelation):
         from . import iff_def
         return iff_def.instantiate({A: self.A, B: self.B})
 
-    def conclude_by_definition(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_by_definition(self, **defaults_config):
         '''
         Conclude (A <=> B) assuming both (A => B), (B => A).
         '''
         from . import iff_intro
-        return iff_intro.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+        return iff_intro.instantiate({A: self.A, B: self.B})
 
     @equivalence_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):

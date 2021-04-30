@@ -309,7 +309,8 @@ class Add(NumberOperation):
         return mult_def_rev.instantiate({n: _n, a: _a, x: _x},
                                         assumptions=assumptions)
 
-    def cancelations(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('all_canceled', 'all_cancel')
+    def cancelations(self, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
         all simple cancellations are performed (where there are exact
@@ -318,9 +319,9 @@ class Add(NumberOperation):
         from proveit.numbers import Neg
         expr = self
 
-        # A convenience to allow successive update to the equation via transitivities.
-        # (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        # A convenience to allow successive update to the equation via 
+        # transitivities. (starting with self=self).
+        eq = TransRelUpdater(self)
 
         neg_operand_indices = dict()
         for _i, operand in enumerate(self.operands.entries):
@@ -337,23 +338,26 @@ class Add(NumberOperation):
                 if len(indices) == 0:
                     # no more indices to use in the future
                     neg_operand_indices.pop(operand)
-                # By finding where i and j will be inserted into the canceled_indices
-                # array, we can figure out how much they need to shift by to compensate
-                # for previous cancelations.
+                # By finding where i and j will be inserted into the 
+                # canceled_indices array, we can figure out how much 
+                # they need to shift by to compensate for previous 
+                # cancelations.
                 i_shift = bisect.bisect_left(canceled_indices, _i)
                 j_shift = bisect.bisect_left(canceled_indices, _j)
-                # insert the last one first so we don't need to compensate:
+                # Insert the last one first so we don't need to 
+                # compensate:
                 if _i < _j:
                     canceled_indices.insert(j_shift, _j)
                     canceled_indices.insert(i_shift, _i)
                 else:
                     canceled_indices.insert(i_shift, _i)
                     canceled_indices.insert(j_shift, _j)
-                expr = eq.update(expr.cancelation(_i - i_shift, _j - j_shift,
-                                                  assumptions))
+                expr = eq.update(expr.cancelation(_i - i_shift, 
+                                                  _j - j_shift))
         return eq.relation
 
-    def cancelation(self, idx1, idx2, assumptions=USE_DEFAULTS):
+    @equivalence_prover('canceled', 'cancel')
+    def cancelation(self, idx1, idx2, **defaults_config):
         '''
         Attempt a simple cancelation between operands at index i and j.
         If one of these operands is the negation of the other, deduce
@@ -366,7 +370,7 @@ class Add(NumberOperation):
         from proveit.numbers import Neg
         if idx1 > idx2:
             # choose i to be less than j
-            return self.cancelation(idx2, idx1, assumptions)
+            return self.cancelation(idx2, idx1)
 
         if Neg(self.operands[idx1]) == self.operands[idx2]:
             basic_thm = add_cancel_basic
@@ -389,25 +393,22 @@ class Add(NumberOperation):
                              "one is not the negation of the other.")
 
         if self.operands.is_double():
-            return basic_thm.instantiate(
-                {a: canceled_op}, assumptions=assumptions)
+            return basic_thm.instantiate({a: canceled_op})
         elif self.operands.num_entries() == 3:
             # _k is the 3rd index, completing i and j in the set {0,1,2}.
             _k = {0, 1, 2}.difference([idx1, idx2]).pop()
             thm = triple_thms[2 - _k]
-            return thm.instantiate({a: canceled_op, b: self.operands[_k]},
-                                   assumptions=assumptions)
+            return thm.instantiate({a: canceled_op, b: self.operands[_k]})
         else:
             _a = self.operands[:idx1]
             _b = canceled_op
             _c = self.operands[idx1 + 1:idx2]
             _d = self.operands[idx2 + 1:]
-            _i = _a.num_elements(assumptions)
-            _j = _c.num_elements(assumptions)
-            _k = _d.num_elements(assumptions)
+            _i = _a.num_elements()
+            _j = _c.num_elements()
+            _k = _d.num_elements()
             spec = general_thm.instantiate(
-                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c, d: _d},
-                assumptions=assumptions)
+                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c, d: _d})
             # set the proper subtraction styles to match the original
             sub_positions = self.subtraction_positions()
             spec.inner_expr().lhs.with_subtraction_at(*sub_positions)
@@ -417,7 +418,8 @@ class Add(NumberOperation):
                 *[update_pos(p) for p in sub_positions])
             return spec
 
-    def zero_eliminations(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('eliminated_zeros', 'eliminate_zeros')   
+    def zero_eliminations(self, **defaults_config):
         '''
         Derive and return this Add expression equal to a form in which
         all zero's are eliminated.
@@ -426,22 +428,23 @@ class Add(NumberOperation):
 
         expr = self
 
-        # A convenience to allow successive update to the equation via transitivities.
-        # (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        # A convenience to allow successive update to the equation via
+        # transitivities (starting with self=self).
+        eq = TransRelUpdater(self)
 
         # Work in reverse order so indices don't need to be updated.
         for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if operand == zero:
                 idx = self.operands.num_entries() - rev_idx - 1
-                expr = eq.update(expr.zero_elimination(idx, assumptions))
+                expr = eq.update(expr.zero_elimination(idx))
                 if not isinstance(expr, Add):
                     # can't do an elimination if reduced to a single term.
                     break
 
         return eq.relation
 
-    def zero_elimination(self, idx, assumptions=USE_DEFAULTS):
+    @equivalence_prover('eliminated_zero', 'eliminate_zero')
+    def zero_elimination(self, idx, **defaults_config):
         '''
         Derive and return this Add expression equal to a form in which
         a specific zero operand (at the given index) is eliminated.
@@ -456,17 +459,14 @@ class Add(NumberOperation):
 
         if self.operands.is_double():
             if idx == 0:
-                return elim_zero_left.instantiate(
-                    {a: self.operands[1]}, assumptions=assumptions)
+                return elim_zero_left.instantiate({a: self.operands[1]})
             else:
-                return elim_zero_right.instantiate(
-                    {a: self.operands[0]}, assumptions=assumptions)
+                return elim_zero_right.instantiate({a: self.operands[0]})
         _a = self.operands[:idx]
         _b = self.operands[idx + 1:]
         _i = _a.num_elements(assumptions)
         _j = _b.num_elements(assumptions)
-        return elim_zero_any.instantiate(
-            {i: _i, j: _j, a: _a, b: _b}, assumptions=assumptions)
+        return elim_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b})
 
     def deduce_zero_from_neg_self(self, assumptions=USE_DEFAULTS):
         '''
@@ -1122,12 +1122,9 @@ class Add(NumberOperation):
                 raise ValueError("Term is absent!")
         return (idx, num) if also_return_num else idx
 
-    def factorization(
-            self,
-            the_factor,
-            pull="left",
-            group_factor=True,
-            assumptions=USE_DEFAULTS):
+    @equivalence_prover('factorized', 'factor')
+    def factorization(self, the_factor, pull="left", group_factor=True,
+                      **defaults_config):
         '''
         Factor out "the_factor" from this sum, pulling it either to the "left" or "right".
         If group_factor is True and the_factor is a product, these operands are grouped
@@ -1139,18 +1136,15 @@ class Add(NumberOperation):
         from proveit.numbers import one, Mult
         expr = self
         # for convenience updating our equation
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
         _b = []
         # factor the_factor from each term
         for _i in range(expr.terms.num_entries()):
             term = expr.terms[_i]
             if hasattr(term, 'factorization'):
                 term_factorization = term.factorization(
-                    the_factor,
-                    pull,
-                    group_factor=group_factor,
-                    group_remainder=True,
-                    assumptions=assumptions)
+                    the_factor, pull, group_factor=group_factor,
+                    group_remainder=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
                         'Expecting right hand size of factorization to be a product')
@@ -1169,11 +1163,11 @@ class Add(NumberOperation):
                     one, term) if pull == 'right' else Mult(
                     term, one)
                 term_factorization = factored_term.simplification(
-                    assumptions).derive_reversed(assumptions)
+                    ).derive_reversed()
                 _b.append(one)
             # substitute in the factorized term
             expr = eq.update(term_factorization.substitution(
-                expr.inner_expr().terms[_i], assumptions=assumptions))
+                expr.inner_expr().terms[_i]))
         if not group_factor and isinstance(the_factor, Mult):
             factor_sub = the_factor.operands
         else:
@@ -1185,34 +1179,28 @@ class Add(NumberOperation):
             _a = ExprTuple()
             _c = factor_sub
         _b = ExprTuple(*_b)
-        _i = _a.num_elements(assumptions)
-        _j = _b.num_elements(assumptions)
-        _k = _c.num_elements(assumptions)
+        _i = _a.num_elements()
+        _j = _b.num_elements()
+        _k = _c.num_elements()
         eq.update(distribute_through_sum.instantiate(
             {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
-            assumptions=assumptions).derive_reversed(assumptions))
+            ).derive_reversed())
         return eq.relation
 
-    def commutation(
-            self,
-            init_idx=None,
-            final_idx=None,
-            assumptions=USE_DEFAULTS):
+    @equivalence_prover('commuted', 'commute')
+    def commutation(self, init_idx=None, final_idx=None, 
+                    **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal to a form in which the operand
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
         at index init_idx has been moved to final_idx.
         For example, (a + b + ... + y + z) = (a + ... + y + b + z)
         via init_idx = 1 and final_idx = -2.
         '''
         from . import commutation, leftward_commutation, rightward_commutation
         eq = apply_commutation_thm(
-            self,
-            init_idx,
-            final_idx,
-            commutation,
-            leftward_commutation,
-            rightward_commutation,
-            assumptions)
+            self, init_idx, final_idx, commutation,
+            leftward_commutation, rightward_commutation)
         '''
         # DON'T WORRY ABOUT RESETTING THE STYLE FOR THE MOMENT.
 
@@ -1224,36 +1212,32 @@ class Add(NumberOperation):
         '''
         return eq
 
-    def group_commutation(
-            self,
-            init_idx,
-            final_idx,
-            length,
-            disassociate=True,
-            assumptions=USE_DEFAULTS):
+    @equivalence_prover('group_commuted', 'group_commute')
+    def group_commutation(self, init_idx, final_idx, length,
+                          disassociate=True, **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal to a form in which the operands
-        at indices [init_idx, init_idx+length) have been moved to [final_idx. final_idx+length).
-        It will do this by performing association first.  If disassocate is True, it
-        will be disassociated afterwards.
+        Given numerical operands, deduce that this expression is equal
+        to a form in which the operands at indices 
+        [init_idx, init_idx+length) have been moved to 
+        [final_idx. final_idx+length).
+        It will do this by performing association first.  
+        If disassocate is True, it will be disassociated afterwards.
         '''
         return group_commutation(
-            self,
-            init_idx,
-            final_idx,
-            length,
-            disassociate,
-            assumptions)
+            self, init_idx, final_idx, length, disassociate=disassociate)
 
-    def association(self, start_idx, length, assumptions=USE_DEFAULTS):
+    @equivalence_prover('associated', 'associate')
+    def association(self, start_idx, length, **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal to a form in which operands in the
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which operands in the
         range [start_idx, start_idx+length) are grouped together.
-        For example, (a + b + ... + y + z) = (a + b ... + (l + ... + m) + ... + y + z)
+        For example, (a + b + ... + y + z) = 
+            (a + b ... + (l + ... + m) + ... + y + z)
         '''
         from . import association
         eq = apply_association_thm(
-            self, start_idx, length, association, assumptions)
+            self, start_idx, length, association)
 
         '''
         # DON'T WORRY ABOUT RESETTING THE STYLE FOR THE MOMENT.
@@ -1268,11 +1252,14 @@ class Add(NumberOperation):
         '''
         return eq
 
-    def disassociation(self, idx, assumptions=USE_DEFAULTS):
+    @equivalence_prover('disassociated', 'disassociate')
+    def disassociation(self, idx, **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal to a form in which the operand
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
         at index idx is no longer grouped together.
-        For example, (a + b ... + (l + ... + m) + ... + y+ z) = (a + b + ... + y + z)
+        For example, (a + b ... + (l + ... + m) + ... + y+ z) 
+            = (a + b + ... + y + z)
         '''
         from proveit.core_expr_types import Len
         from proveit.numbers import Neg
@@ -1285,13 +1272,12 @@ class Add(NumberOperation):
             _a = self.operands[:idx]
             _b = subtraction_terms
             _c = self.operands[idx + 1:]
-            _i = Len(_a).computed(assumptions)
-            _j = Len(_b).computed(assumptions)
-            _k = Len(_c).computed(assumptions)
+            _i = Len(_a).computed()
+            _j = Len(_b).computed()
+            _k = Len(_c).computed()
             return subtraction_disassociation.instantiate(
-                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
-                assumptions=assumptions)
-        eq = apply_disassociation_thm(self, idx, disassociation, assumptions)
+                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c})
+        eq = apply_disassociation_thm(self, idx, disassociation)
         '''
         # DON'T WORRY ABOUT RESETTING THE STYLE FOR THE MOMENT.
         # set the subraction style as appropriate given what we started with:
@@ -1615,32 +1601,3 @@ def const_shift_composition(idx, shift):
     if idx == zero:
         return num(shift)
     return Add(idx, num(shift))
-
-
-# Register these generic expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Add, 'commutation', 'commuted', 'commute')
-InnerExpr.register_equivalence_method(
-    Add,
-    'group_commutation',
-    'group_commuted',
-    'group_commute')
-InnerExpr.register_equivalence_method(
-    Add, 'association', 'associated', 'associate')
-InnerExpr.register_equivalence_method(
-    Add, 'disassociation', 'disassociated', 'disassociate')
-InnerExpr.register_equivalence_method(
-    Add, 'factorization', 'factorized', 'factor')
-InnerExpr.register_equivalence_method(Add, 'cancelation', 'canceled', 'cancel')
-InnerExpr.register_equivalence_method(
-    Add, 'cancelations', 'all_canceled', 'all_cancel')
-InnerExpr.register_equivalence_method(
-    Add,
-    'zero_elimination',
-    'eliminated_zero',
-    'eliminate_zero')
-InnerExpr.register_equivalence_method(
-    Add,
-    'zero_eliminations',
-    'eliminated_zeros',
-    'eliminate_zeros')
