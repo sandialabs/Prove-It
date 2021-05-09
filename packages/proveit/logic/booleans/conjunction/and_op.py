@@ -1,6 +1,6 @@
 from proveit import (Expression, Literal, Operation, Conditional,
                      defaults, USE_DEFAULTS, ProofFailure, InnerExpr,
-                     prover, proof_generator, equivalence_prover)
+                     prover, equivalence_prover)
 from proveit.logic.equality import SimplificationError
 from proveit import j, k, l, m, n, A, B, C, D, E, F, G
 from proveit.logic.booleans.booleans import in_bool
@@ -196,6 +196,7 @@ class And(Operation):
         '''
 
         from proveit.logic import Not
+        from proveit import ExprRange
         if self.operands.num_entries() == 0:
             return  # No side-effects needed for [And]().
         if self.operands.is_double():
@@ -203,7 +204,10 @@ class And(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
         yield self.derive_in_bool
-        yield self.derive_parts
+        for i, operand in enumerate(self.operands):
+            if not isinstance(operand, ExprRange):
+                yield lambda : self.derive_any(i)
+
         # yield self.derive_commutation
 
     def negation_side_effects(self, judgment):
@@ -225,7 +229,8 @@ class And(Operation):
         From (A and B and .. and Z) in Boolean deduce
         (A in Boolean), (B in Boolean), ... (Z in Boolean).
         '''
-        yield self.deduce_parts_in_bool
+        for i in range(self.operands.num_entries()):
+            yield lambda : self.deduce_part_in_bool(i)
 
     @prover
     def derive_in_bool(self, **defaults_config):
@@ -234,19 +239,6 @@ class And(Operation):
         [(A and B and ... and Z) in Boolean].
         '''
         return in_bool(self).prove()
-
-    @proof_generator
-    def derive_parts(self, **defaults_config):
-        r'''
-        From (A and B and ... and Z)` derive each operand:
-        A, B, ..., Z.
-        '''
-        from proveit import ExprRange
-        for i, operand in enumerate(self.operands):
-            if isinstance(operand, ExprRange):
-                pass
-            else:
-                yield self.derive_any(i)
 
     @prover
     def derive_any(self, index_or_expr, **defaults_config):
@@ -379,15 +371,6 @@ class And(Operation):
                          "only applicable when there are two operands."
                          %self)
 
-    @proof_generator
-    def deduce_parts_in_bool(self, **defaults_config):
-        '''
-        Deduce A in Boolean, B in Boolean, ..., Z in Boolean
-        from (A and B and ... and Z) in Boolean.
-        '''
-        for i in range(self.operands.num_entries()):
-            yield self.deduce_part_in_bool(i)
-
     @prover
     def deduce_part_in_bool(self, index_or_expr, **defaults_config):
         '''
@@ -395,9 +378,8 @@ class And(Operation):
         provided X by expression or index number.
         '''
         from . import each_is_bool
-        idx = index_or_expr if isinstance(
-            index_or_expr, int) else list(
-            self.operands).index(index_or_expr)
+        idx = (index_or_expr if isinstance(index_or_expr, int) else 
+               self.operands.entries.index(index_or_expr))
         if idx < 0 or idx >= self.operands.num_entries():
             raise IndexError("Operand out of range: " + str(idx))
         if self.operands.is_double():

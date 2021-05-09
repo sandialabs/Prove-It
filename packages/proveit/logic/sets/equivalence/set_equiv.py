@@ -177,7 +177,7 @@ class SetEquiv(TransitiveRelation):
     #     '''
     #     for judgment in Equals.known_equalities.get(expr, frozenset()):
     #         if judgment.lhs == expr:
-    #             if judgment.is_sufficient(assumptions_set):
+    #             if judgment.is_applicable(assumptions_set):
     #                 yield (judgment, judgment.rhs)
 
     # @staticmethod
@@ -188,7 +188,7 @@ class SetEquiv(TransitiveRelation):
     #     '''
     #     for judgment in Equals.known_equalities.get(expr, frozenset()):
     #         if judgment.rhs == expr:
-    #             if judgment.is_sufficient(assumptions_set):
+    #             if judgment.is_applicable(assumptions_set):
     #                 yield (judgment, judgment.lhs)
 
     @prover

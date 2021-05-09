@@ -214,6 +214,7 @@ class Add(NumberOperation):
         Record the judgment in Add.known_equalities, associated for
         each term.
         '''
+        from proveit import defaults
         from proveit.numbers import Neg
         if not isinstance(judgment, Judgment):
             raise ValueError("Expecting 'judgment' to be a Judgment.")
@@ -232,31 +233,35 @@ class Add(NumberOperation):
             if addition.terms.is_double():
                 # deduce the commutation form: b+a=c from a+b=c
                 if addition.terms[0] != addition.terms[1]:
-                    yield (lambda assumptions: judgment.inner_expr().lhs.commute(0, 1, assumptions))
+                    yield (lambda : judgment.inner_expr().lhs.commute(0, 1))
 
                 if all(not isinstance(term, Neg) for term in addition.terms):
                     # From a+b=c
                     # deduce the negations form: -a-b=-c
                     #      the subtraction form: c-b=a
                     #      and the reversed subtraction form: b-c = -a
-                    yield (lambda assumptions: self.deduce_negation(judgment.rhs, assumptions))
-                    yield (lambda assumptions: self.deduce_subtraction(judgment.rhs, assumptions))
-                    yield (lambda assumptions: self.deduce_reversed_subtraction(judgment.rhs, assumptions))
+                    yield (lambda : self.equation_negation(judgment.rhs))
+                    yield (lambda : self.equation_subtraction(judgment.rhs))
+                    yield (lambda : self.equation_reversed_subtraction(
+                            judgment.rhs))
 
-    def deduce_negation(self, rhs, assumptions=USE_DEFAULTS):
+    @prover
+    def equation_negation(self, rhs, **defaults_config):
         '''
         From (a + b) = rhs, derive and return -(a-b) = -rhs
         '''
         from proveit.numbers.addition.subtraction import negated_add
         if not self.terms.is_double():
             raise NotImplementedError(
-                "Add.deduce_negation implemented only when there are two "
+                "Add.equation_negation implemented only when there are two "
                 "and only two added terms")
+        _a, _b = self.terms[0], self.terms[1]
         deduction = negated_add.instantiate(
-            {a: self.terms[0], b: self.terms[1], c: rhs}, assumptions=assumptions)
+            {a: _a, b: _b, c: rhs}, auto_simplify=False)
         return deduction
 
-    def deduce_subtraction(self, rhs, assumptions=USE_DEFAULTS):
+    @prover
+    def equation_subtraction(self, rhs, **defaults_config):
         '''
         From (a + b) = rhs, derive and return rhs - b = a.
         '''
@@ -265,11 +270,13 @@ class Add(NumberOperation):
             raise NotImplementedError(
                 "Add.deduce_subtraction implemented only when there are "
                 "two and only two added terms")
+        _a, _b = self.terms[0], self.terms[1]
         deduction = subtract_from_add.instantiate(
-            {a: self.terms[0], b: self.terms[1], c: rhs}, assumptions=assumptions)
+            {a: _a, b: _b, c: rhs}, auto_simplify=False)
         return deduction
 
-    def deduce_reversed_subtraction(self, rhs, assumptions=USE_DEFAULTS):
+    @prover
+    def equation_reversed_subtraction(self, rhs, **defaults_config):
         '''
         From (a + b) = rhs, derive and return b - rhs = -a.
         '''
@@ -279,10 +286,12 @@ class Add(NumberOperation):
                 "Add.decude_reversed_subtraction implemented only when "
                 "there are two and only two added terms")
         deduction = subtract_from_add_reversed.instantiate(
-            {a: self.terms[0], b: self.terms[1], c: rhs}, assumptions=assumptions)
+            {a: self.terms[0], b: self.terms[1], c: rhs},
+            auto_simplify=False)
         return deduction
 
-    def conversion_to_multiplication(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('multiplied', 'multiply')
+    def conversion_to_multiplication(self, **defaults_config):
         '''
         From the addition of the same values, derive and return
         the equivalence as a multiplication. For example,
@@ -294,20 +303,20 @@ class Add(NumberOperation):
             mult_def_rev, repeated_addition_to_mult)
         if not all(operand == self.operands[0] for operand in self.operands):
             raise ValueError(
-                "'as_mult' is only applicable on an 'Add' expression if all operands are the same: %s" %
+                "'as_mult' is only applicable on an 'Add' expression "
+                "if all operands are the same: %s" %
                 str(self))
-        if (self.operands.num_entries() == 1 and isinstance(self.operands[0], ExprRange)
+        if (self.operands.num_entries() == 1 
+                and isinstance(self.operands[0], ExprRange)
                 and self.operands[0].is_parameter_independent
                 and self.operands[0].start_index == one):
             expr_range = self.operands[0]
             return repeated_addition_to_mult.instantiate(
-                {x: expr_range.body, n: expr_range.end_index},
-                assumptions=assumptions)
-        _n = self.operands.num_elements(assumptions)
+                {x: expr_range.body, n: expr_range.end_index})
+        _n = self.operands.num_elements()
         _a = self.operands
         _x = self.operands[1]
-        return mult_def_rev.instantiate({n: _n, a: _a, x: _x},
-                                        assumptions=assumptions)
+        return mult_def_rev.instantiate({n: _n, a: _a, x: _x})
 
     @equivalence_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):

@@ -363,7 +363,7 @@ def conclude_via_implication(consequent, **defaults_config):
             for known_implication in Implies.known_right_sides[expr]:
                 # see if the known_implication is applicable under the given
                 # set of assumptions
-                if known_implication.is_sufficient():
+                if known_implication.is_applicable():
                     local_antecedent, local_consequent = known_implication.antecedent, known_implication.consequent
                     consequent_map[local_antecedent] = local_consequent
                     try:

@@ -67,7 +67,6 @@ class Forall(OperationOverInstances):
         except ProofFailure:
             pass
         
-        assumptions = defaults.assumptions
         if (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
             instance_map = Lambda(self.instance_params, self.instance_expr)
@@ -82,13 +81,13 @@ class Forall(OperationOverInstances):
                     if (known_forall.has_domain() 
                             and known_forall.instance_params.is_single()
                             and known_forall.conditions.is_single()):
-                        if known_forall.is_sufficient(assumptions):
+                        if known_forall.is_applicable():
                             known_domains.add(known_forall.domain)
             if len(known_domains) > 0 and domain in SubsetEq.known_left_sides:
                 # We know this quantification in other domain(s).
                 # Do any of those include this domain?
                 for known_inclusion in SubsetEq.known_left_sides[domain]:
-                    if known_inclusion.is_sufficient(assumptions):
+                    if known_inclusion.is_applicable():
                         superset = known_inclusion.superset
                         if superset in known_domains:
                             # We know the quantification over a s
@@ -106,7 +105,7 @@ class Forall(OperationOverInstances):
             try:
                 return self.conclude_by_cases()
             except Exception:
-                raise ProofFailure(self, assumptions,
+                raise ProofFailure(self, defaults.assumptions,
                                    "Unable to conclude automatically; the "
                                    "prove_by_cases method on the domain "
                                    "has failed. :o( ")
@@ -180,7 +179,7 @@ class Forall(OperationOverInstances):
             expr = expr.instance_expr
             with defaults.temporary() as temp_defaults:
                 temp_defaults.assumptions = (defaults.assumptions + 
-                                             (conditions,))
+                                             tuple(conditions))
                 if automation and not isinstance(expr, Forall):
                     expr.prove()
                 if expr.proven():

@@ -213,7 +213,7 @@ class Equals(TransitiveRelation):
         '''
         for judgment in Equals.known_equalities.get(expr, frozenset()):
             if judgment.lhs == expr:
-                if judgment.is_sufficient(assumptions_set):
+                if judgment.is_applicable(assumptions_set):
                     yield (judgment, judgment.rhs)
 
     @staticmethod
@@ -225,7 +225,7 @@ class Equals(TransitiveRelation):
         '''
         for judgment in Equals.known_equalities.get(expr, frozenset()):
             if judgment.rhs == expr:
-                if judgment.is_sufficient(assumptions_set):
+                if judgment.is_applicable(assumptions_set):
                     yield (judgment, judgment.lhs)
 
     @prover
@@ -255,23 +255,29 @@ class Equals(TransitiveRelation):
         return Equals(self.rhs, self.lhs)
 
     @staticmethod
-    def yield_known_equal_expressions(expr, assumptions=USE_DEFAULTS):
+    def yield_known_equal_expressions(expr, *, assumptions=USE_DEFAULTS,
+                                      exceptions=None):
         '''
         Yield everything known to be equal to the given expression
         under the given assumptions directly or indirectly through 
         the transitive property of equality.
+        If 'exceptions' are provided, disregard known equalities
+        with expressions in the 'exceptions' set.
         '''
         assumptions = defaults.checked_assumptions(assumptions)
         to_process = {expr}
         processed = set()
         while len(to_process) > 0:
             expr = to_process.pop()
+            if (exceptions is not None and expr in exceptions):
+                # Skip this 'exception'.
+                continue
             yield expr
             processed.add(expr)
             if expr not in Equals.known_equalities:
                 continue
             for known_equality in Equals.known_equalities[expr]:
-                if known_equality.is_sufficient(assumptions):
+                if known_equality.is_applicable(assumptions):
                     # A valid equality.  See if something is new.
                     for operand in known_equality.operands:
                         if operand not in processed:
@@ -679,10 +685,15 @@ class Equals(TransitiveRelation):
         raise EvaluationError(self) 
 
     @staticmethod
-    def get_known_evaluation(expr):
+    def get_known_evaluation(expr, automation=USE_DEFAULTS):
         '''
         Return an applicable evaluation (under current defaults) for 
         the given expression if one is known; otherwise return None.
+        If automation is True, we are allow to derive
+        an evaluation via transitivity with through any number of known 
+        equalities, excluding equalities with any "preserved" 
+        expressions (in defaults.preserved_exprs) whose evaluations
+        are to be disregarded.
         '''
         try:
             evaluations = Equals.known_evaluation_sets[expr]
@@ -691,7 +702,7 @@ class Equals(TransitiveRelation):
         candidates = []
         assumptions_set = set(defaults.assumptions)
         for judgment in evaluations:
-            if judgment.is_sufficient(assumptions_set):
+            if judgment.is_applicable(assumptions_set):
                 # Found existing evaluation suitable for the
                 # assumptions
                 candidates.append(judgment)
@@ -700,21 +711,57 @@ class Equals(TransitiveRelation):
             # of steps.
             def min_key(judgment): return judgment.proof().num_steps()
             return min(candidates, key=min_key)
+        if automation is USE_DEFAULTS:
+            automation = defaults.automation
+        if automation:
+            # An evaluation isn't directly known, but we may know
+            # something equal to this that has an evaluation and
+            # therefore we have an evaluation by transitivity as long
+            # as 'automation' is allowed.
+            for eq_expr in Equals.yield_known_equal_expressions(
+                    expr, exceptions=defaults.preserved_exprs):
+                if eq_expr == expr: continue
+                eq_evaluation = Equals.get_known_evaluation(
+                        eq_expr, automation=False)
+                if eq_evaluation is not None:
+                    return Equals(expr, eq_expr).prove().apply_transitivity(
+                            eq_evaluation)
         return None
-    
+
+    """
     @staticmethod
     def get_known_simplification(expr):
         '''
         Return an applicable simplification (under current defaults) 
         for the given expression if one is known; otherwise return None.
+        If 'expr' is a "preserved expression" (in 
+        defaults.preserved_exprs), we disregard known simplifications.        
+        If defaults.automation is True, we are allow to derive
+        an simplification via transitivity with through any number of 
+        known equalities, excluding equalities with any "preserved" 
+        expressions (in defaults.preserved_exprs) whose simplifications
+        are to be disregarded.
         '''
-        assumptions = defaults.assumptions
+        if expr in defaults.preserved_exprs:
+            return None
         key = (expr, defaults.get_simplification_directives_id())
         if key in Equals.known_simplifications:
             simplifications = Equals.known_simplifications[key]
             for simplification in simplifications:
-                if simplification.is_sufficient(assumptions):
+                if simplification.is_applicable():
                     return simplification
+        if defaults.automation:
+            # An simplification isn't directly known, but we may know
+            # something equal to this that has a simplification and
+            # therefore we have a simplification by transitivity as long
+            # as 'automation' is allowed.
+            for eq_expr in Equals.yield_known_equal_expressions(
+                    expr, exceptions=defaults.preserved_exprs):
+                if eq_expr == expr: continue
+                eq_simplification = Equals.get_known_simplification(eq_expr)
+                if eq_simplification is not None:
+                    return Equals(expr, eq_expr).prove().apply_transitivity(
+                            eq_simplification)
         return None
 
     @staticmethod
@@ -733,7 +780,8 @@ class Equals(TransitiveRelation):
         key = (expr, defaults.get_simplification_directives_id())
         Equals.known_simplifications.setdefault(key, set()).add(
                 simplification)
-        
+    """
+
     @staticmethod
     def invert(lambda_map, rhs, assumptions=USE_DEFAULTS):
         '''
@@ -748,7 +796,7 @@ class Equals(TransitiveRelation):
             # sufficient.
             for known_equality, inversion in Equals.inversions[(
                     lambda_map, rhs)]:
-                if known_equality.is_sufficient(assumptions_set):
+                if known_equality.is_applicable(assumptions_set):
                     return inversion
         # The mapping may be a trivial identity: f(x) = f(x)
         try:
@@ -900,7 +948,7 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
         evaluations = Equals.known_evaluation_sets[inner]
         candidates = []
         for judgment in evaluations:
-            if judgment.is_sufficient(assumptions_set):
+            if judgment.is_applicable(assumptions_set):
                 # Found existing evaluation suitable for the assumptions
                 candidates.append(judgment)
         if len(candidates) >= 1:
@@ -927,7 +975,7 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     if inner in Equals.known_equalities:
         for known_eq in Equals.known_equalities[inner]:
             try:
-                if known_eq.is_sufficient(assumptions_set):
+                if known_eq.is_applicable(assumptions_set):
                     if in_place:
                         # Should first substitute in the known
                         # equivalence then simplify that.

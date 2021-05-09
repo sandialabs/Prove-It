@@ -172,7 +172,7 @@ class Relation(Operation):
                     # is proven under the default assumptions, but
                     # we will try those ones first (the ones at the
                     # end will be popped off first).
-                    if known_membership.is_sufficient(defaults.assumptions):
+                    if known_membership.is_applicable(defaults.assumptions):
                         domain_methods.append((domain, domain_attr))
                     else:
                         domain_methods.insert(0, (domain, domain_attr))

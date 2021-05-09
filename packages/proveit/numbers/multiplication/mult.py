@@ -181,24 +181,19 @@ class Mult(NumberOperation):
         from proveit.logic import is_irreducible_value, EvaluationError
         from proveit.numbers import zero
         
-        assumptions = defaults.assumptions
-
         # First check for any zero factors -- quickest way to do an evaluation.
         try:
             zero_idx = self.operands.index(zero)
             if self.operands.is_double():
                 if zero_idx == 0:
-                    return mult_zero_left.instantiate(
-                        {x: self.operands[1]}, assumptions=assumptions)
+                    return mult_zero_left.instantiate({x: self.operands[1]})
                 else:
-                    return mult_zero_right.instantiate(
-                        {x: self.operands[0]}, assumptions=assumptions)
+                    return mult_zero_right.instantiate({x: self.operands[0]})
             _a = self.operands[:zero_idx]
             _b = self.operands[zero_idx + 1:]
-            _i = _a.num_elements(assumptions)
-            _j = _b.num_elements(assumptions)
-            return mult_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b},
-                                             assumptions=assumptions)
+            _i = _a.num_elements()
+            _j = _b.num_elements()
+            return mult_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b})
         except (ValueError, ProofFailure):
             pass  # No such "luck" regarding a simple multiplication by zero.
 
@@ -206,29 +201,29 @@ class Mult(NumberOperation):
 
         # A convenience to allow successive update to the equation via transitivities.
         # (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         # Simplify negations -- factor them out.
-        expr = eq.update(expr.neg_simplifications(assumptions))
+        expr = eq.update(expr.neg_simplifications())
 
         if not isinstance(expr, Mult):
             # The expression may have changed to a negation after doing
             # neg_simplification.  Start the simplification of this new
             # expression fresh at this point.
-            eq.update(expr.evaluation(assumptions))
+            eq.update(expr.evaluation())
             return eq.relation
 
         # Eliminate any factors of one.
-        expr = eq.update(expr.one_eliminations(assumptions))
+        expr = eq.update(expr.one_eliminations())
 
         if is_irreducible_value(expr):
             return eq.relation  # done
 
         if isinstance(expr, Mult) and expr.operands.num_entries() > 2:
-            eq.update(pairwise_evaluation(expr, assumptions))
+            eq.update(pairwise_evaluation(expr))
             return eq.relation
 
-        raise EvaluationError(self, assumptions)
+        raise EvaluationError(self)
 
     @equivalence_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
@@ -241,11 +236,9 @@ class Mult(NumberOperation):
         Factors of 0 are dealt with in shallow_evaluation.
         '''
         
-        assumptions = defaults.assumptions
-
         expr = self
         # for convenience updating our equation
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         # Ungroup the expression (disassociate nested multiplications).
         idx = 0
@@ -254,25 +247,25 @@ class Mult(NumberOperation):
             # loop through all operands
             if isinstance(expr.operands[idx], Mult):
                 # if it is grouped, ungroup it
-                expr = eq.update(expr.disassociation(idx, assumptions))
+                expr = eq.update(expr.disassociation(idx))
             else:
                 idx += 1
             length = expr.operands.num_entries()
 
         # Simplify negations -- factor them out.
-        expr = eq.update(expr.neg_simplifications(assumptions))
+        expr = eq.update(expr.neg_simplifications())
 
         if not isinstance(expr, Mult):
             # The expression may have changed to a negation after doing
             # neg_simplification.  Start the simplification of this new
             # expression fresh at this point.
-            eq.update(expr.simplification(assumptions))
+            eq.update(expr.simplification())
             return eq.relation
 
         # Peform any cancelations between numerators and
         # denominators of different factors.  This will also
         # eliminate factors of one.
-        expr = eq.update(expr.cancelations(assumptions))
+        expr = eq.update(expr.cancelations())
 
         return eq.relation
 

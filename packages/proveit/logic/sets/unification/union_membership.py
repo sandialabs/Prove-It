@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS
+from proveit import USE_DEFAULTS, equivalence_prover
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
 from proveit import m, A, x
@@ -10,8 +10,7 @@ class UnionMembership(Membership):
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element)
-        self.domain = domain
+        Membership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -19,18 +18,20 @@ class UnionMembership(Membership):
         '''
         yield self.unfold
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
-        Deduce and return and [element in (A union B ...)] = [(element in A) or (element in B) ...]
+        Deduce and return 
+            [element in (A union B ...)] = 
+            [(element in A) or (element in B) ...]
         where self = (A union B ...).
         '''
         from . import union_def
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
-        return union_def.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+        _m = _A.num_elements()
+        return union_def.instantiate({m: _m, x: element, A: _A})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -65,8 +66,7 @@ class UnionNonmembership(Nonmembership):
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element)
-        self.domain = domain
+        Nonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -75,18 +75,20 @@ class UnionNonmembership(Nonmembership):
         return
         yield
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
-        Deduce and return and [element not in (A union B ...)] = [(element not in A) and (element not in B) ...]
+        Deduce and return
+            [element not in (A union B ...)] = 
+            [(element not in A) and (element not in B) ...]
         where self = (A union B ...).
         '''
         from . import nonmembership_equiv
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
-        return nonmembership_equiv.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+        _m = _A.num_elements()
+        return nonmembership_equiv.instantiate({m: _m, x: element, A: _A})
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''

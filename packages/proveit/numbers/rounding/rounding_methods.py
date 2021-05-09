@@ -145,7 +145,7 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
     if expr.operand in InSet.known_memberships.keys():
         from proveit.logic.sets import ProperSubset, SubsetEq
         for kt in InSet.known_memberships[expr.operand]:
-            if kt.is_sufficient(assumptions):
+            if kt.is_applicable(assumptions):
                 if (SubsetEq(kt.expr.operands[1], Integer).proven(assumptions)
                     or
                         ProperSubset(kt.expr.operands[1], Integer).proven(assumptions)):
@@ -186,7 +186,7 @@ def apply_reduced_simplification(expr, assumptions=USE_DEFAULTS):
             elif the_subop in InSet.known_memberships.keys():
                 from proveit.logic.sets import ProperSubset, SubsetEq
                 for kt in InSet.known_memberships[the_subop]:
-                    if kt.is_sufficient(assumptions):
+                    if kt.is_applicable(assumptions):
                         if (SubsetEq(kt.expr.operands[1], Integer).
                                 proven(assumptions) or
                             ProperSubset(kt.expr.operands[1], Integer).

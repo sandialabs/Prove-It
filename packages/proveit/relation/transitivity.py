@@ -130,7 +130,7 @@ class TransitiveRelation(Relation):
             # stronger then weaker relations
             for _Relation in relation_classes:
                 for judgment in list(_Relation.known_left_sides.get(expr, [])):
-                    if judgment.is_sufficient(assumptions_set):
+                    if judgment.is_applicable(assumptions_set):
                         yield (judgment, judgment.normal_rhs)
 
     @classmethod
@@ -156,7 +156,7 @@ class TransitiveRelation(Relation):
             # stronger then weaker relations
             for _Relation in relation_classes:
                 for judgment in list(_Relation.known_right_sides.get(expr, [])):
-                    if judgment.is_sufficient(assumptions_set):
+                    if judgment.is_applicable(assumptions_set):
                         yield (judgment, judgment.normal_lhs)
 
     def apply_transitivity(self, other, assumptions=USE_DEFAULTS):

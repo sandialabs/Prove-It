@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS
+from proveit import USE_DEFAULTS, equivalence_prover
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
 from proveit import m, x, A
@@ -10,8 +10,7 @@ class IntersectMembership(Membership):
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element)
-        self.domain = domain
+        Membership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -19,18 +18,20 @@ class IntersectMembership(Membership):
         '''
         yield self.unfold
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
-        Deduce and return [element in (A intersect B ...)] = [(element in A) and (element in B) ...]
+        Deduce and return 
+            [element in (A intersect B ...)] =
+            [(element in A) and (element in B) ...]
         where self = (A intersect B ...).
         '''
         from . import intersection_def
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
-        return intersection_def.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+        _m = _A.num_elements()
+        return intersection_def.instantiate({m: _m, x: element, A: _A})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -65,8 +66,7 @@ class IntersectNonmembership(Nonmembership):
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element)
-        self.domain = domain
+        Nonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -75,18 +75,20 @@ class IntersectNonmembership(Nonmembership):
         return
         yield
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
-        Deduce and return [element not in (A intersect B ...)] = [(element not in A) or (element not in B) ...]
+        Deduce and return 
+            [element not in (A intersect B ...)] = 
+            [(element not in A) or (element not in B) ...]
         where self = (A intersect B ...).
         '''
         from . import nonmembership_equiv
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
-        return nonmembership_equiv.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+        _m = _A.num_elements()
+        return nonmembership_equiv.instantiate({m: _m, x: element, A: _A})
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''

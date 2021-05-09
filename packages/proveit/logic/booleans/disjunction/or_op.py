@@ -1,6 +1,6 @@
 from proveit import (Expression, Literal, Operation, defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr, UnusableProof,
-                     prover, proof_generator, equivalence_prover)
+                     prover, equivalence_prover)
 from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
@@ -128,7 +128,8 @@ class Or(Operation):
         From (A or B or .. or Z) in Boolean deduce (A in Boolean), (B in Boolean), ...
         (Z in Boolean).
         '''
-        yield self.deduce_parts_in_bool
+        for _i in range(self.operands.num_entries()):
+            yield lambda : self.deduce_part_in_bool(_i)
 
     @prover
     def conclude_negation(self, **defaults_config):
@@ -333,15 +334,6 @@ class Or(Operation):
         if self.operands.is_double():
             return right_in_bool.instantiate(
                 {A: self.operands[0], B: self.operands[1]})
-
-    @proof_generator
-    def deduce_parts_in_bool(self, **defaults_config):
-        '''
-        Deduce A in Boolean, B in Boolean, ..., Z in Boolean
-        from (A or B or ... or Z) in Boolean.
-        '''
-        for _i in range(self.operands.num_entries()):
-            yield self.deduce_part_in_bool(_i)
 
     @prover
     def deduce_part_in_bool(self, index_or_expr, **defaults_config):

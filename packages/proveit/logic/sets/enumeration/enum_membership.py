@@ -11,8 +11,7 @@ class EnumMembership(Membership):
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element)
-        self.domain = domain
+        Membership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -48,8 +47,8 @@ class EnumMembership(Membership):
                 return fold.instantiate({n: _n, x: self.element, y:_y}, 
                                         assumptions=assumptions)
 
-    @equivalence_prover
-    def equivalence(self, **defaults_config):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
         From the EnumMembership object [element in {a, ..., n}],
         deduce and return:
@@ -113,8 +112,7 @@ class EnumNonmembership(Nonmembership):
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element)
-        self.domain = domain
+        Nonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -122,8 +120,8 @@ class EnumNonmembership(Nonmembership):
         '''
         yield self.unfold
 
-    @equivalence_prover
-    def equivalence(self, **defaults_config):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
         Deduce and return
         |– [element not in {a, ..., n}] =

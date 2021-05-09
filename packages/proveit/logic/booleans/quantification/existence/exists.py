@@ -38,7 +38,6 @@ class Exists(OperationOverInstances):
     @prover
     def conclude(self, **defaults_config):
         from proveit.logic import SubsetEq
-        assumptions = defaults.assumptions
         if (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
             instance_map = Lambda(self.instance_params, self.instance_expr)
@@ -54,13 +53,13 @@ class Exists(OperationOverInstances):
                     if (known_forall.has_domain() 
                             and known_forall.instance_params.is_single()
                             and known_forall.conditions.is_single()):
-                        if known_forall.is_sufficient(assumptions):
+                        if known_forall.is_applicable():
                             known_domains.add(known_forall.domain)
             if len(known_domains) > 0 and domain in SubsetEq.known_left_sides:
                 # We know this quantification in other domain(s).
                 # Does our domain include any of those?
                 for known_inclusion in SubsetEq.known_right_sides[domain]:
-                    if known_inclusion.is_sufficient(assumptions):
+                    if known_inclusion.is_applicable():
                         subset = known_inclusion.subset
                         if subset in known_domains:
                             # We know the quantification over a s

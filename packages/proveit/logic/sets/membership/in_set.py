@@ -11,12 +11,16 @@ class InSet(Operation):
     # maps elements to InSet Judgments.
     # For example, map x to (x in S) if (x in S) is a Judgment.
     known_memberships = dict()
+    
+    # map (element, domain) pairs to corresponding InSet expressions
+    inset_expressions = dict()
 
     def __init__(self, element, domain, *, styles=None):
         Operation.__init__(self, InSet._operator_, (element, domain),
                            styles=styles)
         self.element = self.operands[0]
         self.domain = self.operands[1]
+        InSet.inset_expressions[(self.element, self.domain)] = self
         if hasattr(self.domain, 'membership_object'):
             self.membership_object = self.domain.membership_object(element)
             if not isinstance(self.membership_object, Membership):
@@ -183,48 +187,52 @@ class InSet(Operation):
         assumptions = defaults.checked_assumptions(assumptions)       
         if element in InSet.known_memberships:
             for known_membership in InSet.known_memberships[element]:
-                if known_membership.is_sufficient(assumptions):
+                if known_membership.is_applicable(assumptions):
                     yield known_membership
 
     @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate whether some x ∊ S is TRUE or FALSE
-        using the 'equivalence' method of the domain's 
+        using the 'definition' method of the domain's 
         'membership_object' if there is one.
         '''
         from proveit.logic import TRUE, NotInSet, EvaluationError
-        # try an 'equivalence' method (via the membership object)
+        # try a 'definition' method (via the membership object)
         if not hasattr(self, 'membership_object'):
             # Don't know what to do otherwise.
             raise EvaluationError(self)
-        assumptions = defaults.assumptions
-        equiv = self.membership_object.equivalence(assumptions)
-        rhs_eval = equiv.rhs.evaluation()
-        evaluation = equiv.apply_transitivity(rhs_eval)
+        definition = self.membership_object.definition()
+        rhs_eval = definition.rhs.evaluation()
+        evaluation = definition.apply_transitivity(rhs_eval)
         
         # Try also to evaluate this by deducing membership
         # or non-membership in case it generates a shorter proof.
         try:
             if evaluation.rhs == TRUE:
-                self.membership_object.conclude(assumptions=assumptions)
+                self.membership_object.conclude()
             else:
                 not_in_domain = NotInSet(self.element, self.domain)
                 if hasattr(not_in_domain, 'nonmembership_object'):
-                    not_in_domain.nonmembership_object.conclude(
-                        assumptions=assumptions)
+                    not_in_domain.nonmembership_object.conclude()
         except BaseException:
             pass
         return evaluation
 
 
 class Membership:
-    def __init__(self, element):
+    def __init__(self, element, domain):
         '''
         Base class for any 'membership object' returned by a domain's
         'membership_object' method.
         '''
         self.element = element
+        self.domain = domain
+        # The expression represented by this Membership.
+        if (self.element, self.domain) in InSet.inset_expressions:
+            self.expr = InSet.inset_expressions[(self.element, self.domain)]
+        else:
+            self.expr = InSet(self.element, self.domain)
 
     def side_effects(self, judgment):
         raise NotImplementedError(
@@ -236,9 +244,10 @@ class Membership:
             "Membership object, %s, has no 'conclude' method implemented" % str(
                 self.__class__))
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         raise NotImplementedError(
-            "Membership object, %s, has no 'equivalence' method implemented" % str(
+            "Membership object, %s, has no 'definition' method implemented" % str(
                 self.__class__))
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):

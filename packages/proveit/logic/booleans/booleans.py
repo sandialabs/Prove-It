@@ -1,5 +1,5 @@
 from proveit import (Function, Literal, USE_DEFAULTS, ProofFailure,
-                     defaults, prover)
+                     defaults, equivalence_prover, prover)
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.sets.membership import Membership, Nonmembership
 from proveit import A, C, P, Q
@@ -146,7 +146,8 @@ class BooleanMembership(Membership):
     '''
 
     def __init__(self, element):
-        Membership.__init__(self, element)
+        from . import Boolean
+        Membership.__init__(self, element, Boolean)
 
     def side_effects(self, judgment):
         '''
@@ -163,7 +164,8 @@ class BooleanMembership(Membership):
         if unfold_is_bool.is_usable():
             yield self.unfold
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Try to deduce that the given element is in the Boolean set under the given assumptions.
         '''
@@ -172,29 +174,30 @@ class BooleanMembership(Membership):
         # if the element is already proven or disproven, use in_bool_if_true or
         # in_bool_if_false
         try:
-            element.prove(assumptions=assumptions, automation=False)
-            return in_bool_if_true.instantiate(
-                {A: element}, assumptions=assumptions)
+            element.prove(automation=False)
+            return in_bool_if_true.instantiate({A: element})
         except ProofFailure:
             pass
         try:
-            element.disprove(assumptions=assumptions, automation=False)
-            return in_bool_if_false.instantiate(
-                {A: element}, assumptions=assumptions)
+            element.disprove(automation=False)
+            return in_bool_if_false.instantiate({A: element})
         except ProofFailure:
             pass
         # Use 'deduce_in_bool' if the element has that method.
         if hasattr(element, 'deduce_in_bool'):
-            return element.deduce_in_bool(assumptions=assumptions)
-        raise ProofFailure(in_bool(element), assumptions, str(
+            return element.deduce_in_bool()
+        raise ProofFailure(in_bool(element), defaults.assumptions, str(
             element) + ' not proven to be equal to TRUE or FALSE.')
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
-        Deduce [(element in Boolean) = [(element = TRUE) or (element = FALSE)].
+        Deduce [(element in Boolean) = 
+                [(element = TRUE) or (element = FALSE)].
         '''
         from . import in_bool_def
-        return in_bool_def.instantiate({A: self.element})
+        return in_bool_def.instantiate({A: self.element},
+                                       auto_simplify=False)
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''

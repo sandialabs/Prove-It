@@ -12,11 +12,15 @@ class NotInSet(Operation):
     # For example, map x to (x \nin S) if (x \nin S) is a Judgment.
     known_nonmemberships = dict()
 
+    # map (element, domain) pairs to corresponding NotInSet expressions
+    notinset_expressions = dict()
+
     def __init__(self, element, domain, *, styles=None):
         Operation.__init__(self, NotInSet._operator_, (element, domain),
                            styles=styles)
         self.element = self.operands[0]
         self.domain = self.operands[1]
+        NotInSet.notinset_expressions[(self.element, self.domain)] = self
         if hasattr(self.domain, 'nonmembership_object'):
             self.nonmembership_object = self.domain.nonmembership_object(
                 element)
@@ -102,7 +106,7 @@ class NotInSet(Operation):
         # See if the membership is already known.
         if self.element in NotInSet.known_nonmemberships:
             for known_nonmembership in NotInSet.known_nonmemberships[self.element]:
-                if known_nonmembership.is_sufficient(assumptions):
+                if known_nonmembership.is_applicable(assumptions):
                     # x not in R is known to be true; if we know that
                     # S subset_eq R, we are done.
                     rel = SubsetEq(self.domain,
@@ -156,26 +160,24 @@ class NotInSet(Operation):
         'nonmembership_object' if there is one.
         '''
         from proveit.logic import Equals, TRUE, InSet, EvaluationError
-        # try an 'equivalence' method (via the nonmembership object)
+        # try an 'definition' method (via the nonmembership object)
         if not hasattr(self, 'membership_object'):
             # Don't know what to do otherwise.
             raise EvaluationError(self)
-        assumptions = defaults.assumptions
-        equiv = self.nonmembership_object.equivalence(assumptions)
-        rhs_eval = equiv.rhs.evaluation()
-        evaluation = equiv.apply_transitivity(rhs_eval)
+        definition = self.nonmembership_object.definition()
+        rhs_eval = definition.rhs.evaluation()
+        evaluation = definition.apply_transitivity(rhs_eval)
 
         # try also to evaluate this by deducing membership or 
         # non-membership in case it generates a shorter proof.
         try:
             if evaluation.rhs == TRUE:
                 if hasattr(self, 'nonmembership_object'):
-                    self.nonmembership_object.conclude(assumptions=assumptions)
+                    self.nonmembership_object.conclude()
             else:
                 in_domain = InSet(self.element, self.domain)
                 if hasattr(in_domain, 'membership_object'):
-                    in_domain.membership_object.conclude(
-                        assumptions=assumptions)
+                    in_domain.membership_object.conclude()
         except BaseException:
             pass
         return evaluation
@@ -187,8 +189,15 @@ class Nonmembership:
     'nonmembership_object' method.
     '''
 
-    def __init__(self, element):
+    def __init__(self, element, domain):
         self.element = element
+        self.domain = domain
+        # The expression represented by this NonMembership.
+        if (self.element, self.domain) in NotInSet.notinset_expressions:
+            self.expr = NotInSet.notinset_expressions[(self.element, 
+                                                       self.domain)]
+        else:
+            self.expr = NotInSet(self.element, self.domain)
 
     def side_effects(self, judgment):
         raise NotImplementedError(
@@ -198,9 +207,10 @@ class Nonmembership:
         raise NotImplementedError(
             "Nonmembership object has no 'conclude' method implemented")
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         raise NotImplementedError(
-            "Nonmembership object has no 'equivalence' method implemented")
+            "Nonmembership object has no 'definition' method implemented")
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         raise NotImplementedError(
