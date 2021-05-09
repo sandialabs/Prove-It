@@ -183,20 +183,34 @@ def pairwise_evaluation(expr, **defaults_config):
     operands at the beginning are paired and evaluated sequentially.
     '''
     from proveit import TransRelUpdater
+    from proveit.logic import is_irreducible_value
     # successively evaluate and replace the operation performed on
     # the first two operands
 
     # for convenience while updating our equation:
     eq = TransRelUpdater(expr)
 
+    if is_irreducible_value(expr):
+        # The expression is already irreducible, so we are done.
+        return eq.relation
+
     if expr.operands.num_entries() == 2:
         raise ValueError("pairwise_evaluation may only be used when there "
                          "are more than 2 operands.")
+
+    # While there are more than 2 operands, associate the first 2
+    # and auto-simplify.
     while expr.operands.num_entries() > 2:
-        expr = eq.update(
-            expr.association(0, length=2))
-        expr = eq.update(expr.inner_expr().operands[0].evaluation())
-    eq.update(expr.evaluation())
+        expr = eq.update(expr.association(0, length=2, auto_simplify=True))
+        if is_irreducible_value(expr):
+            # The new expression is irreducible, so we are done.
+            return eq.relation
+        elif not is_irreducible_value(expr.operands[0]):
+            # Auto-simplication failed to convert the first operand
+            # to an irreducible value, so break out of this loop
+            # and generate an appropriate error by trying to
+            # evaluate it directly.
+            expr = eq.update(expr.inner_expr().operands[0].evaluate())
     return eq.relation
 
 
