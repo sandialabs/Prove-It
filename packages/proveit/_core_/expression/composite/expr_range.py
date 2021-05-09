@@ -709,15 +709,7 @@ class ExprRange(Expression):
             requirements=requirements)
         if len(var_range_forms) == 0:
             # Nothing to expand.
-            # However, we may perform a reduction of the range
-            # if it is known to be empty or singular.
-            for entry in subbed_expr_range._possibly_reduced_range_entries(
-                    requirements):
-                if entry != subbed_expr_range:
-                    entry = entry.basic_replaced(
-                            repl_map, allow_relabeling=allow_relabeling,
-                            requirements=requirements)
-                yield entry
+            yield subbed_expr_range
             return  # Done.
 
         # Need to handle the change in scope within the lambda
@@ -1042,15 +1034,7 @@ class ExprRange(Expression):
                                     allow_relabeling=allow_relabeling,
                                     requirements=requirements),
                             start_index, end_index)
-                # We may perform a reduction of the range if it is known
-                # to be empty or singular.
-                for entry in entry._possibly_reduced_range_entries(
-                        requirements):
-                    if entry != entry:
-                        entry = entry.basic_replaced(
-                                repl_map, allow_relabeling=allow_relabeling, 
-                                requirements=requirements)
-                    yield entry
+                yield entry
                 if indices_must_match:
                     # We need to know the new_indices to match with the
                     # original indices.

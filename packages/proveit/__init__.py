@@ -35,7 +35,7 @@ from .relation import (
 
 # @prover and @equivalence_prover are useful decorators for many
 # Expression class methods:
-from .decorators import prover, proof_generator, equivalence_prover
+from .decorators import prover, equivalence_prover
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet

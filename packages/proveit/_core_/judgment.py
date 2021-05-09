@@ -356,13 +356,15 @@ class Judgment:
         proof = self.proof()
         return proof is not None and proof.is_usable()
 
-    def is_sufficient(self, assumptions):
+    def is_applicable(self, assumptions=USE_DEFAULTS):
         '''
-        Return True iff the given assumptions satisfy the Judgment;
-        the Judgment is usable and requires a subset of the given 
-        assumptions.
+        Return True iff this Judgment is usable and applicable under 
+        the default assumptions.
         '''
-        return self.is_usable() and self.assumptions_set.issubset(assumptions)
+        if assumptions is USE_DEFAULTS:
+            assumptions = defaults.assumptions
+        return (self.is_usable() and 
+                self.assumptions_set.issubset(assumptions))
 
     def as_theorem_or_axiom(self):
         '''

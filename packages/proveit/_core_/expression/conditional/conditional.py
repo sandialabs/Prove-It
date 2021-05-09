@@ -143,17 +143,17 @@ class Conditional(Expression):
         
         expr = self
         eq = TransRelUpdater(expr)
-        if not self.value.is_simplified():
+        if True:#not self.value.is_simplified():
             # Simplify the 'value'.
             expr = eq.update(
                     expr.value_substitution(self.value.simplification()))
         if isinstance(self.condition, And):
             # Simplify the conditions.
-            if any(not condition.is_simplified() for condition 
-                   in self.condition.operands.entries):
+            if True:#any(not condition.is_simplified() for condition 
+               #    in self.condition.operands.entries):
                 inner_condition = expr.inner_expr().condition
                 expr = eq.update(inner_condition.simplification_of_operands())
-        elif not self.condition.is_simplified():
+        elif True:#not self.condition.is_simplified():
             # Simplify the condition.
             expr = eq.update(
                     expr.condition_substitution(
@@ -342,12 +342,12 @@ class Conditional(Expression):
             raise_type_error()
         if equality.lhs == self.value:
             return conditional_substitution.instantiate(
-                    {a:equality.lhs, b:equality.rhs,
-                     Q:self.condition}, assumptions = assumptions)
+                    {a:equality.lhs, b:equality.rhs, Q:self.condition}, 
+                    assumptions = assumptions)
         elif equality.rhs == self.value:
             return conditional_substitution.instantiate(
-                    {a:equality.rhs, b:equality.lhs,
-                     Q:self.condition}, assumptions = assumptions)
+                    {a:equality.rhs, b:equality.lhs, Q:self.condition}, 
+                    assumptions = assumptions)
         else:
             raise ValueError("One of the sides of %s was expected to "
                              "match the 'value' part of %s"

@@ -159,7 +159,13 @@ class Proof:
             # obsolete or unusable.  May derive any side-effects that 
             # are obvious consequences arising from this truth
             # (if it has not already been processed):
-            proven_truth.derive_side_effects()
+            with defaults.temporary() as temp_defaults:
+                # Disable auto-simplification and clear the
+                # 'replacements' while deriving side-effects.
+                temp_defaults.auto_simplify = False
+                if len(defaults.replacements) > 0:
+                    temp_defaults.replacements.clear()
+                proven_truth.derive_side_effects()
 
     def _updateDependencies(self, newproof):
         '''
@@ -1086,10 +1092,11 @@ class Instantiation(Proof):
                     relabel_params, assumption, *relabel_param_replacements,
                     allow_relabeling=True, equiv_alt_expansions=None,
                     requirements=requirements)
-                subbed_assumption = subbed_assumption.equality_replaced(
-                        requirements=requirements,
-                        equality_repl_requirements=equality_repl_requirements,
-                        preserve_top_level=True)
+                with defaults.temporary() as temp_defaults:
+                    temp_defaults.auto_simplify = False
+                    subbed_assumption = subbed_assumption.equality_replaced(
+                            requirements=requirements,
+                            equality_repl_requirements=equality_repl_requirements)
                 if isinstance(assumption, ExprRange):
                     # An iteration of assumptions to expand.
                     orig_subbed_assumptions.extend(subbed_assumption)
@@ -1342,7 +1349,7 @@ class Instantiation(Proof):
             eq_replaced = instantiated.equality_replaced(
                     requirements=requirements,
                     equality_repl_requirements=equality_repl_requirements,
-                    preserve_top_level=True)
+                    auto_simplify_top_level=False)
             return eq_replaced
 
         remaining_forall_eliminations = num_forall_eliminations
@@ -1435,7 +1442,10 @@ class Instantiation(Proof):
                 expr = expr.value
 
                 # Instantiate the condition.
-                subbed_cond = instantiate(condition)
+                with defaults.temporary() as temp_defaults:
+                    # We don't want to simplify conditions.
+                    temp_defaults.auto_simplify = False
+                    subbed_cond = instantiate(condition)
                 if isinstance(subbed_cond, And):
                     # It is important to deal with a conjunction
                     # condition in this implicit manner here or we would

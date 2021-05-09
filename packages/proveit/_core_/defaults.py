@@ -50,12 +50,14 @@ class Defaults:
         # employed when simplifying expressions with that class.
         self._simplification_directives_by_expr_class = dict()
         
+        """
         # Hash that unique to the simplification directives.
         self._simplification_directives_hash = None
         
         # Unique id given for a particular set of assumptions and
         # simplification_directives_by_expr_class
         self._assumptions_and_simplification_directives_id = None
+        """
         
         """
         # Automatic reductions may be applied to expressions that
@@ -93,6 +95,7 @@ class Defaults:
             expr = expr.expr
         self.preserved_exprs.add(expr)
 
+    """
     def get_simplification_directives_id(self):
         '''
         Get the identifier of the current simplification directives,
@@ -138,6 +141,7 @@ class Defaults:
         expression class.
         '''
         return self._simplification_directives_by_expr_class[expr_class]
+    """
 
     def temporary(self):
         '''

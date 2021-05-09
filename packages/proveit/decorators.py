@@ -3,7 +3,7 @@ from inspect import signature, Parameter
 from proveit._core_.defaults import defaults
 
 
-def _make_decorated_prover(func, is_generator=False):
+def _make_decorated_prover(func):
     '''
     Use for decorating 'prover' methods 
     (@prover or @equivalence_prover).
@@ -26,7 +26,7 @@ def _make_decorated_prover(func, is_generator=False):
     is_conclude_method = func.__name__.startswith('conclude')
 
     def decorated_prover(*args, **kwargs):
-        from proveit import Judgment
+        from proveit import Expression, Judgment
         preserve_expr = kwargs.pop('preserve_expr', None)
         if is_conclude_method:
             # If the method starts with conclude 'conclude', we must
@@ -68,10 +68,11 @@ def _make_decorated_prover(func, is_generator=False):
                 raise TypeError("@prover method %s is expected to return "
                                 "a proven Judgment, not %s of type %s."
                                 %(func, proven_truth, proven_truth.__class__))
-            if not proven_truth.is_sufficient(assumptions):
-                raise TypeError("@prover method %s returned a Judgment "
-                                "that is not proven under the active "
-                                "assumptions: %s"%(func, assumptions)) 
+            if not proven_truth.is_applicable():
+                raise TypeError("@prover method %s returned a Judgment, "
+                                "%s, that is not proven under the active "
+                                "assumptions: %s"
+                                %(func, proven_truth, defaults.assumptions)) 
             return proven_truth
         
         if len(defaults_to_change) > 0:
@@ -80,44 +81,43 @@ def _make_decorated_prover(func, is_generator=False):
                 for key in defaults_to_change:
                     # Temporarily alter a default:
                     setattr(temp_defaults, key, kwargs[key])
-                assumptions = temp_defaults.assumptions
                 kwargs.update(public_attributes_dict(defaults))
-                if is_generator:
-                    return (checked_truth(proven_truth) for proven_truth
-                            in func(*args, **kwargs))
-                else:
-                    proven_truth = checked_truth(func(*args, **kwargs))
+                proven_truth = checked_truth(func(*args, **kwargs))
         else:
             # No defaults reconfiguration.
-            assumptions = defaults.assumptions
             kwargs.update(public_attributes_dict(defaults))
-            if is_generator:
-                return (checked_truth(proven_truth) for proven_truth
-                        in func(*args, **kwargs))
-            else:
-                proven_truth = checked_truth(func(*args, **kwargs))
+            proven_truth = checked_truth(func(*args, **kwargs))
                 
         if is_conclude_method:
             self = args[0]
+            if isinstance(self, Expression):
+                expr = self
+            elif hasattr(self, 'expr'):
+                expr = self.expr
+            else:
+                raise TypeError(
+                        "The @prover method %s beginning with 'conclude' "
+                        "expected to be a method for an Expression type "
+                        "or the object must have an 'expr' attribute."%func)                
             if func.__name__.startswith('conclude_negation'):
                 from proveit.logic import Not
-                not_self = Not(self)
-                if proven_truth.expr != not_self:
+                not_expr = Not(expr)
+                if proven_truth.expr != not_expr:
                     raise ValueError(
                             "@prover method %s whose name starts with "
-                            "'conclude_negation' must prove 'Not(self)', "
-                            "%s, but got %s."%(func, not_self, proven_truth))   
+                            "'conclude_negation' must prove %s "
+                            "but got %s."%(func, not_expr, proven_truth))   
                 # Match the style of not_self.
-                return proven_truth.with_matching_style(not_self)
+                return proven_truth.with_matching_style(not_expr)
             else:
-                if proven_truth.expr != self:
+                if proven_truth.expr != expr:
                     print(proven_truth.expr.expr_info())
                     print(self.expr_info())
                     raise ValueError("@prover method %s whose name starts with "
-                                     "'conclude' must prove 'self', %s, but got "
-                                     "%s."%(func, self, proven_truth))
+                                     "'conclude' must prove %s but got "
+                                     "%s."%(func, expr, proven_truth))
                 # Match the style of self.
-                return proven_truth.with_matching_style(self)
+                return proven_truth.with_matching_style(expr)
         return proven_truth
     return decorated_prover    
     
@@ -148,18 +148,6 @@ def prover(func):
     valid under "active" assumptions.
     '''
     return _wraps(func, _make_decorated_prover(func))
-
-def proof_generator(func):
-    '''
-    @proof_generator is a decorator for methods that yield any number
-    of proven judgments valid under "active" (default) assumptions. 
-    As a special feature, this decorator allows for extra keyword 
-    arguments for temporarily altering any attributes of the Prove-It 
-    'defaults' (e.g., defaults.assumptions) before calling the decorated
-    method.  It will then check to see if the yielded values are 
-    Judgments that are valid under "active" assumptions.
-    '''
-    return _wraps(func, _make_decorated_prover(func, is_generator=True))    
 
 # Keep track of equivalence provers so we may register them during
 # Expression class construction (see ExprType.__init__ in expr.py).
@@ -219,18 +207,24 @@ def equivalence_prover(past_tense, present_tense):
             if is_simplification_method or is_evaluation_method:
                 from proveit.logic import (is_irreducible_value,
                                            Equals)
-                # See if there is a known evaluation.
+                # See if there is a known evaluation (or if one may
+                # be derived via known equalities if defaults.automation
+                # is enabled).
                 known_evaluation = Equals.get_known_evaluation(_self)
                 if known_evaluation is None:
                     if is_irreducible_value(_self):
                         # Already irreducible.
                         proven_truth = Equals(_self, _self).prove()
+                    """
                     elif is_simplification_method:
-                        # See if there is a known simplification.
+                        # See if there is a known simplification (or if 
+                        # one may be derived via known equalities if
+                        # defaults.automation is enabled).
                         known_simplification = (
                                 Equals.get_known_simplification(_self))
                         if known_simplification is not None:
                             proven_truth = known_simplification
+                    """
                 else:
                     proven_truth = known_evaluation
             if proven_truth is None:
@@ -250,28 +244,41 @@ def equivalence_prover(past_tense, present_tense):
                         "TranstiveRelation of the EquivalenceClass, "
                         "not %s of type %s."
                         %(func, proven_expr, proven_expr.__class__))
-            if proven_expr.lhs != _self:
+            if isinstance(_self, Expression):
+                expr = _self
+            elif hasattr(_self, 'expr'):
+                expr = _self.expr
+            else:
+                raise TypeError("@equivalence_prover, %s, expected to be "
+                                "a method for an Expression type or it "
+                                "must have an 'expr' attribute."%func)
+            if proven_expr.lhs != expr:
                 raise TypeError(
                         "@equivalence_prover, %s, expected to prove an "
-                        "equivalence relation with 'self', %s, on "
-                        "its left side ('lhs').  %s does not satisfy "
-                        "this requirement."%(func, _self, proven_expr))
+                        "equivalence relation with %s on its left side "
+                        "('lhs').  %s does not satisfy this "
+                        "requirement."%(func, expr, proven_expr))
             if is_simplification_method or is_evaluation_method:
                 from proveit.logic import Equals
                 if not isinstance(proven_expr, Equals):
                     raise TypeError(
                             "%s method expected to prove an equality"
                             %str(func))
+                """
                 # Remember that the rhs is a simplified expression
                 # under current simplification directives.
                 directive_id = defaults.get_simplification_directives_id()
                 Expression.simplified_exprs.setdefault(
                         directive_id, set()).add(
                                 proven_expr.rhs)
+                """
+            """
             if is_simplification_method:
                 from proveit.logic import Equals
                 Equals.remember_simplification(proven_truth)
-            elif is_evaluation_method or is_shallow_evaluation_method:
+            el
+            """
+            if is_evaluation_method or is_shallow_evaluation_method:
                 # The right side of an evaluation must be irreducible.
                 from proveit.logic import is_irreducible_value
                 if not is_irreducible_value(proven_expr.rhs):

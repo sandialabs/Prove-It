@@ -2,7 +2,7 @@ import types
 from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.expression.style_options import StyleOptions
 from proveit.decorators import equivalence_prover
 
@@ -377,21 +377,63 @@ class ExprTuple(Composite, Expression):
             # The full expression is to be replaced.
             return repl_map[self]
 
-        subbed_exprs = []
-        for expr in self.entries:
-            if isinstance(expr, ExprRange):
+        subbed_entries = []
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
                 # ExprRange.replaced is a generator that yields items
                 # to be embedded into the tuple.
-                subbed_exprs.extend(expr._replaced_entries(
+                subbed_entries.extend(entry._replaced_entries(
                     repl_map, allow_relabeling, requirements))
             else:
-                subbed_expr = expr.basic_replaced(
+                subbed_entry = entry.basic_replaced(
                         repl_map, allow_relabeling=allow_relabeling, 
                         requirements=requirements)
-                subbed_exprs.append(subbed_expr)
+                subbed_entries.append(subbed_entry)
+
+        if all(subbed_entry._style_id == entry._style_id for
+               subbed_entry, entry in zip(subbed_entries, self.entries)):
+            # Nothing change, so don't remake anything.
+            return self
 
         return self.__class__._checked_make(
-            self._core_info, subbed_exprs, 
+            self._core_info, subbed_entries, 
+            style_preferences=self._style_data.styles)
+
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
+                                     equality_repl_requirements):
+        '''
+        Recursive helper method for equality_replaced.  Handles
+        ExprRange reductions which can't be implemented via
+        simplification because the equations must wrap the
+        ExprRanges in ExprTuples rather than directly equating
+        the ExprRanges themselves (which would be impossible since
+        an ExprRange can represent any number of operands and we
+        need to distinguish the two operands of the equality).
+        '''
+        # Recurse into the sub-expressions.
+        from .expr_range import ExprRange
+        subbed_entries = []
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
+                # ExprRange._possibly_reduced_range_entries is a 
+                # generator that yields items to be embedded into the 
+                # ExprTuple.
+                subbed_entries.extend(entry._possibly_reduced_range_entries(
+                    requirements))
+            else:
+                subbed_entry = entry._equality_replaced(
+                        equality_repl_map, requirements,
+                        equality_repl_requirements,
+                        auto_simplify_top_level=defaults.auto_simplify)
+                subbed_entries.append(subbed_entry)
+
+        if all(subbed_entry._style_id == entry._style_id for
+               subbed_entry, entry in zip(subbed_entries, self.entries)):
+            # Nothing change, so don't remake anything.
+            return self
+
+        return self.__class__._checked_make(
+            self._core_info, subbed_entries,
             style_preferences=self._style_data.styles)
 
     @equivalence_prover('merged', 'merge')
