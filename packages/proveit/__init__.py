@@ -3,8 +3,8 @@ if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
 
 from ._core_ import (
-    defaults, USE_DEFAULTS, InvalidAssumptions, Theory,
-    TheoryException,
+    defaults, USE_DEFAULTS, InvalidAssumptions, SimplificationDirectives,
+    Theory, TheoryException,
     Expression, traverse_inner_expressions, used_vars,
     possibly_free_var_ranges, free_vars,
     InnerExpr, generate_inner_expressions, expression_depth,

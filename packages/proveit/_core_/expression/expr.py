@@ -2,7 +2,8 @@
 This is the expression module.
 """
 
-from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit._core_.defaults import (defaults, USE_DEFAULTS, 
+                                     SimplificationDirectives)
 from proveit._core_.theory import Theory
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaning_data, style_data
@@ -62,6 +63,15 @@ class ExprType(type):
                     raise TypeError("'_operator_' class attributes must be "
                                     "Literal expressions.")
                 Operation.operation_class_of_operator[cls._operator_] = cls
+                
+        if hasattr(cls, '_simplification_directives_'):
+            simplification_directives = cls._simplification_directives_
+            if not isinstance(simplification_directives, 
+                              SimplificationDirectives):
+                raise TypeError(
+                        "%s._simplification_directives_ expected to be "
+                        "of type SimplificationDirectives")
+            simplification_directives._expr_class = cls
         if not hasattr(cls, '__init__'):
             raise TypeError("%s, an Expression-derived class, must have an "
                             "__init__ method"%cls)
@@ -770,58 +780,54 @@ class Expression(metaclass=ExprType):
                 "Infinite 'conclude' recursion blocked.")
         Expression.in_progress_to_conclude.add(in_progress_key)
 
-        with defaults.temporary() as temp_defaults:
-            # We must preserve 'self' if we are attempting to prove it
-            # (don't automatically simplify it).
-            temp_defaults.preserved_exprs.add(self)
-            try:
-                concluded_truth = None
-                if isinstance(self, Not):
-                    # if it is a Not expression, try conclude_negation on the
-                    # operand
-                    try:
-                        concluded_truth = self.operands[0].conclude_negation(
+        try:
+            concluded_truth = None
+            if isinstance(self, Not):
+                # if it is a Not expression, try conclude_negation on the
+                # operand
+                try:
+                    concluded_truth = self.operands[0].conclude_negation(
+                        assumptions=assumptions)
+                except NotImplementedError:
+                    pass  # that didn't work, try conclude on the Not expression itself
+            if concluded_truth is None:
+                try:
+                    # first attempt to prove via implication
+                    concluded_truth = self.conclude_via_implication(
                             assumptions=assumptions)
-                    except NotImplementedError:
-                        pass  # that didn't work, try conclude on the Not expression itself
-                if concluded_truth is None:
-                    try:
-                        # first attempt to prove via implication
-                        concluded_truth = self.conclude_via_implication(
-                                assumptions=assumptions)
-                    except ProofFailure:
-                        # try the 'conclude' method of the specific Expression
-                        # class
-                        concluded_truth = self.conclude(assumptions=assumptions)
-                if concluded_truth is None:
-                    raise ProofFailure(
-                        self, assumptions, "Failure to automatically 'conclude'")
-                if not isinstance(concluded_truth, Judgment):
-                    raise ValueError(
-                        "'conclude' method should return a Judgment "
-                        "(or raise an exception), not %s"%concluded_truth)
-                if concluded_truth.expr != self:
-                    raise ValueError(
-                        "'conclude' method should return a Judgment for this Expression object: " + str(
-                            concluded_truth.expr) + " does not match " + str(self))
-                if not concluded_truth.assumptions_set.issubset(assumptions_set):
-                    raise ValueError("While proving " +
-                                     str(self) +
-                                     ", 'conclude' method returned a Judgment with extra assumptions: " +
-                                     str(set(concluded_truth.assumptions) -
-                                         assumptions_set))
-                if concluded_truth.expr._style_id == self._style_id:
-                    # concluded_truth with the same style as self.
-                    return concluded_truth
-                return concluded_truth.with_matching_styles(
-                    self, assumptions)  # give it the appropriate style
-            except NotImplementedError:
+                except ProofFailure:
+                    # try the 'conclude' method of the specific Expression
+                    # class
+                    concluded_truth = self.conclude(assumptions=assumptions)
+            if concluded_truth is None:
                 raise ProofFailure(
-                    self,
-                    assumptions,
-                    "'conclude' method not implemented for proof automation")
-            finally:
-                Expression.in_progress_to_conclude.remove(in_progress_key)
+                    self, assumptions, "Failure to automatically 'conclude'")
+            if not isinstance(concluded_truth, Judgment):
+                raise ValueError(
+                    "'conclude' method should return a Judgment "
+                    "(or raise an exception), not %s"%concluded_truth)
+            if concluded_truth.expr != self:
+                raise ValueError(
+                    "'conclude' method should return a Judgment for this Expression object: " + str(
+                        concluded_truth.expr) + " does not match " + str(self))
+            if not concluded_truth.assumptions_set.issubset(assumptions_set):
+                raise ValueError("While proving " +
+                                 str(self) +
+                                 ", 'conclude' method returned a Judgment with extra assumptions: " +
+                                 str(set(concluded_truth.assumptions) -
+                                     assumptions_set))
+            if concluded_truth.expr._style_id == self._style_id:
+                # concluded_truth with the same style as self.
+                return concluded_truth
+            return concluded_truth.with_matching_styles(
+                self, assumptions)  # give it the appropriate style
+        except NotImplementedError:
+            raise ProofFailure(
+                self,
+                assumptions,
+                "'conclude' method not implemented for proof automation")
+        finally:
+            Expression.in_progress_to_conclude.remove(in_progress_key)
 
     def proven(self, assumptions=USE_DEFAULTS):
         '''
@@ -962,7 +968,8 @@ class Expression(metaclass=ExprType):
             repl_map, allow_relabeling=allow_relabeling,
             requirements=requirements)
         return replacement.equality_replaced(
-                requirements, equality_repl_requirements)
+                requirements, equality_repl_requirements,
+                auto_simplify_top_level=defaults.auto_simplify)
 
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None):
@@ -989,7 +996,7 @@ class Expression(metaclass=ExprType):
         return replaced
 
     def equality_replaced(self, requirements, equality_repl_requirements,
-                          auto_simplify_top_level=False):
+                          auto_simplify_top_level=USE_DEFAULTS):
         '''
         Return something equal to this expression with replacements
         made via proven equalities, either simplifications or
@@ -1026,14 +1033,16 @@ class Expression(metaclass=ExprType):
 
     def _equality_replaced(self, equality_repl_map, requirements, 
                            equality_repl_requirements,
-                           auto_simplify_top_level=True):
+                           auto_simplify_top_level=USE_DEFAULTS):
         '''
         Recursive helper method for equality_replaced.
         '''
         from proveit import Judgment, Composite, ExprRange       
         from proveit._core_.proof import (
                 ProofFailure, UnsatisfiedPrerequisites)
-        from proveit.logic import Equals, SimplificationError
+        from proveit.logic import (Equals, SimplificationError,
+                                   EvaluationError,
+                                   is_irreducible_value)
         if self in defaults.preserved_exprs:
             # This expression should be preserved, so don't make
             # any equality-based replacement.
@@ -1052,37 +1061,57 @@ class Expression(metaclass=ExprType):
             expr = self._equality_replaced_sub_exprs(
                     equality_repl_map, requirements, 
                     equality_repl_requirements)
+            if expr in defaults.preserved_exprs:
+                # The expression should be preserved, so don't make
+                # any further equality-based replacement.
+                return expr
+            if auto_simplify_top_level is USE_DEFAULTS:
+                auto_simplify_top_level = defaults.auto_simplify
             if (expr != self) and (expr in equality_repl_map):
                 replacement = equality_repl_map[expr]
-            elif (auto_simplify_top_level 
-                    and hasattr(expr, 'shallow_simplification')):# and not expr.is_simplified():
-                # Attempt a shallow simplification (after recursion).
-                try:
-                    replacement = expr.shallow_simplification()
-                    if replacement.rhs == expr:
-                        # Trivial simplification -- don't use it.
-                        return expr
-                except (SimplificationError, UnsatisfiedPrerequisites, 
-                        NotImplementedError, ProofFailure):
-                    # Failure in the simplification attempt; just skip it.
-                    return expr
-            else:
+            elif auto_simplify_top_level and not is_irreducible_value(expr):
+                # Look for a known evaluation.
+                replacement = Equals.get_known_evaluation(expr)
+                if (replacement is None and 
+                        hasattr(expr, 'shallow_evaluation')):
+                    # Attempt a shallow evaluation (after recursion).
+                    try:
+                        replacement = expr.shallow_evaluation()
+                    except (EvaluationError, UnsatisfiedPrerequisites, 
+                            NotImplementedError, ProofFailure):
+                        # Failure in the simplification attempt; 
+                        # just skip it.
+                        pass
+                if (replacement is None and 
+                        hasattr(expr, 'shallow_simplification')):
+                    # Attempt a shallow simplification (after recursion).
+                    try:
+                        replacement = expr.shallow_simplification()
+                        if replacement.rhs == expr:
+                            # Trivial simplification -- don't use it.
+                            return expr
+                    except (SimplificationError, UnsatisfiedPrerequisites, 
+                            NotImplementedError, ProofFailure):
+                        # Failure in the simplification attempt; 
+                        # just skip it.
+                        pass
+            if replacement is None:
                 return expr
-
+        
         # We have a replacement here; make sure it is a valid one.
         if not isinstance(replacement, Judgment):
             raise TypeError("'replacement' must be a "
                             "proven equality as a Judgment: "
-                            "got %s for %s" % (replacement, self))
+                            "got %s for %s" % (replacement, expr))
         if not isinstance(replacement.expr, Equals):
             raise TypeError("'replacement' must be a "
                             "proven equality: got %s for %s"
-                            % (replacement, self))
-        if replacement.expr.lhs != self:
+                            % (replacement, expr))
+        if replacement.expr.lhs != expr:
             raise TypeError("'replacement' must be a "
                             "proven equality with 'self' on the "
                             "left side: got %s for %s"
-                            % (replacement, self))
+                            % (replacement, expr))
         if not replacement.is_applicable():
             # The assumptions aren't adequate to use this reduction.
             return self
@@ -1272,6 +1301,35 @@ class Expression(metaclass=ExprType):
         '''
         from proveit.logic import Equals
         return Equals(self, self).prove()
+
+    @classmethod
+    def temporary_simplification_directives(cls):
+        '''
+        Returns a context manager for temporarily setting simplification
+        directives for this expression class.  Specifically, the
+        _simplification_directives_ attribute of the expression class
+        will be temporarily altered.  An exception will be raised if
+        the class has no _simplification_directives_ attribute.
+        
+        For example,
+        
+        with Add.temporary_simplification_directives() as tmp_directives:
+            tmp_directives.ungroup = False
+            ...
+        
+        will set the 'ungroup' attribute of 
+        Add._simplification_directives_ to False but will restore it
+        to its previous value upon exiting the 'with' block.
+        '''
+        if not hasattr(cls, '_simplification_directives_'):
+            raise AttributeError("%s has no _simplification_directives_ "
+                                 "attribute")
+        simplification_directives = cls._simplification_directives_
+        if not isinstance(simplification_directives, SimplificationDirectives):
+            raise TypeError(
+                    "The '_simplification_directives_' of an Expression "
+                    "class should be of type SimplificationDirectives")
+        return simplification_directives.temporary()
 
     def order_of_appearance(self, sub_expressions):
         '''

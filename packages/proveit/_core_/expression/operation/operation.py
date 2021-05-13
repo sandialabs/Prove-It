@@ -611,6 +611,15 @@ class Operation(Expression):
         # try 'shallow_simplification'.
         simplification = reduction.rhs.shallow_simplification()
         return reduction.apply_transitivity(simplification)
+    
+    def operands_are_irreducible(self):
+        '''
+        Return True iff all of the operands of this Operation are
+        irreducible.
+        '''
+        from proveit.logic import is_irreducible_value
+        return all(is_irreducible_value(operand) for operand
+                   in self.operands.entries)
 
 
 class OperationError(Exception):

@@ -833,7 +833,6 @@ class ExprRange(Expression):
                 var_replacements = \
                     {key: value for key, value in inner_repl_map.items() if
                      key_var(key) == var}
-                print('problem self', self, repl_map)
                 raise ImproperReplacement(
                     self, repl_map,
                     "Failure to expand %s because there is no explicit "

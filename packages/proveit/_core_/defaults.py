@@ -46,11 +46,11 @@ class Defaults:
         # or replaced using an equality-base replacement.
         self.preserved_exprs = set()
         
+        """
         # Map expression classes to directives that should be
         # employed when simplifying expressions with that class.
         self._simplification_directives_by_expr_class = dict()
         
-        """
         # Hash that unique to the simplification directives.
         self._simplification_directives_hash = None
         
@@ -155,7 +155,7 @@ class Defaults:
         
         Will temporarily set defaults.assumptions to inner_assumptions.
         '''
-        return TemporaryDefaults()
+        return TemporarySetter(self)
 
     def checked_assumptions(self, assumptions):
         '''
@@ -229,70 +229,58 @@ class Defaults:
             self._simplification_directives_id = None
         self.__dict__[attr] = value
 
-class TemporaryDefaults(object):
+class TemporarySetter(object):
     '''
-    TemporaryDefaults is a context manager that allows us to
-    temporarily modify attributes of defaults.  These will revert
-    back to the original settings upon exiting the context manager.
-    See Defaults.temporary.
+    TemporarySetter is a context manager that allows us to temporarily
+    set public attributes of an object but restore them upon exiting the
+    context manager (e.g., a 'with' block).
     '''
-    def __init__(self):
+    def __init__(self, obj):
+        self._obj = obj
         self._original_values = dict()
-
-    def _safekeep_original(self, attr):
-        '''
-        Make a copy of the original attribute if we haven't already.
-        '''
-        if attr not in self._original_values:
-            # Remember the original.
-            self._original_values[attr] = defaults.__dict__[attr]
-            # Use a copy for now. A shallow copy should be sufficient.
-            defaults.__dict__[attr] = copy.copy(defaults.__dict__[attr])
 
     def __setattr__(self, attr, val):
         '''
-        Temporarily set the default attribute.
+        Temporarily set the attribute of the object
+        (excluding private attributes which apply to this 
+        TemporarySetter directly).
         '''
-        if attr == '_original_values':
+        if attr[0] == '_':
             object.__setattr__(self, attr, val)
             return
-        if defaults.__dict__[attr] == val:
-            return # Nothing needs to be done.
-        self._safekeep_original(attr)
-        setattr(defaults, attr, val)
+        if attr not in self._obj.__dict__:
+            raise AttributeError("Cannot set unknown attr, %s, of %s"
+                                 %(attr, self._obj))
+        if self._obj.__dict__[attr] == val:
+            return # No change.  Nothing need be done.
+        self._original_values[attr] = self._obj.__dict__[attr]
+        setattr(self._obj, attr, val)
     
     def __getattr__(self, attr):
         '''
-        Return the attribute of the aliased attribute of defaults.
+        Raise an AttributeError with a message about 'setting' but not
+        'getting' the object's attributes.
         '''
-        self._safekeep_original(attr)
-        return getattr(defaults, attr)
+        raise AttributeError("A TemporarySetter may be used for 'setting' "
+                             "but not 'getting' its object's attributes.")
 
     def __enter__(self):
         '''
-        Return this TemporaryDefaults object as the proper interface 
-        into 'defaults' so that the original attribute values of
-        'defaults' can be restored upon exiting.
+        Return this TemporarySetter as the interface for
+        temporarily setting attributes of the underlying object.
         '''
         return self
     
     def __exit__(self, type, value, traceback):
         '''
-        Return the original values of 'defaults'.
+        Restore the original values of the object.
         '''
         # Restore to the state of when we "entered".
         for attr, val in self._original_values.items():
-            defaults.__dict__[attr] = val
+            self._obj.__dict__[attr] = val
+        
 
-    def preserve_expr(self, expr):
-        '''
-        Preserve the given expression so it is not automatically
-        simplified.
-        '''
-        self._safekeep_original('preserved_exprs')
-        defaults.preserved_exprs.add(expr)
-
-
+"""
 class DisabledAutoReductionTypes(set):
     '''
     The DisabledAutoReductionTypes class stores the set of Expression
@@ -326,7 +314,7 @@ class DisabledAutoReductionTypes(set):
         # Restore to the state of when we "entered".
         self.clear()
         self.update(self._original_disabled_types)
-
+"""
 
 class InvalidAssumptions:
     def __init__(self):
@@ -334,6 +322,38 @@ class InvalidAssumptions:
 
     def __str__(self):
         return 'The assumptions must be an iterable collection of Expression objects'
+
+
+class SimplificationDirectives:
+    '''
+    SimplificationDirectives are used to specify the directives to
+    use during simplification (or shallow_simplification) that are
+    particular to each Expression class.  To use 
+    SimplificationDirectives in an Expression class, create
+    a class attribute class _simplification_directives_ assigned
+    to a new SimplificationDirectives object with default
+    attributes for the default directives.  See
+    Expression.temporary_simplification_directives() for how to
+    set simplification directives temporarily with a context manager.
+    '''
+    
+    def __init__(self, **kwargs):
+        self.__dict__.update(**kwargs)
+
+    def __setattr__(self, key, value):
+        if not hasattr(self, key):
+            if key != '_expr_class':
+                raise AttributeError(
+                        "%s is not a simplification directive for %s"
+                        %(key, self._expr_class))
+        self.__dict__[key] = value
+    
+    def temporary(self):
+        '''
+        Return a context manager for making temporary changes to
+        simplification directives.
+        '''
+        return TemporarySetter(self)
 
 
 # USE_DEFAULTS is used to indicate that default assumptions

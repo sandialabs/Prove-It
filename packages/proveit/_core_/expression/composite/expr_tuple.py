@@ -390,8 +390,10 @@ class ExprTuple(Composite, Expression):
                         requirements=requirements)
                 subbed_entries.append(subbed_entry)
 
-        if all(subbed_entry._style_id == entry._style_id for
-               subbed_entry, entry in zip(subbed_entries, self.entries)):
+        if (len(subbed_entries) == len(self.entries) and 
+                all(subbed_entry._style_id == entry._style_id for
+                    subbed_entry, entry in 
+                    zip(subbed_entries, self.entries))):
             # Nothing change, so don't remake anything.
             return self
 
@@ -427,8 +429,10 @@ class ExprTuple(Composite, Expression):
                         auto_simplify_top_level=defaults.auto_simplify)
                 subbed_entries.append(subbed_entry)
 
-        if all(subbed_entry._style_id == entry._style_id for
-               subbed_entry, entry in zip(subbed_entries, self.entries)):
+        if (len(subbed_entries) == len(self.entries) and 
+                all(subbed_entry._style_id == entry._style_id for
+                    subbed_entry, entry in 
+                    zip(subbed_entries, self.entries))):
             # Nothing change, so don't remake anything.
             return self
 
