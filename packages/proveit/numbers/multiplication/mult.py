@@ -1,5 +1,6 @@
 from proveit import (defaults, Literal, Operation, USE_DEFAULTS, ExprTuple,
-                     Judgment, ProofFailure, InnerExpr, equivalence_prover)
+                     Judgment, ProofFailure, InnerExpr, equivalence_prover,
+                     SimplificationDirectives)
 from proveit.logic import Equals, InSet
 from proveit.numbers import num
 from proveit.numbers.number_sets import (Integer, Natural, NaturalPos, Real,
@@ -13,10 +14,11 @@ from proveit.numbers import NumberOperation
 
 class Mult(NumberOperation):
     # operator of the Mult operation.
-    _operator_ = Literal(
-        string_format='*',
-        latex_format=r'\cdot',
-        theory=__file__)
+    _operator_ = Literal(string_format='*',  latex_format=r'\cdot',
+                         theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+            ungroup = True)
 
     # Multiplying two numerals may import a theorem for the evaluation.
     # Track which ones we have encountered already.
@@ -181,7 +183,8 @@ class Mult(NumberOperation):
         from proveit.logic import is_irreducible_value, EvaluationError
         from proveit.numbers import zero
         
-        # First check for any zero factors -- quickest way to do an evaluation.
+        # First check for any zero factors 
+        # -- quickest way to do an evaluation.
         try:
             zero_idx = self.operands.index(zero)
             if self.operands.is_double():
@@ -196,6 +199,11 @@ class Mult(NumberOperation):
             return mult_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b})
         except (ValueError, ProofFailure):
             pass  # No such "luck" regarding a simple multiplication by zero.
+
+        if not self.operands_are_irreducible():
+            # Without a zero factor, shallow evaluation of Mult is only
+            # viable if the operands are all irreducible.
+            raise EvaluationError(self)
 
         expr = self
 
@@ -241,16 +249,17 @@ class Mult(NumberOperation):
         eq = TransRelUpdater(self)
 
         # Ungroup the expression (disassociate nested multiplications).
-        idx = 0
-        length = expr.operands.num_entries() - 1
-        while idx < length:
-            # loop through all operands
-            if isinstance(expr.operands[idx], Mult):
-                # if it is grouped, ungroup it
-                expr = eq.update(expr.disassociation(idx))
-            else:
-                idx += 1
-            length = expr.operands.num_entries()
+        if Mult._simplification_directives_.ungroup:
+            idx = 0
+            length = expr.operands.num_entries() - 1
+            while idx < length:
+                # loop through all operands
+                if isinstance(expr.operands[idx], Mult):
+                    # if it is grouped, ungroup it
+                    expr = eq.update(expr.disassociation(idx))
+                else:
+                    idx += 1
+                length = expr.operands.num_entries()
 
         # Simplify negations -- factor them out.
         expr = eq.update(expr.neg_simplifications())
