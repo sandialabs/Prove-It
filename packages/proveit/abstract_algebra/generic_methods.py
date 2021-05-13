@@ -74,7 +74,6 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
 
 @prover
 def apply_association_thm(expr, start_idx, length, thm, **defaults_config):
-    from proveit import ExprTuple
     from proveit.logic import Equals
     beg = start_idx
     if beg < 0:
@@ -93,7 +92,10 @@ def apply_association_thm(expr, start_idx, length, thm, **defaults_config):
     _i = _A.num_elements()
     _j = _B.num_elements()
     _k = _C.num_elements()
-    return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
+    with expr.__class__.temporary_simplification_directives() as \
+            tmp_directives:
+        tmp_directives.ungroup = False
+        return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
 
 @prover
 def apply_disassociation_thm(expr, idx, thm=None, **defaults_config):
