@@ -375,30 +375,47 @@ class ExprArray(ExprTuple):
         #             'as the ExprRange in tuple number %s' %
         #             str(n))
 
-    def get_col_height(self, explicit=False):
+    def get_col_height(self, orientation=None, parameterization=None):
         '''
         Return the height of the first column of the array in an integer form.
         (Horizontal orientation is assumed)
         '''
         from .expr_range import ExprRange
+        if orientation is None:
+            orientation = self.get_style('orientation', 'horizontal')
+        if parameterization is None:
+            parameterization = self.get_style('parameterization', 'implicit')
+
         output = 0
         for expr in self:
             if isinstance(expr, ExprTuple):
                 output += 1
             elif isinstance(expr, ExprRange):
                 if isinstance(expr.first(), ExprRange):
-                    expr.first().format_length()
+                    if isinstance(expr.first().first(), ExprTuple):
+                        if orientation == 'vertical' and parameterization == 'explicit':
+                            output += expr.first().format_length() + 4
+                        else:
+                            output += expr.first().format_length() + 5
+                    else:
+                        output += expr.first().format_length()
                 else:
                     output += expr.format_length()
         return output
 
-    def get_row_length(self, explicit=False):
+    def get_row_length(self, orientation=None, parameterization=None):
         '''
         Return the length of the first row of the array in an integer form.
         (Horizontal orientation is assumed)
         '''
         from .expr_range import ExprRange
         from proveit import Variable, IndexedVar
+
+        if orientation is None:
+            orientation = self.get_style('orientation', 'horizontal')
+        if parameterization is None:
+            parameterization = self.get_style('parameterization', 'implicit')
+
         output = 0
 
         for expr in self:
@@ -426,6 +443,8 @@ class ExprArray(ExprTuple):
                                         else:
                                             output += 1
                         elif isinstance(value, ExprRange):
+                            if orientation == 'vertical' and parameterization == 'explicit':
+                                output += 2
                             output += value.format_length()
                         else:
                             output += 1
@@ -450,6 +469,7 @@ class ExprArray(ExprTuple):
                     else:
                         output += 1
             break
+            # we only care about the first row because all rows should be the same length.
         return output
 
     def get_formatted_sub_expressions(
@@ -596,9 +616,10 @@ class ExprArray(ExprTuple):
                                             if self.get_style(
                                                     'parameterization', default_style) == 'explicit':
                                                 # for obj in entry_expansion_objects:
-                                                yield r'\colon'
-                                                yield entry.body.formatted(format_type, solo=solo, fence=False)
-                                                yield r'\colon'
+                                                # yield r'\colon'
+                                                yield '..' + entry.body.formatted(format_type, solo=solo, fence=False)\
+                                                      + '..'
+                                                # yield r'\colon'
                                             else:
                                                 yield r'\vdots'
                                             for obj in entry_expansion_objects:
@@ -1224,10 +1245,7 @@ class ExprArray(ExprTuple):
         if orientation == 'horizontal':
             length = self.get_row_length()
         else:
-            if self.get_style('parameterization', default_style):
-                length = self.get_col_height(True)
-            else:
-                length = self.get_col_height()
+            length = self.get_col_height()
         if format_type == 'latex':
             out_str += r'\begin{array} {%s} ' % (
                 justification[0] * length) + '\n '
@@ -1237,30 +1255,29 @@ class ExprArray(ExprTuple):
         for entry in self.get_formatted_sub_expressions(
                 format_type, orientation, default_style, operator_or_operators, solo=solo):
             formatted_sub_expressions.append(entry)
-
+        # print(formatted_sub_expressions)
         if orientation == "vertical":
             # up until now, the formatted_sub_expression is still
             # in the order of the horizontal orientation regardless of
             # orientation type
             k = 1
             vert = []
-            if self.get_style('parameterization', default_style) == 'explicit':
-                ex = True
-            else:
-                ex = False
-            m = self.get_col_height(ex)
-            while k <= self.get_row_length(ex):
+
+            m = self.get_col_height()
+            # print(m)
+            # print(self.get_row_length())
+            while k <= self.get_row_length():
                 i = 1
                 j = k
                 for var in self.get_formatted_sub_expressions(
                         format_type, orientation, default_style, operator_or_operators):
                     if i == j:
                         vert.append(var)
-                        m -= 1
+                        m = m - 1
                         if m == 0:
                             vert.append(r' \\' + ' \n ')
-                            m = self.get_col_height(ex)
-                        j += self.get_row_length(ex)
+                            m = self.get_col_height()
+                        j += self.get_row_length()
                     i += 1
                 k += 1
             formatted_sub_expressions = vert
@@ -1303,10 +1320,10 @@ class ExprArray(ExprTuple):
                 # operator preceeds each operand
                 if implicit_first_operator:
                     # first operator is implicit
-                    out_str = formatted_sub_expressions[0]
+                    out_str += formatted_sub_expressions[0]
                 else:
                     # no space after first operator
-                    out_str = formatted_operators[0] + \
+                    out_str += formatted_operators[0] + \
                         formatted_sub_expressions[0]
                 out_str += ' '  # space before next operator
                 out_str += ' '.join(
@@ -1314,7 +1331,7 @@ class ExprArray(ExprTuple):
                     zip(formatted_operators[1:], formatted_sub_expressions[1:]))
             elif len(formatted_sub_expressions) == len(formatted_operators) + 1:
                 # operator between each operand
-                out_str = ' '.join(
+                out_str += ' '.join(
                     formatted_operand +
                     ' ' +
                     formatted_operator for formatted_operand,
