@@ -322,6 +322,7 @@ class Gate(Function):
             elif isinstance(self.gate_operation, IdentityOp):
                 return self.gate_operation.formatted(
                     format_type, fence=False, solo=solo)
+
             elif formatted_gate_operation == 'X' and representation == 'implicit':
                 # this is formatted as a target.
                 out_str += r'\targ'
@@ -461,6 +462,13 @@ class MultiQubitGate(Function):
                 formatted_gate_operation = 'Input: ' + self.gate.state.formatted(format_type)
             elif isinstance(self.gate, Output):
                 formatted_gate_operation = 'Output: ' + self.gate.state.formatted(format_type)
+            elif isinstance(self.gate, MultiWire):
+                if self.gate.get_style('representation', 'explicit') == 'implicit':
+                    formatted_gate_operation = 'I'
+                else:
+                    formatted_gate_operation = r' /^{' + self.gate.number.formatted(format_type, fence=False) \
+                              + r'} '
+
             # if r'\Qcircuit' in formatted_gate_operation:
             #     idx = formatted_gate_operation.index('\n')
             #     formatted_gate_operation = formatted_gate_operation[idx + 3:len(
