@@ -27,15 +27,16 @@ from ._core_ import (
     ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
     UnsatisfiedPrerequisites,
     StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
+
+# @prover and @equivalence_prover are useful decorators for many
+# Expression class methods:
+from .decorators import prover, equivalence_prover
+
 from .relation import (
     TransitiveRelation,
     TransitivityException,
     TransRelUpdater,
     total_ordering)
-
-# @prover and @equivalence_prover are useful decorators for many
-# Expression class methods:
-from .decorators import prover, equivalence_prover
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet

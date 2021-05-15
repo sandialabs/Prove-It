@@ -1,6 +1,7 @@
 from collections import deque
 from proveit import Expression, Operation, StyleOptions
-from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
+from proveit import (defaults, USE_DEFAULTS, Judgment, ProofFailure,
+                     prover)
 from .sorter import TransitivitySorter
 
 
@@ -87,26 +88,28 @@ class Relation(Operation):
                 operator_or_operators=operator_str, operands=operands,
                 wrap_positions=wrap_positions, 
                 justification=justification)
-            
-    def _simplify_both_sides(self, *, simplify, assumptions=USE_DEFAULTS):
+    
+    def _simplify_both_sides(self, *, simplify):
         '''
         Simplify both sides iff 'simplify' is True.
         '''
         if simplify:
-            return self.simplify_both_sides(assumptions)
+            return self.simplify_both_sides()
         return self
 
-    def simplify_both_sides(self, assumptions=USE_DEFAULTS):
+    @prover
+    def simplify_both_sides(self, **defaults_config):
         '''
         Simplify both sides of the relation under the give assumptions
         and return the new relation.
         '''
         relation = self
-        relation = relation.inner_expr().lhs.simplify(assumptions)
-        relation = relation.inner_expr().rhs.simplify(assumptions)
+        relation = relation.inner_expr().lhs.simplify()
+        relation = relation.inner_expr().rhs.simplify()
         return relation
 
-    def do_something_on_both_sides(self, assumptions=USE_DEFAULTS):
+    @prover
+    def do_something_on_both_sides(self, **defaults_config):
         '''
         The entire purpose of this method is this docstring to be
         informative.  There may be on-the-fly methods created

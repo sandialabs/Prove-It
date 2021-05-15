@@ -637,4 +637,4 @@ class TransitivitySorter:
         if (item1, item2) in item_pair_chains:
             chain = item_pair_chains[(item1, item2)]
             #print("prove direct relationship via", chain)
-            self.relation_class.apply_transitivities(chain, assumptions)
+            self.relation_class.apply_transitivities(chain, assumptions=assumptions)
