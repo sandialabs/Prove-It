@@ -182,7 +182,12 @@ class Mult(NumberOperation):
         from . import mult_zero_left, mult_zero_right, mult_zero_any
         from proveit.logic import is_irreducible_value, EvaluationError
         from proveit.numbers import zero
-        
+        from . import empty_mult, unary_mult_reduction
+
+        if self.operands.num_entries() == 0:
+             # Multiplication with no operands is equal to 1.
+            return empty_mult
+                
         # First check for any zero factors 
         # -- quickest way to do an evaluation.
         try:
@@ -204,6 +209,10 @@ class Mult(NumberOperation):
             # Without a zero factor, shallow evaluation of Mult is only
             # viable if the operands are all irreducible.
             raise EvaluationError(self)
+        
+        if self.operands.is_single():
+             # Multiplication with 1 operand is just that operand
+            return unary_mult_reduction.instantiate({a:self.operands[0]})        
 
         expr = self
 
@@ -243,7 +252,12 @@ class Mult(NumberOperation):
         simplifying negations, and factors of one, in that order.
         Factors of 0 are dealt with in shallow_evaluation.
         '''
+        from . import unary_mult_reduction
         
+        if self.operands.is_single():
+             # Multiplication with 1 operand is just that operand
+            return unary_mult_reduction.instantiate({a:self.operands[0]})     
+
         expr = self
         # for convenience updating our equation
         eq = TransRelUpdater(self)

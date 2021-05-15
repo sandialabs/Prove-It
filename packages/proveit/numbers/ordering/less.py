@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, as_expression,
-                     UnsatisfiedPrerequisites)
+                     UnsatisfiedPrerequisites, prover)
 from proveit.logic import Equals
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
@@ -46,7 +46,8 @@ class Less(NumberOrderingRelation):
         # Use the default.
         return Operation.remake_constructor(self)
     
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Conclude something of the form 
         a < b.
@@ -58,27 +59,27 @@ class Less(NumberOrderingRelation):
             # Special case with upper bound of zero.
             from . import negative_if_real_neg
             concluded = negative_if_real_neg.instantiate(
-                {a: self.lower}, assumptions=assumptions)
+                {a: self.lower})
             return concluded.with_matching_style(self)            
         if self.lower == zero:
             # Special case with lower bound of zero.
-            if InSet(self.upper, RealPos).proven(assumptions):
-                positive_if_real_pos.instantiate({a: self.upper},
-                                                 assumptions=assumptions)
+            if InSet(self.upper, RealPos).proven():
+                positive_if_real_pos.instantiate({a: self.upper})
         if ((isinstance(self.lower, Add) and 
                 self.upper in self.lower.terms.entries) or
              (isinstance(self.upper, Add) and 
                 self.lower in self.upper.terms.entries)):
             try:
                 # Conclude an sum is bounded by one of its terms.
-                return self.conclude_as_bounded_by_term(assumptions)
+                return self.conclude_as_bounded_by_term()
             except UnsatisfiedPrerequisites:
                 # If prerequisites weren't satisfied to do this,
                 # we can still try something else.
                 pass
-        return NumberOrderingRelation.conclude(self, assumptions)
+        return NumberOrderingRelation.conclude(self)
     
-    def conclude_as_bounded_by_term(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_bounded_by_term(self, **defaults_config):
         '''
         Conclude something of the form
             a_1 + ... + a_i + b + c_1 + ... + c_j > b 
@@ -96,7 +97,7 @@ class Less(NumberOrderingRelation):
                                               less_than_an_left_increase)
         if (isinstance(self.lower, Add) and 
                 self.upper in self.lower.terms.entries):
-            concluded = self.lower.bound_by_term(self.upper, assumptions)
+            concluded = self.lower.bound_by_term(self.upper)
         elif (isinstance(self.upper, Add) and 
                 self.lower in self.upper.terms.entries):
             if self.upper.terms.is_double():
@@ -105,25 +106,23 @@ class Less(NumberOrderingRelation):
                     if self.upper.terms[1] == one:
                         # a + 1 > a
                         concluded = less_than_successor.instantiate(
-                                {a: self.lower}, assumptions=assumptions)
+                                {a: self.lower})
                     else:
                         # a + b > a assuming b in RealPos
                         concluded = less_than_an_increase.instantiate(
-                            {a: self.lower, b: self.upper.terms[1]}, 
-                            assumptions=assumptions)
+                            {a: self.lower, b: self.upper.terms[1]})
                 else:
                     assert self.lower == self.upper.terms[1]
                     if self.upper.terms[0] == one:
                         # 1 + a > a
                         concluded = less_than_left_successor.instantiate(
-                                {a: self.lower}, assumptions=assumptions)
+                                {a: self.lower})
                     else:
                         # b + a > a assuming b in RealPos
                         concluded = less_than_an_left_increase.instantiate(
-                            {a: self.lower, b: self.upper.terms[0]}, 
-                            assumptions=assumptions)                    
+                            {a: self.lower, b: self.upper.terms[0]})                    
             else:
-                concluded = self.upper.bound_by_term(self.lower, assumptions)
+                concluded = self.upper.bound_by_term(self.lower)
         else:
             raise ValueError("Less.conclude_as_bounded_by_term is only "
                              "applicable if one side of the Less "
@@ -131,11 +130,11 @@ class Less(NumberOrderingRelation):
                              "side is one of the terms")
         return concluded.with_matching_style(self)
 
-    def conclude_via_equality(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_equality(self, **defaults_config):
         from . import relax_equal_to_less_eq
         concluded = relax_equal_to_less_eq.instantiate(
-            {x: self.operands[0], y: self.operands[1]},
-            assumptions=assumptions)
+            {x: self.operands[0], y: self.operands[1]})
         return concluded.with_matching_style(self)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
@@ -164,7 +163,8 @@ class Less(NumberOrderingRelation):
         return less_is_not_eq.instantiate(
             {a: _a, b: _b}, assumptions=assumptions)
 
-    def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivity(self, other, **defaults_config):
         '''
         Apply a transitivity rule to derive from this x<y expression
         and something of the form y<z, y<=z, z>y, z>=y, or y=z to
@@ -177,25 +177,21 @@ class Less(NumberOrderingRelation):
         other = as_expression(other)
         if isinstance(other, Equals):
             return NumberOrderingRelation.apply_transitivity(
-                self, other, assumptions)  # handles this special case
+                self, other)  # handles this special case
         elif other.lower == self.upper:
             if isinstance(other, Less):
                 new_rel = transitivity_less_less.instantiate(
-                    {x: self.lower, y: self.upper, z: other.upper}, 
-                    assumptions=assumptions)
+                    {x: self.lower, y: self.upper, z: other.upper})
             elif isinstance(other, LessEq):
                 new_rel = transitivity_less_less_eq.instantiate(
-                    {x: self.lower, y: self.upper, z: other.upper}, 
-                    assumptions=assumptions)
+                    {x: self.lower, y: self.upper, z: other.upper})
         elif other.upper == self.lower:
             if isinstance(other, Less):
                 new_rel = transitivity_less_less.instantiate(
-                    {x: other.lower, y: self.lower, z: self.upper}, 
-                    assumptions=assumptions)
+                    {x: other.lower, y: self.lower, z: self.upper})
             elif isinstance(other, LessEq):
                 new_rel = transitivity_less_eq_less.instantiate(
-                    {x: other.lower, y: self.lower, z: self.upper}, 
-                    assumptions=assumptions)
+                    {x: other.lower, y: self.lower, z: self.upper})
         else:
             raise ValueError(
                 "Cannot perform transitivity with %s and %s!" %
