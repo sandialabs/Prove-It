@@ -44,6 +44,7 @@ class Defaults:
 
         # Expressions that should be 'preserved' and not simplified
         # or replaced using an equality-base replacement.
+        # Note that replacements override preserved expressions.
         self.preserved_exprs = set()
         
         """

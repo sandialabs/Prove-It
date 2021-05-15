@@ -964,10 +964,10 @@ class Expression(metaclass=ExprType):
         if equality_repl_requirements is None:
             # Not passing back the equality replacement requirements.
             equality_repl_requirements = set()
-        replacement = self.basic_replaced(
+        expr = self.basic_replaced(
             repl_map, allow_relabeling=allow_relabeling,
             requirements=requirements)
-        return replacement.equality_replaced(
+        return expr.equality_replaced(
                 requirements, equality_repl_requirements,
                 auto_simplify_top_level=defaults.auto_simplify)
 
@@ -1043,19 +1043,21 @@ class Expression(metaclass=ExprType):
         from proveit.logic import (Equals, SimplificationError,
                                    EvaluationError,
                                    is_irreducible_value)
-        if self in defaults.preserved_exprs:
-            # This expression should be preserved, so don't make
-            # any equality-based replacement.
-            return self
 
-        expr = self
         # Check for an equality replacement via equality_repl_map
-        # or as a simplification.
+        # or as a simplification.  Note that 'replacements' override
+        # 'preserved_exprs'.
         replacement = None
-        if (not isinstance(expr, Composite) and 
-                not isinstance(expr, ExprRange)):
-            if expr in equality_repl_map:
-                replacement = equality_repl_map[expr]
+        if (not isinstance(self, Composite) and 
+                not isinstance(self, ExprRange)):
+            if self in equality_repl_map:
+                replacement = equality_repl_map[self]
+        if replacement is None:
+            if self in defaults.preserved_exprs:
+                # This expression should be preserved, so don't make
+                # any equality-based replacement.
+                return self
+        expr = self
         if replacement is None:
             # Recurse into the sub-expressions.
             expr = self._equality_replaced_sub_exprs(
