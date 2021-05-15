@@ -195,6 +195,20 @@ class ExprRange(Expression):
         (see 'with_explicit_parameterization').
         '''
         return self.without_style('parameterization')
+    
+    def _body_replaced(self, expr_map):
+        '''
+        Return the body replaced according the the expression map.
+        First attempt to do this with auto-simplification.  If that
+        faisle, do it without auto-simplification.
+        '''
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.auto_simplify = True
+            try:
+                return self.body.replaced(expr_map)
+            except Exception:
+                temp_defaults.auto_simplify = False
+                return self.body.replaced(expr_map)
 
     def first(self):
         '''
@@ -203,7 +217,7 @@ class ExprRange(Expression):
         '''
         if not hasattr(self, '_first'):
             expr_map = {self.lambda_map.parameter: self.start_index}
-            self._first = self.body.replaced(expr_map)
+            self._first = self._body_replaced(expr_map)
         return self._first
 
     def last(self):
@@ -213,7 +227,7 @@ class ExprRange(Expression):
         '''
         if not hasattr(self, '_last'):
             expr_map = {self.lambda_map.parameter: self.end_index}
-            self._last = self.body.replaced(expr_map)
+            self._last = self._body_replaced(expr_map)
         return self._last
 
     def string(self, **kwargs):
