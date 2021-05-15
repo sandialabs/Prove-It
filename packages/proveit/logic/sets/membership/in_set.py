@@ -140,23 +140,14 @@ class InSet(Operation):
                 return elem_sub_in_domain.inner_expr().element.substitute(
                         self.element)
 
-        # No known membership works.  Let's see if there is a known
-        # simplification of the element before trying anything else.
+        # No known membership works.  Let's try to work with a
+        # simplification of the element instead.
         try:
-            elem_simplification = self.element.simplification(automation=False)
+            elem_simplification = self.element.simplification()
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None  # reflection doesn't count
         except SimplificationError:
-            elem_simplification = None
-
-        if elem_simplification is None:
-            # Let's try harder to simplify the element.
-            try:
-                elem_simplification = self.element.simplification()
-                if elem_simplification.lhs == elem_simplification.rhs:
-                    elem_simplification = None  # reflection doesn't count
-            except SimplificationError:
-                pass
+            pass
 
         # If the element simplification succeeded, prove the membership
         # via the simplified form of the element.
