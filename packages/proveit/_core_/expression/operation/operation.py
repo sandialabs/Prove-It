@@ -609,7 +609,17 @@ class Operation(Expression):
 
         # After making sure the operands have been simplified,
         # try 'shallow_simplification'.
-        simplification = reduction.rhs.shallow_simplification()
+        # Use the 'reduction' as a replacement in case it is needed.
+        # For example, consider 
+        #       1*b + 3*b
+        #   It's reduction is
+        #       1*b + 3*b = b + 3*b
+        #   But in the shallow simplification, we'll do a factorization
+        #   that will exploit the "reduction" fact which wouldn't
+        #   otherwise be used because (1*b + 3*b) is a preserved
+        #   expression inse simplification is an @equivalence_prover.
+        simplification = reduction.rhs.shallow_simplification(
+                replacements=[reduction])
         return reduction.apply_transitivity(simplification)
     
     def operands_are_irreducible(self):
