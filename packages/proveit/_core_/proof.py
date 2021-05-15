@@ -164,7 +164,7 @@ class Proof:
                 # 'replacements' while deriving side-effects.
                 temp_defaults.auto_simplify = False
                 if len(defaults.replacements) > 0:
-                    temp_defaults.replacements.clear()
+                    temp_defaults.replacements = []
                 proven_truth.derive_side_effects()
 
     def _updateDependencies(self, newproof):
