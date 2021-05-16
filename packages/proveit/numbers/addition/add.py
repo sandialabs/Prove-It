@@ -1190,13 +1190,10 @@ class Add(NumberOperation):
         _i = _a.num_elements()
         _j = _b.num_elements()
         _k = _c.num_elements()
-        print('expr', expr)
-        print({i: _i, j: _j, k: _k, a: _a, b: _b, c: _c}, replacements)
         distribution = distribute_through_sum.instantiate(
             {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c}, 
             preserve_expr=expr, replacements=replacements,
             auto_simplify=False)
-        print('distribution', distribution)
         eq.update(distribution.derive_reversed())
         return eq.relation
 
@@ -1306,14 +1303,16 @@ class Add(NumberOperation):
         '''
         return eq
 
-    def bound_via_operand_bound(self, operand_relation, assumptions=USE_DEFAULTS):
+    @prover
+    def bound_via_operand_bound(self, operand_relation, **defaults_config):
         '''
         Alias for bound_via_term_bound.
         Also see NumberOperation.deduce_bound.
         '''
-        return self.bound_via_term_bound(operand_relation, assumptions)
+        return self.bound_via_term_bound(operand_relation)
 
-    def bound_via_term_bound(self, term_relation, assumptions=USE_DEFAULTS):
+    @prover
+    def bound_via_term_bound(self, term_relation, **defaults_config):
         '''
         Deduce a bound of this sum via the bound on
         one of its terms.  For example
@@ -1340,19 +1339,16 @@ class Add(NumberOperation):
                             "appears in the %s relation."
                             %(self, term_relation))
         expr = self
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
         if num > 1:
-            expr = eq.update(expr.association(idx, num,
-                                              assumptions=assumptions))
+            expr = eq.update(expr.association(idx, num,))
         if expr.operands.is_double():
             # Handle the binary cases.
             assert 0 <= idx < 2
             if idx == 0:
-                relation = term_relation.right_add_both_sides(
-                        expr.terms[1], assumptions=assumptions)
+                relation = term_relation.right_add_both_sides(expr.terms[1])
             elif idx == 1:
-                relation = term_relation.left_add_both_sides(
-                        expr.terms[0], assumptions=assumptions)
+                relation = term_relation.left_add_both_sides(expr.terms[0])
             expr = eq.update(relation)
         else:
             thm = None
@@ -1366,23 +1362,22 @@ class Add(NumberOperation):
                 thm = weak_bound_via_term_bound
             _a = self.terms[:idx]
             _b = self.terms[idx+1:]
-            _i = _a.num_elements(assumptions)
-            _j = _b.num_elements(assumptions)
+            _i = _a.num_elements()
+            _j = _b.num_elements()
             _x = term_relation.normal_lhs
             _y = term_relation.normal_rhs
             expr = eq.update(thm.instantiate(
-                    {i: _i, j: _j, a: _a, b: _b, x: _x, y: _y},
-                    assumptions=assumptions))
+                    {i: _i, j: _j, a: _a, b: _b, x: _x, y: _y}))
         if num > 1 and isinstance(expr.terms[idx], Add):
-            expr = eq.update(expr.disassociation(idx, assumptions))            
+            expr = eq.update(expr.disassociation(idx))            
         relation = eq.relation
         if relation.lhs != self:
             relation = relation.with_direction_reversed()
         assert relation.lhs == self
         return relation    
 
-    def bound_by_term(
-            self, term_or_idx, assumptions=USE_DEFAULTS):
+    @prover
+    def bound_by_term(self, term_or_idx, **defaults_config):
         '''
         Deduce that this sum is bound by the given term (or term at
         the given index).
@@ -1414,7 +1409,7 @@ class Add(NumberOperation):
                             term_entry.start_index, term_entry.end_index)
                 else:
                     in_number_set = InSet(term_entry, number_set)
-                if not in_number_set.proven(assumptions):
+                if not in_number_set.proven():
                     relevant_number_sets.discard(number_set)
         if len(relevant_number_sets) == 0:
             raise UnsatisfiedPrerequisites(
@@ -1423,59 +1418,59 @@ class Add(NumberOperation):
                     "in RealPos, RealNeg, RealNonNeg, RealNonPos")
         # If a strong bound is applicable, use that.
         if RealPos in relevant_number_sets:
-            return self.deduce_strong_lower_bound_by_term(
-                    term_or_idx, assumptions)
+            return self.deduce_strong_lower_bound_by_term(term_or_idx)
         if RealNeg in relevant_number_sets:
-            return self.deduce_strong_upper_bound_by_term(
-                    term_or_idx, assumptions)
+            return self.deduce_strong_upper_bound_by_term(term_or_idx)
         if RealNonNeg in relevant_number_sets:
-            return self.deduce_weak_lower_bound_by_term(
-                    term_or_idx, assumptions)
+            return self.deduce_weak_lower_bound_by_term(term_or_idx)
         if RealNonPos in relevant_number_sets:
-            return self.deduce_weak_upper_bound_by_term(
-                    term_or_idx, assumptions)
+            return self.deduce_weak_upper_bound_by_term(term_or_idx)
 
+    @prover
     def deduce_weak_lower_bound_by_term(
-            self, term_or_idx, assumptions=USE_DEFAULTS):
+            self, term_or_idx, **defaults_config):
         '''
         Deduce that this sum is greater than or equal to the term at the
         given index.
         '''
         from . import term_as_weak_lower_bound
         return self._deduce_specific_bound_by_term(
-                term_as_weak_lower_bound, term_or_idx, assumptions)
+                term_as_weak_lower_bound, term_or_idx)
 
+    @prover
     def deduce_weak_upper_bound_by_term(
-            self, term_or_idx, assumptions=USE_DEFAULTS):
+            self, term_or_idx, **defaults_config):
         '''
         Deduce that this sum is less than or equal to the term at the
         given index.
         '''
         from . import term_as_weak_upper_bound
         return self._deduce_specific_bound_by_term(
-                term_as_weak_upper_bound, term_or_idx, assumptions)
+                term_as_weak_upper_bound, term_or_idx)
 
+    @prover
     def deduce_strong_lower_bound_by_term(
-            self, term_or_idx, assumptions=USE_DEFAULTS):
+            self, term_or_idx, **defaults_config):
         '''
         Deduce that this sum is greater than the term at the
         given index.
         '''
         from . import term_as_strong_lower_bound
         return self._deduce_specific_bound_by_term(
-                term_as_strong_lower_bound, term_or_idx, assumptions)
+                term_as_strong_lower_bound, term_or_idx)
 
+    @prover
     def deduce_strong_upper_bound_by_term(
-            self, term_or_idx, assumptions=USE_DEFAULTS):
+            self, term_or_idx, **defaults_config):
         '''
         Deduce that this sum is less than the term at the
         given index.
         '''
         from . import term_as_strong_upper_bound
         return self._deduce_specific_bound_by_term(
-                term_as_strong_upper_bound, term_or_idx, assumptions)
+                term_as_strong_upper_bound, term_or_idx)
 
-    def _deduce_specific_bound_by_term(self, thm, term_or_idx, assumptions):
+    def _deduce_specific_bound_by_term(self, thm, term_or_idx):
         '''
         Helper method for 
         deduce_weak_lower_bound_by_term,
@@ -1498,13 +1493,12 @@ class Add(NumberOperation):
         _a = self.terms[:idx]
         _b = self.terms[idx]
         _c = self.terms[idx + 1:]
-        _i = _a.num_elements(assumptions)
-        _j = _c.num_elements(assumptions)
-        return thm.instantiate(
-            {i: _i, j: _j, a: _a, b: _b, c: _c},
-            assumptions=assumptions)        
+        _i = _a.num_elements()
+        _j = _c.num_elements()
+        return thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})        
 
-    def not_equal(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def not_equal(self, other, **defaults_config):
         '''
         Attempt to prove that self is not equal to other.
         '''
@@ -1522,10 +1516,10 @@ class Add(NumberOperation):
                         # If we know that _a ≠ _b then we can 
                         # prove _a - _b ≠ 0.
                         return nonzero_difference_if_different.instantiate(
-                                {a:_a, b:_b}, assumptions=assumptions)
+                                {a:_a, b:_b})
         # If it isn't a special case treated here, just use
         # conclude-as-folded.
-        return NotEquals(self, other).conclude_as_folded(assumptions)
+        return NotEquals(self, other).conclude_as_folded()
 
 def subtract(a, b):
     '''

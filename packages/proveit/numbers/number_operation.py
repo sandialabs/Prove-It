@@ -1,5 +1,6 @@
 from proveit import (Expression, Judgment, Operation, ExprTuple,
-                     generate_inner_expressions, USE_DEFAULTS)
+                     generate_inner_expressions, USE_DEFAULTS,
+                     prover)
 from proveit.relation import TransRelUpdater
 from collections import deque
 
@@ -10,10 +11,11 @@ class NumberOperation(Operation):
     
     def __init__(self, operator, operand_or_operands, *, styles=None):
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
-    
+
+    @prover
     def deduce_bound(self, inner_expr_bound_or_bounds, 
                      inner_exprs_to_bound = None,
-                     assumptions=USE_DEFAULTS):
+                     **defaults_config):
         '''
         Return a bound of this arithmetic expression based upon
         the bounds of any number of inner expressions.  The inner 
@@ -84,10 +86,10 @@ class NumberOperation(Operation):
                     continue
                 no_such_number_op_inner_expr = False
                 container_relation = inner_relations.setdefault(
-                        container, TransRelUpdater(container, assumptions))
+                        container, TransRelUpdater(container))
                 expr = container_relation.expr
                 container_relation.update(expr.bound_via_operand_bound(
-                        inner_expr_bound, assumptions=assumptions))
+                        inner_expr_bound))
                 # Append the relation for processing
                 if container is self:
                     # No further processing needed when the container
@@ -109,8 +111,8 @@ class NumberOperation(Operation):
                 "valid, they should have percolated to the top")
         return inner_relations[self].relation
 
-    def bound_via_operand_bound(self, operand_bound, 
-                                assumptions = USE_DEFAULTS):
+    @prover
+    def bound_via_operand_bound(self, operand_bound, **defaults_config):
         '''
         Return a bound of this arithmetic expression based upon
         the bound of one of its operands.  The operand should appear

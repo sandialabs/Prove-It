@@ -1,5 +1,6 @@
 from proveit import (defaults, Literal, Operation, USE_DEFAULTS, ExprTuple,
-                     Judgment, ProofFailure, InnerExpr, equivalence_prover,
+                     Judgment, ProofFailure, InnerExpr, 
+                     prover, equivalence_prover,
                      SimplificationDirectives)
 from proveit.logic import Equals, InSet
 from proveit.numbers import num
@@ -1154,16 +1155,16 @@ class Mult(NumberOperation):
         from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation)
 
-
-    def bound_via_operand_bound(self, operand_relation, assumptions=USE_DEFAULTS):
+    @prover
+    def bound_via_operand_bound(self, operand_relation, **defaults_config):
         '''
         Alias for bound_via_factor_bound.
         Also see NumberOperation.deduce_bound.
         '''
-        return self.bound_via_factor_bound(operand_relation, assumptions)
+        return self.bound_via_factor_bound(operand_relation)
 
-    def bound_via_factor_bound(self, factor_relation,
-                               assumptions=USE_DEFAULTS):
+    @prover
+    def bound_via_factor_bound(self, factor_relation, **defaults_config):
         '''
         Deduce a bound of this multiplication via the bound on
         one of its factors.  For example
@@ -1191,29 +1192,28 @@ class Mult(NumberOperation):
                             "appears in the %s relation."
                             %(self, factor_relation))
         expr = self
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
         if num > 1:
-            expr = eq.update(expr.association(idx, num,
-                                              assumptions=assumptions))
+            expr = eq.update(expr.association(idx, num))
         if expr.operands.is_double():
             # Handle the binary cases.
             assert 0 <= idx < 2
             if idx == 0:
                 relation = factor_relation.right_mult_both_sides(
-                        expr.factors[1], assumptions=assumptions)
+                        expr.factors[1])
             elif idx == 1:
                 relation = factor_relation.left_mult_both_sides(
-                        expr.factors[0], assumptions=assumptions)
+                        expr.factors[0])
             expr = eq.update(relation)
         else:
             thm = None
             if (isinstance(factor_relation, Less) and 
-                    all(greater(factor, zero).proven(assumptions) for
+                    all(greater(factor, zero).proven() for
                         factor in self.factors)):
                 # We can use the strong bound.
                 from . import strong_bound_via_factor_bound
                 thm = strong_bound_via_factor_bound
-            elif all(greater_eq(factor, zero).proven(assumptions) for
+            elif all(greater_eq(factor, zero).proven() for
                      factor in self.factors):
                 # We may only use the weak bound.
                 from . import weak_bound_via_factor_bound
@@ -1221,37 +1221,36 @@ class Mult(NumberOperation):
             if thm is not None:
                 _a = self.factors[:idx]
                 _b = self.factors[idx+1:]
-                _i = _a.num_elements(assumptions)
-                _j = _b.num_elements(assumptions)
+                _i = _a.num_elements()
+                _j = _b.num_elements()
                 _x = factor_relation.normal_lhs
                 _y = factor_relation.normal_rhs
                 expr = eq.update(thm.instantiate(
-                        {i: _i, j: _j, a: _a, b: _b, x: _x, y: _y},
-                        assumptions=assumptions))
+                        {i: _i, j: _j, a: _a, b: _b, x: _x, y: _y}))
             else:
                 # Not so simple.  Let's make it simpler by
                 # factoring it into a binary multiplication.
                 expr = eq.update(expr.factorization(
                         idx, pull='left', group_factor=True, 
-                        group_remainder=True, assumptions=assumptions))
-                expr = eq.update(expr.bound_via_factor_bound(
-                        factor_relation, assumptions=assumptions))
+                        group_remainder=True))
+                expr = eq.update(expr.bound_via_factor_bound(factor_relation))
                 # Put things back as the were before the factorization.
                 if isinstance(expr.factors[1], Mult):
-                    expr = eq.update(expr.disassociation(1, assumptions))
+                    expr = eq.update(expr.disassociation(1))
                 if idx != 0:
-                    expr = eq.update(expr.commutation(0, idx, assumptions))
+                    expr = eq.update(expr.commutation(0, idx))
         if num > 1 and isinstance(expr.factors[idx], Mult):
-            expr = eq.update(expr.disassociation(idx, assumptions))            
+            expr = eq.update(expr.disassociation(idx))            
         relation = eq.relation
         if relation.lhs != self:
             relation = relation.with_direction_reversed()
         assert relation.lhs == self
         return relation
-            
-    def deduce_positive(self, assumptions=USE_DEFAULTS):
+
+    @prover
+    def deduce_positive(self, **defaults_config):
         # Deduce that this absolute value is greater than zero
         # given its argument is not equal zero.
         from proveit.numbers import RealPos, zero, greater
-        InSet(self, RealPos).prove(assumptions)
-        return greater(self, zero).prove(assumptions)
+        InSet(self, RealPos).prove()
+        return greater(self, zero).prove()

@@ -88,25 +88,6 @@ class Relation(Operation):
                 operator_or_operators=operator_str, operands=operands,
                 wrap_positions=wrap_positions, 
                 justification=justification)
-    
-    def _simplify_both_sides(self, *, simplify):
-        '''
-        Simplify both sides iff 'simplify' is True.
-        '''
-        if simplify:
-            return self.simplify_both_sides()
-        return self
-
-    @prover
-    def simplify_both_sides(self, **defaults_config):
-        '''
-        Simplify both sides of the relation under the give assumptions
-        and return the new relation.
-        '''
-        relation = self
-        relation = relation.inner_expr().lhs.simplify()
-        relation = relation.inner_expr().rhs.simplify()
-        return relation
 
     @prover
     def do_something_on_both_sides(self, **defaults_config):
