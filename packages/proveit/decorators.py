@@ -258,6 +258,11 @@ def equivalence_prover(past_tense, present_tense):
                         "equivalence relation with %s on its left side "
                         "('lhs').  %s does not satisfy this "
                         "requirement."%(func, expr, proven_expr))
+            if not proven_expr.lhs.has_same_style(expr):
+                # Make the left side of the proven truth have a style
+                # that matches the original expression.
+                inner_lhs = proven_truth.inner_expr().lhs
+                proven_truth = inner_lhs.with_matching_style(expr)
             if is_simplification_method or is_evaluation_method:
                 from proveit.logic import Equals
                 if not isinstance(proven_expr, Equals):

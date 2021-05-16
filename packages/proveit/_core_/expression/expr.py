@@ -602,6 +602,13 @@ class Expression(metaclass=ExprType):
         '''
         return StyleOptions(self)  # the default is empty
 
+    def has_same_style(self, expr):
+        '''
+        Return True if this 'self' expression is the same as the given
+        'expr' expression with the same style.
+        '''
+        return self._style_id == expr._style_id
+
     def with_styles(self, **kwargs):
         '''
         Alter the styles of this expression, and anything containing this
