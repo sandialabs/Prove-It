@@ -1,4 +1,4 @@
-from proveit import Literal, Operation
+from proveit import defaults, Literal, Operation, USE_DEFAULTS
 from proveit.logic import Equals
 from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
 from proveit.linear_algebra.matrix_ops import ScalarProd
@@ -51,6 +51,33 @@ class TensorProd(Operation):
         else:
             raise Exception(
                 "Don't know how to distribute tensor product over " + str(factor.__class__) + " factor")
+
+    def auto_reduction(self, assumptions=USE_DEFAULTS):
+        '''
+        Automatically reduce a unary instance of TensorProd to just the
+        given argument. For example, from TensorProd(x) deduce and
+        return TensorProd(x) = x. This might should be later augmented
+        to deal with empty TensorProd (should that just return a
+        scalar 1?).
+        '''
+        if self.operands.is_single():
+            try:
+                return self.unary_reduction(assumptions)
+            except BaseException:
+                # Not clear what exceptions might be appropriate.
+                pass
+
+    def unary_reduction(self, assumptions=USE_DEFAULTS):
+        from proveit.linear_algebra import unary_tensor_prod_reduction
+        if not self.operands.is_single():
+            raise ValueError("Expression must have a single operand, "
+                             "such as TensorProd(x), in "
+                             "order to invoke unary_reduction")
+        operand = self.operands[0]
+        with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            disable_reduction_types.add(TensorProd)
+            return unary_tensor_prod_reduction.instantiate(
+                    {x: operand}, assumptions=assumptions)
 
     # 2/11/2020 temporarily commented out by wdc until we determine the
     # equivalents for a_etc, etc
