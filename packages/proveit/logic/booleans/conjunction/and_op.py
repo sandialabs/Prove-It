@@ -671,8 +671,8 @@ class And(Operation):
 
 def compose(*expressions, assumptions=USE_DEFAULTS):
     '''
-    Returns [A and B and ...], the And operator applied to the collection of given arguments,
-    derived from each separately.
+    Returns [A and B and ...], the And operator applied to the
+    collection of given arguments, derived from each separately.
     '''
     from proveit._core_.expression.composite import composite_expression
     expressions = composite_expression(expressions)
